@@ -6,20 +6,20 @@ export abstract class BaseController {
      * This is how the controller will handle the request passing the responsibility
      * to the use case to implement it. Make your implementation here...
      */
-    protected abstract handleRequest(request: Request, response: Response): Promise<void | any>;
+    protected abstract implement(request: Request, response: Response): Promise<void | any>;
 
     /**
      * This is the function that will be hooked to the route handler 
      */
 
-    public async execute(request: Request, response: Response): Promise<void> {
+    public async handleRequest(request: Request, response: Response): Promise<void> {
 
         try {
-            await this.handleRequest(request, response);
+            await this.implement(request, response);
         } catch (error) {
             console.log(`[BaseController]: Uncaught controller error`);
             console.log(error);
-            this.fail
+            this.fail(response, error);
         }
     }
 

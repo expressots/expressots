@@ -8,7 +8,7 @@ export class CreatePlayerController extends BaseController {
         super();
     }
     
-    async handleRequest(request: Request, response: Response): Promise<Response> {
+    async implement(request: Request, response: Response): Promise<Response> {
 
         const { name, email, faction } = request.body;
 
