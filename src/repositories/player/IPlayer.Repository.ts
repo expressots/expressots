@@ -1,4 +1,4 @@
-import { Player } from "../../entities/Player";
+import { Player } from "@entities/Player";
 
 export interface IPlayerRepository {
     save(player: Player): Promise<void>;

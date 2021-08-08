@@ -1,7 +1,7 @@
 
-import { Player } from "@/entities/Player";
-import { IMailProvider } from "@/providers/email/IMail.Provider";
-import { IPlayerRepository } from "@/repositories/player/IPlayer.Repository";
+import { Player } from "@entities/Player";
+import { IMailProvider } from "@providers/email/IMail.Provider";
+import { IPlayerRepository } from "@repositories/player/IPlayer.Repository";
 import { ICreateUserRequestDTO } from "./ICreatePlayer.DTO";
 
 export class CreatePlayerUseCase {
@@ -36,7 +36,7 @@ export class CreatePlayerUseCase {
                 body: '<h1>Now you understand the principles of clean and Solid Architecture</h1>'
             })
 
-        } catch (error) {
+        } catch (error: any) {
             return error.message;
         }
 

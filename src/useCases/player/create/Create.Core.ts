@@ -1,5 +1,5 @@
-import { MailTrapProvider } from "@/providers/email/MailTrap.Provider";
-import { PlayerRepository } from "@/repositories/player/Player.Repository";
+import { MailTrapProvider } from "@providers/email/MailTrap.Provider";
+import { PlayerRepository } from "@repositories/player/Player.Repository";
 import { CreatePlayerController } from "./CreatePlayer.Controller";
 import { CreatePlayerUseCase } from "./CreatePlayer.UseCase";
 

@@ -16,7 +16,7 @@ export abstract class BaseController {
 
         try {
             await this.implement(request, response);
-        } catch (error) {
+        } catch (error: any) {
             console.log(`[BaseController]: Uncaught controller error`);
             console.log(error);
             this.fail(response, error);

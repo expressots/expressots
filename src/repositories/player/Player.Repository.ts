@@ -1,4 +1,4 @@
-import { Player } from "../../entities/Player";
+import { Player } from "@entities/Player";
 import { IPlayerRepository } from "./IPlayer.Repository";
 
 export class PlayerRepository implements IPlayerRepository {

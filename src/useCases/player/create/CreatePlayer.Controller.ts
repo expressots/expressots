@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { BaseController } from "@/providers/controller/BaseController";
+import { BaseController } from "@providers/controller/BaseController";
 import { CreatePlayerUseCase } from "./CreatePlayer.UseCase";
 
 export class CreatePlayerController extends BaseController {
@@ -15,7 +15,7 @@ export class CreatePlayerController extends BaseController {
         try {
             await this.createPlayerUseCase.execute({name, email, faction});
             return  this.created(response); 
-        } catch (error) {
+        } catch (error: any) {
             return this.fail(response, error || 'Internal server error!');
         }
     }   
