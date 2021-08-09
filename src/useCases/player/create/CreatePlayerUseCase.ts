@@ -1,9 +1,11 @@
 
 import { Player } from "@entities/Player";
-import { IMailProvider } from "@providers/email/IMail.Provider";
+import { IMailProvider } from "@providers/mailTrap/IMail.Provider";
 import { IPlayerRepository } from "@repositories/player/IPlayer.Repository";
+import { provide } from "inversify-binding-decorators";
 import { ICreateUserRequestDTO } from "./ICreatePlayer.DTO";
 
+@provide(CreatePlayerUseCase)
 export class CreatePlayerUseCase {
     
     constructor(private playerRepository: IPlayerRepository, private mailProvider: IMailProvider){}

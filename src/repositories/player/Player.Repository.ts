@@ -1,6 +1,8 @@
 import { Player } from "@entities/Player";
+import { provide } from "inversify-binding-decorators";
 import { IPlayerRepository } from "./IPlayer.Repository";
 
+@provide(PlayerRepository)
 export class PlayerRepository implements IPlayerRepository {
     
     private players: Player[] = [];

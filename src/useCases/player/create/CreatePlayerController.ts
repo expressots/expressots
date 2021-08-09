@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { BaseController } from "@providers/controller/BaseController";
-import { CreatePlayerUseCase } from "./CreatePlayer.UseCase";
+import { CreatePlayerUseCase } from "./CreatePlayerUseCase";
 
 export class CreatePlayerController extends BaseController {
     

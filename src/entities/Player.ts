@@ -1,6 +1,8 @@
 
+import { provide } from 'inversify-binding-decorators';
 import { v4 as uuidv4 } from 'uuid';
 
+@provide(Player)
 export class Player {
     public readonly id!: string;
     public name!: string;

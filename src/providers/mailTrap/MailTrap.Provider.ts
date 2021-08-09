@@ -10,11 +10,11 @@ export class MailTrapProvider {
     constructor() {
 
         this.transporter = nodemailer.createTransport({
-            host: Env.mailtrap.MAILTRAP_HOST,
-            port: Env.mailtrap.MAILTRAP_PORT,
+            host: Env.Mailtrap.MAILTRAP_HOST,
+            port: Env.Mailtrap.MAILTRAP_PORT,
             auth: {
-                user: Env.mailtrap.MAILTRAP_USERNAME,
-                pass: Env.mailtrap.MAILTRAP_PASSWORD
+                user: Env.Mailtrap.MAILTRAP_USERNAME,
+                pass: Env.Mailtrap.MAILTRAP_PASSWORD
             }
         })
     }

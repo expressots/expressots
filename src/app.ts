@@ -1,13 +1,20 @@
+import 'reflect-metadata';
 import express from 'express';
+import cors from 'cors';
+import { InversifyExpressServer } from 'inversify-express-utils';
+import { container } from '@providers/inversify/Container';
 const compression = require('compression');
-import { router } from './router';
 
-// initialize express
-const app = express();
+const expressServer = new InversifyExpressServer(container);
 
-// add middlewares
-app.use(compression());
-app.use(express.json());
-app.use(router);
+expressServer.setConfig((app: express.Application) => {
+    app.use(compression());
+    app.options('*', app.use(cors())); // Review: To test cors
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    app.use(express.static('public'));
+}); 
+
+const app = expressServer.build();
 
 export { app };

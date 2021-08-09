@@ -1,9 +1,10 @@
-import { response, Router } from 'express';
-import { createPlayerController } from './useCases/player/create/Create.Core';
+import { controller, httpGet, interfaces, response } from "inversify-express-utils";
 
-const router = Router();
+@controller("/")
+export class RouterController implements interfaces.Controller {
 
-// to think about how to segrate routing system
-router.post('/player', (request, response)=> createPlayerController.handleRequest(request, response));
-
-export { router };
+    @httpGet("/")
+    public async execute(@response() res): Promise<void> {
+        res.send('Server Status: Online');
+    }
+}
