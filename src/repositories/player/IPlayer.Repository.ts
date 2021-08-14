@@ -1,6 +1,10 @@
 import { Player } from "@entities/Player";
 
 export interface IPlayerRepository {
-    save(player: Player): Promise<void>;
+    create(player: Player): Promise<void>;
+    delete(id: string): Promise<void>;
+    update(player: Player): Promise<void>;
+    findOne(id: string): Promise<Player>;
+    findAll(): Promise<Player[]>;
     findByEmail(email: string): Promise<Player>;
 }

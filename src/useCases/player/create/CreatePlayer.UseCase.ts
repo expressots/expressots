@@ -14,6 +14,7 @@ export class CreatePlayerUseCase {
 
         const {name, email, faction} = data;
         let playerReturn: ICreatePlayerReturn;
+        const sendEmail: boolean = false;
         
         try {
             // Verifying if the player already exist
@@ -24,21 +25,24 @@ export class CreatePlayerUseCase {
             }
             
             const playerObj = new Player(name, email, faction);
-            await this.playerRepository.save(playerObj);
-           
-            this.mailTrapProvider.sendEmail({
-                to: {
-                    name,
-                    email
-                },
-                from: {
-                    name: 'Clean Architecture Twitch Team',
-                    email: 'clean@architecture.com'
-                },
-                subject: 'Welcome to the Clean Architecture Design!',
-                body: '<h1>Now you understand the principles of clean and Solid Architecture</h1>'
-            })
+            await this.playerRepository.create(playerObj);
 
+            if (sendEmail) {
+                this.mailTrapProvider.sendEmail({
+                    to: {
+                        name,
+                        email
+                    },
+                    from: {
+                        name: 'Clean Architecture Twitch Team',
+                        email: 'clean@architecture.com'
+                    },
+                    subject: 'Welcome to the Clean Architecture Design!',
+                    body: '<h1>Now you understand the principles of clean and Solid Architecture</h1>'
+                });
+    
+            };
+           
             playerReturn = { id:playerObj.id, email:playerObj.email, status: 'Player created successfully!'};
             return playerReturn;
 
