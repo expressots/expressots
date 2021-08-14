@@ -9,12 +9,10 @@ export class Player {
     public email!: string;
     public faction!: string;
     
-    constructor(props: Omit<Player, 'id'>, id?: string){
-        Object.assign(this, props);
-    
-        if (!id) {
-            this.id = uuidv4();
-        }
-    
+    constructor(name: string, email: string, faction: string) {
+        this.id = uuidv4();
+        this.name = name;
+        this.email = email;
+        this.faction = faction;
     }
 }

@@ -1,4 +1,4 @@
-import { ConsoleHelper } from '@providers/console/ConsoleHelper';
+import { ConsoleHelper } from '@providers/console/Console.Helper';
 import { provide } from 'inversify-binding-decorators';
 import { IServerMessageToConsole } from '@providers/types/ServerTypes';
 import { Env } from 'env';

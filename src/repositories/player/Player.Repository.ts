@@ -15,6 +15,10 @@ export class PlayerRepository implements IPlayerRepository {
         const player = this.players.find(player => player.email === email) as Player;
         return player;
     }
+
+    async getPlayers(): Promise<Player[]> {
+        return this.players;
+    }
    
 }
 

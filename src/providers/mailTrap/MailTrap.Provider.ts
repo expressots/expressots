@@ -2,7 +2,9 @@ import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import { Env } from 'env';
 import { IMessage } from './IMail.Provider';
+import { provide } from 'inversify-binding-decorators';
 
+@provide(MailTrapProvider)
 export class MailTrapProvider {
 
     private transporter: Mail;
@@ -10,11 +12,11 @@ export class MailTrapProvider {
     constructor() {
 
         this.transporter = nodemailer.createTransport({
-            host: Env.Mailtrap.MAILTRAP_HOST,
-            port: Env.Mailtrap.MAILTRAP_PORT,
+            host: Env.Mailtrap.HOST,
+            port: Env.Mailtrap.PORT,
             auth: {
-                user: Env.Mailtrap.MAILTRAP_USERNAME,
-                pass: Env.Mailtrap.MAILTRAP_PASSWORD
+                user: Env.Mailtrap.USERNAME,
+                pass: Env.Mailtrap.PASSWORD
             }
         })
     }
