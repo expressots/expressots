@@ -21,6 +21,25 @@ It respects the fundamentals of clean code and some of the SOLID concepts. This 
 - **_Repositories_**: is the layer responsible to communicate with the database.
 - **_Use Cases_**: use cases represents the implementation of an operation that can be performed in the system
 
+## Features
+
+```
+- Module mapping (tsconfig-paths)
+- IOC (Inversion of control): Dependency Injection
+- API Decorators: HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpOptions, HttpHead
+- Entity, Provider, Use case, repository, controller examples
+- Frontend example using react, yup and formik
+```
+
+## Running the project
+
+```
+1. run `yarn install` to install all dependencies
+2. run `yarn start` to start the project
+    1. Backend API: CleanArchitecture/src
+    1. FrontEnd: frontend/src
+```
+
 ## Contributing Guide
 
 ```

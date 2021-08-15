@@ -2,7 +2,7 @@ import { ICreatePlayerDTO } from "./createPlayer.dto";
 import axios from "axios";
 
 const PLAYER_ROUTES = {
-  create: `${process.env.REACT_APP_API_URL}/player/create`,
+  create: 'http://localhost:3001/player/create',
 };
 
 export const createPlayer: (input: ICreatePlayerDTO) => void = async (
