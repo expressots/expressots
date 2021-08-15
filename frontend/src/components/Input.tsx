@@ -16,7 +16,7 @@ const Input: React.FC<TextInputProps> = (props) => {
   const classes = classNames(
     "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline",
     {
-      "border-2  border-red-600": props.error && props.touched,
+      "border border-red-600": props.error && props.touched,
     }
   );
   return (
