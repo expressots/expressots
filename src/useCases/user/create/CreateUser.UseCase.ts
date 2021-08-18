@@ -3,7 +3,6 @@ import { User } from "@entities/User";
 import { MailTrapProvider } from "@providers/mailTrap/MailTrap.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
-import { hashPassword } from "utils/password/Password.Utils";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
 
 @provide(CreateUserUseCase)
@@ -25,7 +24,7 @@ export class CreateUserUseCase {
                 throw new Error('User already exist!');
             }
 
-            const userObj = new User(name, email, password, hashPassword(password, ''));
+            const userObj = new User(name, email, password);
             await this.userRepository.create(userObj);
 
             if (SEND_MAIL) {
