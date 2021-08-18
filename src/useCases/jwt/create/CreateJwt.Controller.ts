@@ -1,6 +1,6 @@
 // src/useCases/jwt/create/CreateJWT.Controller.ts
 // ...
-import { TYPES } from '@providers/types/types.core';
+import { TYPES } from '@providers/types/Types.Core';
 import { UserRepository } from '@repositories/user/User.Repository';
 import {Request, Response} from 'express';
 import { inject } from 'inversify';

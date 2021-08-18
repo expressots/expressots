@@ -7,7 +7,7 @@ import { DeletePlayerController } from '@useCases/player/delete/DeletePlayerCont
 import { UpdatePlayerController } from '@useCases/player/update/UpdatePlayerController';
 import { CreateJwtController } from '@useCases/jwt/create/CreateJwt.Controller';
 import { CreateUserController } from '@useCases/user/create/CreateUser.Controller';
-import { TYPES } from '@providers/types/types.core';
+import { TYPES } from '@providers/types/Types.Core';
 import { JsonWebTokenService } from 'services/jwt/JsonWebToken.Service';
 import { FetchLoggedUserMiddleware } from '@providers/middlewares/FetchLoggedUser.middleware';
 

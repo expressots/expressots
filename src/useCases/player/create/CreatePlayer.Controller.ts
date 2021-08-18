@@ -1,7 +1,7 @@
 import { CreatePlayerUseCase} from "./CreatePlayer.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreatePlayerDTO, ICreatePlayerReturn } from "./ICreatePlayer.DTO";
-import { TYPES } from "@providers/types/types.core";
+import { TYPES } from "@providers/types/Types.Core";
 
 
 @controller('/player/create')
