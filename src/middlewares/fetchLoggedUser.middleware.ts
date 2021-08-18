@@ -5,12 +5,13 @@ import {BaseMiddleware} from 'inversify-express-utils';
 import {JsonWebTokenService} from '../services/jsonWebTokens.service';
 import { User } from '@entities/User';
 import { UserRepository } from '@repositories/user/User.Repository';
+import { TYPES } from '@providers/types/types.core';
 
 @injectable()
 export class FetchLoggedUserMiddleware extends BaseMiddleware {
   constructor(
     private userRepository: UserRepository,
-    @inject("JsonWebTokenService")
+    @inject(TYPES.JsonWebTokenService)
     private readonly jsonWebTokenService: JsonWebTokenService
   ) {
     super();
@@ -24,7 +25,7 @@ export class FetchLoggedUserMiddleware extends BaseMiddleware {
     const token = req.headers.authorization?.replace(/bearer/i, "").replace(/\s/g, "");
 
     if (token === undefined) {
-      return res.status(403).send("You must provide an `Authorization` header");
+      return res.status(403).send({"error": "You must provide an `Authorization` header"});
     }
 
     try {
@@ -32,7 +33,7 @@ export class FetchLoggedUserMiddleware extends BaseMiddleware {
 
       req.user = await this.userRepository.findOne(payload.id);
     } catch (e) {
-      return res.status(403).send("Invalid token");
+      return res.status(403).send({"error":"Invalid token"});
     }
 
     next();

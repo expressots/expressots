@@ -9,22 +9,23 @@ import { JsonWebTokenService } from 'services/jsonWebTokens.service';
 import { FetchLoggedUserMiddleware } from 'middlewares/fetchLoggedUser.middleware';
 import { CreateJwtController } from '@useCases/jwt/create/CreateJwt.Controller';
 import { CreateUserController } from '@useCases/user/create/CreateUser.Controller';
+import { TYPES } from '@providers/types/types.core';
 
 export const serverControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
-    bind<RouterController>("RouterController").to(RouterController);
+    bind<RouterController>(TYPES.RouterController).to(RouterController);
 });
 
 export const playerControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
-    bind<CreatePlayerController>("CreatePlayerController").to(CreatePlayerController);
-    bind<FindAllPlayersController>("FindAllPlayersController").to(FindAllPlayersController);
-    bind<FindPlayerController>("FindPlayerController").to(FindPlayerController);
-    bind<DeletePlayerController>("DeletePlayerController").to(DeletePlayerController);
-    bind<UpdatePlayerController>("UpdatePlayerController").to(UpdatePlayerController);
+    bind<CreatePlayerController>(TYPES.CreatePlayerController).to(CreatePlayerController);
+    bind<FindAllPlayersController>(TYPES.FindAllPlayersController).to(FindAllPlayersController);
+    bind<FindPlayerController>(TYPES.FindPlayerController).to(FindPlayerController);
+    bind<DeletePlayerController>(TYPES.DeletePlayerController).to(DeletePlayerController);
+    bind<UpdatePlayerController>(TYPES.UpdatePlayerController).to(UpdatePlayerController);
 });
 
 export const jwtControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
-    bind<JsonWebTokenService>("JsonWebTokenService").to(JsonWebTokenService);
-    bind<FetchLoggedUserMiddleware>("FetchLoggedUserMiddleware").to(FetchLoggedUserMiddleware);
-    bind<CreateJwtController>("CreateJwtController").to(CreateJwtController);
-    bind<CreateUserController>("CreateUserController").to(CreateUserController);
+    bind<JsonWebTokenService>(TYPES.JsonWebTokenService).to(JsonWebTokenService);
+    bind<FetchLoggedUserMiddleware>(TYPES.FetchLoggedUserMiddleware).to(FetchLoggedUserMiddleware);
+    bind<CreateJwtController>(TYPES.CreateJwtController).to(CreateJwtController);
+    bind<CreateUserController>(TYPES.CreateUserController).to(CreateUserController);
 });

@@ -1,6 +1,7 @@
 import { CreatePlayerUseCase} from "./CreatePlayer.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreatePlayerDTO, ICreatePlayerReturn } from "./ICreatePlayer.DTO";
+import { TYPES } from "@providers/types/types.core";
 
 
 @controller('/player/create')
@@ -11,7 +12,7 @@ export class CreatePlayerController implements interfaces.Controller {
     // *********************************************************
     // `FetchLoggedUserMiddleware` - Middleware to secure route
     // *********************************************************
-    @httpPost('/', "FetchLoggedUserMiddleware")
+    @httpPost('/', TYPES.FetchLoggedUserMiddleware)
     async execute(@requestBody() data: ICreatePlayerDTO, @response() res): Promise<ICreatePlayerReturn> {
         try {
             const dataReturn = await this.createPlayerUseCase.execute(data);
