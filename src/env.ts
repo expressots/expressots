@@ -16,6 +16,9 @@ const Env = {
     },
     Support: {
         ADMIN_EMAIL: process.env.ADMIN_EMAIL
+    },
+    Security: {
+        JWT_PRIVATE_KEY: process.env.SECURITY_JWT_PRIVATE_KEY as string
     }
 }
 
