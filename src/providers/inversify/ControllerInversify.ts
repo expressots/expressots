@@ -5,11 +5,11 @@ import { RouterController } from "router";
 import { FindPlayerController } from '@useCases/player/findOne/FindPlayerController';
 import { DeletePlayerController } from '@useCases/player/delete/DeletePlayerController';
 import { UpdatePlayerController } from '@useCases/player/update/UpdatePlayerController';
-import { JsonWebTokenService } from 'services/jsonWebTokens.service';
-import { FetchLoggedUserMiddleware } from 'middlewares/fetchLoggedUser.middleware';
 import { CreateJwtController } from '@useCases/jwt/create/CreateJwt.Controller';
 import { CreateUserController } from '@useCases/user/create/CreateUser.Controller';
 import { TYPES } from '@providers/types/types.core';
+import { JsonWebTokenService } from 'services/jwt/JsonWebToken.Service';
+import { FetchLoggedUserMiddleware } from '@providers/middlewares/FetchLoggedUser.middleware';
 
 export const serverControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
     bind<RouterController>(TYPES.RouterController).to(RouterController);

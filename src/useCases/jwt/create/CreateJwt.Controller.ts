@@ -5,8 +5,8 @@ import { UserRepository } from '@repositories/user/User.Repository';
 import {Request, Response} from 'express';
 import { inject } from 'inversify';
 import {controller, httpPost, requestBody} from 'inversify-express-utils';
-import { JsonWebTokenService } from 'services/jsonWebTokens.service';
-import {isPasswordMatch} from 'utils/password.utils';
+import { JsonWebTokenService } from 'services/jwt/JsonWebToken.Service';
+import { isPasswordMatch } from 'utils/password/Password.Utils';
 
 @controller("/tokens")
 export class CreateJwtController {

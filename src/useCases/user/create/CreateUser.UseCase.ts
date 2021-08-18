@@ -3,7 +3,7 @@ import { User } from "@entities/User";
 import { MailTrapProvider } from "@providers/mailTrap/MailTrap.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
-import { hashPassword } from "utils/password.utils";
+import { hashPassword } from "utils/password/Password.Utils";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
 
 @provide(CreateUserUseCase)

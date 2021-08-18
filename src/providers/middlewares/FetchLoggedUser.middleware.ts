@@ -2,10 +2,10 @@
 import {inject, injectable} from 'inversify';
 import {NextFunction, Request, Response} from 'express';
 import {BaseMiddleware} from 'inversify-express-utils';
-import {JsonWebTokenService} from '../services/jsonWebTokens.service';
 import { User } from '@entities/User';
 import { UserRepository } from '@repositories/user/User.Repository';
 import { TYPES } from '@providers/types/types.core';
+import { JsonWebTokenService } from 'services/jwt/JsonWebToken.Service';
 
 @injectable()
 export class FetchLoggedUserMiddleware extends BaseMiddleware {
