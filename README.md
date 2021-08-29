@@ -40,17 +40,6 @@ It respects the fundamentals of clean code and some of the SOLID concepts. This 
     1. FrontEnd: frontend/src
 ```
 
-## Contributing Guide
-
-```
-1. Fork the original repository to your own repository
-2. Clone it to your local
-3. Contribute to it
-4. Push it to your remote repo
-5. Send a PR to the main repo
-6. Your contribution will be evaluated then we will merge your changes with the original repository.
-```
-
 ## How to use JWT Secure
 
 ```
@@ -82,4 +71,15 @@ curl --location --request POST 'http://localhost:3000/player/create' \
     "faction": "Faction name"
 }
 '
+```
+
+## Contributing Guide
+
+```
+1. Fork the original repository to your own repository
+2. Clone it to your local
+3. Contribute to it
+4. Push it to your remote repo
+5. Send a PR to the main repo
+6. Your contribution will be evaluated then we will merge your changes with the original repository.
 ```

@@ -1,9 +1,9 @@
-// src/services/jsonWebToken.service.ts
-import {injectable} from 'inversify';
 import {sign, verify} from 'jsonwebtoken';
 import { Env } from 'env';
+import { provide } from 'inversify-binding-decorators';
+import { TYPES } from '@providers/types/Types.core';
 
-@injectable()
+@provide(TYPES.JsonWebTokenService)
 export class JsonWebTokenService {
   private readonly JWT_PRIVATE_KEY = Env.Security.JWT_PRIVATE_KEY;
 

@@ -1,6 +1,6 @@
 
 import { provide } from 'inversify-binding-decorators';
-import { hashPassword } from 'utils/password/Password.Utils';
+import { hashPassword } from '@providers/utils/password/Password.Utils';
 import { v4 as uuidv4 } from 'uuid';
 
 @provide(User)

@@ -1,12 +1,12 @@
 // src/useCases/jwt/create/CreateJWT.Controller.ts
 // ...
-import { TYPES } from '@providers/types/Types.Core';
+import { TYPES } from '@providers/types/Types.core';
 import { UserRepository } from '@repositories/user/User.Repository';
 import {Request, Response} from 'express';
 import { inject } from 'inversify';
 import {controller, httpPost, requestBody} from 'inversify-express-utils';
-import { JsonWebTokenService } from 'services/jwt/JsonWebToken.Service';
-import { isPasswordMatch } from 'utils/password/Password.Utils';
+import { JsonWebTokenService } from '@providers/services/jwt/JsonWebToken.Service';
+import { isPasswordMatch } from '@providers/utils/password/Password.Utils';
 
 @controller("/tokens")
 export class CreateJwtController {
