@@ -50,3 +50,36 @@ It respects the fundamentals of clean code and some of the SOLID concepts. This 
 5. Send a PR to the main repo
 6. Your contribution will be evaluated then we will merge your changes with the original repository.
 ```
+
+## How to use JWT Secure
+
+```
+1) Create user
+curl --location --request POST 'http://localhost:3000/user/create' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name":"User name",
+    "email":"clean@architecture.com",
+    "password": "quentinada"
+
+
+2) Get user token
+curl --location --request POST 'http://localhost:3000/tokens' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "clean@architecture.com",
+    "password": "quentinada"
+}
+'
+
+3) Create player (JWT Secure)
+curl --location --request POST 'http://localhost:3000/player/create' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0ODYzNDIyLTlhNWMtNDM0MS05NDU5LTVmMmUwYTgxMWQwZSIsImVtYWlsIjoicmVuYXRvanJAYWxwaHVzLmNvbS5iciIsImlhdCI6MTYyOTI0NjAzNCwiZXhwIjoxNjI5MzMyNDM0fQ.LAf7mLhfBerJ44EhwLW5AE2c_yy6gwhh4-1ONiqrz_Q' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name":"Clean Archi",
+    "email":"clean@architecture.com",
+    "faction": "Faction name"
+}
+'
+```

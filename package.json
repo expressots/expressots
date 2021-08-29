@@ -13,12 +13,14 @@
   "dependencies": {
     "compression": "^1.7.4",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "nodemailer": "^6.5.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/cors": "^2.8.12",
+    "@types/jsonwebtoken": "^8.5.4",
     "@types/node": "^16.4.13",
     "@types/nodemailer": "^6.4.1",
     "@types/uuid": "^8.3.0",
