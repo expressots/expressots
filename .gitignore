@@ -39,3 +39,9 @@ dist/**/*
 
 # ignore yarn.lock
 yarn.lock
+
+# Ignore VSCODE configuration files
+.vscode
+
+# Ignore Typedoc generated documentation
+public/docs/*
