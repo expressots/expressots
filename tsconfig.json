@@ -22,10 +22,10 @@
       "@repositories/*": ["repositories/*"],
       "@useCases/*": ["useCases/*"],
     },
-    "types": ["reflect-metadata"],
+    "types": ["reflect-metadata", "node"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/providers/test/Sum.ts", "src/providers/test/Sum.test.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,22 +1,23 @@
+import packageJson = require("../package.json");
+
 const Env = {
-    Express: {
-        PORT: process.env.PORT
+    Server: {
+        APP_NAME: packageJson.name,
+        APP_VERSION: packageJson.version,
+        ENVIRONMENT: process.env.ENVIRONMENT,
+        TIMEZONE: process.env.TIMEZONE,
+        DEFAULT_LANGUAGE: process.env.DEFAULT_LANGUAGE,
+        DEFAULT_PORT: process.env.DEFAULT_PORT,
+        SECURE_PORT: process.env.SECURE_PORT,
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL
     },
     Mailtrap: {
         HOST: process.env.MAILTRAP_HOST as string,
-        PORT:Number(process.env.MAILTRAP_PORT),
-        USERNAME:process.env.MAILTRAP_USERNAME,
-        PASSWORD:process.env.MAILTRAP_PASSWORD,
+        PORT: Number(process.env.MAILTRAP_PORT),
+        USERNAME: process.env.MAILTRAP_USERNAME,
+        PASSWORD: process.env.MAILTRAP_PASSWORD,
     },
-    Server: {
-        APP_NAME: process.env.APP_NAME,
-        MODE: process.env.ENVIRONMENT,
-        TIMEZONE: process.env.TIMEZONE,
-        LANGUAGE: process.env.DEFAULT_LANGUAGE
-    },
-    Support: {
-        ADMIN_EMAIL: process.env.ADMIN_EMAIL
-    },
+
     Security: {
         JWT_PRIVATE_KEY: process.env.SECURITY_JWT_PRIVATE_KEY as string
     }

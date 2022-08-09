@@ -1,5 +1,5 @@
 // src/middlewares/fetchLoggedUser.middleware.ts
-import {inject} from 'inversify';
+import {inject, injectable} from 'inversify';
 import {NextFunction, Request, Response} from 'express';
 import {BaseMiddleware} from 'inversify-express-utils';
 import { User } from '@entities/User';
@@ -8,7 +8,7 @@ import { TYPES } from '@providers/types/Types.core';
 import { JsonWebTokenService } from '@providers/services/jwt/JsonWebToken.Service';
 import { provide } from 'inversify-binding-decorators';
 
-@provide(TYPES.FetchLoggedUserMiddleware)
+@injectable()
 export class FetchLoggedUserMiddleware extends BaseMiddleware {
   constructor(
     private userRepository: UserRepository,

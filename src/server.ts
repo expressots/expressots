@@ -1,19 +1,19 @@
 import "reflect-metadata";
 
-import { app } from "./app";
-import { Env } from "./env";
-import { server } from '@providers/inversify/Container'
+import { app } from "App";
+import { Env } from "Env";
+import { ServerInversifyContainer } from "@providers/inversify/Container";
 
-const port = Env.Express.PORT;
+const PORT = Env.Server.DEFAULT_PORT;
 
-app.listen(port, async() => {
-    server.logMessages({
-        port: port!,
-        appName: Env.Server.APP_NAME!,
-        timezone: Env.Server.TIMEZONE!,
-        adminEmail: Env.Support.ADMIN_EMAIL!,
-        language: Env.Server.LANGUAGE!,
-        environment: Env.Server.MODE!
+app.listen(PORT, async () => {
+    ServerInversifyContainer.Init({
+        appName: Env.Server.APP_NAME,
+        appVersion: Env.Server.APP_VERSION,
+        timezone: Env.Server.TIMEZONE,
+        adminEmail: Env.Server.ADMIN_EMAIL,
+        language: Env.Server.DEFAULT_LANGUAGE,
+        environment: Env.Server.ENVIRONMENT,
+        port: PORT
     });
 });
-
