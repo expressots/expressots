@@ -7,7 +7,7 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "tsnd -r dotenv/config -r tsconfig-paths/register src/Server.ts",
+    "start": "tsnd -r dotenv/config -r tsconfig-paths/register src/StartUp.ts",
     "build": "tsc -p .",
     "test": "jest --coverage",
     "doc": "npx typedoc"

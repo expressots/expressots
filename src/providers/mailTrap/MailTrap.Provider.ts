@@ -8,7 +8,7 @@ import { provide } from 'inversify-binding-decorators';
 export class MailTrapProvider {
 
     private transporter: Mail;
-    
+
     constructor() {
 
         this.transporter = nodemailer.createTransport({

@@ -2,20 +2,20 @@
 // ...
 import { TYPES } from '@providers/types/Types.core';
 import { UserRepository } from '@repositories/user/User.Repository';
-import {Request, Response} from 'express';
+import { Request, Response } from 'express';
 import { inject } from 'inversify';
-import {controller, httpPost, requestBody} from 'inversify-express-utils';
-import { JsonWebTokenService } from '@providers/services/jwt/JsonWebToken.Service';
-import { isPasswordMatch } from '@providers/utils/password/Password.Utils';
+import { controller, httpPost, requestBody } from 'inversify-express-utils';
+import { JsonWebTokenProvider } from '@providers/jwt/JsonWebToken.Provider';
+import { IsPasswordMatch } from '@providers/crypto-password-hash-gen/CryptoHashPassword.Provider';
 
 @controller("/tokens")
 export class CreateJwtController {
   // ...
   public constructor(
-    @inject(TYPES.JsonWebTokenService) private readonly jsonWebTokenService: JsonWebTokenService,
+    @inject(TYPES.JsonWebTokenProvider) private readonly jsonWebTokenService: JsonWebTokenProvider,
     // @inject(TYPES.DatabaseService) private readonly database: DatabaseService
     private userRepository: UserRepository
-  ) {}
+  ) { }
 
   @httpPost("")
   public async create(
@@ -30,7 +30,7 @@ export class CreateJwtController {
       return res.sendStatus(400);
     }
     console.log(user); */
-    if (isPasswordMatch(user.hashedPassword, body.password)) {
+    if (IsPasswordMatch(user.hashedPassword, body.password)) {
       const token = this.jsonWebTokenService.encode({
         id: user.id,
         email: user.email,

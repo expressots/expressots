@@ -1,10 +1,10 @@
 
 import { provide } from 'inversify-binding-decorators';
-import { hashPassword } from '@providers/utils/password/Password.Utils';
+import { HashPassword } from '@providers/crypto-password-hash-gen/CryptoHashPassword.Provider';
 import { v4 as uuidv4 } from 'uuid';
 
 @provide(User)
-export class User {
+class User {
     public readonly id!: string;
     public name: string;
     public email!: string;
@@ -15,8 +15,10 @@ export class User {
         this.id = uuidv4();
         this.name = name;
         this.email = email;
-        if(password){
-            this.hashedPassword = hashPassword(password);
+        if (password) {
+            this.hashedPassword = HashPassword(password);
         }
     }
 }
+
+export { User };

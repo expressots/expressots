@@ -1,4 +1,4 @@
-import { ConsoleProvider, Color } from '@providers/console/ConsoleProvider';
+import { ConsoleProvider, Color } from '@providers/console/Console.Provider';
 import { provide } from 'inversify-binding-decorators';
 import { Env } from 'Env';
 
@@ -15,7 +15,7 @@ export interface IServerMessageToConsole {
 @provide(ServerProvider)
 class ServerProvider {
 
-    constructor(private consoleHelper: ConsoleProvider) { }
+    constructor(private consoleProvider: ConsoleProvider) { }
 
     public async Init(consoleMessage: IServerMessageToConsole): Promise<void> {
         const {
@@ -47,7 +47,7 @@ class ServerProvider {
 
         let securePortCheck: string = (port === Env.Server.DEFAULT_PORT) ? "Non-Secure HTTP" : "Secure HTTPS";
 
-        this.consoleHelper.Log(
+        this.consoleProvider.Log(
             `${appName} version ${appVersion} is running on a ${securePortCheck} port ${port} - Environment: ${environment}`,
             terminalColor
         );

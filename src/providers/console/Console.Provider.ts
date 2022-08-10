@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { provide } from 'inversify-binding-decorators';
 
-export enum Color {
+enum Color {
     NONE = 0,
     YELLOW,
     BLUE,
@@ -29,4 +29,4 @@ class ConsoleProvider {
     }
 }
 
-export { ConsoleProvider };
+export { ConsoleProvider, Color };

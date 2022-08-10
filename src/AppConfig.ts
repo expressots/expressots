@@ -3,7 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import compression from "compression";
 import { InversifyExpressServer } from "inversify-express-utils";
-import { container } from "@providers/inversify/Container";
+import { container } from "@providers/inversify/Container.Provider";
 
 const expressServer = new InversifyExpressServer(container);
 
@@ -16,6 +16,6 @@ expressServer.setConfig((app: express.Application) => {
     app.use(express.static('public'));
 });
 
-const app = expressServer.build();
+const appConfig = expressServer.build();
 
-export { app };
+export { appConfig };

@@ -19,7 +19,8 @@ const Env = {
     },
 
     Security: {
-        JWT_PRIVATE_KEY: process.env.SECURITY_JWT_PRIVATE_KEY as string
+        JWT_PRIVATE_KEY: process.env.SECURITY_JWT_PRIVATE_KEY as string,
+        SALT_FOR_HASH: process.env.SALT_FOR_HASH
     }
 }
 

@@ -1,4 +1,4 @@
-import { CreateUserUseCase} from "./CreateUser.UseCase";
+import { CreateUserUseCase } from "./CreateUser.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
 
@@ -14,7 +14,7 @@ export class CreateUserController implements interfaces.Controller {
             const dataReturn = await this.createUserUseCase.execute(data);
             return res.status(201).json(dataReturn);
         } catch (error: any) {
-            throw new Error(error);(error || 'Internal server error!');
+            throw new Error(error); (error || 'Internal server error!');
         }
     }
 }

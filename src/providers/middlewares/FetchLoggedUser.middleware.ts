@@ -1,19 +1,19 @@
 // src/middlewares/fetchLoggedUser.middleware.ts
-import {inject, injectable} from 'inversify';
-import {NextFunction, Request, Response} from 'express';
-import {BaseMiddleware} from 'inversify-express-utils';
+import { inject, injectable } from 'inversify';
+import { NextFunction, Request, Response } from 'express';
+import { BaseMiddleware } from 'inversify-express-utils';
 import { User } from '@entities/User';
 import { UserRepository } from '@repositories/user/User.Repository';
 import { TYPES } from '@providers/types/Types.core';
-import { JsonWebTokenService } from '@providers/services/jwt/JsonWebToken.Service';
+import { JsonWebTokenProvider } from '@providers/jwt/JsonWebToken.Provider';
 import { provide } from 'inversify-binding-decorators';
 
-@injectable()
-export class FetchLoggedUserMiddleware extends BaseMiddleware {
+@provide(FetchLoggedUserMiddleware)
+class FetchLoggedUserMiddleware extends BaseMiddleware {
   constructor(
     private userRepository: UserRepository,
-    @inject(TYPES.JsonWebTokenService)
-    private readonly jsonWebTokenService: JsonWebTokenService
+    @inject(TYPES.JsonWebTokenProvider)
+    private readonly jsonWebTokenProvider: JsonWebTokenProvider
   ) {
     super();
   }
@@ -26,17 +26,19 @@ export class FetchLoggedUserMiddleware extends BaseMiddleware {
     const token = req.headers.authorization?.replace(/bearer/i, "").replace(/\s/g, "");
 
     if (token === undefined) {
-      return res.status(403).send({"error": "You must provide an `Authorization` header"});
+      return res.status(403).send({ "error": "You must provide an `Authorization` header" });
     }
 
     try {
-      const payload: any = this.jsonWebTokenService.decode(token);
+      const payload: any = this.jsonWebTokenProvider.decode(token);
 
       req.user = await this.userRepository.findOne(payload.id);
     } catch (e) {
-      return res.status(403).send({"error":"Invalid token"});
+      return res.status(403).send({ "error": "Invalid token" });
     }
 
     next();
   }
 }
+
+export { FetchLoggedUserMiddleware };

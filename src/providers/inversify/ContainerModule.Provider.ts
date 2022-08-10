@@ -1,4 +1,4 @@
-import { FindAllPlayersController } from './../../useCases/player/findAll/FindAllPlayersController';
+import { FindAllPlayersController } from '../../useCases/player/findAll/FindAllPlayersController';
 import { CreatePlayerController } from "@useCases/player/create/CreatePlayer.Controller";
 import { ContainerModule, interfaces } from "inversify";
 import { RouterController } from "Router";
@@ -8,14 +8,14 @@ import { UpdatePlayerController } from '@useCases/player/update/UpdatePlayerCont
 import { CreateJwtController } from '@useCases/jwt/create/CreateJwt.Controller';
 import { CreateUserController } from '@useCases/user/create/CreateUser.Controller';
 import { TYPES } from '@providers/types/Types.core';
-import { JsonWebTokenService } from '@providers/services/jwt/JsonWebToken.Service';
+import { JsonWebTokenProvider } from '@providers/jwt/JsonWebToken.Provider';
 import { FetchLoggedUserMiddleware } from '@providers/middlewares/FetchLoggedUser.middleware';
 
-export const serverControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
+export const serverContainerModule = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
     bind<RouterController>(TYPES.RouterController).to(RouterController);
 });
 
-export const playerControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
+export const playerContContainerModule = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
     bind<CreatePlayerController>(TYPES.CreatePlayerController).to(CreatePlayerController);
     bind<FindAllPlayersController>(TYPES.FindAllPlayersController).to(FindAllPlayersController);
     bind<FindPlayerController>(TYPES.FindPlayerController).to(FindPlayerController);
@@ -23,8 +23,8 @@ export const playerControllerContainer = new ContainerModule((bind: interfaces.B
     bind<UpdatePlayerController>(TYPES.UpdatePlayerController).to(UpdatePlayerController);
 });
 
-export const jwtControllerContainer = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
-    bind<JsonWebTokenService>(TYPES.JsonWebTokenService).to(JsonWebTokenService);
+export const jwtContainerModule = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
+    bind<JsonWebTokenProvider>(TYPES.JsonWebTokenProvider).to(JsonWebTokenProvider);
     bind<FetchLoggedUserMiddleware>(TYPES.FetchLoggedUserMiddleware).to(FetchLoggedUserMiddleware);
     bind<CreateJwtController>(TYPES.CreateJwtController).to(CreateJwtController);
     bind<CreateUserController>(TYPES.CreateUserController).to(CreateUserController);

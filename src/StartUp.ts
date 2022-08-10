@@ -1,12 +1,12 @@
 import "reflect-metadata";
 
-import { app } from "App";
+import { appConfig } from "AppConfig";
 import { Env } from "Env";
-import { ServerInversifyContainer } from "@providers/inversify/Container";
+import { ServerInversifyContainer } from "@providers/inversify/Container.Provider";
 
 const PORT = Env.Server.DEFAULT_PORT;
 
-app.listen(PORT, async () => {
+appConfig.listen(PORT, async () => {
     ServerInversifyContainer.Init({
         appName: Env.Server.APP_NAME,
         appVersion: Env.Server.APP_VERSION,

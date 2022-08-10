@@ -1,9 +1,9 @@
-import {sign, verify} from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { Env } from 'Env';
-import { injectable } from 'inversify';
+import { provide } from 'inversify-binding-decorators';
 
-@injectable()
-export class JsonWebTokenService {
+@provide(JsonWebTokenProvider)
+class JsonWebTokenProvider {
   private readonly JWT_PRIVATE_KEY = Env.Security.JWT_PRIVATE_KEY;
 
   encode(payload: Object): string {
@@ -16,3 +16,4 @@ export class JsonWebTokenService {
   }
 }
 
+export { JsonWebTokenProvider };
