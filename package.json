@@ -1,7 +1,7 @@
 {
   "name": "clean-architecture-template",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "StartUp.js",
   "license": "MIT",
   "engines": {
     "node": ">=16.0.0"

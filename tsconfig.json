@@ -29,7 +29,10 @@
   "include": ["src/**/*.ts", "src/providers/test/Sum.ts", "src/providers/test/Sum.test.ts"],
   "exclude": ["node_modules", "dist"],
   "typedocOptions": {
-    "entryPoints": ["src/Server.ts"],
+    "entryPoints": ["src/"],
+    "name": "Clean Architecture Documentation",
+    "entryPointStrategy": "expand",
+    "readme": "README.md",
     "out": "public/docs"
   }
 }
