@@ -4,21 +4,21 @@ import { IDeletePlayerDTO } from "./IDeletePlayerDTO";
 
 @provide(DeletePlayerUseCase)
 export class DeletePlayerUseCase {
-    
-    constructor(private playerRepository: PlayerRepository) {}
+
+    constructor(private playerRepository: PlayerRepository) { }
 
     async execute(id: string): Promise<IDeletePlayerDTO> {
-        
+
         try {
-            const player = await this.playerRepository.findOne(id);
+            const player = await this.playerRepository.FindOne(id);
             if (player) {
-                await this.playerRepository.delete(id);
+                await this.playerRepository.Delete(id);
                 const message: IDeletePlayerDTO = { message: "Player deleted successfully" };
-                return message;    
+                return message;
             };
             return { message: "Player not found" };
         } catch (error: any) {
             throw new Error(error);
-        }   
+        }
     }
 }

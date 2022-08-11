@@ -1,7 +1,7 @@
-import { buildProviderModule } from 'inversify-binding-decorators';
-import { Container } from 'inversify';
-import { serverContainerModule, playerContContainerModule, jwtContainerModule } from './ContainerModule.Provider';
-import { ServerProvider } from '@providers/server/Server.Provider';
+import { buildProviderModule } from "inversify-binding-decorators";
+import { Container } from "inversify";
+import { serverContainerModule, playerContContainerModule, jwtContainerModule } from "./ContainerModule.Provider";
+import { ServerProvider } from "@providers/server/Server.Provider";
 
 const container = new Container();
 

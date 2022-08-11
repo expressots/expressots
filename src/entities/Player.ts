@@ -1,9 +1,10 @@
 
-import { provide } from 'inversify-binding-decorators';
-import { v4 as uuidv4 } from 'uuid';
+import { provide } from "inversify-binding-decorators";
+import { v4 as uuidv4 } from "uuid";
+import { IBaseEntity } from "./IBase.Entity";
 
 @provide(Player)
-class Player {
+class Player implements IBaseEntity {
     public readonly id!: string;
     public name!: string;
     public email!: string;
@@ -14,6 +15,10 @@ class Player {
         this.name = name;
         this.email = email;
         this.faction = faction;
+    }
+
+    get Id(): string {
+        return this.id;
     }
 }
 

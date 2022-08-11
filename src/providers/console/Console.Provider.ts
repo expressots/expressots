@@ -1,5 +1,5 @@
-import chalk from 'chalk';
-import { provide } from 'inversify-binding-decorators';
+import chalk from "chalk";
+import { provide } from "inversify-binding-decorators";
 
 enum Color {
     NONE = 0,

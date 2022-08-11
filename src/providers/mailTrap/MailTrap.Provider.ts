@@ -1,11 +1,11 @@
-import nodemailer from 'nodemailer';
-import Mail from 'nodemailer/lib/mailer';
-import { Env } from 'Env';
-import { IMessage } from './IMail.Provider';
-import { provide } from 'inversify-binding-decorators';
+import nodemailer from "nodemailer";
+import Mail from "nodemailer/lib/mailer";
+import { Env } from "Env";
+import { IMessage } from "./IMail.Provider";
+import { provide } from "inversify-binding-decorators";
 
 @provide(MailTrapProvider)
-export class MailTrapProvider {
+class MailTrapProvider {
 
     private transporter: Mail;
 
@@ -21,7 +21,7 @@ export class MailTrapProvider {
         })
     }
 
-    async sendEmail(message: IMessage): Promise<void> {
+    public async SendEmail(message: IMessage): Promise<void> {
         await this.transporter.sendMail({
             to: {
                 name: message.to.name,
@@ -37,3 +37,5 @@ export class MailTrapProvider {
     }
 
 }
+
+export { MailTrapProvider };

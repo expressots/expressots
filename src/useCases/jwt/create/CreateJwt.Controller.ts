@@ -24,7 +24,7 @@ export class CreateJwtController {
     res: Response
   ) {
     console.log(req.body);
-    const user = await this.userRepository.findByEmail(body.email);
+    const user = await this.userRepository.FindByEmail(body.email);
 
     /* if (!user) {
       return res.sendStatus(400);

@@ -10,25 +10,25 @@ export class CreateUserUseCase {
 
     constructor(private userRepository: UserRepository, private mailTrapProvider: MailTrapProvider) { }
 
-    async execute(data: ICreateUserDTO) : Promise<ICreateUserReturn> {
+    async execute(data: ICreateUserDTO): Promise<ICreateUserReturn> {
 
-        const {name, email, password} = data;
+        const { name, email, password } = data;
         let userReturn: ICreateUserReturn;
         const SEND_MAIL: boolean = false;
 
         try {
             // Verifying if the user already exist
-            const userExist:ICreateUserDTO = await this.userRepository.findByEmail(email);
+            const userExist: ICreateUserDTO = await this.userRepository.FindByEmail(email);
 
             if (userExist) {
                 throw new Error('User already exist!');
             }
 
             const userObj = new User(name, email, password);
-            await this.userRepository.create(userObj);
+            await this.userRepository.Create(userObj);
 
             if (SEND_MAIL) {
-                this.mailTrapProvider.sendEmail({
+                this.mailTrapProvider.SendEmail({
                     to: {
                         // name,
                         // email
@@ -45,7 +45,7 @@ export class CreateUserUseCase {
 
             };
 
-            userReturn = { id:userObj.id, email:userObj.email, status: 'User created successfully!'};
+            userReturn = { id: userObj.id, email: userObj.email, status: 'User created successfully!' };
             return userReturn;
 
         } catch (error: any) {

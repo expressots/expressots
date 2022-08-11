@@ -1,10 +1,8 @@
 import { User } from "@entities/User";
+import { IBaseRepository } from "@repositories/IBase.Repository";
 
-export interface IUserRepository {
-    create(user: User): Promise<void>;
-    delete(id: string): Promise<void>;
-    update(player: User): Promise<void>;
-    findOne(id: string): Promise<User>;
-    findAll(): Promise<User[]>;
-    findByEmail(email: string): Promise<User>;
+interface IUserRepository extends IBaseRepository<User> {
+    FindByEmail(email: string): Promise<User>;
 }
+
+export { IUserRepository };

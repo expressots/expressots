@@ -32,7 +32,7 @@ class FetchLoggedUserMiddleware extends BaseMiddleware {
     try {
       const payload: any = this.jsonWebTokenProvider.decode(token);
 
-      req.user = await this.userRepository.findOne(payload.id);
+      req.user = await this.userRepository.FindOne(payload.id) as User;
     } catch (e) {
       return res.status(403).send({ "error": "Invalid token" });
     }

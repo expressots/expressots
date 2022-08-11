@@ -2,7 +2,7 @@ import { ConsoleProvider, Color } from '@providers/console/Console.Provider';
 import { provide } from 'inversify-binding-decorators';
 import { Env } from 'Env';
 
-export interface IServerMessageToConsole {
+interface IServerMessageToConsole {
     appName: string | undefined;
     appVersion: string | undefined;
     timezone: string | undefined;
@@ -58,4 +58,4 @@ class ServerProvider {
     }
 }
 
-export { ServerProvider };
+export { ServerProvider, IServerMessageToConsole };

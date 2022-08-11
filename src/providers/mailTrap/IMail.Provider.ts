@@ -3,13 +3,15 @@ interface IAddress {
     name: string;
 }
 
-export interface IMessage {
+interface IMessage {
     from: IAddress;
     to: IAddress;
     subject: string;
     body: string;
 }
 
-export interface IMailProvider {
+interface IMailProvider {
     sendEmail(message: IMessage): Promise<void>;
 }
+
+export { IMessage, IMailProvider };

@@ -7,28 +7,28 @@ import { ICreatePlayerDTO, ICreatePlayerReturn } from "./ICreatePlayer.DTO";
 
 @provide(CreatePlayerUseCase)
 export class CreatePlayerUseCase {
-    
-    constructor(private playerRepository: PlayerRepository, private mailTrapProvider: MailTrapProvider) { }
-    
-    async execute(data: ICreatePlayerDTO) : Promise<ICreatePlayerReturn> {
 
-        const {name, email, faction} = data;
+    constructor(private playerRepository: PlayerRepository, private mailTrapProvider: MailTrapProvider) { }
+
+    async execute(data: ICreatePlayerDTO): Promise<ICreatePlayerReturn> {
+
+        const { name, email, faction } = data;
         let playerReturn: ICreatePlayerReturn;
         const sendEmail: boolean = false;
-        
+
         try {
             // Verifying if the player already exist
-            const playerExist:ICreatePlayerDTO = await this.playerRepository.findByEmail(email);
-            
+            const playerExist: ICreatePlayerDTO = await this.playerRepository.FindByEmail(email);
+
             if (playerExist) {
                 throw new Error('Player already exist!');
             }
-            
+
             const playerObj = new Player(name, email, faction);
-            await this.playerRepository.create(playerObj);
+            await this.playerRepository.Create(playerObj);
 
             if (sendEmail) {
-                this.mailTrapProvider.sendEmail({
+                this.mailTrapProvider.SendEmail({
                     to: {
                         name,
                         email
@@ -40,14 +40,14 @@ export class CreatePlayerUseCase {
                     subject: 'Welcome to the Clean Architecture Design!',
                     body: '<h1>Now you understand the principles of clean and Solid Architecture</h1>'
                 });
-    
+
             };
-           
-            playerReturn = { id:playerObj.id, email:playerObj.email, status: 'Player created successfully!'};
+
+            playerReturn = { id: playerObj.id, email: playerObj.email, status: 'Player created successfully!' };
             return playerReturn;
 
         } catch (error: any) {
             return error.message;
-        } 
+        }
     }
 }

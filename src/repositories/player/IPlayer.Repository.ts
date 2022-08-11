@@ -1,10 +1,8 @@
 import { Player } from "@entities/Player";
+import { IBaseRepository } from "@repositories/IBase.Repository";
 
-export interface IPlayerRepository {
-    create(player: Player): Promise<void>;
-    delete(id: string): Promise<void>;
-    update(player: Player): Promise<void>;
-    findOne(id: string): Promise<Player>;
-    findAll(): Promise<Player[]>;
-    findByEmail(email: string): Promise<Player>;
+interface IPlayerRepository extends IBaseRepository<Player> {
+    FindByEmail(email: string): Promise<Player>;
 }
+
+export { IPlayerRepository };

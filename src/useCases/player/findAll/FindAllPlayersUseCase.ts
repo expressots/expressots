@@ -4,16 +4,16 @@ import { IFindAllPlayersDTO } from "./IFindAllPlayersDTO";
 
 @provide(FindAllPlayersUseCase)
 export class FindAllPlayersUseCase {
-    
-    constructor(private playerRepository:PlayerRepository) { }
+
+    constructor(private playerRepository: PlayerRepository) { }
 
     async execute(): Promise<IFindAllPlayersDTO[]> {
         // get all names of players
-        const players = await this.playerRepository.findAll();
-        
+        const players = await this.playerRepository.FindAll();
+
         // convert to DTO
-        const playersToReturn:IFindAllPlayersDTO[] = players.map(player => {
-            return { 
+        const playersToReturn: IFindAllPlayersDTO[] = players.map(player => {
+            return {
                 id: player.id,
                 name: player.name
             }
