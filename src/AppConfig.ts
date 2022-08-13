@@ -1,3 +1,7 @@
+/**
+ * This class is responsible to load the configuration file and to provide the configuration to the application.
+ * @module appConfig - The configuration object.
+*/
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";

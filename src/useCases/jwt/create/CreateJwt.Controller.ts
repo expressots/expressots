@@ -23,13 +23,9 @@ export class CreateJwtController {
     req: Request,
     res: Response
   ) {
-    console.log(req.body);
+
     const user = await this.userRepository.FindByEmail(body.email);
 
-    /* if (!user) {
-      return res.sendStatus(400);
-    }
-    console.log(user); */
     if (IsPasswordMatch(user.hashedPassword, body.password)) {
       const token = this.jsonWebTokenService.encode({
         id: user.id,

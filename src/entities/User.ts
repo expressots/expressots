@@ -10,7 +10,7 @@ class User implements IBaseEntity {
     public name: string;
     public email!: string;
     public password!: string;
-    public hashedPassword!: string;
+    public hashedPassword: string;
 
     constructor(name: string, email: string, password: string) {
         this.id = uuidv4();
