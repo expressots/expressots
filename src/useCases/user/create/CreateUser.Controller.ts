@@ -16,11 +16,11 @@ export class CreateUserController implements interfaces.Controller {
 
         const dataReturn = await this.createUserUseCase.execute(data);
 
-        if (dataReturn) {
-            return res.status(201).json(dataReturn);
+        if (dataReturn instanceof ApplicationError) {
+            return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
+
         }
 
-        const error = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User could not be created"), true) as ApplicationError;
-        return res.status(error.ErrorType).json({ error: error.ErrorType, message: error.Message });
+        return res.status(201).json(dataReturn);
     }
 }
