@@ -9,7 +9,8 @@ const Env = {
         DEFAULT_LANGUAGE: process.env.DEFAULT_LANGUAGE,
         DEFAULT_PORT: process.env.DEFAULT_PORT,
         SECURE_PORT: process.env.SECURE_PORT,
-        ADMIN_EMAIL: process.env.ADMIN_EMAIL
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+        CORS: process.env.CORS_ORIGIN as string,
     },
     Mailtrap: {
         HOST: process.env.MAILTRAP_HOST as string,

@@ -7,7 +7,8 @@ enum GeneralErrorCode {
 
 enum ApplicationErrorCode {
     GeneralAppError = 51,
-    LogFolderCreationError = 52
+    NotImplemented = 52,
+    LogFolderCreationError = 53
 }
 
 /* Http Error Code Response */

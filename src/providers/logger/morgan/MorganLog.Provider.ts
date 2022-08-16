@@ -4,8 +4,9 @@ import { Report } from "@providers/error/ReportError.Provider";
 import fs from "fs";
 import { createStream, RotatingFileStream } from "rotating-file-stream";
 import path from "path";
+import { DefineMorganTokens } from "./MorganTokens";
 
-class Log {
+class MorganLog {
 
     public static Init(rootDir: string): RotatingFileStream | void {
         fs.mkdir(`${rootDir}\\Log`, { recursive: true }, (err) => {
@@ -16,7 +17,10 @@ class Log {
             }
         });
 
-        let logFile = createStream(Log.GetFileName(), {
+        // Setting up the morgan tokens
+        DefineMorganTokens();
+
+        let logFile = createStream(MorganLog.GetFileName(), {
             interval: '1d',
             path: path.join(rootDir, 'Log'),
             size: '10M',
@@ -34,10 +38,10 @@ class Log {
         var yyyy = today.getFullYear();
         let todayDate = today.getFullYear() + '-' + mm + '-' + dd;
 
-        let conToday = " api-" + mm + '-' + dd + '-' + yyyy + ".log";
+        let conToday = "api-requests-" + mm + '-' + dd + '-' + yyyy + ".log";
 
         return conToday;
     }
 }
 
-export { Log };
+export { MorganLog };

@@ -1,7 +1,7 @@
 
 import { User } from "@entities/User";
 import { ApplicationError } from "@providers/error/ApplicationError";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { ApplicationErrorCode, GeneralErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
 import { MailTrapProvider } from "@providers/mailTrap/MailTrap.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
