@@ -35,13 +35,76 @@ It respects the fundamentals of clean code and some of the SOLID concepts. This 
 - Frontend example using react, yup and formik
 ```
 
-## Running the project
+## Feature Details
 
+-   **Module Mapping**: Using the tsconfig-paths module, we are mapping the entities, providers, repositories, use cases folders, so that we can import them using relative paths.
+
+```json
+"paths": {
+      "@entities/*": ["entities/*"],
+      "@providers/*": ["providers/*"],
+      "@repositories/*": ["repositories/*"],
+      "@useCases/*": ["useCases/*"],
+    },
 ```
-1. run `yarn install` to install all dependencies
-2. run `yarn start` to start the project
-    1. Backend API: CleanArchitecture/src
-    1. FrontEnd: frontend/src
+
+-   **IOC**: Using InversifyJS we are creating the IoC container and registering all the dependencies. Provider `inversify` contains two files, ContainerProvider and BindingProvider called `ContainerModule.Provider`. An example of controllers being registered is shown below.
+
+```typescript
+export const playerContContainerModule = new ContainerModule(
+    (bind: interfaces.Bind, unbind: interfaces.Unbind) => {
+        bind<CreatePlayerController>(TYPES.CreatePlayerController).to(
+            CreatePlayerController
+        );
+        bind<FindAllPlayersController>(TYPES.FindAllPlayersController).to(
+            FindAllPlayersController
+        );
+        bind<FindPlayerController>(TYPES.FindPlayerController).to(
+            FindPlayerController
+        );
+        bind<DeletePlayerController>(TYPES.DeletePlayerController).to(
+            DeletePlayerController
+        );
+        bind<UpdatePlayerController>(TYPES.UpdatePlayerController).to(
+            UpdatePlayerController
+        );
+    }
+);
+```
+
+-   **API Decorators**: Using the decorators we are creating the endpoints for the controllers.
+
+```typescript
+@controller('/user/create')
+   @httpPost('/')
+```
+
+-   **Entity, Provider, Use case, repository, controller examples**: Folders organization for the clean architecture.
+
+-   **Error handling**: Using `Report.Error()` we can report errors using predefined error codes. This is useful when we want to report known errors to the client. Inside of `Report.Error()` there is a try catch block encapsulating the error.
+
+```typescript
+type ErrorType = GeneralErrorCode | ApplicationErrorCode | HttpStatusErrorCode;
+
+// Reporting errors
+if (userExist) {
+    const error = Report.Error(
+        new ApplicationError(
+            HttpStatusErrorCode.BadRequest,
+            "User already exist!"
+        ),
+        true
+    ) as ApplicationError;
+    return error;
+}
+```
+
+-   **Morgan Logger**: Morgan is a logger for nodejs. It is a middleware that logs the requests and responses in a file.
+
+-   **Exception Logger (winston)**: Winston is a logger for nodejs. It is a middleware that logs all the other exceptions in a file.
+
+```typescript
+Log(error, "user-create");
 ```
 
 ## How to use JWT Secure
@@ -75,6 +138,15 @@ curl --location --request POST 'http://localhost:3000/player/create' \
     "faction": "Faction name"
 }
 '
+```
+
+## Running the project
+
+```
+1. run `yarn install` to install all dependencies
+2. run `yarn start` to start the project
+    1. Backend API: CleanArchitecture/src
+    1. FrontEnd: frontend/src
 ```
 
 ## Contributing Guide
