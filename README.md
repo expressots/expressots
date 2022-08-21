@@ -6,28 +6,32 @@ The idea of this project is to offer a clean and concise architecture boilerplat
 
 It respects the fundamentals of clean code and some of the SOLID concepts. This boilerplate has my own flavour, which means that I don't follow follow strictly all the concepts, I rather customize to my own needs. I tried to extract the best practices of the 5 main principles:
 
-- **_S_**: Single responsibility
-- **_O_**: Open-Close
-- **_L_**: Liskov substitution
-- **_I_**: Interface segregation
-- **_D_**: Dependency inversion
+-   **_S_**: Single responsibility
+-   **_O_**: Open-Close
+-   **_L_**: Liskov substitution
+-   **_I_**: Interface segregation
+-   **_D_**: Dependency inversion
 
 `Reference:` [Uncle Bob article](http://butunclebob.com/ArticleS.UncleBob.PrinciplesOfOod)
 
 > ![Clean Architecture](https://github.com/rsaz/cleanArchitecture01/blob/main/media/CleanArchitecture.jpg)
 
-- **_Entities_**: class definitions, or models with their attributes, properties and methods.
-- **_Providers_**: is the layer responsible to provide externals resources such as database, email services. Everything external to the application.
-- **_Repositories_**: is the layer responsible to communicate with the database.
-- **_Use Cases_**: use cases represents the implementation of an operation that can be performed in the system
+-   **_Entities_**: class definitions, or models with their attributes, properties and methods.
+-   **_Providers_**: is the layer responsible to provide externals resources such as database, email services. Everything external to the application.
+-   **_Repositories_**: is the layer responsible to communicate with the database.
+-   **_Use Cases_**: use cases represents the implementation of an operation that can be performed in the system
 
 ## Features
 
 ```
 - Module mapping (tsconfig-paths)
-- IOC (Inversion of control): Dependency Injection
+- IOC (Inversion of control): Dependency Injection with InversifyJS
 - API Decorators: HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpOptions, HttpHead
 - Entity, Provider, Use case, repository, controller examples
+- Error handling
+- Morgan Logger
+- Exception Logger (winston)
+- Authentication using JWT
 - Frontend example using react, yup and formik
 ```
 
