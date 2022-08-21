@@ -1,5 +1,5 @@
 import { sign, verify } from "jsonwebtoken";
-import { Env } from "Env";
+import { Env } from "env";
 import { provide } from "inversify-binding-decorators";
 
 @provide(JsonWebTokenProvider)

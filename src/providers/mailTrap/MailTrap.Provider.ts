@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import Mail from "nodemailer/lib/mailer";
-import { Env } from "Env";
+import { Env } from "env";
 import { IMessage } from "./IMail.Provider";
 import { provide } from "inversify-binding-decorators";
 

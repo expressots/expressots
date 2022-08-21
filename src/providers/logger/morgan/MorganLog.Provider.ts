@@ -9,7 +9,7 @@ import { DefineMorganTokens } from "./MorganTokens";
 class MorganLog {
 
     public static Init(rootDir: string): RotatingFileStream | void {
-        fs.mkdir(`${rootDir}\\Log`, { recursive: true }, (err) => {
+        fs.mkdir(`${rootDir}`, { recursive: true }, (err) => {
 
             if (err) {
                 Report.Error(new ApplicationError(ApplicationErrorCode.LogFolderCreationError));
@@ -22,7 +22,7 @@ class MorganLog {
 
         let logFile = createStream(MorganLog.GetFileName(), {
             interval: '1d',
-            path: path.join(rootDir, 'Log'),
+            path: path.join(rootDir),
             size: '10M',
             compress: 'gzip',
             maxFiles: 30,

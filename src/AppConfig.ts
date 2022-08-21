@@ -1,4 +1,4 @@
-import { Env } from 'Env';
+import { Env } from 'env';
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -16,7 +16,7 @@ import { MorganDefaultFormat } from "@providers/logger/morgan/MorganTokens";
 
 
 const expressServer = new InversifyExpressServer(container);
-const fileStream: rfs.RotatingFileStream = MorganLog.Init(__dirname) as rfs.RotatingFileStream;
+const fileStream: rfs.RotatingFileStream = MorganLog.Init(Env.Log.LOG_FOLDER) as rfs.RotatingFileStream;
 const corsPath = Env.Server.CORS;
 
 expressServer.setConfig((app: express.Application) => {

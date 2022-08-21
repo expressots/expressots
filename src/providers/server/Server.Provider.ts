@@ -1,6 +1,6 @@
 import { ConsoleProvider, Color } from '@providers/console/Console.Provider';
 import { provide } from 'inversify-binding-decorators';
-import { Env } from 'Env';
+import { Env } from 'env';
 
 interface IServerMessageToConsole {
     appName: string | undefined;

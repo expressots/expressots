@@ -1,3 +1,4 @@
+import Log from '@providers/logger/exception/ExceptionLogger.Provider';
 import { ApplicationError } from '@providers/error/ApplicationError';
 
 class Report {
@@ -13,6 +14,7 @@ class Report {
                 console.log(`Error message: ${error.Message}`);
                 console.log(`Error type: ${error.ErrorType}`);
             } else {
+                Log(error, "api-events");
                 return error;
             }
         }

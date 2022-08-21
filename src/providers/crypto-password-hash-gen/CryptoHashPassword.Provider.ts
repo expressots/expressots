@@ -1,4 +1,4 @@
-import { Env } from "Env";
+import { Env } from "env";
 import { createHash } from "crypto";
 
 const salt = Env.Security.SALT_FOR_HASH;

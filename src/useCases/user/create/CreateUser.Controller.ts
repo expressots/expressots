@@ -2,8 +2,9 @@ import { CreateUserUseCase } from "./CreateUser.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
 import { Report } from "@providers/error/ReportError.Provider";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
+import Log from "@providers/logger/exception/ExceptionLogger.Provider";
 
 
 @controller('/user/create')
@@ -14,13 +15,21 @@ export class CreateUserController implements interfaces.Controller {
     @httpPost('/')
     async execute(@requestBody() data: ICreateUserDTO, @response() res): Promise<ICreateUserReturn> {
 
-        const dataReturn = await this.createUserUseCase.execute(data);
+        let dataReturn: ICreateUserReturn | ApplicationError;
 
-        if (dataReturn instanceof ApplicationError) {
-            return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
+        try {
 
+            dataReturn = await this.createUserUseCase.execute(data);
+
+            if (dataReturn instanceof ApplicationError) {
+                return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
+            }
+
+            return res.status(201).json(dataReturn);
+
+        } catch (error: any) {
+            Log(error, "user-create");
+            return res.status(ApplicationErrorCode.GeneralAppError).json({ error: ApplicationErrorCode.GeneralAppError, message: error.message });
         }
-
-        return res.status(201).json(dataReturn);
     }
 }

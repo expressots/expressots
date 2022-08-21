@@ -7,7 +7,7 @@
 import "reflect-metadata";
 
 import { appConfig } from "AppConfig";
-import { Env } from "Env";
+import { Env } from "env";
 import { ServerInversifyContainer } from "@providers/inversify/Container.Provider";
 
 const PORT = Env.Server.DEFAULT_PORT;

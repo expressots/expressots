@@ -12,6 +12,11 @@ const Env = {
         ADMIN_EMAIL: process.env.ADMIN_EMAIL,
         CORS: process.env.CORS_ORIGIN as string,
     },
+    Log: {
+        LOG_LEVEL: (process.env.LOG_LEVEL)?.toLowerCase() as string,
+        LOG_FILE: process.env.LOG_FILE as string,
+        LOG_FOLDER: process.env.LOG_FOLDER as string,
+    },
     Mailtrap: {
         HOST: process.env.MAILTRAP_HOST as string,
         PORT: Number(process.env.MAILTRAP_PORT),
