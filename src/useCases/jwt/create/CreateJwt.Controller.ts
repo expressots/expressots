@@ -1,39 +1,34 @@
-// src/useCases/jwt/create/CreateJWT.Controller.ts
-// ...
-import { TYPES } from '@providers/types/Types.core';
-import { UserRepository } from '@repositories/user/User.Repository';
-import { Request, Response } from 'express';
-import { inject } from 'inversify';
-import { controller, httpPost, requestBody } from 'inversify-express-utils';
-import { JsonWebTokenProvider } from '@providers/jwt/JsonWebToken.Provider';
-import { IsPasswordMatch } from '@providers/crypto-password-hash-gen/CryptoHashPassword.Provider';
+import { controller, httpPost, interfaces, requestBody, response } from 'inversify-express-utils';
+import { ICreateJwtDTO, ICreateJwtReturn } from './ICreateJwt.DTO';
+import { CreateJwtUseCase } from './CreateJwt.UseCase';
+import { ApplicationError } from '@providers/error/ApplicationError';
+import Log from '@providers/logger/exception/ExceptionLogger.Provider';
+import { ApplicationErrorCode } from '@providers/error/ErrorTypes';
 
 @controller("/tokens")
-export class CreateJwtController {
-  // ...
-  public constructor(
-    @inject(TYPES.JsonWebTokenProvider) private readonly jsonWebTokenService: JsonWebTokenProvider,
-    // @inject(TYPES.DatabaseService) private readonly database: DatabaseService
-    private userRepository: UserRepository
-  ) { }
+export class CreateJwtController implements interfaces.Controller {
 
-  @httpPost("")
-  public async create(
-    @requestBody() body: { email: string; password: string },
-    req: Request,
-    res: Response
-  ) {
+  public constructor(private createJwtUseCase: CreateJwtUseCase) { }
 
-    const user = await this.userRepository.FindByEmail(body.email);
+  @httpPost("/")
+  public async Create(@requestBody() data: ICreateJwtDTO, @response() res): Promise<ICreateJwtReturn> {
 
-    if (IsPasswordMatch(user.hashedPassword, body.password)) {
-      const token = this.jsonWebTokenService.encode({
-        id: user.id,
-        email: user.email,
-      });
-      return res.json({ token });
+    let dataReturn: ICreateJwtReturn | ApplicationError;
+
+    try {
+      dataReturn = await this.createJwtUseCase.Execute(data);
+
+      if (dataReturn instanceof ApplicationError) {
+        return res.status(dataReturn.ErrorType).send({ error: dataReturn.ErrorType, message: dataReturn.Message });
+      }
+
+      return res.status(201).send(dataReturn);
+
+    } catch (error: any) {
+      Log(error, "jwt-create");
+      return res.status(ApplicationErrorCode.GeneralAppError).send({ error: ApplicationErrorCode.GeneralAppError, message: error.message });
     }
-
-    return res.sendStatus(400);
   }
 }
+   /* @inject(TYPES.JsonWebTokenProvider) private readonly jsonWebTokenService: JsonWebTokenProvider,
+private userRepository: UserRepository */

@@ -1,8 +1,7 @@
 import { CreateUserUseCase } from "./CreateUser.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
-import { Report } from "@providers/error/ReportError.Provider";
-import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import Log from "@providers/logger/exception/ExceptionLogger.Provider";
 
