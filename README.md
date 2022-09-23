@@ -149,6 +149,33 @@ curl --location --request POST 'http://localhost:3000/player/create' \
     1. FrontEnd: frontend/src
 ```
 
+## Build and running as a container Docker
+
+- Install Docker and compose: ```https://docs.docker.com/engine/install/ https://docs.docker.com/compose/install/```
+
+- Build your Docker image:
+```docker build --no-cache --progress=plain -t projectname:latest . ```
+
+- To run the image:
+```docker run -ti --rm -p3001:3001 projectname:latest npm run start -d```
+
+* If you have a Docker compose installation:
+
+- Run in docker in development mode:
+````
+`docker compose up` or on linux: `make up`
+````
+
+- Run docker in production:
+```
+`docker compose -f docker-compose.yml -f docker-compose.prod.yml up` or on linux: `make up-prod`
+```
+
+- Stop container:
+```
+docker compose down or on linux: `make down`
+```
+
 ## Contributing Guide
 
 ```
