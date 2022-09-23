@@ -4,4 +4,4 @@ services:
   ts-node-docker:
     build:
       target: production
-    command: node dist/index.js
+    command: npm run start -r dotenv/config -r tsconfig-paths/register dist/src/StartUp.ts
