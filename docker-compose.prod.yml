@@ -1,0 +1,7 @@
+version: "3.9"
+
+services:
+  ts-node-docker:
+    build:
+      target: production
+    command: node dist/index.js
