@@ -5,6 +5,8 @@ WORKDIR /home/node/app
 
 COPY package*.json ./
 
+USER node
+
 RUN npm i
 
 COPY . .
