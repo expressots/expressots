@@ -1,5 +1,5 @@
 
-import { User } from "@entities/User";
+import { User, UserDocument } from "@entities/User";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import { ApplicationErrorCode, GeneralErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
@@ -9,36 +9,46 @@ import { provide } from "inversify-binding-decorators";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
 
 @provide(CreateUserUseCase)
-export class CreateUserUseCase {
+class CreateUserUseCase {
 
-    constructor(private userRepository: UserRepository, private mailTrapProvider: MailTrapProvider) { }
+    constructor(private userRepository: UserRepository, private mailTrapProvider?: MailTrapProvider) { }
 
     async execute(data: ICreateUserDTO): Promise<ICreateUserReturn | ApplicationError> {
 
         const { name, email, password } = data;
-        let userReturn: ICreateUserReturn | null = null;
+        let userReturn: ICreateUserReturn;
 
         const SEND_MAIL: boolean = false;
 
         // Verifying if the user already exist
-        const userExist: ICreateUserDTO = await this.userRepository.FindByEmail(email);
+        const userExist: UserDocument | null = await this.userRepository.FindOne({ email });
+
 
         if (userExist) {
-            const error = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User already exist!"), true) as ApplicationError;
+            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User already exist!"),
+                true) as ApplicationError;
             return error;
         }
 
-        const userObj = new User(name, email, password);
+        const userObj: UserDocument = new User({
+            name,
+            email,
+            password
+        });
+
+
         const userCreated = await this.userRepository.Create(userObj);
 
-        UserRepository.USERS.push(userCreated); // Temporary solution to test the user repository
+        if (!userCreated) {
+            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.InternalServerError, "Error to create user!"),
+                true) as ApplicationError;
+            return error;
+        }
 
-        if (SEND_MAIL) {
+        if (SEND_MAIL && this.mailTrapProvider) {
             this.mailTrapProvider.SendEmail({
                 to: {
-                    // name,
-                    // email
-                    name: 'Renato',
+                    name: 'User',
                     email: 'mail-1e7b60@inbox.mailtrap.io'
                 },
                 from: {
@@ -51,7 +61,14 @@ export class CreateUserUseCase {
 
         };
 
-        userReturn = { id: userObj.id, email: userObj.email, status: 'User created successfully!' };
-        return userReturn;
+        userReturn = {
+            id: userObj.id,
+            email: userObj.email,
+            status: 'User created successfully!'
+        };
+
+        return Promise.resolve(userReturn);
     }
 }
+
+export { CreateUserUseCase };

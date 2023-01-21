@@ -9,9 +9,22 @@ import "reflect-metadata";
 import { appConfig } from "AppConfig";
 import { Env } from "env";
 import { ServerInversifyContainer } from "@providers/inversify/Container.Provider";
+import { MongooseProvider } from "@providers/orm/mongoose/Mongoose.Provider";
+import { mongodbUri, options } from "@providers/database/mongodb/MongoConnectionOptions.Provider";
+import mongoose from "mongoose";
+import { Seed } from "@providers/database/mongodb/MongoSeed.Provider";
 
 const PORT = Env.Server.DEFAULT_PORT;
 
+/* Initialize DB */
+MongooseProvider.Initialize(mongodbUri, options);
+
+/* Seed DB */
+if (Env.Database.SEED) {
+  Seed();
+}
+
+/* Initialize API */
 appConfig.listen(PORT, async () => {
   ServerInversifyContainer.Init({
     appName: Env.Server.APP_NAME,
@@ -22,4 +35,12 @@ appConfig.listen(PORT, async () => {
     environment: Env.Server.ENVIRONMENT,
     port: PORT,
   });
+});
+
+/* Shutdown the API */
+process.on("SIGINT", () => {
+  mongoose.disconnect();
+  console.log("MongoDB connection closed");
+  console.log("Shutting down the API");
+  process.exit(0);
 });

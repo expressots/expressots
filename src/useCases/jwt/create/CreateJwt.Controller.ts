@@ -5,7 +5,7 @@ import { ApplicationError } from '@providers/error/ApplicationError';
 import Log from '@providers/logger/exception/ExceptionLogger.Provider';
 import { ApplicationErrorCode } from '@providers/error/ErrorTypes';
 
-@controller("/tokens")
+@controller("/token")
 export class CreateJwtController implements interfaces.Controller {
 
   public constructor(private createJwtUseCase: CreateJwtUseCase) { }

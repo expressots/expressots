@@ -1,42 +1,113 @@
 import { IBaseEntity } from "@entities/IBase.Entity";
 import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./IBase.Repository";
+import { Document, Model, PopulateOptions } from "mongoose";
+import { FilterQuery } from "mongoose";
 
 @provide(BaseRepository)
-class BaseRepository<T extends IBaseEntity> implements IBaseRepository<T> {
+class BaseRepository<T extends IBaseEntity, U extends Document> implements IBaseRepository<T, U> {
 
-    public objects: T[] = [];
+    protected model: Model<T>;
 
-    Create(item: T): Promise<T> {
-        this.objects.push(item);
+    async Create(item: U, refEntities: (Document | Document[])[] = [],
+        embeddedRelations: string[] = [],
+        refBack: boolean = false): Promise<U | null> {
 
-        return Promise.resolve(item);
-    }
+        const parentRecord = await item.save();
 
-    Update(item: T): Promise<T> {
-        const userFoundIndex: number = this.objects.findIndex(u => u.Id === item.Id);
-        if (userFoundIndex > -1) {
-            this.objects[userFoundIndex] = item;
+        if (refEntities.length) {
+            for (const entity of refEntities) {
+
+                if ("collection" in entity) {
+                    const referenceField: string = entity.collection.collectionName.slice(0, -1);
+
+                    if (refBack) {
+                        const referenceBackfield: string = parentRecord.collection.collectionName.slice(0, -1);
+
+                        entity[referenceBackfield] = parentRecord.id;
+                    }
+
+                    const entityRecord = await entity.save();
+
+                    if (parentRecord[referenceField] instanceof Array) {
+                        if (!parentRecord[referenceField].includes(entityRecord.id)) {
+                            parentRecord[referenceField].push(entityRecord.id);
+                        }
+                    } else {
+                        parentRecord[referenceField] = entityRecord.id;
+                    }
+                } else {
+                    const referenceField: string = entity[0].collection.collectionName.slice(0, -1);
+
+                    if (parentRecord[referenceField]) {
+                        parentRecord[referenceField] = [];
+
+                        for (const reference of entity) {
+                            if (refBack) {
+                                const referenceBackfield: string = parentRecord.collection.collectionName.slice(0, -1);
+
+                                entity[referenceBackfield] = parentRecord.id;
+                            }
+
+                            const referenceRecord: Document = await reference.save();
+
+                            if (!parentRecord[referenceField].includes(referenceRecord.id)) {
+                                parentRecord[referenceField].push(referenceRecord.id);
+                            }
+                        }
+                    }
+                }
+            }
+
+            await parentRecord.save();
         }
 
-        return Promise.resolve(item);
+        if (embeddedRelations.length) {
+            embeddedRelations = embeddedRelations.filter((relation) => {
+                return relation in parentRecord;
+            });
+
+            await parentRecord.populate(embeddedRelations);
+        }
+
+        return Promise.resolve(parentRecord);
     }
 
-    Delete(id: string): Promise<T> {
-        const item = (this.objects.splice(this.objects.findIndex(u => u.Id === id), 1))[0];
-
-        return Promise.resolve(item);
+    Update(item: U, refEntities: (Document<any, any, any> | Document<any, any, any>[])[], embeddedRelations: string[], refBack: boolean): Promise<U | null> {
+        throw new Error("Method not implemented.");
+    }
+    Delete(id: string): Promise<U | null> {
+        throw new Error("Method not implemented.");
+    }
+    DeleteReferences(parent: U, referenceField: string, ids: string[]): Promise<U | null> {
+        throw new Error("Method not implemented.");
     }
 
-    FindOne(id: string): Promise<T | undefined> {
-        const userFound = this.objects.find(u => u.Id === id);
-
-        return Promise.resolve(userFound);
+    async FindOne(query: FilterQuery<T>, embeddedRelations: string[] | PopulateOptions | PopulateOptions[] = []): Promise<U | null> {
+        try {
+            const user = await this.model
+                .findOne(query)
+                .populate(embeddedRelations)
+                .then((userDocument) => {
+                    return userDocument as U;
+                });
+            return Promise.resolve(user);
+        } catch {
+            return Promise.reject(null);
+        }
+    }
+    FindById(id: string, embeddedRelations: string[]): Promise<U | null> {
+        throw new Error("Method not implemented.");
+    }
+    FindAll(query: FilterQuery<T>, embeddedRelations: string[]): Promise<T[]> {
+        throw new Error("Method not implemented.");
     }
 
-    FindAll(): Promise<T[]> {
-        return Promise.resolve(this.objects);
-    }
+
+
+
+
+
 }
 
 export { BaseRepository };

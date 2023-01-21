@@ -12,6 +12,18 @@ const Env = {
         ADMIN_EMAIL: process.env.ADMIN_EMAIL,
         CORS: process.env.CORS_ORIGIN as string,
     },
+    Database: {
+        TYPE: process.env.DB_TYPE as string,
+        NAME: process.env.DATABASE,
+        HOST: process.env.DB_HOST,
+        PORT: Number(process.env.DB_PORT),
+        // Remember to create the user on systems.users
+        // db.createUser({user: "cleancode", pwd: "cleancode", roles: ["readWrite", "dbAdmin"]})
+        USERNAME: process.env.DB_USERNAME,
+        PASSWORD: process.env.DB_PASSWORD,
+        EXTRA_ARGS: process.env.DB_EXTRA_ARGS,
+        SEED: process.env.DB_SEED,
+    },
     Log: {
         LOG_LEVEL: (process.env.LOG_LEVEL)?.toLowerCase() as string,
         LOG_FILE: process.env.LOG_FILE as string,

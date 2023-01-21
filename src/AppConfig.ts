@@ -17,7 +17,7 @@ import { MorganDefaultFormat } from "@providers/logger/morgan/MorganTokens";
 
 const expressServer = new InversifyExpressServer(container);
 const fileStream: rfs.RotatingFileStream = MorganLog.Init(Env.Log.LOG_FOLDER) as rfs.RotatingFileStream;
-const corsPath = Env.Server.CORS;
+const corsPath: string = Env.Server.CORS;
 
 expressServer.setConfig((app: express.Application) => {
     app.use(compression());

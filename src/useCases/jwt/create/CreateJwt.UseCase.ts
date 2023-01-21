@@ -1,5 +1,5 @@
 import { HttpStatusErrorCode } from '@providers/error/ErrorTypes';
-import { User } from "@entities/User";
+import { User, UserDocument } from "@entities/User";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
@@ -15,7 +15,9 @@ class CreateJwtUseCase {
 
     public async Execute(data: ICreateJwtDTO): Promise<ICreateJwtReturn | ApplicationError> {
 
-        const userFound: User = await this.userRepository.FindByEmail(data.email);
+        const userFound: UserDocument | null = await this.userRepository.FindOne({
+            email: data.email
+        });
 
         if (!userFound) {
             const error = Report.Error(new ApplicationError(HttpStatusErrorCode.Found, `User not found with email ${data.email}`), true) as ApplicationError;
@@ -24,7 +26,7 @@ class CreateJwtUseCase {
 
         let dataReturn: ICreateJwtReturn = { token: "" };
 
-        if (IsPasswordMatch(userFound.hashedPassword, data.password)) {
+        if (IsPasswordMatch(userFound.password, data.password)) {
             const token = this.jsonWebTokenProvider.encode({ id: userFound.id, email: userFound.email });
 
             dataReturn = { token };

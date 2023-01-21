@@ -1,45 +1,42 @@
 
-import { provide } from "inversify-binding-decorators";
-import { HashPassword } from "@providers/crypto-password-hash-gen/CryptoHashPassword.Provider";
-import { v4 as uuidv4 } from "uuid";
 import { IBaseEntity } from "./IBase.Entity";
+import { Document, Schema, model } from "mongoose";
 
-@provide(User)
-class User implements IBaseEntity {
-    public readonly id!: string;
-    public name: string;
-    public email!: string;
-    public password!: string;
-    public hashedPassword: string;
-
-    constructor(name: string, email: string, password: string) {
-        this.id = uuidv4();
-        this.name = name;
-        this.email = email;
-        if (password) {
-            this.hashedPassword = HashPassword(password);
-        }
-    }
-
-    public get Id(): string {
-        return this.id;
-    }
-
-    public get Name(): string {
-        return this.name;
-    }
-
-    public set Name(name: string) {
-        this.name = name;
-    }
-
-    public get Email(): string {
-        return this.email;
-    }
-
-    public set Email(email: string) {
-        this.email = email;
-    }
+/* Represents the model of a user and its property types */
+interface IUser extends IBaseEntity {
+    name: string;
+    email: string;
+    password: string;
 }
 
-export { User };
+type UserDocument = Document & IUser;
+
+const userSchema = new Schema<IUser>(
+    {
+        name: {
+            type: String,
+            required: [true, "Name is required"],
+        },
+        email: {
+            type: String,
+            required: [true, "Email is required"],
+            unique: true,
+            lowercase: true,
+            match: [/\S+@\S+\.\S+/, "Email is invalid"],
+        },
+        password: {
+            type: String,
+            required: [true, "Password is required"],
+            minlength: [6, "Password must be at least 6 characters"],
+        },
+    },
+    {
+        timestamps: true,
+        versionKey: false,
+    }
+);
+
+// The actual model in which we instantiate the user
+const User = model<IUser>("User", userSchema);
+
+export { User, IUser, UserDocument };
