@@ -20,7 +20,7 @@ const PORT = Env.Server.DEFAULT_PORT;
 MongooseProvider.Initialize(mongodbUri, options);
 
 /* Seed DB */
-if (Env.Database.SEED) {
+if (Env.Database.SEED === true) {
   Seed();
 }
 

@@ -23,10 +23,9 @@ class CreateUserUseCase {
         // Verifying if the user already exist
         const userExist: UserDocument | null = await this.userRepository.FindOne({ email });
 
-
         if (userExist) {
             const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User already exist!"),
-                true) as ApplicationError;
+                true, "user-create") as ApplicationError;
             return error;
         }
 
@@ -40,8 +39,11 @@ class CreateUserUseCase {
         const userCreated = await this.userRepository.Create(userObj);
 
         if (!userCreated) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.InternalServerError, "Error to create user!"),
-                true) as ApplicationError;
+            const error: ApplicationError = Report.Error(
+                new ApplicationError(
+                    HttpStatusErrorCode.InternalServerError,
+                    "Error to create user!"),
+                true, "user-create") as ApplicationError;
             return error;
         }
 

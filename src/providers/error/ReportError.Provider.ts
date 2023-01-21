@@ -3,7 +3,7 @@ import { ApplicationError } from '@providers/error/ApplicationError';
 
 class Report {
 
-    public static Error(applicationError: ApplicationError, returnObject: boolean = false): void | ApplicationError {
+    public static Error(applicationError: ApplicationError, returnObject: boolean = false, service: string = "api-events"): void | ApplicationError {
         try {
 
             throw applicationError;
@@ -14,7 +14,7 @@ class Report {
                 console.log(`Error message: ${error.Message}`);
                 console.log(`Error type: ${error.ErrorType}`);
             } else {
-                Log(error, "api-events");
+                Log(error, service);
                 return error;
             }
         }

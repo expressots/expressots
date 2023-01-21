@@ -49,15 +49,20 @@ function GetPathAndLineNumber(error: Error): string {
 }
 
 // Logger Wrapper to be used in the application
-const Log = function (error: Error, service?: string) {
+const Log = function (content: Error | string, service?: string) {
 
-    let pathLine: string = GetPathAndLineNumber(error);
-    let logMessageFormat: string = `${error.message} - (${error.name}) [file: %s]`;
+    if (typeof content !== "string") {
+        let pathLine: string = GetPathAndLineNumber(content);
+        let logMessageFormat: string = `${content.message} - (${content.name}) [file: %s]`;
 
-    if (Env.Log.LOG_LEVEL === "debug") {
-        logger.debug(logMessageFormat, pathLine, { service });
-    } else {
-        logger.error(logMessageFormat, pathLine, { service });
+        if (Env.Log.LOG_LEVEL === "debug") {
+            logger.debug(logMessageFormat, pathLine, { service });
+        } else {
+            logger.error(logMessageFormat, pathLine, { service });
+        }
+    }
+    else {
+        logger.info(content, { service });
     }
 }
 
