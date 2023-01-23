@@ -18,7 +18,7 @@ export class CreateUserController implements interfaces.Controller {
 
         try {
 
-            dataReturn = await this.createUserUseCase.execute(data);
+            dataReturn = await this.createUserUseCase.Execute(data);
 
             if (dataReturn instanceof ApplicationError) {
                 return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });

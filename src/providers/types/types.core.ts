@@ -1,3 +1,4 @@
+import { DeleteUserController } from './../../useCases/user/delete/DeleteUser.Controller';
 // src/providers/types/Types.core.ts
 export const TYPES = {
   // ...
@@ -8,6 +9,8 @@ export const TYPES = {
   // JWT
   JsonWebTokenProvider: Symbol.for("JsonWebTokenProvider"),
   CreateJwtController: Symbol.for("CreateJwtController"),
+  // User
   CreateUserController: Symbol.for("CreateUserController"),
+  DeleteUserController: Symbol.for("DeleteUserController"),
 };
 

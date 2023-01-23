@@ -10,7 +10,7 @@ const DropDatabase = async () => {
 const SeedDatabase = async () => {
     const userRepository = new UserRepository();
     const createUserUseCase = new CreateUserUseCase(userRepository);
-    await createUserUseCase.execute({
+    await createUserUseCase.Execute({
         name: "Admin",
         email: "admin@email.com",
         password: "password",

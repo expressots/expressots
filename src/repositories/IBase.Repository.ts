@@ -20,7 +20,7 @@ interface IBaseRepository<T extends IBaseEntity, U extends Document> {
 
     FindOne(query: FilterQuery<T>, embeddedRelations: string[] | PopulateOptions | PopulateOptions[]): Promise<U | null>;
 
-    FindById(id: string, embeddedRelations: string[]): Promise<U | null>;
+    FindById(id: string, embeddedRelations: string[] | PopulateOptions | PopulateOptions[]): Promise<U | null>;
 
     FindAll(query: FilterQuery<T>, embeddedRelations: string[]): Promise<T[]>;
 }

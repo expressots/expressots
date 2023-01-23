@@ -13,7 +13,7 @@ class CreateUserUseCase {
 
     constructor(private userRepository: UserRepository, private mailTrapProvider?: MailTrapProvider) { }
 
-    async execute(data: ICreateUserDTO): Promise<ICreateUserReturn | ApplicationError> {
+    async Execute(data: ICreateUserDTO): Promise<ICreateUserReturn | ApplicationError> {
 
         const { name, email, password } = data;
         let userReturn: ICreateUserReturn;

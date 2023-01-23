@@ -76,9 +76,16 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
     Update(item: U, refEntities: (Document<any, any, any> | Document<any, any, any>[])[], embeddedRelations: string[], refBack: boolean): Promise<U | null> {
         throw new Error("Method not implemented.");
     }
-    Delete(id: string): Promise<U | null> {
-        throw new Error("Method not implemented.");
+
+    async Delete(id: string): Promise<U | null> {
+        try {
+            const res = await this.model.deleteOne({ _id: id });
+            return Promise.resolve(res as unknown as U);
+        } catch {
+            return Promise.reject(null);
+        }
     }
+
     DeleteReferences(parent: U, referenceField: string, ids: string[]): Promise<U | null> {
         throw new Error("Method not implemented.");
     }
@@ -96,9 +103,23 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
             return Promise.reject(null);
         }
     }
-    FindById(id: string, embeddedRelations: string[]): Promise<U | null> {
-        throw new Error("Method not implemented.");
+
+    async FindById(id: string, embeddedRelations: string[] | PopulateOptions | PopulateOptions[] = []): Promise<U | null> {
+        try {
+            console.log(id);
+            const res = await this.model
+                .findById(id)
+                .populate(embeddedRelations)
+                .then((userDocument) => {
+                    return userDocument as U;
+                });
+            return Promise.resolve(res);
+
+        } catch {
+            return Promise.reject(null);
+        }
     }
+
     FindAll(query: FilterQuery<T>, embeddedRelations: string[]): Promise<T[]> {
         throw new Error("Method not implemented.");
     }
