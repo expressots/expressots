@@ -6,7 +6,7 @@ import { IUser, User, UserDocument } from '@entities/User';
 import { UserRepository } from '@repositories/user/User.Repository';
 import { JsonWebTokenProvider } from '@providers/jwt/JsonWebToken.Provider';
 import { provide } from 'inversify-binding-decorators';
-import { TYPES } from '@providers/types/Types.core';
+import { TYPES } from '@providers/types/types.core';
 
 @provide(FetchLoggedUserMiddleware)
 class FetchLoggedUserMiddleware extends BaseMiddleware {

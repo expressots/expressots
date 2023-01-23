@@ -1,3 +1,4 @@
+import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { CreateUserUseCase } from "@useCases/user/create/CreateUser.UseCase";
 import mongoose from "mongoose"
@@ -14,6 +15,8 @@ const SeedDatabase = async () => {
         email: "admin@email.com",
         password: "password",
     });
+
+    Log(LogLevel.Info, "Database seeded", "mongo-seed-provider");
 };
 
 const Seed = async () => {

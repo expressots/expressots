@@ -13,6 +13,7 @@ import { MongooseProvider } from "@providers/orm/mongoose/Mongoose.Provider";
 import { mongodbUri, options } from "@providers/database/mongodb/MongoConnectionOptions.Provider";
 import mongoose from "mongoose";
 import { Seed } from "@providers/database/mongodb/MongoSeed.Provider";
+import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 
 const PORT = Env.Server.DEFAULT_PORT;
 
@@ -40,7 +41,7 @@ appConfig.listen(PORT, async () => {
 /* Shutdown the API */
 process.on("SIGINT", () => {
   mongoose.disconnect();
-  console.log("MongoDB connection closed");
-  console.log("Shutting down the API");
+  Log(LogLevel.Info, "MongoDB connection closed", "mongoose-provider");
+  Log(LogLevel.Info, "API is shutting down", "server-provider");
   process.exit(0);
 });

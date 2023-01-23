@@ -18,7 +18,7 @@ const Env = {
         HOST: process.env.DB_HOST,
         PORT: Number(process.env.DB_PORT),
         // Remember to create the user on systems.users
-        // db.createUser({user: "cleancode", pwd: "cleancode", roles: ["readWrite", "dbAdmin"]})
+        // db.createUser({user: "cleancode", pwd: "cleancode", roles: [{role: "readWrite", db: "cleancode"}, {role: "dbAdmin", db: "cleancode"}]})
         USERNAME: process.env.DB_USERNAME,
         PASSWORD: process.env.DB_PASSWORD,
         EXTRA_ARGS: process.env.DB_EXTRA_ARGS,

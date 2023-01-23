@@ -5,12 +5,6 @@ export const TYPES = {
   FetchLoggedUserMiddleware: Symbol.for("FetchLoggedUserMiddleware"),
   // Server
   RouterController: Symbol.for("RouterController"),
-  // Player
-  CreatePlayerController: Symbol.for("CreatePlayerController"),
-  FindAllPlayersController: Symbol.for("FindAllPlayersController"),
-  FindPlayerController: Symbol.for("FindPlayerController"),
-  DeletePlayerController: Symbol.for("DeletePlayerController"),
-  UpdatePlayerController: Symbol.for("UpdatePlayerController"),
   // JWT
   JsonWebTokenProvider: Symbol.for("JsonWebTokenProvider"),
   CreateJwtController: Symbol.for("CreateJwtController"),

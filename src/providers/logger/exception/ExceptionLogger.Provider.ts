@@ -48,21 +48,28 @@ function GetPathAndLineNumber(error: Error): string {
     return pathLine;
 }
 
+export enum LogLevel {
+    Debug = 0,
+    Error,
+    Info,
+}
+
 // Logger Wrapper to be used in the application
-const Log = function (content: Error | string, service?: string) {
+const Log = function (logLevel: LogLevel, content: Error | string, service?: string) {
 
-    if (typeof content !== "string") {
-        let pathLine: string = GetPathAndLineNumber(content);
-        let logMessageFormat: string = `${content.message} - (${content.name}) [file: %s]`;
+    const pathLine: string = GetPathAndLineNumber(content as Error);
+    const logMessageFormat: string = `${(content as Error).message} - (${(content as Error).name}) [file: %s]`;
 
-        if (Env.Log.LOG_LEVEL === "debug") {
-            logger.debug(logMessageFormat, pathLine, { service });
-        } else {
+    switch (logLevel) {
+        case LogLevel.Debug:
+            console.log(logMessageFormat, pathLine, { service });
+            break;
+        case LogLevel.Error:
             logger.error(logMessageFormat, pathLine, { service });
-        }
-    }
-    else {
-        logger.info(content, { service });
+            break;
+        case LogLevel.Info:
+            logger.info(content as string, { service });
+            break;
     }
 }
 

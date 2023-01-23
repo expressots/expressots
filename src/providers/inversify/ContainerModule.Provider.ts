@@ -4,7 +4,7 @@ import { CreateJwtController } from "@useCases/jwt/create/CreateJwt.Controller";
 import { CreateUserController } from "@useCases/user/create/CreateUser.Controller";
 import { JsonWebTokenProvider } from "@providers/jwt/JsonWebToken.Provider";
 import { FetchLoggedUserMiddleware } from "@providers/middlewares/FetchLoggedUser.middleware";
-import { TYPES } from "@providers/types/Types.core";
+import { TYPES } from '@providers/types/types.core';
 
 export const serverContainerModule = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
     bind<RouterController>(TYPES.RouterController).to(RouterController);

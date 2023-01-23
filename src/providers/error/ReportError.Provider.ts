@@ -1,4 +1,4 @@
-import Log from '@providers/logger/exception/ExceptionLogger.Provider';
+import Log, { LogLevel } from '@providers/logger/exception/ExceptionLogger.Provider';
 import { ApplicationError } from '@providers/error/ApplicationError';
 
 class Report {
@@ -10,13 +10,8 @@ class Report {
 
         } catch (error: any) {
 
-            if (!returnObject) {
-                console.log(`Error message: ${error.Message}`);
-                console.log(`Error type: ${error.ErrorType}`);
-            } else {
-                Log(error, service);
-                return error;
-            }
+            Log(LogLevel.Error, error, service);
+            return (!returnObject) ? null : error;
         }
     }
 }

@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-import Log from "@providers/logger/exception/ExceptionLogger.Provider";
-import { Env } from "env";
+import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 
 class MongooseProvider {
     public static async Initialize(uri: string, options: mongoose.ConnectOptions): Promise<void> {
@@ -8,10 +7,10 @@ class MongooseProvider {
 
         mongoose.connect(uri, options)
             .then(() => {
-                console.log("MongoDB is connected");
+                Log(LogLevel.Info, "MongoDB is connected", "mongoose-provider");
             }
             ).catch((error: any) => {
-                Log(error, "mongoose-provider");
+                Log(LogLevel.Error, error, "mongoose-provider");
             });
     }
 }
