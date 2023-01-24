@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",                             /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */
     "module": "commonjs",
-    "lib": ["ES6"],                                   /* Specify library files to be included in the compilation. */
+    "lib": ["ES6", "DOM"],                                   /* Specify library files to be included in the compilation. */
     "allowJs": true,                                /* Allow javascript files to be compiled. */
     "outDir": "./dist",                           /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 'es2020', or 'ESNext'. */
     "strict": true,                                 /* Enable all strict type-checking options. */
@@ -22,11 +22,11 @@
       "@repositories/*": ["repositories/*"],
       "@useCases/*": ["useCases/*"],
     },
-    "types": ["reflect-metadata", "node"],
+    "types": ["reflect-metadata", "node", "jest"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*.ts", "src/providers/test/Sum.ts", "src/providers/test/Sum.test.ts"],
+  "include": [".", "src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "typedocOptions": {
     "entryPoints": ["src/"],
