@@ -5,7 +5,6 @@ class Report {
 
     public static Error(applicationError: ApplicationError, returnObject: boolean = false, service: string = "api-events"): void | ApplicationError {
         try {
-
             throw applicationError;
 
         } catch (error: any) {

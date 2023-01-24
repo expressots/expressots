@@ -12,5 +12,8 @@ export const TYPES = {
   // User
   CreateUserController: Symbol.for("CreateUserController"),
   DeleteUserController: Symbol.for("DeleteUserController"),
+  FindByIdController: Symbol.for("FindByIdController"),
+  UpdateUserController: Symbol.for("UpdateUserController"),
+  FindALlUsersController: Symbol.for("FindALlUsersController"),
 };
 

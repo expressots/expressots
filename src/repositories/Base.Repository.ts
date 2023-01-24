@@ -73,8 +73,70 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
         return Promise.resolve(parentRecord);
     }
 
-    Update(item: U, refEntities: (Document<any, any, any> | Document<any, any, any>[])[], embeddedRelations: string[], refBack: boolean): Promise<U | null> {
-        throw new Error("Method not implemented.");
+    async Update(item: U, refEntities: (Document | Document[])[] = [], embeddedRelations: string[] = [], refBack: boolean = false): Promise<U | null> {
+
+        try {
+            // Save references then add them to the parent record
+            if (refEntities.length) {
+                for (const entity of refEntities) {
+
+                    if ("collection" in entity) {
+                        const referenceField: string = entity.collection.collectionName.slice(0, -1);
+
+                        if (refBack) {
+                            const referenceBackfield: string = item.collection.collectionName.slice(0, -1);
+
+                            entity[referenceBackfield] = item.id;
+                        }
+
+                        const entityRecord: Document = await entity.save();
+
+                        if (item[referenceField] instanceof Array) {
+                            if (!item[referenceField].includes(entityRecord.id)) {
+                                item[referenceField].push(entityRecord.id);
+                            }
+                        } else {
+                            item[referenceField] = entityRecord.id;
+                        }
+                    } else {
+                        const referenceField: string = entity[0].collection.collectionName.slice(0, -1);
+
+                        if (item[referenceField]) {
+                            item[referenceField] = item[referenceField] || [];
+
+                            for (const reference of entity) {
+                                if (refBack) {
+                                    const referenceBackfield: string = item.collection.collectionName.slice(0, -1);
+
+                                    entity[referenceBackfield] = item.id;
+                                }
+
+                                const referenceRecord: Document = await reference.save();
+
+                                if (!item[referenceField].includes(referenceRecord.id)) {
+                                    item[referenceField].push(referenceRecord.id);
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            await item.save();
+
+            if (embeddedRelations.length) {
+                embeddedRelations = embeddedRelations.filter((relation) => {
+                    return item[relation];
+                });
+
+                await item.populate(embeddedRelations);
+            }
+
+            return Promise.resolve(item);
+        } catch {
+            return Promise.resolve(null);
+        }
     }
 
     async Delete(id: string): Promise<U | null> {
@@ -86,8 +148,36 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
         }
     }
 
-    DeleteReferences(parent: U, referenceField: string, ids: string[]): Promise<U | null> {
-        throw new Error("Method not implemented.");
+    async DeleteReferences(parent: U, referenceField: string, ids: string[] = []): Promise<U | null> {
+
+        if (!parent[referenceField]) {
+            return Promise.reject(null);
+        }
+
+        try {
+            if (parent[referenceField] instanceof Array) {
+                parent[referenceField] = parent[referenceField].filter((id) => {
+                    return !ids.includes(id.toString());
+                });
+            } else {
+                if (ids.length) {
+                    for (const id of ids) {
+                        if (parent[referenceField].toString() === id) {
+                            parent[referenceField] = null;
+                            break;
+                        }
+                    }
+                } else {
+                    parent[referenceField] = null;
+                }
+            }
+
+            await parent.save();
+            return Promise.resolve(parent);
+
+        } catch {
+            return Promise.reject(null);
+        }
     }
 
     async FindOne(query: FilterQuery<T>, embeddedRelations: string[] | PopulateOptions | PopulateOptions[] = []): Promise<U | null> {
@@ -106,7 +196,6 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
 
     async FindById(id: string, embeddedRelations: string[] | PopulateOptions | PopulateOptions[] = []): Promise<U | null> {
         try {
-            console.log(id);
             const res = await this.model
                 .findById(id)
                 .populate(embeddedRelations)
@@ -120,15 +209,20 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
         }
     }
 
-    FindAll(query: FilterQuery<T>, embeddedRelations: string[]): Promise<T[]> {
-        throw new Error("Method not implemented.");
+    async FindAll(query: FilterQuery<T> = {}, embeddedRelations: string[] | PopulateOptions | PopulateOptions[] = []): Promise<U[]> {
+        try {
+            const res: U[] = await this.model
+                .find(query)
+                .populate(embeddedRelations)
+                .then((userDocuments) => {
+                    return userDocuments as U[];
+                });
+
+            return Promise.resolve(res);
+        } catch {
+            return Promise.reject([]);
+        }
     }
-
-
-
-
-
-
 }
 
 export { BaseRepository };

@@ -3,11 +3,10 @@ import { controller, httpPost, interfaces, requestBody, response } from "inversi
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
 import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
-import Log from "@providers/logger/exception/ExceptionLogger.Provider";
-
+import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 
 @controller('/user/create')
-export class CreateUserController implements interfaces.Controller {
+class CreateUserController implements interfaces.Controller {
 
     constructor(private createUserUseCase: CreateUserUseCase) { }
 
@@ -27,8 +26,10 @@ export class CreateUserController implements interfaces.Controller {
             return res.status(201).json(dataReturn);
 
         } catch (error: any) {
-            Log(error, "user-create");
+            Log(LogLevel.Error, error, "user-create");
             return res.status(ApplicationErrorCode.GeneralAppError).json({ error: ApplicationErrorCode.GeneralAppError, message: error.message });
         }
     }
 }
+
+export { CreateUserController };
