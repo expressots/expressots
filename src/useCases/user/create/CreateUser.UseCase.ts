@@ -7,11 +7,15 @@ import { MailTrapProvider } from "@providers/mailTrap/MailTrap.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
 import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
+import { PasswordEncryptProvider } from "@providers/passwordEncrypt/PasswordEncrypt.Provider";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
 
-    constructor(private userRepository: UserRepository, private mailTrapProvider?: MailTrapProvider) { }
+    constructor(private userRepository: UserRepository,
+        private passwordEncryptProvider?: PasswordEncryptProvider,
+        private mailTrapProvider?: MailTrapProvider
+    ) { }
 
     async Execute(data: ICreateUserDTO): Promise<ICreateUserReturn | ApplicationError> {
 
@@ -35,6 +39,16 @@ class CreateUserUseCase {
             password
         });
 
+        // Encrypting password
+        if (this.passwordEncryptProvider) {
+            const passwordHash: string | ApplicationError = await this.passwordEncryptProvider.GeneratePasswordHash(password);
+
+            if (passwordHash instanceof ApplicationError) {
+                return passwordHash;
+            }
+
+            userObj.password = passwordHash;
+        }
 
         const userCreated = await this.userRepository.Create(userObj);
 
