@@ -8,12 +8,16 @@ import { InversifyExpressServer } from "inversify-express-utils";
 import { container } from "@providers/inversify/Container.Provider";
 import { MorganLog } from "@providers/logger/morgan/MorganLog.Provider";
 import { MorganDefaultFormat } from "@providers/logger/morgan/MorganTokens";
+import { Environments } from '@providers/envValidator/EnvValidator.Provider';
 
 /**
  * This class is responsible to load the configuration file and to provide the configuration to the application.
  * @module appConfig - The configuration object.
 */
 
+
+/* Check if .env file exists and all environment variables are defined */
+Environments.CheckAll();
 
 const expressServer = new InversifyExpressServer(container);
 const fileStream: rfs.RotatingFileStream = MorganLog.Init(Env.Log.LOG_FOLDER) as rfs.RotatingFileStream;

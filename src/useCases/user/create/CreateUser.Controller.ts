@@ -1,7 +1,7 @@
 import { CreateUserUseCase } from "./CreateUser.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
-import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
+import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 
@@ -23,7 +23,7 @@ class CreateUserController implements interfaces.Controller {
                 return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
             }
 
-            return res.status(201).json(dataReturn);
+            return res.status(HttpStatusErrorCode.Created).json(dataReturn);
 
         } catch (error: any) {
             Log(LogLevel.Error, error, "user-create");
