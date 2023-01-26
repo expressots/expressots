@@ -4,7 +4,7 @@ export interface ICreateUserDTO {
     password: string;
 }
 
-export interface ICreateUserReturn {
+export interface ICreateUserReturnDTO {
     id: string,
     email: string,
     status: string

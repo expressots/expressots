@@ -30,6 +30,7 @@ const Env = {
         LOG_FOLDER: process.env.LOG_FOLDER as string,
     },
     Mailtrap: {
+        INBOX_ALIAS: process.env.MAILTRAP_INBOX_ALIAS as string,
         HOST: process.env.MAILTRAP_HOST as string,
         PORT: Number(process.env.MAILTRAP_PORT),
         USERNAME: process.env.MAILTRAP_USERNAME,

@@ -3,10 +3,10 @@ import { User, UserDocument } from "@entities/User";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import { ApplicationErrorCode, GeneralErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
-import { MailTrapProvider } from "@providers/mailTrap/MailTrap.Provider";
+import { EmailType, MailTrapProvider } from "@providers/email/mailTrap/MailTrap.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
-import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
+import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
 import { PasswordEncryptProvider } from "@providers/passwordEncrypt/PasswordEncrypt.Provider";
 
 @provide(CreateUserUseCase)
@@ -17,12 +17,12 @@ class CreateUserUseCase {
         private mailTrapProvider?: MailTrapProvider
     ) { }
 
-    async Execute(data: ICreateUserDTO): Promise<ICreateUserReturn | ApplicationError> {
+    async Execute(data: ICreateUserDTO): Promise<ICreateUserReturnDTO | ApplicationError> {
 
         const { name, email, password } = data;
-        let userReturn: ICreateUserReturn;
+        let userReturn: ICreateUserReturnDTO;
 
-        const SEND_MAIL: boolean = false;
+        const SEND_MAIL: boolean = true;
 
         // Verifying if the user already exist
         const userExist: UserDocument | null = await this.userRepository.FindOne({ email });
@@ -62,19 +62,7 @@ class CreateUserUseCase {
         }
 
         if (SEND_MAIL && this.mailTrapProvider) {
-            this.mailTrapProvider.SendEmail({
-                to: {
-                    name: 'User',
-                    email: 'mail-1e7b60@inbox.mailtrap.io'
-                },
-                from: {
-                    name: 'Clean Architecture Twitch Team',
-                    email: 'clean@architecture.com'
-                },
-                subject: 'Welcome to the Clean Architecture Design!',
-                body: '<h1>Now you understand the principles of clean and Solid Architecture</h1>'
-            });
-
+            this.mailTrapProvider.SendEmail(EmailType.CreateUser);
         };
 
         userReturn = {

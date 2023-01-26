@@ -1,6 +1,6 @@
 import { CreateUserUseCase } from "./CreateUser.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
-import { ICreateUserDTO, ICreateUserReturn } from "./ICreateUser.DTO";
+import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
 import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
@@ -11,9 +11,9 @@ class CreateUserController implements interfaces.Controller {
     constructor(private createUserUseCase: CreateUserUseCase) { }
 
     @httpPost('/')
-    async execute(@requestBody() data: ICreateUserDTO, @response() res): Promise<ICreateUserReturn> {
+    async execute(@requestBody() data: ICreateUserDTO, @response() res): Promise<ICreateUserReturnDTO> {
 
-        let dataReturn: ICreateUserReturn | ApplicationError;
+        let dataReturn: ICreateUserReturnDTO | ApplicationError;
 
         try {
 
