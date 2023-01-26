@@ -1,13 +1,15 @@
 import { IBaseEntity } from "@entities/IBase.Entity";
 import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./IBase.Repository";
-import { Document, Model, PopulateOptions } from "mongoose";
+import mongoose, { Document, Model, PopulateOptions } from "mongoose";
 import { FilterQuery } from "mongoose";
+import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 
 @provide(BaseRepository)
 class BaseRepository<T extends IBaseEntity, U extends Document> implements IBaseRepository<T, U> {
 
     protected model: Model<T>;
+    protected connection: mongoose.Connection; // When creating connection
 
     async Create(item: U, refEntities: (Document | Document[])[] = [],
         embeddedRelations: string[] = [],
@@ -15,126 +17,63 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
 
         const parentRecord = await item.save();
 
-        if (refEntities.length) {
-            for (const entity of refEntities) {
+        for (const entity of refEntities) {
+            if ("collection" in entity) {
+                const referenceField = entity.collection.collectionName.slice(0, -1);
 
-                if ("collection" in entity) {
-                    const referenceField: string = entity.collection.collectionName.slice(0, -1);
+                if (refBack) {
+                    const referenceBackfield = parentRecord.collection.collectionName.slice(0, -1);
+                    entity[referenceBackfield] = parentRecord.id;
+                }
 
+                const entityRecord = await entity.save();
+                parentRecord[referenceField] = entityRecord.id;
+            } else {
+                for (const ref of entity) {
                     if (refBack) {
-                        const referenceBackfield: string = parentRecord.collection.collectionName.slice(0, -1);
-
-                        entity[referenceBackfield] = parentRecord.id;
+                        const referenceBackfield = parentRecord.collection.collectionName.slice(0, -1);
+                        ref[referenceBackfield] = parentRecord.id;
                     }
-
-                    const entityRecord = await entity.save();
-
-                    if (parentRecord[referenceField] instanceof Array) {
-                        if (!parentRecord[referenceField].includes(entityRecord.id)) {
-                            parentRecord[referenceField].push(entityRecord.id);
-                        }
-                    } else {
-                        parentRecord[referenceField] = entityRecord.id;
-                    }
-                } else {
-                    const referenceField: string = entity[0].collection.collectionName.slice(0, -1);
-
-                    if (parentRecord[referenceField]) {
-                        parentRecord[referenceField] = [];
-
-                        for (const reference of entity) {
-                            if (refBack) {
-                                const referenceBackfield: string = parentRecord.collection.collectionName.slice(0, -1);
-
-                                entity[referenceBackfield] = parentRecord.id;
-                            }
-
-                            const referenceRecord: Document = await reference.save();
-
-                            if (!parentRecord[referenceField].includes(referenceRecord.id)) {
-                                parentRecord[referenceField].push(referenceRecord.id);
-                            }
-                        }
-                    }
+                    await ref.save();
                 }
             }
+        }
 
+        if (refEntities.length) {
             await parentRecord.save();
         }
 
         if (embeddedRelations.length) {
-            embeddedRelations = embeddedRelations.filter((relation) => {
-                return relation in parentRecord;
-            });
-
             await parentRecord.populate(embeddedRelations);
         }
-
         return Promise.resolve(parentRecord);
     }
 
-    async Update(item: U, refEntities: (Document | Document[])[] = [], embeddedRelations: string[] = [], refBack: boolean = false): Promise<U | null> {
+    async Update(item: U, refEntities: (Document | Document[])[] = [],
+        embeddedRelations: string[] = [], refBack: boolean = false): Promise<U | null> {
 
         try {
-            // Save references then add them to the parent record
-            if (refEntities.length) {
-                for (const entity of refEntities) {
-
-                    if ("collection" in entity) {
-                        const referenceField: string = entity.collection.collectionName.slice(0, -1);
-
-                        if (refBack) {
-                            const referenceBackfield: string = item.collection.collectionName.slice(0, -1);
-
-                            entity[referenceBackfield] = item.id;
-                        }
-
-                        const entityRecord: Document = await entity.save();
-
-                        if (item[referenceField] instanceof Array) {
-                            if (!item[referenceField].includes(entityRecord.id)) {
-                                item[referenceField].push(entityRecord.id);
-                            }
-                        } else {
-                            item[referenceField] = entityRecord.id;
-                        }
-                    } else {
-                        const referenceField: string = entity[0].collection.collectionName.slice(0, -1);
-
-                        if (item[referenceField]) {
-                            item[referenceField] = item[referenceField] || [];
-
-                            for (const reference of entity) {
-                                if (refBack) {
-                                    const referenceBackfield: string = item.collection.collectionName.slice(0, -1);
-
-                                    entity[referenceBackfield] = item.id;
-                                }
-
-                                const referenceRecord: Document = await reference.save();
-
-                                if (!item[referenceField].includes(referenceRecord.id)) {
-                                    item[referenceField].push(referenceRecord.id);
-                                }
-                            }
-                        }
-                    }
+            for (const entity of refEntities) {
+                if (!Array.isArray(entity)) {
+                    const referenceField = entity.constructor.name.slice(0, -1);
+                    item[referenceField] = entity.id;
+                    await entity.save();
+                } else {
+                    const referenceField = entity[0].constructor.name.slice(0, -1);
+                    item[referenceField] = entity.map((e) => e.id);
+                    await Promise.all(entity.map((e) => e.save()));
                 }
-
             }
 
             await item.save();
 
             if (embeddedRelations.length) {
-                embeddedRelations = embeddedRelations.filter((relation) => {
-                    return item[relation];
-                });
-
                 await item.populate(embeddedRelations);
             }
 
             return Promise.resolve(item);
-        } catch {
+        } catch (error: any) {
+            Log(LogLevel.Error, error, "baserepository-update");
             return Promise.resolve(null);
         }
     }
@@ -143,7 +82,8 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
         try {
             const res = await this.model.deleteOne({ _id: id });
             return Promise.resolve(res as unknown as U);
-        } catch {
+        } catch (error: any) {
+            Log(LogLevel.Error, error, "baserepository-delete");
             return Promise.reject(null);
         }
     }
@@ -175,7 +115,8 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
             await parent.save();
             return Promise.resolve(parent);
 
-        } catch {
+        } catch (error: any) {
+            Log(LogLevel.Error, error, "baserepository-deletereferences");
             return Promise.reject(null);
         }
     }
@@ -189,7 +130,8 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
                     return userDocument as U;
                 });
             return Promise.resolve(user);
-        } catch {
+        } catch (error: any) {
+            Log(LogLevel.Error, error, "baserepository-findone");
             return Promise.reject(null);
         }
     }
@@ -204,7 +146,8 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
                 });
             return Promise.resolve(res);
 
-        } catch {
+        } catch (error: any) {
+            Log(LogLevel.Error, error, "baserepository-findbyid");
             return Promise.reject(null);
         }
     }
@@ -217,9 +160,9 @@ class BaseRepository<T extends IBaseEntity, U extends Document> implements IBase
                 .then((userDocuments) => {
                     return userDocuments as U[];
                 });
-
             return Promise.resolve(res);
-        } catch {
+        } catch (error: any) {
+            Log(LogLevel.Error, error, "baserepository-findall");
             return Promise.reject([]);
         }
     }

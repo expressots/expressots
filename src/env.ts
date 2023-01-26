@@ -22,7 +22,7 @@ const Env = {
         USERNAME: process.env.DB_USERNAME,
         PASSWORD: process.env.DB_PASSWORD,
         EXTRA_ARGS: process.env.DB_EXTRA_ARGS,
-        SEED: process.env.DB_SEED as unknown as boolean,
+        SEED: process.env.DB_SEED === "true" ? true : false,
     },
     Log: {
         LOG_LEVEL: (process.env.LOG_LEVEL)?.toLowerCase() as string,

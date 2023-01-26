@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Env } from "env";
 
-const mongodbUri: string =
+const MongodbUri: string =
     "mongodb://" +
     Env.Database.USERNAME +
     ":" +
@@ -12,9 +12,9 @@ const mongodbUri: string =
     Env.Database.NAME +
     Env.Database.EXTRA_ARGS;
 
-const options: mongoose.ConnectOptions = {
+const ConnectionOptions: mongoose.ConnectOptions = {
     keepAlive: true,
     keepAliveInitialDelay: 300000
 };
 
-export { mongodbUri, options };
+export { MongodbUri, ConnectionOptions };

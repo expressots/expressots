@@ -1,5 +1,5 @@
 import { IBaseEntity } from "@entities/IBase.Entity";
-import { Document, FilterQuery, PopulateOptions } from "mongoose";
+import mongoose, { Document, FilterQuery, PopulateOptions } from "mongoose";
 
 interface IBaseRepository<T extends IBaseEntity, U extends Document> {
     Create(item: U,
