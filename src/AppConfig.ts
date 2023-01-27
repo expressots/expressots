@@ -21,11 +21,11 @@ Environments.CheckAll();
 
 const expressServer = new InversifyExpressServer(container);
 const fileStream: rfs.RotatingFileStream = MorganLog.Init(Env.Log.LOG_FOLDER) as rfs.RotatingFileStream;
-const corsPath: string = Env.Server.CORS;
+const corsPath: string[] = Env.Server.CORS.split(',');
 
 expressServer.setConfig((app: express.Application) => {
     app.use(compression());
-    app.options(corsPath, app.use(cors())); // Review: Specify the correct address for communication
+    app.use(cors({ credentials: true, origin: corsPath }));
     app.use(express.json());
     app.use(morgan(MorganDefaultFormat(), { stream: fileStream }));
     app.use(express.urlencoded({ extended: true }));
