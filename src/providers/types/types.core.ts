@@ -1,13 +1,10 @@
-import { DeleteUserController } from './../../useCases/user/delete/DeleteUser.Controller';
-// src/providers/types/Types.core.ts
-export const TYPES = {
-  // ...
+const TYPES = {
   // Middlewares
   FetchLoggedUserMiddleware: Symbol.for("FetchLoggedUserMiddleware"),
   // Server
   RouterController: Symbol.for("RouterController"),
   // JWT
-  JsonWebTokenProvider: Symbol.for("JsonWebTokenProvider"),
+  JwtProvider: Symbol.for("JwtProvider"),
   CreateJwtController: Symbol.for("CreateJwtController"),
   // User
   CreateUserController: Symbol.for("CreateUserController"),
@@ -17,3 +14,4 @@ export const TYPES = {
   FindALlUsersController: Symbol.for("FindALlUsersController"),
 };
 
+export { TYPES };

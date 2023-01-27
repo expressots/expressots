@@ -25,7 +25,7 @@ class MailTrapProvider {
                 user: Env.Mailtrap.USERNAME,
                 pass: Env.Mailtrap.PASSWORD
             }
-        })
+        });
     }
 
     private async MailSender(message: IMessage): Promise<void> {

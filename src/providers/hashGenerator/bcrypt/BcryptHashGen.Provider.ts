@@ -7,8 +7,8 @@ import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 
 const SALT_ROUNDS = 10;
 
-@provide(PasswordEncryptProvider)
-class PasswordEncryptProvider {
+@provide(BcryptHashGenProvider)
+class BcryptHashGenProvider {
 
     async GeneratePasswordHash(password: string): Promise<string | ApplicationError> {
 
@@ -46,4 +46,4 @@ class PasswordEncryptProvider {
     }
 }
 
-export { PasswordEncryptProvider };
+export { BcryptHashGenProvider };

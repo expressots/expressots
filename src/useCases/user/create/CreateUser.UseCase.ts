@@ -7,13 +7,13 @@ import { EmailType, MailTrapProvider } from "@providers/email/mailTrap/MailTrap.
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
 import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
-import { PasswordEncryptProvider } from "@providers/passwordEncrypt/PasswordEncrypt.Provider";
+import { BcryptHashGenProvider } from "@providers/hashGenerator/bcrypt/BcryptHashGen.Provider";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
 
     constructor(private userRepository: UserRepository,
-        private passwordEncryptProvider?: PasswordEncryptProvider,
+        private bcryptHashGen?: BcryptHashGenProvider,
         private mailTrapProvider?: MailTrapProvider
     ) { }
 
@@ -22,7 +22,7 @@ class CreateUserUseCase {
         const { name, email, password } = data;
         let userReturn: ICreateUserReturnDTO;
 
-        const SEND_MAIL: boolean = true;
+        const SEND_MAIL: boolean = false;
 
         // Verifying if the user already exist
         const userExist: UserDocument | null = await this.userRepository.FindOne({ email });
@@ -40,8 +40,8 @@ class CreateUserUseCase {
         });
 
         // Encrypting password
-        if (this.passwordEncryptProvider) {
-            const passwordHash: string | ApplicationError = await this.passwordEncryptProvider.GeneratePasswordHash(password);
+        if (this.bcryptHashGen) {
+            const passwordHash: string | ApplicationError = await this.bcryptHashGen.GeneratePasswordHash(password);
 
             if (passwordHash instanceof ApplicationError) {
                 return passwordHash;

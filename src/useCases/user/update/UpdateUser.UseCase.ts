@@ -6,11 +6,11 @@ import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
 import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { IUpdateUserRequestDTO, IUpdateUserResponseDTO } from "./IUpdateUser.DTO";
-import { PasswordEncryptProvider } from "@providers/passwordEncrypt/PasswordEncrypt.Provider";
+import { BcryptHashGenProvider } from "@providers/hashGenerator/bcrypt/BcryptHashGen.Provider";
 
 @provide(UpdateUserUseCase)
 class UpdateUserUseCase {
-    constructor(private userRepository: UserRepository, private passwordEncryptProvider: PasswordEncryptProvider) { }
+    constructor(private userRepository: UserRepository, private bcryptHasGen: BcryptHashGenProvider) { }
 
     async Execute(data: IUpdateUserRequestDTO): Promise<IUpdateUserResponseDTO | ApplicationError> {
 
@@ -27,8 +27,8 @@ class UpdateUserUseCase {
         user.email = (data.email != undefined) ? data.email : user.email;
 
         // Encrypting password
-        if (this.passwordEncryptProvider && data.password != undefined) {
-            const passwordHash: string | ApplicationError = await this.passwordEncryptProvider.GeneratePasswordHash(data.password);
+        if (this.bcryptHasGen && data.password != undefined) {
+            const passwordHash: string | ApplicationError = await this.bcryptHasGen.GeneratePasswordHash(data.password);
 
             if (passwordHash instanceof ApplicationError) {
                 return passwordHash;
