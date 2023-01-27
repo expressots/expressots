@@ -4,13 +4,14 @@ import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
 import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
 import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import AuthMiddleware from "@providers/middlewares/AuthMiddleware.Provider";
 
 @controller('/user/create')
 class CreateUserController implements interfaces.Controller {
 
     constructor(private createUserUseCase: CreateUserUseCase) { }
 
-    @httpPost('/')
+    @httpPost('/', AuthMiddleware)
     async execute(@requestBody() data: ICreateUserDTO, @response() res): Promise<ICreateUserReturnDTO> {
 
         let dataReturn: ICreateUserReturnDTO | ApplicationError;
