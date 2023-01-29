@@ -36,7 +36,6 @@ const Env = {
         USERNAME: process.env.MAILTRAP_USERNAME,
         PASSWORD: process.env.MAILTRAP_PASSWORD,
     },
-
     Security: {
         JWT_SECRET: process.env.JWT_SECRET as string,
         JWT_EXPIRES_IN: process.env.JWT_EXPIRES as string,

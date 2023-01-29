@@ -44,13 +44,7 @@ class EnvValidatorProvider {
 declare global {
     interface String {
         AsBoolean(): boolean | undefined;
-    }
-
-    interface String {
         AsNumber(): number | undefined;
-    }
-
-    interface String {
         AsString(): string | undefined;
     }
 }

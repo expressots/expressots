@@ -1,5 +1,6 @@
+import fs from 'fs';
 import { Env } from "env";
-import { createHash } from "crypto";
+import { createHash, generateKeyPairSync } from "crypto";
 import { provide } from "inversify-binding-decorators";
 import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
 import { ApplicationError } from "@providers/error/ApplicationError";
@@ -38,6 +39,24 @@ class CryptoHashGenProvider {
     }
 
     return comparison;
+  }
+
+  async GeneratePrivatePublicKeyPair(): Promise<void> {
+    const keyPair = await generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      publicExponent: 65537,
+      privateKeyEncoding: {
+        type: "pkcs8",
+        format: "pem",
+      },
+      publicKeyEncoding: {
+        type: "spki",
+        format: "pem",
+      },
+    });
+
+    fs.writeFileSync('./private.pem', keyPair.privateKey);
+    fs.writeFileSync('./public.pem', keyPair.publicKey);
   }
 }
 

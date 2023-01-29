@@ -46,3 +46,6 @@ yarn.lock
 
 # Ignore Typedoc generated documentation
 public/docs/*
+
+# Ignore .pem files
+*.pem

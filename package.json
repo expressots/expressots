@@ -19,6 +19,7 @@
     "doc": "npx typedoc"
   },
   "dependencies": {
+    "@types/express": "^4.17.16",
     "bcrypt": "^5.1.0",
     "chalk": "4.1.2",
     "compression": "^1.7.4",
