@@ -1,30 +1,18 @@
-import { controller, httpGet, interfaces, requestParam, response } from "inversify-express-utils";
+import { controller, httpGet, requestParam, response } from "inversify-express-utils";
 import { FindByIdUseCase } from "./FindById.UseCase";
 import { IFindByIdDTO } from "./IFindById.DTO";
-import { AppError } from "@providers/error/ApplicationError";
-import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import { BaseController } from "@providers/controller/Controller.Provider";
 
 @controller("/user")
-class FindByIdController implements interfaces.Controller {
-    constructor(private findByIdUseCase: FindByIdUseCase) { }
+class FindByIdController extends BaseController {
+    constructor(private findByIdUseCase: FindByIdUseCase) {
+        super("user-find-by-id-controller");
+    }
 
     @httpGet("/find/:id")
     async Execute(@requestParam("id") id: string, @response() res): Promise<IFindByIdDTO> {
-        let dataReturn: IFindByIdDTO | AppError;
 
-        try {
-            dataReturn = await this.findByIdUseCase.Execute(id);
-
-            if (dataReturn instanceof AppError) {
-                return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
-            }
-
-            return res.status(HttpStatusErrorCode.OK).json(dataReturn);
-        } catch (error: any) {
-            Log(LogLevel.Error, error, "user-find-by-id");
-            return res.status(ApplicationErrorCode.GeneralAppError).json({ error: ApplicationErrorCode.GeneralAppError, message: error.message });
-        }
+        return this.CallUseCase(this.findByIdUseCase.Execute(id), res);
     }
 }
 
