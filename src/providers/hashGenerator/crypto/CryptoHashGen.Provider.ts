@@ -2,7 +2,7 @@ import fs from 'fs';
 import { Env } from "env";
 import { createHash, generateKeyPairSync } from "crypto";
 import { provide } from "inversify-binding-decorators";
-import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import { AppError } from "@providers/error/ApplicationError";
 import { Report } from "@providers/error/ReportError.Provider";
 
@@ -18,7 +18,7 @@ class CryptoHashGenProvider {
 
     if (!hashedPass) {
       const error: AppError = Report.Error(new AppError(
-        ApplicationErrorCode.GeneralAppError,
+        StatusCode.GeneralAppError,
         'Hashing password failed'),
         "crypto-hash-gen-provider");
       return error;
@@ -32,7 +32,7 @@ class CryptoHashGenProvider {
 
     if (!comparison) {
       const error: AppError = Report.Error(new AppError(
-        ApplicationErrorCode.GeneralAppError,
+        StatusCode.GeneralAppError,
         'Password comparison failed'),
         "crypto-hash-gen-provider");
       return error;

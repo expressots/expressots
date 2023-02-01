@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { AppError } from "@providers/error/ApplicationError";
 import { provide } from "inversify-binding-decorators";
 import { Report } from "@providers/error/ReportError.Provider";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 
 const SALT_ROUNDS = 10;
 
@@ -17,7 +17,7 @@ class BcryptHashGenProvider {
                 if (error) {
                     reject(
                         Report.Error(new AppError(
-                            HttpStatusErrorCode.BadRequest,
+                            StatusCode.BadRequest,
                             error ? error.message : " Error to generate password hash"),
                             "password-encrypt"));
                 } else {
@@ -33,7 +33,7 @@ class BcryptHashGenProvider {
                 if (error) {
                     reject(
                         Report.Error(new AppError(
-                            HttpStatusErrorCode.BadRequest,
+                            StatusCode.BadRequest,
                             error ? error.message : "Error to compare password hash"),
                             "password-encrypt"));
                 } else {

@@ -1,4 +1,4 @@
-type ErrorType = GeneralErrorCode | ApplicationErrorCode | HttpStatusErrorCode;
+type GeneralStatusCode = GeneralErrorCode | ApplicationErrorCode | HttpStatusErrorCode;
 type HttpStatusErrorCode = InformationResponse | SuccessfulResponse | SuccessfulResponse | RedirectionMessage | ClientErrorResponse | ServerErrorResponse;
 
 enum GeneralErrorCode {
@@ -89,7 +89,8 @@ enum ServerErrorResponse {
 }
 
 const HttpStatusErrorCode = { ...InformationResponse, ...SuccessfulResponse, ...RedirectionMessage, ...ClientErrorResponse, ...ServerErrorResponse };
-const AllErrors = { ...GeneralErrorCode, ...ApplicationErrorCode, ...HttpStatusErrorCode };
+const GeneralStatusCode = { ...GeneralErrorCode, ...ApplicationErrorCode, ...HttpStatusErrorCode };
+const StatusCode = { ...GeneralErrorCode, ...ApplicationErrorCode, ...HttpStatusErrorCode, ...GeneralStatusCode };
 /* Http Error Code Response */
 
 /* Specific Application Error Code */
@@ -98,4 +99,4 @@ const AllErrors = { ...GeneralErrorCode, ...ApplicationErrorCode, ...HttpStatusE
 
 /* Specific Application Error Code */
 
-export { AllErrors, ErrorType, GeneralErrorCode, ApplicationErrorCode, HttpStatusErrorCode };
+export { StatusCode };

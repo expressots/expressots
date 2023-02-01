@@ -1,9 +1,9 @@
-import { AllErrors, ApplicationErrorCode, ErrorType, GeneralErrorCode, HttpStatusErrorCode } from "./ErrorTypes";
+import { StatusCode } from "./ErrorTypes";
 
 class ApplicationError extends Error {
-    private errorType: ErrorType = GeneralErrorCode.Unknown;
+    private errorType: number = StatusCode.Unknown;
 
-    constructor(errorType: ErrorType, errorMessage?: string) {
+    constructor(errorType: number, errorMessage?: string) {
         super(errorMessage);
 
         if (errorMessage === undefined) {
@@ -18,14 +18,14 @@ class ApplicationError extends Error {
         return this.message;
     }
 
-    public get ErrorType(): ErrorType {
+    public get ErrorType(): number {
         return this.errorType;
     }
 
-    private ParseErrorType(errorType: ErrorType): void {
+    private ParseErrorType(errorType: number): void {
 
-        const errorTypesListIds = Object.keys(AllErrors).filter(key => !isNaN(Number(key)));
-        const errorTypesListNames = Object.keys(AllErrors).filter(key => isNaN(Number(key)));
+        const errorTypesListIds = Object.keys(StatusCode).filter(key => !isNaN(Number(key)));
+        const errorTypesListNames = Object.keys(StatusCode).filter(key => isNaN(Number(key)));
 
         for (let i: number = 0; i < errorTypesListIds.length; i++) {
             if (Number(errorTypesListIds[i]) === errorType) {

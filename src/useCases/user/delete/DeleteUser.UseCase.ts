@@ -2,7 +2,7 @@ import { AppError } from "@providers/error/ApplicationError";
 import { IDeleteRequestDTO, IDeleteResponseDTO } from "./IDeleteUser.DTO";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { Report } from "@providers/error/ReportError.Provider";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import { provide } from "inversify-binding-decorators";
 
 @provide(DeleteUserUseCase)
@@ -17,7 +17,7 @@ class DeleteUserUseCase {
 
         if (!userExist) {
             const error: AppError = Report.Error(new AppError(
-                HttpStatusErrorCode.BadRequest,
+                StatusCode.BadRequest,
                 "User not found"),
                 "user-delete");
             return error;
@@ -27,7 +27,7 @@ class DeleteUserUseCase {
 
         if (!userDeleted) {
             const error: AppError = Report.Error(new AppError(
-                HttpStatusErrorCode.BadRequest,
+                StatusCode.BadRequest,
                 "User not deleted"),
                 "user-delete");
             return error;

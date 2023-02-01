@@ -4,7 +4,7 @@ import { IFindByIdDTO } from "./IFindById.DTO";
 import { AppError } from "@providers/error/ApplicationError";
 import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 
 @provide(FindByIdUseCase)
 class FindByIdUseCase {
@@ -15,7 +15,7 @@ class FindByIdUseCase {
         const user: UserDocument | null = await this.userRepository.FindById(id);
 
         if (!user) {
-            const error: AppError = Report.Error(new AppError(HttpStatusErrorCode.BadRequest,
+            const error: AppError = Report.Error(new AppError(StatusCode.BadRequest,
                 "User not found!"),
                 "user-find-by-id");
             return error;

@@ -1,5 +1,5 @@
 import { AppError } from "@providers/error/ApplicationError";
-import { ApplicationErrorCode, GeneralErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
 import fs from "fs";
 import { createStream, RotatingFileStream } from "rotating-file-stream";
@@ -13,7 +13,7 @@ class MorganLog {
 
             if (err) {
                 Report.Error(new AppError(
-                    ApplicationErrorCode.LogFolderCreationError));
+                    StatusCode.LogFolderCreationError));
                 return;
             }
         });

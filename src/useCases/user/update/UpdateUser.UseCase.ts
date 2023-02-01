@@ -4,7 +4,7 @@ import { provide } from "inversify-binding-decorators";
 import { AppError } from "@providers/error/ApplicationError";
 import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import { IUpdateUserRequestDTO, IUpdateUserResponseDTO } from "./IUpdateUser.DTO";
 import { BcryptHashGenProvider } from "@providers/hashGenerator/bcrypt/BcryptHashGen.Provider";
 
@@ -18,7 +18,7 @@ class UpdateUserUseCase {
 
         if (!user) {
             const error: AppError = Report.Error(new AppError(
-                HttpStatusErrorCode.BadRequest,
+                StatusCode.BadRequest,
                 "User not found!"),
                 "user-find-by-id");
             return error;
@@ -42,7 +42,7 @@ class UpdateUserUseCase {
         const updatedUser: UserDocument | null = await this.userRepository.Update(user);
 
         if (!updatedUser) {
-            const error: AppError = Report.Error(new AppError(HttpStatusErrorCode.BadRequest,
+            const error: AppError = Report.Error(new AppError(StatusCode.BadRequest,
                 "User not updated!"),
                 "user-update");
             return error;

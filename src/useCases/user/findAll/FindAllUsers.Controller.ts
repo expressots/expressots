@@ -2,6 +2,7 @@ import { controller, httpGet, response } from "inversify-express-utils";
 import { FindAllUsersUseCase } from "./FindAllUsers.UseCase";
 import { IFindAllUsersResponseDTO } from "./FindAllUsers.DTO";
 import { BaseController } from "@providers/controller/Controller.Provider";
+import { StatusCode } from "@providers/error/ErrorTypes";
 
 @controller("/users")
 class FindAllUsersController extends BaseController {
@@ -12,7 +13,7 @@ class FindAllUsersController extends BaseController {
     @httpGet("/")
     async Execute(@response() res): Promise<IFindAllUsersResponseDTO[]> {
 
-        return this.CallUseCase(this.updateUserUseCase.Execute(), res);
+        return this.CallUseCase(this.updateUserUseCase.Execute(), res, StatusCode.OK);
     }
 }
 

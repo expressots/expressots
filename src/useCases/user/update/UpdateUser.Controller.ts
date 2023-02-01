@@ -1,7 +1,5 @@
-import { controller, httpPut, interfaces, requestBody, requestParam, response } from "inversify-express-utils";
-import { AppError } from "@providers/error/ApplicationError";
-import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import { controller, httpPut, requestBody, requestParam, response } from "inversify-express-utils";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import { UpdateUserUseCase } from "./UpdateUser.UseCase";
 import { IUpdateUserRequestDTO, IUpdateUserResponseDTO } from "./IUpdateUser.DTO";
 import { BaseController } from "@providers/controller/Controller.Provider";
@@ -17,7 +15,7 @@ class UpdateUserController extends BaseController {
 
         data.id = id;
 
-        return this.CallUseCase(this.updateUserUseCase.Execute(data), res);
+        return this.CallUseCase(this.updateUserUseCase.Execute(data), res, StatusCode.OK);
     }
 }
 

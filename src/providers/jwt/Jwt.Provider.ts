@@ -4,7 +4,7 @@ import { Env } from "env";
 import { provide } from "inversify-binding-decorators";
 import { Report } from "@providers/error/ReportError.Provider";
 import { AppError } from "@providers/error/ApplicationError";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 
 @provide(JwtProvider)
 class JwtProvider {
@@ -26,7 +26,7 @@ class JwtProvider {
       }, (error: Error, token: string) => {
         if (error) {
           reject(Report.Error(new AppError(
-            HttpStatusErrorCode.InternalServerError),
+            StatusCode.InternalServerError),
             error.message), "jwt-generate");
         } else {
           resolve(token);

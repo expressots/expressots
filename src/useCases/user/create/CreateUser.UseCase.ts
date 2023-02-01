@@ -1,7 +1,7 @@
 
 import { User, UserDocument } from "@entities/User";
 import { AppError } from "@providers/error/ApplicationError";
-import { ApplicationErrorCode, GeneralErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
 import { EmailType, MailTrapProvider } from "@providers/email/mailTrap/MailTrap.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
@@ -29,7 +29,7 @@ class CreateUserUseCase {
 
         if (userExist) {
             const error: AppError = Report.Error(new AppError(
-                HttpStatusErrorCode.BadRequest,
+                StatusCode.BadRequest,
                 "User already exist!"),
                 "user-create");
             return error;
@@ -56,7 +56,7 @@ class CreateUserUseCase {
 
         if (!userCreated) {
             const error: AppError = Report.Error(new AppError(
-                HttpStatusErrorCode.InternalServerError,
+                StatusCode.InternalServerError,
                 "Error to create user!"), "user-create");
             return error;
         }

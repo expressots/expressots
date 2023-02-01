@@ -1,5 +1,5 @@
 import { AppError } from "@providers/error/ApplicationError";
-import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 import { provide } from "inversify-binding-decorators";
 import { interfaces } from "inversify-express-utils";
@@ -12,7 +12,7 @@ class BaseController implements interfaces.Controller {
         this.serviceName = serviceName;
     }
 
-    protected async CallUseCase(useCase: Promise<any>, res: any) {
+    protected async CallUseCase(useCase: Promise<any>, res: any, successStatusCode: number) {
         let dataReturn: any;
 
         try {
@@ -22,11 +22,11 @@ class BaseController implements interfaces.Controller {
                 return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
             }
 
-            return res.status(HttpStatusErrorCode.Created).json(dataReturn);
+            return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
             Log(LogLevel.Error, error, this.serviceName);
-            return res.status(ApplicationErrorCode.GeneralAppError).json({
-                error: ApplicationErrorCode.GeneralAppError, message: error.message
+            return res.status(StatusCode.GeneralAppError).json({
+                error: StatusCode.GeneralAppError, message: error.message
             });
         }
     }

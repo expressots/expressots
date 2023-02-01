@@ -2,6 +2,7 @@ import { controller, httpGet, requestParam, response } from "inversify-express-u
 import { FindByIdUseCase } from "./FindById.UseCase";
 import { IFindByIdDTO } from "./IFindById.DTO";
 import { BaseController } from "@providers/controller/Controller.Provider";
+import { StatusCode } from "@providers/error/ErrorTypes";
 
 @controller("/user")
 class FindByIdController extends BaseController {
@@ -12,7 +13,7 @@ class FindByIdController extends BaseController {
     @httpGet("/find/:id")
     async Execute(@requestParam("id") id: string, @response() res): Promise<IFindByIdDTO> {
 
-        return this.CallUseCase(this.findByIdUseCase.Execute(id), res);
+        return this.CallUseCase(this.findByIdUseCase.Execute(id), res, StatusCode.OK);
     }
 }
 

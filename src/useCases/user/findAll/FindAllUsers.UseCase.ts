@@ -4,7 +4,7 @@ import { AppError } from "@providers/error/ApplicationError";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
-import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/error/ErrorTypes";
 
 
 @provide(FindAllUsersUseCase)
@@ -17,7 +17,7 @@ class FindAllUsersUseCase {
         const users: UserDocument[] = await this.usersRepository.FindAll();
 
         if (users.length === 0) {
-            const error: AppError = Report.Error(new AppError(HttpStatusErrorCode.BadRequest,
+            const error: AppError = Report.Error(new AppError(StatusCode.BadRequest,
                 "There is no users!"),
                 "user-find-all");
             return error;
