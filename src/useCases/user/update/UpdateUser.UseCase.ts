@@ -1,7 +1,7 @@
 
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
 import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
@@ -12,13 +12,15 @@ import { BcryptHashGenProvider } from "@providers/hashGenerator/bcrypt/BcryptHas
 class UpdateUserUseCase {
     constructor(private userRepository: UserRepository, private bcryptHasGen: BcryptHashGenProvider) { }
 
-    async Execute(data: IUpdateUserRequestDTO): Promise<IUpdateUserResponseDTO | ApplicationError> {
+    async Execute(data: IUpdateUserRequestDTO): Promise<IUpdateUserResponseDTO | AppError> {
 
         const user: UserDocument | null = await this.userRepository.FindById(data.id);
 
         if (!user) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User not found!"),
-                true, "user-find-by-id") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(
+                HttpStatusErrorCode.BadRequest,
+                "User not found!"),
+                "user-find-by-id");
             return error;
         }
 
@@ -28,9 +30,9 @@ class UpdateUserUseCase {
 
         // Encrypting password
         if (this.bcryptHasGen && data.password != undefined) {
-            const passwordHash: string | ApplicationError = await this.bcryptHasGen.GeneratePasswordHash(data.password);
+            const passwordHash: string | AppError = await this.bcryptHasGen.GeneratePasswordHash(data.password);
 
-            if (passwordHash instanceof ApplicationError) {
+            if (passwordHash instanceof AppError) {
                 return passwordHash;
             }
 
@@ -40,8 +42,9 @@ class UpdateUserUseCase {
         const updatedUser: UserDocument | null = await this.userRepository.Update(user);
 
         if (!updatedUser) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User not updated!"),
-                true, "user-update") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(HttpStatusErrorCode.BadRequest,
+                "User not updated!"),
+                "user-update");
             return error;
         }
 

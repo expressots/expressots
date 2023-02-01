@@ -1,5 +1,5 @@
 import { controller, httpGet, interfaces, response } from "inversify-express-utils";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 import { FindAllUsersUseCase } from "./FindAllUsers.UseCase";
@@ -11,12 +11,12 @@ class FindAllUsersController implements interfaces.Controller {
 
     @httpGet("/")
     async Execute(@response() res): Promise<IFindAllUsersResponseDTO[]> {
-        let dataReturn: IFindAllUsersResponseDTO[] | ApplicationError;
+        let dataReturn: IFindAllUsersResponseDTO[] | AppError;
 
         try {
             dataReturn = await this.updateUserUseCase.Execute();
 
-            if (dataReturn instanceof ApplicationError) {
+            if (dataReturn instanceof AppError) {
                 return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
             }
 

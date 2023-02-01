@@ -3,7 +3,7 @@ import { Env } from "env";
 import { createHash, generateKeyPairSync } from "crypto";
 import { provide } from "inversify-binding-decorators";
 import { ApplicationErrorCode } from "@providers/error/ErrorTypes";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { Report } from "@providers/error/ReportError.Provider";
 
 const salt = Env.Security.SALT_FOR_HASH;
@@ -11,30 +11,30 @@ const salt = Env.Security.SALT_FOR_HASH;
 @provide(CryptoHashGenProvider)
 class CryptoHashGenProvider {
 
-  GeneratePasswordHash(password: string): string | ApplicationError {
+  GeneratePasswordHash(password: string): string | AppError {
 
     const hashedPass: string = createHash('sha256')
       .update(`${password}_${salt}`).digest('hex');
 
     if (!hashedPass) {
-      const error: ApplicationError = Report.Error(new ApplicationError(
+      const error: AppError = Report.Error(new AppError(
         ApplicationErrorCode.GeneralAppError,
         'Hashing password failed'),
-        true, "crypto-hash-gen-provider") as ApplicationError;
+        "crypto-hash-gen-provider");
       return error;
     }
 
     return hashedPass;
   }
 
-  ComparePasswordHash(password: string, hash: string): boolean | ApplicationError {
+  ComparePasswordHash(password: string, hash: string): boolean | AppError {
     const comparison: boolean = hash === this.GeneratePasswordHash(password);
 
     if (!comparison) {
-      const error: ApplicationError = Report.Error(new ApplicationError(
+      const error: AppError = Report.Error(new AppError(
         ApplicationErrorCode.GeneralAppError,
         'Password comparison failed'),
-        true, "crypto-hash-gen-provider") as ApplicationError;
+        "crypto-hash-gen-provider");
       return error;
     }
 

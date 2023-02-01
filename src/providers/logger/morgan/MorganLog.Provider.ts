@@ -1,4 +1,4 @@
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { ApplicationErrorCode, GeneralErrorCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
 import fs from "fs";
@@ -12,7 +12,8 @@ class MorganLog {
         fs.mkdir(`${rootDir}`, { recursive: true }, (err) => {
 
             if (err) {
-                Report.Error(new ApplicationError(ApplicationErrorCode.LogFolderCreationError));
+                Report.Error(new AppError(
+                    ApplicationErrorCode.LogFolderCreationError));
                 return;
             }
         });

@@ -1,4 +1,4 @@
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { IDeleteRequestDTO, IDeleteResponseDTO } from "./IDeleteUser.DTO";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { Report } from "@providers/error/ReportError.Provider";
@@ -10,22 +10,26 @@ class DeleteUserUseCase {
 
     constructor(private userRepository: UserRepository) { }
 
-    async Execute(data: IDeleteRequestDTO): Promise<IDeleteResponseDTO | ApplicationError> {
+    async Execute(data: IDeleteRequestDTO): Promise<IDeleteResponseDTO | AppError> {
         const { id } = data;
 
         const userExist = await this.userRepository.FindById(id);
 
         if (!userExist) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User not found"),
-                true, "user-delete") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(
+                HttpStatusErrorCode.BadRequest,
+                "User not found"),
+                "user-delete");
             return error;
         }
 
         const userDeleted = await this.userRepository.Delete(id);
 
         if (!userDeleted) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User not deleted"),
-                true, "user-delete") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(
+                HttpStatusErrorCode.BadRequest,
+                "User not deleted"),
+                "user-delete");
             return error;
         }
 

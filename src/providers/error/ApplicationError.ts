@@ -36,4 +36,4 @@ class ApplicationError extends Error {
     }
 }
 
-export { ApplicationError };
+export { ApplicationError as AppError };

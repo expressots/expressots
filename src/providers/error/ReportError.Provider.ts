@@ -1,16 +1,18 @@
 import Log, { LogLevel } from '@providers/logger/exception/ExceptionLogger.Provider';
-import { ApplicationError } from '@providers/error/ApplicationError';
+import { AppError } from '@providers/error/ApplicationError';
+import { ErrorType } from './ErrorTypes';
+import { provide } from 'inversify-binding-decorators';
 
+@provide(Report)
 class Report {
 
-    public static Error(applicationError: ApplicationError, returnObject: boolean = false, service: string = "api-events"): void | ApplicationError {
+    public static Error(applicationError: AppError, service: string = "api-events"): AppError {
         try {
             throw applicationError;
 
         } catch (error: any) {
-
             Log(LogLevel.Error, error, service);
-            return (!returnObject) ? null : error;
+            return error;
         }
     }
 }

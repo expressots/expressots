@@ -1,6 +1,6 @@
 import { provide } from "inversify-binding-decorators";
 import { IFindAllUsersResponseDTO } from "./FindAllUsers.DTO";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
@@ -12,13 +12,14 @@ class FindAllUsersUseCase {
 
     constructor(private usersRepository: UserRepository) { }
 
-    async Execute(): Promise<IFindAllUsersResponseDTO[] | ApplicationError> {
+    async Execute(): Promise<IFindAllUsersResponseDTO[] | AppError> {
 
         const users: UserDocument[] = await this.usersRepository.FindAll();
 
         if (users.length === 0) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "There is no users!"),
-                true, "user-find-all") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(HttpStatusErrorCode.BadRequest,
+                "There is no users!"),
+                "user-find-all");
             return error;
         }
 

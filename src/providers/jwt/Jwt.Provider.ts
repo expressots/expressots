@@ -3,7 +3,7 @@ import fs from "fs";
 import { Env } from "env";
 import { provide } from "inversify-binding-decorators";
 import { Report } from "@providers/error/ReportError.Provider";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 
 @provide(JwtProvider)
@@ -15,7 +15,7 @@ class JwtProvider {
    * @returns Promise with the token generated
    */
   async SignJWT(payload: string | object | Buffer, expiresIn: string | number): Promise<string
-    | ApplicationError> {
+    | AppError> {
 
     // get private key from private.pem file
     const privateKey: string = fs.readFileSync('./private.pem', 'utf8');
@@ -25,8 +25,9 @@ class JwtProvider {
         algorithm: "RS256", expiresIn
       }, (error: Error, token: string) => {
         if (error) {
-          reject(Report.Error(new ApplicationError(HttpStatusErrorCode.InternalServerError,
-            error.message), true, "jwt-generate"));
+          reject(Report.Error(new AppError(
+            HttpStatusErrorCode.InternalServerError),
+            error.message), "jwt-generate");
         } else {
           resolve(token);
         }

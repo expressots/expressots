@@ -1,7 +1,7 @@
 import { controller, httpGet, interfaces, requestParam, response } from "inversify-express-utils";
 import { FindByIdUseCase } from "./FindById.UseCase";
 import { IFindByIdDTO } from "./IFindById.DTO";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { ApplicationErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
 
@@ -11,12 +11,12 @@ class FindByIdController implements interfaces.Controller {
 
     @httpGet("/find/:id")
     async Execute(@requestParam("id") id: string, @response() res): Promise<IFindByIdDTO> {
-        let dataReturn: IFindByIdDTO | ApplicationError;
+        let dataReturn: IFindByIdDTO | AppError;
 
         try {
             dataReturn = await this.findByIdUseCase.Execute(id);
 
-            if (dataReturn instanceof ApplicationError) {
+            if (dataReturn instanceof AppError) {
                 return res.status(dataReturn.ErrorType).json({ error: dataReturn.ErrorType, message: dataReturn.Message });
             }
 

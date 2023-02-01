@@ -1,6 +1,6 @@
 
 import { User, UserDocument } from "@entities/User";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { ApplicationErrorCode, GeneralErrorCode, HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 import { Report } from "@providers/error/ReportError.Provider";
 import { EmailType, MailTrapProvider } from "@providers/email/mailTrap/MailTrap.Provider";
@@ -17,7 +17,7 @@ class CreateUserUseCase {
         private mailTrapProvider?: MailTrapProvider
     ) { }
 
-    async Execute(data: ICreateUserDTO): Promise<ICreateUserReturnDTO | ApplicationError> {
+    async Execute(data: ICreateUserDTO): Promise<ICreateUserReturnDTO | AppError> {
 
         const { name, email, password } = data;
         let userReturn: ICreateUserReturnDTO;
@@ -28,8 +28,10 @@ class CreateUserUseCase {
         const userExist: UserDocument | null = await this.userRepository.FindOne({ email });
 
         if (userExist) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User already exist!"),
-                true, "user-create") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(
+                HttpStatusErrorCode.BadRequest,
+                "User already exist!"),
+                "user-create");
             return error;
         }
 
@@ -41,9 +43,9 @@ class CreateUserUseCase {
 
         // Encrypting password
         if (this.bcryptHashGen) {
-            const passwordHash: string | ApplicationError = await this.bcryptHashGen.GeneratePasswordHash(password);
+            const passwordHash: string | AppError = await this.bcryptHashGen.GeneratePasswordHash(password);
 
-            if (passwordHash instanceof ApplicationError) {
+            if (passwordHash instanceof AppError) {
                 return passwordHash;
             }
 
@@ -53,11 +55,9 @@ class CreateUserUseCase {
         const userCreated = await this.userRepository.Create(userObj);
 
         if (!userCreated) {
-            const error: ApplicationError = Report.Error(
-                new ApplicationError(
-                    HttpStatusErrorCode.InternalServerError,
-                    "Error to create user!"),
-                true, "user-create") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(
+                HttpStatusErrorCode.InternalServerError,
+                "Error to create user!"), "user-create");
             return error;
         }
 

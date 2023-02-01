@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { provide } from "inversify-binding-decorators";
 import { Report } from "@providers/error/ReportError.Provider";
 import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
@@ -10,17 +10,16 @@ const SALT_ROUNDS = 10;
 @provide(BcryptHashGenProvider)
 class BcryptHashGenProvider {
 
-    async GeneratePasswordHash(password: string): Promise<string | ApplicationError> {
+    async GeneratePasswordHash(password: string): Promise<string | AppError> {
 
         return new Promise((resolve: Function, reject: Function) => {
             bcrypt.hash(password, SALT_ROUNDS, (error: Error, hash: string) => {
                 if (error) {
                     reject(
-                        Report.Error(new ApplicationError(
+                        Report.Error(new AppError(
                             HttpStatusErrorCode.BadRequest,
                             error ? error.message : " Error to generate password hash"),
-                            true, "password-encrypt") as ApplicationError
-                    );
+                            "password-encrypt"));
                 } else {
                     resolve(hash);
                 }
@@ -28,16 +27,15 @@ class BcryptHashGenProvider {
         });
     }
 
-    async ComparePasswordHash(password: string, hash: string): Promise<boolean | ApplicationError> {
+    async ComparePasswordHash(password: string, hash: string): Promise<boolean | AppError> {
         return new Promise((resolve: Function, reject: Function) => {
             bcrypt.compare(password, hash, (error: Error, result: boolean) => {
                 if (error) {
                     reject(
-                        Report.Error(new ApplicationError(
+                        Report.Error(new AppError(
                             HttpStatusErrorCode.BadRequest,
                             error ? error.message : "Error to compare password hash"),
-                            true, "password-encrypt") as ApplicationError
-                    );
+                            "password-encrypt"));
                 } else {
                     resolve(result);
                 }

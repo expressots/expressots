@@ -1,7 +1,7 @@
 import { UserRepository } from "@repositories/user/User.Repository";
 import { provide } from "inversify-binding-decorators";
 import { IFindByIdDTO } from "./IFindById.DTO";
-import { ApplicationError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/error/ApplicationError";
 import { UserDocument } from "@entities/User";
 import { Report } from "@providers/error/ReportError.Provider";
 import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
@@ -10,13 +10,14 @@ import { HttpStatusErrorCode } from "@providers/error/ErrorTypes";
 class FindByIdUseCase {
     constructor(private userRepository: UserRepository) { }
 
-    async Execute(id: string): Promise<IFindByIdDTO | ApplicationError> {
+    async Execute(id: string): Promise<IFindByIdDTO | AppError> {
 
         const user: UserDocument | null = await this.userRepository.FindById(id);
 
         if (!user) {
-            const error: ApplicationError = Report.Error(new ApplicationError(HttpStatusErrorCode.BadRequest, "User not found!"),
-                true, "user-find-by-id") as ApplicationError;
+            const error: AppError = Report.Error(new AppError(HttpStatusErrorCode.BadRequest,
+                "User not found!"),
+                "user-find-by-id");
             return error;
         }
 

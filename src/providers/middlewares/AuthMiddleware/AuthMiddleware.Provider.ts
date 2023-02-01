@@ -9,7 +9,6 @@ const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
     if (authHeader === secret) {
         const token: string = authHeader.split(" ")[1];
-        console.log(token);
         return next();
     } else {
         return res.status(HttpStatusErrorCode.Unauthorized).json({ error: HttpStatusErrorCode.Unauthorized, message: "You don't sufficient privileges" });
