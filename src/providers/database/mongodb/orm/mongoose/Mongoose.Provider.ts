@@ -38,8 +38,10 @@ class MongooseProvider implements IDatabaseProvider {
     }
 
     async DefaultConnectionClose(): Promise<void> {
-        Log(LogLevel.Info, "MongoDB connection closed", "mongoose-provider");
-        await mongoose.connection.close();
+        if (mongoose.connection.readyState === mongoose.ConnectionStates.connected) {
+            Log(LogLevel.Info, "MongoDB connection closed", "mongoose-provider");
+            await mongoose.connection.close();
+        }
     }
 }
 

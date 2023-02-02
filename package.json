@@ -1,6 +1,6 @@
 {
-  "name": "clean-architecture-template",
-  "version": "1.0.0",
+  "name": "expressots-demo",
+  "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
   "licenses": [

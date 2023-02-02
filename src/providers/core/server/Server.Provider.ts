@@ -43,6 +43,7 @@ class ServerProvider {
     }
 
     private async ServerShutdown(): Promise<void> {
+        
         MongooseProvider.DefaultConnectionClose();
         Log(LogLevel.Info, "API is shutting down", "server-provider");
         process.exit(0);
