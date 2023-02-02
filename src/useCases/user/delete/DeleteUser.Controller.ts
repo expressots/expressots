@@ -2,7 +2,7 @@ import { controller, httpDelete, requestParam, response } from 'inversify-expres
 import { DeleteUserUseCase } from './DeleteUser.UseCase';
 import { IDeleteResponseDTO } from './IDeleteUser.DTO';
 
-import { BaseController } from '@providers/controller/Controller.Provider';
+import { BaseController } from '@providers/core/controller/Controller.Provider';
 import { StatusCode } from '@providers/error/ErrorTypes';
 
 @controller('/user')

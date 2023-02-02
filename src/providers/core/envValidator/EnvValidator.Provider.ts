@@ -11,9 +11,10 @@ class EnvValidatorProvider {
     }
 
     public static CheckAll(): void {
+        Log(LogLevel.Info, "Checking environment variables...", "env-validator-provider");
 
         /* Verify if .env file exists */
-        const envFilePath: string = path.join(__dirname, "..", "..", "..", ".env");
+        const envFilePath: string = path.join(__dirname, "..", "..", "..", "..", ".env");
 
         if (!fs.existsSync(envFilePath)) {
             Log(LogLevel.Info, "Environment file .env is not defined.", "env-validator-provider");

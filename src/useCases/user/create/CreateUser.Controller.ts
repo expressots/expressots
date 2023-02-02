@@ -2,7 +2,7 @@ import { CreateUserUseCase } from "./CreateUser.UseCase";
 import { controller, httpPost, interfaces, requestBody, response } from "inversify-express-utils";
 import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
 import AuthMiddleware from "@providers/middlewares/AuthMiddleware/AuthMiddleware.Provider";
-import { BaseController } from "@providers/controller/Controller.Provider";
+import { BaseController } from "@providers/core/controller/Controller.Provider";
 import { StatusCode } from "@providers/error/ErrorTypes";
 
 @controller('/user/create')

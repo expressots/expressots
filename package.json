@@ -13,7 +13,7 @@
     "node": ">=18.10.0"
   },
   "scripts": {
-    "start": "tsnd -r dotenv/config -r tsconfig-paths/register src/StartUp.ts",
+    "start": "tsnd -r dotenv/config -r tsconfig-paths/register src/Main.ts",
     "build": "tsc -p .",
     "test": "jest --config jest.config.ts",
     "doc": "npx typedoc"

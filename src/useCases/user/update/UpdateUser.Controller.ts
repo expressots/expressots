@@ -2,7 +2,7 @@ import { controller, httpPut, requestBody, requestParam, response } from "invers
 import { StatusCode } from "@providers/error/ErrorTypes";
 import { UpdateUserUseCase } from "./UpdateUser.UseCase";
 import { IUpdateUserRequestDTO, IUpdateUserResponseDTO } from "./IUpdateUser.DTO";
-import { BaseController } from "@providers/controller/Controller.Provider";
+import { BaseController } from "@providers/core/controller/Controller.Provider";
 
 @controller("/user")
 class UpdateUserController extends BaseController {
