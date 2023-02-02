@@ -1,5 +1,4 @@
 import { ContainerModule, interfaces } from "inversify";
-import { RouterController } from "Router";
 import { CreateUserController } from "@useCases/user/create/CreateUser.Controller";
 import { JwtProvider } from "@providers/jwt/Jwt.Provider";
 import { TYPES } from '@providers/core/types/Types.Symbol.core';
@@ -7,10 +6,6 @@ import { DeleteUserController } from "@useCases/user/delete/DeleteUser.Controlle
 import { FindByIdController } from "@useCases/user/findById/FindById.Controller";
 import { UpdateUserController } from "@useCases/user/update/UpdateUser.Controller";
 import { FindAllUsersController } from "@useCases/user/findAll/FindAllUsers.Controller";
-
-export const serverContainerModule = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
-    bind<RouterController>(TYPES.RouterController).to(RouterController);
-});
 
 export const jwtContainerModule = new ContainerModule((bind: interfaces.Bind, unbind: interfaces.Unbind) => {
     bind<JwtProvider>(TYPES.JwtProvider).to(JwtProvider);

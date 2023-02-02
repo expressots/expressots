@@ -3,7 +3,7 @@ import { provide } from 'inversify-binding-decorators';
 import { Env } from 'env';
 import { Environments } from '@providers/core/envValidator/EnvValidator.Provider';
 import { Container } from 'inversify';
-import { InversifyExpressServer } from 'inversify-express-utils';
+import { InversifyExpressServer, response } from 'inversify-express-utils';
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -81,6 +81,11 @@ class ServerProvider {
 
             /* Shutdown the API */
             process.on("SIGINT", this.ServerShutdown);
+        });
+
+        /* Default route */
+        this.app.get('/', async (req, res) => {
+            res.send('Server Status: Online');
         });
     }
 }
