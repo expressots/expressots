@@ -13,6 +13,7 @@ import { MorganLog } from "@providers/core/logger/morgan/MorganLog.Provider";
 import { MorganDefaultFormat } from "@providers/core/logger/morgan/MorganTokens";
 import { MongooseProvider } from '@providers/database/mongodb/orm/mongoose/Mongoose.Provider';
 import { MongoSeed } from '@providers/database/mongodb/orm/mongoose/MongooseSeed';
+import Log, { LogLevel } from '../logger/exception/ExceptionLogger.Provider';
 
 
 @provide(ServerProvider)
@@ -39,6 +40,12 @@ class ServerProvider {
         if (Env.Database.SEED === true) {
             MongoSeed.Execute();
         }
+    }
+
+    private async ServerShutdown(): Promise<void> {
+        MongooseProvider.DefaultConnectionClose();
+        Log(LogLevel.Info, "API is shutting down", "server-provider");
+        process.exit(0);
     }
 
     public async Create(container: Container): Promise<ServerProvider> {
@@ -71,6 +78,9 @@ class ServerProvider {
         this.app.listen(this.port, async () => {
             this.consoleMessageProvider?.MessageServer(this.port);
             await this.PostServerInitialization();
+
+            /* Shutdown the API */
+            process.on("SIGINT", this.ServerShutdown);
         });
     }
 }
