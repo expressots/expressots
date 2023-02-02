@@ -1,9 +1,9 @@
 import "reflect-metadata";
 
 import { MongooseProvider } from "@providers/database/mongodb/orm/mongoose/Mongoose.Provider";
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
-import { container } from "@providers/server/Container.Provider";
-import { ServerProvider } from "@providers/server/Server.Provider";
+import Log, { LogLevel } from "@providers/core/logger/exception/ExceptionLogger.Provider";
+import { container } from "@providers/core/server/Container.Provider";
+import { ServerProvider } from "@providers/core/server/Server.Provider";
 import { Env } from "env";
 
 

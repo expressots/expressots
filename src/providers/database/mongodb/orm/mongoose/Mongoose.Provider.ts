@@ -1,5 +1,5 @@
 import mongoose, { Connection } from "mongoose";
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import Log, { LogLevel } from "@providers/core/logger/exception/ExceptionLogger.Provider";
 import { IDatabaseProvider } from "@providers/database/IDatabaseProvider";
 import { ConnectionOptions, MongodbUri } from "./MongooseConnectionOptions";
 

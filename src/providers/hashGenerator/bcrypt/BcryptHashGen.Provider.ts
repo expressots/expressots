@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
 
-import { AppError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/core/error/ApplicationError";
 import { provide } from "inversify-binding-decorators";
-import { Report } from "@providers/error/ReportError.Provider";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { Report } from "@providers/core/error/ReportError.Provider";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 
 const SALT_ROUNDS = 10;
 

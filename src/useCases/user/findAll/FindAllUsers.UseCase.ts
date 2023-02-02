@@ -1,10 +1,10 @@
 import { provide } from "inversify-binding-decorators";
 import { IFindAllUsersResponseDTO } from "./FindAllUsers.DTO";
-import { AppError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/core/error/ApplicationError";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { UserDocument } from "@entities/User";
-import { Report } from "@providers/error/ReportError.Provider";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { Report } from "@providers/core/error/ReportError.Provider";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 
 
 @provide(FindAllUsersUseCase)

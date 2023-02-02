@@ -2,7 +2,7 @@ import { controller, httpGet, response } from "inversify-express-utils";
 import { FindAllUsersUseCase } from "./FindAllUsers.UseCase";
 import { IFindAllUsersResponseDTO } from "./FindAllUsers.DTO";
 import { BaseController } from "@providers/core/controller/Controller.Provider";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 
 @controller("/users")
 class FindAllUsersController extends BaseController {

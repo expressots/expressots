@@ -2,9 +2,9 @@ import fs from 'fs';
 import { Env } from "env";
 import { createHash, generateKeyPairSync } from "crypto";
 import { provide } from "inversify-binding-decorators";
-import { StatusCode } from "@providers/error/ErrorTypes";
-import { AppError } from "@providers/error/ApplicationError";
-import { Report } from "@providers/error/ReportError.Provider";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
+import { AppError } from "@providers/core/error/ApplicationError";
+import { Report } from "@providers/core/error/ReportError.Provider";
 
 const salt = Env.Security.SALT_FOR_HASH;
 

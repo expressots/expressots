@@ -3,7 +3,7 @@ import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./IBase.Repository";
 import mongoose, { Document, Model, PopulateOptions } from "mongoose";
 import { FilterQuery } from "mongoose";
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import Log, { LogLevel } from "@providers/core/logger/exception/ExceptionLogger.Provider";
 
 @provide(BaseRepository)
 class BaseRepository<T extends IBaseEntity, U extends Document> implements IBaseRepository<T, U> {

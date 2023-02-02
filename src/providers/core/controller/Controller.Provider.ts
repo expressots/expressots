@@ -1,6 +1,6 @@
-import { AppError } from "@providers/error/ApplicationError";
-import { StatusCode } from "@providers/error/ErrorTypes";
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import { AppError } from "@providers/core/error/ApplicationError";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
+import Log, { LogLevel } from "@providers/core/logger/exception/ExceptionLogger.Provider";
 import { provide } from "inversify-binding-decorators";
 import { interfaces } from "inversify-express-utils";
 

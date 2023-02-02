@@ -9,8 +9,8 @@ import cors from "cors";
 import morgan from "morgan";
 import compression from "compression";
 import rfs from "rotating-file-stream";
-import { MorganLog } from "@providers/logger/morgan/MorganLog.Provider";
-import { MorganDefaultFormat } from "@providers/logger/morgan/MorganTokens";
+import { MorganLog } from "@providers/core/logger/morgan/MorganLog.Provider";
+import { MorganDefaultFormat } from "@providers/core/logger/morgan/MorganTokens";
 import { MongooseProvider } from '@providers/database/mongodb/orm/mongoose/Mongoose.Provider';
 import { MongoSeed } from '@providers/database/mongodb/orm/mongoose/MongooseSeed';
 

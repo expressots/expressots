@@ -1,4 +1,4 @@
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import Log, { LogLevel } from "@providers/core/logger/exception/ExceptionLogger.Provider";
 import { provide } from "inversify-binding-decorators";
 import fs from "fs";
 import path from "path";

@@ -2,7 +2,7 @@ import { ContainerModule, interfaces } from "inversify";
 import { RouterController } from "Router";
 import { CreateUserController } from "@useCases/user/create/CreateUser.Controller";
 import { JwtProvider } from "@providers/jwt/Jwt.Provider";
-import { TYPES } from '@providers/types/types.core';
+import { TYPES } from '@providers/core/types/Types.Symbol.core';
 import { DeleteUserController } from "@useCases/user/delete/DeleteUser.Controller";
 import { FindByIdController } from "@useCases/user/findById/FindById.Controller";
 import { UpdateUserController } from "@useCases/user/update/UpdateUser.Controller";

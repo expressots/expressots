@@ -1,4 +1,4 @@
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 import { Env } from "env";
 import { Request, Response, NextFunction } from "express";
 

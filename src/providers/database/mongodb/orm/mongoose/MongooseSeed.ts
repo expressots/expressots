@@ -1,4 +1,4 @@
-import Log, { LogLevel } from "@providers/logger/exception/ExceptionLogger.Provider";
+import Log, { LogLevel } from "@providers/core/logger/exception/ExceptionLogger.Provider";
 import { UserRepository } from "@repositories/user/User.Repository";
 import { CreateUserUseCase } from "@useCases/user/create/CreateUser.UseCase";
 import { provide } from "inversify-binding-decorators";

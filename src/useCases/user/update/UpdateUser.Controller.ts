@@ -1,5 +1,5 @@
 import { controller, httpPut, requestBody, requestParam, response } from "inversify-express-utils";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 import { UpdateUserUseCase } from "./UpdateUser.UseCase";
 import { IUpdateUserRequestDTO, IUpdateUserResponseDTO } from "./IUpdateUser.DTO";
 import { BaseController } from "@providers/core/controller/Controller.Provider";

@@ -2,9 +2,9 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import { Env } from "env";
 import { provide } from "inversify-binding-decorators";
-import { Report } from "@providers/error/ReportError.Provider";
-import { AppError } from "@providers/error/ApplicationError";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { Report } from "@providers/core/error/ReportError.Provider";
+import { AppError } from "@providers/core/error/ApplicationError";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 
 @provide(JwtProvider)
 class JwtProvider {

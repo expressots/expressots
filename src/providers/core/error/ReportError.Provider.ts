@@ -1,5 +1,5 @@
-import Log, { LogLevel } from '@providers/logger/exception/ExceptionLogger.Provider';
-import { AppError } from '@providers/error/ApplicationError';
+import Log, { LogLevel } from '@providers/core/logger/exception/ExceptionLogger.Provider';
+import { AppError } from '@providers/core/error/ApplicationError';
 import { provide } from 'inversify-binding-decorators';
 
 @provide(Report)

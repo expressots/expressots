@@ -3,7 +3,7 @@ import { controller, httpPost, interfaces, requestBody, response } from "inversi
 import { ICreateUserDTO, ICreateUserReturnDTO } from "./ICreateUser.DTO";
 import AuthMiddleware from "@providers/middlewares/AuthMiddleware/AuthMiddleware.Provider";
 import { BaseController } from "@providers/core/controller/Controller.Provider";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 
 @controller('/user/create')
 class CreateUserController extends BaseController {

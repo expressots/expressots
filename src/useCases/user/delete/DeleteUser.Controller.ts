@@ -3,7 +3,7 @@ import { DeleteUserUseCase } from './DeleteUser.UseCase';
 import { IDeleteResponseDTO } from './IDeleteUser.DTO';
 
 import { BaseController } from '@providers/core/controller/Controller.Provider';
-import { StatusCode } from '@providers/error/ErrorTypes';
+import { StatusCode } from '@providers/core/error/ErrorTypes';
 
 @controller('/user')
 export class DeleteUserController extends BaseController {

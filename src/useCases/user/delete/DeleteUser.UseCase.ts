@@ -1,8 +1,8 @@
-import { AppError } from "@providers/error/ApplicationError";
+import { AppError } from "@providers/core/error/ApplicationError";
 import { IDeleteRequestDTO, IDeleteResponseDTO } from "./IDeleteUser.DTO";
 import { UserRepository } from "@repositories/user/User.Repository";
-import { Report } from "@providers/error/ReportError.Provider";
-import { StatusCode } from "@providers/error/ErrorTypes";
+import { Report } from "@providers/core/error/ReportError.Provider";
+import { StatusCode } from "@providers/core/error/ErrorTypes";
 import { provide } from "inversify-binding-decorators";
 
 @provide(DeleteUserUseCase)
