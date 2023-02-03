@@ -1,6 +1,16 @@
-# Clean Architecture Idea
+# Expresso TS
 
-## Clean code using solid principles with Nodejs and Typescript
+A Typescript + [Node.js]("https://nodejs.org/en/") framework for quick building scalable, easy to read and maintain, server-side applications 🚀
+
+## Philosophy
+
+Expresso TS is a framework designed to make the lives of the developers easier by providing a structure for building server-side applications that is clear to read, maintain and scale. The philosophy is centered around the idea that developers should not have to waste time on repetitive tasks such as setting up a logging system, authentication, error handling, database connection, and organizing the project for better maintainability.
+
+Expresso TS offers a solution that is designed to help developers jump ahead and focus on the most important part of the development process, writing code. The framework provides capability to the developers to quickly extend the framework functionalities by creating providers and adding them to the dependency injection system. This way, developers can use these new functionalities throughout the entire application without having to worry about the complexities of integrating it into the system.
+
+## The Project Structure
+
+### Clean code using solid principles with Nodejs and Typescript
 
 The idea of this project is to offer a clean and concise architecture boilerplate for those trying to navigate on node development.
 
@@ -21,23 +31,19 @@ It respects the fundamentals of clean code and some of the SOLID concepts. This 
 -   **_Repositories_**: is the layer responsible to communicate with the database.
 -   **_Use Cases_**: use cases represents the implementation of an operation that can be performed in the system
 
-## Features
+## Key Features
 
-```
-- Module mapping (tsconfig-paths)
-- IOC (Inversion of control): Dependency Injection with InversifyJS
-- API Decorators: HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpOptions, HttpHead
-- Entity, Provider, Use case, repository, controller examples
-- Error handling
-- Morgan Logger
-- Exception Logger (winston)
-- Authentication using JWT
-- Frontend example using react, yup and formik
-```
+-   Module mapping (tsconfig-paths) : Entity, Provider, Use case, repository, controller examples
+-   IOC (Inversion of control): Dependency Injection with InversifyJS
+-   API Decorators: HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpOptions, HttpHead
+-   Error handling
+-   API Logger : Morgan
+-   Application General Logger: Winston
+-   App container and module creation
 
 ## Feature Details
 
--   **Module Mapping**: Using the tsconfig-paths module, we are mapping the entities, providers, repositories, use cases folders, so that we can import them using relative paths.
+-   **Module Mapping**: Using the tsconfig-paths module, we are mapping the entities, providers, repositories, use cases folders, so that we can import them using relative paths. This allows us to create a project structure that is configured using a development pattern.
 
 ```json
 "paths": {
@@ -48,28 +54,28 @@ It respects the fundamentals of clean code and some of the SOLID concepts. This 
     },
 ```
 
--   **IOC**: Using InversifyJS we are creating the IoC container and registering all the dependencies. Provider `inversify` contains two files, ContainerProvider and BindingProvider called `ContainerModule.Provider`. An example of controllers being registered is shown below.
+-   **IOC**: Using InversifyJS we are creating the IoC container and registering all the dependencies. The project contains AppContainer class to register the modules, and a mechanism to create modules in which controllers can bind to it.
+
+AppContainer for registering the modules:
 
 ```typescript
-export const playerContContainerModule = new ContainerModule(
-    (bind: interfaces.Bind, unbind: interfaces.Unbind) => {
-        bind<CreatePlayerController>(TYPES.CreatePlayerController).to(
-            CreatePlayerController
-        );
-        bind<FindAllPlayersController>(TYPES.FindAllPlayersController).to(
-            FindAllPlayersController
-        );
-        bind<FindPlayerController>(TYPES.FindPlayerController).to(
-            FindPlayerController
-        );
-        bind<DeletePlayerController>(TYPES.DeletePlayerController).to(
-            DeletePlayerController
-        );
-        bind<UpdatePlayerController>(TYPES.UpdatePlayerController).to(
-            UpdatePlayerController
-        );
-    }
-);
+const container = new Container();
+
+container.load(buildProviderModule(), UserContainerModule);
+
+export { container };
+```
+
+Creating the modules and registering the controllers:
+
+```typescript
+export const UserContainerModule = CreateModule([
+    CreateUserController,
+    DeleteUserController,
+    FindByIdController,
+    UpdateUserController,
+    FindAllUsersController,
+]);
 ```
 
 -   **API Decorators**: Using the decorators we are creating the endpoints for the controllers.
@@ -88,74 +94,56 @@ type ErrorType = GeneralErrorCode | ApplicationErrorCode | HttpStatusErrorCode;
 
 // Reporting errors
 if (userExist) {
-    const error = Report.Error(
-        new ApplicationError(
-            HttpStatusErrorCode.BadRequest,
-            "User already exist!"
-        ),
-        true
-    ) as ApplicationError;
+    const error = Report.Error(new ApplicationError(StatusCode.BadRequest, "User already exist!"), "user-create");
     return error;
 }
 ```
 
--   **Morgan Logger**: Morgan is a logger for nodejs. It is a middleware that logs the requests and responses in a file.
+-   **API Request Logger**: Morgan is a logger for nodejs. It is a middleware that logs the requests and responses in a file.
 
--   **Exception Logger (winston)**: Winston is a logger for nodejs. It is a middleware that logs all the other exceptions in a file.
+```Text
+[localhost ::ffff:127.0.0.1]-[2023-02-02 17:2:16]-[pid: 48644] POST /user/create 151 - 0.007 ms - -
+```
+
+-   **Application General Logger**: Winston is a logger for nodejs. It is a middleware that logs all the other exceptions in a file.
+
+```Text
+[2023-02-01 20:27:58] [core-api] [user-create] error: User already exist! - (Error) [file:  CreateUserUseCase.<anonymous> (<app_path>\src\useCases\user\create\CreateUser.UseCase.ts:31:50)]
+```
+
+How To Log:
 
 ```typescript
-Log(error, "user-create");
+Log(LogLevel.Error, error, this.serviceName);
 ```
 
-## How to use JWT Secure
+-   LogLevel: enum with the following values: Debug, Error, Info
+-   error: Error object
+-   serviceName: is the name of the service that is generating the error
 
-```
-1) Create user
-curl --location --request POST 'http://localhost:3000/user/create' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name":"User name",
-    "email":"clean@architecture.com",
-    "password": "quentinada"
+## Getting Started
 
-
-2) Get user token
-curl --location --request POST 'http://localhost:3000/tokens' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "email": "clean@architecture.com",
-    "password": "quentinada"
-}
-'
-
-3) Create player (JWT Secure)
-curl --location --request POST 'http://localhost:3000/player/create' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0ODYzNDIyLTlhNWMtNDM0MS05NDU5LTVmMmUwYTgxMWQwZSIsImVtYWlsIjoicmVuYXRvanJAYWxwaHVzLmNvbS5iciIsImlhdCI6MTYyOTI0NjAzNCwiZXhwIjoxNjI5MzMyNDM0fQ.LAf7mLhfBerJ44EhwLW5AE2c_yy6gwhh4-1ONiqrz_Q' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name":"Clean Archi",
-    "email":"clean@architecture.com",
-    "faction": "Faction name"
-}
-'
-```
-
-## Running the project
+To get started with Expresso TS, simply clone the repository and follow the below steps
 
 ```
 1. run `yarn install` to install all dependencies
 2. run `yarn start` to start the project
-    1. Backend API: CleanArchitecture/src
-    1. FrontEnd: frontend/src
+
+3. run the docker-compose file to create the mongodb container
+4. create the user and password in mongodb and apply management rights
+5. add the user and password to the .env file
 ```
+
+## Documentation
+
+To be developed
 
 ## Contributing Guide
 
 ```
-1. Fork the original repository to your own repository
-2. Clone it to your local
-3. Contribute to it
-4. Push it to your remote repo
-5. Send a PR to the main repo
-6. Your contribution will be evaluated then we will merge your changes with the original repository.
+1. Clone it to your local
+2. Contribute to it
+3. Push it to your remote repo
+4. Send a PR to the main repo with your branch
+5. Your contribution will be evaluated then we will merge your changes with the original repository.
 ```
