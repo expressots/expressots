@@ -1,9 +1,12 @@
-/* import { Module } from "module";
+import { buildProviderModule } from "inversify-binding-decorators";
+import { Container } from "inversify";
+import { UserContainerModule } from "@useCases/user/User.Module";
 
-@Module{
-    imports: [AppModule],
-        controllers: [AppController],
-            providers: [AppService],
-})
+const container = new Container();
 
-export class AppContainer { } */
+container.load(
+    buildProviderModule(),
+    UserContainerModule
+);
+
+export { container };

@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
-import { container } from "@providers/core/server/Container.Provider";
 import { ServerProvider } from "@providers/core/server/Server.Provider";
+import { container } from "AppContainer";
 import { Env } from "env";
 
 
