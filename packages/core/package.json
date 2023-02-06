@@ -1,0 +1,40 @@
+{
+  "name": "@expressots/core",
+  "version": "0.0.1",
+  "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
+  "author": "Richard Zampieri",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "homepage": "https://expresso-ts.com",
+  "funding": {
+    "type": "",
+    "url": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.10.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "express": "^4.18.2",
+    "inversify": "^6.0.1",
+    "inversify-binding-decorators": "^4.0.0",
+    "inversify-express-utils": "^6.4.3",
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^4.9.5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17"
+  }
+}
