@@ -1,4 +1,4 @@
 *.ts linguist-language=TypeScript
 
-# ignore all other files
-* linguist-language=Ignore
+# ignore all other files that are not TypeScript files
+!*.ts linguist-language=Text
