@@ -36,7 +36,8 @@ bower_components
 Thumbs.db
 
 # Ignore built ts files
-dist/**/*
+/expressots/package/core/dist/**/*
+/expressots/package/default-project/dist/**/*
 
 # ignore yarn.lock
 yarn.lock
