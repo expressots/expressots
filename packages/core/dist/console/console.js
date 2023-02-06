@@ -35,18 +35,19 @@ let Console = Console_1 = class Console {
         }
     }
     async messageServer(port, env) {
+        var _a, _b, _c, _d, _e, _f, _g;
         const appConsoleMessage = {
-            appName: env.Application.APP_NAME || "Expressots",
-            appVersion: env.Application.APP_VERSION || "1.0.0",
-            timezone: env.Application.TIMEZONE || "UTC",
-            adminEmail: env.Application.ADMIN_EMAIL || "dev@expresso-ts.com",
-            language: env.Application.LANGUAGE || "en",
-            environment: env.Application.ENVIRONMENT || "development",
-            https: env.Application.HTTPS || false,
+            appName: ((_a = env === null || env === void 0 ? void 0 : env.Application) === null || _a === void 0 ? void 0 : _a.APP_NAME) || "Expressots",
+            appVersion: ((_b = env === null || env === void 0 ? void 0 : env.Application) === null || _b === void 0 ? void 0 : _b.APP_VERSION) || "1.0.0",
+            timezone: ((_c = env === null || env === void 0 ? void 0 : env.Application) === null || _c === void 0 ? void 0 : _c.TIMEZONE) || "UTC",
+            adminEmail: ((_d = env === null || env === void 0 ? void 0 : env.Application) === null || _d === void 0 ? void 0 : _d.ADMIN_EMAIL) || "dev@expresso-ts.com",
+            language: ((_e = env === null || env === void 0 ? void 0 : env.Application) === null || _e === void 0 ? void 0 : _e.LANGUAGE) || "en",
+            environment: ((_f = env === null || env === void 0 ? void 0 : env.Application) === null || _f === void 0 ? void 0 : _f.ENVIRONMENT) || "development",
+            https: ((_g = env === null || env === void 0 ? void 0 : env.Application) === null || _g === void 0 ? void 0 : _g.HTTPS) || false,
             port: port
         };
         let terminalColor = ColorStyle.None;
-        switch (env.Application.ENVIRONMENT.toLowerCase()) {
+        switch (appConsoleMessage.environment.toLowerCase()) {
             case "development":
                 terminalColor = ColorStyle.Yellow;
                 break;
@@ -60,7 +61,7 @@ let Console = Console_1 = class Console {
                 terminalColor = ColorStyle.Red;
                 break;
         }
-        let securePortCheck = env.Application.HTTPS ? "Secure HTTPS" : "Non-Secure HTTP";
+        let securePortCheck = appConsoleMessage.https ? "Secure HTTPS" : "Non-Secure HTTP";
         this.printColor(`${appConsoleMessage.appName} version ${appConsoleMessage.appVersion} is running on a ` +
             `${securePortCheck} port ${appConsoleMessage.port} - Environment: ${appConsoleMessage.environment}`, terminalColor);
     }

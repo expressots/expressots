@@ -16,13 +16,20 @@ class Application {
     constructor() { }
 
     /* Add any service that you want to be initialized before the server starts */
-    protected configureServices(): void { }
+    protected configureServices(): void {
+
+    }
 
     /* Add any service that you want to execute after the server starts */
     protected postServerInitialization(): void { }
 
     /* Add any service that you want to execute after server is shutdown */
-    protected serverShutdown(): void { }
+    protected serverShutdown(): void {
+
+        /* Replace this console by the Log system */
+        console.log("Server is shutting down");
+        process.exit(0);
+    }
 
     public create(container: Container, middlewares: express.RequestHandler[] = []): Application {
 
@@ -45,9 +52,9 @@ class Application {
     public listen(port: any, env?: IEnv): void {
         this.port = port;
 
-        this.app.listen(this.port, async () => {
+        this.app.listen(this.port, () => {
 
-            new Console().messageServer(this.port, env);
+            new Console().messageServer(this.port, env || {} as IEnv);
 
             /* Shutdown the API */
             process.on("SIGINT", this.serverShutdown);

@@ -18,11 +18,16 @@ const console_1 = require("../console/console");
 let Application = Application_1 = class Application {
     constructor() { }
     /* Add any service that you want to be initialized before the server starts */
-    configureServices() { }
+    configureServices() {
+    }
     /* Add any service that you want to execute after the server starts */
     postServerInitialization() { }
     /* Add any service that you want to execute after server is shutdown */
-    serverShutdown() { }
+    serverShutdown() {
+        /* Replace this console by the Log system */
+        console.log("Server is shutting down");
+        process.exit(0);
+    }
     create(container, middlewares = []) {
         this.configureServices();
         const expressServer = new inversify_express_utils_1.InversifyExpressServer(container);
@@ -36,14 +41,10 @@ let Application = Application_1 = class Application {
     }
     listen(port, env) {
         this.port = port;
-        this.app.listen(this.port, async () => {
-            new console_1.Console().messageServer(this.port, env);
+        this.app.listen(this.port, () => {
+            new console_1.Console().messageServer(this.port, env || {});
             /* Shutdown the API */
             process.on("SIGINT", this.serverShutdown);
-        });
-        /* Default route */
-        this.app.get("/", (req, res) => {
-            res.send("Server Status: Online");
         });
         this.postServerInitialization();
     }

@@ -41,19 +41,20 @@ class Console {
     public async messageServer(port: any, env?: IEnv): Promise<void> {
 
         const appConsoleMessage: IApplicationMessageToConsole = {
-            appName: env.Application.APP_NAME || "Expressots",
-            appVersion: env.Application.APP_VERSION || "1.0.0",
-            timezone: env.Application.TIMEZONE || "UTC",
-            adminEmail: env.Application.ADMIN_EMAIL || "dev@expresso-ts.com",
-            language: env.Application.LANGUAGE || "en",
-            environment: env.Application.ENVIRONMENT || "development",
-            https: env.Application.HTTPS || false,
+
+            appName: env?.Application?.APP_NAME || "Expressots",
+            appVersion: env?.Application?.APP_VERSION || "1.0.0",
+            timezone: env?.Application?.TIMEZONE || "UTC",
+            adminEmail: env?.Application?.ADMIN_EMAIL || "dev@expresso-ts.com",
+            language: env?.Application?.LANGUAGE || "en",
+            environment: env?.Application?.ENVIRONMENT || "development",
+            https: env?.Application?.HTTPS || false,
             port: port
         };
 
         let terminalColor: ColorStyle = ColorStyle.None;
 
-        switch (env.Application.ENVIRONMENT.toLowerCase()) {
+        switch (appConsoleMessage.environment.toLowerCase()) {
             case "development":
                 terminalColor = ColorStyle.Yellow;
                 break;
@@ -68,7 +69,7 @@ class Console {
                 break;
         }
 
-        let securePortCheck: string = env.Application.HTTPS ? "Secure HTTPS" : "Non-Secure HTTP";
+        let securePortCheck: string = appConsoleMessage.https ? "Secure HTTPS" : "Non-Secure HTTP";
 
         this.printColor(
             `${appConsoleMessage.appName} version ${appConsoleMessage.appVersion} is running on a ` +

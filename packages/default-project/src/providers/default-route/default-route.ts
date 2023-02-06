@@ -1,10 +1,8 @@
-import { provide } from "inversify-binding-decorators";
 import { controller } from "inversify-express-utils";
 import { httpGet, response } from "inversify-express-utils/lib/decorators";
 
-@provide(DefaultRouterProvider)
 @controller("/")
-class DefaultRouterProvider {
+class DefaultRouterController {
 
     @httpGet("")
     async execute(@response() res: any) {
@@ -12,4 +10,4 @@ class DefaultRouterProvider {
     }
 }
 
-export default DefaultRouterProvider;
+export { DefaultRouterController };
