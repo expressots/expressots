@@ -16,8 +16,7 @@ class GeneralLogger {
     private logger: Logger;
 
     constructor(env?: IEnv) {
-        this.env = env || undefined;
-
+        this.env = env;
         this.logger = createLogger(this.createLoggerOptions());
     }
 
@@ -36,7 +35,7 @@ class GeneralLogger {
 
         const rotationalFileTransport: DailyRotateFile = new DailyRotateFile({
             level: "error",
-            filename: `${this.env?.Log?.FOLDER}/${this.env?.Log.FILE}-%DATE%.log` || "logs/general-%DATE%.log" as string,
+            filename: (this.env) ? `${this?.env?.Log?.FOLDER}/${this?.env?.Log?.FILE}-%DATE%.log` : "logs/general-%DATE%.log",
             datePattern: "YYYY-MM-DD",
             zippedArchive: true,
             maxSize: "20m",
