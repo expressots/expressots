@@ -6,6 +6,8 @@ import { provide } from "inversify-binding-decorators";
 import { InversifyExpressServer } from "inversify-express-utils";
 import { Console } from "../console/console";
 import { IEnv } from "./ienv";
+import { LogLevel, log } from "../logger";
+import { Environments } from "../environment";
 
 @provide(Application)
 class Application {
@@ -18,6 +20,8 @@ class Application {
     /* Add any service that you want to be initialized before the server starts */
     protected configureServices(): void {
 
+        /* Check if .env file exists and all environment variables are defined */
+        Environments.CheckAll();
     }
 
     /* Add any service that you want to execute after the server starts */
@@ -26,8 +30,7 @@ class Application {
     /* Add any service that you want to execute after server is shutdown */
     protected serverShutdown(): void {
 
-        /* Replace this console by the Log system */
-        console.log("Server is shutting down");
+        log(LogLevel.Info, "API is shutting down", "application-provider");
         process.exit(0);
     }
 

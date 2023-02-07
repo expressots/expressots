@@ -9,6 +9,10 @@ interface IEnv {
         HTTPS: boolean;
         PORT: string;
     },
+    Log: {
+        FILE: string;
+        FOLDER: string;
+    }
 }
 
 export { IEnv };

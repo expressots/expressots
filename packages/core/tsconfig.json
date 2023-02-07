@@ -5,6 +5,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "noImplicitAny": false,
+    "strictBindCallApply": false,
     "declaration": true,
     "types": [
       "node",
