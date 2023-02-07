@@ -11,7 +11,8 @@
     "forceConsistentCasingInFileNames": true,           
     "strict": true,                                     
     "noImplicitAny": false,                          
-    "skipLibCheck": true                                
+    "skipLibCheck": true,
+    "types": ["reflect-metadata","node"]                                
   },
   "include": [
     "src/**/*"

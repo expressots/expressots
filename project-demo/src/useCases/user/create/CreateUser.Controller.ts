@@ -14,7 +14,7 @@ class CreateUserController extends BaseController {
 
     @httpPost('/', AuthMiddleware)
     async execute(@requestBody() data: ICreateUserDTO, @response() res): Promise<ICreateUserReturnDTO> {
-
+        console.log("payload: ", data);
         return this.CallUseCase(this.createUserUseCase.Execute(data), res, StatusCode.Created);
     }
 }

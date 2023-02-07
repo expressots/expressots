@@ -1,6 +1,7 @@
 import { Application } from '@expressots/core';
+import { provide } from 'inversify-binding-decorators';
 
-
+@provide(App)
 class App extends Application {
 
     protected configureServices(): void { }

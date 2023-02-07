@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 import express from "express";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
