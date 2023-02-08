@@ -1,6 +1,5 @@
 import { format, transports, LoggerOptions, createLogger, Logger } from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
-import { IEnv } from "../application";
 import { provide } from "inversify-binding-decorators";
 
 enum LogLevel {
@@ -12,11 +11,9 @@ enum LogLevel {
 @provide(GeneralLogger)
 class GeneralLogger {
 
-    private env: IEnv | undefined;
     private logger: Logger;
 
-    constructor(env?: IEnv) {
-        this.env = env;
+    constructor() {
         this.logger = createLogger(this.createLoggerOptions());
     }
 
@@ -35,7 +32,7 @@ class GeneralLogger {
 
         const rotationalFileTransport: DailyRotateFile = new DailyRotateFile({
             level: "error",
-            filename: (this.env) ? `${this?.env?.Log?.FOLDER}/${this?.env?.Log?.FILE}-%DATE%.log` : "logs/general-%DATE%.log",
+            filename: "logs/general-%DATE%.log", //`${this?.env?.Log?.FOLDER}/${this?.env?.Log?.FILE}-%DATE%.log` : "logs/general-%DATE%.log",
             datePattern: "YYYY-MM-DD",
             zippedArchive: true,
             maxSize: "20m",

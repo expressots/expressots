@@ -29,7 +29,7 @@ class CreateUserController {
     @httpPost("/")
     async execute(@requestBody() data: any, @response() res: any) {
         console.log("payload: ", data);
-        res.status(200).json({ message: "OK" });
+        res.status(200).json({ message: data });
     }
 }
 

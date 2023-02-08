@@ -1,14 +1,16 @@
 import "reflect-metadata";
 
-import { container } from "./appContainer";
+import { container } from "./app-container";
 import { App } from "./providers/application/application";
-import express from "express";
+import { ServerEnvironment } from "@expressots/core";
+import ENV from "./env";
 
 async function Bootstrap() {
-    const app = App.create(container, [
-        express.json(),
-    ]);
-    app.listen(3000);
+    const app = App.create(container);
+    app.listen(3000, 
+        ServerEnvironment.Development,
+        { appName: ENV.Application.APP_NAME, appVersion: ENV.Application.APP_VERSION}
+        );
 }
 
 Bootstrap();

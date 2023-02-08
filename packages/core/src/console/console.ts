@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import { provide } from "inversify-binding-decorators";
-import { IEnv } from "../application";
 
 enum ColorStyle {
     None = 0,
@@ -13,12 +12,6 @@ enum ColorStyle {
 interface IApplicationMessageToConsole {
     appName: string;
     appVersion: string;
-    timezone: string,
-    adminEmail: string;
-    language: string;
-    environment: string;
-    https: boolean;
-    port: string;
 }
 
 @provide(Console)
@@ -38,23 +31,17 @@ class Console {
         }
     }
 
-    public async messageServer(port: any, env?: IEnv): Promise<void> {
+    public async messageServer(port: any, environment: string, consoleMessage?: IApplicationMessageToConsole): Promise<void> {
 
         const appConsoleMessage: IApplicationMessageToConsole = {
 
-            appName: env?.Application?.APP_NAME || "Expressots",
-            appVersion: env?.Application?.APP_VERSION || "1.0.0",
-            timezone: env?.Application?.TIMEZONE || "UTC",
-            adminEmail: env?.Application?.ADMIN_EMAIL || "dev@expresso-ts.com",
-            language: env?.Application?.LANGUAGE || "en",
-            environment: env?.Application?.ENVIRONMENT || "development",
-            https: env?.Application?.HTTPS || false,
-            port: port
+            appName: consoleMessage?.appName || "Application",
+            appVersion: consoleMessage?.appVersion || "not provided",
         };
 
         let terminalColor: ColorStyle = ColorStyle.None;
 
-        switch (appConsoleMessage.environment.toLowerCase()) {
+        switch (environment.toLowerCase()) {
             case "development":
                 terminalColor = ColorStyle.Yellow;
                 break;
@@ -69,14 +56,12 @@ class Console {
                 break;
         }
 
-        let securePortCheck: string = appConsoleMessage.https ? "Secure HTTPS" : "Non-Secure HTTP";
-
         this.printColor(
-            `${appConsoleMessage.appName} version ${appConsoleMessage.appVersion} is running on a ` +
-            `${securePortCheck} port ${appConsoleMessage.port} - Environment: ${appConsoleMessage.environment}`,
+            `${appConsoleMessage.appName} version ${appConsoleMessage.appVersion} is running on ` +
+            `port ${port} - Environment: ${environment}`,
             terminalColor
         )
     }
 }
 
-export { Console };
+export { Console, IApplicationMessageToConsole };

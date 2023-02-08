@@ -2,16 +2,22 @@ import express from "express";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { InversifyExpressServer } from "inversify-express-utils";
-import { Console } from "../console/console";
-import { IEnv } from "./ienv";
-import { LogLevel, log } from "../logger";
+import { Console, IApplicationMessageToConsole } from "../console/console";
 import { Environments } from "../environment";
+import { LogLevel, log } from "../logger";
+
+enum ServerEnvironment {
+    Development = "development",
+    Staging = "staging",
+    Production = "production"
+}
 
 @provide(Application)
 class Application {
 
     private app: express.Application;
-    private port: any;
+    private port: number;
+    private environment: ServerEnvironment;
 
     constructor() { }
 
@@ -40,6 +46,12 @@ class Application {
 
         expressServer.setConfig((app: express.Application) => {
 
+            /* Default body parser application/json */
+            app.use(express.json());
+
+            /* Default body parser application/x-www-form-urlencoded */
+            app.use(express.urlencoded({ extended: true }));
+
             middlewares.forEach(middleware => {
                 app.use(middleware);
             });
@@ -50,12 +62,13 @@ class Application {
         return this;
     }
 
-    public listen(port: any, env?: IEnv): void {
+    public listen(port: number, environment: ServerEnvironment, consoleMessage?: IApplicationMessageToConsole): void {
         this.port = port;
+        this.environment = environment;
 
         this.app.listen(this.port, () => {
 
-            new Console().messageServer(this.port, env || {} as IEnv);
+            new Console().messageServer(this.port, this.environment, consoleMessage);
 
             /* Shutdown the API */
             process.on("SIGINT", this.serverShutdown);
@@ -67,4 +80,4 @@ class Application {
 
 const appServerInstance: Application = new Application();
 
-export { appServerInstance as AppInstance, Application };
+export { appServerInstance as AppInstance, Application, ServerEnvironment };

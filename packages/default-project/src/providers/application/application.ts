@@ -4,7 +4,9 @@ import { provide } from 'inversify-binding-decorators';
 @provide(App)
 class App extends Application {
 
-    protected configureServices(): void { }
+    protected configureServices(): void {
+        //super.configureServices();
+     }
 
     protected postServerInitialization(): void { }
 
