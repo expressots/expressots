@@ -6,7 +6,7 @@ class App extends Application {
 
     protected configureServices(): void {
         //super.configureServices();
-     }
+    }
 
     protected postServerInitialization(): void { }
 

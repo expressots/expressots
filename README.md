@@ -1,6 +1,6 @@
 # Expresso TS
 
-A Typescript + [Node.js]("https://nodejs.org/en/") framework for quick building scalable, easy to read and maintain, server-side applications 🚀
+A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
 
 ## Philosophy
 

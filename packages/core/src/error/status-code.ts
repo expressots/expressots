@@ -1,15 +1,4 @@
-type GeneralStatusCode = GeneralErrorCode | ApplicationErrorCode | HttpStatusErrorCode;
-type HttpStatusErrorCode = InformationResponse | SuccessfulResponse | SuccessfulResponse | RedirectionMessage | ClientErrorResponse | ServerErrorResponse;
-
-enum GeneralErrorCode {
-    Unknown = 0
-}
-
-enum ApplicationErrorCode {
-    GeneralAppError = 51,
-    NotImplemented = 52,
-    LogFolderCreationError = 53
-}
+type HttpStatusErrorCode = InformationResponse | SuccessfulResponse | RedirectionMessage | ClientErrorResponse | ServerErrorResponse;
 
 /* Http Error Code Response */
 enum InformationResponse {
@@ -88,16 +77,7 @@ enum ServerErrorResponse {
     NetworkAuthenticationRequired = 511
 }
 
-/* Http Error Code Response */
-
-/* Specific Application Error Code */
-
-// {Add your error enums here}
-
-/* Specific Application Error Code */
-
 const HttpStatusErrorCode = { ...InformationResponse, ...SuccessfulResponse, ...RedirectionMessage, ...ClientErrorResponse, ...ServerErrorResponse };
-const GeneralStatusCode = { ...GeneralErrorCode, ...ApplicationErrorCode, ...HttpStatusErrorCode };
-const StatusCode = { ...GeneralErrorCode, ...ApplicationErrorCode, ...HttpStatusErrorCode, ...GeneralStatusCode };
+const StatusCode = { ...HttpStatusErrorCode };
 
 export { StatusCode };

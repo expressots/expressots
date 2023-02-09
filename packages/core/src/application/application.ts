@@ -5,6 +5,7 @@ import { InversifyExpressServer } from "inversify-express-utils";
 import { Console, IApplicationMessageToConsole } from "../console/console";
 import { Environments } from "../environment";
 import { LogLevel, log } from "../logger";
+import errorHandler from "../error/error-handler-middleware";
 
 enum ServerEnvironment {
     Development = "development",
@@ -58,6 +59,9 @@ class Application {
         });
 
         this.app = expressServer.build();
+        
+         /* Add the error handler middleware */
+         this.app.use(errorHandler);
 
         return this;
     }
