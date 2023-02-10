@@ -20,7 +20,7 @@ class BaseController implements interfaces.Controller {
 
             return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
-            Report.Error(error, res);
+            Report.Error(error);
         }
     }
 
@@ -33,7 +33,7 @@ class BaseController implements interfaces.Controller {
 
             return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
-            Report.Error(error, res);
+            Report.Error(error);
         }
     }
 

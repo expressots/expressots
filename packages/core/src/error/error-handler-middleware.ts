@@ -5,7 +5,7 @@ import { LogLevel, log } from "../logger";
 
 function errorHandler(error: AppError, req: Request, res: Response, next: NextFunction): void {
     
-    log(LogLevel.Error, error, "error-handler");
+    log(LogLevel.Error, error, error.service || "service-undefined");
     res.status(error.statusCode || StatusCode.InternalServerError).json({statusCode: error.statusCode, error: error.message});
 }
 

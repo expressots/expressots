@@ -1,4 +1,4 @@
-import { Report, StatusCode } from "@expressots/core";
+import { AppError, Report, StatusCode } from "@expressots/core";
 import { provide } from "inversify-binding-decorators";
 import { User } from "../../../entities/user.entity";
 import { ICreateUserDTO, ICreateUserResponseDTO } from "./create-user.dto";
@@ -11,8 +11,8 @@ class CreateUserUseCase {
         try {
             const user = new User(data.name, data.email);
            
-            if (user) {
-                Report.Error(StatusCode.BadRequest, "User not created");
+            if (!user) {
+                Report.Error(new AppError(StatusCode.BadRequest, "User already exists", "create-user-usecase"));
             }
            
             const response: ICreateUserResponseDTO = {
