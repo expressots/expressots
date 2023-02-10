@@ -11,7 +11,7 @@ class CreateUserUseCase {
         try {
             const user = new User(data.name, data.email);
            
-            if (!user) {
+            if (user) {
                 Report.Error(StatusCode.BadRequest, "User not created");
             }
            

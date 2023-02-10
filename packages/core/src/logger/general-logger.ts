@@ -37,8 +37,6 @@ class GeneralLogger {
             zippedArchive: true,
             maxSize: "20m",
             maxFiles: "7d",
-            handleExceptions: true,
-            handleRejections: true,
             silent: false
         });
 
@@ -56,7 +54,7 @@ class GeneralLogger {
             format: format.combine(
                 format.splat(),
                 format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-                format.label({ label: "core" }),
+                format.label({ label: "core-api" }),
                 format.printf(({ timestamp, level, message, service, label }) => {
                     return `[${timestamp}] [${label}] [${service}] ${level}: ${message}`;
                 }),
@@ -80,9 +78,16 @@ class GeneralLogger {
 
     public log(logLevel: LogLevel, content: Error | string, service?: string) {
 
-        const pathLine: string = this.getPathAndLine(content as Error);
-        const logMessageFormat: string = `${(content as Error).message} - (${(content as Error).name}) [file: %s]`;
+        let pathLine: string = "";
+        let logMessageFormat: string = "";
 
+        if (typeof content === "object") {
+            pathLine = this.getPathAndLine(content as Error);
+            logMessageFormat = `${(content as Error).message} - (${(content as Error).name}) [file: %s]`;
+        } else {
+            logMessageFormat = content as string;
+        }
+        
         switch (logLevel) {
             case LogLevel.Debug:
                 console.log(logMessageFormat, pathLine, { service });
@@ -98,6 +103,6 @@ class GeneralLogger {
 }
 
 const Log: GeneralLogger = new GeneralLogger();
-const logger = Log.log;
+const log  = Log.log.bind(Log);
 
-export { LogLevel, GeneralLogger, logger as log };
+export { LogLevel, GeneralLogger, log };
