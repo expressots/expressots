@@ -2,8 +2,6 @@
 
 > This is a CLI for the Expresso TS framework.
 
-![demo](https://raw.githubusercontent.com/Daniel-Boll/expressots-cli/main/assets/demo.gif)
-
 ---
 
 ## Installation 💻

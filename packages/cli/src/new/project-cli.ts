@@ -1,9 +1,9 @@
 import { CommandModule, Argv } from "yargs";
-import { ProjectUIForm } from "./project-ui";
+import { projectForm } from "./project-ui";
 
 const createProject = (): CommandModule<{}, any> => {
 	return {
-		command: "new project [project-name]",
+		command: "new [project-name]",
 		describe: "Create a new Expresso TS project",
 		builder: (yargs: Argv): Argv<any> => {
 			yargs.positional("project-name", {
@@ -13,8 +13,8 @@ const createProject = (): CommandModule<{}, any> => {
 
 			return yargs;
 		},
-		handler: ({ projectName }) => {
-			return ProjectUIForm({ projectName });
+		handler: async ({ projectName }) => {
+			return await projectForm(projectName);
 		},
 	};
 };
