@@ -27,6 +27,7 @@
   "keywords": [],
   "dependencies": {
     "chalk": "^4.1.2",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "inversify": "^6.0.1",
     "inversify-binding-decorators": "^4.0.0",

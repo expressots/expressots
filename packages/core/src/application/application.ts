@@ -1,11 +1,11 @@
 import express from "express";
+import process from "process";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { InversifyExpressServer } from "inversify-express-utils";
 import { Console, IApplicationMessageToConsole } from "../console/console";
-import { Environments } from "../environment";
-import { LogLevel, log } from "../logger";
 import errorHandler from "../error/error-handler-middleware";
+import { LogLevel, log } from "../logger";
 
 enum ServerEnvironment {
     Development = "development",
@@ -23,21 +23,15 @@ class Application {
     constructor() { }
 
     /* Add any service that you want to be initialized before the server starts */
-    protected configureServices(): void {
-
-        /* Check if .env file exists and all environment variables are defined */
-        Environments.CheckAll();
-    }
+    protected configureServices(): void { }
 
     /* Add any service that you want to execute after the server starts */
     protected postServerInitialization(): void { }
 
     /* Add any service that you want to execute after server is shutdown */
     protected serverShutdown(): void {
-
-        log(LogLevel.Info, "API is shutting down", "application-provider");
         process.exit(0);
-    }
+     }
 
     public create(container: Container, middlewares: express.RequestHandler[] = []): Application {
 
@@ -74,8 +68,7 @@ class Application {
 
             new Console().messageServer(this.port, this.environment, consoleMessage);
 
-            /* Shutdown the API */
-            process.on("SIGINT", this.serverShutdown);
+            process.on("SIGINT", this.serverShutdown.bind(this));
         });
 
         this.postServerInitialization();
@@ -85,3 +78,4 @@ class Application {
 const appServerInstance: Application = new Application();
 
 export { appServerInstance as AppInstance, Application, ServerEnvironment };
+

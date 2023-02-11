@@ -1,7 +1,9 @@
-import { provide } from "inversify-binding-decorators";
-import { LogLevel, log } from "../logger";
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+
+import { provide } from "inversify-binding-decorators";
+import { LogLevel, log } from "../logger";
 
 @provide(EnvValidatorProvider)
 class EnvValidatorProvider {
@@ -11,10 +13,12 @@ class EnvValidatorProvider {
     }
 
     public static CheckAll(): void {
-        log(LogLevel.Info, "Checking environment variables...", "env-validator-provider");
+
+        /* Load .env file */
+        dotenv.config();
 
         /* Verify if .env file exists */
-        const envFilePath: string = path.join(__dirname, "..", "..", "..", "..", ".env");
+        const envFilePath: string = path.join(process.cwd(), ".",".env");
 
         if (!fs.existsSync(envFilePath)) {
             log(LogLevel.Info, "Environment file .env is not defined.", "env-validator-provider");
@@ -25,7 +29,6 @@ class EnvValidatorProvider {
         let hasError: boolean = false;
 
         for (const key in process.env) {
-
             if (regexIgnoreDefaultEnvKeys.test(key)) {
                 continue;
             }

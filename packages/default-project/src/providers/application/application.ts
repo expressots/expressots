@@ -1,16 +1,20 @@
-import { Application } from '@expressots/core';
+import { Application, Environments, GeneralLogger, LogLevel, log } from '@expressots/core';
 import { provide } from 'inversify-binding-decorators';
 
 @provide(App)
 class App extends Application {
 
     protected configureServices(): void {
-        //super.configureServices();
+
+        Environments.CheckAll();
     }
 
     protected postServerInitialization(): void { }
 
-    protected serverShutdown(): void { }
+    protected serverShutdown(): void {
+        log(LogLevel.Info, 'Server is shutting down', "logger-provider");
+        super.serverShutdown();
+    }
 }
 
 const appInstance = new App();
