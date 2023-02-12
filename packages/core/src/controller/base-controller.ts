@@ -1,6 +1,6 @@
 import { provide } from 'inversify-binding-decorators';
 import { interfaces } from 'inversify-express-utils';
-import { AppError, Report } from '../error';
+import { Report } from '../error';
 
 @provide(BaseController)
 class BaseController implements interfaces.Controller {

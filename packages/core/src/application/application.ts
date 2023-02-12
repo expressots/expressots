@@ -1,11 +1,10 @@
 import express from "express";
-import process from "process";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { InversifyExpressServer } from "inversify-express-utils";
+import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
 import errorHandler from "../error/error-handler-middleware";
-import { LogLevel, log } from "../logger";
 
 enum ServerEnvironment {
     Development = "development",
