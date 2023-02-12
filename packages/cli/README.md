@@ -2,6 +2,8 @@
 
 > This is a CLI for the Expresso TS framework.
 
+[![asciicast](https://asciinema.org/a/7diTOTyY653mpdA0JtugjRn9a.svg)](https://asciinema.org/a/7diTOTyY653mpdA0JtugjRn9a)
+
 ---
 
 ## Installation 💻
