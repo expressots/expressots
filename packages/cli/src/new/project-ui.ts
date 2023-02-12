@@ -53,12 +53,25 @@ const projectForm = async (projectName: string): Promise<void> => {
 			choices: ["npm", "yarn", "pnpm"],
 		},
 		{
+			type: "list",
+			name: "template",
+			message: "Select a template",
+			choices: [
+				"Non-Opinionated :: A simple ExpressoTS project with no opinionated features.",
+			],
+		},
+		{
 			type: "confirm",
 			name: "confirm",
 			message: "Do you want to create this project?",
 			default: true,
 		},
 	]);
+
+	// Hashmap of templates and their directories
+	const templates: Record<string, unknown> = {
+		"Non-Opinionated": "01_base",
+	};
 
 	if (answer.confirm) {
 		const progressBar = new SingleBar(
@@ -74,7 +87,11 @@ const projectForm = async (projectName: string): Promise<void> => {
 			doing: "Cloning project",
 		});
 
-		const emitter = degit("expressots/expressots/project-demo");
+		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
+
+		const emitter = degit(
+			`expressots/expressots/templates/${templates[template]}`
+		);
 		await emitter.clone(answer.name);
 
 		progressBar.update(50, {
