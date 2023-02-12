@@ -7,7 +7,7 @@ interface ICreateBookDTO {
 interface ICreateBookResponseDTO {
     id: number;
     title: string;
-    auhtor: string;
+    author: string;
     status: string;
 }
 

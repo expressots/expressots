@@ -18,7 +18,7 @@ class CreateBookUseCase {
             const response: ICreateBookResponseDTO = {
                 id: book.id,
                 title: book.title,
-                auhtor: book.author,
+                author: book.author,
                 status: "Book created successfully"
             }
             
