@@ -22,7 +22,12 @@
     "node": ">=18.10.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --passWithNoTests --silent --noStackTrace --runInBand --no-cache",
+    "test:verbose": "jest --passWithNoTests --runInBand",
+    "test:unit": "npm test -- --bail --watch -c jest-unit-config.ts",
+    "test:integration": "npm test -- --bail --watch -c jest-integration-config.ts",
+    "test:staged": "npm test -- --findRelatedTests",
+    "test:ci": "npm test -- --coverage"
   },
   "keywords": [],
   "dependencies": {
@@ -38,6 +43,10 @@
     "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
-    "@types/express": "^4.17.17"
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.4.0",
+    "jest": "^29.4.2",
+    "ts-jest": "^29.0.5",
+    "ts-node": "^10.9.1"
   }
 }
