@@ -2,8 +2,10 @@ import { Config } from 'jest'
 
 const Configuration: Config = {
   preset: 'ts-jest',
-  roots: ['<rootDir>/src',
-    '<rootDir>/test'],
+  roots: [
+    '<rootDir>/src',
+    '<rootDir>/test'
+  ],
   testMatch: [
     '<rootDir>/test/**/*.spec.ts',
     '<rootDir>/test/**/*.test.ts'
