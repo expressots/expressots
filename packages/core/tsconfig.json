@@ -9,15 +9,18 @@
     "declaration": true,
     "types": [
       "node",
-      "reflect-metadata"
+      "reflect-metadata",
+      "jest"
     ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true
   },
   "include": [
-    "./src/**/*"
-, "src/application/application.tsn/application.ts"  ],
+    "./src/**/*",
+     "src/application/application.tsn/application.ts",
+     "test/**/*"
+    ],
   "exclude": [
     "node_modules"
   ]
