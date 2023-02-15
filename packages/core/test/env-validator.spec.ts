@@ -19,13 +19,13 @@ describe('EnvValidatorProvider', () => {
     it('returns the value of the environment variable with the given key', () => {
       const expectedValue = 'test value';
       process.env.TEST_KEY = expectedValue;
-      const actualValue = Environments.Get('TEST_KEY');
+      const actualValue = Environments.get('TEST_KEY');
       expect(actualValue).toEqual(expectedValue);
     });
 
     it('returns the default value if the environment variable is not defined', () => {
       const defaultValue = 'default value';
-      const actualValue = Environments.Get('NON_EXISTENT_KEY', defaultValue);
+      const actualValue = Environments.get('NON_EXISTENT_KEY', defaultValue);
       expect(actualValue).toEqual(defaultValue);
     });
   });
@@ -48,7 +48,7 @@ describe('EnvValidatorProvider', () => {
 
     it('loads the .env file', () => {
       jest.spyOn(dotenv, 'config').mockImplementation();
-      Environments.CheckAll();
+      Environments.checkAll();
       expect(dotenv.config).toHaveBeenCalled();
     });
   });
