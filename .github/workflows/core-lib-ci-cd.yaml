@@ -79,5 +79,7 @@ jobs:
           exit 1
         fi
 
-        # Publish to NPM
+        # Install Node.js v18.10.0 and publish to NPM
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs
         npm publish
