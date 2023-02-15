@@ -1,0 +1,83 @@
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Unit Tests
+      run: npm test
+      env:
+        CI: true
+
+    - name: CodeQL Autobuild
+      uses: github/codeql-action/autobuild@v1
+      with:
+        languages: nodejs
+        init: true
+        # Only analyze the main branch to reduce CI build time
+        # Remove the "if: github.ref == 'refs/heads/main'" line to analyze all branches
+        if: github.ref == 'refs/heads/main'
+
+    - name: CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
+      with:
+        # Path to CodeQL database
+        database: codeql-database
+        # Path to the folder with source files to be analyzed
+        # Change this to the correct path for your project
+        sarif-file: analysis-results.sarif
+        # Path to the folder where CodeQL CLI is installed
+        # Change this to the correct path for your system
+        toolchain: /opt/codeql-home/codeql-runner
+        # Path to the CodeQL query to run
+        queries: ./codeql/queries
+
+    - name: Post CodeQL Analysis
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        # Path to CodeQL database
+        database: codeql-database
+        # Path to the analysis results in SARIF format
+        # This should match the value of the "sarif-file" parameter used in the previous step
+        sarif_file: analysis-results.sarif
+
+    - name: Publish to NPM
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      run: |
+        if [ "${{ github.event_name }}" != "push" ]; then
+          exit 0
+        fi
+
+        # Check test coverage
+        COVERAGE_THRESHOLD=70
+        COVERAGE=$(npm run coverage --silent | tail -n 1)
+        COVERAGE=${COVERAGE#* }
+        COVERAGE=${COVERAGE%.*}
+        echo "Coverage: $COVERAGE%"
+        if [ $COVERAGE -lt $COVERAGE_THRESHOLD ]; then
+          echo "Failed test coverage check ($COVERAGE% < $COVERAGE_THRESHOLD%)."
+          exit 1
+        fi
+
+        # Check for CodeQL issues
+        CODEQL_ISSUES=$(cat analysis-results.sarif | jq '[.runs[] | select(.tool.driver.name | contains("CodeQL")) | .issues[].severity] | sort | reverse | unique')
+        if [ -n "$CODEQL_ISSUES" ]; then
+          echo "Failed CodeQL check: $CODEQL_ISSUES."
+          exit 1
+        fi
+
+        # Publish to NPM
+        npm publish
