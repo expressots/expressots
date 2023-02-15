@@ -29,7 +29,7 @@ jobs:
         CI: true
 
     - name: CodeQL Autobuild
-      uses: github/codeql-action/autobuild@v1
+      uses: github/codeql-action/autobuild@v2
       with:
         languages: nodejs
         init: true
@@ -38,7 +38,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
     - name: CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
       with:
         # Path to CodeQL database
         database: codeql-database
@@ -52,7 +52,7 @@ jobs:
         queries: ./codeql/queries
 
     - name: Post CodeQL Analysis
-      uses: github/codeql-action/upload-sarif@v1
+      uses: github/codeql-action/upload-sarif@v2
       with:
         # Path to CodeQL database
         database: codeql-database
