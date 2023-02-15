@@ -3,7 +3,7 @@ import { interfaces } from 'inversify-express-utils';
 import { Report } from '../error';
 
 @provide(BaseController)
-class BaseController implements interfaces.Controller {
+abstract class BaseController implements interfaces.Controller {
 
     private serviceName: string;
 

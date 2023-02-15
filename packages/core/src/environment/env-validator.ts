@@ -8,11 +8,11 @@ import { LogLevel, log } from "../logger";
 @provide(EnvValidatorProvider)
 class EnvValidatorProvider {
 
-    public static Get(key: string, defaultValue: any = undefined): any {
+    public static get(key: string, defaultValue: any = undefined): any {
         return process.env[key] ?? defaultValue;
     }
 
-    public static CheckAll(): void {
+    public static checkAll(): void {
 
         /* Load .env file */
         dotenv.config();
