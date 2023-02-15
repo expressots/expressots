@@ -28,41 +28,39 @@ jobs:
       env:
         CI: true
 
-    - name: CodeQL Autobuild
-      uses: github/codeql-action/autobuild@v2
+    - name: Download CodeQL Results
+      uses: actions/download-artifact@v2
       with:
-        path: packages/core
-        languages: nodejs, javascript, typescript
-        queries: ./codeql/queries
-        init: true
-        # Only analyze the main branch to reduce CI build time
-        # Remove the "if: github.ref == 'refs/heads/main'" line to analyze all branches
-        if: github.ref == 'refs/heads/main'
+        name: codeql-results
+        path: analysis-results.sarif
 
-    - name: CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
-      with:
-        path: packages/core
-        languages: nodejs, javascript, typescript
-        # Path to CodeQL database
-        database: codeql-database
-        # Path to the folder with source files to be analyzed
-        # Change this to the correct path for your project
-        sarif-file: analysis-results.sarif
+    - name: CodeQL Scan
+      run: |
         # Path to the folder where CodeQL CLI is installed
         # Change this to the correct path for your system
-        toolchain: /opt/codeql-home/codeql-runner
-        # Path to the CodeQL query to run
-        queries: ./codeql/queries
+        CODEQL_PATH=/opt/codeql-home/codeql-runner
 
-    - name: Post CodeQL Analysis
+        # Path to the folder with source files to be analyzed
+        # Change this to the correct path for your project
+        SOURCE_PATH=packages/core
+
+        # Path to the CodeQL query to run
+        # Change this to the correct path for your project
+        QUERY_PATH=./codeql/queries
+
+        # Path to the CodeQL results file
+        RESULTS_FILE=analysis-results.sarif
+
+        $CODEQL_PATH/codeql database create codeql-db --language=javascript --source-root=$SOURCE_PATH
+        $CODEQL_PATH/codeql database analyze codeql-db $QUERY_PATH --format=sarif-latest --output=$RESULTS_FILE
+        $CODEQL_PATH/codeql database upgrade codeql-db
+
+
+    - name: Upload CodeQL Issues
       uses: github/codeql-action/upload-sarif@v2
       with:
-        # Path to CodeQL database
-        database: codeql-database
-        # Path to the analysis results in SARIF format
-        # This should match the value of the "sarif-file" parameter used in the previous step
         sarif_file: analysis-results.sarif
+
 
     - name: Publish to NPM
       env:

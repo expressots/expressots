@@ -56,3 +56,10 @@ jobs:
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
+
+    # Upload the CodeQL results as an artifact
+    - name: Upload CodeQL results
+      uses: actions/upload-artifact@v2
+      with:
+        name: codeql-results
+        path: ${{github.workspace}}/analysis-results.sarif
