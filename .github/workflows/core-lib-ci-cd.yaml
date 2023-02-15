@@ -31,7 +31,9 @@ jobs:
     - name: CodeQL Autobuild
       uses: github/codeql-action/autobuild@v2
       with:
-        languages: nodejs
+        path: packages/core
+        languages: nodejs, javascript, typescript
+        queries: ./codeql/queries
         init: true
         # Only analyze the main branch to reduce CI build time
         # Remove the "if: github.ref == 'refs/heads/main'" line to analyze all branches
@@ -40,6 +42,8 @@ jobs:
     - name: CodeQL Analysis
       uses: github/codeql-action/analyze@v2
       with:
+        path: packages/core
+        languages: nodejs, javascript, typescript
         # Path to CodeQL database
         database: codeql-database
         # Path to the folder with source files to be analyzed
