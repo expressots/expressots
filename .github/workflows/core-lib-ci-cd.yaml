@@ -38,7 +38,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: v$ {{ github.ref}}
+        tag_name: v${{ github.ref}}
         release_name: Release ${{ github.ref }}
         body: |
           Changes in this Release
