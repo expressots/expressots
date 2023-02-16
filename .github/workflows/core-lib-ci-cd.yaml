@@ -29,9 +29,6 @@ jobs:
       env:
         CI: true
 
-    - name: Debug GITHUB_TOKEN
-      run: echo "token is ${{secrets.GITHUB_TOKEN}}"
-
     # Create git release
     - name: Github release
       uses: actions/create-release@v1
