@@ -38,12 +38,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        tag_name: v$ {{ github.event.pull_request.head.ref}}
-        release_name: Release ${{ github.event.pull_request.head.ref }}
+        tag_name: v$ {{ github.ref}}
+        release_name: Release ${{ github.ref }}
         body: |
           Changes in this Release
-          - ${{ github.event.pull_request.title }}
-          New Release ${{ github.event.pull_request.head.ref}}
+          - ${{ github.ref }}
         draft: false
         prerelease: false
 
