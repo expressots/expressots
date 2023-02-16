@@ -29,12 +29,15 @@ jobs:
       env:
         CI: true
 
+    - name: Debug GITHUB_TOKEN
+      run: echo "token is ${{secrets.GITHUB_TOKEN}}"
+
     # Create git release
     - name: Github release
       uses: actions/create-release@v1
       if: github.event.pull_request.merged == true
       env:
-        GITHUB_TOKEN: ${{ secrets.EXPRESSOTS }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v$ {{ github.event.pull_request.head.ref}}
         release_name: Release ${{ github.event.pull_request.head.ref }}
