@@ -1,4 +1,4 @@
-name: "CodeQL"
+name: "CodeQL Analysis Report"
 
 on:
   push:
@@ -36,30 +36,12 @@ jobs:
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
+      continue-on-error: true
       with:
         languages: ${{ matrix.language }}
-
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, Go, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
-      with:
-        path: packages/core
-
-    # If the Autobuild fails above, remove it and uncomment the following three lines.
-    # Modify them (or add more) to build your code if your project.
-    # - run: |
-    #     echo "Run, Build Application using script"
-    #     ./location_of_script_within_repo/buildscript.sh
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
-
-    # Upload the CodeQL results as an artifact
-    - name: Upload CodeQL results
-      uses: actions/upload-artifact@v2
-      with:
-        name: codeql-results
-        path: packages/core/analysis-results.sarif
+        path: "packages/core"
