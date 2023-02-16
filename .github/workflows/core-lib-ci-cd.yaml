@@ -1,7 +1,8 @@
-name: Build and Publish
+name: Build and Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
@@ -28,67 +29,41 @@ jobs:
       env:
         CI: true
 
-    - name: Download CodeQL Results
-      uses: actions/download-artifact@v2
+    # Create git release
+    - name: Github release
+      uses: actions/create-release@v1
+      if: github.event.pull_request.merged == true
       with:
-        name: codeql-results
-        path: packages/core/analysis-results.sarif
-
-    - name: CodeQL Scan
-      run: |
-        # Path to the folder where CodeQL CLI is installed
-        # Change this to the correct path for your system
-        CODEQL_PATH=/opt/codeql-home/codeql-runner
-
-        # Path to the folder with source files to be analyzed
-        # Change this to the correct path for your project
-        SOURCE_PATH=packages/core
-
-        # Path to the CodeQL query to run
-        # Change this to the correct path for your project
-        QUERY_PATH=./codeql/queries
-
-        # Path to the CodeQL results file
-        RESULTS_FILE=analysis-results.sarif
-
-        $CODEQL_PATH/codeql database create codeql-db --language=javascript --source-root=$SOURCE_PATH
-        $CODEQL_PATH/codeql database analyze codeql-db $QUERY_PATH --format=sarif-latest --output=$RESULTS_FILE
-        $CODEQL_PATH/codeql database upgrade codeql-db
+        tag_name: v$ {{ github.event.pull_request.head.ref}}
+        release_name: Release ${{ github.event.pull_request.head.ref }}
+        body: |
+          Changes in this Release
+          - ${{ github.event.pull_request.title }}
+          New Release ${{ github.event.pull_request.head.ref}}
+        draft: false
+        prerelease: false
 
 
-    - name: Upload CodeQL Issues
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: analysis-results.sarif
-
-
-    - name: Publish to NPM
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-      run: |
-        if [ "${{ github.event_name }}" != "push" ]; then
-          exit 0
-        fi
+    #- name: Publish to NPM
+    #  env:
+    #    NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    #  run: |
+    #    if [ "${{ github.event_name }}" != "push" ]; then
+    #      exit 0
+    #    fi
 
         # Check test coverage
-        COVERAGE_THRESHOLD=70
-        COVERAGE=$(npm run coverage --silent | tail -n 1)
-        COVERAGE=${COVERAGE#* }
-        COVERAGE=${COVERAGE%.*}
-        echo "Coverage: $COVERAGE%"
-        if [ $COVERAGE -lt $COVERAGE_THRESHOLD ]; then
-          echo "Failed test coverage check ($COVERAGE% < $COVERAGE_THRESHOLD%)."
-          exit 1
-        fi
-
-        # Check for CodeQL issues
-        CODEQL_ISSUES=$(cat analysis-results.sarif | jq '[.runs[] | select(.tool.driver.name | contains("CodeQL")) | .issues[].severity] | sort | reverse | unique')
-        if [ -n "$CODEQL_ISSUES" ]; then
-          echo "Failed CodeQL check: $CODEQL_ISSUES."
-          exit 1
-        fi
+    #    COVERAGE_THRESHOLD=70
+    #    COVERAGE=$(npm run coverage --silent | tail -n 1)
+    #    COVERAGE=${COVERAGE#* }
+    #    COVERAGE=${COVERAGE%.*}
+    #    echo "Coverage: $COVERAGE%"
+    #    if [ $COVERAGE -lt $COVERAGE_THRESHOLD ]; then
+    #      echo "Failed test coverage check ($COVERAGE% < $COVERAGE_THRESHOLD%)."
+    #      exit 1
+    #    fi
 
         # Install Node.js v18.10.0 and publish to NPM
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-        cd packages/core && npm publish
+    #    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    #    sudo apt-get install -y nodejs
+    #    cd packages/core && npm publish
