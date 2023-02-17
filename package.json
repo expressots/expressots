@@ -22,7 +22,7 @@
     "node": ">=18.10.0"
   },
   "scripts": {
-    "release": "release-it",
+    "release": "release-it -- --no-npm.publish",
     "test": "jest"
   },
   "keywords": [],
@@ -34,7 +34,9 @@
     "release-it": "^15.6.0"
   },
   "release-it": {
-    "commitMessage": "chore: release v${version}"
+    "git": {
+      "commitMessage": "chore: release v${version}"
+    }
   },
   "github": {
     "release": true
