@@ -1,5 +1,14 @@
 
 
+## [0.0.5](https://github.com/expressots/expressots/compare/v0.0.2...v0.0.5) (2023-02-17)
+
+
+### Bug Fixes
+
+* fix pipeline on push ([da20e93](https://github.com/expressots/expressots/commit/da20e93665a7fd51f449f0c6ae71cd485028d1f4))
+* fix release tag pipeline ([#12](https://github.com/expressots/expressots/issues/12)) ([d2a5491](https://github.com/expressots/expressots/commit/d2a5491dce149feb2a7b143d57ba1e08d8a2d68b))
+* set pipeline only pr merge ([2936442](https://github.com/expressots/expressots/commit/293644285f4dd611ab6b600c462a6559f9625605))
+
 ## [0.0.4](https://github.com/expressots/expressots/compare/v0.0.2...v0.0.4) (2023-02-17)
 
 
