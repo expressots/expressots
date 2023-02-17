@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   pull_request:
-    types: [closed]
+    types: [opened, synchronize, closed]
     branches:
       - main          
 
