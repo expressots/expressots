@@ -34,9 +34,10 @@ jobs:
     # Generate changelog
     - name: Generate changelog
       id: changelog
+      working-directory: ${{ github.workspace }}
       run: |
         # extract the changelog
-        echo "::set-output name=tag::$(grep -oP '^## \K\d+\.\d+\.\d+' CHANGELOG.md | head -n 1)" 
+        echo "::set-output name=tag::$(grep -oP '^## \[(\d+\.\d+\.\d+)\]' CHANGELOG.md | head -n 1 | cut -d '[' -f 2 | cut -d ']' -f 1)" 
 
     # Create git release
     - name: Github release
