@@ -4,9 +4,7 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - main
-  workflow_dispatch:
-          
+      - main          
 
 jobs:
   build:
@@ -42,7 +40,7 @@ jobs:
     # Create git release
     - name: Github release
       uses: actions/create-release@v1
-      #if: github.event.pull_request.merged == true
+      if: github.event.pull_request.merged == true
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
