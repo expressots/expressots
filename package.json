@@ -22,7 +22,7 @@
     "node": ">=18.10.0"
   },
   "scripts": {
-    "release": "release-it -- --no-npm.publish",
+    "release": "release-it",
     "test": "jest"
   },
   "keywords": [],
