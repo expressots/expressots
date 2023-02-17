@@ -1,5 +1,12 @@
 
 
+## [0.1.1](https://github.com/rsaz/typescript-clean-architecture/compare/v0.1.0...v0.1.1) (2023-02-17)
+
+
+### Bug Fixes
+
+* fix build & release pipeline to get tag ([86d24e8](https://github.com/rsaz/typescript-clean-architecture/commit/86d24e86c84c533245251969ba5195b1ebbe9043))
+
 ## [0.1.0](https://github.com/rsaz/typescript-clean-architecture/compare/v...v0.1.0) (2023-02-17)
 
 
