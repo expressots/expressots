@@ -31,6 +31,13 @@ jobs:
       env:
         CI: true
 
+    # Generate changelog
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # extract the changelog
+        echo "::set-output name=tag::$(grep -oP '^## \K\d+\.\d+\.\d+' CHANGELOG.md | head -n 1)" 
+
     # Create git release
     - name: Github release
       uses: actions/create-release@v1
