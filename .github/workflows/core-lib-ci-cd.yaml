@@ -25,6 +25,9 @@ jobs:
     - name: Install Dependencies
       working-directory: packages/core
       run: npm install
+      
+    - name: Install Release-it Dependencies
+      run: npm install release-it @release-it/conventional-changelog
 
     - name: Unit Tests
       working-directory: packages/core
