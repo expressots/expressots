@@ -1,0 +1,99 @@
+{
+  "name": "@expressots/core",
+  "version": "0.0.1",
+  "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
+  "author": "Richard Zampieri",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "homepage": "https://expresso-ts.com",
+  "funding": {
+    "type": "",
+    "url": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.10.0"
+  },
+  "scripts": {
+    "release": "release-it",
+    "test": "jest"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "@commitlint/cli": "^17.4.3",
+    "@commitlint/config-conventional": "^17.4.3",
+    "@release-it/conventional-changelog": "^5.1.1",
+    "husky": "^8.0.3",
+    "release-it": "^15.6.0"
+  },
+  "release-it": {
+    "commitMessage": "chore: release v${version}"
+  },
+  "github": {
+    "release": true
+  },
+  "npm": {
+    "publish": false
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "infile": "CHANGELOG.md",
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          {
+            "type": "feat",
+            "section": "Features"
+          },
+          {
+            "type": "fix",
+            "section": "Bug Fixes"
+          },
+          {
+            "type": "perf",
+            "section": "Performance Improvements"
+          },
+          {
+            "type": "revert",
+            "section": "Reverts"
+          },
+          {
+            "type": "docs",
+            "section": "Documentation"
+          },
+          {
+            "type": "style",
+            "section": "Styles"
+          },
+          {
+            "type": "refactor",
+            "section": "Code Refactoring"
+          },
+          {
+            "type": "test",
+            "section": "Tests"
+          },
+          {
+            "type": "build",
+            "section": "Build System"
+          },
+          {
+            "type": "ci",
+            "section": "Continuous Integrations"
+          },
+          {
+            "type": "chore",
+            "hidden": true
+          }
+        ]
+      }
+    }
+  }
+}
