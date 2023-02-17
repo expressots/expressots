@@ -32,6 +32,13 @@ jobs:
       env:
         CI: true
 
+    - name: Release
+      uses: release-it/release-it-action@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        release-version: ${{ steps.version.outputs.tag }}
+
     # Generate changelog
     #- name: Generate changelog
     #  id: changelog
