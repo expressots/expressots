@@ -31,14 +31,15 @@ jobs:
       run: npm test
       env:
         CI: true
-
-    - name: Release
-      uses: release-it/release-it-action@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+    
+    - name: release-it Github Action
+      uses: TheRealWaldo/release-it@v0.7.2
       with:
-        release-version: ${{ steps.version.outputs.tag }}
-
+        # Github token to pass to release-it
+        github-token: ${{ github.token }}
+        version: ${{ steps.version.outputs.tag }}
+        changelog: ./CHANGELOG.md
+        
     # Generate changelog
     #- name: Generate changelog
     #  id: changelog
