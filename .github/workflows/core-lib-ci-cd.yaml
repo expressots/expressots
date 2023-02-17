@@ -32,13 +32,28 @@ jobs:
       env:
         CI: true
     
-    - name: release-it Github Action
+    - name: Create release
       uses: TheRealWaldo/release-it@v0.7.2
       with:
-        # Github token to pass to release-it
         github-token: ${{ github.token }}
-        version: ${{ steps.version.outputs.tag }}
-        changelog: ./CHANGELOG.md
+        no-changelog: true
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+    - name: Read changelog
+      id: changelog
+      run: echo "::set-output name=changelog::$(cat CHANGELOG.md)"
+    - name: Create GitHub release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        release_name: Release ${{ steps.version.outputs.tag }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
         
     # Generate changelog
     #- name: Generate changelog
