@@ -5,6 +5,9 @@ on:
     types: [opened, synchronize, closed]
     branches:
       - main          
+  push:
+    branches:
+      - main
 
 jobs:
   build:
