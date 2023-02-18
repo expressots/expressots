@@ -1,12 +1,17 @@
 {
   "compilerOptions": {
+    "composite": true,
     "module": "commonjs",
-    "target": "ES2017",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
     "declaration": true,
+    "target": "ES2017",
+    "sourceMap": false,
+    "noImplicitAny": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noLib": false,
+    "strictBindCallApply": false,
+    "importHelpers": true,
+    "removeComments": false,
     "types": [
       "node",
       "reflect-metadata",
@@ -14,14 +19,17 @@
     ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "allowJs": true,
+    "strict": true,
+    "strictNullChecks": false
   },
   "include": [
-    "./src/**/*",
-     "src/application/application.tsn/application.ts",
-     "test/**/*"
+    "./src/**/*.ts",
+     "src/application/application.tsn/application.ts",  
     ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "test/**/*"
   ]
 }
