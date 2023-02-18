@@ -31,23 +31,15 @@ jobs:
       run: npm test
       env:
         CI: true
-    
-    - name: Create release
-      uses: TheRealWaldo/release-it@v0.7.2
-      with:
-        github-token: ${{ github.token }}
-        no-changelog: true
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
         
     # Generate changelog
-    #- name: Generate changelog
-    #  id: changelog
-    #  working-directory: ${{ github.workspace }}
-    #  run: |
+    - name: Generate changelog
+      id: changelog
+      working-directory: ${{ github.workspace }}
+      run: |
         # extract the changelog
-    #    echo "::set-output name=tag::$(grep -oP '^## \[(\d+\.\d+\.\d+)\]' CHANGELOG.md | head -n 1 | cut -d '[' -f 2 | cut -d ']' -f 1)" 
+        echo "::set-output name=tag::$(grep -oP '^## \[(\d+\.\d+\.\d+)\]' CHANGELOG.md | head -n 1 | cut -d '[' -f 2 | cut -d ']' -f 1)" 
+        echo v${{ steps.changelog.outputs.tag }}
 
     # Create git release
     #- name: Github release
