@@ -1,5 +1,5 @@
 interface PingResponseDTO {
-    message: string;
+  message: string;
 }
 
 export { PingResponseDTO };

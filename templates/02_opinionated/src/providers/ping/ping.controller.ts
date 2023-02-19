@@ -6,16 +6,14 @@ import { PingResponseDTO } from "./ping.dto";
 
 @controller("/")
 class PingController extends BaseController {
+  constructor(private pingUseCase: PingUseCase) {
+    super("default-router-controller");
+  }
 
-    constructor(private pingUseCase: PingUseCase) {
-        super("default-router-controller");
-    }
-
-    @httpGet("")
-    execute(@response() res: any): Promise<PingResponseDTO> {
-
-        return this.callUseCase(this.pingUseCase.execute(), res, StatusCode.OK);
-    }
+  @httpGet("")
+  execute(@response() res: any): Promise<PingResponseDTO> {
+    return this.callUseCase(this.pingUseCase.execute(), res, StatusCode.OK);
+  }
 }
 
 export { PingController };

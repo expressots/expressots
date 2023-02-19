@@ -3,15 +3,13 @@ import { PingResponseDTO } from "./ping.dto";
 
 @provide(PingUseCase)
 class PingUseCase {
+  execute(): PingResponseDTO {
+    const response: PingResponseDTO = {
+      message: "API is Online",
+    };
 
-    execute(): PingResponseDTO {
-
-        const response: PingResponseDTO = {
-            message: "API is Online"
-        }
-
-        return response;
-    }
+    return response;
+  }
 }
 
 export { PingUseCase };
