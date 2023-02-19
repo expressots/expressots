@@ -18,7 +18,8 @@
     "types": ["reflect-metadata","node", "jest"]                                
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    ".eslintrc.js",
   ],
   "exclude": [
     "node_modules",
