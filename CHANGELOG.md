@@ -1,5 +1,31 @@
 
 
+## [1.1.0](https://github.com/expressots/expressots/compare/v0.0.2...v1.1.0) (2023-02-19)
+
+
+### Features
+
+* add eslint prettier config ([906cdcc](https://github.com/expressots/expressots/commit/906cdcc0ebf00bee55c8cab66e95dd74c9296cb8))
+* add opinionated template ([d1eb222](https://github.com/expressots/expressots/commit/d1eb222016c809a1a4576cce5b51660d55ad7c19))
+* add readme ([557e1ff](https://github.com/expressots/expressots/commit/557e1ffcd41d1e482372183a0ea72820531740d7))
+* update 01_base template ([d289c57](https://github.com/expressots/expressots/commit/d289c5752bb78ad6bce7f35fcdb7019e7cc38b6a))
+
+
+### Bug Fixes
+
+* add ping controller ([ca7b005](https://github.com/expressots/expressots/commit/ca7b005be099eadc35b5e6b96aaf82c0e3840c81))
+* fix index.js main on package ([26596b7](https://github.com/expressots/expressots/commit/26596b7982143e63186461bde1324a81a8901446))
+* fix jest compilation error ([9c5be2e](https://github.com/expressots/expressots/commit/9c5be2e8a1dc062618d048183dfeef08d67d8e70))
+* fix release tag pipeline ([#12](https://github.com/expressots/expressots/issues/12)) ([d2a5491](https://github.com/expressots/expressots/commit/d2a5491dce149feb2a7b143d57ba1e08d8a2d68b))
+* logo update on doc ([b2fe55b](https://github.com/expressots/expressots/commit/b2fe55b54fcac09bf261b5ea5cab4ebdbe20dee1))
+* logo update on doc, build update ([b36889d](https://github.com/expressots/expressots/commit/b36889d513ed07678b43f7107ef9cd49ab5f8afa))
+* non opinionated folder and prettier ([61d1e1b](https://github.com/expressots/expressots/commit/61d1e1b45e9bd240d4a6fd12a71f814e0426a436))
+* prettier eslint jest setup ([0f29452](https://github.com/expressots/expressots/commit/0f29452c796abefe205ece8b943efda24b383905))
+* remove test-app ([767c7a5](https://github.com/expressots/expressots/commit/767c7a54ea65c228a94ba3d63e5b6739c474a96e))
+* set pipeline only pr merge ([2936442](https://github.com/expressots/expressots/commit/293644285f4dd611ab6b600c462a6559f9625605))
+* update main remove index.js ([8b40b11](https://github.com/expressots/expressots/commit/8b40b11c51da728db4f8760e75fee1e2724e98e0))
+* update readme ([a2ef784](https://github.com/expressots/expressots/commit/a2ef7849a1c1466f8737f263ad1728f5d30b25ec))
+
 ## [0.0.7](https://github.com/expressots/expressots/compare/v0.0.2...v0.0.7) (2023-02-18)
 
 
