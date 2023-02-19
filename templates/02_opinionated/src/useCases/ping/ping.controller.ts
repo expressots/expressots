@@ -1,10 +1,10 @@
-import { BaseController, Report, StatusCode } from "@expressots/core";
+import { BaseController, StatusCode } from "@expressots/core";
 import { controller } from "inversify-express-utils";
 import { httpGet, response } from "inversify-express-utils/lib/decorators";
-import { PingUseCase } from "./ping.usecase";
 import { PingResponseDTO } from "./ping.dto";
+import { PingUseCase } from "./ping.usecase";
 
-@controller("/")
+@controller("/ping")
 class PingController extends BaseController {
   constructor(private pingUseCase: PingUseCase) {
     super("default-router-controller");
@@ -12,7 +12,13 @@ class PingController extends BaseController {
 
   @httpGet("")
   execute(@response() res: any): Promise<PingResponseDTO> {
-    return this.callUseCase(this.pingUseCase.execute(), res, StatusCode.OK);
+    const start: Date = new Date();
+
+    return this.callUseCase(
+      this.pingUseCase.execute(start),
+      res,
+      StatusCode.OK,
+    );
   }
 }
 
