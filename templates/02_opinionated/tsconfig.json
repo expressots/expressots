@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2016",                               
+    "experimentalDecorators": true,                   
+    "emitDecoratorMetadata": true,                    
+    "module": "commonjs",                             
+    "resolveJsonModule": true,                        
+    "sourceMap": true,                                
+    "outDir": "./dist",                                   
+    "esModuleInterop": true,                            
+    "forceConsistentCasingInFileNames": true,           
+    "strict": true,                                     
+    "noImplicitAny": false,                          
+    "skipLibCheck": true,
+    "types": ["reflect-metadata","node"]                                
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
