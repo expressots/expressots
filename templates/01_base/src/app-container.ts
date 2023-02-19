@@ -1,11 +1,11 @@
 import { AppContainer } from "@expressots/core";
-import { PingModule } from "./controllers/ping.module";
+import { AppModule } from "./app.module";
 
 const appContainer = new AppContainer();
 
 const container = appContainer.create([
     // Add your modules here
-    PingModule
+    AppModule
 ]);
 
 export { container };

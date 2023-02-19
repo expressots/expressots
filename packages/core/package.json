@@ -23,6 +23,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "postbuild": "xcopy \"package.json\" \"dist\" /y && xcopy \"README.md\" \"dist\" /y",
+    "release": "npm run build && npm run postbuild",
     "test": "jest"
   },
   "keywords": [],
