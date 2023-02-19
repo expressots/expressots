@@ -3,7 +3,8 @@ import chalk from "chalk";
 import degit from "degit";
 import { spawn } from "child_process";
 import { Presets, SingleBar } from "cli-progress";
-// import chalkAnimation from 'chalk-animation';
+import fs from "node:fs";
+import path from "node:path";
 
 async function packageManagerInstall({
 	packageManager,
@@ -33,6 +34,29 @@ async function packageManagerInstall({
 			}
 		});
 	});
+}
+
+// Change the package.json name to the user's project name
+function changePackageName({
+	directory,
+	name,
+}: {
+	directory: string;
+	name: string;
+}): void {
+	// Get the absolute path of the input directory parameter
+	const absDirPath = path.resolve(directory);
+
+	// Load the package.json file
+	const packageJsonPath = path.join(absDirPath, "package.json");
+	const fileContents = fs.readFileSync(packageJsonPath, "utf-8");
+	const packageJson = JSON.parse(fileContents);
+
+	// Change the name
+	packageJson.name = name;
+
+	// Save the package.json file
+	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
 const projectForm = async (projectName: string): Promise<void> => {
@@ -70,7 +94,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
-		"Non-Opinionated": "01_base",
+		"Non-Opinionated": "01_non_opinionated",
 	};
 
 	if (answer.confirm) {
@@ -105,7 +129,15 @@ const projectForm = async (projectName: string): Promise<void> => {
 			progressBar,
 		});
 
+		progressBar.update(90);
+
+		changePackageName({
+			directory: answer.name,
+			name: answer.name,
+		});
+
 		progressBar.update(100);
+
 		progressBar.stop();
 
 		console.log(chalk.green("Project created successfully!"));
