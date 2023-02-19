@@ -47,8 +47,8 @@ Expresso TS is an MIT-Licensed open source project. It can grow thanks to the sp
 
 ## Stay in touch
 
-- Author - [Richard Zampieri](https://github.com/rsaz)
+Author - [Richard Zampieri](https://github.com/rsaz)
 
 ## License
 
-Expresso TS [MIT LICENSE](LICENSE).
+Expresso TS [MIT LICENSE](https://github.com/expressots/expressots/blob/main/LICENSE.md).
