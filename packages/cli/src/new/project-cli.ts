@@ -1,7 +1,9 @@
 import { CommandModule, Argv } from "yargs";
 import { projectForm } from "./project-ui";
 
-const createProject = (): CommandModule<{}, any> => {
+type todo = void;
+
+const createProject = (): CommandModule<todo, any> => {
 	return {
 		command: "new [project-name]",
 		describe: "Create a new Expresso TS project",
