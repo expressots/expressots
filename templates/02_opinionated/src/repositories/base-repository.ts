@@ -1,6 +1,6 @@
 import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./base-repository.interface";
-import { IEntity } from "../entities/base.entity";
+import { IEntity } from "@entities/base.entity";
 
 @provide(BaseRepository)
 class BaseRepository<T extends IEntity> implements IBaseRepository<T> {

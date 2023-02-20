@@ -1,8 +1,8 @@
 import { AppError, Report, StatusCode } from "@expressots/core";
 import { provide } from "inversify-binding-decorators";
-import { User } from "../../../entities/user.entity";
 import { ICreateUserDTO, ICreateUserResponseDTO } from "./create-user.dto";
-import { UserRepository } from "../../../repositories/user/user.repository";
+import { UserRepository } from "@repositories/user/user.repository";
+import { User } from "@entities/user.entity";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {

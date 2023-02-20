@@ -9,7 +9,7 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "start": "tsnd ./src/main.ts",
+    "start": "tsnd -r dotenv/config -r tsconfig-paths/register ./src/main.ts",
     "start:prod": "node ./dist/main.js",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -38,6 +38,7 @@
     "inversify-binding-decorators": "^4.0.0",
     "inversify-express-utils": "^6.3.2",
     "reflect-metadata": "^0.1.13",
+    "tsconfig-paths": "^4.1.2",
     "uuid": "^9.0.0"
   }
 }
