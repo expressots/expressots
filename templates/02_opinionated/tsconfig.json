@@ -25,12 +25,12 @@
     "types": ["reflect-metadata","node", "jest"]                                
   },
   "include": [
+    ".",
     "src/**/*.ts",
     ".eslintrc.js",
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "test/**/*"
+    "dist"
   ]
 }
