@@ -2,12 +2,19 @@ import { AppError, Report, StatusCode } from "@expressots/core";
 import { provide } from "inversify-binding-decorators";
 import { User } from "../../../entities/user.entity";
 import { ICreateUserDTO, ICreateUserResponseDTO } from "./create-user.dto";
+import { UserRepository } from "../../../repositories/user/user.repository";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
-  execute(data: ICreateUserDTO): ICreateUserResponseDTO {
+  constructor(private userRepository: UserRepository) {}
+
+  execute(data: ICreateUserDTO): ICreateUserResponseDTO | null {
     try {
-      const user = new User(data.name, data.email);
+      const { name, email } = data;
+
+      const user: User | null = this.userRepository.create(
+        new User(name, email),
+      );
 
       if (!user) {
         Report.Error(
@@ -19,13 +26,19 @@ class CreateUserUseCase {
         );
       }
 
-      const response: ICreateUserResponseDTO = {
-        name: user.name,
-        email: user.email,
-        status: "success",
-      };
+      let response: ICreateUserResponseDTO;
 
-      return response;
+      if (user !== null) {
+        response = {
+          id: user.Id,
+          name: user.name,
+          email: user.email,
+          status: "success",
+        };
+        return response;
+      }
+
+      return null;
     } catch (error: any) {
       throw error;
     }

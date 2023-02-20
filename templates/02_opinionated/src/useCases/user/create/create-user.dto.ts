@@ -4,6 +4,7 @@ interface ICreateUserDTO {
 }
 
 interface ICreateUserResponseDTO {
+  id: string;
   name: string;
   email: string;
   status: string;
