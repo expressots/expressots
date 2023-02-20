@@ -7,52 +7,32 @@
 		"node": ">=10"
 	},
 	"scripts": {
-		"build": "tsc && chmod +x dist/cli.js",
-		"start": "npm run build && node ./dist/cli.js",
-		"pretest": "npm run build",
-		"test": "xo && ava"
+		"start:build": "pnpm run build && pnpm run start",
+		"start": "node ./dist/cli.js",
+		"start:dev": "tsnd ./src/cli.ts",
+		"build": "tsc -p tsconfig.json && chmod +x ./dist/cli.js",
+		"clean": "rm -rf ./dist",
+		"//": "👆👆👆 Should use rimraf instead of rm -rf later"
 	},
 	"files": [
 		"dist/cli.js"
 	],
 	"dependencies": {
-		"ink": "^3.2.0",
-		"ink-big-text": "^1.2.0",
-		"ink-form": "^1.0.2",
-		"ink-gradient": "^2.0.0",
-		"react": "^17.0.2",
+		"chalk-animation": "^1",
+		"cli-progress": "^3.11.2",
+		"degit": "^2.8.4",
+		"inquirer": "^8.0.0",
 		"yargs": "^17.6.2"
 	},
-	"ava": {
-		"typescript": {
-			"extensions": [
-				"tsx"
-			],
-			"rewritePaths": {
-				"source/": "dist/"
-			}
-		}
-	},
-	"xo": {
-		"extends": "xo-react",
-		"rules": {
-			"react/prop-types": "off"
-		}
-	},
 	"devDependencies": {
-		"@ava/typescript": "^3.0.1",
-		"@sindresorhus/tsconfig": "^3.0.1",
-		"@types/ink-big-text": "^1.2.1",
-		"@types/ink-gradient": "^2.0.1",
-		"@types/react": "^18.0.27",
+		"@types/chalk-animation": "^1.6.1",
+		"@types/cli-progress": "^3.11.0",
+		"@types/degit": "^2.8.3",
+		"@types/inquirer": "^9.0.3",
+		"@types/node": "^18.11.19",
 		"@types/yargs": "^17.0.22",
-		"ava": "^5.1.1",
 		"chalk": "^4.1.2",
-		"eslint-config-xo-react": "^0.27.0",
-		"eslint-plugin-react": "^7.32.2",
-		"eslint-plugin-react-hooks": "^4.6.0",
-		"ink-testing-library": "^2.1.0",
-		"typescript": "^4.9.5",
-		"xo": "^0.39.1"
+		"ts-node-dev": "^2.0.0",
+		"typescript": "^4.9.5"
 	}
 }

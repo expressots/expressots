@@ -10,7 +10,7 @@ The Expresso TS CLI is a command-line interface tool that helps you to create `E
 
 ### This is an example of the CLI for the Expresso TS framework.
 
-![demo](https://raw.githubusercontent.com/Daniel-Boll/expressots-cli/main/assets/demo.gif)
+[![asciicast](https://asciinema.org/a/7diTOTyY653mpdA0JtugjRn9a.svg)](https://asciinema.org/a/7diTOTyY653mpdA0JtugjRn9a)
 
 
 ## Installation 💻
