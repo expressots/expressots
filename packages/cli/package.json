@@ -1,38 +1,133 @@
 {
-	"name": "cli",
-	"version": "0.0.0",
-	"license": "MIT",
-	"bin": "dist/cli.js",
-	"engines": {
-		"node": ">=10"
-	},
-	"scripts": {
-		"start:build": "npm run build && npm run start",
-		"start": "node ./dist/cli.js",
-		"start:dev": "tsnd ./src/cli.ts",
-		"build": "tsc -p tsconfig.json && chmod +x ./dist/cli.js",
-		"clean": "rm -rf ./dist",
-		"//": "👆👆👆 Should use rimraf instead of rm -rf later"
-	},
-	"files": [
-		"dist/cli.js"
-	],
-	"dependencies": {
-		"chalk-animation": "^1",
-		"cli-progress": "^3.11.2",
-		"degit": "^2.8.4",
-		"inquirer": "^8.0.0",
-		"yargs": "^17.6.2"
-	},
-	"devDependencies": {
-		"@types/chalk-animation": "^1.6.1",
-		"@types/cli-progress": "^3.11.0",
-		"@types/degit": "^2.8.3",
-		"@types/inquirer": "^9.0.3",
-		"@types/node": "^18.11.19",
-		"@types/yargs": "^17.0.22",
-		"chalk": "^4.1.2",
-		"ts-node-dev": "^2.0.0",
-		"typescript": "^4.9.5"
-	}
+  "name": "@expressots/cli",
+  "version": "0.0.0",
+  "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
+  "author": "Richard Zampieri",
+  "license": "MIT",
+  "bin": {
+    "expressots-cli": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=18.10.0"
+  },
+  "funding": {
+    "type": "",
+    "url": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/expressots-cli"
+  },
+  "homepage": "https://expresso-ts.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ExpressoTS",
+    "CLI",
+    "Scaffolding"
+  ],
+  "scripts": {
+    "start:build": "pnpm build && pnpm start",
+    "start": "node ./dist/cli.js",
+    "start:dev": "tsnd ./src/cli.ts",
+    "build": "pnpm clean && tsc -p tsconfig.json && chmod +x ./dist/cli.js",
+    "clean": "rimraf ./dist",
+    "lint": "eslint .eslintrc.js --ext .ts,.tsx,.js,.jsx ."
+  },
+  "files": [
+    "dist/cli.js"
+  ],
+  "dependencies": {
+    "chalk-animation": "^1",
+    "cli-progress": "^3.11.2",
+    "degit": "^2.8.4",
+    "inquirer": "^8.0.0",
+    "yargs": "^17.6.2"
+  },
+  "devDependencies": {
+    "@types/chalk-animation": "^1.6.1",
+    "@types/cli-progress": "^3.11.0",
+    "@types/degit": "^2.8.3",
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^18.11.19",
+    "@types/yargs": "^17.0.22",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
+    "chalk": "^4.1.2",
+    "eslint": "^8.34.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "prettier": "^2.8.4",
+    "release-it": "^15.6.0",
+    "rimraf": "^4.1.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^4.9.5"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release v${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": false
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "infile": "CHANGELOG.md",
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance Improvements"
+            },
+            {
+              "type": "revert",
+              "section": "Reverts"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "style",
+              "section": "Styles"
+            },
+            {
+              "type": "refactor",
+              "section": "Code Refactoring"
+            },
+            {
+              "type": "test",
+              "section": "Tests"
+            },
+            {
+              "type": "build",
+              "section": "Build System"
+            },
+            {
+              "type": "ci",
+              "section": "Continuous Integrations"
+            },
+            {
+              "type": "chore",
+              "hidden": true
+            }
+          ]
+        }
+      }
+    }
+  }
 }

@@ -106,7 +106,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 					"Progress |" + chalk.green("{bar}") + "| {percentage}% || {doing}",
 				hideCursor: true,
 			},
-			Presets.shades_classic
+			Presets.shades_classic,
 		);
 
 		progressBar.start(100, 0, {
@@ -116,7 +116,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
 
 		const emitter = degit(
-			`expressots/expressots/templates/${templates[template]}`
+			`expressots/expressots/templates/${templates[template]}`,
 		);
 		await emitter.clone(answer.name);
 
