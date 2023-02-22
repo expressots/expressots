@@ -28,10 +28,10 @@
     "Scaffolding"
   ],
   "scripts": {
-    "start:build": "pnpm build && pnpm start",
+    "start:build": "npm run build && npm run start",
     "start": "node ./dist/cli.js",
     "start:dev": "tsnd ./src/cli.ts",
-    "build": "pnpm clean && tsc -p tsconfig.json && chmod +x ./dist/cli.js",
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x ./dist/cli.js",
     "clean": "rimraf ./dist",
     "lint": "eslint .eslintrc.js --ext .ts,.tsx,.js,.jsx ."
   },
