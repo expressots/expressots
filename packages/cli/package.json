@@ -7,7 +7,7 @@
 		"node": ">=10"
 	},
 	"scripts": {
-		"start:build": "pnpm run build && pnpm run start",
+		"start:build": "npm run build && npm run start",
 		"start": "node ./dist/cli.js",
 		"start:dev": "tsnd ./src/cli.ts",
 		"build": "tsc -p tsconfig.json && chmod +x ./dist/cli.js",

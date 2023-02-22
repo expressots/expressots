@@ -1,5 +1,5 @@
 import { CommandModule, Argv } from "yargs";
-import { projectForm } from "./project-ui";
+import { projectForm } from "./create-project-ui";
 
 const createProject = (): CommandModule<{}, any> => {
 	return {
