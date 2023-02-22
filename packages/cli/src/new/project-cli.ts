@@ -1,5 +1,5 @@
 import { CommandModule, Argv } from "yargs";
-import { projectForm } from "./create-project-ui";
+import { projectForm } from "./project-ui";
 
 type todo = void;
 

@@ -81,8 +81,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 			name: "template",
 			message: "Select a template",
 			choices: [
-				"Non-Opinionated :: A simple ExpressoTS project.",
-				"Opinionated :: A robust ExpressoTS project with opinionated features.",
+				"Non-Opinionated :: A simple ExpressoTS project with no opinionated features.",
 			],
 		},
 		{
@@ -96,7 +95,6 @@ const projectForm = async (projectName: string): Promise<void> => {
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
 		"Non-Opinionated": "01_non_opinionated",
-		"Opinionated": "02_opinionated",
 	};
 
 	if (answer.confirm) {
