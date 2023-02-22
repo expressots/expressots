@@ -2,3 +2,7 @@
 
 # ignore all other files that are not TypeScript files
 !*.ts linguist-language=Text
+
+# cloning templates
+/templates/01_non_opinionated export-ignore
+/templates/02_opinionated export-ignore
