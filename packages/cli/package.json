@@ -5,7 +5,7 @@
   "author": "Richard Zampieri",
   "license": "MIT",
   "bin": {
-    "expressots-cli": "dist/cli.js"
+    "expressots": "dist/cli.js"
   },
   "engines": {
     "node": ">=18.10.0"
