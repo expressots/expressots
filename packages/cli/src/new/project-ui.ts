@@ -36,6 +36,24 @@ async function packageManagerInstall({
 	});
 }
 
+async function checkIfPackageManagerExists(packageManager: string) {
+	return new Promise((resolve, reject) => {
+		const checkProcess = spawn(packageManager, ["--version"]);
+
+		checkProcess.on("error", () => {
+			reject(new Error(`Package manager ${packageManager} is not installed`));
+		});
+
+		checkProcess.on("close", (code) => {
+			if (code === 0) {
+				resolve(true);
+			} else {
+				reject(new Error(`Package manager ${packageManager} is not installed`));
+			}
+		});
+	});
+}
+
 // Change the package.json name to the user's project name
 function changePackageName({
 	directory,
@@ -82,7 +100,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 			message: "Select a template",
 			choices: [
 				"Non-Opinionated :: A simple ExpressoTS project.",
-				"Opinionated :: A complete ExpressoTS project with an opinionated structure and features."
+				"Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
 			],
 		},
 		{
@@ -96,10 +114,16 @@ const projectForm = async (projectName: string): Promise<void> => {
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
 		"Non-Opinionated": "01_non_opinionated",
-		"Opinionated": "02_opinionated",
+		Opinionated: "02_opinionated",
 	};
 
 	if (answer.confirm) {
+		// Check if the package manager exists
+		await checkIfPackageManagerExists(answer.packageManager).catch((err) => {
+			console.log(chalk.red(err.message));
+			process.exit(1);
+		});
+
 		const progressBar = new SingleBar(
 			{
 				format:
