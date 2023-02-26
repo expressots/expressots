@@ -1,6 +1,6 @@
 {
   "name": "@expressots/cli",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
   "author": "Richard Zampieri",
   "license": "MIT",
@@ -40,9 +40,6 @@
     "release": "release-it",
     "prepare": "husky install"
   },
-  "files": [
-    "bin/cli.js"
-  ],
   "dependencies": {
     "chalk-animation": "^1",
     "cli-progress": "^3.11.2",

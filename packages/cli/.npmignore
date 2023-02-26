@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# Include Bin folder
+!bin/
+!bin/**
+
+# Include these files
+!package.json
+!README.md
+!LICENSE.md
