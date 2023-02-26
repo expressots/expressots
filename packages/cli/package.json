@@ -1,11 +1,14 @@
 {
   "name": "@expressots/cli",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
   "author": "Richard Zampieri",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/expressots/expressots-cli/issues"
+  },
   "bin": {
-    "expressots": "dist/cli.js"
+    "expressots": "bin/cli.js"
   },
   "engines": {
     "node": ">=18.10.0"
@@ -29,14 +32,16 @@
   ],
   "scripts": {
     "start:build": "npm run build && npm run start",
-    "start": "node ./dist/cli.js",
+    "start": "node ./bin/cli.js",
     "start:dev": "tsnd ./src/cli.ts",
-    "build": "npm run clean && tsc -p tsconfig.json && chmod +x ./dist/cli.js",
-    "clean": "rimraf ./dist",
-    "lint": "eslint .eslintrc.js --ext .ts,.tsx,.js,.jsx ."
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x ./bin/cli.js",
+    "clean": "rimraf ./bin",
+    "lint": "eslint .eslintrc.js --ext .ts,.tsx,.js,.jsx .",
+    "release": "release-it",
+    "prepare": "husky install"
   },
   "files": [
-    "dist/cli.js"
+    "bin/cli.js"
   ],
   "dependencies": {
     "chalk-animation": "^1",

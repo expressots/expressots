@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import chalk from "chalk";
 import degit from "degit";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import { Presets, SingleBar } from "cli-progress";
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,12 @@ async function packageManagerInstall({
 	progressBar: SingleBar;
 }) {
 	return new Promise((resolve, reject) => {
-		const installProcess = spawn(packageManager, ["install"], {
+		
+		const isWindows: boolean = process.platform === "win32";
+		const command: string = isWindows ? `${packageManager}.cmd` : packageManager;
+		//const args = isWindows ? [packageManager, "install"] : ["install"];
+
+		const installProcess = spawn(command, ["install"], {
 			cwd: directory,
 		});
 
@@ -37,21 +42,12 @@ async function packageManagerInstall({
 }
 
 async function checkIfPackageManagerExists(packageManager: string) {
-	return new Promise((resolve, reject) => {
-		const checkProcess = spawn(packageManager, ["--version"]);
-
-		checkProcess.on("error", () => {
-			reject(new Error(`Package manager ${packageManager} is not installed`));
-		});
-
-		checkProcess.on("close", (code) => {
-			if (code === 0) {
-				resolve(true);
-			} else {
-				reject(new Error(`Package manager ${packageManager} is not installed`));
-			}
-		});
-	});
+	try {
+		execSync(`${packageManager} --version`);
+		return true;
+	} catch (_) {
+		throw new Error(`Package manager ${packageManager} is not installed`);
+	}
 }
 
 // Change the package.json name to the user's project name
@@ -113,8 +109,8 @@ const projectForm = async (projectName: string): Promise<void> => {
 
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
-		"Non-Opinionated": "01_non_opinionated",
-		Opinionated: "02_opinionated",
+		"Non-Opinionated": "non_opinionated",
+		"Opinionated": "opinionated",
 	};
 
 	if (answer.confirm) {
@@ -142,6 +138,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 		const emitter = degit(
 			`expressots/expressots/templates/${templates[template]}`,
 		);
+
 		await emitter.clone(answer.name);
 
 		progressBar.update(50, {
