@@ -1,7 +1,9 @@
-import type { JestConfigWithTsJest } from 'ts-jest'
+import type { Config } from 'jest'
 
-const jestConfig: JestConfigWithTsJest = {
-  preset: 'ts-jest',
+const jestConfig: Config = {
+  transform: {
+    "^.+\\.(t|j)sx?$": "@swc/jest",
+  },
   testEnvironment: 'node',
   testMatch: ['**/*.spec.ts', '**/*.test.ts'],
 }
