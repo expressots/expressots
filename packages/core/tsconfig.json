@@ -10,7 +10,6 @@
     "rootDir": "./src",
     "noLib": false,
     "strictBindCallApply": false,
-    "importHelpers": true,
     "removeComments": false,
     "types": [
       "node",
