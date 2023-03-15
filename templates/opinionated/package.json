@@ -38,7 +38,6 @@
     "inversify-binding-decorators": "^4.0.0",
     "inversify-express-utils": "^6.3.2",
     "reflect-metadata": "^0.1.13",
-    "tsconfig-paths": "^4.1.2",
-    "uuid": "^9.0.0"
+    "tsconfig-paths": "^4.1.2"
   }
 }
