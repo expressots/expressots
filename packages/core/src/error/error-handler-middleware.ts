@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { AppError } from "./application-error";
 import { StatusCode } from "./status-code";
 import { LogLevel, log } from "../logger";
+import { IAppError } from "./report";
 
-function errorHandler(error: AppError, req: Request, res: Response, next: NextFunction): void {
+function errorHandler(error: IAppError, req: Request, res: Response, next: NextFunction): void {
     
     log(LogLevel.Error, error, error.service || "service-undefined");
     res.status(error.statusCode || StatusCode.InternalServerError).json({statusCode: error.statusCode, error: error.message});

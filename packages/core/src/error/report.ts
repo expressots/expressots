@@ -1,14 +1,22 @@
 import { provide } from "inversify-binding-decorators";
-import { AppError } from "./application-error";
+
+interface IAppError {
+    statusCode: number;
+    message: string;
+    service?: string
+}
 
 @provide(Report)
-class Report {
+class Report extends Error {
+    constructor() {
+        super()
+    }
 
-    public static Error(error: AppError) {
-    
-        throw error;
+    public Error(appError: IAppError) {
+        
+        throw { ...appError, name: this.name, stack: this.stack };
     }
 }
 
-export { Report };
+export { Report, IAppError };
 

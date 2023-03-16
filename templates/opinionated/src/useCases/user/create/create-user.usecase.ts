@@ -1,4 +1,4 @@
-import { AppError, Report, StatusCode } from "@expressots/core";
+import { Report, StatusCode } from "@expressots/core";
 import { provide } from "inversify-binding-decorators";
 import { ICreateUserDTO, ICreateUserResponseDTO } from "./create-user.dto";
 import { UserRepository } from "@repositories/user/user.repository";
@@ -17,13 +17,11 @@ class CreateUserUseCase {
       );
 
       if (!user) {
-        Report.Error(
-          new AppError(
-            StatusCode.BadRequest,
-            "User already exists",
-            "create-user-usecase",
-          ),
-        );
+        new Report().Error({
+          statusCode: StatusCode.BadRequest,
+          message: "User already exists",
+          service: "create-user-usecase",
+        });
       }
 
       let response: ICreateUserResponseDTO;
