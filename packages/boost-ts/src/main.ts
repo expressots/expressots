@@ -36,3 +36,19 @@ const result2 = match("a", {
 });
 
 console.log(result2); // One
+
+// EXAMPLES OF USE OF THE MATCH PATTERN FUNCTION
+
+/*
+const result = match(0, {
+    0: () => "this is 0",
+    [RGB.Red] : () => "this is enum",
+    99: () => "this is 99",
+    "11..=22": () => "this number is in between 11 and 22",
+    "/abc/": () => "this is a regex",
+    "2 | 3 | 5 | 8": () => "this number is a prime number",
+    false: () => "this is a boolean",
+    "a..=d": () => "this is a char",
+    "_": () => "this is the default case"
+});
+*/
