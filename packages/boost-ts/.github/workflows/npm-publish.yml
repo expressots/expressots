@@ -27,7 +27,7 @@ jobs:
       run: npm install
       
     - name: Unit Tests
-      working-directory: ./test
+      working-directory: ${{github.workspace}}/tests
       run: npm test
       env:
         CI: true
