@@ -1,24 +1,29 @@
+<p align="center">
+  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/expressots/blob/main/media/alogo.png" width="120" alt="Expresso TS Logo" /></a>
+</p>
+
 # Boost-TS
 
-Boost a set of libraries for the Typescript programming language that extends the language capability in several areas
+Boost is a collection of libraries for the TypeScript programming language designed to enhance its capabilities across various domains. These libraries provide a wide range of functionality, enabling developers to leverage the full potential of TypeScript and streamline their development process. With Boost, TypeScript developers can efficiently tackle complex tasks, improve code readability, and maintainability, while also benefiting from advanced features and best practices.
 
-OBS.: WIP -> Work in Progress
+## Available Libraries
+
+- Match Pattern
+- Optional Pattern
 
 ## Installation
 
-Currently unavailable
-
 ```bash
-npm install
+npm i @expressots/boost-ts
 ```
 
-## Usage
+## Match Pattern Usage
 
-```js
+- Using Match pattern with enums
+
+```typescript
 import { match } from "./match-pattern";
-```
 
-```js
 const enum Coin {
     Penny,
     Nickel,
@@ -38,7 +43,23 @@ function valueInCents(coin: Coin): number {
 console.log(valueInCents(Coin.Penny)); // 1
 ```
 
-```js
+- Using Match pattern with numbers
+
+```typescript
+let isNumber: number = 1;
+
+const result = match(isNUmber, {
+  1: () => "1",
+  2: () => "2",
+  "_": () => "No number found"
+});
+
+console.log(result); // The light is off
+```
+
+- Using Match pattern with boolean
+
+```typescript
 let isOn: boolean = true;
 
 const result = match(isOn, {
@@ -49,23 +70,57 @@ const result = match(isOn, {
 console.log(result); // The light is off
 ```
 
-Other Examples
+- Using Match pattern with Optional pattern
 
-```js
+```typescript
+import { Some, None, Optional, matchOptional } from "./optional-pattern";
+import { match } from "./match-pattern";
+
+const v1: Optional<number> = Some(1);
+const v2: Optional<number> = None();
+
+const result = match(v1, {
+    Some: (x) => x + 1,
+    None: 0,
+});
+
+console.log(result); // 2
+```
+
+- Other possible combinations
+  - "expressions..=expressions" -> numbers or characters
+  - "isOr: this | that | other"
+  - "Regex: "/[a-z]/"
+
+```typescript
 const result = match("a", {
   "1..=13": () => "Between 1 and 13",
   "25 | 50 | 100": () => "A bill",
   "a..=d": () => "A letter",
   "/[a-z]/": () => "A lowercase letter",
-  _: () => "Default",
+  "_": () => "Default",
 });
 console.log(result); // A letter
 ```
 
+## Optional Pattern Usage
+
+```typescript
+const someValue: Optional<number> = Some(1);
+
+function plusOne(x: Optional<number>): number {
+    return match(x, {
+        Some: (x) => x + 3,
+        None: 0,
+    })
+}
+
+console.log(plusOne(None())); // 0
+```
+
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 

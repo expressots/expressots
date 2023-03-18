@@ -7,7 +7,7 @@
   "keywords": [],
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/expressots"
+    "url": "https://github.com/expressots/boost-ts.git"
   },
   "publishConfig": {
     "access": "public"
