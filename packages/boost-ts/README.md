@@ -49,12 +49,12 @@ console.log(valueInCents(Coin.Penny)); // 1
 let isNumber: number = 1;
 
 const result = match(isNUmber, {
-  1: () => "1",
-  2: () => "2",
+  1: () => 1,
+  2: () => 2,
   "_": () => "No number found"
 });
 
-console.log(result); // The light is off
+console.log(result); // 1
 ```
 
 - Using Match pattern with boolean
