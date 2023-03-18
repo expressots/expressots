@@ -18,6 +18,7 @@ module.exports = {
       '@typescript-eslint/no-explicit-any': 'off',
       "no-trailing-spaces": ["error", { "skipBlankLines": true}],
       "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
-      "no-multi-spaces": "off"
+      "no-multi-spaces": "off",
+      "prettier/prettier": ["error", { "endOfLine": "auto" }],
     },
   };
