@@ -1,0 +1,57 @@
+name: Build Boost TS
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches:
+      - main          
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.10.0'
+
+    - name: Install Dependencies
+      working-directory: ${{github.workspace}}
+      run: npm install
+      
+    - name: Unit Tests
+      working-directory: ./test
+      run: npm test
+      env:
+        CI: true
+        
+    # Generate changelog
+    - name: Generate changelog
+      id: changelog
+      working-directory: ${{ github.workspace }}
+      run: |
+        # extract the changelog
+        echo "::set-output name=tag::$(grep -oP '^## \[(\d+\.\d+\.\d+)\]' CHANGELOG.md | head -n 1 | cut -d '[' -f 2 | cut -d ']' -f 1)" 
+        echo v${{ steps.changelog.outputs.tag }}
+
+    # Create git release
+    - name: Github release
+      uses: actions/create-release@v1
+      if: github.event.pull_request.merged == true
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        tag_name: v${{ steps.changelog.outputs.tag }}
+        release_name: ${{ steps.changelog.outputs.tag }}
+        body: |
+          Changes in this Release
+          - ${{ steps.changelog.outputs.tag }}
+        draft: false
+        prerelease: false
