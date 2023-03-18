@@ -5,3 +5,6 @@ node_modules/
 # Ignore lock files
 *-lock.json
 
+# main used for test
+main.ts
+

@@ -1,10 +1,46 @@
-type MatchPatterns<T> = {
-    [key: string]: () => T;
+/* type None = { tag: "None" };
+type Some<T> = { tag: "Some", value: T};
+export type Optional<T> = Some<T> | None;
+
+export function Some<T>(value: T): Some<T> {
+    return { tag: "Some", value };
 }
 
-export function match<T>(value: any, patterns: MatchPatterns<T>): T {
+export function None(): None {
+    return { tag: "None" };
+} */
 
+import { None, Some } from "./optional-pattern";
+
+function isSome(value: any): value is Some<any> {
+    return value && value.tag === "Some";
+}
+
+function isNone(value: any): value is None {
+    return value && value.tag === "None";
+}
+
+type OptionalPattern<T, U> = {
+    Some?: (value: U) => T;
+    None?: T;
+}
+
+type MatchPatterns<T, U> = {
+    [key: string]: () => T;
+} | OptionalPattern<T, U>;
+
+export function match<T, U = never>(value: any, patterns: MatchPatterns<T, U>): T {
+
+    if (isSome(value) && patterns.Some) {
+        return patterns.Some(value.value);
+    } else if (isNone(value) && patterns.None !== undefined) {
+        return patterns.None as T;
+    }
+    
     for (const p in patterns) {
+
+        if (p === "Some" || p === "None") continue;
+
         const patternKey = String(p);
         const isRange = patternKey.includes("..=");
         const isOr = patternKey.includes("|");

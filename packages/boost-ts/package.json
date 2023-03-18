@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "tsnd --respawn --transpile-only --ignore-watch node_modules src/main.ts",
     "build": "rimraf dist && tsc -p tsconfig.json",
     "build:prod": "npm run build && node dist/main.js",
     "test": "jest"
