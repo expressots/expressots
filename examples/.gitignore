@@ -22,3 +22,7 @@ typeorm-demo-ui/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# lock files
+typeorm-demo-api/yarn.lock
+typeorm-demo-ui/package-lock.json
