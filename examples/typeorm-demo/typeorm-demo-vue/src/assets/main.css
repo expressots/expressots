@@ -1,0 +1,41 @@
+@import "./base.css";
+@import "./components/index.scss";
+
+a {
+  color: theme('colors.blue.400');
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+b,
+strong {
+  font-weight: theme('fontWeight.bold');
+}
+
+/* CODE */
+
+code {
+  font-family: inherit;
+  text-shadow: 0 0 1px theme("colors.red.400");
+  padding: 0 2px;
+  @apply text-red-400 bg-red-100 px-1 rounded-md dark:text-gray-400 dark:bg-gray-800 text-xs;
+}
+
+.dark code {
+  text-shadow: 0 0 1px theme("colors.gray.400");
+}
+
+/* INPUT */
+
+.required::after {
+  content: "*";
+  margin-left: 3px;
+  position: absolute;
+  top: 58%;
+  transform: translateY(-42%);
+  @apply text-red-500 dark:text-red-400 text-xl;
+}
