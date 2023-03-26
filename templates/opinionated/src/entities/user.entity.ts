@@ -1,5 +1,5 @@
 import { provide } from "inversify-binding-decorators";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "node:crypto";
 
 @provide(User)
 class User {
@@ -8,7 +8,7 @@ class User {
     public email: string;
 
     constructor(name: string, email: string) {
-        this.id = uuidv4();
+        this.id = randomUUID();
         this.name = name;
         this.email = email;
     }
