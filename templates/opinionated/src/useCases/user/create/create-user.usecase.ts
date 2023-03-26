@@ -6,41 +6,41 @@ import { User } from "@entities/user.entity";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
-  constructor(private userRepository: UserRepository) {}
+    constructor(private userRepository: UserRepository) {}
 
-  execute(data: ICreateUserDTO): ICreateUserResponseDTO | null {
-    try {
-      const { name, email } = data;
+    execute(data: ICreateUserDTO): ICreateUserResponseDTO | null {
+        try {
+            const { name, email } = data;
 
-      const user: User | null = this.userRepository.create(
-        new User(name, email),
-      );
+            const user: User | null = this.userRepository.create(
+                new User(name, email),
+            );
 
-      if (!user) {
-        new Report().Error({
-          statusCode: StatusCode.BadRequest,
-          message: "User already exists",
-          service: "create-user-usecase",
-        });
-      }
+            if (!user) {
+                new Report().Error({
+                    statusCode: StatusCode.BadRequest,
+                    message: "User already exists",
+                    service: "create-user-usecase",
+                });
+            }
 
-      let response: ICreateUserResponseDTO;
+            let response: ICreateUserResponseDTO;
 
-      if (user !== null) {
-        response = {
-          id: user.Id,
-          name: user.name,
-          email: user.email,
-          status: "success",
-        };
-        return response;
-      }
+            if (user !== null) {
+                response = {
+                    id: user.Id,
+                    name: user.name,
+                    email: user.email,
+                    status: "success",
+                };
+                return response;
+            }
 
-      return null;
-    } catch (error: any) {
-      throw error;
+            return null;
+        } catch (error: any) {
+            throw error;
+        }
     }
-  }
 }
 
 export { CreateUserUseCase };

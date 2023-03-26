@@ -4,9 +4,9 @@ import { BaseRepository } from "@repositories/base-repository";
 
 @provide(UserRepository)
 class UserRepository extends BaseRepository<User> {
-  constructor() {
-    super();
-  }
+    constructor() {
+        super();
+    }
 }
 
 export { UserRepository };

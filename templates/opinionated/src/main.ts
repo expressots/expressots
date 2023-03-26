@@ -6,11 +6,15 @@ import ENV from "./env";
 import { container } from "app-container";
 
 async function Bootstrap() {
-  const app = App.create(container);
-  app.listen(ENV.Application.PORT, ServerEnvironment[ENV.Application.ENVIRONMENT], {
-    appName: ENV.Application.APP_NAME,
-    appVersion: ENV.Application.APP_VERSION,
-  });
+    const app = App.create(container);
+    app.listen(
+        ENV.Application.PORT,
+        ServerEnvironment[ENV.Application.ENVIRONMENT],
+        {
+            appName: ENV.Application.APP_NAME,
+            appVersion: ENV.Application.APP_VERSION,
+        },
+    );
 }
 
 Bootstrap();
