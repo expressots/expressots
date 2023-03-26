@@ -19,6 +19,6 @@ module.exports = {
       "no-trailing-spaces": ["error", { "skipBlankLines": true}],
       "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
       "no-multi-spaces": "off",
-      "prettier/prettier": ["error", { "endOfLine": "auto" }],
+      "prettier/prettier": ["error", { "endOfLine": "auto" }, { "tabWidth": 4}],
     },
   };
