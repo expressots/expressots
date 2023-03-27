@@ -15,7 +15,7 @@
       "@entities/*": ["entities/*"],
       "@providers/*": ["providers/*"],
       "@repositories/*": ["repositories/*"],
-      "@useCases/*": ["useCases/*"],
+      "@usesases/*": ["usecases/*"],
     },                                   
     "esModuleInterop": true,                            
     "forceConsistentCasingInFileNames": true,           

@@ -1,6 +1,6 @@
 import { AppContainer } from "@expressots/core/";
-import { PingModule } from "@useCases/ping/ping.module";
-import { UserModule } from "@useCases/user/user.module";
+import { PingModule } from "@usesases/ping/ping.module";
+import { UserModule } from "@usesases/user/user.module";
 
 const appContainer = new AppContainer();
 

@@ -16,7 +16,7 @@ class PingUseCase {
             start: format(start),
             end: format(end),
             ttl: `${ttl.toFixed(2)} sec`,
-            message: "Hello Expresso TS!",
+            message: "Pong!",
         };
 
         return response;

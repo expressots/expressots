@@ -41,12 +41,15 @@ packages/default-project/dist
 
 # ignore yarn.lock
 yarn.lock
+templates/opinionated/yarn.lock
+templates/opinionated/package-lock.json
 
 # Ignore VSCODE configuration files
 .vscode
 
 # Ignore Typedoc generated documentation
 public/docs/*
+templates/opinionated/public
 
 # Ignore .pem files
 *.pem
