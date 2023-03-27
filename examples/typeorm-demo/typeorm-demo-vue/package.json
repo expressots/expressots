@@ -6,7 +6,7 @@
     "email": "antonyz.dev@gmail.com"
   },
   "scripts": {
-    "dev": "vite --port 3000",
+    "dev": "vite --port 3001",
     "build": "run-p lint type-check build-only",
     "preview": "vite preview --port 4173",
     "build-only": "vite build",

@@ -1,8 +1,13 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-typeorm-demo-api/node_modules/
-typeorm-demo-ui/node_modules/
+typeorm-demo/typeorm-demo-api/node_modules/
+typeorm-demo/typeorm-demo-ui-react/node_modules/
+typeorm-demo/typeorm-demo-vue/node_modules/
+history/project-one/node_modules/
+history/project-one/log
+history/project-one/public
+history/project-one/.vscode
 /.pnp
 .pnp.js
 
@@ -18,11 +23,13 @@ typeorm-demo-ui/node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+history/project-one/.env
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # lock files
-typeorm-demo-api/yarn.lock
-typeorm-demo-ui/package-lock.json
+typeorm-demo/typeorm-demo-api/yarn.lock
+typeorm-demo/typeorm-demo-vue/package-lock.json
+history/project-one/yarn.lock
