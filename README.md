@@ -47,7 +47,7 @@ ExpressoTS is an MIT-licensed open source project. It's an independent project w
 - [Eduardo Parreiras](https://github.com/duduzcouto)
 - [Felipe Fontana](https://github.com/f0ntana)
 - [Juliano Soares](https://github.com/juliano-soares)
-- [Lucas Medeiros](https://github.com/LucasMedeiros7)
+- [Vitor Caminha](https://github.com/VitorCaminha) 
 
 ## Backers
 

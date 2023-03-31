@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames":true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "checkJs": true,
+    "allowJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "typeRoots": ["./node_modules/@types"],
+    "types": [
+      "node",
+      "reflect-metadata",
+      "jest"
+    ],    
+},
+  "files": [
+    "packages/core/src/index.ts",
+  ]
+}

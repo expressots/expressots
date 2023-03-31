@@ -38,6 +38,7 @@ Thumbs.db
 # Ignore built ts files
 packages/core/dist
 packages/default-project/dist
+lib
 
 # ignore yarn.lock
 yarn.lock
@@ -53,3 +54,6 @@ templates/opinionated/public
 
 # Ignore .pem files
 *.pem
+
+# ignore pack files
+*.tgz

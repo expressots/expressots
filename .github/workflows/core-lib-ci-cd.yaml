@@ -1,13 +1,9 @@
-name: Build and Release
+name: Build and Publish to NPM
 
 on:
-  pull_request:
-    types: [opened, synchronize, closed]
-    branches:
-      - main          
   push:
     branches:
-      - main
+      - main          
 
 jobs:
   build:
@@ -17,13 +13,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '18.10.0'
 
     - name: Install Dependencies
-      working-directory: packages/core
       run: npm install
       
     - name: Unit Tests
@@ -31,27 +26,17 @@ jobs:
       run: npm test
       env:
         CI: true
-        
-    # Generate changelog
-    - name: Generate changelog
-      id: changelog
-      working-directory: ${{ github.workspace }}
-      run: |
-        # extract the changelog
-        echo "::set-output name=tag::$(grep -oP '^## \[(\d+\.\d+\.\d+)\]' CHANGELOG.md | head -n 1 | cut -d '[' -f 2 | cut -d ']' -f 1)" 
-        echo v${{ steps.changelog.outputs.tag }}
-
-    # Create git release
-    - name: Github release
-      uses: actions/create-release@v1
-      if: github.event.pull_request.merged == true
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        tag_name: v${{ steps.changelog.outputs.tag }}
-        release_name: ${{ steps.changelog.outputs.tag }}
-        body: |
-          Changes in this Release
-          - ${{ steps.changelog.outputs.tag }}
-        draft: false
-        prerelease: false
+    
+    - name: Set up .npmrc
+      run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
+    - name: Install dependencies
+      run: npm ci
+    
+    #- name: Publish to npm
+    #  i#f: github.actor == 'rsaz'
+    #  uses: JS-DevTools/npm-publish@v1
+    #  with:
+    #    token: $#{{ secrets.NPM_TOKEN }}
+    #    tag: latest
+    #    access: public 
+   
