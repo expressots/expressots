@@ -1,5 +1,7 @@
 
 
+## [1.1.0](https://github.com/expressots/expressots/compare/v1.1.0-37-g3e82d383af42099e2d3b0b347916e21dbbdd93c9...v1.1.0) (2023-03-31)
+
 ## [1.2.0](https://github.com/expressots/expressots/compare/v1.1.0-35-g27548a8d24a0891d1d04fca1ba131ad585fba5ef...v1.2.0) (2023-03-31)
 
 * feat: add cjs/esm (92f858f)
