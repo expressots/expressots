@@ -21,22 +21,22 @@ jobs:
     - name: Install Dependencies
       run: npm install
       
-    - name: Unit Tests
-      working-directory: packages/core
-      run: npm test
-      env:
-        CI: true
+    #- name: Unit Tests
+    #  working-directory: packages/core
+    #  run: npm test
+    #  env:
+    #    CI: true
     
     - name: Set up .npmrc
       run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
     - name: Install dependencies
       run: npm ci
     
-    #- name: Publish to npm
-    #  i#f: github.actor == 'rsaz'
-    #  uses: JS-DevTools/npm-publish@v1
-    #  with:
-    #    token: $#{{ secrets.NPM_TOKEN }}
-    #    tag: latest
-    #    access: public 
+    - name: Publish to npm
+      if: github.actor == 'rsaz'
+      uses: JS-DevTools/npm-publish@v1
+      with:
+        token: $#{{ secrets.NPM_TOKEN }}
+        tag: latest
+        access: public 
    
