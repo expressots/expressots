@@ -1,5 +1,7 @@
 
 
+## [1.2.0](https://github.com/expressots/expressots/compare/v1.1.0-41-gf2a0fd59ba849c6ee880121d773da15fe2580cb1...v1.2.0) (2023-03-31)
+
 ## [1.1.0](https://github.com/expressots/expressots/compare/v1.1.0-39-g71dbe2f089dcef87a2d71c00043eeb7ce4427771...v1.1.0) (2023-03-31)
 
 ## [1.1.0](https://github.com/expressots/expressots/compare/v1.1.0-37-g3e82d383af42099e2d3b0b347916e21dbbdd93c9...v1.1.0) (2023-03-31)
