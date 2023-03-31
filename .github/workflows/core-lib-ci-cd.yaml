@@ -55,28 +55,3 @@ jobs:
           - ${{ steps.changelog.outputs.tag }}
         draft: false
         prerelease: false
-
-
-    #- name: Publish to NPM
-    #  env:
-    #    NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-    #  run: |
-    #    if [ "${{ github.event_name }}" != "push" ]; then
-    #      exit 0
-    #    fi
-
-        # Check test coverage
-    #    COVERAGE_THRESHOLD=70
-    #    COVERAGE=$(npm run coverage --silent | tail -n 1)
-    #    COVERAGE=${COVERAGE#* }
-    #    COVERAGE=${COVERAGE%.*}
-    #    echo "Coverage: $COVERAGE%"
-    #    if [ $COVERAGE -lt $COVERAGE_THRESHOLD ]; then
-    #      echo "Failed test coverage check ($COVERAGE% < $COVERAGE_THRESHOLD%)."
-    #      exit 1
-    #    fi
-
-        # Install Node.js v18.10.0 and publish to NPM
-    #    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-    #    sudo apt-get install -y nodejs
-    #    cd packages/core && npm publish
