@@ -1,6 +1,6 @@
 import { provide } from 'inversify-binding-decorators';
 import { interfaces } from 'inversify-express-utils';
-import { Report } from '../error';
+import { Report, StatusCode } from '../error';
 
 @provide(BaseController)
 abstract class BaseController implements interfaces.Controller {
@@ -20,7 +20,7 @@ abstract class BaseController implements interfaces.Controller {
 
             return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
-            new Report().Error(error);
+            Report.Error(error, StatusCode.InternalServerError, this.serviceName);
         }
     }
 
@@ -33,7 +33,7 @@ abstract class BaseController implements interfaces.Controller {
 
             return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
-            new Report().Error(error);
+            Report.Error(error, StatusCode.InternalServerError, this.serviceName);
         }
     }
 

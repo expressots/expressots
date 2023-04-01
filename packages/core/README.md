@@ -91,14 +91,14 @@ export const UserContainerModule = CreateModule([
 
 -   **Entity, Provider, Use case, repository, controller examples**: Folders organization for the clean architecture.
 
--   **Error handling**: Using `new Report().Error()` we can report errors using predefined error codes. This is useful when we want to report known errors to the client. Inside of `new Report().Error()` there is a try catch block encapsulating the error.
+-   **Error handling**: Using `Report.Error()` we can report errors using predefined error codes. This is useful when we want to report known errors to the client. Inside of `Report.Error()` there is a try catch block encapsulating the error.
 
 ```typescript
 type ErrorType = GeneralErrorCode | ApplicationErrorCode | HttpStatusErrorCode;
 
 // Reporting errors
 if (userExist) {
-    const error = new Report().Error({ statusCode: StatusCode.BadRequest, message: "User already exist!", service: "user-create"});
+    const error = Report.Error("User already exist!", StatusCode.BadRequest, "user-create-service");
     return error;
 }
 ```

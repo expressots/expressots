@@ -1,7 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { StatusCode } from "./status-code";
 import { LogLevel, log } from "../logger";
-import { IAppError } from "./report";
+
+interface IAppError {
+    statusCode: number;
+    message: string;
+    service?: string
+}
 
 function errorHandler(error: IAppError, req: Request, res: Response, next: NextFunction): void {
     
