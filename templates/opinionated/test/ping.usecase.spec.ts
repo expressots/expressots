@@ -18,7 +18,7 @@ describe("PingUseCase", () => {
         expect(response).toHaveProperty("end");
         expect(response).toHaveProperty("ttl");
         expect(response).toHaveProperty("message");
-        expect(response.message).toBe("Hello Expresso TS!");
+        expect(response.message).toBe("Pong!");
         expect(start <= end).toBe(true);
         expect(ttl >= 0).toBe(true);
     });

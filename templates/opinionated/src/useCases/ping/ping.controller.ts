@@ -1,8 +1,8 @@
 import { BaseController, StatusCode } from "@expressots/core";
 import { controller } from "inversify-express-utils";
 import { httpGet, response } from "inversify-express-utils/lib/decorators";
-import { PingResponseDTO } from "./ping.dto";
 import { PingUseCase } from "./ping.usecase";
+import { PingResponseDTO } from "./ping.dto";
 
 @controller("/ping")
 class PingController extends BaseController {
