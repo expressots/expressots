@@ -1,5 +1,12 @@
 
 
+## [1.1.1](https://github.com/expressots/expressots/compare/v1.1.0...v1.1.1) (2023-04-04)
+
+
+### Bug Fixes
+
+* template folder path issue ([babdce9](https://github.com/expressots/expressots/commit/babdce9367f85ddd2075c4bed854ab83ee339add))
+
 ## [1.1.0](https://github.com/expressots/expressots/compare/v1.1.0-42-gc6f184868daa1b6862337621c69b5370b70a2772...v1.1.0) (2023-03-31)
 
 ## [1.2.0](https://github.com/expressots/expressots/compare/v1.1.0-41-gf2a0fd59ba849c6ee880121d773da15fe2580cb1...v1.2.0) (2023-03-31)
