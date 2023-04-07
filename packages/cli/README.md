@@ -16,7 +16,7 @@ npm install -g @expressots/cli
 
 ## Usage
 
-Learn more in the official documentation
+Learn more in the [official documentation](https://expresso-ts.com/docs/category/cli)
 
 ## Stay in touch
 
