@@ -20,7 +20,7 @@ abstract class BaseController implements interfaces.Controller {
 
             return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
-            Report.Error(error, StatusCode.InternalServerError, this.serviceName);
+            Report.Error(error, undefined, this.serviceName);
         }
     }
 
@@ -33,7 +33,7 @@ abstract class BaseController implements interfaces.Controller {
 
             return res.status(successStatusCode).json(dataReturn);
         } catch (error: any) {
-            Report.Error(error, StatusCode.InternalServerError, this.serviceName);
+            Report.Error(error, undefined, this.serviceName);
         }
     }
 

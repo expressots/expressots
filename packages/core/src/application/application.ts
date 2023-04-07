@@ -5,6 +5,8 @@ import { InversifyExpressServer } from "inversify-express-utils";
 import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
 import errorHandler from "../error/error-handler-middleware";
+import { Report } from "../error";
+import { LogLevel, log } from "../logger";
 
 enum ServerEnvironment {
     Development = "development",
@@ -30,7 +32,7 @@ class Application {
     /* Add any service that you want to execute after server is shutdown */
     protected serverShutdown(): void {
         process.exit(0);
-     }
+    }
 
     public create(container: Container, middlewares: express.RequestHandler[] = []): Application {
 
@@ -53,8 +55,8 @@ class Application {
 
         this.app = expressServer.build();
         
-         /* Add the error handler middleware */
-         this.app.use(errorHandler);
+        /* Add the error handler middleware */
+        this.app.use(errorHandler);
 
         return this;
     }
@@ -67,6 +69,14 @@ class Application {
 
             new Console().messageServer(this.port, this.environment, consoleMessage);
 
+            process.on('uncaughtException', error => {
+                try {
+                    Report.Error(error)
+                } catch {
+                    this.serverShutdown()
+                }
+            })
+
             process.on("SIGINT", this.serverShutdown.bind(this));
         });
 
@@ -77,4 +87,3 @@ class Application {
 const appServerInstance: Application = new Application();
 
 export { appServerInstance as AppInstance, Application, ServerEnvironment };
-

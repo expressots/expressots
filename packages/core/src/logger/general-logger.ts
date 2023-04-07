@@ -20,8 +20,8 @@ class GeneralLogger {
     private createConsoleTransport(): transports.ConsoleTransportInstance {
 
         const consoleTransport: transports.ConsoleTransportInstance = new transports.Console({
-            level: "debug",
-            handleExceptions: true,
+            level: process.env.ENVIRONMENT !== "Development" && "Debug",
+            handleExceptions: false,
             handleRejections: true
         });
 
