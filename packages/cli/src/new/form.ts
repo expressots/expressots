@@ -16,10 +16,10 @@ async function packageManagerInstall({
 	progressBar: SingleBar;
 }) {
 	return new Promise((resolve, reject) => {
-		
 		const isWindows: boolean = process.platform === "win32";
-		const command: string = isWindows ? `${packageManager}.cmd` : packageManager;
-		//const args = isWindows ? [packageManager, "install"] : ["install"];
+		const command: string = isWindows
+			? `${packageManager}.cmd`
+			: packageManager;
 
 		const installProcess = spawn(command, ["install"], {
 			cwd: directory,
@@ -110,7 +110,7 @@ const projectForm = async (projectName: string): Promise<void> => {
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
 		"Non-Opinionated": "non_opinionated",
-		"Opinionated": "opinionated",
+		Opinionated: "opinionated",
 	};
 
 	if (answer.confirm) {

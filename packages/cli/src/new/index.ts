@@ -1,1 +1,1 @@
-export * from "./project-cli";
+export * from "./cli";
