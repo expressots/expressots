@@ -8,11 +8,6 @@
 
 The Expresso TS CLI is a command-line interface tool that helps you to create `ExpressoTS` projects, develop, and maintain your applications and resources created. It assists in multiple ways, including scaffolding the project as well as the services offered by the application such as use cases, controllers, providers and more.
 
-### This is an example of the CLI for the Expresso TS framework.
-
-[![asciicast](https://asciinema.org/a/7diTOTyY653mpdA0JtugjRn9a.svg)](https://asciinema.org/a/7diTOTyY653mpdA0JtugjRn9a)
-
-
 ## Installation 💻
 
 ```
