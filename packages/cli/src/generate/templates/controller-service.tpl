@@ -6,7 +6,7 @@ import { I{{className}}ResponseDTO } from "./{{fileName}}.dto";
 @controller("/{{{route}}}")
 class {{className}}Controller extends BaseController {
 
-  constructor(private {{useCase}}UseCase: {{className}}UseCase ) {
+  constructor(private {{useCase}}UseCase: {{className}}UseCase) {
 		super("{{construct}}-controller")
 	}
 
@@ -15,7 +15,7 @@ class {{className}}Controller extends BaseController {
     return this.callUseCase(
             this.{{useCase}}UseCase.execute(),
             res,
-            StatusCode.Ok,
+            StatusCode.OK,
         );
   }
 }
