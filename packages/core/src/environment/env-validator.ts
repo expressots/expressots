@@ -5,13 +5,28 @@ import dotenv from "dotenv";
 import { provide } from "inversify-binding-decorators";
 import { LogLevel, log } from "../logger";
 
+/**
+ * The EnvValidatorProvider class provides utility methods for working with environment variables.
+ * It validates, loads, and retrieves environment variables from the .env file.
+ * @provide EnvValidatorProvider
+ */
 @provide(EnvValidatorProvider)
 class EnvValidatorProvider {
 
+    /**
+     * Retrieves the value of an environment variable, or a default value if the variable is not set.
+     * @param key - The key of the environment variable.
+     * @param defaultValue - The default value to return if the environment variable is not set.
+     * @returns The value of the environment variable, or the default value if not set.
+     */
     public static get(key: string, defaultValue: any = undefined): any {
         return process.env[key] ?? defaultValue;
     }
 
+    /**
+     * Validates and loads all environment variables from the .env file.
+     * If the .env file does not exist or any environment variables are not set, the process will exit with an error.
+     */
     public static checkAll(): void {
 
         /* Load .env file */

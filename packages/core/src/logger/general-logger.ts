@@ -2,12 +2,18 @@ import { format, transports, LoggerOptions, createLogger, Logger } from "winston
 import DailyRotateFile from "winston-daily-rotate-file";
 import { provide } from "inversify-binding-decorators";
 
+/**
+ * LogLevel enumeration defines the available log levels.
+ */
 enum LogLevel {
     Debug,
     Error,
     Info,
 }
 
+/**
+ * GeneralLogger class is a utility class to manage logging within the application.
+ */
 @provide(GeneralLogger)
 class GeneralLogger {
 
@@ -17,6 +23,10 @@ class GeneralLogger {
         this.logger = createLogger(this.createLoggerOptions());
     }
 
+    /**
+     * Creates a console transport for logging.
+     * @returns {transports.ConsoleTransportInstance} A Winston console transport instance.
+     */
     private createConsoleTransport(): transports.ConsoleTransportInstance {
 
         const consoleTransport: transports.ConsoleTransportInstance = new transports.Console({
@@ -28,6 +38,10 @@ class GeneralLogger {
         return consoleTransport;
     }
 
+    /**
+     * Creates a rotational file transport for logging.
+     * @returns {DailyRotateFile} A Winston daily rotate file transport instance.
+     */
     private createRotationalFileTransport(): DailyRotateFile {
 
         const rotationalFileTransport: DailyRotateFile = new DailyRotateFile({
@@ -43,6 +57,10 @@ class GeneralLogger {
         return rotationalFileTransport;
     }
 
+    /**
+     * Creates a logger options object for Winston.
+     * @returns {LoggerOptions} A Winston logger options object.
+     */
     private createLoggerOptions(): LoggerOptions {
 
         const loggerOptions: LoggerOptions = {
@@ -64,6 +82,11 @@ class GeneralLogger {
         return loggerOptions;
     }
 
+    /**
+     * Retrieves the path and line number of the error.
+     * @param error - An Error object containing error details.
+     * @returns {string} A string containing the path and line number of the error.
+     */
     private getPathAndLine(error: Error): string {
         let pathLine: string = "";
 
@@ -76,6 +99,12 @@ class GeneralLogger {
         return pathLine;
     }
 
+    /**
+     * Logs a message or error with the specified log level and service.
+     * @param logLevel - The log level to use (Debug, Error, or Info).
+     * @param content - The message or Error object to log.
+     * @param service - The service name (optional) associated with the log.
+     */
     public log(logLevel: LogLevel, content: Error | string, service?: string) {
 
         let pathLine: string = "";
