@@ -1,5 +1,17 @@
 
 
+## [1.2.0](https://github.com/expressots/expressots/compare/v1.1.0...v1.2.0) (2023-04-08)
+
+
+### Features
+
+* add doc & config types for cli ([a72db25](https://github.com/expressots/expressots/commit/a72db25088a8c2d0a18cd8fc71dde40e01cd4c22))
+
+
+### Bug Fixes
+
+* template folder path issue ([babdce9](https://github.com/expressots/expressots/commit/babdce9367f85ddd2075c4bed854ab83ee339add))
+
 ## [1.1.1](https://github.com/expressots/expressots/compare/v1.1.0...v1.1.1) (2023-04-04)
 
 
