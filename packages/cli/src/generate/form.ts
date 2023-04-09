@@ -6,6 +6,8 @@ import chalk from "chalk";
 import { anyCaseToCamelCase, anyCaseToKebabCase, anyCaseToPascalCase, anyCaseToLowerCase } from "@expressots/boost-ts";
 import Compiler from "../utils/compiler";
 import { Pattern } from "../types";
+import { addControllerToModule } from "../utils/add-controller-to-module";
+import { verifyIfFileExists } from "../utils/verify-file-exists";
 
 function getFileNameWithoutExtension(filePath: string) {
 	return filePath.split('.')[0];
@@ -38,6 +40,8 @@ export const createTemplate = async ({
 
 	const usecaseDir = `${sourceRoot}/${withinSource}`;
 
+	await verifyIfFileExists(`${usecaseDir}/${path}${file}`)
+
 	mkdirSync(`${usecaseDir}/${path}`, { recursive: true });
 
 	if (schematic !== "service") {
@@ -55,16 +59,18 @@ export const createTemplate = async ({
 			},
 		});
 	} else {
-		for await (const currentSchematic of ["controller-service", "usecase", "dto"]) {
+		for await (const resource of ["controller-service", "usecase", "dto"]) {
+			const currentSchematic = resource.replace("controller-service", "controller");
+
 			const schematicFile = file.replace(
 				`controller.ts`,
 				`${currentSchematic}.ts`,
 			);
 
-			console.log(messageColors[currentSchematic](`> [${currentSchematic}] Creating ${schematicFile.replace("controller-service", "controller")}...`));
-			
+			console.log(messageColors[currentSchematic](`> [${currentSchematic}] Creating ${schematicFile}...`));
+
 			writeTemplate({
-				outputPath: `${usecaseDir}/${path}${schematicFile.replace("controller-service", "controller")}`,
+				outputPath: `${usecaseDir}/${path}${schematicFile}`,
 				template: {
 					path: `./templates/${currentSchematic}.tpl`,
 					data: {
@@ -81,20 +87,28 @@ export const createTemplate = async ({
 
 	const moduleName = path.split("/")[0];
 
-	if (["controller", "service"].includes(schematic) && !existsSync(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`)) {
-		console.log(messageColors.module(`> [module] Creating ${moduleName}.module.ts...`));
+	if (["controller", "service"].includes(schematic)) {
+		if (existsSync(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`)) {
+			console.log(messageColors.module(`> [module] Adding controller to ${moduleName}.module.ts...`));
 
-		writeTemplate({
-			outputPath: `${usecaseDir}/${moduleName}/${moduleName}.module.ts`,
-			template: {
-				path: `./templates/module.tpl`,
-				data: {
-					moduleName: moduleName[0].toUpperCase() + moduleName.slice(1),
-					className,
-					path: `${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`
+			const controllerPath = `./${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`
+
+			await addControllerToModule(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`, `${className}Controller`, controllerPath);
+		} else {
+			console.log(messageColors.module(`> [module] Creating ${moduleName}.module.ts...`));
+
+			writeTemplate({
+				outputPath: `${usecaseDir}/${moduleName}/${moduleName}.module.ts`,
+				template: {
+					path: `./templates/module.tpl`,
+					data: {
+						moduleName: moduleName[0].toUpperCase() + moduleName.slice(1),
+						className,
+						path: `${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`
+					},
 				},
-			},
-		});
+			});
+		}
 	}
 
 	return file;
