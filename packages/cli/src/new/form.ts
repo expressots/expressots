@@ -73,40 +73,61 @@ function changePackageName({
 	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
-const projectForm = async (projectName: string): Promise<void> => {
-	const answer = await inquirer.prompt([
-		{
-			type: "input",
-			name: "name",
-			message: "Project name",
-			default: projectName,
-			transformer: (input: string) => {
-				return chalk.yellow(chalk.bold(input));
-			},
-		},
-		{
-			type: "list",
-			name: "packageManager",
-			message: "Package manager",
-			choices: ["npm", "yarn", "pnpm"],
-		},
-		{
-			type: "list",
-			name: "template",
-			message: "Select a template",
-			choices: [
-				"Non-Opinionated :: A simple ExpressoTS project.",
-				"Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
-			],
-		},
-		{
-			type: "confirm",
-			name: "confirm",
-			message: "Do you want to create this project?",
-			default: true,
-		},
-	]);
+enum Template {
+	"non-opinionated" = "Non-Opinionated :: A simple ExpressoTS project.",
+	opinionated = "Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
+}
 
+const enum PackageManager {
+	npm,
+	yarn,
+	pnpm,
+}
+
+const projectForm = async (projectName: string, packageManager: PackageManager, template: keyof typeof Template): Promise<void> => {
+	let answer: any;
+	if (packageManager && template) {
+		answer = {
+			name: projectName,
+			packageManager: packageManager,
+			template: Template[template],
+			confirm: true,
+		};
+	} else {
+
+		answer = await inquirer.prompt([
+			{
+				type: "input",
+				name: "name",
+				message: "Project name",
+				default: projectName,
+				transformer: (input: string) => {
+					return chalk.yellow(chalk.bold(input));
+				},
+			},
+			{
+				type: "list",
+				name: "packageManager",
+				message: "Package manager",
+				choices: ["npm", "yarn", "pnpm"],
+			},
+			{
+				type: "list",
+				name: "template",
+				message: "Select a template",
+				choices: [
+					"Non-Opinionated :: A simple ExpressoTS project.",
+					"Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
+				],
+			},
+			{
+				type: "confirm",
+				name: "confirm",
+				message: "Do you want to create this project?",
+				default: true,
+			},
+		]);
+	}
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
 		"Non-Opinionated": "non_opinionated",
