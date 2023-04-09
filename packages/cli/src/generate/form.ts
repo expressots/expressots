@@ -21,7 +21,6 @@ type CreateTemplateProps = {
 const messageColors = {
 	usecase: (text: string) => chalk.cyan(text),
 	controller: (text: string) => chalk.magenta(text),
-	"controller-service": (text: string) => chalk.magenta(text),
 	dto: (text: string) => chalk.blue(text),
 	provider: (text: string) => chalk.yellow(text),
 	module: (text: string) => chalk.red(text),
@@ -72,7 +71,7 @@ export const createTemplate = async ({
 			writeTemplate({
 				outputPath: `${usecaseDir}/${path}${schematicFile}`,
 				template: {
-					path: `./templates/${currentSchematic}.tpl`,
+					path: `./templates/${resource}.tpl`,
 					data: {
 						className,
 						fileName: getFileNameWithoutExtension(file),
