@@ -1,6 +1,9 @@
 import { AppError, Report, StatusCode } from "@expressots/core";
 import { provide } from "inversify-binding-decorators";
-import { ICreateUserDTO, ICreateUserResponseDTO } from "./create-user.dto";
+import {
+    ICreateUserRequestDTO,
+    ICreateUserResponseDTO,
+} from "./create-user.dto";
 import { UserRepository } from "@repositories/user/user.repository";
 import { User } from "@entities/user.entity";
 
@@ -8,7 +11,7 @@ import { User } from "@entities/user.entity";
 class CreateUserUseCase {
     constructor(private userRepository: UserRepository) {}
 
-    execute(data: ICreateUserDTO): ICreateUserResponseDTO | null {
+    execute(data: ICreateUserRequestDTO): ICreateUserResponseDTO | null {
         try {
             const { name, email } = data;
 

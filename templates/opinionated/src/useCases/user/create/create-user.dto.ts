@@ -1,4 +1,4 @@
-interface ICreateUserDTO {
+interface ICreateUserRequestDTO {
     name: string;
     email: string;
 }
@@ -10,4 +10,4 @@ interface ICreateUserResponseDTO {
     status: string;
 }
 
-export { ICreateUserDTO, ICreateUserResponseDTO };
+export { ICreateUserRequestDTO, ICreateUserResponseDTO };

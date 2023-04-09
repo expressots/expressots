@@ -1,7 +1,7 @@
-interface IFindAllResponseDTO {
+interface IFindAllUserResponseDTO {
     id: string;
     name: string;
     email: string;
 }
 
-export { IFindAllResponseDTO };
+export { IFindAllUserResponseDTO };
