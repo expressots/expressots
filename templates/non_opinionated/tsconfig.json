@@ -8,7 +8,6 @@
     "emitDecoratorMetadata": true,                    
     "resolveJsonModule": true,                        
     "sourceMap": true,                                
-    "outDir": "./dist",
     "rootDir": "./src",                                   
     "esModuleInterop": true,                            
     "forceConsistentCasingInFileNames": true,           
@@ -18,8 +17,7 @@
     "types": ["reflect-metadata","node", "jest"]                                
   },
   "include": [
-    "src/**/*.ts",
-    ".eslintrc.js",
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

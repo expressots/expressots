@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+      "target": "ES2017",
+      "module": "commonjs",                             
+      "outDir": "./dist",
+      "rootDir": "./src",
+      "strict": true,                                     
+      "esModuleInterop": true,                            
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,           
+      "moduleResolution": "node",
+      "resolveJsonModule": true,                        
+      "removeComments": true,                                   
+      "noImplicitAny": false,                          
+      "types": ["reflect-metadata","node", "jest"],  
+      "experimentalDecorators": true,                   
+      "emitDecoratorMetadata": true,                              
+    },
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "node_modules",
+      "dist",
+      "test/**/*"
+    ]
+  }
