@@ -2,7 +2,7 @@
 
 const path = require("path");
 const tsconfigPaths = require("tsconfig-paths");
-const tsconfig = require("./tsconfig.json");
+const tsconfig = require("./tsconfig.build.json");
 
 const baseUrl = tsconfig.compilerOptions.baseUrl || ".";
 const outDir = tsconfig.compilerOptions.outDir || ".";
