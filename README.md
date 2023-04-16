@@ -44,10 +44,11 @@ ExpressoTS is an MIT-licensed open source project. It's an independent project w
 ## Contributors
 
 - [Daniel Boll](https://github.com/daniel-boll)
-- [Eduardo Parreiras](https://github.com/duduzcouto)
 - [Felipe Fontana](https://github.com/f0ntana)
 - [Juliano Soares](https://github.com/juliano-soares)
 - [Vitor Caminha](https://github.com/VitorCaminha) 
+- [Ariel Betti](https://github.com/ArielBetti)
+- [Rodrigo da Hora](https://github.com/dahorarodrigo)
 
 ## Backers
 
