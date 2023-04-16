@@ -6,8 +6,8 @@ const jestConfig: JestConfigWithTsJest = {
     verbose: true,
     automock: false,
     testMatch: ["**/*.test.ts", "**/*.spec.ts"],
-    coverageDirectory: "../coverage",
-    coverageReporters: ["text", "html", "json"]
+    coverageDirectory: "./coverage",
+    coverageReporters: ["text", "html", "json"],
 };
 
 export default jestConfig;
