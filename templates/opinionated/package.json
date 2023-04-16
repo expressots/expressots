@@ -6,11 +6,13 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p .",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "start": "tsnd -r dotenv/config -r tsconfig-paths/register ./src/main.ts",
-    "start:prod": "node ./dist/main.js",
+    "build:clean": "rm -rf ./dist",
+    "build:prod": "npm run build:clean && npm run build && cp -R ./register-path.js ./dist",
+    "start:prod": "node -r dotenv/config -r ./dist/register-path.js ./dist/src/main.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
