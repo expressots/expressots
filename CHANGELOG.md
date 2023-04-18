@@ -1,5 +1,30 @@
 
 
+## [1.3.0](https://github.com/expressots/expressots/compare/v1.2.0...v1.3.0) (2023-04-18)
+
+
+### Features
+
+* add bug report template ([8a160c4](https://github.com/expressots/expressots/commit/8a160c4b0b53be39a0fa42315936291be6694c8c))
+* add feature request template ([9d264c6](https://github.com/expressots/expressots/commit/9d264c68e44fee754c906846aaa7a7c89cb6b571))
+
+
+### Bug Fixes
+
+* add expresso config ([086ba59](https://github.com/expressots/expressots/commit/086ba59aba1d430877c3807eb77df9460413dbce))
+* add PR template ([1ce4b65](https://github.com/expressots/expressots/commit/1ce4b651a16d602ed459049eeac4200bb80e7651))
+* config-path for build ([72d8086](https://github.com/expressots/expressots/commit/72d8086cc1067add1a3d69c8c13bc5b5d6b7e024))
+* expose express.json() config ([717f677](https://github.com/expressots/expressots/commit/717f6779e033d0e616f7fd464b81edb6bf95c1a9))
+* template import errors from dtos ([#25](https://github.com/expressots/expressots/issues/25)) ([471e311](https://github.com/expressots/expressots/commit/471e3114a4afa9a9dc4af16b872e75f6ef436ae3))
+* update doc contributor ([75cc0cc](https://github.com/expressots/expressots/commit/75cc0cc6f7a0b0527b566c5a4e842c9d13c68ee9))
+* update expressots version ([e170a1f](https://github.com/expressots/expressots/commit/e170a1fd1aab61fd2403707a54c8b027139eb26c))
+* update jest config ([6b33fd6](https://github.com/expressots/expressots/commit/6b33fd6117d32a29d2516831b3a8e7ecd16dfb65))
+* update non-opinionated config ([1b10e0e](https://github.com/expressots/expressots/commit/1b10e0e3ba9f679b2cc59d4c3ec75a8c2e238d43))
+* update opinionated template ([b7bde50](https://github.com/expressots/expressots/commit/b7bde50ec10b9ad9c2d855d1189ad3ccf4e68108))
+* update opinionated template ([cae55a0](https://github.com/expressots/expressots/commit/cae55a04d1282c08668ee5ef12b9976400e2acfd))
+* update templates ([e58af09](https://github.com/expressots/expressots/commit/e58af0995c8f71ad104d1cc4cab79e74ba257bb1))
+* update test coverage path ([0804c5c](https://github.com/expressots/expressots/commit/0804c5c4b6fd4437a69330a40621408273ffdfac))
+
 ## [1.2.0](https://github.com/expressots/expressots/compare/v1.1.0...v1.2.0) (2023-04-08)
 
 
