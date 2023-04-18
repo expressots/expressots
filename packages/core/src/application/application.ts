@@ -62,11 +62,20 @@ class Application {
 
         expressServer.setConfig((app: express.Application) => {
 
-            /* Default body parser application/json */
-            app.use(express.json());
+            // Detect if a middleware in the array has a body parser. If so, replace the default body parser.
+            const hasCustomBodyParser = middlewares.some(middleware => {
+                const middlewareName = middleware.name.toLowerCase();
+                return middlewareName.includes("json") || middlewareName.includes("urlencoded");
+            });
+            
+            if (!hasCustomBodyParser) {
+                
+                /* Default body parser application/json */
+                app.use(express.json());
 
-            /* Default body parser application/x-www-form-urlencoded */
-            app.use(express.urlencoded({ extended: true }));
+                /* Default body parser application/x-www-form-urlencoded */
+                app.use(express.urlencoded({ extended: true }));
+            }
 
             middlewares.forEach(middleware => {
                 app.use(middleware);
