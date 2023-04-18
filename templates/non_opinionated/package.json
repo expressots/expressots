@@ -18,7 +18,7 @@
   },
   "keywords": [],
   "dependencies": {
-    "@expressots/core": "^1.2.0",
+    "@expressots/core": "latest",
     "dotenv": "^16.0.3",
     "inversify": "^6.0.1",
     "inversify-binding-decorators": "^4.0.0",
