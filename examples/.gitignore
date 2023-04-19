@@ -9,7 +9,6 @@
 01-history/project-one/public
 01-history/project-one/.vscode
 03-opinionated-with-docker/node_modules
-03-opinionated-with-docker/.env
 
 /.pnp
 .pnp.js
