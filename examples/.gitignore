@@ -8,8 +8,12 @@ history/project-one/node_modules/
 history/project-one/log
 history/project-one/public
 history/project-one/.vscode
+
 /.pnp
 .pnp.js
+
+# Logs
+typeorm-demo/typeorm-demo-api/logs/
 
 # testing
 /coverage
