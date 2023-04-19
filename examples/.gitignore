@@ -1,13 +1,15 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-typeorm-demo/typeorm-demo-api/node_modules/
-typeorm-demo/typeorm-demo-ui-react/node_modules/
-typeorm-demo/typeorm-demo-vue/node_modules/
-history/project-one/node_modules/
-history/project-one/log
-history/project-one/public
-history/project-one/.vscode
+02-typeorm-demo/typeorm-demo-api/node_modules/
+02-typeorm-demo/typeorm-demo-ui-react/node_modules/
+02-typeorm-demo/typeorm-demo-vue/node_modules/
+01-history/project-one/node_modules/
+01-history/project-one/log
+01-history/project-one/public
+01-history/project-one/.vscode
+03-opinionated-with-docker/node_modules
+03-opinionated-with-docker/.env
 
 /.pnp
 .pnp.js
@@ -27,7 +29,7 @@ typeorm-demo/typeorm-demo-api/logs/
 .env.development.local
 .env.test.local
 .env.production.local
-history/project-one/.env
+01-history/project-one/.env
 
 npm-debug.log*
 yarn-debug.log*
