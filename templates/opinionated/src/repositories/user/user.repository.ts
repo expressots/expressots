@@ -1,8 +1,8 @@
 import { User } from "@entities/user.entity";
 import { BaseRepository } from "@repositories/base-repository";
-import { provideSingleton } from "helpers/provide-singleton";
+import { provide } from "inversify-binding-decorators";
 
-@provideSingleton(UserRepository)
+@provide(UserRepository)
 class UserRepository extends BaseRepository<User> {
     constructor() {
         super();

@@ -1,10 +1,16 @@
+import { inject } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./base-repository.interface";
 import { IEntity } from "@entities/base.entity";
+import { InMemoryDB } from "@providers/db-in-memory/db-in-memory.provider";
 
 @provide(BaseRepository)
 class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
-    private readonly USERDB: T[] = [];
+    @inject(InMemoryDB) private inMemoryDB!: InMemoryDB;
+
+    private get USERDB(): T[] {
+        return this.inMemoryDB.getUserDB() as T[];
+    }
 
     create(item: T): T | null {
         this.USERDB.push(item);

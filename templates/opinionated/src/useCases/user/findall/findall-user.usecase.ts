@@ -3,8 +3,8 @@ import { User } from "@entities/user.entity";
 import { UserRepository } from "@repositories/user/user.repository";
 import { IFindAllUserResponseDTO } from "./findall-user.dto";
 
-@provide(CreateUserUseCase)
-class CreateUserUseCase {
+@provide(FindAllUserUseCase)
+class FindAllUserUseCase {
     constructor(private userRepository: UserRepository) {}
 
     execute(): IFindAllUserResponseDTO[] | null {
@@ -27,4 +27,4 @@ class CreateUserUseCase {
     }
 }
 
-export { CreateUserUseCase };
+export { FindAllUserUseCase };
