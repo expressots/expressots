@@ -6,16 +6,14 @@
 
 A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
 
-## Author
+## Opinionated Docker Example Author
+
+An opinionated Expresso TS Project running on Docker.
 
 - Rafael Thayto
 - [GitHub](https://github.com/rafa-thayto)
 - [Twitch](https://www.twitch.tv/thayto_dev)
 - [Linkedin](https://www.linkedin.com/in/thayto/)
-
-## Opinionated Docker Example
-
-An opinionated Expresso TS Project running on Docker.
 
 ## How to use
 
@@ -41,7 +39,7 @@ docker run --name expressots-docker -dp 3000:3000 expressots-docker
 
 ## Support
 
-Expresso TS is an MIT-Licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you want to join the them, as we are currently looking for sponsors and backers, please [contact us](mailto: richard.zampieri@expresso-ts.com)
+Expresso TS is an MIT-Licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you want to join the them, as we are currently looking for sponsors and backers, please [contact us](richard.zampieri@expresso-ts.com)
 
 ## Stay in touch
 
