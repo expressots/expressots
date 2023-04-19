@@ -22,7 +22,7 @@ An opinionated Expresso TS Project running on Docker.
 ```bash
 git clone https://github.com/expressots/examples.git
 
-cd examples/opinionated-with-docker
+cd examples/03-opinionated-with-docker
 ```
 
 2 - Build the docker image
