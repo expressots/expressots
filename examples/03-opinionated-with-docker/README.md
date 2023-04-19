@@ -23,6 +23,8 @@ An opinionated Expresso TS Project running on Docker.
 git clone https://github.com/expressots/examples.git
 
 cd examples/03-opinionated-with-docker
+
+npm install or yarn install
 ```
 
 2 - Build the docker image
