@@ -6,15 +6,21 @@
 
 A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
 
-## Philosophy
+## Expresso TS Framework Community Demos
 
-ExpressoTS is a developer-friendly framework designed to streamline the process of building server-side applications. With a focus on readability, maintainability, and scalability, ExpressoTS aims to simplify the development process by providing a clear and concise structure.
+Welcome to the Expresso TS Framework Community Demos repository! This repository is dedicated to showcasing demos and projects created by the Expresso TS Framework community members and the direct contributors of the framework. Our goal is to highlight the diverse applications and creative solutions built using Expresso TS Framework and inspire others to develop their own projects.
 
-Gone are the days of tedious setup tasks such as configuring logging systems, handling authentication, and connecting to databases. With ExpressoTS, developers can focus on what really matters - writing code. The framework takes care of the repetitive and time-consuming aspects of development, allowing developers to work more efficiently.
+The demos in this repository cover a wide range of use cases and demonstrate various features and capabilities of the Expresso TS Framework. They serve as excellent learning resources for those who are new to the framework or looking for practical examples to incorporate into their own projects.
 
-One of the key features of Expresso TS is its flexible and extensible architecture. The framework provides a simple but powerful dependency injection system that enables developers to quickly and easily extend its functionality by creating and adding providers. This allows developers to seamlessly integrate new features throughout the entire application without having to worry about the complexities of integration.
+We encourage community members to contribute to this repository by sharing their own demos and projects. If you have a demo or project you would like to showcase, please feel free to submit a pull request, and we'll be happy to include it in this collection.
 
-Whether you're building a simple API or a complex enterprise application, Expresso TS can help you deliver your project on time and on budget. With a comprehensive set of tools and features, Expresso TS makes it easy to build high-quality, scalable, and maintainable server-side applications.
+Happy coding, and thank you for being a part of the Expresso TS Framework community!
+
+## Our Examples and Demos contributors 
+
+- **Antony Gabriel** [Git](https://github.com/AntonyZ89) || [Twitch](https://www.twitch.tv/antonydev) || [Linkedin](https://www.linkedin.com/in/antonydev/) || [Type ORM Vue UI](https://github.com/expressots/examples/tree/main/02-typeorm-demo/typeorm-demo-vue)
+
+- **Rafael Thayto** [Git](https://github.com/rafa-thayto) || [Twitch](https://www.twitch.tv/thayto_dev) || [Linkedin](https://www.linkedin.com/in/thayto/) || [Expresso Opinionated with Docker](https://github.com/expressots/examples/tree/main/03-opinionated-with-docker)
 
 ## Getting Started
 
@@ -24,7 +30,7 @@ Whether you're building a simple API or a complex enterprise application, Expres
 
 ## Questions
 
-For questions and support please use the Official [Discord Channel](https://discord.com/invite/PyPJfGK). We have a very active community there, that will be happy to help you. Post your questions in the channel called **HELP EXPRESSO TS** and forum called **help**.
+For questions and support please use the Official [Discord Channel](https://discord.com/invite/PyPJfGK). We have a very active community there, that will be happy to help you. Post your questions in the channel called **NEED SUPPORT** and forum called **expresso-ts**.
 
 ## Issues
 
@@ -40,19 +46,10 @@ ExpressoTS is an MIT-licensed open source project. It's an independent project w
 - Follow the organization on GitHub and Star the project
 - Contribute submitting issues and pull requests
 - Share the project with your friends and colleagues
-
-## Contributors
-
-- [Daniel Boll](https://github.com/daniel-boll)
-- [Felipe Fontana](https://github.com/f0ntana)
-- [Juliano Soares](https://github.com/juliano-soares)
-- [Vitor Caminha](https://github.com/VitorCaminha) 
-- [Ariel Betti](https://github.com/ArielBetti)
-- [Rodrigo da Hora](https://github.com/dahorarodrigo)
-
+ 
 ## Backers
 
-- Work in progress
+- Be the first, consider to become a sponsor
 
 ## Stay in touch
 
