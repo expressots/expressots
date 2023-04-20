@@ -22,6 +22,8 @@ Happy coding, and thank you for being a part of the Expresso TS Framework commun
 
 - **Rafael Thayto** [Git](https://github.com/rafa-thayto) || [Twitch](https://www.twitch.tv/thayto_dev) || [Linkedin](https://www.linkedin.com/in/thayto/) || [Expresso Opinionated with Docker](https://github.com/expressots/examples/tree/main/03-opinionated-with-docker)
 
+- **Ariel Betti** [Git]((https://github.com/ArielBetti) || [Twitch](https://www.twitch.tv/asancode) || [Linkedin](https://www.linkedin.com/in/ariel-betti/)
+
 ## Getting Started
 
 - Here is our [Official Documentation](https://expresso-ts.com/)
