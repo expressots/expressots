@@ -6,14 +6,14 @@
 
 A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
 
-## Opinionated Docker Example Author
+## Poke Battle Game Example Author
 
 An opinionated Expresso TS Project running on Docker.
 
-- Rafael Thayto
-- [GitHub](https://github.com/rafa-thayto)
-- [Twitch](https://www.twitch.tv/thayto_dev)
-- [Linkedin](https://www.linkedin.com/in/thayto/)
+- Ariel Betti
+- [GitHub](https://github.com/ArielBetti)
+- [Twitch](https://www.twitch.tv/asancode)
+- [Linkedin](https://www.linkedin.com/in/ariel-betti/)
 
 ## How to use
 
@@ -22,21 +22,23 @@ An opinionated Expresso TS Project running on Docker.
 ```bash
 git clone https://github.com/expressots/examples.git
 
-cd examples/03-opinionated-with-docker
+cd examples/04-poke-battle-with-prisma
 
 npm install or yarn install
 ```
 
-2 - Build the docker image
+2 - Install Postgres docker image
+
+Pull official postgres image and create a container with a database called `pokebattle`
 
 ```bash
-docker build -t expressots-docker .
+docker pull postgres:latest
 ```
 
-3 - Run the docker image to create a container on port 3000
+3 - Run the the application
 
 ```bash
-docker run --name expressots-docker -dp 3000:3000 expressots-docker
+npm start or yarn start
 ```
 
 ## Support
