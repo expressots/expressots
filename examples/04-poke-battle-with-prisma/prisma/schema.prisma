@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "postgres"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id       String    @id @default(uuid())
+  email    String    @unique
+  name     String
+  password String
+  History  History[]
+}
+
+model History {
+  id         String    @id @default(uuid())
+  player     User      @relation(fields: [playerId], references: [id])
+  log        Json[]
+  playerId   String // relation scalar field  (used in the `@relation` attribute above)
+  userName   String
+  winner     Boolean
+  pokemon1   String
+  pokemon2   String
+  winnerName String
+  loserName  String
+  isDraw     Boolean
+}

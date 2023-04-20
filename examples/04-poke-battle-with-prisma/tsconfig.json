@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2017",
+    "declaration": true,
+    "removeComments": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "baseUrl": "./src",
+    "paths": {
+      "@entities/*": ["entities/*"],
+      "@providers/*": ["providers/*"],
+      "@repositories/*": ["repositories/*"],
+      "@useCases/*": ["useCases/*"]
+    },
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "types": ["reflect-metadata", "node", "jest"]
+  },
+  "include": [".", "src/**/*.ts", ".eslintrc.js"],
+  "exclude": ["node_modules", "dist"]
+}
