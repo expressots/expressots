@@ -8,7 +8,8 @@ A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for qui
 
 ## Poke Battle Game Example Author
 
-An opinionated Expresso TS Project running on Docker.
+Poke battle is an automatic battle of pokemons with authentication system and history of battles per user.
+An opinionated Expresso TS Project. 
 
 - Ariel Betti
 - [GitHub](https://github.com/ArielBetti)
