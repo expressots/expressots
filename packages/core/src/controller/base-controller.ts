@@ -16,7 +16,7 @@ abstract class BaseController implements interfaces.Controller {
      * Constructs a new BaseController instance with a specified service name.
      * @param serviceName - The name of the service associated with the controller.
      */
-    constructor(serviceName: string) {
+    constructor(serviceName: string="") {
         this.serviceName = serviceName;
     }
 
