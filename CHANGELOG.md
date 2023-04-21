@@ -1,5 +1,20 @@
 
 
+## [1.3.0](https://github.com/expressots/expressots/compare/v1.2.1...v1.3.0) (2023-04-21)
+
+
+### Features
+
+* add user repository as singleton provider in opinionated template ([#24](https://github.com/expressots/expressots/issues/24)) ([3b5bded](https://github.com/expressots/expressots/commit/3b5bded07769d51f69b481e4b5e9b45c27d13a69))
+
+
+### Bug Fixes
+
+* add gitignore on opinionated template ([315d355](https://github.com/expressots/expressots/commit/315d355ed87eb6be85daddc250289d5e0d41cd21))
+* findall use case query db in memory ([ff8feea](https://github.com/expressots/expressots/commit/ff8feeaf36d0b74eebd9ab4e22f1910cff0a4df8))
+* the number of constructor arguments ([ccf2a48](https://github.com/expressots/expressots/commit/ccf2a4878e795e0182608546eae8cd83e3bea775))
+* update core pkg templates to always download latest ([ca443eb](https://github.com/expressots/expressots/commit/ca443eb6be103725c73442f49e2fec14d797bba1))
+
 ## [1.2.1](https://github.com/expressots/expressots/compare/v1.2.0...v1.2.1) (2023-04-18)
 
 
