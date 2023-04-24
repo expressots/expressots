@@ -19,10 +19,10 @@ class TypeORMProvider {
                         "typeorm-provider-initialize",
                     );
                 })
-                .catch((error) => {
+                .catch((error: any) => {
                     log(LogLevel.Error, error, "typeorm-provider");
                 });
-        } catch (error) {
+        } catch (error: any) {
             log(LogLevel.Error, error, "typeorm-provider");
         }
     }
@@ -42,7 +42,7 @@ class TypeORMProvider {
                 .catch((error) => {
                     log(LogLevel.Error, error, "typeorm-provider");
                 });
-        } catch (error) {
+        } catch (error: any) {
             log(LogLevel.Error, error, "typeorm-provider");
         }
     }

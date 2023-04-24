@@ -1,10 +1,10 @@
 import "reflect-metadata";
 
 import { ServerEnvironment } from "@expressots/core";
-import { App } from "@providers/application/application";
 import ENV from "./env";
-import { container } from "app-container";
+import { App } from "@providers/application/application";
 import cors from "cors";
+import { container } from "app-container";
 
 async function Bootstrap() {
     const app = App.create(container, [cors({ origin: ENV.Cors.ORIGIN })]);
