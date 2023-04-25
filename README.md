@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/expressots/blob/main/media/alogo.png" width="120" alt="Expresso TS Logo" /></a>
+  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" width="120" alt="Expresso TS Logo" /></a>
 </p>
 
 # Expresso TS
@@ -46,7 +46,7 @@ ExpressoTS is an MIT-licensed open source project. It's an independent project w
 - [Daniel Boll](https://github.com/daniel-boll)
 - [Felipe Fontana](https://github.com/f0ntana)
 - [Juliano Soares](https://github.com/juliano-soares)
-- [Vitor Caminha](https://github.com/VitorCaminha) 
+- [Vitor Caminha](https://github.com/VitorCaminha)
 - [Ariel Betti](https://github.com/ArielBetti)
 - [Rodrigo da Hora](https://github.com/dahorarodrigo)
 

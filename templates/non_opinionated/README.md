@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/expressots/blob/main/media/alogo.png" width="120" alt="Expresso TS Logo" /></a>
+  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" width="120" alt="Expresso TS Logo" /></a>
 </p>
 
 # Expresso TS
