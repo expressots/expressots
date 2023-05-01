@@ -33,7 +33,7 @@ class CreateUserUseCase {
 
             if (user !== null) {
                 response = {
-                    id: user.Id,
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                     status: "success",

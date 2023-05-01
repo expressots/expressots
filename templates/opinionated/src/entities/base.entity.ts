@@ -1,5 +1,5 @@
 interface IEntity {
-    Id: string;
+    id: string;
 }
 
 export { IEntity };

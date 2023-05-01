@@ -14,7 +14,7 @@ class FindAllUserUseCase {
 
             users.forEach((user: User) => {
                 response.push({
-                    id: user.Id,
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                 });

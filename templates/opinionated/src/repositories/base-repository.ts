@@ -23,7 +23,7 @@ class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
     }
 
     delete(id: string): boolean {
-        const index: number = this.USERDB.findIndex((item) => item.Id === id);
+        const index: number = this.USERDB.findIndex((item) => item.id === id);
 
         if (index != -1) {
             this.USERDB.splice(index, 1);
@@ -33,7 +33,7 @@ class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
     }
 
     find(id: string): T | null {
-        const user = this.USERDB.find((item) => item.Id === id);
+        const user = this.USERDB.find((item) => item.id === id);
         return user || null;
     }
 

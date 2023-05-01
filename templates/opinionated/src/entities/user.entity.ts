@@ -1,9 +1,10 @@
 import { provide } from "inversify-binding-decorators";
 import { randomUUID } from "node:crypto";
+import { IEntity } from "./base.entity";
 
 @provide(User)
-class User {
-    private id: string;
+class User implements IEntity {
+    public id: string;
     public name: string;
     public email: string;
 
@@ -11,10 +12,6 @@ class User {
         this.id = randomUUID();
         this.name = name;
         this.email = email;
-    }
-
-    get Id(): string {
-        return this.id;
     }
 }
 
