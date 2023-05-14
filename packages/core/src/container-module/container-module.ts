@@ -1,10 +1,41 @@
-import { ContainerModule } from "inversify";
+import { BindingScopeEnum, ContainerModule, interfaces } from "inversify";
 import { provide } from "inversify-binding-decorators";
+import { provideSingleton, provideTransient } from "../decorator";
+
+/**
+ * Key to be used for storing and retrieving binding type metadata.
+ */
+const BINDING_TYPE_METADATA_KEY = "binding-type";
+
+/**
+ * The scope decorator is a higher order function that can be used to decorate a class with a binding type.
+ * @param binding An instance of interfaces.BindingScope which represents the binding type.
+ * @returns A decorator function that can be used to decorate a class with a binding type.
+ */
+const scope = (binding: interfaces.BindingScope) => {
+    return function (target: any) {
+        if (!Reflect.hasMetadata(BINDING_TYPE_METADATA_KEY, target)) {
+            Reflect.defineMetadata(BINDING_TYPE_METADATA_KEY, binding, target);
+
+            switch (binding) {
+                case BindingScopeEnum.Singleton:
+                    provideSingleton(target);
+                    break;
+                case BindingScopeEnum.Transient:
+                    provideTransient(target);
+                    break;
+                default:
+                    provide(target);
+                    break;
+            }
+        }
+    };
+};
 
 /**
  * Type alias for a map of controller symbols to controller constructor functions.
  */
-type controllerType = Map<Symbol, new () => any>;
+type controllerType = Map<symbol, new () => any>;
 
 /**
  * The BaseModule class provides methods for creating InversifyJS container modules.
@@ -12,17 +43,13 @@ type controllerType = Map<Symbol, new () => any>;
  */
 @provide(BaseModule)
 class BaseModule {
-
-    constructor() { }
-
     /**
      * Create a map of symbols for the provided controllers.
      * @param controllers - An array of controller classes.
      * @returns A map of symbols mapped to controller constructor functions.
      */
     private static createSymbols(controllers: any[]): controllerType {
-
-        const symbols = new Map<Symbol, new () => any>();
+        const symbols = new Map<symbol, new () => any>();
 
         for (const controller of controllers) {
             const target = controller;
@@ -33,20 +60,53 @@ class BaseModule {
         return symbols;
     }
 
-     /**
+    /**
      * Create an InversifyJS ContainerModule for the provided controllers.
      * @param controllers - An array of controller classes.
+     * @param scope - An optional binding scope to be used for all controllers.
      * @returns A ContainerModule with the controller bindings.
      */
-    public static createContainerModule(controllers: any[]): ContainerModule {
-
+    public static createContainerModule(
+        controllers: any[],
+        scope?: interfaces.BindingScope,
+    ): ContainerModule {
         const symbols = BaseModule.createSymbols(controllers);
 
-        return new ContainerModule(bind => {
-            for (const symbol of symbols) {
-                const target: Object = symbol.valueOf();
+        return new ContainerModule((bind) => {
+            for (const [symbol, target] of symbols) {
+                if (scope) {
+                    switch (scope) {
+                        case BindingScopeEnum.Singleton:
+                            bind(symbol).to(target).inSingletonScope();
+                            break;
+                        case BindingScopeEnum.Transient:
+                            bind(symbol).to(target).inTransientScope();
+                            break;
+                        case BindingScopeEnum.Request:
+                            bind(symbol).to(target).inRequestScope();
+                            break;
+                    }
+                } else {
+                    const bindingType = Reflect.getMetadata(
+                        BINDING_TYPE_METADATA_KEY,
+                        target,
+                    );
 
-                bind(target[0]).to(target[1]);
+                    switch (bindingType) {
+                        case BindingScopeEnum.Singleton:
+                            bind(symbol).to(target).inSingletonScope();
+                            break;
+                        case BindingScopeEnum.Transient:
+                            bind(symbol).to(target).inTransientScope();
+                            break;
+                        case BindingScopeEnum.Request:
+                            bind(symbol).to(target).inRequestScope();
+                            break;
+                        default:
+                            bind(symbol).to(target).inRequestScope();
+                            break;
+                    }
+                }
             }
         });
     }
@@ -54,4 +114,4 @@ class BaseModule {
 
 const CreateModule = BaseModule.createContainerModule;
 
-export { CreateModule };
+export { CreateModule, scope };
