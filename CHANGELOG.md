@@ -1,5 +1,13 @@
 
 
+## [1.4.0](https://github.com/expressots/expressots/compare/v1.3.0...v1.4.0) (2023-05-14)
+
+
+### Bug Fixes
+
+* add example with controller only ([11b4ce3](https://github.com/expressots/expressots/commit/11b4ce3124482122a4f47fb27b7a1b1e02731621))
+* opinionated template ientity id ([dd50ca0](https://github.com/expressots/expressots/commit/dd50ca0926c98890cbe1342f804ca34152c4a9f9))
+
 ## [1.3.0](https://github.com/expressots/expressots/compare/v1.2.1...v1.3.0) (2023-04-21)
 
 
