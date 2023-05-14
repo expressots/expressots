@@ -23,8 +23,8 @@
   "license": "MIT",
   "homepage": "https://expresso-ts.com",
   "funding": {
-    "type": "",
-    "url": ""
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
   },
   "repository": {
     "type": "git",
