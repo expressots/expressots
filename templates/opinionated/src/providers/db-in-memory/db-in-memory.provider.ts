@@ -1,5 +1,5 @@
+import { provideSingleton } from "@expressots/core";
 import { IEntity } from "@entities/base.entity";
-import { provideSingleton } from "@providers/bindingType/provide-singleton";
 
 @provideSingleton(InMemoryDB)
 class InMemoryDB {
