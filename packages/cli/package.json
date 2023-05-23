@@ -14,8 +14,8 @@
     "node": ">=18.10.0"
   },
   "funding": {
-    "type": "",
-    "url": ""
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
   },
   "repository": {
     "type": "git",
