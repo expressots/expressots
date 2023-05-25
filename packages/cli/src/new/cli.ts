@@ -1,12 +1,12 @@
-import { CommandModule, Argv } from "yargs";
+import { Argv, CommandModule } from "yargs";
 import { projectForm } from "./form";
 
 type CommandModuleArgs = {};
-
+	
 const createProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
-		command: "new <project-name> [package-manager] [template]",
-		describe: "Create a new Expresso TS project",
+		command: "new <project-name> [package-manager] [template] [directory]",
+		describe: "Create a new project",
 		builder: (yargs: Argv): Argv => {
 			yargs
 			.positional("project-name", {
@@ -24,14 +24,22 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 				type: "string",
 				choices: ["npm", "yarn", "pnpm"],
 				alias: "p",
-			});
+			})
+			.option("directory", {
+				describe: "The directory for new project",
+				type: "string",
+				alias: "d",
+			})
+			.implies("package-manager", "template")
+			.implies("template", "package-manager")
 
 			return yargs;
 		},
-		handler: async ({projectName, packageManager, template}) => {
-			return await projectForm(projectName, packageManager, template);
+		handler: async ({projectName, packageManager , template, directory}) => {
+			return await projectForm(projectName, [packageManager, template, directory]);
 		},
 	};
 };
 
 export { createProject };
+ 

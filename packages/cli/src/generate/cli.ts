@@ -7,7 +7,7 @@ type CommandModuleArgs = {};
 const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "generate [schematic] [path]",
-		describe: "Generate a schematic",
+		describe: "Scaffold a new resource",
 		aliases: ["g"],
 		builder: (yargs: Argv): Argv => {
 			yargs.positional("schematic", {

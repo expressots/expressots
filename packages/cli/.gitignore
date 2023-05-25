@@ -32,3 +32,5 @@ package-lock.json
 
 *.log
 expressots.config.ts
+
+*.tgz

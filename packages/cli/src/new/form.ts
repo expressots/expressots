@@ -1,10 +1,12 @@
-import inquirer from "inquirer";
 import chalk from "chalk";
-import degit from "degit";
-import { spawn, execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import { Presets, SingleBar } from "cli-progress";
+import degit from "degit";
+import inquirer from "inquirer";
 import fs from "node:fs";
 import path from "node:path";
+import { centerText } from "../utils/center-text";
+import { printError } from "../utils/cli-ui";
 
 async function packageManagerInstall({
 	packageManager,
@@ -35,7 +37,7 @@ async function packageManagerInstall({
 			if (code === 0) {
 				resolve("Installation Done!");
 			} else {
-				reject(new Error(`npm install exited with code ${code}`));
+				reject(new Error(`${packageManager} install exited with code ${code}`));
 			}
 		});
 	});
@@ -45,12 +47,12 @@ async function checkIfPackageManagerExists(packageManager: string) {
 	try {
 		execSync(`${packageManager} --version`);
 		return true;
-	} catch (_) {
-		throw new Error(`Package manager ${packageManager} is not installed`);
+	} catch (error) {
+		printError("Package manager not found!", packageManager);
+		process.exit(1);
 	}
 }
 
-// Change the package.json name to the user's project name
 function changePackageName({
 	directory,
 	name,
@@ -79,13 +81,31 @@ enum Template {
 }
 
 const enum PackageManager {
-	npm,
-	yarn,
-	pnpm,
+	npm = "npm",
+	yarn = "yarn",
+	pnpm = "pnpm"
 }
 
-const projectForm = async (projectName: string, packageManager: PackageManager, template: keyof typeof Template): Promise<void> => {
+const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 	let answer: any;
+	const projName: string = projectName;
+	let packageManager: PackageManager | undefined;
+	let template: keyof typeof Template | undefined;
+	let directory: string | undefined;
+
+	// Resolving the argument order problem
+	for (const arg of args) {
+		if (args.length >= 3) {
+			if (arg === "npm" || arg === "yarn" || arg === "pnpm") {
+				packageManager = arg as PackageManager;
+			} else if (arg === "non-opinionated" || arg === "opinionated") {
+				template = arg as keyof typeof Template;
+			} else {
+				directory = arg;
+			}
+		}
+	}
+
 	if (packageManager && template) {
 		answer = {
 			name: projectName,
@@ -94,7 +114,6 @@ const projectForm = async (projectName: string, packageManager: PackageManager, 
 			confirm: true,
 		};
 	} else {
-
 		answer = await inquirer.prompt([
 			{
 				type: "input",
@@ -128,6 +147,16 @@ const projectForm = async (projectName: string, packageManager: PackageManager, 
 			},
 		]);
 	}
+
+	if (directory) {
+		if(!fs.existsSync(path.join(directory, answer.name))) {
+			answer.name = path.join(directory, answer.name);
+		} else {
+			printError("Directory already exists", directory);
+			process.exit(1);
+		}
+	}
+
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
 		"Non-Opinionated": "non_opinionated",
@@ -135,12 +164,8 @@ const projectForm = async (projectName: string, packageManager: PackageManager, 
 	};
 
 	if (answer.confirm) {
-		// Check if the package manager exists
-		await checkIfPackageManagerExists(answer.packageManager).catch((err) => {
-			console.log(chalk.red(err.message));
-			process.exit(1);
-		});
-
+		await checkIfPackageManagerExists(answer.packageManager);
+		console.log("\n");
 		const progressBar = new SingleBar(
 			{
 				format:
@@ -156,38 +181,60 @@ const projectForm = async (projectName: string, packageManager: PackageManager, 
 
 		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
 
-		const emitter = degit(
-			`expressots/expressots/templates/${templates[template]}`,
-		);
-
-		await emitter.clone(answer.name);
-
+		try  {
+			const emitter = degit(
+				`expressots/expressots/templates/${templates[template]}`,
+			);
+	
+			await emitter.clone(answer.name);
+		} catch (err: any) {
+			printError("Project already exists or Folder is not empty", answer.name);
+			process.exit(1);
+		}
+		
 		progressBar.update(50, {
 			doing: "Installing dependencies",
 		});
 
-		// Run the package manager install in the directory
 		await packageManagerInstall({
 			packageManager: answer.packageManager,
 			directory: answer.name,
 			progressBar,
 		});
 
+		
 		progressBar.update(90);
 
 		changePackageName({
 			directory: answer.name,
-			name: answer.name,
+			name: projName,
 		});
 
 		progressBar.update(100);
 
 		progressBar.stop();
 
-		console.log(chalk.green("Project created successfully!"));
-		console.log("Run the following commands to start the project:");
-		console.log(chalk.bold(`cd ${answer.name}`));
-		console.log(chalk.bold(`${answer.packageManager} start`));
+		console.log("\n");
+		console.log("🐎 Project ",chalk.green(projName), "created successfully!");
+		console.log("🤙 Run the following commands to start the project:\n");
+		
+		console.log(chalk.bold.gray(`$ cd ${answer.name}`));
+		switch (answer.packageManager) {
+			case "npm":
+				console.log(chalk.bold.gray("$ npm run dev"));
+				break;
+			case "yarn":
+				console.log(chalk.bold.gray("$ yarn dev"));
+				break;
+			case "pnpm":
+				console.log(chalk.bold.gray("$ pnpm run dev"));
+				break;
+		}
+
+		console.log("\n");
+		console.log(chalk.bold.green(centerText("Happy coding!")));
+		console.log(chalk.bold.gray(centerText("Please consider donating to support the project.\n")));
+		console.log(chalk.bold.white(centerText("💖 Sponsor: https://github.com/sponsors/expressots")));
 	}
 };
 
