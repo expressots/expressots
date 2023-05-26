@@ -1,54 +1,74 @@
-<p align="center">
-  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" width="120" alt="Expresso TS Logo" /></a>
-</p>
-
 # Expresso TS
 
 A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
 
 ## Philosophy
 
-Expresso TS is a framework designed to make the lives of the developers easier by providing a structure for building server-side applications that is clear to read, maintain and scale. The philosophy is centered around the idea that developers should not have to waste time on repetitive tasks such as setting up a logging system, authentication, error handling, database connection, and organizing the project for better maintainability.
+ExpressoTS is a TypeScript lightweight framework for building scalable, readable and maintainable server-side applications. The framework provides a level of abstraction on top of common HTTP server framework Expressjs exposing their API's directly to the developer. This provides freedom and brings to the developer a tool that is well known and easy to use.
 
-Expresso TS offers a solution that is designed to help developers jump ahead and focus on the most important part of the development process, writing code. The framework provides capability to the developers to quickly extend the framework functionalities by creating providers and adding them to the dependency injection system. This way, developers can use these new functionalities throughout the entire application without having to worry about the complexities of integrating it into the system.
+## How to use
 
-## Installation
+### Executing in development mode
 
 ```bash
-npm run install
+npm run dev
 ```
 
-## Running the app
+### Generating production build
 
 ```bash
-# development
-npm run start
-
-# build
 npm run build
+```
 
-# production mode
-npm run start:prod
+### Executing in production mode
+
+```bash
+npm run prod
 ```
 
 ## Test
 
-```bash
-# unit tests
-npm run test
+How to run test scripts
 
-# test coverage
+### Unit tests
+
+```bash
+npm run test
+```
+
+### Test coverage
+
+```bash
 npm run test:cov
 ```
 
-## Support
+## Documentation
 
-Expresso TS is an MIT-Licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you want to join the them, as we are currently looking for sponsors and backers, please [contact us](mailto: br.developer@gmail.com)
+- Here is our [Official Documentation](https://expresso-ts.com/)
+- Checkout our [First Steps documentation](https://expresso-ts.com/docs/overview/first-steps)
+- Our [CLI Documentation](https://expresso-ts.com/docs/category/cli)
 
-## Stay in touch
+## Questions
 
-Author - [Richard Zampieri](https://github.com/rsaz)
+For questions and support please use the Official [Discord Channel](https://discord.com/invite/PyPJfGK). We have a very active community there, that will be happy to help you. Post your questions in the channel called **HELP EXPRESSO TS** and forum called **help**.
+
+## Issues
+
+The [Issue Reporting Channel](https://github.com/expressots/expressots/issues) is for bug report and feature request **only**.
+
+Before you create an issue, please make sure you read the [Contribution Guidelines](CONTRIBUTING.md).
+
+## Support the project
+
+Expresso TS is an MIT-licensed open source project. It's an independent project with ongoing development made possible thanks to your support. If you'd like to help, please consider:
+
+- Become a sponsor on **[Sponsor no GitHub](https://github.com/sponsors/expressots)**
+- Follow the **[organization](https://github.com/expressots)** on GitHub and Star ⭐ the project
+- Subscribe to the Twitch channel: **[Richard Zampieri](https://www.twitch.tv/richardzampieri)**
+- Join our **[Discord](https://discord.com/invite/PyPJfGK)**
+- Contribute submitting **[issues and pull requests](https://github.com/expressots/expressots/issues/new/choose)**
+- Share the project with your friends and colleagues
 
 ## License
 
-Expresso TS [MIT LICENSE](https://github.com/expressots/expressots/blob/main/LICENSE.md).
+ExpressoTS is **[MIT licensed](LICENSE.md)**
