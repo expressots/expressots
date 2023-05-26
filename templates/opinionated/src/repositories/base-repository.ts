@@ -8,28 +8,40 @@ import { InMemoryDB } from "@providers/db-in-memory/db-in-memory.provider";
 class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
     @inject(InMemoryDB) private inMemoryDB!: InMemoryDB;
 
-    private get USERDB(): T[] {
-        return this.inMemoryDB.getUserDB() as T[];
+    protected get USERDB(): T[] {
+        return [...this.inMemoryDB.getUserDB()] as T[];
     }
 
     create(item: T): T | null {
-        this.USERDB.push(item);
-        return item;
-    }
+        const existingItem = this.USERDB.find((user) => user.id === item.id);
+        if (existingItem) {
+            throw new Error(`Object with id ${item.id} already exists`);
+        }
 
-    update(item: T) {
-        this.USERDB.push(item);
+        this.inMemoryDB.getUserDB().push(item);
         return item;
     }
 
     delete(id: string): boolean {
-        const index: number = this.USERDB.findIndex((item) => item.id === id);
+        const db = this.inMemoryDB.getUserDB();
+        const index: number = db.findIndex((item) => item.id === id);
 
-        if (index != -1) {
-            this.USERDB.splice(index, 1);
+        if (index !== -1) {
+            db.splice(index, 1);
             return true;
         }
         return false;
+    }
+
+    update(item: T): T | null {
+        const db = this.inMemoryDB.getUserDB();
+        const index: number = db.findIndex((i) => i.id === item.id);
+
+        if (index !== -1) {
+            db[index] = item;
+            return item;
+        }
+        return null;
     }
 
     find(id: string): T | null {

@@ -1,7 +1,16 @@
 import { CreateModule } from "@expressots/core";
-import { CreateUserController } from "./create/create-user.controller";
-import { FindAllUserController } from "./findall/findall-user.controller";
+import { UserCreateController } from "./create/user-create.controller";
+import { UserDeleteController } from "./delete/user-delete.controller";
+import { UserUpdateController } from "./update/user-update.controller";
+import { UserFindController } from "./find/user-find.controller";
+import { UserFindallController } from "./findall/user-findall.controller";
 
-const UserModule = CreateModule([CreateUserController, FindAllUserController]);
+const UserModule = CreateModule([
+    UserCreateController,
+    UserDeleteController,
+    UserUpdateController,
+    UserFindController,
+    UserFindallController,
+]);
 
 export { UserModule };

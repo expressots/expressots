@@ -7,7 +7,7 @@ interface ICreateUserResponseDTO {
     id: string;
     name: string;
     email: string;
-    status: string;
+    message: string;
 }
 
 export { ICreateUserRequestDTO, ICreateUserResponseDTO };

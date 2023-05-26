@@ -1,7 +1,7 @@
 import { provide } from "inversify-binding-decorators";
 import { User } from "@entities/user.entity";
 import { UserRepository } from "@repositories/user/user.repository";
-import { IFindAllUserResponseDTO } from "./findall-user.dto";
+import { IFindAllUserResponseDTO } from "./user-findall.dto";
 
 @provide(FindAllUserUseCase)
 class FindAllUserUseCase {

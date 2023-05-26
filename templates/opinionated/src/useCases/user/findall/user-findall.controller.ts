@@ -1,10 +1,10 @@
 import { BaseController, StatusCode } from "@expressots/core";
 import { controller, httpGet, response } from "inversify-express-utils";
-import { IFindAllUserResponseDTO } from "./findall-user.dto";
-import { FindAllUserUseCase } from "./findall-user.usecase";
+import { IFindAllUserResponseDTO } from "./user-findall.dto";
+import { FindAllUserUseCase } from "./user-findall.usecase";
 
 @controller("/user/findall")
-class FindAllUserController extends BaseController {
+class UserFindallController extends BaseController {
     constructor(private findallUserUseCase: FindAllUserUseCase) {
         super("findall-user-controller");
     }
@@ -19,4 +19,4 @@ class FindAllUserController extends BaseController {
     }
 }
 
-export { FindAllUserController };
+export { UserFindallController };

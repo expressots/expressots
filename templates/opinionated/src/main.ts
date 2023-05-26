@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
-import { App } from "@providers/application/application";
-import { container } from "app-container";
+import { App } from "@providers/application/application.provider";
+import { container } from "app.container";
 import { ServerEnvironment } from "@expressots/core";
 import ENV from "./env";
 

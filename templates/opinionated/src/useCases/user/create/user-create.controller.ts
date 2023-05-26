@@ -8,26 +8,26 @@ import {
 import {
     ICreateUserRequestDTO,
     ICreateUserResponseDTO,
-} from "./create-user.dto";
-import { CreateUserUseCase } from "./create-user.usecase";
+} from "./user-create.dto";
+import { CreateUserUseCase } from "./user-create.usecase";
 
 @controller("/user/create")
-class CreateUserController extends BaseController {
+class UserCreateController extends BaseController {
     constructor(private createUserUseCase: CreateUserUseCase) {
         super("create-user-controller");
     }
 
     @httpPost("/")
     execute(
-        @requestBody() data: ICreateUserRequestDTO,
+        @requestBody() payload: ICreateUserRequestDTO,
         @response() res: any,
     ): ICreateUserResponseDTO {
         return this.callUseCase(
-            this.createUserUseCase.execute(data),
+            this.createUserUseCase.execute(payload),
             res,
             StatusCode.Created,
         );
     }
 }
 
-export { CreateUserController };
+export { UserCreateController };

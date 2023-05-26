@@ -3,23 +3,24 @@ import { provide } from "inversify-binding-decorators";
 import {
     ICreateUserRequestDTO,
     ICreateUserResponseDTO,
-} from "./create-user.dto";
+} from "./user-create.dto";
 import { UserRepository } from "@repositories/user/user.repository";
 import { User } from "@entities/user.entity";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
-    constructor(private userRepository: UserRepository) {}
+    constructor(private userRepository: UserRepository, private user: User) {}
 
-    execute(data: ICreateUserRequestDTO): ICreateUserResponseDTO | null {
+    execute(payload: ICreateUserRequestDTO): ICreateUserResponseDTO | null {
         try {
-            const { name, email } = data;
+            this.user.name = payload.name;
+            this.user.email = payload.email;
 
-            const user: User | null = this.userRepository.create(
-                new User(name, email),
+            const userExists: User | null = this.userRepository.findByEmail(
+                this.user.email,
             );
 
-            if (!user) {
+            if (userExists) {
                 Report.Error(
                     new AppError(
                         StatusCode.BadRequest,
@@ -29,19 +30,14 @@ class CreateUserUseCase {
                 );
             }
 
-            let response: ICreateUserResponseDTO;
+            this.userRepository.create(this.user);
 
-            if (user !== null) {
-                response = {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    status: "success",
-                };
-                return response;
-            }
-
-            return null;
+            return {
+                id: this.user.id,
+                name: this.user.name,
+                email: this.user.email,
+                message: "user created successfully",
+            };
         } catch (error: any) {
             throw error;
         }
