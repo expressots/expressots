@@ -5,6 +5,7 @@ import {
     requestBody,
     response,
 } from "inversify-express-utils";
+import { Response } from "express";
 import {
     ICreateUserRequestDTO,
     ICreateUserResponseDTO,
@@ -20,7 +21,7 @@ class UserCreateController extends BaseController {
     @httpPost("/")
     execute(
         @requestBody() payload: ICreateUserRequestDTO,
-        @response() res: any,
+        @response() res: Response,
     ): ICreateUserResponseDTO {
         return this.callUseCase(
             this.createUserUseCase.execute(payload),

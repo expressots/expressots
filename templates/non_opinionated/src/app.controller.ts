@@ -1,5 +1,6 @@
 import { BaseController } from "@expressots/core";
 import { controller, httpGet, response } from "inversify-express-utils";
+import { Response } from "express";
 import { AppUseCase } from "./app.usecase";
 
 @controller("/")
@@ -9,7 +10,7 @@ class AppController extends BaseController {
     }
 
     @httpGet("/")
-    execute(@response() res: any) {
+    execute(@response() res: Response) {
         return res.send(this.appUseCase.execute());
     }
 }

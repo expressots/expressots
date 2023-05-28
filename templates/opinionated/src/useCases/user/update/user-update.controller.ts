@@ -6,6 +6,7 @@ import {
     requestParam,
     response,
 } from "inversify-express-utils";
+import { Response } from "express";
 import {
     IUserUpdateRequestDTO,
     IUserUpdateResponseDTO,
@@ -22,7 +23,7 @@ class UserUpdateController extends BaseController {
     execute(
         @requestParam("email") email: string,
         @requestBody() payload: IUserUpdateRequestDTO,
-        @response() res: any,
+        @response() res: Response,
     ): IUserUpdateResponseDTO {
         const data = { ...payload, email };
 

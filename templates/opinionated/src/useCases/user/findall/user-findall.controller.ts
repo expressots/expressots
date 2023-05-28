@@ -1,5 +1,6 @@
 import { BaseController, StatusCode } from "@expressots/core";
 import { controller, httpGet, response } from "inversify-express-utils";
+import { Response } from "express";
 import { IFindAllUserResponseDTO } from "./user-findall.dto";
 import { FindAllUserUseCase } from "./user-findall.usecase";
 
@@ -10,7 +11,7 @@ class UserFindallController extends BaseController {
     }
 
     @httpGet("/")
-    execute(@response() res: any): IFindAllUserResponseDTO {
+    execute(@response() res: Response): IFindAllUserResponseDTO {
         return this.callUseCase(
             this.findallUserUseCase.execute(),
             res,
