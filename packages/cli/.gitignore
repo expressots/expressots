@@ -34,3 +34,5 @@ package-lock.json
 expressots.config.ts
 
 *.tgz
+
+*.container.ts

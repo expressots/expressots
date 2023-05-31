@@ -3,7 +3,6 @@ import fs from 'node:fs';
 async function addControllerToModule(filePath: string, controllerName: string, controllerPath: string) {
   const fileContent = await fs.promises.readFile(filePath, 'utf8');
 
-
   const imports: string[] = [];
   const notImports: string[] = [];
   fileContent.split('\n').forEach((line: string) => {
@@ -15,14 +14,14 @@ async function addControllerToModule(filePath: string, controllerName: string, c
   });
 
 	const newImport = `import { ${controllerName} } from "${controllerPath}";`;
-
+  
 	if (imports.includes(newImport)) {
 		return;
 	}
 
   imports.push(newImport);
 
-  const moduleDeclarationRegex = /CreateModule\(\[(.*)\]\);/s;
+  const moduleDeclarationRegex = /CreateModule\(\s*\[([\s\S]*?)]/;
   const moduleDeclarationMatch = fileContent.match(moduleDeclarationRegex);
 
   if (!moduleDeclarationMatch) {
@@ -39,7 +38,7 @@ async function addControllerToModule(filePath: string, controllerName: string, c
 
   const newControllers = controllers.join(', ');
 
-  const newModuleDeclaration = `CreateModule([${newControllers}]);`;
+  const newModuleDeclaration = `CreateModule([${newControllers}]`;
 
   const newFileContent = [...imports, ...notImports].join('\n').replace(moduleDeclarationRegex, newModuleDeclaration);
 

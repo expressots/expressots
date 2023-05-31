@@ -1,8 +1,8 @@
 import { BaseController, StatusCode } from "@expressots/core";
-import { controller, {{method}}, response } from "inversify-express-utils";
+import { controller, {{method}}, requestParam, response } from "inversify-express-utils";
 import { Response } from "express";
 import { {{className}}UseCase } from "./{{fileName}}.usecase";
-import { I{{className}}ResponseDTO } from "./{{fileName}}.dto";
+import { I{{className}}RequestDTO, I{{className}}ResponseDTO } from "./{{fileName}}.dto";
 
 @controller("/{{{route}}}")
 class {{className}}Controller extends BaseController {
@@ -11,10 +11,10 @@ class {{className}}Controller extends BaseController {
 		super("{{construct}}-controller")
 	}
 
-  @{{method}}("/")
-  execute(@response() res: Response): I{{className}}ResponseDTO {
+  @{{method}}("/:id")
+  execute(@requestParam() payload: I{{className}}RequestDTO, @response() res: Response): I{{className}}ResponseDTO {
     return this.callUseCase(
-            this.{{useCase}}UseCase.execute(),
+            this.{{useCase}}UseCase.execute(payload),
             res,
             StatusCode.OK,
     );

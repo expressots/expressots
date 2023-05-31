@@ -1,6 +1,6 @@
-import chalk from 'chalk';
 import inquirer from 'inquirer';
 import fs from 'node:fs';
+import { printError } from './cli-ui';
 
 async function verifyIfFileExists(path: string) {
 	const fileExists = fs.existsSync(path);
@@ -15,9 +15,9 @@ async function verifyIfFileExists(path: string) {
 			},
 		]);
 
+		const fileName = path.split('/').pop();
 		if (!answer.confirm) {
-			console.log(chalk.green('> File not created!'))
-
+			printError('File not created!', fileName);
 			process.exit(1);
 		}
 	}

@@ -2,10 +2,12 @@ import { existsSync } from "node:fs";
 import path from "path";
 import { RegisterOptions, Service } from "ts-node";
 import { ExpressoConfig } from "../types";
+import { printError } from "./cli-ui";
 
 /**
  * The path to the expressots.config.ts file
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EXPRESSOTS_CONFIG: string = path.join(
 	process.cwd(),
 	"expressots.config.ts",
@@ -50,6 +52,7 @@ class Compiler {
 	}
 
 	private static interopRequireDefault(obj: any): { default: any } {
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const module = require(obj);
 		return module && module.__esModule ? module : { default: module };
 	}
@@ -61,7 +64,11 @@ class Compiler {
 		if (exists) return configPath;
 
 		const parentDir = path.join(dir, "..");
-		if (parentDir === dir) throw new Error("No config file found");
+
+		if (parentDir === dir) {
+			printError("No config file found!", "expressots.config.ts");
+			process.exit(1);
+		}
 
 		return Compiler.findConfig(parentDir);
 	}

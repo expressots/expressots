@@ -1,8 +1,27 @@
-import { CommandModule, Argv } from "yargs";
+import { Argv, CommandModule } from "yargs";
 import { createTemplate } from "./form";
-import chalk from "chalk";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type CommandModuleArgs = {};
+
+const coerceSchematicAliases = (arg: string) => {
+	switch (arg) {
+		case "u":
+			return "usecase";
+		case "c":
+			return "controller";
+		case "d":
+			return "dto";
+		case "s":
+			return "service";
+		case "p":
+			return "provider";
+		case "e":
+			return "entity";
+		default:
+			return arg;
+	}
+};
 
 const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
@@ -17,6 +36,7 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 					"dto",
 					"service",
 					"provider",
+					"entity",
 				] as const,
 				describe: "The schematic to generate",
 				type: "string",
@@ -26,33 +46,28 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 			yargs.positional("path", {
 				describe: "The path to generate the schematic",
 				type: "string",
+				alias: "d",
+			});
+
+			yargs.positional("method", {
+				choices: [
+					"get",
+					"post",
+					"put",
+					"patch",
+					"delete",
+				] as const,
+				describe: "HTTP method",
+				type: "string",
+				alias: "m",
 			});
 
 			return yargs;
 		},
-		handler: async ({ schematic, path }) => {
-      const file = await createTemplate({ schematic, path  });
-
-			console.log(chalk.green(`> ${file.split(".")[0]} ${schematic} created! 🚀`))
+		handler: async ({ schematic, path, method }) => {
+      		await createTemplate({ schematic, path, method });
 		},
 	};
-};
-
-const coerceSchematicAliases = (arg: string) => {
-	switch (arg) {
-		case "u":
-			return "usecase";
-		case "c":
-			return "controller";
-		case "d":
-			return "dto";
-		case "s":
-			return "service";
-		case "p":
-			return "provider";
-		default:
-			return arg;
-	}
 };
 
 export { generateProject };
