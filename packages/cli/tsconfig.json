@@ -5,7 +5,7 @@
 	"declaration": true,
 	"esModuleInterop": true,
     "moduleResolution": "node",
-	"resolveJsonModule": false,
+	"resolveJsonModule": true,
 	"target": "ES2017",
 	"lib": ["ES2017"],
 	"outDir": "bin",

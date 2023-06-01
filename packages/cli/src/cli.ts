@@ -5,8 +5,9 @@ import { hideBin } from "yargs/helpers";
 import { generateProject } from "./generate";
 import { infoProject } from "./info";
 import { createProject } from "./new";
+import * as pkg from "../package.json";
 
-export const CLI_VERSION = "1.2.2";
+export const CLI_VERSION = pkg.version;
 
 console.log(`\n[🐎 Expressots]\n`);
 
