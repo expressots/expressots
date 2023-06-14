@@ -1,7 +1,7 @@
+import { Report, StatusCode } from "@expressots/core";
+import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
 import { IUserFindRequestDTO, IUserFindResponseDTO } from "./user-find.dto";
-import { UserRepository } from "@repositories/user/user.repository";
-import { AppError, Report, StatusCode } from "@expressots/core";
 
 @provide(UserFindUseCase)
 class UserFindUseCase {
@@ -12,11 +12,9 @@ class UserFindUseCase {
 
         if (!userExists) {
             Report.Error(
-                new AppError(
-                    StatusCode.BadRequest,
-                    "User not found",
-                    "user-find-usecase",
-                ),
+                "User not found",
+                StatusCode.BadRequest,
+                "user-find-usecase",
             );
             return null;
         }

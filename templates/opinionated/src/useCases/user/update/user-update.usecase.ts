@@ -1,11 +1,11 @@
+import { User } from "@entities/user.entity";
+import { Report, StatusCode } from "@expressots/core";
 import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
 import {
     IUserUpdateRequestDTO,
     IUserUpdateResponseDTO,
 } from "./user-update.dto";
-import { AppError, Report, StatusCode } from "@expressots/core";
-import { User } from "@entities/user.entity";
 
 @provide(UserUpdateUseCase)
 class UserUpdateUseCase {
@@ -18,12 +18,11 @@ class UserUpdateUseCase {
 
         if (!userExists) {
             Report.Error(
-                new AppError(
-                    StatusCode.BadRequest,
-                    "User not found",
-                    "user-update-usecase",
-                ),
+                "User not found",
+                StatusCode.BadRequest,
+                "user-update-usecase",
             );
+
             return null;
         }
 

@@ -1,10 +1,10 @@
+import { Report, StatusCode } from "@expressots/core";
+import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
 import {
     IUserDeleteRequestDTO,
     IUserDeleteResponseDTO,
 } from "./user-delete.dto";
-import { UserRepository } from "@repositories/user/user.repository";
-import { AppError, Report, StatusCode } from "@expressots/core";
 
 @provide(UserDeleteUseCase)
 class UserDeleteUseCase {
@@ -23,11 +23,9 @@ class UserDeleteUseCase {
         }
 
         Report.Error(
-            new AppError(
-                StatusCode.BadRequest,
-                "User not found",
-                "user-delete-usecase",
-            ),
+            "User not found",
+            StatusCode.BadRequest,
+            "user-delete-usecase",
         );
 
         return null;

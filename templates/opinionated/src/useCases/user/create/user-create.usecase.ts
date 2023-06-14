@@ -1,11 +1,11 @@
-import { AppError, Report, StatusCode } from "@expressots/core";
+import { User } from "@entities/user.entity";
+import { Report, StatusCode } from "@expressots/core";
+import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
 import {
     ICreateUserRequestDTO,
     ICreateUserResponseDTO,
 } from "./user-create.dto";
-import { UserRepository } from "@repositories/user/user.repository";
-import { User } from "@entities/user.entity";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
@@ -22,11 +22,9 @@ class CreateUserUseCase {
 
             if (userExists) {
                 Report.Error(
-                    new AppError(
-                        StatusCode.BadRequest,
-                        "User already exists",
-                        "create-user-usecase",
-                    ),
+                    "User already exists",
+                    StatusCode.BadRequest,
+                    "create-user-usecase",
                 );
             }
 
