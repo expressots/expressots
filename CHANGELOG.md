@@ -1,5 +1,20 @@
 
 
+## [1.4.1](https://github.com/expressots/expressots/compare/v1.4.0...v1.4.1) (2023-06-14)
+
+
+### Bug Fixes
+
+* add user crud, remove ping, app.container ([befb447](https://github.com/expressots/expressots/commit/befb44720185d95fab2d275f79d5d5152cba2836))
+* correct bootstrap function name ([1b99dcc](https://github.com/expressots/expressots/commit/1b99dcc0a3910fcc490a19db169f3799e95ca175))
+* report known error in middleware ([#31](https://github.com/expressots/expressots/issues/31)) ([3790e24](https://github.com/expressots/expressots/commit/3790e24e9c30f3823a5b88eb4525cc892d5866df))
+* update .env.example ([90c0375](https://github.com/expressots/expressots/commit/90c0375763d5d942332a6217fa23c17d4f2d7260))
+* update changelog ([4e117b9](https://github.com/expressots/expressots/commit/4e117b9e4463374705fee83707444e0a112b656b))
+* update core and template readme ([b2cc461](https://github.com/expressots/expressots/commit/b2cc461e730a24e7cadd323266fa1c862af7cf65))
+* update non-op template app.container ([11a3938](https://github.com/expressots/expressots/commit/11a3938a8e1fa24e95da33cad0761967c9d6cd8e))
+* update response type on controllers ([8ca9f5e](https://github.com/expressots/expressots/commit/8ca9f5eac99a3a921c7b6c39fb8129cee4670889))
+* update singleton decorator in dbInmemory ([61bd590](https://github.com/expressots/expressots/commit/61bd590d06b96d297e6da8f92638df1ee8edce6b))
+
 ## [1.4.0](https://github.com/expressots/expressots/compare/v1.3.0...v1.4.0) (2023-05-14)
 
 * add DI (dependency injection) singleton, transient, scope to container, providers, entities, etc
