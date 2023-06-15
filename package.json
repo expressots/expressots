@@ -83,6 +83,7 @@
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.11",
+    "@types/reflect-metadata": "^0.1.0",
     "ts-jest": "^29.0.5",
     "typescript": "^5.0.3"
   },
