@@ -4,6 +4,11 @@
         "lib": ["ES6", "DOM"],
         "target": "ES6",
         "module": "commonjs",
+        "types": [
+            "node",
+            "reflect-metadata",
+            "jest"
+          ],   
         "moduleResolution": "node",
         "outDir": "lib/cjs",
         "declarationDir": "lib/cjs/types",
