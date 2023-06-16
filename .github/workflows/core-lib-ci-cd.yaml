@@ -25,9 +25,6 @@ jobs:
 
     - name: Install Dependencies
       run: npm install
-    
-    - name: Reflect-metadata install
-      run: npm install reflect-metadata -g
 
     - name: Build
       run: npm run build:linux
