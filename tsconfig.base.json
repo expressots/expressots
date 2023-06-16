@@ -13,7 +13,6 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "typeRoots": ["./node_modules/@types"],
     "types": [
       "node",
       "reflect-metadata",

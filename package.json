@@ -51,7 +51,7 @@
   },
   "scripts": {
     "win-clean": "if exist lib (del /q lib\\*)",
-    "linux-clean": "rm -f lib/*",
+    "linux-clean": "rm -rf lib/*",
     "win-cpy": "xcopy package.json lib\\ && xcopy README.md lib\\ && xcopy CHANGELOG.md lib\\ /Y",
     "linux-cpy": "cp package.json README.md CHANGELOG.md lib/",
     "build:win": "npm run win-clean && npm run build:esm && npm run build:cjs && npm run win-cpy",
