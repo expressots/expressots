@@ -1,4 +1,3 @@
-import "reflect-metadata";
 export * from "./application";
 export * from "./common";
 export * from "./console";
