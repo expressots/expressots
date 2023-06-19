@@ -1,5 +1,15 @@
 
 
+## [1.4.2](https://github.com/expressots/expressots/compare/v1.4.1...v1.4.2) (2023-06-19)
+
+
+### Bug Fixes
+
+* error handling ([#34](https://github.com/expressots/expressots/issues/34)) ([0c8bdc8](https://github.com/expressots/expressots/commit/0c8bdc8b933f64b76299396429162c0acae24feb))
+* remove exclude pattern ([#33](https://github.com/expressots/expressots/issues/33)) ([9f5461b](https://github.com/expressots/expressots/commit/9f5461be50eaf4c0aa60952eef7e120228740287))
+* update cicd ([#32](https://github.com/expressots/expressots/issues/32)) ([c6e4820](https://github.com/expressots/expressots/commit/c6e4820bd20b8c1fc43cbc80ddb609031d893f36))
+* update usecases to the new error handling ([1471e25](https://github.com/expressots/expressots/commit/1471e252f9e05f4a1f034a95d248c27cdbb306cd))
+
 ## [1.4.1](https://github.com/expressots/expressots/compare/v1.4.0...v1.4.1) (2023-06-14)
 
 
