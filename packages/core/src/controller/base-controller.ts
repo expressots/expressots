@@ -1,6 +1,5 @@
 import { provide } from 'inversify-binding-decorators';
 import { interfaces } from 'inversify-express-utils';
-import { Report } from '../error';
 
 /**
  * The BaseController class is an abstract base class for controllers.
@@ -27,15 +26,7 @@ abstract class BaseController implements interfaces.Controller {
      * @param successStatusCode - The HTTP status code to return upon successful execution.
      */
     protected async callUseCaseAsync(useCase: Promise<any>, res: any, successStatusCode: number) {
-        try {
-            const dataReturn = await useCase;
-            return res.status(successStatusCode).json(dataReturn);
-        } catch (error: any) {
-            if (error instanceof Error) {
-                Report.Error(error, undefined, this.serviceName);
-            }
-            return error;
-        }
+        return res.status(successStatusCode).json(await useCase);
     }
 
     /**
@@ -45,18 +36,8 @@ abstract class BaseController implements interfaces.Controller {
      * @param successStatusCode - The HTTP status code to return upon successful execution.
      */
     protected callUseCase(useCase: any, res: any, successStatusCode: number) {
-        try {
-            const dataReturn = useCase;
-            return res.status(successStatusCode).json(dataReturn);
-        } catch (error: any) {
-            if (error instanceof Error) {
-                Report.Error(error, undefined, this.serviceName);
-            }
-            return error;
-        }
+        return res.status(successStatusCode).json(useCase);
     }
-
-
 }
 
 export { BaseController };
