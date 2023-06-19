@@ -39,12 +39,4 @@ jobs:
       run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
     - name: Install dependencies
       run: npm ci
-    
-    - name: Publish to npm
-      if: github.actor == 'rsaz'
-      uses: JS-DevTools/npm-publish@v1
-      with:
-        token: $#{{ secrets.NPM_TOKEN }}
-        tag: latest
-        access: public 
    
