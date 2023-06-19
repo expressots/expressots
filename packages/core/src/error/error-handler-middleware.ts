@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { IAppError } from "./report";
 import { StatusCode } from "./status-code";
-import { LogLevel, log } from "../logger";
 
 /**
  * errorHandler is a custom Express error-handling middleware function.
