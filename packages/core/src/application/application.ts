@@ -1,10 +1,11 @@
 import express from "express";
+import process from "process";
+import errorHandler from "../error/error-handler-middleware";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { InversifyExpressServer } from "inversify-express-utils";
-import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
-import errorHandler from "../error/error-handler-middleware";
+import { IHandlebars, RenderTemplateOptions } from "../render";
 
 /**
  * Enum representing possible server environments.
@@ -108,6 +109,26 @@ class Application {
         });
 
         this.postServerInitialization();
+    }
+
+    /**
+     * Configures the application's view engine based on the provided configuration options.
+     * 
+     * @public
+     * @method setEngine
+     * @template T - A generic type extending from RenderTemplateOptions.
+     *
+     * @param {T} options - An object of type T (must be an object that extends RenderTemplateOptions) 
+     *                      that provides the configuration options for setting the view engine.
+     *                      This includes the extension name, view path, and the engine function itself.
+     */
+    public setEngine<T extends RenderTemplateOptions>(options: T): void {
+        if ("extName" in options) {
+            const { extName, viewPath, engine } = options as IHandlebars;
+            this.app.engine(extName, engine);
+            this.app.set("view engine", extName);
+            this.app.set("views", viewPath);
+        }
     }
 }
 
