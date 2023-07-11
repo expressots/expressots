@@ -1,5 +1,17 @@
 
 
+## [1.5.0](https://github.com/expressots/expressots/compare/v1.4.2...v1.5.0) (2023-07-11)
+
+
+### Features
+
+* add render engine mechanic and handlebars sup ([#37](https://github.com/expressots/expressots/issues/37)) ([c9f1c61](https://github.com/expressots/expressots/commit/c9f1c616c3480575c013e1e3e6b397e9b6870fb2))
+
+
+### Bug Fixes
+
+* remove npm auto publish from ci ([#35](https://github.com/expressots/expressots/issues/35)) ([c7145aa](https://github.com/expressots/expressots/commit/c7145aa5b7e99ee774141824437c30df9e3f4882))
+
 ## [1.4.2](https://github.com/expressots/expressots/compare/v1.4.1...v1.4.2) (2023-06-19)
 
 
