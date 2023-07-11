@@ -7,3 +7,4 @@ export * from "./decorator";
 export * from "./environment";
 export * from "./error";
 export * from "./logger";
+export * from "./render";
