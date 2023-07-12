@@ -1,5 +1,12 @@
 
 
+## [1.5.0](https://github.com/expressots/expressots/compare/1.5.0-dev...1.5.0) (2023-07-12)
+
+
+### Features
+
+* add render engine for handlebars ([1257fe0](https://github.com/expressots/expressots/commit/1257fe08ec0bf9096af1927caddf6fa2a8d481e8))
+
 ## [1.5.0](https://github.com/expressots/expressots/compare/v1.4.2...v1.5.0) (2023-07-11)
 
 
