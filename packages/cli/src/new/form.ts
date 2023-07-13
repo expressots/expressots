@@ -215,7 +215,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 		progressBar.stop();
 
 		console.log("\n");
-		console.log("🐎 Project ",chalk.green(projName), "created successfully!");
+		console.log("🐎 Project ", chalk.green(answer.name), "created successfully!");
 		console.log("🤙 Run the following commands to start the project:\n");
 		
 		console.log(chalk.bold.gray(`$ cd ${answer.name}`));
