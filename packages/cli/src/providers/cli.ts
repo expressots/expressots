@@ -6,7 +6,7 @@ type CommandModuleArgs = {};
 
 const generateProviders = (): CommandModule<CommandModuleArgs, any> => {
 	return {
-		command: "add <provider> [libraryVersion] [providerVersion]",
+		command: "add <provider> [library-version] [provider-version]",
 		describe: "Scaffold a new provider",
 		aliases: ["a"],
 		builder: (yargs: Argv): Argv => {
@@ -17,13 +17,13 @@ const generateProviders = (): CommandModule<CommandModuleArgs, any> => {
 				describe: "The provider to add to the project",
 				type: "string",
 			})
-			.option("libraryVersion", {
-				describe: "The version to install",
+			.option("library-version", {
+				describe: "The library version to install",
 				type: "string",
 				default: "latest",
 				alias: "v",
 			})
-			.option("providerVersion", {
+			.option("provider-version", {
 				describe: "The version of the provider to install",
 				type: "string",
 				default: "latest",

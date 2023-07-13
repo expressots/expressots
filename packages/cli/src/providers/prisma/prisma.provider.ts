@@ -9,7 +9,6 @@ import Compiler from "../../utils/compiler";
 
 const prismaProvider = async (version: string, providerVersion: string): Promise<void> => {
   const choices = [
-    // TODO: Verify if the following databases are supported by prisma
     { name: "CockroachDB", value: "cockroachdb" },
     { name: "Microsoft SQL Server", value: "sqlserver" },
     { name: "MongoDB", value: "mongodb" },
@@ -22,7 +21,7 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     {
       type: "input",
       name: "schemaName",
-      message: "Type the schema/db name > (default=schema):",
+      message: "Type the schema name (default=schema):",
       default: "schema",
       transformer: (input: string) => {
         return chalk.yellow(chalk.bold(input));
