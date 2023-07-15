@@ -19,7 +19,7 @@ class UserUpdateUseCase {
         if (!userExists) {
             Report.Error(
                 "User not found",
-                StatusCode.BadRequest,
+                StatusCode.NotFound,
                 "user-update-usecase",
             );
 
