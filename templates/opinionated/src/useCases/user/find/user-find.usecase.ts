@@ -13,7 +13,7 @@ class UserFindUseCase {
         if (!userExists) {
             Report.Error(
                 "User not found",
-                StatusCode.BadRequest,
+                StatusCode.NotFound,
                 "user-find-usecase",
             );
             return null;

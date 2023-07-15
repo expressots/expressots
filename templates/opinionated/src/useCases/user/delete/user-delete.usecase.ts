@@ -24,7 +24,7 @@ class UserDeleteUseCase {
 
         Report.Error(
             "User not found",
-            StatusCode.BadRequest,
+            StatusCode.NotFound,
             "user-delete-usecase",
         );
 
