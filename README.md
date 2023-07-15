@@ -20,7 +20,7 @@ Whether you're building a simple API or a complex enterprise application, Expres
 
 - Here is our [Official Documentation](https://expresso-ts.com/)
 - Checkout our [First Steps documentation](https://doc.expresso-ts.com/docs/overview/first-steps)
-- Our [CLI Documentation](https://expresso-ts.com/docs/category/cli)
+- Our [CLI Documentation](https://doc.expresso-ts.com/docs/category/cli)
 
 ## Questions
 
