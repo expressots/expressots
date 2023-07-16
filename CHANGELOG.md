@@ -1,5 +1,12 @@
 
 
+## [1.5.1](https://github.com/expressots/expressots/compare/1.5.0...1.5.1) (2023-07-16)
+
+
+### Bug Fixes
+
+* add 404 on opinionated template user usecases ([#41](https://github.com/expressots/expressots/issues/41)) ([e2920cc](https://github.com/expressots/expressots/commit/e2920cce79eaad3fc5f031f45375312cba790103))
+
 ## [1.5.0](https://github.com/expressots/expressots/compare/1.5.0-dev...1.5.0) (2023-07-12)
 
 
