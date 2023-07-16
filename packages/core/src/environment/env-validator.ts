@@ -28,36 +28,35 @@ class EnvValidatorProvider {
      * If the .env file does not exist or any environment variables are not set, the process will exit with an error.
      */
     public static checkAll(): void {
-
-        /* Load .env file */
-        dotenv.config();
-
-        /* Verify if .env file exists */
-        const envFilePath: string = path.join(process.cwd(), ".",".env");
-
+        // Get the full path of the .env file
+        const envFilePath: string = path.join(process.cwd(), ".", ".env");
+        
+        // Check if the .env file exists
         if (!fs.existsSync(envFilePath)) {
             log(LogLevel.Info, "Environment file .env is not defined.", "env-validator-provider");
             process.exit(1);
         }
+    
+        // Load the environment variables from the .env file
+        const dotenvConfigOutput = dotenv.config({ path: envFilePath });
+        const dotEnvParsed = dotenvConfigOutput.parsed;
 
-        const regexIgnoreDefaultEnvKeys: RegExp = /^npm_config_/;
+        /* Verify if all environment variables are defined */
         let hasError: boolean = false;
-
-        for (const key in process.env) {
-            if (regexIgnoreDefaultEnvKeys.test(key)) {
-                continue;
-            }
-
-            if (!process.env[key] || process.env[key] === "") {
-                log(LogLevel.Info, `Environment variable ${key} is not defined.`, "env-validator-provider");
-                hasError = true;
+        if (dotEnvParsed) {
+            for (const key of Object.keys(dotEnvParsed)) {
+                // Check if the environment variable is not defined or is an empty string
+                if (!process.env[key] || process.env[key] === "") {
+                    log(LogLevel.Info, `Environment variable ${key} is not defined.`, "env-validator-provider");
+                    hasError = true;
+                }
             }
         }
 
         if (hasError) {
             process.exit(1);
         }
-    }
+    }    
 }
 
 declare global {
