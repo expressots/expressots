@@ -1,6 +1,6 @@
 name: "\U0001F680 Community Ideas"
 description: "I have an idea or proposal \U0001F4A1!"
-labels: ["community-idea", "needs triage"]
+labels: ["community-idea"]
 assignees:
   - "rsaz"
 body:
