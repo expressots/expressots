@@ -23,11 +23,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
-          ISSUE_TEMPLATE=${{ github.event.issue.template }}
+          LABELS=${{ toJSON(github.event.issue.labels) }}
           PROJECT_ID=7
           COLUMN_NAME="Idea"
 
-          if [[ $ISSUE_TEMPLATE == ".github/ISSUE_TEMPLATE/community_ideas.yml" ]]; then
+          if echo "$LABELS" | grep -q "community-idea"; then
             # Log in to the GitHub CLI
             echo "$GH_TOKEN" | gh auth login --with-token
 
