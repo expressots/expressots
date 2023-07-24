@@ -41,5 +41,5 @@ jobs:
             gh api -X POST /projects/columns/$COLUMN_ID/cards -F content_id=$ISSUE_NUMBER -F content_type=Issue
             
             # Apply the label
-            gh issue update $ISSUE_NUMBER --label Idea
+            gh issue update expressots/expressots#$ISSUE_NUMBER --label Idea
           fi
