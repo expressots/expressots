@@ -20,7 +20,7 @@ jobs:
 
       - name: Add to project and label
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.EXPRESSOTS }}
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
           REPO_NAME=${{ github.event.repository.full_name }}
