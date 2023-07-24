@@ -28,9 +28,12 @@ jobs:
           PROJECT_ID=7
           COLUMN_NAME="Idea"
 
+          echo "-> Issue number: $ISSUE_NUMBER - Repo name: $REPO_NAME - Labels: $LABELS"
+
           if echo "$LABELS" | grep -q "community-idea"; then
             # Log in to the GitHub CLI
             echo "$GH_TOKEN" | gh auth login --with-token
+            echo "Logged in to GitHub CLI Inside"
 
             # Get the Issue ID
             ISSUE_DATA=$(gh api repos/$REPO_NAME/issues/$ISSUE_NUMBER)
