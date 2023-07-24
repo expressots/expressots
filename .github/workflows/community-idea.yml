@@ -11,12 +11,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install GitHub CLI
+      - name: Install GitHub CLI and jq
         run: |
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
-          sudo apt-add-repository https://cli.github.com/packages
           sudo apt update
-          sudo apt install gh
+          sudo apt install jq
+          curl -sSL https://github.com/cli/cli/releases/download/v2.32.0/gh_2.32.0_linux_amd64.deb -o gh.deb
+          sudo dpkg -i gh.deb
 
       - name: Add to project and label
         env:
