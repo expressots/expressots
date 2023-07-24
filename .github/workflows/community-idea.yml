@@ -24,7 +24,7 @@ jobs:
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
           REPO_NAME=${{ github.event.repository.full_name }}
-          LABELS=${{ toJSON(github.event.issue.labels) }}
+          LABELS='${{ toJSON(github.event.issue.labels) }}'
           PROJECT_ID=7
           COLUMN_NAME="Idea"
 
@@ -46,5 +46,5 @@ jobs:
             gh api -X POST /projects/columns/$COLUMN_ID/cards -F content_id=$ISSUE_ID -F content_type=Issue
             
             # Apply the label
-            gh issue update expressots/expressots#$ISSUE_NUMBER --label Idea
+            gh issue update $ISSUE_NUMBER --label Idea
           fi
