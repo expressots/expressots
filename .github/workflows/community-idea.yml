@@ -1,0 +1,45 @@
+name: Auto assign project and label
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign_to_project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh
+
+      - name: Add to project and label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_TEMPLATE=${{ github.event.issue.template }}
+          PROJECT_ID=7
+          COLUMN_NAME="Idea"
+
+          if [[ $ISSUE_TEMPLATE == ".github/ISSUE_TEMPLATE/community_ideas.yml" ]]; then
+            # Log in to the GitHub CLI
+            echo "$GH_TOKEN" | gh auth login --with-token
+
+            # Get a list of columns for the project
+            COLUMNS=$(gh api /projects/$PROJECT_ID/columns)
+
+            # Find the ID of the column with the correct name
+            COLUMN_ID=$(echo "$COLUMNS" | jq -r --arg name "$COLUMN_NAME" '.[] | select(.name==$name) | .id')
+
+            # Add the issue to the project
+            gh api -X POST /projects/columns/$COLUMN_ID/cards -F content_id=$ISSUE_NUMBER -F content_type=Issue
+            
+            # Apply the label
+            gh issue update $ISSUE_NUMBER --label Idea
+          fi
