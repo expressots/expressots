@@ -30,7 +30,7 @@ jobs:
 
           echo "-> Issue number: $ISSUE_NUMBER - Repo name: $REPO_NAME - Labels: $LABELS"
 
-          if echo "$LABELS" | grep -q "community-idea"; then
+          if echo "$LABELS" | jq -r '.[] | .name' | grep -q "community-idea"; then
             # Log in to the GitHub CLI
             echo "$GH_TOKEN" | gh auth login --with-token
             echo "Logged in to GitHub CLI Inside"
