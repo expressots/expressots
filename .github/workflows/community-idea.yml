@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/add-to-project@v0.5.0
         with:
-          project-url: https://github.com/orgs/<orgName>/projects/<projectNumber>
+          project-url: https://github.com/orgs/expressots/projects/7
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labeled: needs-triage
           label-operator: AND
