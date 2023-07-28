@@ -1,2 +1,2 @@
-export { StatusCode } from './status-code';
-export { Report } from './report';
+export { StatusCode } from "./status-code";
+export { Report } from "./report";

@@ -1,1 +1,1 @@
-export { Environments } from './env-validator';
+export { Environments } from "./env-validator";

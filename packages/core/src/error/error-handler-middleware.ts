@@ -10,8 +10,15 @@ import { StatusCode } from "./status-code";
  * @param res - The Express response object.
  * @param next - The Express next function for passing control to the next middleware function.
  */
-function errorHandler(error: IAppError, req: Request, res: Response, next: NextFunction): void {
-    res.status(error.statusCode || StatusCode.InternalServerError).json({statusCode: error.statusCode, error: error.message});
+function errorHandler(
+  error: IAppError,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  res
+    .status(error.statusCode || StatusCode.InternalServerError)
+    .json({ statusCode: error.statusCode, error: error.message });
 }
 
 export default errorHandler;
