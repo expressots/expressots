@@ -1,1 +1,1 @@
-export { BaseController } from './base-controller';
+export { BaseController } from "./base-controller";

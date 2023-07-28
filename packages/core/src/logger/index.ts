@@ -1,1 +1,1 @@
-export { GeneralLogger, LogLevel, log } from './general-logger';
+export { GeneralLogger, LogLevel, log } from "./general-logger";

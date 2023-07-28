@@ -1,1 +1,1 @@
-export { CreateModule, scope } from "./container-module"
+export { CreateModule, scope } from "./container-module";
