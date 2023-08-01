@@ -8,6 +8,7 @@ import { exit } from "node:process";
 import Compiler from "../../utils/compiler";
 
 const prismaProvider = async (version: string, providerVersion: string): Promise<void> => {
+  
   const choices = [
     { name: "CockroachDB", value: "cockroachdb" },
     { name: "Microsoft SQL Server", value: "sqlserver" },
@@ -17,7 +18,12 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     { name: "SQLite", value: "sqlite" },
   ];
 
-  const answer = await inquirer.prompt([
+  const drivers = [
+    { name: "pg", value: "pg" },
+    { name: "mysql", value: "mysql" },
+  ]
+
+  const answerPt1 = await inquirer.prompt([
     {
       type: "input",
       name: "schemaName",
@@ -30,8 +36,8 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     {
       type: "input",
       name: "schemaPath",
-      message: "Where do you want to save your prisma schema> (default=./): ./src/providers",
-      default: "./",
+      message: "Where do you want to save your prisma schema (default=./):",
+      default: ".",
       transformer: (input: string) => {
         return chalk.yellow(chalk.bold(input));
       },
@@ -41,20 +47,30 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
       name: "databaseName",
       message: "Select your database:",
       choices: choices.map((choice) => choice.name),
-    },
-		{
-      type: "confirm",
-      name: "baseRepository",
-      message: "Do you want to add BaseRepository Pattern in this project?",
-      default: true,
-    },
-    {
-      type: "confirm",
-      name: "confirm",
-      message: "Do you want to add prisma provider in this project?",
-      default: true,
-    },
-  ]);
+    }]);
+    
+    const answerPt2 = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "instalDriver",
+          message: `Do you want to install the latest recommended database driver for ${answerPt1.databaseName}?`,
+          default: true,
+        },
+        {
+          type: "confirm",
+          name: "baseRepository",
+          message: "Do you want to add BaseRepository Pattern in this project?",
+          default: true,
+        },
+        {
+          type: "confirm",
+          name: "confirm",
+          message: "Do you want to add prisma provider in this project?",
+          default: true,
+        },
+    ]);
+
+  const answer = { ...answerPt1, ...answerPt2 };
 
   if (answer.confirm) {
     // Find which package manager the user has used to install the desired prisma version
@@ -110,7 +126,10 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     prismaPackage(answer);
 
 		if (answer.baseRepository) {
-			// const { opinionated } = await Compiler.loadConfig();
+			const { opinionated } = await Compiler.loadConfig();
+      if (opinionated) {
+        console.log("./src/repositories")
+      }
 			// TODO: Generate a BaseRepository Pattern using templates
 			console.log(`Generating BaseRepository Pattern...`);
 		}
