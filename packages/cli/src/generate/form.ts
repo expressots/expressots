@@ -52,7 +52,7 @@ export const createTemplate = async ({
 	if (schematic !== "service") {
 
 		// add to guarantee that the routing will always be the last part of the path
-		let routeSchema:string = "";
+		let routeSchema = "";
 		
 		if (target.includes("/") || target.includes("\\") || target.includes("//")) {
 			routeSchema = path.split("/").pop();
@@ -106,7 +106,7 @@ export const createTemplate = async ({
 			}
 
 			// add to guarantee that the routing will always be the last part of the path
-			let routeSchema:string = "";
+			let routeSchema = "";
 			
 			if (target.includes("/") || target.includes("\\") || target.includes("//")) {
 				routeSchema = path.split("/").pop();
@@ -156,20 +156,20 @@ export const createTemplate = async ({
 			}
 		}
 
-		let controllerPath = "";
+		let controllerPath = "./";
 		const pathCount = (path.split("/")).length;
 		
 		if (path === "") {
-			controllerPath = `${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${file.slice(0, file.lastIndexOf('.'))}`;
 		} else if (pathCount === 1) {
-			controllerPath = `${path}/${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${path}/${file.slice(0, file.lastIndexOf('.'))}`;
 		} else if (pathCount === 2) {
-			controllerPath = `${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`;
 		} else {
 			const segments: string[] = path.split("/");
-			controllerPath = `${segments[segments.length-1]}/${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${segments[segments.length-1]}/${file.slice(0, file.lastIndexOf('.'))}`;
 		}
-
+		
 		if (moduleExist) {
 			if (target.includes("/") || target.includes("\\") || target.includes("//")) {
 				await addControllerToModule(`${usecaseDir}/${modulePath}/${moduleName}.module.ts`, `${className}Controller`, controllerPath);
@@ -181,7 +181,7 @@ export const createTemplate = async ({
 					await addControllerToModule(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`, `${className}Controller`, controllerPath);
 				}
 			}
-		} else {			
+		} else {
 			writeTemplate({
 				outputPath: moduleOutPath,
 				template: {

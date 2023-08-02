@@ -28,7 +28,7 @@ async function addControllerToModule(filePath: string, controllerName: string, c
     return;
   }
 
-  const controllers = moduleDeclarationMatch[1].trim().split(',').map((c) => c.trim());
+  const controllers = moduleDeclarationMatch[1].trim().split(',').map((c) => c.trim()).filter((c) => c);
 
   if (controllers.includes(controllerName)) {
     return;
@@ -37,7 +37,7 @@ async function addControllerToModule(filePath: string, controllerName: string, c
   controllers.push(controllerName);
 
   const newControllers = controllers.join(', ');
-
+  
   const newModuleDeclaration = `CreateModule([${newControllers}]`;
 
   const newFileContent = [...imports, ...notImports].join('\n').replace(moduleDeclarationRegex, newModuleDeclaration);
