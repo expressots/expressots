@@ -8,7 +8,7 @@ import { exit } from "node:process";
 import Compiler from "../../utils/compiler";
 
 const prismaProvider = async (version: string, providerVersion: string): Promise<void> => {
-  
+
   const choices = [
     { name: "CockroachDB", value: "cockroachdb" },
     { name: "Microsoft SQL Server", value: "sqlserver" },
@@ -18,10 +18,14 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     { name: "SQLite", value: "sqlite" },
   ];
 
-  const drivers = [
-    { name: "pg", value: "pg" },
-    { name: "mysql", value: "mysql" },
-  ]
+  const drivers = {
+    "PostgreSQL": "pg",
+    "MySQL": "mysql2",
+    "SQLite": "sqlite3",
+    "Microsoft SQL Server": "mssql",
+    "MongoDB": "mongodb",
+    "CockroachDB": "pg",
+  } as { [key: string]: string };
 
   const answerPt1 = await inquirer.prompt([
     {
@@ -48,11 +52,11 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
       message: "Select your database:",
       choices: choices.map((choice) => choice.name),
     }]);
-    
+
     const answerPt2 = await inquirer.prompt([
         {
           type: "confirm",
-          name: "instalDriver",
+          name: "installDriver",
           message: `Do you want to install the latest recommended database driver for ${answerPt1.databaseName}?`,
           default: true,
         },
@@ -90,6 +94,12 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
       // Install Prisma Client
       console.log(`Installing Prisma Client with ${packageManager}...`);
       // await execProcess({ commandArg: packageManager, args: ["install", `@prisma/client@${providerVersion}`], directory: process.cwd() });
+
+      if (answer.installDriver) {
+        // Install Prisma Client
+        console.log(`Installing the latest recommended database driver for ${answer.databaseName}: ${drivers[answer.databaseName]} ...`);
+        // await execProcess({ commandArg: packageManager, args: ["install", drivers[answer.databaseName]], directory: process.cwd() });
+      }
 
       // Install @expressots/prisma in the project
       console.log(`Installing @expressots/prisma with ${packageManager}...`);
@@ -134,9 +144,7 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
 			console.log(`Generating BaseRepository Pattern...`);
 		}
 
-    console.log(`Now install your favorite database driver with ${packageManager} for ${answer.databaseName}.`);
-    console.log('For example, if you want to use PostgreSQL, run "npm install pg".');
-    console.log('Also configure your database connection in the project.');
+    console.log('Now configure your database connection in the project.');
     console.log(chalk.green("Prisma provider added successfully!"));
   } else {
     console.log(chalk.red("Prisma provider not added!"));
