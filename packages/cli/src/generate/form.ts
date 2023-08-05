@@ -1,4 +1,4 @@
-import path, * as nodePath from "path";
+import * as nodePath from "path";
 import { mkdirSync, readFileSync } from "node:fs";
 import { render } from "mustache";
 import { writeFileSync, existsSync } from "fs";
@@ -166,7 +166,7 @@ export const createTemplate = async ({
 		} else if (pathCount === 2) {
 			controllerPath += `${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`;
 		} else {
-			const segments: string[] = path.split("/");
+			const segments: string[] = path.split("/").filter((segment) => segment !== "");
 			controllerPath += `${segments[segments.length-1]}/${file.slice(0, file.lastIndexOf('.'))}`;
 		}
 		
