@@ -1,5 +1,21 @@
 
 
+## [1.6.0](https://github.com/expressots/expressots/compare/1.5.1...1.6.0) (2023-08-07)
+
+
+### Features
+
+* add community ideas form ([#43](https://github.com/expressots/expressots/issues/43)) ([e23c936](https://github.com/expressots/expressots/commit/e23c9360cec22f21a8f44e04b290cf6aa23aef17))
+* add dependabot for fetch new version of dependencies ([#60](https://github.com/expressots/expressots/issues/60)) ([9ea1033](https://github.com/expressots/expressots/commit/9ea1033809eb19f50ae779824e5e428710c4480d))
+* add prisma provider configuration types in ExpressoConfig ([#71](https://github.com/expressots/expressots/issues/71)) ([4a189a2](https://github.com/expressots/expressots/commit/4a189a2d85aed320d97fff4aebc48dcb0e125adf))
+* bump prettier from 3.0.0 to 3.0.1 ([#68](https://github.com/expressots/expressots/issues/68)) ([b555e19](https://github.com/expressots/expressots/commit/b555e19698fd102c681b50a96e99ad37b399bae7))
+* **prettier:** add a prettier config and run it in the core package ([#58](https://github.com/expressots/expressots/issues/58)) ([2ac367b](https://github.com/expressots/expressots/commit/2ac367b3c5911216a1ffb9b542ae4bb418227eba))
+
+
+### Bug Fixes
+
+* add workflow for auto project and label ([#44](https://github.com/expressots/expressots/issues/44)) ([1306d18](https://github.com/expressots/expressots/commit/1306d181bc904384a3edea0be219bba891b865cf))
+
 ## [1.5.1](https://github.com/expressots/expressots/compare/1.5.0...1.5.1) (2023-07-16)
 
 
