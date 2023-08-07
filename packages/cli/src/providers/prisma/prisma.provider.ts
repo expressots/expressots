@@ -98,21 +98,21 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     if (packageManager) {
       // Install prisma in the project
       console.log(`Installing prisma with ${packageManager}...`);
-      await execProcess({ commandArg: packageManager, args: ["install", `prisma@${providerVersion} -D`], directory: process.cwd() });
+      await execProcess({ commandArg: packageManager, args: ["add", `prisma@${providerVersion}`, "-D"], directory: process.cwd() });
 
       // Install Prisma Client
       console.log(`Installing Prisma Client with ${packageManager}...`);
-      await execProcess({ commandArg: packageManager, args: ["install", `@prisma/client@${answer.prismaClientVersion}`], directory: process.cwd() });
+      await execProcess({ commandArg: packageManager, args: ["add", `@prisma/client@${answer.prismaClientVersion}`], directory: process.cwd() });
 
       if (answer.installDriver) {
         // Install database driver
         console.log(`Installing the latest recommended database driver for ${answer.databaseName}: ${drivers[answer.databaseName]} ...`);
-        await execProcess({ commandArg: packageManager, args: ["install", drivers[answer.databaseName]], directory: process.cwd() });
+        await execProcess({ commandArg: packageManager, args: ["add", drivers[answer.databaseName]], directory: process.cwd() });
       }
 
       // Install @expressots/prisma in the project
       console.log(`Installing @expressots/prisma with ${packageManager}...`);
-      await execProcess({ commandArg: packageManager, args: ["install", `@expressots/prisma@${version}`], directory: process.cwd() });
+      await execProcess({ commandArg: packageManager, args: ["add", `@expressots/prisma@${version}`], directory: process.cwd() });
     } else {
       printError(`Could not find a package manager installed in this project.\nPlease install prisma and @expressots/prisma manually.`, "prisma");
       process.exit(1);
