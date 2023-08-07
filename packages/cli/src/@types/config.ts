@@ -5,6 +5,15 @@ export const enum Pattern {
 	CAMEL_CASE = "camelCase",
 }
 
+interface IProviders {
+	prisma?: {
+		schemaName: string;
+		schemaPath: string;
+		entitiesPath: string;
+		entityNamePattern: string;
+	}
+}
+
 /**
  * The configuration object for the Expresso CLI.
  *
@@ -18,4 +27,5 @@ export interface ExpressoConfig {
 	scaffoldPattern: Pattern;
 	sourceRoot: string;
 	opinionated: boolean;
+	providers?: IProviders;
 }

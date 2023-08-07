@@ -98,14 +98,14 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     if (packageManager) {
       // Install prisma in the project
       console.log(`Installing prisma with ${packageManager}...`);
-      await execProcess({ commandArg: packageManager, args: ["install", `prisma@${providerVersion}`], directory: process.cwd() });
+      await execProcess({ commandArg: packageManager, args: ["install", `prisma@${providerVersion} -D`], directory: process.cwd() });
 
       // Install Prisma Client
       console.log(`Installing Prisma Client with ${packageManager}...`);
-      await execProcess({ commandArg: packageManager, args: ["install", `@prisma/client@${answer.prismaClientVersion} --save-dev`], directory: process.cwd() });
+      await execProcess({ commandArg: packageManager, args: ["install", `@prisma/client@${answer.prismaClientVersion}`], directory: process.cwd() });
 
       if (answer.installDriver) {
-        // Install Prisma Client
+        // Install database driver
         console.log(`Installing the latest recommended database driver for ${answer.databaseName}: ${drivers[answer.databaseName]} ...`);
         await execProcess({ commandArg: packageManager, args: ["install", drivers[answer.databaseName]], directory: process.cwd() });
       }
@@ -152,6 +152,10 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
 			// TODO: Generate a BaseRepository Pattern using templates
 			console.log(`Generating BaseRepository Pattern...`);
 		}
+
+		// Install @expressots/prisma in the project
+		console.log(`Mapping configurations to expressots.config...`);
+		await addProviderConfigInExpressotsConfig(answer.schemaName, `${answer.schemaPath}/prisma`)
 
     console.log('Now configure your database connection in the project.');
     console.log(chalk.green("Prisma provider added successfully!"));
@@ -204,6 +208,29 @@ function prismaPackage(answer: any): void {
 
   // Save the package.json file
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+
+async function addProviderConfigInExpressotsConfig(schemaName: string, schemaPath: string): Promise<void> {
+  const absDirPath = path.resolve(process.cwd());
+
+  const expressotsConfigPath = path.join(absDirPath, "expressots.config.ts");
+
+	const fileContents = fs.readFileSync(expressotsConfigPath, "utf-8");
+
+	const config = await Compiler.loadConfig();
+
+	const providersObject = `opinionated: ${config.opinionated},\n\tproviders: {
+		prisma: {
+			schemaName: "${schemaName}",
+			schemaPath: "${schemaPath}",
+			entitiesPath: "src/entities",
+			entityNamePattern: "entity",
+		},
+	},`;
+
+	const newFileContents = fileContents.replace(/opinionated: (.*)/, providersObject);
+
+	fs.writeFileSync(expressotsConfigPath, newFileContents);
 }
 
 export { prismaProvider };
