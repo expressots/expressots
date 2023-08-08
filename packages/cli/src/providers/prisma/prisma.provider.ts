@@ -215,7 +215,7 @@ async function addProviderConfigInExpressotsConfig(schemaName: string, schemaPat
 
   const expressotsConfigPath = path.join(absDirPath, "expressots.config.ts");
 
-	const fileContents = fs.readFileSync(expressotsConfigPath, "utf-8");
+	let fileContents = fs.readFileSync(expressotsConfigPath, "utf-8");
 
 	const config = await Compiler.loadConfig();
 
@@ -227,6 +227,11 @@ async function addProviderConfigInExpressotsConfig(schemaName: string, schemaPat
 			entityNamePattern: "entity",
 		},
 	},`;
+
+	if (config.providers) {
+		// delete the providers object until the last closing curly brace
+		fileContents = fileContents.replace(/\n([\s]*?)providers: {([\s\S]*?)};/, '\n};');
+	}
 
 	const newFileContents = fileContents.replace(/opinionated: (.*)/, providersObject);
 
