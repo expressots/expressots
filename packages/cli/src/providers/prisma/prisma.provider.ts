@@ -112,7 +112,7 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
 
       // Install @expressots/prisma in the project
       console.log(`Installing @expressots/prisma with ${packageManager}...`);
-      await execProcess({ commandArg: packageManager, args: ["add", `@expressots/prisma@${version}`], directory: process.cwd() });
+      //await execProcess({ commandArg: packageManager, args: ["add", `@expressots/prisma@${version}`], directory: process.cwd() });
     } else {
       printError(`Could not find a package manager installed in this project.\nPlease install prisma and @expressots/prisma manually.`, "prisma");
       process.exit(1);
@@ -223,7 +223,7 @@ async function addProviderConfigInExpressotsConfig(schemaName: string, schemaPat
 		prisma: {
 			schemaName: "${schemaName}",
 			schemaPath: "${schemaPath}",
-			entitiesPath: "src/entities",
+			entitiesPath: "entities",
 			entityNamePattern: "entity",
 		},
 	},`;
