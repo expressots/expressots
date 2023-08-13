@@ -13,6 +13,9 @@ import { buildProviderModule, provide } from "inversify-binding-decorators";
 @provide(AppContainer)
 class AppContainer {
   private container!: Container;
+
+  constructor(private options?: interfaces.ContainerOptions) {}
+
   /**
    * Creates and configures a new dependency injection container.
    * @param modules - An array of ContainerModule instances to load into the container.
@@ -26,6 +29,7 @@ class AppContainer {
     this.container = new Container({
       autoBindInjectable: true,
       defaultScope,
+      ...this.options,
     });
 
     this.container.load(buildProviderModule(), ...modules);
