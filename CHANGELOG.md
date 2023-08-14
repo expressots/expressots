@@ -1,5 +1,18 @@
 
 
+## [1.7.0](https://github.com/expressots/expressots/compare/1.6.0...1.7.0) (2023-08-14)
+
+
+### Features
+
+* bump @release-it/conventional-changelog from 5.1.1 to 6.0.0 ([#61](https://github.com/expressots/expressots/issues/61)) ([634304b](https://github.com/expressots/expressots/commit/634304b8228a0c6f4a4e8298961f46e4bd5c9b7c))
+* bump @types/node from 18.17.4 to 20.4.9 ([#72](https://github.com/expressots/expressots/issues/72)) ([31a887d](https://github.com/expressots/expressots/commit/31a887d3a33923dba4c8d952ec60046e21f08361))
+
+
+### Bug Fixes
+
+* add `options` parameter to `AppContainer` ([#73](https://github.com/expressots/expressots/issues/73)) ([804d5cd](https://github.com/expressots/expressots/commit/804d5cd568830584322d877b91dffaed8c952e56))
+
 ## [1.6.0](https://github.com/expressots/expressots/compare/1.5.1...1.6.0) (2023-08-07)
 
 
