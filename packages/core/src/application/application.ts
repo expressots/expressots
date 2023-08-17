@@ -1,8 +1,9 @@
-import process from "process";
 import express from "express";
-import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
+import { Container } from "inversify";
 import { InversifyExpressServer } from "inversify-express-utils";
+import { ApplicationBase } from "./application-base";
+import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
 import errorHandler from "../error/error-handler-middleware";
 import { IHandlebars, RenderTemplateOptions } from "../render";
@@ -21,30 +22,14 @@ enum ServerEnvironment {
  * @provide Application
  */
 @provide(Application)
-class Application {
+class Application extends ApplicationBase {
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
 
-  /**
-   * Constructs a new instance of the Application class.
-   */
-  constructor() {}
-
-  /**
-   * Configure services that should be initialized before the server starts.
-   */
-  protected configureServices(): void {}
-
-  /**
-   * Configure services that should be executed after the server starts.
-   */
-  protected postServerInitialization(): void {}
-
-  /**
-   * Perform actions or cleanup after the server is shutdown.
-   */
-  protected serverShutdown(): void { }
+  protected configureServices(): void | Promise<void> { }
+  protected postServerInitialization(): void | Promise<void> { }
+  protected serverShutdown(): void | Promise<void> { }
 
   /**
    * Handles process exit by calling serverShutdown and then exiting the process.
@@ -60,16 +45,16 @@ class Application {
    * @param middlewares - An array of Express middlewares to be applied.
    * @returns The configured Application instance.
    */
-  public create(
+  public async create(
     container: Container,
     middlewares: express.RequestHandler[] = [],
-  ): Application {
-    this.configureServices();
+  ): Promise<Application> {
+    
+    await Promise.resolve(this.configureServices());
 
     const expressServer = new InversifyExpressServer(container);
 
     expressServer.setConfig((app: express.Application) => {
-      // Detect if a middleware in the array has a body parser. If so, replace the default body parser.
       const hasCustomBodyParser = middlewares.some((middleware) => {
         const middlewareName = middleware.name.toLowerCase();
         return (
@@ -79,10 +64,7 @@ class Application {
       });
 
       if (!hasCustomBodyParser) {
-        /* Default body parser application/json */
         app.use(express.json());
-
-        /* Default body parser application/x-www-form-urlencoded */
         app.use(express.urlencoded({ extended: true }));
       }
 
@@ -93,7 +75,6 @@ class Application {
 
     this.app = expressServer.build();
 
-    /* Add the error handler middleware */
     this.app.use(errorHandler);
 
     return this;
@@ -105,11 +86,11 @@ class Application {
    * @param environment - The server environment.
    * @param consoleMessage - Optional message to display in the console.
    */
-  public listen(
+  public async listen(
     port: number,
     environment: ServerEnvironment,
     consoleMessage?: IApplicationMessageToConsole,
-  ): void {
+  ): Promise<void> {
     this.port = port;
     this.environment = environment;
 
@@ -122,7 +103,7 @@ class Application {
 
     });
 
-    this.postServerInitialization();
+    await Promise.resolve(this.postServerInitialization());
   }
 
   /**
@@ -146,6 +127,5 @@ class Application {
   }
 }
 
-const appServerInstance: Application = new Application();
+export { Application, ServerEnvironment };
 
-export { appServerInstance as AppInstance, Application, ServerEnvironment };

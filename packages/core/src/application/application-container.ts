@@ -22,7 +22,6 @@ interface ContainerOptions {
   skipBaseClassChecks?: boolean;
 }
 
-
 /**
  * The AppContainer class provides a container for managing dependency injection.
  * It allows the creation of a container with custom options, including default binding scope
@@ -47,6 +46,7 @@ class AppContainer {
   constructor(options?: ContainerOptions) {
     this.options = {
       defaultScope: BindingScopeEnum.Request,
+      skipBaseClassChecks: true,
       ...options,
     }
   }
