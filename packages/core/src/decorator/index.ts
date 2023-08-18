@@ -1,1 +1,1 @@
-export * from "./scope-binding";
+export { provideSingleton, provideTransient } from "./scope-binding";

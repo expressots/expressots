@@ -7,6 +7,7 @@ import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
 import errorHandler from "../error/error-handler-middleware";
 import { IHandlebars, RenderTemplateOptions } from "../render";
+import { Configure, IConfigure } from "../middleware/configure-services";
 
 /**
  * Enum representing possible server environments.
@@ -26,7 +27,7 @@ class Application extends ApplicationBase {
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
-
+    
   protected configureServices(): void | Promise<void> { }
   protected postServerInitialization(): void | Promise<void> { }
   protected serverShutdown(): void | Promise<void> { }
@@ -52,22 +53,13 @@ class Application extends ApplicationBase {
     
     await Promise.resolve(this.configureServices());
 
+    const configure = container.get<IConfigure>(Configure);
+    const configureMiddlewares = configure.getMiddlewares();
+    middlewares = [...middlewares, ...configureMiddlewares];
+
     const expressServer = new InversifyExpressServer(container);
 
     expressServer.setConfig((app: express.Application) => {
-      const hasCustomBodyParser = middlewares.some((middleware) => {
-        const middlewareName = middleware.name.toLowerCase();
-        return (
-          middlewareName.includes("json") ||
-          middlewareName.includes("urlencoded")
-        );
-      });
-
-      if (!hasCustomBodyParser) {
-        app.use(express.json());
-        app.use(express.urlencoded({ extended: true }));
-      }
-
       middlewares.forEach((middleware) => {
         app.use(middleware);
       });

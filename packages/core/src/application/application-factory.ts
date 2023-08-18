@@ -1,3 +1,4 @@
+import express from "express";
 import { Container } from "inversify";
 import { Application } from "./application";
 import { IApplication } from "./application.interfaces";
@@ -7,7 +8,7 @@ class AppFactory {
         let app: Application;
         
         if (CustomAppType) {
-            app = new CustomAppType();
+            app = container.resolve(CustomAppType);
         } else {
             app = container.get<Application>(Application);
         }
