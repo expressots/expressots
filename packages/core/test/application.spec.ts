@@ -9,7 +9,7 @@ import {
 import { IApplicationMessageToConsole } from "../src/console";
 
 describe("AppContainer", () => {
-  it("should create a container", () => {
+  it("creates a container", () => {
     // Arrange
     const appContainer = new AppContainer();
     const modules: ContainerModule[] = [];
@@ -28,7 +28,7 @@ describe("AppContainer", () => {
 });
 
 describe("Application", () => {
-  it("should create an application express inversify server", () => {
+  it("creates an application express inversify server", () => {
     // Arrange
     const mockCreate = jest.fn().mockReturnValue({});
     const mockListen = jest.fn();

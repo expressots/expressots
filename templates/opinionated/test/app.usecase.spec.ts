@@ -8,7 +8,7 @@ describe("AppUseCase", () => {
         appUseCase = new AppUseCase();
     });
 
-    it("should return a valid AppResponse", () => {
+    it("returns a valid AppResponse", () => {
         const response = appUseCase.execute();
         expect(response).toBe("Hello from ExpressoTS App");
     });
