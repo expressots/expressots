@@ -37,35 +37,35 @@ describe("Console", () => {
   });
 
   describe("messageServer", () => {
-    it('should call message server with the correct arguments for environment "development" without IConsoleMessage', async () => {
+    it('calls message server with the correct arguments for environment "development" without IConsoleMessage', async () => {
       const spy = jest.spyOn(console, "log");
       await consoleInstance.messageServer(3000, "development");
 
       expect(spy).toHaveBeenCalledWith("mocked yellow message");
     });
 
-    it('should call message server with the correct arguments for environment "staging" without IConsoleMessage', async () => {
+    it('calls message server with the correct arguments for environment "staging" without IConsoleMessage', async () => {
       const spy = jest.spyOn(console, "log");
       await consoleInstance.messageServer(3000, "staging");
 
       expect(spy).toHaveBeenCalledWith("mocked blue message");
     });
 
-    it('should call message server with the correct arguments for environment "production" without IConsoleMessage', async () => {
+    it('calls message server with the correct arguments for environment "production" without IConsoleMessage', async () => {
       const spy = jest.spyOn(console, "log");
       await consoleInstance.messageServer(3000, "production");
 
       expect(spy).toHaveBeenCalledWith("mocked green message");
     });
 
-    it('should call message server with the correct arguments for environment "unknown" without IConsoleMessage', async () => {
+    it('calls message server with the correct arguments for environment "unknown" without IConsoleMessage', async () => {
       const spy = jest.spyOn(console, "log");
       await consoleInstance.messageServer(3000, "test");
 
       expect(spy).toHaveBeenCalledWith("mocked red message");
     });
 
-    it('should call message server with the correct arguments when the "consoleMessage" argument is provided', async () => {
+    it('calls message server with the correct arguments when the "consoleMessage" argument is provided', async () => {
       const spy = jest.spyOn(consoleInstance, "messageServer");
       const consoleMessage = {
         appName: "TestApp",
