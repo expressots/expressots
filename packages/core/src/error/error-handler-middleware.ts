@@ -10,7 +10,7 @@ import { StatusCode } from "./status-code";
  * @param res - The Express response object.
  * @param next - The Express next function for passing control to the next middleware function.
  */
-function errorHandler(
+function defaultErrorHandler(
   error: IAppError,
   req: Request,
   res: Response,
@@ -21,4 +21,4 @@ function errorHandler(
     .json({ statusCode: error.statusCode, error: error.message });
 }
 
-export default errorHandler;
+export default defaultErrorHandler;

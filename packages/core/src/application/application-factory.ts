@@ -8,10 +8,6 @@ import { IApplication } from "./application.interfaces";
  * 
  * Responsible for creating an instance of the Application, 
  * either using a custom application type or with provided middlewares.
- * 
- * Usage:
- * 1. Provide a custom application type for specialized behavior.
- * 2. Provide an array of middlewares to configure the application.
  */
 class AppFactory {
     /**

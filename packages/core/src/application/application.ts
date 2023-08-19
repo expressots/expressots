@@ -68,9 +68,13 @@ class Application extends ApplicationBase {
       });
     });
 
+    expressServer.setErrorConfig((app: express.Application) => {
+      if (configure.getErrorHandler()){
+        app.use(configure.getErrorHandler() as express.ErrorRequestHandler);
+      }
+    });
+    
     this.app = expressServer.build();
-
-    this.app.use(errorHandler);
 
     return this;
   }
