@@ -56,7 +56,7 @@ class Application extends ApplicationBase {
     const configure = container.get<IConfigure>(Configure);
     const configureMiddlewares = configure.getMiddlewares();
     middlewares = [...middlewares, ...configureMiddlewares];
-
+    
     const expressServer = new InversifyExpressServer(container);
 
     expressServer.setConfig((app: express.Application) => {
