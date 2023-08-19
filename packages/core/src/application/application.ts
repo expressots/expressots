@@ -27,6 +27,7 @@ class Application extends ApplicationBase {
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
+  private container: Container;
     
   protected configureServices(): void | Promise<void> { }
   protected postServerInitialization(): void | Promise<void> { }
@@ -51,6 +52,8 @@ class Application extends ApplicationBase {
     middlewares: express.RequestHandler[] = [],
   ): Promise<Application> {
     
+    this.container = container;
+
     await Promise.resolve(this.configureServices());
 
     const configure = container.get<IConfigure>(Configure);
@@ -87,12 +90,12 @@ class Application extends ApplicationBase {
     this.environment = environment;
 
     this.app.listen(this.port, () => {
-      new Console().messageServer(this.port, this.environment, consoleMessage);
+      const console: Console = this.container.get<Console>(Console);
+      console.messageServer(this.port, this.environment, consoleMessage);
 
       (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as NodeJS.Signals[]).forEach((signal) => {
         process.on(signal, this.handleExit.bind(this));
       });
-
     });
 
     await Promise.resolve(this.postServerInitialization());
