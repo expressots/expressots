@@ -2,10 +2,7 @@ import express from "express";
 import { provideSingleton } from "../decorator/index";
 import { OptionsJson } from "./interfaces/bodyparser.interface";
 import { CorsOptions } from "./interfaces/cors.interface";
-
-interface IVersion {
-    version: string;
-}
+import { middlewareResolver } from "./middleware-resolver";
 
 /**
  * Interface for configuring and managing middlewares in the application.
@@ -20,7 +17,9 @@ interface IConfigure {
      */
     addBodyParser(options?: OptionsJson): void;
     
-    addCors(options?: CorsOptions, version?: IVersion): void;
+    addCors(options?: CorsOptions): void;
+
+    //addStatic(): void;
     /**
      * Retrieves all the middlewares that have been added.
      * 
@@ -37,8 +36,7 @@ interface IConfigure {
  * @see IConfigure
  */
 @provideSingleton(Configure)
-class Configure implements IConfigure {
-    
+class Configure implements IConfigure {    
     private middlewares: express.RequestHandler[] = [];
 
     /**
@@ -50,10 +48,18 @@ class Configure implements IConfigure {
         this.middlewares.push(express.json(options));
     }
 
-    addCors(options?: CorsOptions, version?: IVersion): void {
-        console.log("Adding CORS middleware");
-        //this.middlewares.push(require("cors")(options));
+    addCors(options?: CorsOptions): void {
+        const middleware = middlewareResolver("cors", options);
+        
+        if (middleware) {
+            this.middlewares.push(middleware);
+        }
     }
+
+    
+    /* addStatic(): void {
+        this.middlewares.push(express.static("public"));
+    } */
 
     /**
      * Retrieves all the middlewares that have been added to the collection.
