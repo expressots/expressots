@@ -4,6 +4,7 @@ import { OptionsJson } from "./interfaces/bodyparser.interface";
 import { CorsOptions } from "./interfaces/cors.interface";
 import { middlewareResolver } from "./middleware-resolver";
 import defaultErrorHandler from "../error/error-handler-middleware";
+import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 
 type ExpressHandler = express.ErrorRequestHandler | express.RequestParamHandler | express.RequestHandler | undefined;
 
@@ -20,11 +21,28 @@ interface IConfigure {
     */
     addBodyParser(options?: OptionsJson): void;
     
+    /**
+    * Adds Cross-Origin Resource Sharing (CORS) middleware to enable or control cross-origin requests.
+    * 
+    * @param options - Optional configuration options for CORS. Defines the behavior of CORS requests like allowed origins, methods, headers, etc.
+    */
     addCors(options?: CorsOptions): void;
 
+    /**
+    * Configures the error handling middleware for the application.
+    * 
+    * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
+    */
     setErrorHandler(errorHandling?: ExpressHandler): void;
 
-    //addStatic(): void;
+    /**
+    * Adds a middleware to serve static files from the specified root directory.
+    * Allows the application to serve files like images, CSS, JavaScript, etc.
+    *
+    * @param root - The root directory from which the static assets are to be served.
+    * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
+    */
+    serveStatic(root: string, options?: ServeStaticOptions): void;
     /**
     * Retrieves all the middlewares that have been added.
     * 
@@ -61,6 +79,11 @@ class Configure implements IConfigure {
         this.middlewares.push(express.json(options));
     }
 
+    /**
+    * Adds Cross-Origin Resource Sharing (CORS) middleware to enable or control cross-origin requests.
+    * 
+    * @param options - Optional configuration options for CORS. Defines the behavior of CORS requests like allowed origins, methods, headers, etc.
+    */
     addCors(options?: CorsOptions): void {
         const middleware = middlewareResolver("cors", options);
         
@@ -69,6 +92,11 @@ class Configure implements IConfigure {
         }
     }
 
+    /**
+    * Configures the error handling middleware for the application.
+    * 
+    * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
+    */
     setErrorHandler(errorHandling?: ExpressHandler): void{
         if (!errorHandling) {
             this.errorHandler = defaultErrorHandler;
@@ -77,9 +105,16 @@ class Configure implements IConfigure {
         }
     }
     
-    /* addStatic(): void {
-        this.middlewares.push(express.static("public"));
-    } */
+    /**
+    * Adds a middleware to serve static files from the specified root directory.
+    * Allows the application to serve files like images, CSS, JavaScript, etc.
+    *
+    * @param root - The root directory from which the static assets are to be served.
+    * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
+    */
+    serveStatic(root: string, options?: ServeStaticOptions): void {
+        this.middlewares.push(express.static(root, options));
+    }
 
     /**
      * Retrieves all the middlewares that have been added to the collection.
