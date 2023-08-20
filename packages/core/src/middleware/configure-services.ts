@@ -5,6 +5,7 @@ import { CorsOptions } from "./interfaces/cors.interface";
 import { middlewareResolver } from "./middleware-resolver";
 import defaultErrorHandler from "../error/error-handler-middleware";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
+import { CompressionOptions } from "./interfaces/compression.interface";
 
 type ExpressHandler = express.ErrorRequestHandler | express.RequestParamHandler | express.RequestHandler | undefined;
 
@@ -29,6 +30,13 @@ interface IConfigure {
     addCors(options?: CorsOptions): void;
 
     /**
+    * Adds Compression middleware to reduce the size of the response body and improve the speed of the client-server communication.
+    * 
+    * @param options - Optional configuration options for Compression. Allows fine-tuning the compression behavior, such as setting the compression level, threshold, and filter functions to determine which requests should be compressed.
+    */
+    addCompression(options?: CompressionOptions): void;
+
+    /**
     * Configures the error handling middleware for the application.
     * 
     * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
@@ -43,6 +51,7 @@ interface IConfigure {
     * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
     */
     serveStatic(root: string, options?: ServeStaticOptions): void;
+    
     /**
     * Retrieves all the middlewares that have been added.
     * 
@@ -87,6 +96,19 @@ class Configure implements IConfigure {
     addCors(options?: CorsOptions): void {
         const middleware = middlewareResolver("cors", options);
         
+        if (middleware) {
+            this.middlewares.push(middleware);
+        }
+    }
+
+    /**
+    * Adds Compression middleware to reduce the size of the response body and improve the speed of the client-server communication.
+    * 
+    * @param options - Optional configuration options for Compression. Allows fine-tuning the compression behavior, such as setting the compression level, threshold, and filter functions to determine which requests should be compressed.
+    */
+    addCompression(options?: CompressionOptions): void {
+        const middleware = middlewareResolver("compression", options);
+
         if (middleware) {
             this.middlewares.push(middleware);
         }
