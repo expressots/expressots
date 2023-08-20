@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { IAppError } from "./report";
+import { AppError } from "./app-error";
 import { StatusCode } from "./status-code";
 
 /**
@@ -11,14 +11,16 @@ import { StatusCode } from "./status-code";
  * @param next - The Express next function for passing control to the next middleware function.
  */
 function defaultErrorHandler(
-  error: IAppError,
+  error: Error,
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
-  res
-    .status(error.statusCode || StatusCode.InternalServerError)
-    .json({ statusCode: error.statusCode, error: error.message });
+  if (error instanceof AppError) {
+    res.status(error.statusCode).json({ statusCode: error.statusCode, error: error.message });
+  } else {
+    res.status(StatusCode.InternalServerError).json({ statusCode: 500, error: "An unexpected error occurred" });
+  }
 }
 
 export default defaultErrorHandler;
