@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { provide } from "inversify-binding-decorators";
 import { interfaces } from "inversify-express-utils";
-import { log } from "../logger/logger-service";
+import { Logger } from "../provider/logger/logger-service";
 
 /**
  * The BaseController class is an abstract base class for controllers.
@@ -11,7 +11,7 @@ import { log } from "../logger/logger-service";
 @provide(BaseController)
 abstract class BaseController implements interfaces.Controller {
   private serviceName: string;
-
+  
   /**
    * Constructs a new BaseController instance with a specified service name.
    * @param serviceName - The name of the service associated with the controller.
@@ -78,7 +78,6 @@ abstract class BaseController implements interfaces.Controller {
     return new Promise<string>((resolve, reject) => {
       res.render(template, options, (err, compiled) => {
         if (err) {
-          log.error(err.message, "base-controller");
           reject(err);
         }
         resolve(compiled);

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { provide } from "inversify-binding-decorators";
-import { log } from "../../logger/logger-service";
+import { Logger } from "../logger/logger-service";
 
 /**
  * The EnvValidatorProvider class provides utility methods for working with environment variables.
@@ -11,6 +11,12 @@ import { log } from "../../logger/logger-service";
  */
 @provide(EnvValidatorProvider)
 class EnvValidatorProvider {
+  private logger: Logger;
+
+  constructor() {
+    this.logger = new Logger();
+  }
+
   /**
    * Retrieves the value of an environment variable, or a default value if the variable is not set.
    * @param key - The key of the environment variable.
@@ -31,7 +37,7 @@ class EnvValidatorProvider {
 
     // Check if the .env file exists
     if (!fs.existsSync(envFilePath)) {
-      log.error("Environment file .env is not defined.",
+      this.logger.error("Environment file .env is not defined.",
         "env-validator-provider",
       );
       process.exit(1);
@@ -47,7 +53,7 @@ class EnvValidatorProvider {
       for (const key of Object.keys(dotEnvParsed)) {
         // Check if the environment variable is not defined or is an empty string
         if (!process.env[key] || process.env[key] === "") {
-          log.error(`Environment variable ${key} is not defined.`,
+          this.logger.error(`Environment variable ${key} is not defined.`,
             "env-validator-provider",
           );
           hasError = true;

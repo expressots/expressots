@@ -102,6 +102,4 @@ class Logger {
   }
 }
 
-const log: Logger = new Logger();
-
-export { Logger, LogLevel, log };
+export { Logger, LogLevel };

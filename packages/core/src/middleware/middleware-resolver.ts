@@ -1,5 +1,5 @@
 import express from "express";
-import { log } from "../logger/logger-service";
+import { Logger } from "../provider/logger/logger-service";
 
 /**
  * MiddlewareResolver class is responsible for resolving and retrieving Express middlewares
@@ -8,6 +8,12 @@ import { log } from "../logger/logger-service";
  * an informative message.
  */
 class MiddlewareResolver {
+    private logger: Logger;
+    
+    constructor() {
+        this.logger = new Logger();
+    }
+
     /**
      * A registry object mapping middleware names to their corresponding package names.
      * It is used to identify and require the middleware from the current working directory.
@@ -43,7 +49,7 @@ class MiddlewareResolver {
             const middleware =  require(hasMiddleware);
             return middleware(...options) || middleware.default(...options);
         } else {
-            log.warn(`Middleware [${middlewareName}] not installed. Please install it using your package manager.`, "middleware-resolver");
+            this.logger.warn(`Middleware [${middlewareName}] not installed. Please install it using your package manager.`, "middleware-resolver");
         }
 
         return null;

@@ -1,6 +1,6 @@
 import { provide } from "inversify-binding-decorators";
+import { Logger } from "../provider/logger/logger-service";
 import { AppError } from "./app-error";
-import { log } from "../logger/logger-service";
 
 /**
  * Report class is a utility class to manage and log errors within the application.
@@ -10,6 +10,11 @@ import { log } from "../logger/logger-service";
 @provide(Report)
 class Report {
   static stack: string;
+  private logger: Logger;
+
+  constructor() {
+    this.logger = new Logger();
+  }
 
   /**
    * The Error method is responsible for generating a standardized error object,
@@ -36,10 +41,11 @@ class Report {
       appError = new AppError(error, statusCode, service);
     }
 
-    log.error(appError.message, appError.service || "service-undefined");
+    this.logger.error(appError.message, appError.service || "service-undefined");
 
     return appError;
   }
 }
 
 export { Report };
+
