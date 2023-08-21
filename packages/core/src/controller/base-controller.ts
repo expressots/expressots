@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { provide } from "inversify-binding-decorators";
 import { interfaces } from "inversify-express-utils";
-import { log, LogLevel } from "../logger";
+import { log } from "../logger/logger-service";
 
 /**
  * The BaseController class is an abstract base class for controllers.
@@ -78,7 +78,7 @@ abstract class BaseController implements interfaces.Controller {
     return new Promise<string>((resolve, reject) => {
       res.render(template, options, (err, compiled) => {
         if (err) {
-          log(LogLevel.Error, err.message, "base-controller");
+          log.error(err.message, "base-controller");
           reject(err);
         }
         resolve(compiled);

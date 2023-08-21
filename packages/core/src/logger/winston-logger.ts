@@ -136,7 +136,9 @@ class GeneralLogger {
   }
 }
 
+/*
 const Log: GeneralLogger = new GeneralLogger();
 const log = Log.log.bind(Log);
 
 export { LogLevel, GeneralLogger, log };
+*/

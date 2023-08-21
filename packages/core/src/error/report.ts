@@ -1,6 +1,6 @@
 import { provide } from "inversify-binding-decorators";
-import { log, LogLevel } from "../logger";
 import { AppError } from "./app-error";
+import { log } from "../logger/logger-service";
 
 /**
  * Report class is a utility class to manage and log errors within the application.
@@ -36,7 +36,7 @@ class Report {
       appError = new AppError(error, statusCode, service);
     }
 
-    log(LogLevel.Error, appError, appError.service || "service-undefined");
+    log.error(appError.message, appError.service || "service-undefined");
 
     return appError;
   }

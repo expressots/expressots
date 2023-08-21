@@ -1,5 +1,5 @@
 import express from "express";
-import { LogLevel, log } from "../logger";
+import { log } from "../logger/logger-service";
 
 /**
  * MiddlewareResolver class is responsible for resolving and retrieving Express middlewares
@@ -43,7 +43,7 @@ class MiddlewareResolver {
             const middleware =  require(hasMiddleware);
             return middleware(...options) || middleware.default(...options);
         } else {
-            log(LogLevel.Info, `Middleware [${middlewareName}] not installed. Please install it using your package manager.`, "middleware-resolver");
+            log.warn(`Middleware [${middlewareName}] not installed. Please install it using your package manager.`, "middleware-resolver");
         }
 
         return null;

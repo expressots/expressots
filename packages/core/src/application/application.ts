@@ -1,13 +1,12 @@
 import express from "express";
-import { provide } from "inversify-binding-decorators";
 import { Container } from "inversify";
+import { provide } from "inversify-binding-decorators";
 import { InversifyExpressServer } from "inversify-express-utils";
-import { ApplicationBase } from "./application-base";
 import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
-import errorHandler from "../error/error-handler-middleware";
-import { IHandlebars, RenderTemplateOptions } from "../render";
 import { Configure, IConfigure } from "../middleware/configure-services";
+import { IHandlebars, RenderTemplateOptions } from "../render";
+import { ApplicationBase } from "./application-base";
 
 /**
  * Enum representing possible server environments.
