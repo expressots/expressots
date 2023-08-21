@@ -91,30 +91,22 @@ const enum PackageManager {
 	bun = "bun",
 }
 
-const projectForm = async (projectName: string, args: any[]): Promise<void> => {
-	let answer: any;
-	const projName: string = projectName;
-	let packageManager: PackageManager | undefined;
-	let template: keyof typeof Template | undefined;
-	let directory: string | undefined;
+type TemplateKeys = keyof typeof Template;
 
-	// Resolving the argument order problem
-	for (const arg of args) {
-		if (args.length >= 3) {
-			if (
-				arg === "npm" ||
-				arg === "yarn" ||
-				arg === "pnpm" ||
-				arg === "bun"
-			) {
-				packageManager = arg as PackageManager;
-			} else if (arg === "non-opinionated" || arg === "opinionated") {
-				template = arg as keyof typeof Template;
-			} else {
-				directory = arg;
-			}
-		}
-	}
+type ProjectFormArgs = [
+	PackageManager,
+	TemplateKeys,
+	string,
+];
+
+const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<void> => {
+	let answer: {
+		name: string;
+		packageManager: string;
+		template: Template;
+		confirm: boolean;
+	};
+	const projName: string = projectName;
 
 	if (packageManager && template) {
 		answer = {
