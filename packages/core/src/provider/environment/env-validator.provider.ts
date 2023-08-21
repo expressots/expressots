@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { provide } from "inversify-binding-decorators";
-import { log } from "../logger/logger-service";
+import { log } from "../../logger/logger-service";
 
 /**
  * The EnvValidatorProvider class provides utility methods for working with environment variables.
@@ -17,7 +17,7 @@ class EnvValidatorProvider {
    * @param defaultValue - The default value to return if the environment variable is not set.
    * @returns The value of the environment variable, or the default value if not set.
    */
-  public static get(key: string, defaultValue: any = undefined): any {
+  public get(key: string, defaultValue: any = undefined): any {
     return process.env[key] ?? defaultValue;
   }
 
@@ -25,7 +25,7 @@ class EnvValidatorProvider {
    * Validates and loads all environment variables from the .env file.
    * If the .env file does not exist or any environment variables are not set, the process will exit with an error.
    */
-  public static checkAll(): void {
+  public checkAll(): void {
     // Get the full path of the .env file
     const envFilePath: string = path.join(process.cwd(), ".", ".env");
 
@@ -47,7 +47,7 @@ class EnvValidatorProvider {
       for (const key of Object.keys(dotEnvParsed)) {
         // Check if the environment variable is not defined or is an empty string
         if (!process.env[key] || process.env[key] === "") {
-          log.warn(`Environment variable ${key} is not defined.`,
+          log.error(`Environment variable ${key} is not defined.`,
             "env-validator-provider",
           );
           hasError = true;
@@ -92,4 +92,4 @@ String.prototype.AsString = function (): string | undefined {
   return String(this);
 };
 
-export { EnvValidatorProvider as Environments };
+export { EnvValidatorProvider };
