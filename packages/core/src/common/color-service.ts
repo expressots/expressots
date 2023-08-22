@@ -1,5 +1,14 @@
+/**
+ * Type representing supported text colors.
+ */
 type Color = "red" | "green" | "yellow" | "blue" | "black" | "none";
 
+/**
+ * Mapping of text color codes.
+ * 
+ * @remarks
+ * Defines the ANSI escape codes for the corresponding colors in the terminal.
+ */
 const colorCodes: Record<Color, string> = {
   red: "\x1b[31m",
   green: "\x1b[32m",
@@ -9,6 +18,12 @@ const colorCodes: Record<Color, string> = {
   none: "\x1b[0m",
 };
 
+/**
+ * Mapping of background color codes.
+ * 
+ * @remarks
+ * Defines the ANSI escape codes for the corresponding background colors in the terminal.
+ */
 const bgColorCodes: Record<Color, string> = {
   red: "\x1b[41m",
   green: "\x1b[42m",
@@ -20,6 +35,9 @@ const bgColorCodes: Record<Color, string> = {
 
 /**
  * Enum representing possible color styles for console output.
+ * 
+ * @remarks
+ * Enum values correspond to the string representations of colors.
  */
 enum ColorStyle {
     None = "none",

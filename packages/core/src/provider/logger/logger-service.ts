@@ -1,13 +1,26 @@
 import { provide } from "inversify-binding-decorators";
 
+/**
+ * Represents the different logging levels.
+ */
 type LogLevel = "INFO" | "WARN" | "ERROR" | "NONE";
+
+/**
+ * Represents the supported text colors.
+ */
 type Color = "red" | "green" | "yellow" | "blue" | "white" | "black" | "none";
 
+/**
+ * Describes the color style with text and background color.
+ */
 type ColorStyle = {
   textColor: Color;
   bgColor: Color;
 }
 
+/**
+ * ANSI escape color codes mapping for different text colors.
+ */
 const colorCodes: Record<Color, string> = {
   red: "\x1b[31m",
   green: "\x1b[32m",
@@ -18,6 +31,9 @@ const colorCodes: Record<Color, string> = {
   none: "\x1b[0m",
 };
 
+/**
+ * ANSI escape color codes mapping for different background colors.
+ */
 const bgColorCodes: Record<Color, string> = {
   red: "\x1b[41m",
   green: "\x1b[42m",
@@ -28,6 +44,9 @@ const bgColorCodes: Record<Color, string> = {
   none: "\x1b[0m",
 };
 
+/**
+ * Log styles mapped to different log levels.
+ */
 const logStyles: Record<LogLevel, ColorStyle> = {
   INFO: { textColor: "blue", bgColor: "none" },
   WARN: { textColor: "yellow", bgColor: "none" },
@@ -35,10 +54,20 @@ const logStyles: Record<LogLevel, ColorStyle> = {
   NONE: { textColor: "none", bgColor: "none" },
 };
 
+/**
+ * Applies a specified color to a text string.
+ * 
+ * @param text - The text to be colored.
+ * @param color - The color to be applied.
+ * @returns The colored text.
+ */
 function colorText(text: string, color: Color): string {
   return `${colorCodes[color]}${text}\x1b[0m`;
 }
 
+/**
+ * Class that provides logging functionality with colorized text.
+ */
 @provide(Logger)
 class Logger {
   private pid: number;
@@ -47,6 +76,14 @@ class Logger {
     this.pid = process.pid;
   }
 
+  /**
+   * Formats the log message with color, timestamps, and log levels.
+   *
+   * @param logLevel - The level of the log (e.g. INFO, WARN).
+   * @param message - The main log message.
+   * @param module - Optional module name.
+   * @returns The formatted log message.
+   */
   protected formatMessage(logLevel: LogLevel = "NONE", message: string, module?: string): string {
     const localDate = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -85,18 +122,42 @@ class Logger {
     return `${colorText('[ExpressoTS]', "green")} ${timestamp} ${colorText('[PID:' + this.pid + ']', "green")} ${formattedLogLevel} [${colorText(module || '', "green")}] ${colorText(message, logColor)}`;
   }
 
+  /**
+   * Logs a generic message.
+   *
+   * @param message - The message to log.
+   * @param module - Optional module name.
+   */
   public msg(message: string, module?: string): void {
     console.log(this.formatMessage("NONE", message, module));
   }
 
+  /**
+   * Logs an informational message.
+   *
+   * @param message - The message to log.
+   * @param module - Optional module name.
+   */
   public info(message: string, module?: string): void {
     console.log(this.formatMessage("INFO", message, module));
   }
 
+  /**
+   * Logs a warning message.
+   *
+   * @param message - The message to log.
+   * @param module - Optional module name.
+   */
   public warn(message: string, module?: string): void {
     console.log(this.formatMessage("WARN", message, module));
   }
 
+  /**
+   * Logs an error message.
+   *
+   * @param message - The message to log.
+   * @param module - Optional module name.
+   */
   public error(message: string, module?: string): void {
     console.log(this.formatMessage("ERROR", message, module));
   }

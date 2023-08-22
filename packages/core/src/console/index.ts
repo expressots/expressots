@@ -1,1 +1,1 @@
-export { Console, IApplicationMessageToConsole } from "./console";
+export { IApplicationMessageToConsole } from "./console";
