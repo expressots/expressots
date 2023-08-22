@@ -1,11 +1,12 @@
 import express from "express";
 import { provideSingleton } from "../decorator/index";
-import { OptionsJson } from "./interfaces/bodyparser.interface";
-import { CorsOptions } from "./interfaces/cors.interface";
-import { middlewareResolver } from "./middleware-resolver";
 import defaultErrorHandler from "../error/error-handler-middleware";
-import { ServeStaticOptions } from "./interfaces/serve-static.interface";
+import { Logger } from "../provider/logger/logger-service";
+import { OptionsJson } from "./interfaces/bodyparser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
+import { CorsOptions } from "./interfaces/cors.interface";
+import { ServeStaticOptions } from "./interfaces/serve-static.interface";
+import { middlewareResolver } from "./middleware-resolver";
 
 type ExpressHandler = express.ErrorRequestHandler | express.RequestParamHandler | express.RequestHandler | undefined;
 
@@ -53,6 +54,14 @@ interface IConfigure {
     serveStatic(root: string, options?: ServeStaticOptions): void;
     
     /**
+     * Adds a middleware to the middleware collection.
+     * 
+     * @param middleware - The Express request handler function to be added to the middleware collection.
+     * 
+     */ 
+    addMiddleware(middleware: express.RequestHandler): void;
+
+    /**
     * Retrieves all the middlewares that have been added.
     * 
     * @returns An array of Express request handlers representing the middlewares.
@@ -78,6 +87,7 @@ interface IConfigure {
 class Configure implements IConfigure {    
     private middlewares: express.RequestHandler[] = [];
     private errorHandler: ExpressHandler | undefined;
+    private logger: Logger = new Logger();
 
     /**
      * Adds a Body Parser middleware to the middleware collection using the given options.
@@ -136,6 +146,23 @@ class Configure implements IConfigure {
     */
     serveStatic(root: string, options?: ServeStaticOptions): void {
         this.middlewares.push(express.static(root, options));
+    }
+
+    /**
+     * Adds a middleware to the middleware collection.
+     * 
+     * @param middleware - The Express request handler function to be added to the middleware collection.
+     * 
+     */ 
+    addMiddleware(middleware: express.RequestHandler): void {
+        const middlewares = this.getMiddlewares();
+        const middlewareIndex = middlewares.findIndex((m) => m.name === middleware.name);
+
+        if (middlewareIndex !== -1) {
+            this.logger.warn(`[${middleware.name}] already exists. Skipping...`, "configure-service");
+        } else {
+            this.middlewares.push(middleware);
+        }
     }
 
     /**
