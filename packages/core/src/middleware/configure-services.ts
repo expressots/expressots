@@ -90,12 +90,32 @@ class Configure implements IConfigure {
     private logger: Logger = new Logger();
 
     /**
+     * Checks if a middleware with the given name exists in the middleware collection.
+     * 
+     * @param middlewareName - The name of the middleware to be checked.
+     * 
+     * @returns A boolean value indicating whether the middleware exists or not.
+     */
+    private middlewareExists(middlewareName: string): boolean {
+        const middlewares = this.getMiddlewares();
+        const middlewareIndex = middlewares.findIndex((m) => m.name === middlewareName);
+
+        return middlewareIndex !== -1;
+    }
+
+    /**
      * Adds a Body Parser middleware to the middleware collection using the given options.
      * 
      * @param options - Optional configuration options for the JSON body parser.
      */
     public addBodyParser(options?: OptionsJson): void {
-        this.middlewares.push(express.json(options));
+        const middlewareExist = this.middlewareExists("jsonParser");
+
+        if (middlewareExist) {
+            this.logger.warn(`[jsonParser] already exists. Skipping...`, "configure-service");
+        } else {
+            this.middlewares.push(express.json(options));
+        }
     }
 
     /**
@@ -105,8 +125,9 @@ class Configure implements IConfigure {
     */
     addCors(options?: CorsOptions): void {
         const middleware = middlewareResolver("cors", options);
-        
-        if (middleware) {
+        const middlewareExist = this.middlewareExists("cors");
+
+        if (middleware && !middlewareExist) {
             this.middlewares.push(middleware);
         }
     }
@@ -119,7 +140,9 @@ class Configure implements IConfigure {
     addCompression(options?: CompressionOptions): void {
         const middleware = middlewareResolver("compression", options);
 
-        if (middleware) {
+        const middlewareExist = this.middlewareExists("compression");
+
+        if (middleware && !middlewareExist) {
             this.middlewares.push(middleware);
         }
     }
@@ -129,7 +152,7 @@ class Configure implements IConfigure {
     * 
     * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
     */
-    setErrorHandler(errorHandling?: ExpressHandler): void{
+    setErrorHandler(errorHandling?: ExpressHandler): void{       
         if (!errorHandling) {
             this.errorHandler = defaultErrorHandler;
         } else {
@@ -145,7 +168,13 @@ class Configure implements IConfigure {
     * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
     */
     serveStatic(root: string, options?: ServeStaticOptions): void {
-        this.middlewares.push(express.static(root, options));
+        const middlewareExist = this.middlewareExists("serveStatic");
+
+        if (middlewareExist) {
+            this.logger.warn(`[serveStatic] already exists. Skipping...`, "configure-service");
+        } else {
+            this.middlewares.push(express.static(root, options));
+        }
     }
 
     /**
@@ -155,10 +184,9 @@ class Configure implements IConfigure {
      * 
      */ 
     addMiddleware(middleware: express.RequestHandler): void {
-        const middlewares = this.getMiddlewares();
-        const middlewareIndex = middlewares.findIndex((m) => m.name === middleware.name);
+        const middlewareExist = this.middlewareExists(middleware.name);
 
-        if (middlewareIndex !== -1) {
+        if (middlewareExist) {
             this.logger.warn(`[${middleware.name}] already exists. Skipping...`, "configure-service");
         } else {
             this.middlewares.push(middleware);
