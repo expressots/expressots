@@ -67,7 +67,7 @@ export class InversifyExpressServer {
   /**
    * Sets the error handler configuration function to be applied to the application.
    * Note that the error config function is not actually executed until a call to
-   * InversifyExpresServer.build().
+   * InversifyExpressServer.build().
    *
    * This method is chainable.
    *
