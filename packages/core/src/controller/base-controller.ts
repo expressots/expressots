@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { provide } from "inversify-binding-decorators";
-import { interfaces } from "inversify-express-utils";
+import { interfaces } from ".";
 
 /**
  * The BaseController class is an abstract base class for controllers.
@@ -8,7 +8,7 @@ import { interfaces } from "inversify-express-utils";
  * @provide BaseController
  */
 @provide(BaseController)
-abstract class BaseController implements interfaces.Controller {  
+abstract class BaseController implements interfaces.Controller {
   /**
    * Calls an asynchronous use case and sends an appropriate response based on the result.
    * @param useCase - A promise representing the asynchronous use case to call.
@@ -19,7 +19,7 @@ abstract class BaseController implements interfaces.Controller {
     useCase: Promise<any>,
     res: any,
     successStatusCode: number,
-  ) {
+  ): Promise<any> {
     return res.status(successStatusCode).json(await useCase);
   }
 
@@ -29,7 +29,7 @@ abstract class BaseController implements interfaces.Controller {
    * @param res - The Express response object.
    * @param successStatusCode - The HTTP status code to return upon successful execution.
    */
-  protected callUseCase(useCase: any, res: any, successStatusCode: number) {
+  protected callUseCase(useCase: any, res: any, successStatusCode: number): any {
     return res.status(successStatusCode).json(useCase);
   }
 

@@ -1,12 +1,12 @@
 import express from "express";
+import process from "process";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
-import { InversifyExpressServer } from "inversify-express-utils";
-import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
 import { Configure, IConfigure } from "../middleware/configure-services";
 import { IHandlebars, RenderTemplateOptions } from "../render";
 import { ApplicationBase } from "./application-base";
+import { InversifyExpressServer } from "../controller/express-utils/inversify-server";
 
 /**
  * Enum representing possible server environments.
