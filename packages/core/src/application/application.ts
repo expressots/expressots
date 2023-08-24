@@ -55,8 +55,8 @@ class Application extends ApplicationBase {
 
     await Promise.resolve(this.configureServices());
 
-    const configure = container.get<IMiddleware>(Middleware);
-    const configureMiddlewares = configure.getMiddlewares();
+    const middleware = container.get<IMiddleware>(Middleware);
+    const configureMiddlewares = middleware.getMiddlewares();
     middlewares = [...middlewares, ...configureMiddlewares];
     
     const expressServer = new InversifyExpressServer(container);
@@ -68,8 +68,8 @@ class Application extends ApplicationBase {
     });
 
     expressServer.setErrorConfig((app: express.Application) => {
-      if (configure.getErrorHandler()){
-        app.use(configure.getErrorHandler() as express.ErrorRequestHandler);
+      if (middleware.getErrorHandler()){
+        app.use(middleware.getErrorHandler() as express.ErrorRequestHandler);
       }
     });
     
