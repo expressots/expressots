@@ -17,7 +17,7 @@ abstract class BaseController implements interfaces.Controller {
    */
   protected async callUseCaseAsync(
     useCase: Promise<any>,
-    res: any,
+    res: Response,
     successStatusCode: number,
   ): Promise<any> {
     return res.status(successStatusCode).json(await useCase);
@@ -29,7 +29,7 @@ abstract class BaseController implements interfaces.Controller {
    * @param res - The Express response object.
    * @param successStatusCode - The HTTP status code to return upon successful execution.
    */
-  protected callUseCase(useCase: any, res: any, successStatusCode: number): any {
+  protected callUseCase(useCase: any, res: Response, successStatusCode: number): any {
     return res.status(successStatusCode).json(useCase);
   }
 
