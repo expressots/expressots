@@ -106,7 +106,7 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 		template: Template;
 		confirm: boolean;
 	};
-	const projName: string = projectName;
+	const [packageManager, template, directory] = args;
 
 	if (packageManager && template) {
 		answer = {
@@ -222,7 +222,7 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 
 		changePackageName({
 			directory: answer.name,
-			name: projName,
+			name: projectName,
 		});
 
 		progressBar.update(100);
