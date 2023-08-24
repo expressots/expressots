@@ -14,7 +14,7 @@ type ExpressHandler = express.ErrorRequestHandler | express.RequestParamHandler 
 * Interface for configuring and managing middlewares in the application.
 * Provides methods to be added automatically in the application without the need to import packages.
 */
-interface IConfigure {
+interface IMiddleware {
     /**
     * Adds a Body Parser middleware to the middleware collection.
     * The body parser is responsible for parsing the incoming request bodies in a middleware.
@@ -83,8 +83,8 @@ interface IConfigure {
  * 
  * @see IConfigure
  */
-@provideSingleton(Configure)
-class Configure implements IConfigure {    
+@provideSingleton(Middleware)
+class Middleware implements IMiddleware {    
     private middlewares: express.RequestHandler[] = [];
     private errorHandler: ExpressHandler | undefined;
     private logger: Logger = new Logger();
@@ -212,5 +212,5 @@ class Configure implements IConfigure {
     }
 }
 
-export { Configure, IConfigure };
+export { Middleware, IMiddleware };
 

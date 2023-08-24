@@ -3,7 +3,7 @@ import process from "process";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { Console, IApplicationMessageToConsole } from "../console/console";
-import { Configure, IConfigure } from "../middleware/configure-services";
+import { Middleware, IMiddleware } from "../middleware/middleware-services";
 import { IHandlebars, RenderTemplateOptions } from "../render";
 import { ApplicationBase } from "./application-base";
 import { InversifyExpressServer } from "../controller/express-utils/inversify-server";
@@ -55,7 +55,7 @@ class Application extends ApplicationBase {
 
     await Promise.resolve(this.configureServices());
 
-    const configure = container.get<IConfigure>(Configure);
+    const configure = container.get<IMiddleware>(Middleware);
     const configureMiddlewares = configure.getMiddlewares();
     middlewares = [...middlewares, ...configureMiddlewares];
     

@@ -1,6 +1,3 @@
-//import { RequestHandler  } from "express";
-//import { PARAMETER_TYPE } from "./constants";
-
 import type { Application, NextFunction, Request, RequestHandler, Response } from 'express';
 import { interfaces as inversifyInterfaces } from 'inversify';
 import { HTTP_VERBS_ENUM, PARAMETER_TYPE } from './constants';
