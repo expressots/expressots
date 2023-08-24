@@ -7,13 +7,13 @@ import { Middleware, IMiddleware } from "../middleware/middleware-services";
 import { IHandlebars, RenderTemplateOptions } from "../render";
 import { ApplicationBase } from "./application-base";
 import { InversifyExpressServer } from "../controller/express-utils/inversify-server";
+import { Logger } from "../provider/logger/logger-service";
 
 /**
  * Enum representing possible server environments.
  */
 enum ServerEnvironment {
   Development = "development",
-  Staging = "staging",
   Production = "production",
 }
 
@@ -27,6 +27,7 @@ class Application extends ApplicationBase {
   private port: number;
   private environment: ServerEnvironment;
   private container: Container;
+  private middlewares: express.RequestHandler[] = [];
     
   protected configureServices(): void | Promise<void> { }
   protected postServerInitialization(): void | Promise<void> { }
@@ -56,13 +57,12 @@ class Application extends ApplicationBase {
     await Promise.resolve(this.configureServices());
 
     const middleware = container.get<IMiddleware>(Middleware);
-    const configureMiddlewares = middleware.getMiddlewares();
-    middlewares = [...middlewares, ...configureMiddlewares];
+    this.middlewares.push(...middlewares, ...middleware.getMiddlewares());
     
     const expressServer = new InversifyExpressServer(container);
 
     expressServer.setConfig((app: express.Application) => {
-      middlewares.forEach((middleware) => {
+      this.middlewares.forEach((middleware) => {
         app.use(middleware);
       });
     });
@@ -91,6 +91,7 @@ class Application extends ApplicationBase {
   ): Promise<void> {
     this.port = port;
     this.environment = environment;
+    this.app.set("env", environment);
 
     this.app.listen(this.port, () => {
       const console: Console = this.container.get<Console>(Console);
@@ -122,6 +123,20 @@ class Application extends ApplicationBase {
       this.app.set("view engine", extName);
       this.app.set("views", viewPath);
     }
+  }
+
+  /**
+   * Verifies if the current environment is development.
+   * 
+   * @returns A boolean value indicating whether the current environment is development or not.
+   */
+  protected isDevelopment(): boolean {
+    if (this.app) {
+      return this.app.get("env") === ServerEnvironment.Development;
+    }
+    
+    this.container.get<Logger>(Logger).error("isDevelopment() method must be called on `PostServerInitialization`", "application");
+    return false;
   }
 }
 
