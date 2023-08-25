@@ -1,13 +1,15 @@
 import express from "express";
-import process from "process";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
-import { Console, IApplicationMessageToConsole } from "../console/console";
-import { Middleware, IMiddleware } from "../middleware/middleware-services";
-import { IHandlebars, RenderTemplateOptions } from "../render";
-import { ApplicationBase } from "./application-base";
-import { InversifyExpressServer } from "../controller/express-utils/inversify-server";
-import { Logger } from "../provider/logger/logger-service";
+import process from "process";
+import { Console, IApplicationMessageToConsole } from "../../console/console";
+import { InversifyExpressServer } from "../../controller/express-utils/inversify-server";
+import { IMiddleware, Middleware } from "../../middleware/middleware-services";
+import { Logger } from "../../provider/logger/logger-service";
+import { IHandlebars, RenderTemplateOptions } from "../../render";
+import { ApplicationBase } from "../application-base";
+import { IApplicationExpress } from "./application-express.interface";
+
 
 /**
  * Enum representing possible server environments.
@@ -21,8 +23,8 @@ enum ServerEnvironment {
  * The Application class provides a way to configure and manage an Express application.
  * @provide Application
  */
-@provide(Application)
-class Application extends ApplicationBase {
+@provide(ApplicationExpress)
+class ApplicationExpress extends ApplicationBase implements IApplicationExpress{
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
@@ -49,8 +51,8 @@ class Application extends ApplicationBase {
    */
   public async create(
     container: Container,
-    middlewares: express.RequestHandler[] = [],
-  ): Promise<Application> {
+    middlewares: express.RequestHandler[] = []
+  ): Promise<ApplicationExpress> {
     
     this.container = container;
 
@@ -61,21 +63,20 @@ class Application extends ApplicationBase {
     
     const expressServer = new InversifyExpressServer(container);
 
-    expressServer.setConfig((app: express.Application) => {
-      this.middlewares.forEach((middleware) => {
-        app.use(middleware);
+      expressServer.setConfig((app: express.Application) => {
+        this.middlewares.forEach((middleware) => {
+          app.use(middleware);
+        });
       });
-    });
 
-    expressServer.setErrorConfig((app: express.Application) => {
-      if (middleware.getErrorHandler()){
-        app.use(middleware.getErrorHandler() as express.ErrorRequestHandler);
-      }
-    });
+      expressServer.setErrorConfig((app: express.Application) => {
+        if (middleware.getErrorHandler()){
+          app.use(middleware.getErrorHandler() as express.ErrorRequestHandler);
+        }
+      });
     
-    this.app = expressServer.build();
-
-    return this;
+      this.app = expressServer.build();
+      return this;
   }
 
   /**
@@ -140,5 +141,5 @@ class Application extends ApplicationBase {
   }
 }
 
-export { Application, ServerEnvironment };
+export { ApplicationExpress as AppExpress, ServerEnvironment };
 

@@ -1,8 +1,12 @@
-import { IApplicationMessageToConsole } from "../console/console";
-import { RenderTemplateOptions } from "../render";
-import { ServerEnvironment } from "./application";
+import { IApplicationMessageToConsole } from "../../console/console";
+import { RenderTemplateOptions } from "../../render";
+import { ServerEnvironment } from "./application-express";
 
-interface IApplication {
+/**
+ * Interface representing the Application class for Expressjs
+ * @interface IApplicationExpress
+ */
+interface IApplicationExpress {
     /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
@@ -25,4 +29,4 @@ interface IApplication {
     setEngine<T extends RenderTemplateOptions>(options: T): void;
 }
 
-export { IApplication };
+export { IApplicationExpress };

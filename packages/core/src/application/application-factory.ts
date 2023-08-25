@@ -1,7 +1,12 @@
 import express from "express";
 import { Container } from "inversify";
-import { Application } from "./application";
-import { IApplication } from "./application.interfaces";
+import { Logger } from "../provider/logger/logger-service";
+import { AppExpress } from "./express/application-express";
+import { IApplicationFastify } from "./fastify/application-fastify.interface";
+import { AppFastify } from "./fastify/application-fastify";
+import { IApplicationExpress } from "./express/application-express.interface";
+
+type HttpServer = AppExpress | AppFastify;
 
 /**
  * AppFactory Class
@@ -10,13 +15,14 @@ import { IApplication } from "./application.interfaces";
  * either using a custom application type or with provided middlewares.
  */
 class AppFactory {
+    private static logger: Logger = new Logger();
     /**
      * Creates an instance of the application using a custom application type.
      * @param container - InversifyJS container to resolve dependencies.
      * @param CustomAppType - Custom application class extending Application.
      * @returns Instance of the application.
      */
-    public static async create<T extends Application>(container: Container, CustomAppType?: new ()=> T): Promise<IApplication>;
+    public static async create<T extends HttpServer>(container: Container, CustomAppType: new ()=> T, httpServerFactory?: new () => T): Promise<IApplicationExpress | IApplicationFastify>;
 
     /**
      * Creates an instance of the application with provided middlewares.
@@ -24,7 +30,7 @@ class AppFactory {
      * @param middlewares - Array of Express middlewares to be applied.
      * @returns Instance of the application.
      */
-    public static async create<T extends Application>(container: Container, middlewares: express.RequestHandler[]): Promise<IApplication>;
+    public static async create<T extends HttpServer>(container: Container, middlewares: express.RequestHandler[], httpServerFactory?: new () => T): Promise<IApplicationExpress | IApplicationFastify>;
 
     /**
      * Implementation of the create method, handling both overloads.
@@ -32,19 +38,32 @@ class AppFactory {
      * @param appTypeOrMiddlewares - Custom application class or array of middlewares.
      * @returns Instance of the application.
      */
-    public static async create<T extends Application>(container: Container, appTypeOrMiddlewares?: (new ()=> T) | express.RequestHandler[]): Promise<IApplication> {
-        let app: Application;
+    public static async create<T extends HttpServer>(container: Container, appTypeOrMiddlewares?: (new ()=> T) | express.RequestHandler[], httpServerFactory?: new () => T): Promise<IApplicationExpress | IApplicationFastify> {
+        let app: AppExpress | AppFastify = {} as AppExpress | AppFastify;
         
-        if (typeof appTypeOrMiddlewares === "function") {
-            app = container.resolve(appTypeOrMiddlewares);
-            app.create(container);
-            return app as IApplication;
-        }
-
-        app = container.get<Application>(Application);
-        app.create(container, appTypeOrMiddlewares as express.RequestHandler[]);
-      
-        return app as IApplication;
+        if (!httpServerFactory || httpServerFactory === AppExpress) {
+            // Using custom application class - opinionated
+            if (typeof appTypeOrMiddlewares === "function") {
+                app = container.resolve(appTypeOrMiddlewares);
+                app.create(container, []);
+                return app as IApplicationExpress;
+            }
+            // Using middlewares - non-opinionated
+            app = container.get<AppExpress>(AppExpress);
+            app.create(container, appTypeOrMiddlewares as express.RequestHandler[]);
+            return app as IApplicationExpress;
+        } else {
+            // Using custom application class - opinionated
+            if (typeof appTypeOrMiddlewares === "function") {
+                app == container.resolve(appTypeOrMiddlewares);
+                app.create(container, []);
+                return app as IApplicationFastify;
+            }
+            // Using middlewares - non-opinionated
+            app = container.get<AppFastify>(AppFastify);
+            app.create(container, []);
+            return {} as IApplicationFastify;
+        }        
     }
 }
 
