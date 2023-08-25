@@ -1,10 +1,9 @@
-import { provide } from "inversify-binding-decorators";
-import { ApplicationBase } from "../application-base";
-import { IApplicationFastify } from "./application-fastify.interface";
 import { Container } from "inversify";
+import { provide } from "inversify-binding-decorators";
 import { IApplicationMessageToConsole } from "../../console/console";
-import { IHandlebars } from "../../render";
+import { ApplicationBase } from "../application-base";
 import { ServerEnvironment } from "../express/application-express";
+import { IApplicationFastify } from "./application-fastify.interface";
 
 /**
  * The Application class provides a way to configure and manage an Fastify application.
@@ -12,13 +11,9 @@ import { ServerEnvironment } from "../express/application-express";
  */
 @provide(ApplicationFastify)
 class ApplicationFastify extends ApplicationBase implements IApplicationFastify {
-    listen(port: number, environment: ServerEnvironment, consoleMessage?: IApplicationMessageToConsole | undefined): void | Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    setEngine<T extends IHandlebars>(options: T): void {
-        throw new Error("Method not implemented.");
-    }
-    
+    private container: Container;
+    private middlewares: string[] = [];
+
     protected configureServices(): void | Promise<void> {}
     protected postServerInitialization(): void | Promise<void> {}
     protected serverShutdown(): void | Promise<void> {}
@@ -27,8 +22,15 @@ class ApplicationFastify extends ApplicationBase implements IApplicationFastify 
         container: Container,
         middlewares: string[] = []
       ): Promise<ApplicationFastify> {
-        return Promise.resolve(this);
+        this.container = container;
+        this.middlewares = middlewares;    
+        return Promise.resolve(new ApplicationFastify());
       }
+
+      public async listen(port: number, environment: ServerEnvironment, consoleMessage?: IApplicationMessageToConsole | undefined): Promise<void> {
+        console.log("inside of listen")
+    }
+  
 
 }
 

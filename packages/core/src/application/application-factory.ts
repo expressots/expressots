@@ -22,7 +22,8 @@ class AppFactory {
      * @param CustomAppType - Custom application class extending Application.
      * @returns Instance of the application.
      */
-    public static async create<T extends HttpServer>(container: Container, CustomAppType: new ()=> T, httpServerFactory?: new () => T): Promise<IApplicationExpress | IApplicationFastify>;
+    public static async create<T extends AppExpress>(container: Container, CustomAppType: new ()=> T, httpServerFactory?: new () => T): Promise<IApplicationExpress>;
+    public static async create<T extends AppFastify>(container: Container, CustomAppType: new ()=> T, httpServerFactory?: new () => T): Promise<IApplicationFastify>;
 
     /**
      * Creates an instance of the application with provided middlewares.
@@ -30,7 +31,8 @@ class AppFactory {
      * @param middlewares - Array of Express middlewares to be applied.
      * @returns Instance of the application.
      */
-    public static async create<T extends HttpServer>(container: Container, middlewares: express.RequestHandler[], httpServerFactory?: new () => T): Promise<IApplicationExpress | IApplicationFastify>;
+    public static async create<T extends AppExpress>(container: Container, middlewares: express.RequestHandler[], httpServerFactory?: new () => T): Promise<IApplicationExpress>;
+    public static async create<T extends AppFastify>(container: Container, middlewares: express.RequestHandler[], httpServerFactory?: new () => T): Promise<IApplicationFastify>;
 
     /**
      * Implementation of the create method, handling both overloads.
@@ -56,13 +58,12 @@ class AppFactory {
             // Using custom application class - opinionated
             if (typeof appTypeOrMiddlewares === "function") {
                 app == container.resolve(appTypeOrMiddlewares);
-                app.create(container, []);
                 return app as IApplicationFastify;
             }
             // Using middlewares - non-opinionated
             app = container.get<AppFastify>(AppFastify);
-            app.create(container, []);
-            return {} as IApplicationFastify;
+            app.create(container, [] as string[]);
+            return app as IApplicationFastify;
         }        
     }
 }

@@ -8,7 +8,6 @@ import { ServerEnvironment } from "../express/application-express";
  */
 interface IApplicationFastify {
    listen(port: number, environment: ServerEnvironment, consoleMessage?: IApplicationMessageToConsole): Promise<void> | void;
-   setEngine<T extends RenderTemplateOptions>(options: T): void;
 }
 
 export { IApplicationFastify };
