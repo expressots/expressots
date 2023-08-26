@@ -139,6 +139,10 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress{
     this.container.get<Logger>(Logger).error("isDevelopment() method must be called on `PostServerInitialization`", "application");
     return false;
   }
+
+  public get ExpressApp(): express.Application {
+    return this.app;
+  }
 }
 
 export { ApplicationExpress as AppExpress, ServerEnvironment };
