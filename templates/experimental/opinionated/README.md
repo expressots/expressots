@@ -17,7 +17,7 @@ npm i
 To start production read code in dist, run the following command:
 
 ```bash
-npm start
+npm prod
 ```
 
 Starts the application by running the index.js file in the dist folder.
