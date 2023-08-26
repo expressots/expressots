@@ -1,5 +1,4 @@
 import { IApplicationMessageToConsole } from "../../console/console";
-import { RenderTemplateOptions } from "../../render";
 import { ServerEnvironment } from "../express/application-express";
 
 /**
@@ -7,7 +6,16 @@ import { ServerEnvironment } from "../express/application-express";
  * @interface IApplicationFastify
  */
 interface IApplicationFastify {
+
+   /**
+    * Method to start the application
+    * @param {number} port The port to listen on
+    * @param {ServerEnvironment} environment The environment to run the application in
+    * @param {IApplicationMessageToConsole} [consoleMessage] The message to display to the console
+    * @returns {Promise<void> | void}
+    */
    listen(port: number, environment: ServerEnvironment, consoleMessage?: IApplicationMessageToConsole): Promise<void> | void;
 }
 
 export { IApplicationFastify };
+

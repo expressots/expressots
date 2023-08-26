@@ -140,6 +140,12 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress{
     return false;
   }
 
+  /**
+   * Verifies if the current environment is production.
+   * 
+   * @returns A boolean value indicating whether the current environment is production or not.
+   * 
+   */
   public get ExpressApp(): express.Application {
     return this.app;
   }
