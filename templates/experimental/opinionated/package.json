@@ -7,8 +7,8 @@
   "license": "UNLICENSED",
   "main": "dist/main.js",
   "scripts": {
-    "build": "expressots build",
-    "dev": "expressots dev",
+    "build": "expressots build  --experimental",
+    "dev": "expressots dev  --experimental",
     "prod": "node dist/main.js",
     "test": "jest",
     "test:cov": "jest --coverage",
