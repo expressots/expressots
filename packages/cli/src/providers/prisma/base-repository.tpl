@@ -1,16 +1,25 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { CreateInput, ModelsOf, DeleteWhere, Select, PrismaAction } from "@expressots/prisma";
+import {
+    CreateInput,
+    ModelsOf,
+    DeleteWhere,
+    Select,
+    PrismaAction,
+} from "@expressots/prisma";
 import { IBaseRepository } from "./base-repository.interface";
+import { injectable } from "inversify";
 
-class BaseRepository<ModelName extends  ModelsOf<PrismaClient>> implements IBaseRepository<ModelName> { 
+@injectable()
+class BaseRepository<ModelName extends ModelsOf<PrismaClient>>
+    implements IBaseRepository<ModelName>
+{
     protected prismaModel: any;
     protected prismaClient: PrismaClient;
-
     constructor(modelName: keyof PrismaClient) {
         this.prismaClient = new PrismaClient();
         this.prismaModel = this.prismaClient[modelName];
     }
-    
+
     async aggregate(args: PrismaAction<ModelName, "aggregate">): Promise<any> {
         return await this.prismaModel.aggregate(args);
     }
@@ -19,39 +28,48 @@ class BaseRepository<ModelName extends  ModelsOf<PrismaClient>> implements IBase
         return await this.prismaModel.count(args);
     }
 
-    async create(data: CreateInput<ModelName> | { data: CreateInput<ModelName>, select?: Select<ModelName, "create"> }): Promise<ModelName | never> {
+    async create(
+        data:
+            | CreateInput<ModelName>["data"]
+            | {
+                  data: CreateInput<ModelName>["data"];
+                  select?: Select<ModelName, "create">["select"];
+              },
+    ): Promise<ModelName | never> {
         if (!data) {
             throw new Error("Data cannot be null or undefined");
         }
 
-        if ( typeof data === "object" && "data" in data) {
+        if (typeof data === "object" && "data" in data) {
             return await this.prismaModel.create(data);
         }
 
         return await this.prismaModel.create({ data });
     }
 
-    async delete(where: DeleteWhere<ModelName>, select?: Select<ModelName, "delete">): Promise<ModelName | never> {
+    async delete(
+        where: DeleteWhere<ModelName>["where"],
+        select?: Select<ModelName, "delete">["select"],
+    ): Promise<ModelName | never> {
         if (!where) {
             throw new Error("Data cannot be null or undefined");
         }
-    
+
         const obj = await this.prismaModel.delete({ where });
-        
+
         if (select) {
             const entries = Object.entries(select);
-    
-            const hasTrueField = entries.some(([, value]) => value === true);
-    
+
+            const hasTrueField = entries.some(([, value]) => value);
+
             if (hasTrueField) {
-    
-                const result: any = {}; 
+                const result: any = {};
                 for (const [key, value] of entries) {
                     if (value) {
                         result[key] = obj[key as keyof typeof obj];
                     }
                 }
-                return result as ModelName; 
+                return result as ModelName;
             } else {
                 for (const [key, value] of entries) {
                     if (!value) {
@@ -60,48 +78,67 @@ class BaseRepository<ModelName extends  ModelsOf<PrismaClient>> implements IBase
                 }
             }
         }
-    
+
         return obj;
     }
 
-    async deleteMany(args?: PrismaAction<ModelName, "deleteMany">): Promise<Prisma.BatchPayload> {
+    async deleteMany(
+        args?: PrismaAction<ModelName, "deleteMany">,
+    ): Promise<Prisma.BatchPayload> {
         return await this.prismaModel.deleteMany(args);
     }
 
-    
-    async findFirst(args?: PrismaAction<ModelName, "findFirst">): Promise<ModelName | null> {
+    async findFirst(
+        args?: PrismaAction<ModelName, "findFirst">,
+    ): Promise<ModelName | null> {
         return await this.prismaModel.findFirst(args);
     }
 
-    async findFirstOrThrow(args?: PrismaAction<ModelName, "findFirstOrThrow">): Promise<ModelName | never> {
+    async findFirstOrThrow(
+        args?: PrismaAction<ModelName, "findFirstOrThrow">,
+    ): Promise<ModelName | never> {
         return await this.prismaModel.findFirstOrThrow(args);
     }
 
-    async findMany(args: PrismaAction<ModelName, "findMany">): Promise<ModelName[]> {
+    async findMany(
+        args: PrismaAction<ModelName, "findMany">,
+    ): Promise<ModelName[]> {
         return await this.prismaModel.findMany(args);
     }
-    
-    async findUnique(args: PrismaAction<ModelName, "findUnique">): Promise<ModelName | null> {
+
+    async findUnique(
+        args: PrismaAction<ModelName, "findUnique">,
+    ): Promise<ModelName | null> {
         return this.prismaModel.findUnique(args);
     }
 
-    async findUniqueOrThrow(args?: PrismaAction<ModelName, "findUniqueOrThrow">): Promise<ModelName | never> {
+    async findUniqueOrThrow(
+        args?: PrismaAction<ModelName, "findUniqueOrThrow">,
+    ): Promise<ModelName | never> {
         return await this.prismaModel.findUniqueOrThrow(args);
     }
 
-    async groupBy(args: PrismaAction<ModelName, "groupBy">): Promise<ModelName | never> {
+    async groupBy(
+        args: PrismaAction<ModelName, "groupBy">,
+    ): Promise<ModelName | never> {
         return await this.prismaModel.groupBy(args);
     }
 
-    async update(args: PrismaAction<ModelName, "update">): Promise<ModelName | never> {
+    async update(
+        args: PrismaAction<ModelName, "update">,
+    ): Promise<ModelName | never> {
         return await this.prismaModel.update(args);
     }
 
-    async updateMany(args: PrismaAction<ModelName, "updateMany">): Promise<Prisma.BatchPayload> {
+    async updateMany(
+        args: PrismaAction<ModelName, "updateMany">,
+    ): Promise<Prisma.BatchPayload> {
         return await this.prismaModel.updateMany(args);
     }
 
-    async upsert(args: PrismaAction<ModelName, "upsert">): Promise<ModelName | never> {
+    async upsert(
+        args: PrismaAction<ModelName, "upsert">,
+    ): Promise<ModelName | never> {
         return await this.prismaModel.upsert(args);
     }
 }
