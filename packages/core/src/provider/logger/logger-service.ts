@@ -116,10 +116,10 @@ class Logger {
     const formattedLogLevel = colorText(logLevel.padEnd(5, ' '), logColor);
     
     if (logLevel === "NONE") {
-      return `${colorText('[ExpressoTS]', "none")} ${timestamp} ${colorText('[PID:' + this.pid + ']', "none")} ${formattedLogLevel} [${colorText(module || '', "none")}] ${colorText(message, logColor)}`;  
+      return `${colorText('[ExpressoTS]', "none")} ${timestamp} ${colorText('[PID:' + this.pid + ']', "none")} ${formattedLogLevel} [${colorText(module || '', "none")}] ${colorText(message, logColor)}\n`;  
     }
     
-    return `${colorText('[ExpressoTS]', "green")} ${timestamp} ${colorText('[PID:' + this.pid + ']', "green")} ${formattedLogLevel} [${colorText(module || '', "green")}] ${colorText(message, logColor)}`;
+    return `${colorText('[ExpressoTS]', "green")} ${timestamp} ${colorText('[PID:' + this.pid + ']', "green")} ${formattedLogLevel} [${colorText(module || '', "green")}] ${colorText(message, logColor)}\n`;
   }
 
   /**
@@ -129,7 +129,7 @@ class Logger {
    * @param module - Optional module name.
    */
   public msg(message: string, module?: string): void {
-    console.log(this.formatMessage("NONE", message, module));
+    process.stdout.write(this.formatMessage("NONE", message, module));
   }
 
   /**
@@ -139,7 +139,7 @@ class Logger {
    * @param module - Optional module name.
    */
   public info(message: string, module?: string): void {
-    console.log(this.formatMessage("INFO", message, module));
+    process.stdout.write(this.formatMessage("INFO", message, module));
   }
 
   /**
@@ -149,7 +149,7 @@ class Logger {
    * @param module - Optional module name.
    */
   public warn(message: string, module?: string): void {
-    console.log(this.formatMessage("WARN", message, module));
+    process.stdout.write(this.formatMessage("WARN", message, module));
   }
 
   /**
@@ -159,7 +159,7 @@ class Logger {
    * @param module - Optional module name.
    */
   public error(message: string, module?: string): void {
-    console.log(this.formatMessage("ERROR", message, module));
+    process.stderr.write(this.formatMessage("ERROR", message, module));
   }
 }
 
