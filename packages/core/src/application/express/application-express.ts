@@ -3,12 +3,12 @@ import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import process from "process";
 import { Console, IApplicationMessageToConsole } from "../../console/console";
-import { InversifyExpressServer } from "../../controller/express-utils/inversify-server";
 import { IMiddleware, Middleware } from "../../middleware/middleware-services";
 import { Logger } from "../../provider/logger/logger-service";
 import { IHandlebars, RenderTemplateOptions } from "../../render";
 import { ApplicationBase } from "../application-base";
 import { IApplicationExpress } from "./application-express.interface";
+import { InversifyExpressServer } from "./express-utils/inversify-server";
 
 
 /**
