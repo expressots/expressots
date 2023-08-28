@@ -9,5 +9,5 @@ export * from "./express/express-utils/decorators";
 export * as interfaces from "./express/express-utils/interfaces";
 export * from "./express/express-utils/base-middleware";
 export * from "./express/express-utils/httpResponseMessage";
-export * from "./express/express-utils/inversify-server";
+export * from "./express/express-utils/inversify-express-server";
 export * from "./express/express-utils/utils";

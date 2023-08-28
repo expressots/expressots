@@ -8,7 +8,7 @@ import { Logger } from "../../provider/logger/logger-service";
 import { IHandlebars, RenderTemplateOptions } from "../../render";
 import { ApplicationBase } from "../application-base";
 import { IApplicationExpress } from "./application-express.interface";
-import { InversifyExpressServer } from "./express-utils/inversify-server";
+import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 
 
 /**
