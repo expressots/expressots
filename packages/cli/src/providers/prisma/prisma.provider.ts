@@ -72,7 +72,7 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
         {
           type: "confirm",
           name: "baseRepository",
-          message: "Do you want to add BaseRepository Pattern in this project?",
+          message: "Do you want to add BaseRepository Pattern in this project?\nthis will replace the existing BaseRepository and BaseRespositoryInterface if it exists.",
           default: true,
         },
         {
@@ -145,12 +145,31 @@ const prismaProvider = async (version: string, providerVersion: string): Promise
     prismaPackage(answer);
 
 		if (answer.baseRepository) {
-			const { opinionated } = await Compiler.loadConfig();
+			const { opinionated, sourceRoot } = await Compiler.loadConfig();
+			let folderMatch = "";
       if (opinionated) {
-        console.log("./src/repositories")
-      }
-			// TODO: Generate a BaseRepository Pattern using templates
+				folderMatch = "repositories";
+      } else {
+				folderMatch = "";
+			}
+			const repositoryDir = `${sourceRoot}/${folderMatch}`;
+
 			console.log(`Generating BaseRepository Pattern...`);
+
+			const baseRepositoryInterfaceTplPath = path.join(__dirname, './templates/base-repository.interface.tpl');
+			const baseRepositoryTplPath = path.join(__dirname, './templates/base-repository.tpl');
+
+			const baseRepositoryInterfaceTemplate = fs.readFileSync(baseRepositoryInterfaceTplPath, 'utf8');
+			const baseRepositoryTemplate = fs.readFileSync(baseRepositoryTplPath, 'utf8');
+			fs.writeFileSync(
+					path.join(repositoryDir, 'base-repository.interface.ts'),
+					baseRepositoryInterfaceTemplate
+			);
+
+			fs.writeFileSync(
+					path.join(repositoryDir, 'base-repository.ts'),
+					baseRepositoryTemplate
+			);
 		}
 
 		// Install @expressots/prisma in the project
