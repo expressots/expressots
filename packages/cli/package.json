@@ -35,7 +35,7 @@
     "start": "node ./bin/cli.js",
     "start:dev": "tsnd ./src/cli.ts",
     "build": "npm run clean && tsc -p tsconfig.json && yarn cp:templates && chmod +x ./bin/cli.js",
-    "cp:templates": "cp -r ./src/generate/templates ./bin/generate/templates",
+    "cp:templates": "cp -r ./src/generate/templates ./bin/generate/templates && cp -r ./src/providers/prisma/templates ./bin/providers/prisma/templates",
     "clean": "rimraf ./bin",
     "lint": "eslint .eslintrc.js --ext .ts,.tsx,.js,.jsx .",
     "release": "release-it",
