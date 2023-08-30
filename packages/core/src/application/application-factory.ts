@@ -5,6 +5,7 @@ import { AppExpress } from "./express/application-express";
 import { IApplicationExpress } from "./express/application-express.interface";
 import { AppFastify } from "./fastify/application-fastify";
 import { IApplicationFastify } from "./fastify/application-fastify.interface";
+import { Handler } from "@fastify/middie";
 
 /**
  * AppFactory Class
@@ -49,7 +50,7 @@ class AppFactory {
                     return app as IApplicationExpress;
                 case AppFastify:
                     app = container.resolve(appTypeOrMiddlewares as new () => AppFastify);
-                    app.create(container);
+                    await app.create(container);
                     return app as IApplicationFastify;
                 default:
                     app = container.resolve(appTypeOrMiddlewares as new () => AppExpress);
@@ -64,7 +65,7 @@ class AppFactory {
                     return app as AppExpress;
                 case AppFastify:
                     app = container.get<AppFastify>(AppFastify);
-                    app.create(container, [] as string[]);
+                    await app.create(container, appTypeOrMiddlewares as Array<Handler>);
                     return app as AppFastify;
                 default:
                     app = container.get<AppExpress>(AppExpress);

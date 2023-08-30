@@ -64,6 +64,7 @@
     "format:write": "prettier --write \"packages/**/*.ts\" --cache"
   },
   "dependencies": {
+    "@fastify/middie": "^8.3.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "fastify": "^4.21.0",
