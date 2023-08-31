@@ -1,7 +1,6 @@
 import { Response } from "express";
 import { provide } from "inversify-binding-decorators";
-import { interfaces } from "../application";
-
+import * as interfaces from "../application/express/express-utils/interfaces";
 /**
  * The BaseController class is an abstract base class for controllers.
  * It provides methods for handling use case calls and sending appropriate responses.

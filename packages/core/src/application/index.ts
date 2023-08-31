@@ -1,14 +1,5 @@
-export { AppExpress, ServerEnvironment } from "./express/application-express";
-export { IApplicationExpress } from "./express/application-express.interface";
-export { AppFastify } from "./fastify/application-fastify";
-export { IApplicationFastify } from "./fastify/application-fastify.interface";
+export * from "./express"
+export * from "./fastify"
 export { AppContainer } from "./application-container";
 export { AppFactory } from "./application-factory";
-export * from "./express/express-utils/constants";
-export * from "./express/express-utils/decorators";
-export * as interfaces from "./express/express-utils/interfaces";
-export * from "./express/express-utils/base-middleware";
-export * from "./express/express-utils/httpResponseMessage";
-export * from "./express/express-utils/inversify-express-server";
-export * from "./express/express-utils/utils";
-export * from "./fastify/plugins";
+

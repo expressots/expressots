@@ -1,14 +1,13 @@
+import { Handler } from '@fastify/middie';
 import { FastifyInstance, FastifyPluginAsync, FastifyPluginCallback } from 'fastify';
-import express from 'express';
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { Console, IApplicationMessageToConsole } from "../../console/console";
+import { IMiddleware, Middleware } from '../../middleware/middleware-services';
 import { ApplicationBase } from "../application-base";
 import { ServerEnvironment } from "../express/application-express";
 import { IApplicationFastify } from "./application-fastify.interface";
 import { InversifyFastifyServer } from "./fastify-utils/inversify-fastify-server";
-import { IMiddleware, Middleware } from '../../middleware/middleware-services';
-import { Handler } from '@fastify/middie';
 import { IPlugin, Plugin } from './plugins/plugin-service';
 
 export type FastifyPlugin = FastifyPluginCallback | FastifyPluginAsync;
@@ -82,3 +81,4 @@ class ApplicationFastify extends ApplicationBase implements IApplicationFastify 
 }
 
 export { ApplicationFastify as AppFastify };
+

@@ -1,5 +1,4 @@
 import { provideSingleton } from "../../../decorator";
-import { CorsOptions } from "../../../middleware/interfaces/cors.interface";
 import { Logger } from "../../../provider/logger/logger-service";
 import { FastifyPlugin } from "../application-fastify";
 import { pluginResolver } from "./plugin-resolver";
