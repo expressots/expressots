@@ -1,0 +1,1 @@
+export { IPlugin, Plugin } from "./plugin-service";

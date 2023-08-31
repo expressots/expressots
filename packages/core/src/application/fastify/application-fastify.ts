@@ -9,6 +9,7 @@ import { IApplicationFastify } from "./application-fastify.interface";
 import { InversifyFastifyServer } from "./fastify-utils/inversify-fastify-server";
 import { IMiddleware, Middleware } from '../../middleware/middleware-services';
 import { Handler } from '@fastify/middie';
+import { IPlugin, Plugin } from './plugins/plugin-service';
 
 export type FastifyPlugin = FastifyPluginCallback | FastifyPluginAsync;
 
@@ -23,7 +24,7 @@ class ApplicationFastify extends ApplicationBase implements IApplicationFastify 
     private environment: ServerEnvironment;
     private container: Container;
     private middlewares: Array<Handler> = [];
-    private plugins: Array<FastifyPluginCallback> = [];
+    private plugins: Map<FastifyPlugin, any> = new Map();
     
     protected configureServices(): void | Promise<void> {}
     protected postServerInitialization(): void | Promise<void> {}
@@ -45,10 +46,15 @@ class ApplicationFastify extends ApplicationBase implements IApplicationFastify 
 
         await Promise.resolve(this.configureServices());
 
+        // Getting express middlewares
         const middleware = container.get<IMiddleware>(Middleware);
         this.middlewares.push(...expressMiddlewares, ...middleware.getMiddlewares() as Array<Handler>);
 
-        const serverInstance = new InversifyFastifyServer(this.container, this.middlewares);
+        // Getting plugins
+        const plugin = container.get<IPlugin>(Plugin);
+        this.plugins = plugin.getPlugins();
+      
+        const serverInstance = new InversifyFastifyServer(this.container, this.middlewares, this.plugins);
 
         this.app = await serverInstance.build();
 

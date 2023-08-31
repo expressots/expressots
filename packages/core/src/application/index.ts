@@ -11,3 +11,4 @@ export * from "./express/express-utils/base-middleware";
 export * from "./express/express-utils/httpResponseMessage";
 export * from "./express/express-utils/inversify-express-server";
 export * from "./express/express-utils/utils";
+export * from "./fastify/plugins";
