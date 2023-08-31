@@ -58,7 +58,6 @@
     "build:linux": "npm run linux-clean && npm run build:esm && npm run build:cjs && npm run linux-cpy",
     "build:esm": "tsc -p tsconfig.esm.json && mv lib/esm/index.js lib/esm/index.mjs ",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "git": "powershell -Command \"git add .; git commit -m \"%1\"; npm run release\"",
     "release": "release-it",
     "test": "jest",
     "format:write": "prettier --write \"packages/**/*.ts\" --cache"
