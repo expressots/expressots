@@ -112,18 +112,6 @@
               "section": "Bug Fixes"
             },
             {
-              "type": "perf",
-              "section": "Performance Improvements"
-            },
-            {
-              "type": "revert",
-              "section": "Reverts"
-            },
-            {
-              "type": "docs",
-              "section": "Documentation"
-            },
-            {
               "type": "refactor",
               "section": "Code Refactoring"
             },
