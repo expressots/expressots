@@ -1,9 +1,8 @@
 import "reflect-metadata";
-import fs from "fs";
-import path from "path";
 import dotenv from "dotenv";
-import { Environments } from "../src/environment";
-import * as log from "../src/logger";
+import fs from "fs";
+import { EnvValidatorProvider } from "../src/provider/environment/env-validator.provider";
+import { Logger } from "../src/provider/logger/logger-service";
 
 jest.mock("fs");
 jest.mock("path");
@@ -12,6 +11,9 @@ jest.mock("../src/logger", () => ({
     Info: jest.fn(),
   },
 }));
+
+const Environments = new EnvValidatorProvider();
+const logger: Logger = new Logger();
 
 describe("EnvValidatorProvider", () => {
   describe("Get", () => {
@@ -36,7 +38,7 @@ describe("EnvValidatorProvider", () => {
     beforeEach(() => {
       originalEnv = process.env;
       process.env = {};
-      logSpy = jest.spyOn(log.log, "Info").mockImplementation();
+      logSpy = jest.spyOn(logger, "info").mockImplementation();
       jest.spyOn(fs, "existsSync").mockReturnValue(true);
     });
 

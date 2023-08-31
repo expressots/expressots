@@ -1,6 +1,5 @@
 import "reflect-metadata";
-import chalk from "chalk";
-import { Console, IApplicationMessageToConsole } from "../src/console";
+import { Console } from "../src/console/console";
 
 enum ColorStyle {
   None = 0,

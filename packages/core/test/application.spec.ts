@@ -3,7 +3,7 @@ import express from "express";
 import { Container, ContainerModule } from "inversify";
 import {
   AppContainer,
-  Application,
+  AppExpress,
   ServerEnvironment,
 } from "../src/application";
 import { IApplicationMessageToConsole } from "../src/console";
@@ -32,7 +32,7 @@ describe("Application", () => {
     // Arrange
     const mockCreate = jest.fn().mockReturnValue({});
     const mockListen = jest.fn();
-    const application = new Application();
+    const application = new AppExpress();
 
     // Act
     jest.spyOn(application, "create").mockImplementation(mockCreate);
