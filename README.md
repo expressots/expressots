@@ -69,8 +69,8 @@ Why Contribute to Documentation?
 
 Ready to contribute?
 
-- [Contributing Guidelines](https://github.com/expressots/expresso-site-doc/blob/main/CONTRIBUTING.md)
-- [How to Contribute](https://github.com/expressots/expresso-site-doc/blob/main/CONTRIBUTING_HOWTO.md)
+- [Contributing Guidelines](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md)
+- [How to Contribute](https://github.com/expressots/expressots/blob/main/CONTRIBUTING_HOWTO.md)
 - [Coding Guidelines](https://github.com/rsaz/TypescriptCodingGuidelines)
 
 ## Support the project
