@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BindingScopeEnum, ContainerModule, interfaces } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { provideSingleton, provideTransient } from "../decorator";
@@ -48,7 +50,7 @@ class BaseModule {
    * @param controllers - An array of controller classes.
    * @returns A map of symbols mapped to controller constructor functions.
    */
-  private static createSymbols(controllers: any[]): controllerType {
+  private static createSymbols(controllers: Array<any>): controllerType {
     const symbols = new Map<symbol, new () => any>();
 
     for (const controller of controllers) {
@@ -67,7 +69,7 @@ class BaseModule {
    * @returns A ContainerModule with the controller bindings.
    */
   public static createContainerModule(
-    controllers: any[],
+    controllers: Array<any>,
     scope?: interfaces.BindingScope,
   ): ContainerModule {
     const symbols = BaseModule.createSymbols(controllers);

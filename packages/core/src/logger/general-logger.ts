@@ -95,8 +95,8 @@ class GeneralLogger {
     let pathLine: string = "";
 
     if (error.stack) {
-      let callerLine = error.stack.split("\n")[1];
-      let index = callerLine.indexOf("at ");
+      const callerLine = error.stack.split("\n")[1];
+      const index = callerLine.indexOf("at ");
       pathLine = callerLine.substring(index + +2, callerLine.length);
     }
 
@@ -109,7 +109,11 @@ class GeneralLogger {
    * @param content - The message or Error object to log.
    * @param service - The service name (optional) associated with the log.
    */
-  public log(logLevel: LogLevel, content: Error | string, service?: string) {
+  public log(
+    logLevel: LogLevel,
+    content: Error | string,
+    service?: string,
+  ): void {
     let pathLine: string = "";
     let logMessageFormat: string = "";
 

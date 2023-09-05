@@ -17,6 +17,7 @@ class EnvValidatorProvider {
    * @param defaultValue - The default value to return if the environment variable is not set.
    * @returns The value of the environment variable, or the default value if not set.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static get(key: string, defaultValue: any = undefined): any {
     return process.env[key] ?? defaultValue;
   }
