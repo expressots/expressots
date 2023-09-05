@@ -16,7 +16,13 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ["dist", "node_modules", ".eslintrc.cjs", "jest.config.js", "packages/core/test"],
+  ignorePatterns: [
+    "dist",
+    "node_modules",
+    ".eslintrc.cjs",
+    "jest.config.ts",
+    "packages/core/test",
+  ],
   rules: {
     "@typescript-eslint/adjacent-overload-signatures": "error",
     "@typescript-eslint/array-type": ["error", { default: "generic" }],

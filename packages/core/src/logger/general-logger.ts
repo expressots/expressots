@@ -109,7 +109,11 @@ class GeneralLogger {
    * @param content - The message or Error object to log.
    * @param service - The service name (optional) associated with the log.
    */
-  public log(logLevel: LogLevel, content: Error | string, service?: string) {
+  public log(
+    logLevel: LogLevel,
+    content: Error | string,
+    service?: string,
+  ): void {
     let pathLine: string = "";
     let logMessageFormat: string = "";
 
