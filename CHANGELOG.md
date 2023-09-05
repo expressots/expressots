@@ -1,5 +1,21 @@
 
 
+## [1.8.0](https://github.com/expressots/expressots/compare/1.7.0...1.8.0) (2023-09-05)
+
+
+### Features
+
+* add benchmark folder ([#83](https://github.com/expressots/expressots/issues/83)) ([30cb1f9](https://github.com/expressots/expressots/commit/30cb1f922f980de23b0e8e896b552a0708075201))
+* bump prettier from 3.0.1 to 3.0.2 ([#74](https://github.com/expressots/expressots/issues/74)) ([a66f80d](https://github.com/expressots/expressots/commit/a66f80d36967cc6112a30f422ec34a8dcb3efd66))
+* bump prettier from 3.0.2 to 3.0.3 ([#80](https://github.com/expressots/expressots/issues/80)) ([59af991](https://github.com/expressots/expressots/commit/59af99177edc371c5608761c6b3f438806aba898))
+
+
+### Bug Fixes
+
+* increase the event range for graceful shutdown ([#76](https://github.com/expressots/expressots/issues/76)) ([8e88c7e](https://github.com/expressots/expressots/commit/8e88c7e2f1f0b2091c013885a823bbda533de62b))
+* remove verb should from unit tests labels ([#78](https://github.com/expressots/expressots/issues/78)) ([f37d028](https://github.com/expressots/expressots/commit/f37d02878cbf2587028d7c61ecc35c4981721eab))
+* update readme ([c1f0bcd](https://github.com/expressots/expressots/commit/c1f0bcd341284b4259454b579ccaf35091b1e2e1))
+
 ## [1.7.0](https://github.com/expressots/expressots/compare/1.6.0...1.7.0) (2023-08-14)
 
 
