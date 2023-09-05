@@ -95,8 +95,8 @@ class GeneralLogger {
     let pathLine: string = "";
 
     if (error.stack) {
-      let callerLine = error.stack.split("\n")[1];
-      let index = callerLine.indexOf("at ");
+      const callerLine = error.stack.split("\n")[1];
+      const index = callerLine.indexOf("at ");
       pathLine = callerLine.substring(index + +2, callerLine.length);
     }
 

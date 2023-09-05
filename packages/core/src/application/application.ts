@@ -44,7 +44,7 @@ class Application {
   /**
    * Perform actions or cleanup after the server is shutdown.
    */
-  protected serverShutdown(): void { }
+  protected serverShutdown(): void {}
 
   /**
    * Handles process exit by calling serverShutdown and then exiting the process.
@@ -62,7 +62,7 @@ class Application {
    */
   public create(
     container: Container,
-    middlewares: express.RequestHandler[] = [],
+    middlewares: Array<express.RequestHandler> = [],
   ): Application {
     this.configureServices();
 
@@ -116,10 +116,17 @@ class Application {
     this.app.listen(this.port, () => {
       new Console().messageServer(this.port, this.environment, consoleMessage);
 
-      (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as NodeJS.Signals[]).forEach((signal) => {
+      (
+        [
+          "SIGTERM",
+          "SIGHUP",
+          "SIGBREAK",
+          "SIGQUIT",
+          "SIGINT",
+        ] as Array<NodeJS.Signals>
+      ).forEach((signal) => {
         process.on(signal, this.handleExit.bind(this));
       });
-
     });
 
     this.postServerInitialization();

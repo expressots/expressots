@@ -22,7 +22,6 @@ interface ContainerOptions {
   skipBaseClassChecks?: boolean;
 }
 
-
 /**
  * The AppContainer class provides a container for managing dependency injection.
  * It allows the creation of a container with custom options, including default binding scope
@@ -40,7 +39,7 @@ class AppContainer {
   private container!: Container;
   private options: ContainerOptions;
 
-   /**
+  /**
    * Constructs the AppContainer instance.
    * @param options - The options for creating the container. Can include custom default scope and skip base class checks setting.
    */
@@ -48,7 +47,7 @@ class AppContainer {
     this.options = {
       defaultScope: BindingScopeEnum.Request,
       ...options,
-    }
+    };
   }
 
   /**
@@ -57,9 +56,7 @@ class AppContainer {
    * @param defaultScope - The default scope to use for bindings. Scoped (Request) by default, but offers Singleton and Transient as well.
    * @returns The configured dependency injection container.
    */
-  public create(
-    modules: ContainerModule[],
-  ): Container {
+  public create(modules: Array<ContainerModule>): Container {
     const containerOptions: interfaces.ContainerOptions = {
       autoBindInjectable: true,
       ...this.options,
