@@ -15,7 +15,7 @@ describe("AppContainer", () => {
     const modules: ContainerModule[] = [];
 
     // Act
-    jest.spyOn(appContainer, "create").mockImplementation(() => {
+    vi.spyOn(appContainer, "create").mockImplementation(() => {
       return new Container();
     });
 
@@ -30,13 +30,13 @@ describe("AppContainer", () => {
 describe("Application", () => {
   it("creates an application express inversify server", () => {
     // Arrange
-    const mockCreate = jest.fn().mockReturnValue({});
-    const mockListen = jest.fn();
+    const mockCreate = vi.fn().mockReturnValue({});
+    const mockListen = vi.fn();
     const application = new Application();
 
     // Act
-    jest.spyOn(application, "create").mockImplementation(mockCreate);
-    jest.spyOn(application, "listen").mockImplementation(mockListen);
+    vi.spyOn(application, "create").mockImplementation(mockCreate);
+    vi.spyOn(application, "listen").mockImplementation(mockListen);
 
     const container = {} as Container;
     const middlewares = [] as express.RequestHandler[];

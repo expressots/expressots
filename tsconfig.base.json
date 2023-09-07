@@ -2,7 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames":true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "checkJs": true,
@@ -13,13 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": [
-      "node",
-      "reflect-metadata",
-      "jest"
-    ],    
-},
-  "files": [
-    "packages/core/src/index.ts",
-  ]
+    "types": ["node", "reflect-metadata", "vitest/globals"]
+  },
+  "files": ["packages/core/src/index.ts"]
 }
