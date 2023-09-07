@@ -54,6 +54,7 @@ class Console {
    * @param consoleMessage - Optional application message details for console output.
    */
   public async messageServer(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     port: any,
     environment: string,
     consoleMessage?: IApplicationMessageToConsole,

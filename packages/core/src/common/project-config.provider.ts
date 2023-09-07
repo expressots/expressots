@@ -1,6 +1,6 @@
 /**
  * Enum representing different string patterns.
- * 
+ *
  * - LOWER_CASE: Represents strings in all lowercase letters. E.g. "hello"
  * - KEBAB_CASE: Represents strings separated by hyphens. E.g. "hello-world"
  * - PASCAL_CASE: Represents strings where the first letter of each word is capitalized. E.g. "HelloWorld"
@@ -22,12 +22,12 @@ const enum Pattern {
  * @property {string} entityNamePattern - The naming convention to use for entity names.
  */
 interface IProviders {
-	prisma?: {
-		schemaName: string;
-		schemaPath: string;
-		entitiesPath: string;
-		entityNamePattern: string;
-	}
+  prisma?: {
+    schemaName: string;
+    schemaPath: string;
+    entitiesPath: string;
+    entityNamePattern: string;
+  };
 }
 
 /**
@@ -44,7 +44,7 @@ interface ExpressoConfig {
   scaffoldPattern: Pattern;
   sourceRoot: string;
   opinionated: boolean;
-	providers?: IProviders;
+  providers?: IProviders;
 }
 
 export { ExpressoConfig, Pattern };

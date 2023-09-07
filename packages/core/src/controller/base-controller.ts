@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Response } from "express";
 import { provide } from "inversify-binding-decorators";
 import { interfaces } from "inversify-express-utils";

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { IAppError } from "./report";
 import { StatusCode } from "./status-code";
 
@@ -10,12 +10,7 @@ import { StatusCode } from "./status-code";
  * @param res - The Express response object.
  * @param next - The Express next function for passing control to the next middleware function.
  */
-function errorHandler(
-  error: IAppError,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
+function errorHandler(error: IAppError, req: Request, res: Response): void {
   res
     .status(error.statusCode || StatusCode.InternalServerError)
     .json({ statusCode: error.statusCode, error: error.message });
