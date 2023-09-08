@@ -5,11 +5,11 @@ import dotenv from "dotenv";
 import { Environments } from "../src/environment";
 import * as log from "../src/logger";
 
-jest.mock("fs");
-jest.mock("path");
-jest.mock("../src/logger", () => ({
+vi.mock("fs");
+vi.mock("path");
+vi.mock("../src/logger", () => ({
   log: {
-    Info: jest.fn(),
+    Info: vi.fn(),
   },
 }));
 
@@ -31,22 +31,22 @@ describe("EnvValidatorProvider", () => {
 
   describe("CheckAll", () => {
     let originalEnv: NodeJS.ProcessEnv;
-    let logSpy: jest.SpyInstance;
+    let logSpy: vi.SpyInstance;
 
     beforeEach(() => {
       originalEnv = process.env;
       process.env = {};
-      logSpy = jest.spyOn(log.log, "Info").mockImplementation();
-      jest.spyOn(fs, "existsSync").mockReturnValue(true);
+      logSpy = vi.spyOn(log.log, "Info").mockImplementation();
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
     });
 
     afterEach(() => {
       process.env = originalEnv;
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("loads the .env file", () => {
-      jest.spyOn(dotenv, "config").mockImplementation();
+      vi.spyOn(dotenv, "config").mockImplementation();
       Environments.checkAll();
       expect(dotenv.config).toHaveBeenCalled();
     });
