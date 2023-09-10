@@ -5,13 +5,16 @@ import { IUserFindRequestDTO, IUserFindResponseDTO } from "./user-find.dto";
 
 @provide(UserFindUseCase)
 class UserFindUseCase {
-    constructor(private userRepository: UserRepository) {}
+    constructor(
+        private userRepository: UserRepository,
+        private report: Report,
+    ) {}
 
     execute(payload: IUserFindRequestDTO): IUserFindResponseDTO | null {
         const userExists = this.userRepository.findByEmail(payload.email);
 
         if (!userExists) {
-            Report.Error(
+            this.report.Error(
                 "User not found",
                 StatusCode.NotFound,
                 "user-find-usecase",

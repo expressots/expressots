@@ -9,7 +9,11 @@ import {
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
-    constructor(private userRepository: UserRepository, private user: User) {}
+    constructor(
+        private userRepository: UserRepository,
+        private user: User,
+        private report: Report,
+    ) {}
 
     execute(payload: ICreateUserRequestDTO): ICreateUserResponseDTO | null {
         try {
@@ -21,7 +25,7 @@ class CreateUserUseCase {
             );
 
             if (userExists) {
-                Report.Error(
+                this.report.Error(
                     "User already exists",
                     StatusCode.BadRequest,
                     "create-user-usecase",
