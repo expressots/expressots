@@ -91,10 +91,11 @@ class Application {
       });
     });
 
-    this.app = expressServer.build();
+    expressServer.setErrorConfig((app: express.Application) => {
+      app.use(errorHandler);
+    });
 
-    /* Add the error handler middleware */
-    this.app.use(errorHandler);
+    this.app = expressServer.build();
 
     return this;
   }

@@ -8,7 +8,10 @@ import {
 
 @provide(UserDeleteUseCase)
 class UserDeleteUseCase {
-    constructor(private userRepository: UserRepository) {}
+    constructor(
+        private userRepository: UserRepository,
+        private report: Report,
+    ) {}
 
     execute(payload: IUserDeleteRequestDTO): IUserDeleteResponseDTO | null {
         const userExists = this.userRepository.find(payload.id);
@@ -22,7 +25,7 @@ class UserDeleteUseCase {
             };
         }
 
-        Report.Error(
+        this.report.Error(
             "User not found",
             StatusCode.NotFound,
             "user-delete-usecase",

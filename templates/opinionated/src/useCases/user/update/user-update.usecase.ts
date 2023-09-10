@@ -9,7 +9,10 @@ import {
 
 @provide(UserUpdateUseCase)
 class UserUpdateUseCase {
-    constructor(private userRepository: UserRepository) {}
+    constructor(
+        private userRepository: UserRepository,
+        private report: Report,
+    ) {}
 
     execute(payload: IUserUpdateRequestDTO): IUserUpdateResponseDTO | null {
         const userExists: User | null = this.userRepository.findByEmail(
@@ -17,7 +20,7 @@ class UserUpdateUseCase {
         );
 
         if (!userExists) {
-            Report.Error(
+            this.report.Error(
                 "User not found",
                 StatusCode.NotFound,
                 "user-update-usecase",
