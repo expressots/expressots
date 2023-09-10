@@ -1,3 +1,17 @@
+
+
+## [1.8.1](https://github.com/expressots/expressots/compare/1.8.0...1.8.1) (2023-09-10)
+
+
+### Bug Fixes
+
+* add generic in memory db and virtual table analysis ([#86](https://github.com/expressots/expressots/issues/86)) ([29541f9](https://github.com/expressots/expressots/commit/29541f997e47c8ac5f8cafbb0195c34c904454f4))
+
+
+### Continuous Integrations
+
+* config test workflow and setup vitest ([#88](https://github.com/expressots/expressots/issues/88)) ([67316ce](https://github.com/expressots/expressots/commit/67316cece977f04f9750a5a5af6cd88dfc695e0d))
+
 ## [1.8.0](https://github.com/expressots/expressots/compare/1.7.0...1.8.0) (2023-09-05)
 
 ### Features
