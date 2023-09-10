@@ -1,9 +1,3 @@
-## [1.8.1](https://github.com/expressots/expressots/compare/1.8.0...1.8.1) (2023-09-09)
-
-### Bug Fixes
-
-- middleware needs next parameter ([#89](https://github.com/expressots/expressots/pull/89))
-
 ## [1.8.0](https://github.com/expressots/expressots/compare/1.7.0...1.8.0) (2023-09-05)
 
 ### Features

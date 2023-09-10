@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { IAppError } from "./report";
+import { AppError } from "./app-error";
 import { StatusCode } from "./status-code";
 
 /**
@@ -10,15 +10,23 @@ import { StatusCode } from "./status-code";
  * @param res - The Express response object.
  * @param next - The Express next function for passing control to the next middleware function.
  */
-function errorHandler(
-  error: IAppError,
+function defaultErrorHandler(
+  error: Error,
   req: Request,
   res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction,
 ): void {
-  res
-    .status(error.statusCode || StatusCode.InternalServerError)
-    .json({ statusCode: error.statusCode, error: error.message });
+  if (error instanceof AppError) {
+    res
+      .status(error.statusCode)
+      .json({ statusCode: error.statusCode, error: error.message });
+  } else {
+    res.status(StatusCode.InternalServerError).json({
+      statusCode: StatusCode.InternalServerError,
+      error: "An unexpected error occurred.",
+    });
+  }
 }
 
-export default errorHandler;
+export default defaultErrorHandler;
