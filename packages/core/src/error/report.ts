@@ -1,13 +1,5 @@
 import { provide } from "inversify-binding-decorators";
-import { log, LogLevel } from "../logger";
-
-interface IAppError {
-  statusCode: number;
-  message: string;
-  service?: string;
-  name: string;
-  stack?: string;
-}
+import { AppError } from "./app-error";
 
 /**
  * Report class is a utility class to manage and log errors within the application.
@@ -30,39 +22,21 @@ class Report {
    *
    * @throws An object of the custom type IAppError, which includes details about the error.
    */
-  public static Error(
+  public Error(
     error: Error | string,
     statusCode?: number,
     service?: string,
-  ): void {
-    let appError: IAppError = {} as IAppError;
-
-    Error.captureStackTrace(this, this.Error);
-
-    const callerName: string = this.stack.split("\n")[1]?.trim()?.split(" ")[1];
+  ): AppError {
+    let appError: AppError = {} as AppError;
 
     if (error instanceof Error) {
-      appError = {
-        statusCode: statusCode ?? 500,
-        message: error.message,
-        service: service ?? callerName,
-        name: error.name,
-        stack: error.stack,
-      };
+      appError = new AppError(error.message, statusCode, service);
     } else {
-      appError = {
-        statusCode: statusCode ?? 500,
-        message: error,
-        service: service ?? callerName,
-        name: this.Error.name,
-        stack: this.stack,
-      };
+      appError = new AppError(error, statusCode, service);
     }
-
-    log(LogLevel.Error, appError, appError.service || "service-undefined");
 
     throw appError;
   }
 }
 
-export { Report, IAppError };
+export { Report };
