@@ -17,5 +17,5 @@
   },
   "include": ["packages/core/src/**/*.ts"],
   "files": ["./packages/core/src/index.ts"],
-  "exclude": ["node_modules", "packages/**/*.spec.ts"]
+  "exclude": ["node_modules", "packages/**/*.spec.ts", "scripts/**/*"]
 }
