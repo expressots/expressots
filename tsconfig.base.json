@@ -15,6 +15,7 @@
     "emitDecoratorMetadata": true,
     "types": ["node", "reflect-metadata", "vitest/globals"]
   },
+  "include": ["packages/core/src/**/*.ts"],
   "files": ["./packages/core/src/index.ts"],
   "exclude": ["node_modules", "packages/**/*.spec.ts"]
 }
