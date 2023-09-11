@@ -25,7 +25,7 @@ class CreateUserUseCase {
             );
 
             if (userExists) {
-                this.report.Error(
+                this.report.error(
                     "User already exists",
                     StatusCode.BadRequest,
                     "create-user-usecase",

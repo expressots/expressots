@@ -14,7 +14,7 @@ class UserFindUseCase {
         const userExists = this.userRepository.findByEmail(payload.email);
 
         if (!userExists) {
-            this.report.Error(
+            this.report.error(
                 "User not found",
                 StatusCode.NotFound,
                 "user-find-usecase",

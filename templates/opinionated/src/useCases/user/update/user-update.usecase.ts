@@ -20,7 +20,7 @@ class UserUpdateUseCase {
         );
 
         if (!userExists) {
-            this.report.Error(
+            this.report.error(
                 "User not found",
                 StatusCode.NotFound,
                 "user-update-usecase",

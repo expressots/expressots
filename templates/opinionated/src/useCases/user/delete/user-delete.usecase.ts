@@ -25,7 +25,7 @@ class UserDeleteUseCase {
             };
         }
 
-        this.report.Error(
+        this.report.error(
             "User not found",
             StatusCode.NotFound,
             "user-delete-usecase",
