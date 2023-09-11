@@ -1,11 +1,11 @@
-interface IUserDeleteRequestDTO {
+class UserDeleteRequestDTO {
     id: string;
 }
 
-interface IUserDeleteResponseDTO {
+class UserDeleteResponseDTO {
     name: string;
     email: string;
     message: string;
 }
 
-export { IUserDeleteRequestDTO, IUserDeleteResponseDTO };
+export { UserDeleteRequestDTO, UserDeleteResponseDTO };

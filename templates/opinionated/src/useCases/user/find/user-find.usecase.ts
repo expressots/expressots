@@ -1,7 +1,7 @@
 import { Report, StatusCode } from "@expressots/core";
 import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
-import { IUserFindRequestDTO, IUserFindResponseDTO } from "./user-find.dto";
+import { UserFindRequestDTO, UserFindResponseDTO } from "./user-find.dto";
 
 @provide(UserFindUseCase)
 class UserFindUseCase {
@@ -10,16 +10,16 @@ class UserFindUseCase {
         private report: Report,
     ) {}
 
-    execute(payload: IUserFindRequestDTO): IUserFindResponseDTO | null {
+    execute(payload: UserFindRequestDTO): UserFindResponseDTO | null {
         const userExists = this.userRepository.findByEmail(payload.email);
 
         if (!userExists) {
-            this.report.error(
+            const error = this.report.error(
                 "User not found",
                 StatusCode.NotFound,
                 "user-find-usecase",
             );
-            return null;
+            throw error;
         }
 
         return {

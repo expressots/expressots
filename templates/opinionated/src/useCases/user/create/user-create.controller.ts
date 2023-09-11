@@ -6,10 +6,7 @@ import {
     response,
 } from "inversify-express-utils";
 import { Response } from "express";
-import {
-    ICreateUserRequestDTO,
-    ICreateUserResponseDTO,
-} from "./user-create.dto";
+import { CreateUserRequestDTO, CreateUserResponseDTO } from "./user-create.dto";
 import { CreateUserUseCase } from "./user-create.usecase";
 
 @controller("/user/create")
@@ -20,9 +17,9 @@ class UserCreateController extends BaseController {
 
     @httpPost("/")
     execute(
-        @requestBody() payload: ICreateUserRequestDTO,
+        @requestBody() payload: CreateUserRequestDTO,
         @response() res: Response,
-    ): ICreateUserResponseDTO {
+    ): CreateUserResponseDTO {
         return this.callUseCase(
             this.createUserUseCase.execute(payload),
             res,

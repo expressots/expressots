@@ -2,10 +2,7 @@ import { User } from "@entities/user.entity";
 import { Report, StatusCode } from "@expressots/core";
 import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
-import {
-    ICreateUserRequestDTO,
-    ICreateUserResponseDTO,
-} from "./user-create.dto";
+import { CreateUserRequestDTO, CreateUserResponseDTO } from "./user-create.dto";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {
@@ -15,7 +12,7 @@ class CreateUserUseCase {
         private report: Report,
     ) {}
 
-    execute(payload: ICreateUserRequestDTO): ICreateUserResponseDTO | null {
+    execute(payload: CreateUserRequestDTO): CreateUserResponseDTO | null {
         try {
             this.user.name = payload.name;
             this.user.email = payload.email;
@@ -25,11 +22,13 @@ class CreateUserUseCase {
             );
 
             if (userExists) {
-                this.report.error(
+                const error = this.report.error(
                     "User already exists",
                     StatusCode.BadRequest,
                     "create-user-usecase",
                 );
+
+                throw error;
             }
 
             this.userRepository.create(this.user);
