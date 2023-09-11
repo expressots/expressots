@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build:linux
+        run: npm run build
 
       - name: ExpressoTS Tests
         working-directory: packages/core

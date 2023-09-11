@@ -16,5 +16,5 @@
     "types": ["node", "reflect-metadata", "vitest/globals"]
   },
   "files": ["./packages/core/src/index.ts"],
-  "exclude": ["node_modules", "packages/**/*.spec.ts"]
+  "exclude": ["node_modules", "packages/**/*.spec.ts", "scripts/**/*"]
 }
