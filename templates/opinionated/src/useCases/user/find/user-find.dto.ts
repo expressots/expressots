@@ -1,12 +1,12 @@
-interface IUserFindRequestDTO {
+class UserFindRequestDTO {
     email: string;
 }
 
-interface IUserFindResponseDTO {
+class UserFindResponseDTO {
     id: string;
     name: string;
     email: string;
     message: string;
 }
 
-export { IUserFindRequestDTO, IUserFindResponseDTO };
+export { UserFindRequestDTO, UserFindResponseDTO };

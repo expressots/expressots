@@ -1,13 +1,13 @@
-interface ICreateUserRequestDTO {
+class CreateUserRequestDTO {
     name: string;
     email: string;
 }
 
-interface ICreateUserResponseDTO {
+class CreateUserResponseDTO {
     id: string;
     name: string;
     email: string;
     message: string;
 }
 
-export { ICreateUserRequestDTO, ICreateUserResponseDTO };
+export { CreateUserRequestDTO, CreateUserResponseDTO };

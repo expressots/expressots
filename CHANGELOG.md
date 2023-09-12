@@ -1,5 +1,28 @@
 
 
+## [1.9.0](https://github.com/expressots/expressots/compare/1.8.1...1.9.0) (2023-09-12)
+
+
+### Features
+
+* add pck resolver & remove chalk dependency ([6bbd415](https://github.com/expressots/expressots/commit/6bbd415937159e419116b6ade8f9852c3251fbf4))
+* bump vitest from 0.34.3 to 0.34.4 ([#92](https://github.com/expressots/expressots/issues/92)) ([89dc682](https://github.com/expressots/expressots/commit/89dc682c7047897f01fd7770591b6ffea689d137))
+
+
+### Bug Fixes
+
+* disable console.spec to be refactored ([22a54bd](https://github.com/expressots/expressots/commit/22a54bdb7f0c2032d3b0e0f935ce48d73e665e84))
+* dto validator json structure per property ([a8fbe40](https://github.com/expressots/expressots/commit/a8fbe409647140e867f930a882fd395df45d6de7))
+* export console for testing ([d3f2c07](https://github.com/expressots/expressots/commit/d3f2c07ca2df0176fabed04172ce4ff684c91c9c))
+* opinionated template logger.error function ([073f4e1](https://github.com/expressots/expressots/commit/073f4e154732fa3fed9492ec772c36894bc3cf48))
+* replace dto interface for class opinionated template ([3e99d7c](https://github.com/expressots/expressots/commit/3e99d7c5492ff64701e754ec845a0410da442296))
+* use new report utility in usecases ([#91](https://github.com/expressots/expressots/issues/91)) ([d1477b2](https://github.com/expressots/expressots/commit/d1477b24f932e354fb55373e8e73fe9155289486))
+
+
+### Code Refactoring
+
+* update type from any to number ([#90](https://github.com/expressots/expressots/issues/90)) ([5e34a44](https://github.com/expressots/expressots/commit/5e34a44d8bd353b8d3834f198f36bf73aa521845))
+
 ## [1.8.1](https://github.com/expressots/expressots/compare/1.8.0...1.8.1) (2023-09-10)
 
 

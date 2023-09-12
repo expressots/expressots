@@ -1,17 +1,28 @@
-import { Application, Environments, LogLevel, log } from "@expressots/core";
+import { Application, IProvider, Provider } from "@expressots/core";
 import { provide } from "inversify-binding-decorators";
+import { container } from "../../app.container";
 
 @provide(App)
 class App extends Application {
+    private provider: IProvider;
+
+    constructor() {
+        super();
+        this.provider = container.get<IProvider>(Provider);
+    }
+
     protected configureServices(): void {
-        Environments.checkAll();
+        this.provider.envValidator.checkAll();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     protected postServerInitialization(): void {}
 
     protected serverShutdown(): void {
-        log(LogLevel.Info, "Server is shutting down", "logger-provider");
+        this.provider.logger.info(
+            "Shutting down server!",
+            "application-provider",
+        );
         super.serverShutdown();
     }
 }

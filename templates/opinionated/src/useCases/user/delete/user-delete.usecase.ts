@@ -1,10 +1,7 @@
 import { Report, StatusCode } from "@expressots/core";
 import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
-import {
-    IUserDeleteRequestDTO,
-    IUserDeleteResponseDTO,
-} from "./user-delete.dto";
+import { UserDeleteRequestDTO, UserDeleteResponseDTO } from "./user-delete.dto";
 
 @provide(UserDeleteUseCase)
 class UserDeleteUseCase {
@@ -13,7 +10,7 @@ class UserDeleteUseCase {
         private report: Report,
     ) {}
 
-    execute(payload: IUserDeleteRequestDTO): IUserDeleteResponseDTO | null {
+    execute(payload: UserDeleteRequestDTO): UserDeleteResponseDTO | null {
         const userExists = this.userRepository.find(payload.id);
 
         if (userExists) {
@@ -25,13 +22,13 @@ class UserDeleteUseCase {
             };
         }
 
-        this.report.Error(
+        const error = this.report.error(
             "User not found",
             StatusCode.NotFound,
             "user-delete-usecase",
         );
 
-        return null;
+        throw error;
     }
 }
 
