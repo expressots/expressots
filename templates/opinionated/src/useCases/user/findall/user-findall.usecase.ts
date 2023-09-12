@@ -1,16 +1,16 @@
 import { provide } from "inversify-binding-decorators";
 import { User } from "@entities/user.entity";
 import { UserRepository } from "@repositories/user/user.repository";
-import { IFindAllUserResponseDTO } from "./user-findall.dto";
+import { FindAllUserResponseDTO } from "./user-findall.dto";
 
 @provide(FindAllUserUseCase)
 class FindAllUserUseCase {
     constructor(private userRepository: UserRepository) {}
 
-    execute(): IFindAllUserResponseDTO[] | null {
+    execute(): FindAllUserResponseDTO[] | null {
         try {
             const users = this.userRepository.findAll();
-            const response: IFindAllUserResponseDTO[] = [];
+            const response: FindAllUserResponseDTO[] = [];
 
             users.forEach((user: User) => {
                 response.push({

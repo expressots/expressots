@@ -6,7 +6,7 @@ import {
     response,
 } from "inversify-express-utils";
 import { Response } from "express";
-import { IUserFindRequestDTO, IUserFindResponseDTO } from "./user-find.dto";
+import { UserFindRequestDTO, UserFindResponseDTO } from "./user-find.dto";
 import { UserFindUseCase } from "./user-find.usecase";
 
 @controller("/user/find")
@@ -17,9 +17,9 @@ class UserFindController extends BaseController {
 
     @httpGet("/:email")
     execute(
-        @requestParam() payload: IUserFindRequestDTO,
+        @requestParam() payload: UserFindRequestDTO,
         @response() res: Response,
-    ): IUserFindResponseDTO {
+    ): UserFindResponseDTO {
         return this.callUseCase(
             this.userFindUseCase.execute(payload),
             res,

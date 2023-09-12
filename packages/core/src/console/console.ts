@@ -1,16 +1,9 @@
-import chalk from "chalk";
 import { provide } from "inversify-binding-decorators";
-
-/**
- * Enum representing possible color styles for console output.
- */
-enum ColorStyle {
-  None = 0,
-  Yellow,
-  Blue,
-  Green,
-  Red,
-}
+import {
+  ColorStyle,
+  bgColorCodes,
+  colorCodes,
+} from "../common/color-service.provider";
 
 /**
  * Interface representing application message details for console output.
@@ -35,16 +28,11 @@ class Console {
     message: string,
     colorStyle: ColorStyle,
   ): Promise<void> {
-    switch (colorStyle) {
-      case ColorStyle.Yellow:
-        return console.log(chalk.bgYellow.black(message));
-      case ColorStyle.Blue:
-        return console.log(chalk.bgBlue.black(message));
-      case ColorStyle.Green:
-        return console.log(chalk.bgGreen.black(message));
-      case ColorStyle.Red:
-        return console.log(chalk.bgRed.black(message));
-    }
+    const textColor = "black";
+    const bgColor = colorStyle;
+    console.log(
+      `${bgColorCodes[bgColor]}${colorCodes[textColor]}${message}\x1b[0m`,
+    );
   }
 
   /**

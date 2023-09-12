@@ -6,10 +6,7 @@ import {
     response,
 } from "inversify-express-utils";
 import { Response } from "express";
-import {
-    IUserDeleteRequestDTO,
-    IUserDeleteResponseDTO,
-} from "./user-delete.dto";
+import { UserDeleteRequestDTO, UserDeleteResponseDTO } from "./user-delete.dto";
 import { UserDeleteUseCase } from "./user-delete.usecase";
 
 @controller("/user/delete")
@@ -20,9 +17,9 @@ class UserDeleteController extends BaseController {
 
     @httpDelete("/:id")
     execute(
-        @requestParam() payload: IUserDeleteRequestDTO,
+        @requestParam() payload: UserDeleteRequestDTO,
         @response() res: Response,
-    ): IUserDeleteResponseDTO {
+    ): UserDeleteResponseDTO {
         return this.callUseCase(
             this.userDeleteUseCase.execute(payload),
             res,

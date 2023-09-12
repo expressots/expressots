@@ -7,10 +7,7 @@ import {
     response,
 } from "inversify-express-utils";
 import { Response } from "express";
-import {
-    IUserUpdateRequestDTO,
-    IUserUpdateResponseDTO,
-} from "./user-update.dto";
+import { UserUpdateRequestDTO, UserUpdateResponseDTO } from "./user-update.dto";
 import { UserUpdateUseCase } from "./user-update.usecase";
 
 @controller("/user/update")
@@ -22,9 +19,9 @@ class UserUpdateController extends BaseController {
     @httpPatch("/:email")
     execute(
         @requestParam("email") email: string,
-        @requestBody() payload: IUserUpdateRequestDTO,
+        @requestBody() payload: UserUpdateRequestDTO,
         @response() res: Response,
-    ): IUserUpdateResponseDTO {
+    ): UserUpdateResponseDTO {
         const data = { ...payload, email };
 
         return this.callUseCase(

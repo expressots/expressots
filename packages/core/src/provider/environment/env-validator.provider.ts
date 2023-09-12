@@ -2,7 +2,9 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { provide } from "inversify-binding-decorators";
-import { log, LogLevel } from "../logger";
+import { Logger } from "../logger/logger-service";
+
+type DefaultValueType = string | number | boolean | undefined;
 
 /**
  * The EnvValidatorProvider class provides utility methods for working with environment variables.
@@ -11,14 +13,22 @@ import { log, LogLevel } from "../logger";
  */
 @provide(EnvValidatorProvider)
 class EnvValidatorProvider {
+  private logger: Logger;
+
+  constructor() {
+    this.logger = new Logger();
+  }
+
   /**
    * Retrieves the value of an environment variable, or a default value if the variable is not set.
    * @param key - The key of the environment variable.
    * @param defaultValue - The default value to return if the environment variable is not set.
    * @returns The value of the environment variable, or the default value if not set.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public static get(key: string, defaultValue: any = undefined): any {
+  public get(
+    key: string,
+    defaultValue: DefaultValueType = undefined,
+  ): DefaultValueType {
     return process.env[key] ?? defaultValue;
   }
 
@@ -26,14 +36,13 @@ class EnvValidatorProvider {
    * Validates and loads all environment variables from the .env file.
    * If the .env file does not exist or any environment variables are not set, the process will exit with an error.
    */
-  public static checkAll(): void {
+  public checkAll(): void {
     // Get the full path of the .env file
     const envFilePath: string = path.join(process.cwd(), ".", ".env");
 
     // Check if the .env file exists
     if (!fs.existsSync(envFilePath)) {
-      log(
-        LogLevel.Info,
+      this.logger.error(
         "Environment file .env is not defined.",
         "env-validator-provider",
       );
@@ -50,8 +59,7 @@ class EnvValidatorProvider {
       for (const key of Object.keys(dotEnvParsed)) {
         // Check if the environment variable is not defined or is an empty string
         if (!process.env[key] || process.env[key] === "") {
-          log(
-            LogLevel.Info,
+          this.logger.error(
             `Environment variable ${key} is not defined.`,
             "env-validator-provider",
           );
@@ -97,4 +105,4 @@ String.prototype.AsString = function (): string | undefined {
   return String(this);
 };
 
-export { EnvValidatorProvider as Environments };
+export { EnvValidatorProvider };

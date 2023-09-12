@@ -1,13 +1,13 @@
-interface IUserUpdateRequestDTO {
+class UserUpdateRequestDTO {
     name?: string;
     email: string;
 }
 
-interface IUserUpdateResponseDTO {
+class UserUpdateResponseDTO {
     id: string;
     name: string;
     email: string;
     message: string;
 }
 
-export { IUserUpdateRequestDTO, IUserUpdateResponseDTO };
+export { UserUpdateRequestDTO, UserUpdateResponseDTO };
