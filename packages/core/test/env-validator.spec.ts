@@ -1,17 +1,20 @@
 import "reflect-metadata";
-import fs from "fs";
-import path from "path";
 import dotenv from "dotenv";
-import { Environments } from "../src/environment";
-import * as log from "../src/logger";
+import path from "path";
+import fs from "fs";
+import { EnvValidatorProvider } from "../src/provider/environment/env-validator.provider";
+import { Logger, LogLevel } from "../src/provider/logger/logger-service";
 
 vi.mock("fs");
 vi.mock("path");
-vi.mock("../src/logger", () => ({
+vi.mock("../src/provider/logger", () => ({
   log: {
     Info: vi.fn(),
   },
 }));
+
+const log = new Logger();
+const Environments = new EnvValidatorProvider();
 
 describe("EnvValidatorProvider", () => {
   describe("Get", () => {
@@ -36,7 +39,7 @@ describe("EnvValidatorProvider", () => {
     beforeEach(() => {
       originalEnv = process.env;
       process.env = {};
-      logSpy = vi.spyOn(log.log, "Info").mockImplementation();
+      logSpy = vi.spyOn(log, "info").mockImplementation();
       vi.spyOn(fs, "existsSync").mockReturnValue(true);
     });
 
