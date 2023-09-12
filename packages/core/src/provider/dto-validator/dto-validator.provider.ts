@@ -28,11 +28,18 @@ function ValidateDTO<T extends object>(type: new () => T): RequestHandler {
       );
 
       if (errors.length > 0) {
-        const DTO = errors
-          .map((error) =>
-            error.constraints ? Object.values(error.constraints) : [],
-          )
-          .flat();
+        const DTO = errors.reduce((acc, error) => {
+          if (error.constraints) {
+            const propertyName = error.property;
+            if (!acc.some((e) => e.property === propertyName)) {
+              acc.push({ property: propertyName, messages: [] });
+            }
+
+            const target = acc.find((e) => e.property === propertyName);
+            target.messages.push(...Object.values(error.constraints));
+          }
+          return acc;
+        }, []);
 
         res.status(StatusCode.BadRequest).json({
           errorCode: StatusCode.BadRequest,
