@@ -1,0 +1,147 @@
+{
+  "name": "@expressots/project_name",
+  "version": "0.0.1",
+  "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
+  "author": "",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/cjs/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/esm/types/index.d.ts",
+        "default": "./lib/esm/index.mjs"
+      },
+      "require": {
+        "types": "./lib/cjs/types/index.d.ts",
+        "default": "./lib/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "license": "MIT",
+  "homepage": "https://expresso-ts.com",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/<<repo_name>>"
+  },
+  "bugs": {
+    "url": "https://github.com/expressots/<<repo_name>>/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "expressots",
+    "nodejs",
+    "microservices",
+    "typescript",
+    "clean-architecture",
+    "typescript-framework",
+    "framework",
+    "server-side"
+  ],
+  "engines": {
+    "node": ">=18.10.0"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "win-clean": "if exist lib (del /q lib\\*)",
+    "linux-clean": "rm -rf lib/*",
+    "win-cpy": "xcopy package.json lib\\ && xcopy README.md lib\\ && xcopy CHANGELOG.md lib\\ /Y",
+    "linux-cpy": "cp package.json README.md CHANGELOG.md lib/",
+    "build:win": "npm run win-clean && npm run build:esm && npm run build:cjs && npm run win-cpy",
+    "build:linux": "npm run linux-clean && npm run build:esm && npm run build:cjs && npm run linux-cpy",
+    "build:esm": "tsc -p tsconfig.esm.json && mv lib/esm/index.js lib/esm/index.mjs ",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "git": "powershell -Command \"git add .; git commit -m \"%1\"; npm run release\"",
+    "release": "release-it",
+    "test": "jest",
+    "format": "prettier --write \"src/**/*.ts\" --cache",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "jest": "^29.5.0",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^17.7.1",
+    "@commitlint/config-conventional": "^17.7.0",
+    "@release-it/conventional-changelog": "^7.0.1",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.4.9",
+    "@typescript-eslint/eslint-plugin": "^6.6.0",
+    "@typescript-eslint/parser": "^6.6.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.48.0",
+    "husky": "^8.0.3",
+    "prettier": "^3.0.3",
+    "release-it": "^16.1.5",
+    "ts-jest": "^29.0.5",
+    "typescript": "^5.2.2"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore(release): ${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": false
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "infile": "CHANGELOG.md",
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance Improvements"
+            },
+            {
+              "type": "revert",
+              "section": "Reverts"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "refactor",
+              "section": "Code Refactoring"
+            },
+            {
+              "type": "test",
+              "section": "Tests"
+            },
+            {
+              "type": "build",
+              "section": "Build System"
+            },
+            {
+              "type": "ci",
+              "section": "Continuous Integrations"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
