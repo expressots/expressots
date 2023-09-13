@@ -63,7 +63,7 @@
     "coverage": "vitest run --coverage",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format:write": "prettier --write \"packages/**/*.ts\" --cache",
+    "format": "prettier --write \"packages/**/*.ts\" --cache",
     "lint": "eslint \"packages/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/*.ts\" --fix"
   },

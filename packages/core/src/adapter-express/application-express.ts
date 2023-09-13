@@ -1,18 +1,20 @@
-import process from "process";
 import express from "express";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
-import { InversifyExpressServer } from "inversify-express-utils";
+import process from "process";
 import { Console, IApplicationMessageToConsole } from "../console/console";
-import errorHandler from "../error/error-handler-middleware";
+import { IMiddleware, Middleware } from "../middleware/middleware-service";
+import { Logger } from "../provider/logger/logger-service";
 import { IHandlebars, RenderTemplateOptions } from "../render";
+import { ApplicationBase } from "../application/application-base";
+import { IApplicationExpress } from "./application-express.interface";
+import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 
 /**
  * Enum representing possible server environments.
  */
 enum ServerEnvironment {
   Development = "development",
-  Staging = "staging",
   Production = "production",
 }
 
@@ -20,31 +22,20 @@ enum ServerEnvironment {
  * The Application class provides a way to configure and manage an Express application.
  * @provide Application
  */
-@provide(Application)
-class Application {
+@provide(ApplicationExpress)
+class ApplicationExpress
+  extends ApplicationBase
+  implements IApplicationExpress
+{
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
+  private container: Container;
+  private middlewares: Array<express.RequestHandler> = [];
 
-  /**
-   * Constructs a new instance of the Application class.
-   */
-  constructor() {}
-
-  /**
-   * Configure services that should be initialized before the server starts.
-   */
-  protected configureServices(): void {}
-
-  /**
-   * Configure services that should be executed after the server starts.
-   */
-  protected postServerInitialization(): void {}
-
-  /**
-   * Perform actions or cleanup after the server is shutdown.
-   */
-  protected serverShutdown(): void {}
+  protected configureServices(): void | Promise<void> {}
+  protected postServerInitialization(): void | Promise<void> {}
+  protected serverShutdown(): void | Promise<void> {}
 
   /**
    * Handles process exit by calling serverShutdown and then exiting the process.
@@ -60,43 +51,32 @@ class Application {
    * @param middlewares - An array of Express middlewares to be applied.
    * @returns The configured Application instance.
    */
-  public create(
+  public async create(
     container: Container,
     middlewares: Array<express.RequestHandler> = [],
-  ): Application {
-    this.configureServices();
+  ): Promise<ApplicationExpress> {
+    this.container = container;
+
+    await Promise.resolve(this.configureServices());
+
+    const middleware = container.get<IMiddleware>(Middleware);
+    this.middlewares.push(...middlewares, ...middleware.getMiddlewares());
 
     const expressServer = new InversifyExpressServer(container);
 
     expressServer.setConfig((app: express.Application) => {
-      // Detect if a middleware in the array has a body parser. If so, replace the default body parser.
-      const hasCustomBodyParser = middlewares.some((middleware) => {
-        const middlewareName = middleware.name.toLowerCase();
-        return (
-          middlewareName.includes("json") ||
-          middlewareName.includes("urlencoded")
-        );
-      });
-
-      if (!hasCustomBodyParser) {
-        /* Default body parser application/json */
-        app.use(express.json());
-
-        /* Default body parser application/x-www-form-urlencoded */
-        app.use(express.urlencoded({ extended: true }));
-      }
-
-      middlewares.forEach((middleware) => {
+      this.middlewares.forEach((middleware) => {
         app.use(middleware);
       });
     });
 
     expressServer.setErrorConfig((app: express.Application) => {
-      app.use(errorHandler);
+      if (middleware.getErrorHandler()) {
+        app.use(middleware.getErrorHandler() as express.ErrorRequestHandler);
+      }
     });
 
     this.app = expressServer.build();
-
     return this;
   }
 
@@ -106,16 +86,18 @@ class Application {
    * @param environment - The server environment.
    * @param consoleMessage - Optional message to display in the console.
    */
-  public listen(
+  public async listen(
     port: number,
     environment: ServerEnvironment,
     consoleMessage?: IApplicationMessageToConsole,
-  ): void {
+  ): Promise<void> {
     this.port = port;
     this.environment = environment;
+    this.app.set("env", environment);
 
     this.app.listen(this.port, () => {
-      new Console().messageServer(this.port, this.environment, consoleMessage);
+      const console: Console = this.container.get<Console>(Console);
+      console.messageServer(this.port, this.environment, consoleMessage);
 
       (
         [
@@ -130,7 +112,7 @@ class Application {
       });
     });
 
-    this.postServerInitialization();
+    await Promise.resolve(this.postServerInitialization());
   }
 
   /**
@@ -152,8 +134,35 @@ class Application {
       this.app.set("views", viewPath);
     }
   }
+
+  /**
+   * Verifies if the current environment is development.
+   *
+   * @returns A boolean value indicating whether the current environment is development or not.
+   */
+  protected isDevelopment(): boolean {
+    if (this.app) {
+      return this.app.get("env") === ServerEnvironment.Development;
+    }
+
+    this.container
+      .get<Logger>(Logger)
+      .error(
+        "isDevelopment() method must be called on `PostServerInitialization`",
+        "application",
+      );
+    return false;
+  }
+
+  /**
+   * Verifies if the current environment is production.
+   *
+   * @returns A boolean value indicating whether the current environment is production or not.
+   *
+   */
+  public get ExpressApp(): express.Application {
+    return this.app;
+  }
 }
 
-const appServerInstance: Application = new Application();
-
-export { appServerInstance as AppInstance, Application, ServerEnvironment };
+export { ApplicationExpress as AppExpress, ServerEnvironment };

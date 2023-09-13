@@ -1,2 +1,3 @@
-export { AppInstance, Application, ServerEnvironment } from "./application";
+export * from "../adapter-express";
 export { AppContainer } from "./app-container";
+export { AppFactory } from "./application-factory";
