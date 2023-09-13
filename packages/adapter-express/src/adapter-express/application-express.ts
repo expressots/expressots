@@ -10,10 +10,10 @@ import {
   Logger,
   IHandlebars,
   RenderTemplateOptions,
-  ApplicationBase,
 } from "@expressots/core";
 import { IApplicationExpress } from "./application-express.interface";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
+import { ApplicationBase } from "./application-base";
 
 /**
  * Enum representing possible server environments.

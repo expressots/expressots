@@ -1,6 +1,7 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -44,6 +45,7 @@
 </details>
 
 <!-- ABOUT THE PROJECT -->
+
 # About The Project
 
 ExpressoTS is a [Typescript](https://www.typescriptlang.org/) + [Node.js](https://nodejs.org/en/) lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🐎
@@ -92,16 +94,17 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/expressots/expressots?style=for-the-badge
-[contributors-url]: https://github.com/expressots/expressots/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/expressots/expressots?style=for-the-badge
-[forks-url]: https://github.com/expressots/expressots/forks
-[stars-shield]: https://img.shields.io/github/stars/expressots/expressots?style=for-the-badge
-[stars-url]: https://github.com/expressots/expressots/stargazers
-[issues-shield]: https://img.shields.io/github/issues/expressots/expressots?style=for-the-badge
-[issues-url]: https://github.com/expressots/expressots/issues
-[license-shield]: https://img.shields.io/github/license/expressots/expressots?style=for-the-badge
-[license-url]: https://github.com/expressots/expressots/blob/main/LICENSE
+
+[contributors-shield]: https://img.shields.io/github/contributors/expressots/adapter-express?style=for-the-badge
+[contributors-url]: https://github.com/expressots/adapter-express/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/expressots/adapter-express?style=for-the-badge
+[forks-url]: https://github.com/expressots/adapter-express/forks
+[stars-shield]: https://img.shields.io/github/stars/expressots/adapter-express?style=for-the-badge
+[stars-url]: https://github.com/expressots/adapter-express/stargazers
+[issues-shield]: https://img.shields.io/github/issues/expressots/adapter-express?style=for-the-badge
+[issues-url]: https://github.com/expressots/expressadapter-expressots/issues
+[license-shield]: https://img.shields.io/github/license/expressots/adapter-express?style=for-the-badge
+[license-url]: https://github.com/expressots/adapter-express/blob/main/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/expresso-ts/
 [product-screenshot]: images/screenshot.png
