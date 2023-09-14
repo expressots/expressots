@@ -1,4 +1,3 @@
-export * from "./adapter-express";
 export * from "./application";
 export * from "./common";
 export * from "./console";
