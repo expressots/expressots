@@ -1,5 +1,18 @@
 
 
+## [1.10.0](https://github.com/expressots/expressots/compare/1.9.1...1.10.0) (2023-09-14)
+
+
+### Features
+
+* add middleware resolver ([23b8d9f](https://github.com/expressots/expressots/commit/23b8d9ff8f0c8b4bb893f4fd0d7f39afcb7dd1cd))
+
+
+### Code Refactoring
+
+* remove winston lib for loggin ([5868bc9](https://github.com/expressots/expressots/commit/5868bc949f2242f0a9bfe5483642bb3878cc0156))
+* removing unnecessary dependencies ([fdd43e0](https://github.com/expressots/expressots/commit/fdd43e0f280024b8e4b53f392ea56842a091898e))
+
 ## [1.9.1](https://github.com/expressots/expressots/compare/1.9.0...1.9.1) (2023-09-14)
 
 
