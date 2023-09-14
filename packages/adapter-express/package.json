@@ -90,6 +90,9 @@
     "ts-jest": "^29.0.5",
     "typescript": "^5.2.2"
   },
+  "peerDependencies": {
+    "@expressots/core": "^1.9.0"
+  },
   "release-it": {
     "git": {
       "commitMessage": "chore(release): ${version}"
