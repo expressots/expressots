@@ -57,11 +57,6 @@ class MiddlewareResolver {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const middleware = require(hasMiddleware);
       return middleware(...options) || middleware.default(...options);
-    } else {
-      this.logger.warn(
-        `Middleware [${middlewareName}] not installed. Please install it using your package manager.`,
-        "middleware-resolver",
-      );
     }
 
     return null;
