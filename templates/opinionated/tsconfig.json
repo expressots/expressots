@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES2017",
         "module": "commonjs",
-        "lib": ["es2017", "dom"],
+        "lib": ["es2017"],
         "declaration": false,
         "removeComments": true,
         "experimentalDecorators": true,

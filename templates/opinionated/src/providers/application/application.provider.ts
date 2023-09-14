@@ -1,32 +1,31 @@
-import { Application, IProvider, Provider } from "@expressots/core";
+import { IMiddleware, Middleware, IProvider, Provider } from "@expressots/core";
+import { AppExpress } from "@expressots/adapter-express";
 import { provide } from "inversify-binding-decorators";
 import { container } from "../../app.container";
 
 @provide(App)
-class App extends Application {
+class App extends AppExpress {
+    private middleware: IMiddleware;
     private provider: IProvider;
 
     constructor() {
         super();
+        this.middleware = container.get<IMiddleware>(Middleware);
         this.provider = container.get<IProvider>(Provider);
     }
 
     protected configureServices(): void {
-        this.provider.envValidator.checkAll();
+        this.middleware.addBodyParser();
+        this.middleware.setErrorHandler();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    protected postServerInitialization(): void {}
-
-    protected serverShutdown(): void {
-        this.provider.logger.info(
-            "Shutting down server!",
-            "application-provider",
-        );
-        super.serverShutdown();
+    protected postServerInitialization(): void {
+        if (this.isDevelopment()) {
+            this.provider.envValidator.checkAll();
+        }
     }
+
+    protected serverShutdown(): void {}
 }
 
-const appInstance = new App();
-
-export { appInstance as App };
+export { App };

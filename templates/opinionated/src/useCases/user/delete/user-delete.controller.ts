@@ -1,23 +1,23 @@
 import { BaseController, StatusCode } from "@expressots/core";
-import {
-    controller,
-    httpDelete,
-    requestParam,
-    response,
-} from "inversify-express-utils";
 import { Response } from "express";
 import { UserDeleteRequestDTO, UserDeleteResponseDTO } from "./user-delete.dto";
 import { UserDeleteUseCase } from "./user-delete.usecase";
+import {
+    Delete,
+    controller,
+    param,
+    response,
+} from "@expressots/adapter-express";
 
 @controller("/user/delete")
 class UserDeleteController extends BaseController {
     constructor(private userDeleteUseCase: UserDeleteUseCase) {
-        super("user-delete-controller");
+        super();
     }
 
-    @httpDelete("/:id")
+    @Delete("/:id")
     execute(
-        @requestParam() payload: UserDeleteRequestDTO,
+        @param() payload: UserDeleteRequestDTO,
         @response() res: Response,
     ): UserDeleteResponseDTO {
         return this.callUseCase(

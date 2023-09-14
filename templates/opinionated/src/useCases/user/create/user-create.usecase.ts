@@ -1,8 +1,8 @@
-import { User } from "@entities/user.entity";
 import { Report, StatusCode } from "@expressots/core";
-import { UserRepository } from "@repositories/user/user.repository";
 import { provide } from "inversify-binding-decorators";
+import { UserRepository } from "@repositories/user/user.repository";
 import { CreateUserRequestDTO, CreateUserResponseDTO } from "./user-create.dto";
+import { User } from "@entities/user.entity";
 
 @provide(CreateUserUseCase)
 class CreateUserUseCase {

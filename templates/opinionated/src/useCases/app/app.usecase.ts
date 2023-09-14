@@ -2,7 +2,7 @@ import { provide } from "inversify-binding-decorators";
 
 @provide(AppUseCase)
 class AppUseCase {
-    execute(): string {
+    execute() {
         return "Hello from ExpressoTS App";
     }
 }

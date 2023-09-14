@@ -1,11 +1,12 @@
 import "reflect-metadata";
 
-import { AppInstance, ServerEnvironment } from "@expressots/core";
+import { AppFactory } from "@expressots/core";
 import { container } from "./app.container";
+import { ServerEnvironment } from "@expressots/adapter-express";
 
 async function bootstrap() {
-    AppInstance.create(container);
-    AppInstance.listen(3000, ServerEnvironment.Development);
+    const app = await AppFactory.create(container, []);
+    await app.listen(3000, ServerEnvironment.Development);
 }
 
 bootstrap();
