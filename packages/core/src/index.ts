@@ -5,5 +5,6 @@ export * from "./container-module";
 export * from "./controller";
 export * from "./decorator";
 export * from "./error";
+export * from "./middleware";
 export * from "./provider";
 export * from "./render";

@@ -63,7 +63,7 @@
     "coverage": "vitest run --coverage",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format:write": "prettier --write \"packages/**/*.ts\" --cache",
+    "format": "prettier --write \"packages/**/*.ts\" --cache",
     "lint": "eslint \"packages/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/*.ts\" --fix"
   },
@@ -80,6 +80,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^17.7.0",
+    "@expressots/adapter-express": "latest",
     "@release-it/conventional-changelog": "^7.0.1",
     "@types/express": "^4.17.17",
     "@types/node": "^20.4.9",
@@ -94,6 +95,9 @@
     "typescript": "^5.0.3",
     "vite": "4.4.9",
     "vitest": "0.34.4"
+  },
+  "peerDependencies": {
+    "@expressots/adapter-express": "latest"
   },
   "release-it": {
     "git": {
