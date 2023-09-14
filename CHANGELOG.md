@@ -1,69 +1,67 @@
-
-
-## [1.10.0](https://github.com/expressots/expressots/compare/1.9.1...1.10.0) (2023-09-14)
-
+## [2.0.0](https://github.com/expressots/expressots/compare/1.9.1...2.0.0) (2023-09-14)
 
 ### Features
 
-* add middleware resolver ([23b8d9f](https://github.com/expressots/expressots/commit/23b8d9ff8f0c8b4bb893f4fd0d7f39afcb7dd1cd))
-
+- add middleware resolver ([23b8d9f](https://github.com/expressots/expressots/commit/23b8d9ff8f0c8b4bb893f4fd0d7f39afcb7dd1cd))
+- add app factory
+- add services layer
+- add middleware interfaces for cors, compression, bodyparser and generic middleware
+- add configurable error handler
+- separate expressjs from core library in its own library called adapter-express
+- created provider mechanism to share resources between multiple adapters
+- eliminate chalk, inversify utils dependencies
+- create a logger system using stdout
 
 ### Code Refactoring
 
-* remove winston lib for loggin ([5868bc9](https://github.com/expressots/expressots/commit/5868bc949f2242f0a9bfe5483642bb3878cc0156))
-* removing unnecessary dependencies ([fdd43e0](https://github.com/expressots/expressots/commit/fdd43e0f280024b8e4b53f392ea56842a091898e))
+- refactor error handling
+- remove winston lib for loggin ([5868bc9](https://github.com/expressots/expressots/commit/5868bc949f2242f0a9bfe5483642bb3878cc0156))
+- removing unnecessary dependencies ([fdd43e0](https://github.com/expressots/expressots/commit/fdd43e0f280024b8e4b53f392ea56842a091898e))
 
 ## [1.9.1](https://github.com/expressots/expressots/compare/1.9.0...1.9.1) (2023-09-14)
 
-
 ### Bug Fixes
 
-* add peer dependency @expressots/adapter-express ([874db40](https://github.com/expressots/expressots/commit/874db402af7bac8d5ac638fc206f3daf9f707fc3))
-* change esm config to modeule interop ([32f04b5](https://github.com/expressots/expressots/commit/32f04b5bc7da6c515df70b0156f2f5cadd5526ac))
-* change esm config to modeule interop ([978b168](https://github.com/expressots/expressots/commit/978b1685aa18c0573313ee96049159a1c95c4d87))
-* opinionated template app provider services ([bcb55ca](https://github.com/expressots/expressots/commit/bcb55caf1e5a0ff053b5aaf89a79ef4537b38161))
-* using adapter-express dependency ([84b0348](https://github.com/expressots/expressots/commit/84b03486193632b84e46e670bd44c6f8a01ebaa4))
-
+- add peer dependency @expressots/adapter-express ([874db40](https://github.com/expressots/expressots/commit/874db402af7bac8d5ac638fc206f3daf9f707fc3))
+- change esm config to modeule interop ([32f04b5](https://github.com/expressots/expressots/commit/32f04b5bc7da6c515df70b0156f2f5cadd5526ac))
+- change esm config to modeule interop ([978b168](https://github.com/expressots/expressots/commit/978b1685aa18c0573313ee96049159a1c95c4d87))
+- opinionated template app provider services ([bcb55ca](https://github.com/expressots/expressots/commit/bcb55caf1e5a0ff053b5aaf89a79ef4537b38161))
+- using adapter-express dependency ([84b0348](https://github.com/expressots/expressots/commit/84b03486193632b84e46e670bd44c6f8a01ebaa4))
 
 ### Code Refactoring
 
-* create express adapter platform ([784beaa](https://github.com/expressots/expressots/commit/784beaaea9247e304abada8ebd33c673199e35f9))
-* expose app base class for adapter ([36d8dec](https://github.com/expressots/expressots/commit/36d8dec0435a2456d1b9e1d5dca5bfb8956cfdea))
+- create express adapter platform ([784beaa](https://github.com/expressots/expressots/commit/784beaaea9247e304abada8ebd33c673199e35f9))
+- expose app base class for adapter ([36d8dec](https://github.com/expressots/expressots/commit/36d8dec0435a2456d1b9e1d5dca5bfb8956cfdea))
 
 ## [1.9.0](https://github.com/expressots/expressots/compare/1.8.1...1.9.0) (2023-09-12)
 
-
 ### Features
 
-* add pck resolver & remove chalk dependency ([6bbd415](https://github.com/expressots/expressots/commit/6bbd415937159e419116b6ade8f9852c3251fbf4))
-* bump vitest from 0.34.3 to 0.34.4 ([#92](https://github.com/expressots/expressots/issues/92)) ([89dc682](https://github.com/expressots/expressots/commit/89dc682c7047897f01fd7770591b6ffea689d137))
-
+- add pck resolver & remove chalk dependency ([6bbd415](https://github.com/expressots/expressots/commit/6bbd415937159e419116b6ade8f9852c3251fbf4))
+- bump vitest from 0.34.3 to 0.34.4 ([#92](https://github.com/expressots/expressots/issues/92)) ([89dc682](https://github.com/expressots/expressots/commit/89dc682c7047897f01fd7770591b6ffea689d137))
 
 ### Bug Fixes
 
-* disable console.spec to be refactored ([22a54bd](https://github.com/expressots/expressots/commit/22a54bdb7f0c2032d3b0e0f935ce48d73e665e84))
-* dto validator json structure per property ([a8fbe40](https://github.com/expressots/expressots/commit/a8fbe409647140e867f930a882fd395df45d6de7))
-* export console for testing ([d3f2c07](https://github.com/expressots/expressots/commit/d3f2c07ca2df0176fabed04172ce4ff684c91c9c))
-* opinionated template logger.error function ([073f4e1](https://github.com/expressots/expressots/commit/073f4e154732fa3fed9492ec772c36894bc3cf48))
-* replace dto interface for class opinionated template ([3e99d7c](https://github.com/expressots/expressots/commit/3e99d7c5492ff64701e754ec845a0410da442296))
-* use new report utility in usecases ([#91](https://github.com/expressots/expressots/issues/91)) ([d1477b2](https://github.com/expressots/expressots/commit/d1477b24f932e354fb55373e8e73fe9155289486))
-
+- disable console.spec to be refactored ([22a54bd](https://github.com/expressots/expressots/commit/22a54bdb7f0c2032d3b0e0f935ce48d73e665e84))
+- dto validator json structure per property ([a8fbe40](https://github.com/expressots/expressots/commit/a8fbe409647140e867f930a882fd395df45d6de7))
+- export console for testing ([d3f2c07](https://github.com/expressots/expressots/commit/d3f2c07ca2df0176fabed04172ce4ff684c91c9c))
+- opinionated template logger.error function ([073f4e1](https://github.com/expressots/expressots/commit/073f4e154732fa3fed9492ec772c36894bc3cf48))
+- replace dto interface for class opinionated template ([3e99d7c](https://github.com/expressots/expressots/commit/3e99d7c5492ff64701e754ec845a0410da442296))
+- use new report utility in usecases ([#91](https://github.com/expressots/expressots/issues/91)) ([d1477b2](https://github.com/expressots/expressots/commit/d1477b24f932e354fb55373e8e73fe9155289486))
 
 ### Code Refactoring
 
-* update type from any to number ([#90](https://github.com/expressots/expressots/issues/90)) ([5e34a44](https://github.com/expressots/expressots/commit/5e34a44d8bd353b8d3834f198f36bf73aa521845))
+- update type from any to number ([#90](https://github.com/expressots/expressots/issues/90)) ([5e34a44](https://github.com/expressots/expressots/commit/5e34a44d8bd353b8d3834f198f36bf73aa521845))
 
 ## [1.8.1](https://github.com/expressots/expressots/compare/1.8.0...1.8.1) (2023-09-10)
 
-
 ### Bug Fixes
 
-* add generic in memory db and virtual table analysis ([#86](https://github.com/expressots/expressots/issues/86)) ([29541f9](https://github.com/expressots/expressots/commit/29541f997e47c8ac5f8cafbb0195c34c904454f4))
-
+- add generic in memory db and virtual table analysis ([#86](https://github.com/expressots/expressots/issues/86)) ([29541f9](https://github.com/expressots/expressots/commit/29541f997e47c8ac5f8cafbb0195c34c904454f4))
 
 ### Continuous Integrations
 
-* config test workflow and setup vitest ([#88](https://github.com/expressots/expressots/issues/88)) ([67316ce](https://github.com/expressots/expressots/commit/67316cece977f04f9750a5a5af6cd88dfc695e0d))
+- config test workflow and setup vitest ([#88](https://github.com/expressots/expressots/issues/88)) ([67316ce](https://github.com/expressots/expressots/commit/67316cece977f04f9750a5a5af6cd88dfc695e0d))
 
 ## [1.8.0](https://github.com/expressots/expressots/compare/1.7.0...1.8.0) (2023-09-05)
 
