@@ -1,5 +1,22 @@
 
 
+## [1.9.1](https://github.com/expressots/expressots/compare/1.9.0...1.9.1) (2023-09-14)
+
+
+### Bug Fixes
+
+* add peer dependency @expressots/adapter-express ([874db40](https://github.com/expressots/expressots/commit/874db402af7bac8d5ac638fc206f3daf9f707fc3))
+* change esm config to modeule interop ([32f04b5](https://github.com/expressots/expressots/commit/32f04b5bc7da6c515df70b0156f2f5cadd5526ac))
+* change esm config to modeule interop ([978b168](https://github.com/expressots/expressots/commit/978b1685aa18c0573313ee96049159a1c95c4d87))
+* opinionated template app provider services ([bcb55ca](https://github.com/expressots/expressots/commit/bcb55caf1e5a0ff053b5aaf89a79ef4537b38161))
+* using adapter-express dependency ([84b0348](https://github.com/expressots/expressots/commit/84b03486193632b84e46e670bd44c6f8a01ebaa4))
+
+
+### Code Refactoring
+
+* create express adapter platform ([784beaa](https://github.com/expressots/expressots/commit/784beaaea9247e304abada8ebd33c673199e35f9))
+* expose app base class for adapter ([36d8dec](https://github.com/expressots/expressots/commit/36d8dec0435a2456d1b9e1d5dca5bfb8956cfdea))
+
 ## [1.9.0](https://github.com/expressots/expressots/compare/1.8.1...1.9.0) (2023-09-12)
 
 
