@@ -7,7 +7,7 @@ import { CompressionOptions } from "./interfaces/compression.interface";
 import { CorsOptions } from "./interfaces/cors.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { middlewareResolver } from "./middleware-resolver";
-import { CookieSessionOptions } from "./interfaces/cookie-session.interface";
+import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
 
 type ExpressHandler =
   | express.ErrorRequestHandler
@@ -47,7 +47,7 @@ interface IMiddleware {
    *
    * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
    */
-  addCookieSession(options?: CookieSessionOptions): void;
+  addCookieSession(options: CookieSessionOptions): void;
 
   /**
    * Configures the error handling middleware for the application.
@@ -169,7 +169,7 @@ class Middleware implements IMiddleware {
    *
    * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
    */
-  addCookieSession(options?: CookieSessionOptions): void {
+  addCookieSession(options: CookieSessionOptions): void {
     const middleware = middlewareResolver("cookieSession", options);
 
     const middlewareExist = this.middlewareExists("cookieSession");

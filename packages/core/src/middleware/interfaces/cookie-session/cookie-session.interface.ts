@@ -9,7 +9,7 @@ interface CookieSessionOptions {
   /**
    * The list of keys to use to sign & verify cookie values. Set cookies are always signed with keys[0], while the other keys are valid for verification, allowing for key rotation.
    */
-  keys?: Array<string> | Keygrip | undefined;
+  keys: Array<string> | Keygrip;
 
   /**
    * A string which will be used as single key if keys is not provided.
