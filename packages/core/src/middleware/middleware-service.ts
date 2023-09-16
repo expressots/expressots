@@ -44,12 +44,15 @@ interface IMiddleware {
 
   /**
    * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
-   * 
+   *
    * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
    * @param options - Optional configuration options for Cookie Parser.
    */
-  addCookieParser(secret?: string | string[] | undefined, options?: CookieParserOptions): void;
-  
+  addCookieParser(
+    secret?: string | Array<string> | undefined,
+    options?: CookieParserOptions,
+  ): void;
+
   /**
    * Configures the error handling middleware for the application.
    *
@@ -167,11 +170,14 @@ class Middleware implements IMiddleware {
 
   /**
    * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
-   * 
+   *
    * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
    * @param options - Optional configuration options for Cookie Parser.
    */
-  addCookieParser(secret?: string | string[] | undefined, options?: CookieParserOptions | undefined): void {
+  addCookieParser(
+    secret?: string | Array<string> | undefined,
+    options?: CookieParserOptions | undefined,
+  ): void {
     const middleware = middlewareResolver("cookieParser", secret, options);
 
     const middlewareExist = this.middlewareExists("cookieParser");
