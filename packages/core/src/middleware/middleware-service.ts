@@ -178,7 +178,7 @@ class Middleware implements IMiddleware {
       this.middlewares.push(middleware);
     }
   }
-  
+
   /**
    * Configures the error handling middleware for the application.
    *
