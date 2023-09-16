@@ -5,6 +5,7 @@ import { Logger } from "../provider/logger/logger-service";
 import { OptionsJson } from "./interfaces/body-parser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
 import { CorsOptions } from "./interfaces/cors.interface";
+import { CookieParserOptions } from "./interfaces/cookie-parser.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { middlewareResolver } from "./middleware-resolver";
 
@@ -41,6 +42,14 @@ interface IMiddleware {
    */
   addCompression(options?: CompressionOptions): void;
 
+  /**
+   * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
+   * 
+   * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
+   * @param options - Optional configuration options for Cookie Parser.
+   */
+  addCookieParser(secret?: string | string[] | undefined, options?: CookieParserOptions): void;
+  
   /**
    * Configures the error handling middleware for the application.
    *
@@ -150,6 +159,22 @@ class Middleware implements IMiddleware {
     const middleware = middlewareResolver("compression", options);
 
     const middlewareExist = this.middlewareExists("compression");
+
+    if (middleware && !middlewareExist) {
+      this.middlewares.push(middleware);
+    }
+  }
+
+  /**
+   * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
+   * 
+   * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
+   * @param options - Optional configuration options for Cookie Parser.
+   */
+  addCookieParser(secret?: string | string[] | undefined, options?: CookieParserOptions | undefined): void {
+    const middleware = middlewareResolver("cookieParser", secret, options);
+
+    const middlewareExist = this.middlewareExists("cookieParser");
 
     if (middleware && !middlewareExist) {
       this.middlewares.push(middleware);
