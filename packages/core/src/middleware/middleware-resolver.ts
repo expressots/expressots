@@ -23,6 +23,7 @@ class MiddlewareResolver {
     cors: "cors",
     compression: "compression",
     cookieParser: "cookie-parser",
+    cookieSession: "cookie-session",
     // Add other middlewares
   };
 
@@ -40,7 +41,10 @@ class MiddlewareResolver {
     const packageName = this.middlewareRegistry[middlewareName];
 
     if (!packageName) {
-      console.error(`Middleware ${middlewareName} not found`);
+      this.logger.error(
+        `Middleware ${packageName} not found`,
+        "middleware-resolver",
+      );
       return null;
     }
 
@@ -49,7 +53,7 @@ class MiddlewareResolver {
       hasMiddleware = require.resolve(packageName, { paths: [process.cwd()] });
     } catch (error) {
       this.logger.warn(
-        `Middleware [${middlewareName}] not installed. Please install it using your package manager.`,
+        `Middleware [${packageName}] not installed. Please install it using your package manager.`,
         "middleware-resolver",
       );
     }
