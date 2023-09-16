@@ -1,3 +1,20 @@
+
+
+## [2.1.0](https://github.com/expressots/expressots/compare/2.0.0...2.1.0) (2023-09-16)
+
+
+### Features
+
+* add cookie-parser middleware ([2fe9377](https://github.com/expressots/expressots/commit/2fe93776423355503211a0d96f2b1952e3bc6320))
+* add cookie-parser middleware ([a53a0c2](https://github.com/expressots/expressots/commit/a53a0c2e23dafc188286cd0ff5a6145cf3416ad0))
+* add cookie-session middleware ([323c2d3](https://github.com/expressots/expressots/commit/323c2d32c5e4a9c78f19fe47807f323139fb306a))
+* add cookie-session middleware ([60ac1fa](https://github.com/expressots/expressots/commit/60ac1fa36b2a8388983be0ab8f2d8a1696089d78))
+
+
+### Bug Fixes
+
+* create folder for interface and print pck name instead of curated name ([2a47508](https://github.com/expressots/expressots/commit/2a47508f5170950ddd8b471fffc8d43a8fb57e32))
+
 ## [2.0.0](https://github.com/expressots/expressots/compare/1.9.1...2.0.0) (2023-09-14)
 
 ### Features
