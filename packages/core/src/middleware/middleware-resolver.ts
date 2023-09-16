@@ -22,6 +22,7 @@ class MiddlewareResolver {
   private middlewareRegistry: { [key: string]: string } = {
     cors: "cors",
     compression: "compression",
+    cookieSession: "cookie-session",
     // Add other middlewares
   };
 
