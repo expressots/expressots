@@ -1,6 +1,6 @@
 {
 	"name": "@expressots/cli",
-	"version": "1.3.3",
+	"version": "1.3.4",
 	"description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
 	"author": "Richard Zampieri",
 	"license": "MIT",
