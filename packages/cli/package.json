@@ -31,15 +31,17 @@
 		"Scaffolding"
 	],
 	"scripts": {
+		"prepare": "husky install",
 		"start:build": "npm run build && npm run start",
 		"start": "node ./bin/cli.js",
 		"start:dev": "tsnd ./src/cli.ts",
 		"build": "npm run clean && tsc -p tsconfig.json && yarn cp:templates && chmod +x ./bin/cli.js",
 		"cp:templates": "cp -r ./src/generate/templates ./bin/generate/templates",
 		"clean": "rimraf ./bin",
-		"lint": "eslint .eslintrc.js --ext .ts,.tsx,.js,.jsx .",
-		"release": "release-it",
-		"prepare": "husky install"
+		"format": "prettier --write \"./src/**/*.ts\" --cache",
+		"lint": "eslint \"./src/**/*.ts\"",
+		"lint:fix": "eslint \"./src/**/*.ts\" --fix",
+		"release": "release-it"
 	},
 	"dependencies": {
 		"@expressots/boost-ts": "^1.1.1",

@@ -7,7 +7,7 @@ import { printError } from "../utils/cli-ui";
 
 function getInfosFromPackage() {
 	try {
-			// Get the absolute path of the input directory parameter
+		// Get the absolute path of the input directory parameter
 		const absDirPath = path.resolve();
 		// Load the package.json file
 		const packageJsonPath = path.join(absDirPath, "package.json");
@@ -21,7 +21,10 @@ function getInfosFromPackage() {
 		console.log(chalk.bold(`\tVersion: ${packageJson.version}`));
 		console.log(chalk.bold(`\tAuthor: ${packageJson.author}`));
 	} catch (error) {
-		printError("No project information available.", "package.json not found!")
+		printError(
+			"No project information available.",
+			"package.json not found!",
+		);
 	}
 }
 

@@ -37,7 +37,11 @@ async function packageManagerInstall({
 			if (code === 0) {
 				resolve("Installation Done!");
 			} else {
-				reject(new Error(`${packageManager} install exited with code ${code}`));
+				reject(
+					new Error(
+						`${packageManager} install exited with code ${code}`,
+					),
+				);
 			}
 		});
 	});
@@ -83,7 +87,7 @@ enum Template {
 const enum PackageManager {
 	npm = "npm",
 	yarn = "yarn",
-	pnpm = "pnpm"
+	pnpm = "pnpm",
 }
 
 const projectForm = async (projectName: string, args: any[]): Promise<void> => {
@@ -149,7 +153,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 	}
 
 	if (directory) {
-		if(!fs.existsSync(path.join(directory, answer.name))) {
+		if (!fs.existsSync(path.join(directory, answer.name))) {
 			answer.name = path.join(directory, answer.name);
 		} else {
 			printError("Directory already exists", directory);
@@ -169,7 +173,9 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 		const progressBar = new SingleBar(
 			{
 				format:
-					"Progress |" + chalk.green("{bar}") + "| {percentage}% || {doing}",
+					"Progress |" +
+					chalk.green("{bar}") +
+					"| {percentage}% || {doing}",
 				hideCursor: true,
 			},
 			Presets.shades_classic,
@@ -181,17 +187,20 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 
 		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
 
-		try  {
+		try {
 			const emitter = degit(
 				`expressots/expressots/templates/${templates[template]}`,
 			);
-	
+
 			await emitter.clone(answer.name);
 		} catch (err: any) {
-			printError("Project already exists or Folder is not empty", answer.name);
+			printError(
+				"Project already exists or Folder is not empty",
+				answer.name,
+			);
 			process.exit(1);
 		}
-		
+
 		progressBar.update(50, {
 			doing: "Installing dependencies",
 		});
@@ -202,7 +211,6 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 			progressBar,
 		});
 
-		
 		progressBar.update(90);
 
 		changePackageName({
@@ -215,9 +223,13 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 		progressBar.stop();
 
 		console.log("\n");
-		console.log("🐎 Project ", chalk.green(answer.name), "created successfully!");
+		console.log(
+			"🐎 Project ",
+			chalk.green(answer.name),
+			"created successfully!",
+		);
 		console.log("🤙 Run the following commands to start the project:\n");
-		
+
 		console.log(chalk.bold.gray(`$ cd ${answer.name}`));
 		switch (answer.packageManager) {
 			case "npm":
@@ -233,8 +245,20 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 
 		console.log("\n");
 		console.log(chalk.bold.green(centerText("Happy coding!")));
-		console.log(chalk.bold.gray(centerText("Please consider donating to support the project.\n")));
-		console.log(chalk.bold.white(centerText("💖 Sponsor: https://github.com/sponsors/expressots")));
+		console.log(
+			chalk.bold.gray(
+				centerText(
+					"Please consider donating to support the project.\n",
+				),
+			),
+		);
+		console.log(
+			chalk.bold.white(
+				centerText(
+					"💖 Sponsor: https://github.com/sponsors/expressots",
+				),
+			),
+		);
 	}
 };
 

@@ -10,7 +10,7 @@ const infoProject = (): CommandModule<CommandModuleArgs, any> => {
 		describe: "Displays project details",
 		aliases: ["i"],
 		handler: async () => {
-      await infoForm();
+			await infoForm();
 		},
 	};
 };

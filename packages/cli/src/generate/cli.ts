@@ -50,13 +50,7 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.positional("method", {
-				choices: [
-					"get",
-					"post",
-					"put",
-					"patch",
-					"delete",
-				] as const,
+				choices: ["get", "post", "put", "patch", "delete"] as const,
 				describe: "HTTP method",
 				type: "string",
 				alias: "m",
@@ -65,7 +59,7 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 			return yargs;
 		},
 		handler: async ({ schematic, path, method }) => {
-      		await createTemplate({ schematic, path, method });
+			await createTemplate({ schematic, path, method });
 		},
 	};
 };
