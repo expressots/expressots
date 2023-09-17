@@ -6,7 +6,7 @@ import { generateProject } from "./generate";
 import { infoProject } from "./info";
 import { createProject } from "./new";
 
-export const CLI_VERSION = "1.3.3";
+export const CLI_VERSION = "1.3.4";
 
 console.log(`\n[🐎 Expressots]\n`);
 
