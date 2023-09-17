@@ -65,7 +65,7 @@ interface IMiddleware {
   /**
    * Adds a middleware to serve the favicon to the middleware collection.
    * The favicon is the icon that is displayed in the browser tab for the application.
-   * 
+   *
    * @param path - The path to the favicon file.
    * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
    */
@@ -223,7 +223,7 @@ class Middleware implements IMiddleware {
   /**
    * Adds a middleware to serve the favicon to the middleware collection.
    * The favicon is the icon that is displayed in the browser tab for the application.
-   * 
+   *
    * @param path - The path to the favicon file.
    * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
    */
@@ -236,7 +236,7 @@ class Middleware implements IMiddleware {
       this.middlewares.push(middleware);
     }
   }
-  
+
   /**
    * Configures the error handling middleware for the application.
    *
