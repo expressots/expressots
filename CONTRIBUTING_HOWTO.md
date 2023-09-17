@@ -1,6 +1,6 @@
 # How to Contribute to ExpressoTS
 
-1. [Fork](https://github.com/expressots/expresso-site-doc/fork) the repo and create your branch from main.
+1. [Fork](https://github.com/expressots/expressots/fork) the repo and create your branch from main.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
 4. Ensure the test suite passes.
