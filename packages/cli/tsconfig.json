@@ -15,8 +15,8 @@
 		"skipLibCheck": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"types": ["node"]
+		"types": ["node", "vitest/globals"]
 	},
 	"include": ["./src"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "test/**/*.spec.ts"]
 }

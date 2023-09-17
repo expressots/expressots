@@ -1,4 +1,3 @@
-/* eslint-env node */
 module.exports = {
 	parser: "@typescript-eslint/parser",
 	parserOptions: {
@@ -15,6 +14,7 @@ module.exports = {
 		"node_modules/*",
 		"expressots.config.ts",
 		"commitlint.config.ts",
+		"vite.config.ts",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",
