@@ -3,7 +3,12 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { render } from "mustache";
 import { writeFileSync, existsSync } from "fs";
 import chalk from "chalk";
-import { anyCaseToCamelCase, anyCaseToKebabCase, anyCaseToPascalCase, anyCaseToLowerCase } from "@expressots/boost-ts";
+import {
+	anyCaseToCamelCase,
+	anyCaseToKebabCase,
+	anyCaseToPascalCase,
+	anyCaseToLowerCase,
+} from "@expressots/boost-ts";
 import Compiler from "../utils/compiler";
 import { Pattern } from "../types";
 import { addControllerToModule } from "../utils/add-controller-to-module";
@@ -12,7 +17,7 @@ import { addModuleToContainer } from "../utils/add-module-to-container";
 import { printError } from "../utils/cli-ui";
 
 function getFileNameWithoutExtension(filePath: string) {
-	return filePath.split('.')[0];
+	return filePath.split(".")[0];
 }
 
 type CreateTemplateProps = {
@@ -29,7 +34,10 @@ export const createTemplate = async ({
 	const { opinionated, sourceRoot } = await Compiler.loadConfig();
 
 	if (sourceRoot === "") {
-		printError("You must specify a source root in your expressots.config.ts","sourceRoot");
+		printError(
+			"You must specify a source root in your expressots.config.ts",
+			"sourceRoot",
+		);
 		process.exit(1);
 	}
 
@@ -41,23 +49,28 @@ export const createTemplate = async ({
 		folderMatch = "";
 	}
 
-	const { path, file, className, moduleName, modulePath } = await splitTarget({ target, schematic });
-	
+	const { path, file, className, moduleName, modulePath } = await splitTarget(
+		{ target, schematic },
+	);
+
 	const usecaseDir = `${sourceRoot}/${folderMatch}`;
-	
-	await verifyIfFileExists(`${usecaseDir}/${path}/${file}`)
-	
+
+	await verifyIfFileExists(`${usecaseDir}/${path}/${file}`);
+
 	mkdirSync(`${usecaseDir}/${path}`, { recursive: true });
 
 	if (schematic !== "service") {
-
 		// add to guarantee that the routing will always be the last part of the path
 		let routeSchema = "";
-		
-		if (target.includes("/") || target.includes("\\") || target.includes("//")) {
+
+		if (
+			target.includes("/") ||
+			target.includes("\\") ||
+			target.includes("//")
+		) {
 			routeSchema = path.split("/").pop();
 		} else {
-			routeSchema = path.replace(/\/$/, '');
+			routeSchema = path.replace(/\/$/, "");
 		}
 
 		writeTemplate({
@@ -74,20 +87,32 @@ export const createTemplate = async ({
 		});
 	} else {
 		for await (const resource of ["controller-service", "usecase", "dto"]) {
-			const currentSchematic = resource.replace("controller-service", "controller");
-		
+			const currentSchematic = resource.replace(
+				"controller-service",
+				"controller",
+			);
+
 			const schematicFile = file.replace(
 				`controller.ts`,
 				`${currentSchematic}.ts`,
 			);
 
-			console.log(" ",chalk.greenBright(`[${currentSchematic}]`.padEnd(14)), chalk.bold.white(`${schematicFile} created! ✔️`));
-			
+			console.log(
+				" ",
+				chalk.greenBright(`[${currentSchematic}]`.padEnd(14)),
+				chalk.bold.white(`${schematicFile} created! ✔️`),
+			);
+
 			let templateBasedMethod = "";
 			if (method) {
-				if (resource === "controller-service" || resource === "controller") {
-					if (method === "get") templateBasedMethod = `./templates/${resource}.tpl`;
-					else templateBasedMethod = `./templates/${resource}-${method}.tpl`;
+				if (
+					resource === "controller-service" ||
+					resource === "controller"
+				) {
+					if (method === "get")
+						templateBasedMethod = `./templates/${resource}.tpl`;
+					else
+						templateBasedMethod = `./templates/${resource}-${method}.tpl`;
 				} else {
 					templateBasedMethod = `./templates/${resource}.tpl`;
 				}
@@ -97,21 +122,26 @@ export const createTemplate = async ({
 				}
 
 				if (resource === "usecase") {
-					if (method === "get") templateBasedMethod = `./templates/${resource}.tpl`;
-					if (method === "post") templateBasedMethod = `./templates/${resource}-${method}.tpl`;
+					if (method === "get")
+						templateBasedMethod = `./templates/${resource}.tpl`;
+					if (method === "post")
+						templateBasedMethod = `./templates/${resource}-${method}.tpl`;
 				}
-
 			} else {
 				templateBasedMethod = `./templates/${resource}.tpl`;
 			}
 
 			// add to guarantee that the routing will always be the last part of the path
 			let routeSchema = "";
-			
-			if (target.includes("/") || target.includes("\\") || target.includes("//")) {
+
+			if (
+				target.includes("/") ||
+				target.includes("\\") ||
+				target.includes("//")
+			) {
 				routeSchema = path.split("/").pop();
 			} else {
-				routeSchema = path.replace(/\/$/, '');
+				routeSchema = path.replace(/\/$/, "");
 			}
 
 			writeTemplate({
@@ -122,7 +152,7 @@ export const createTemplate = async ({
 						className,
 						fileName: getFileNameWithoutExtension(file),
 						useCase: anyCaseToCamelCase(className),
-						route: routeSchema,//path.replace(/\/$/, ''),
+						route: routeSchema, //path.replace(/\/$/, ''),
 						construct: anyCaseToKebabCase(className),
 						method: getHttpMethod(method),
 					},
@@ -133,52 +163,88 @@ export const createTemplate = async ({
 
 	// Module generation
 	if (["controller", "service"].includes(schematic)) {
-		
 		let moduleExist = false;
 		let moduleOutPath = "";
-		
-		if (target.includes("/") || target.includes("\\") || target.includes("//")) {
+
+		if (
+			target.includes("/") ||
+			target.includes("\\") ||
+			target.includes("//")
+		) {
 			if (modulePath === "") {
-				moduleExist = existsSync(`${usecaseDir}/${moduleName}.module.ts`);
+				moduleExist = existsSync(
+					`${usecaseDir}/${moduleName}.module.ts`,
+				);
 				moduleOutPath = `${usecaseDir}/${moduleName}.module.ts`;
 			} else {
-				moduleExist = existsSync(`${usecaseDir}/${modulePath}/${moduleName}.module.ts`);
+				moduleExist = existsSync(
+					`${usecaseDir}/${modulePath}/${moduleName}.module.ts`,
+				);
 				moduleOutPath = `${usecaseDir}/${modulePath}/${moduleName}.module.ts`;
 			}
 		} else {
-			moduleExist = existsSync(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`);
+			moduleExist = existsSync(
+				`${usecaseDir}/${moduleName}/${moduleName}.module.ts`,
+			);
 			if (modulePath === "") {
-				moduleExist = existsSync(`${usecaseDir}/${moduleName}.module.ts`);
+				moduleExist = existsSync(
+					`${usecaseDir}/${moduleName}.module.ts`,
+				);
 				moduleOutPath = `${usecaseDir}/${moduleName}.module.ts`;
 			} else {
-				moduleExist = existsSync(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`);
+				moduleExist = existsSync(
+					`${usecaseDir}/${moduleName}/${moduleName}.module.ts`,
+				);
 				moduleOutPath = `${usecaseDir}/${moduleName}/${moduleName}.module.ts`;
 			}
 		}
 
 		let controllerPath = "./";
-		const pathCount = (path.split("/")).length;
-		
+		const pathCount = path.split("/").length;
+
 		if (path === "") {
-			controllerPath += `${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${file.slice(0, file.lastIndexOf("."))}`;
 		} else if (pathCount === 1) {
-			controllerPath += `${path}/${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${path}/${file.slice(0, file.lastIndexOf("."))}`;
 		} else if (pathCount === 2) {
-			controllerPath += `${path.split("/")[1]}/${file.slice(0, file.lastIndexOf('.'))}`;
+			controllerPath += `${path.split("/")[1]}/${file.slice(
+				0,
+				file.lastIndexOf("."),
+			)}`;
 		} else {
-			const segments: string[] = path.split("/").filter((segment) => segment !== "");
-			controllerPath += `${segments[segments.length-1]}/${file.slice(0, file.lastIndexOf('.'))}`;
+			const segments: string[] = path
+				.split("/")
+				.filter((segment) => segment !== "");
+			controllerPath += `${segments[segments.length - 1]}/${file.slice(
+				0,
+				file.lastIndexOf("."),
+			)}`;
 		}
-		
+
 		if (moduleExist) {
-			if (target.includes("/") || target.includes("\\") || target.includes("//")) {
-				await addControllerToModule(`${usecaseDir}/${modulePath}/${moduleName}.module.ts`, `${className}Controller`, controllerPath);
+			if (
+				target.includes("/") ||
+				target.includes("\\") ||
+				target.includes("//")
+			) {
+				await addControllerToModule(
+					`${usecaseDir}/${modulePath}/${moduleName}.module.ts`,
+					`${className}Controller`,
+					controllerPath,
+				);
 			} else {
-				
 				if (modulePath === "") {
-					await addControllerToModule(`${usecaseDir}/${moduleName}.module.ts`, `${className}Controller`, controllerPath);
+					await addControllerToModule(
+						`${usecaseDir}/${moduleName}.module.ts`,
+						`${className}Controller`,
+						controllerPath,
+					);
 				} else {
-					await addControllerToModule(`${usecaseDir}/${moduleName}/${moduleName}.module.ts`, `${className}Controller`, controllerPath);
+					await addControllerToModule(
+						`${usecaseDir}/${moduleName}/${moduleName}.module.ts`,
+						`${className}Controller`,
+						controllerPath,
+					);
 				}
 			}
 		} else {
@@ -187,16 +253,25 @@ export const createTemplate = async ({
 				template: {
 					path: `./templates/module.tpl`,
 					data: {
-						moduleName: moduleName[0].toUpperCase() + moduleName.slice(1),
+						moduleName:
+							moduleName[0].toUpperCase() + moduleName.slice(1),
 						className,
-						path: controllerPath
+						path: controllerPath,
 					},
 				},
 			});
 
-			console.log(" ",chalk.greenBright(`[module]`.padEnd(14)), chalk.bold.white(`${moduleName}.module created! ✔️`));
+			console.log(
+				" ",
+				chalk.greenBright(`[module]`.padEnd(14)),
+				chalk.bold.white(`${moduleName}.module created! ✔️`),
+			);
 
-			if (target.includes("/") || target.includes("\\") || target.includes("//")) {
+			if (
+				target.includes("/") ||
+				target.includes("\\") ||
+				target.includes("//")
+			) {
 				await addModuleToContainer(moduleName, modulePath, path);
 			} else {
 				await addModuleToContainer(moduleName, moduleName, path);
@@ -204,9 +279,17 @@ export const createTemplate = async ({
 		}
 	}
 	if (schematic === "service") {
-		console.log(" ",chalk.greenBright(`[${schematic}]`.padEnd(14)), chalk.bold.yellow(`${file.split(".")[0]} created! ✔️`));
+		console.log(
+			" ",
+			chalk.greenBright(`[${schematic}]`.padEnd(14)),
+			chalk.bold.yellow(`${file.split(".")[0]} created! ✔️`),
+		);
 	} else {
-		console.log(" ",chalk.greenBright(`[${schematic}]`.padEnd(14)), chalk.bold.white(`${file.split(".")[0]} ${schematic} created! ✔️`));
+		console.log(
+			" ",
+			chalk.greenBright(`[${schematic}]`.padEnd(14)),
+			chalk.bold.white(`${file.split(".")[0]} ${schematic} created! ✔️`),
+		);
 	}
 	return file;
 };
@@ -224,41 +307,57 @@ const splitTarget = async ({
 	moduleName: string;
 	modulePath: string;
 }> => {
-
-	const pathContent: string[] = target.split("/").filter((item) => item !== "");
+	const pathContent: string[] = target
+		.split("/")
+		.filter((item) => item !== "");
 	const endsWithSlash: boolean = target.endsWith("/");
 	let path = "";
 	let fileName = "";
 	let module = "";
 	let modulePath = "";
 
-	if (target.includes("/") || target.includes("\\") || target.includes("//")) {
+	if (
+		target.includes("/") ||
+		target.includes("\\") ||
+		target.includes("//")
+	) {
 		//pathContent = target.split("/").filter((item) => item !== "");
 		if (schematic === "service") schematic = "controller";
-		if (schematic === "service" || schematic === "controller" && pathContent.length > 4) {
+		if (
+			schematic === "service" ||
+			(schematic === "controller" && pathContent.length > 4)
+		) {
 			printError("Max path depth is 4.", pathContent.join("/"));
 			process.exit(1);
 		}
-		
+
 		if (endsWithSlash) {
-			fileName = pathContent[pathContent.length-1];
+			fileName = pathContent[pathContent.length - 1];
 			path = pathContent.join("/");
-			module = (pathContent.length == 1)? pathContent[pathContent.length-1] : pathContent[pathContent.length-2];
-			modulePath = pathContent.slice(0,-1).join("/");
+			module =
+				pathContent.length == 1
+					? pathContent[pathContent.length - 1]
+					: pathContent[pathContent.length - 2];
+			modulePath = pathContent.slice(0, -1).join("/");
 		} else {
-			fileName = pathContent[pathContent.length-1];
-			path = pathContent.slice(0,-1).join("/");
-			module = (pathContent.length == 2)? pathContent[pathContent.length-2] : pathContent[pathContent.length-3];
-			modulePath = pathContent.slice(0,-2).join("/");
+			fileName = pathContent[pathContent.length - 1];
+			path = pathContent.slice(0, -1).join("/");
+			module =
+				pathContent.length == 2
+					? pathContent[pathContent.length - 2]
+					: pathContent[pathContent.length - 3];
+			modulePath = pathContent.slice(0, -2).join("/");
 		}
-		
+
 		return {
 			path,
-			file: `${await getNameWithScaffoldPattern(fileName)}.${schematic}.ts`,
+			file: `${await getNameWithScaffoldPattern(
+				fileName,
+			)}.${schematic}.ts`,
 			className: anyCaseToPascalCase(fileName),
 			moduleName: module,
-			modulePath
-		}
+			modulePath,
+		};
 	} else {
 		if (schematic === "service") schematic = "controller";
 		// 1. Extract the name (first part of the target)
@@ -272,13 +371,17 @@ const splitTarget = async ({
 			const [wordName, ...path] = name
 				?.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)
 				.map((word) => word.toLowerCase());
-			
+
 			return {
-				path: `${wordName}/${pathEdgeCase(path)}${pathEdgeCase(remainingPath)}`,
-				file: `${await getNameWithScaffoldPattern(name)}.${schematic}.ts`,
+				path: `${wordName}/${pathEdgeCase(path)}${pathEdgeCase(
+					remainingPath,
+				)}`,
+				file: `${await getNameWithScaffoldPattern(
+					name,
+				)}.${schematic}.ts`,
 				className: anyCaseToPascalCase(name),
 				moduleName: wordName,
-				modulePath: (pathContent[0].split("-")[1])
+				modulePath: pathContent[0].split("-")[1],
 			};
 		}
 
@@ -288,26 +391,25 @@ const splitTarget = async ({
 			file: `${await getNameWithScaffoldPattern(name)}.${schematic}.ts`,
 			className: anyCaseToPascalCase(name),
 			moduleName: name,
-			modulePath: ""
+			modulePath: "",
 		};
 	}
-	
 };
 
-const getHttpMethod = (method: string) : string => {
-	switch(method) {
+const getHttpMethod = (method: string): string => {
+	switch (method) {
 		case "put":
-			return "httpPut";
+			return "Put";
 		case "post":
-			return "httpPost";
+			return "Post";
 		case "patch":
-			return "httpPatch";
+			return "Patch";
 		case "delete":
-			return "httpDelete";
+			return "Delete";
 		default:
-			return "httpGet";
+			return "Get";
 	}
-}
+};
 
 const writeTemplate = ({
 	outputPath,
@@ -338,7 +440,7 @@ const schematicFolder = (schematic: string): string | undefined => {
 		case "provider":
 			return "providers";
 		case "entity":
-			return "entities"
+			return "entities";
 	}
 
 	return undefined;
