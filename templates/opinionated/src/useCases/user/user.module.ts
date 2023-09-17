@@ -5,12 +5,10 @@ import { UserUpdateController } from "./update/user-update.controller";
 import { UserFindController } from "./find/user-find.controller";
 import { UserFindallController } from "./findall/user-findall.controller";
 
-const UserModule = CreateModule([
+export const UserModule = CreateModule([
     UserCreateController,
     UserDeleteController,
     UserUpdateController,
     UserFindController,
     UserFindallController,
 ]);
-
-export { UserModule };

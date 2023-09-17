@@ -5,7 +5,7 @@ import { CreateUserRequestDTO, CreateUserResponseDTO } from "./user-create.dto";
 import { User } from "@entities/user.entity";
 
 @provide(CreateUserUseCase)
-class CreateUserUseCase {
+export class CreateUserUseCase {
     constructor(
         private userRepository: UserRepository,
         private user: User,
@@ -44,5 +44,3 @@ class CreateUserUseCase {
         }
     }
 }
-
-export { CreateUserUseCase };

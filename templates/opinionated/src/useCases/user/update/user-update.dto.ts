@@ -1,13 +1,11 @@
-class UserUpdateRequestDTO {
+export class UserUpdateRequestDTO {
     name?: string;
     email: string;
 }
 
-class UserUpdateResponseDTO {
+export class UserUpdateResponseDTO {
     id: string;
     name: string;
     email: string;
     message: string;
 }
-
-export { UserUpdateRequestDTO, UserUpdateResponseDTO };

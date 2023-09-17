@@ -4,7 +4,7 @@ import { provide } from "inversify-binding-decorators";
 import { container } from "../../app.container";
 
 @provide(App)
-class App extends AppExpress {
+export class App extends AppExpress {
     private middleware: IMiddleware;
     private provider: IProvider;
 
@@ -27,5 +27,3 @@ class App extends AppExpress {
 
     protected serverShutdown(): void {}
 }
-
-export { App };

@@ -5,7 +5,7 @@ import { provide } from "inversify-binding-decorators";
 import { UserUpdateRequestDTO, UserUpdateResponseDTO } from "./user-update.dto";
 
 @provide(UserUpdateUseCase)
-class UserUpdateUseCase {
+export class UserUpdateUseCase {
     constructor(
         private userRepository: UserRepository,
         private report: Report,
@@ -36,5 +36,3 @@ class UserUpdateUseCase {
         };
     }
 }
-
-export { UserUpdateUseCase };

@@ -5,7 +5,7 @@ import { UserFindUseCase } from "./user-find.usecase";
 import { Get, controller, param, response } from "@expressots/adapter-express";
 
 @controller("/user/find")
-class UserFindController extends BaseController {
+export class UserFindController extends BaseController {
     constructor(private userFindUseCase: UserFindUseCase) {
         super();
     }
@@ -22,5 +22,3 @@ class UserFindController extends BaseController {
         );
     }
 }
-
-export { UserFindController };

@@ -6,6 +6,6 @@ describe("AppUseCase", () => {
         const appUseCase = new AppUseCase();
         const result = appUseCase.execute();
 
-        expect(result).toBe("Hello Expresso TS!");
+        expect(result).toBe("Hello from ExpressoTS!");
     });
 });

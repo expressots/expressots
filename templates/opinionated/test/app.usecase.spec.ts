@@ -10,6 +10,6 @@ describe("AppUseCase", () => {
 
     it("returns a valid AppResponse", () => {
         const response = appUseCase.execute();
-        expect(response).toBe("Hello from ExpressoTS App");
+        expect(response).toBe("Hello from ExpressoTS!");
     });
 });

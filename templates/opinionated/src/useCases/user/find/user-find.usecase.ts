@@ -4,7 +4,7 @@ import { provide } from "inversify-binding-decorators";
 import { UserFindRequestDTO, UserFindResponseDTO } from "./user-find.dto";
 
 @provide(UserFindUseCase)
-class UserFindUseCase {
+export class UserFindUseCase {
     constructor(
         private userRepository: UserRepository,
         private report: Report,
@@ -30,5 +30,3 @@ class UserFindUseCase {
         };
     }
 }
-
-export { UserFindUseCase };

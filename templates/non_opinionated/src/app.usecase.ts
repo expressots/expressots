@@ -1,10 +1,8 @@
 import { provide } from "inversify-binding-decorators";
 
 @provide(AppUseCase)
-class AppUseCase {
+export class AppUseCase {
     execute() {
-        return "Hello Expresso TS!";
+        return "Hello from ExpressoTS!";
     }
 }
-
-export { AppUseCase };

@@ -11,7 +11,7 @@ import {
 } from "@expressots/adapter-express";
 
 @controller("/user/update")
-class UserUpdateController extends BaseController {
+export class UserUpdateController extends BaseController {
     constructor(private userUpdateUseCase: UserUpdateUseCase) {
         super();
     }
@@ -31,5 +31,3 @@ class UserUpdateController extends BaseController {
         );
     }
 }
-
-export { UserUpdateController };

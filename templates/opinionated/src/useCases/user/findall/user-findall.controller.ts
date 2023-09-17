@@ -5,7 +5,7 @@ import { FindAllUserResponseDTO } from "./user-findall.dto";
 import { FindAllUserUseCase } from "./user-findall.usecase";
 
 @controller("/user/findall")
-class UserFindallController extends BaseController {
+export class UserFindallController extends BaseController {
     constructor(private findallUserUseCase: FindAllUserUseCase) {
         super();
     }
@@ -19,5 +19,3 @@ class UserFindallController extends BaseController {
         );
     }
 }
-
-export { UserFindallController };

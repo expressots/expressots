@@ -5,7 +5,7 @@ import { IEntity } from "@entities/base.entity";
 import { InMemoryDB } from "@providers/db-in-memory/db-in-memory.provider";
 
 @provide(BaseRepository)
-class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
+export class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
     @inject(InMemoryDB)
     private inMemoryDB!: InMemoryDB;
     private tableName: string;
@@ -72,5 +72,3 @@ class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
         return this.table;
     }
 }
-
-export { BaseRepository };

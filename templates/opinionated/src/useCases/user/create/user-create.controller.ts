@@ -5,7 +5,7 @@ import { CreateUserRequestDTO, CreateUserResponseDTO } from "./user-create.dto";
 import { CreateUserUseCase } from "./user-create.usecase";
 
 @controller("/user/create")
-class UserCreateController extends BaseController {
+export class UserCreateController extends BaseController {
     constructor(private createUserUseCase: CreateUserUseCase) {
         super();
     }
@@ -22,5 +22,3 @@ class UserCreateController extends BaseController {
         );
     }
 }
-
-export { UserCreateController };
