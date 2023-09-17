@@ -145,6 +145,10 @@
             {
               "type": "ci",
               "section": "Continuous Integrations"
+            },
+            {
+              "type": "chore",
+              "hidden": true
             }
           ]
         }
