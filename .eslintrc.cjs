@@ -21,6 +21,7 @@ module.exports = {
     "node_modules",
     ".eslintrc.cjs",
     "packages/core/test",
+    "scripts",
   ],
   rules: {
     "@typescript-eslint/adjacent-overload-signatures": "error",
