@@ -24,6 +24,7 @@ class MiddlewareResolver {
     compression: "compression",
     cookieParser: "cookie-parser",
     cookieSession: "cookie-session",
+    serveFavicon: "serve-favicon",
     // Add other middlewares
   };
 

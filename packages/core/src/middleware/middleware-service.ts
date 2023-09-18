@@ -9,6 +9,7 @@ import { CookieParserOptions } from "./interfaces/cookie-parser.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { middlewareResolver } from "./middleware-resolver";
 import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
+import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 
 type ExpressHandler =
   | express.ErrorRequestHandler
@@ -60,6 +61,15 @@ interface IMiddleware {
    * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
    */
   addCookieSession(options: CookieSessionOptions): void;
+
+  /**
+   * Adds a middleware to serve the favicon to the middleware collection.
+   * The favicon is the icon that is displayed in the browser tab for the application.
+   *
+   * @param path - The path to the favicon file.
+   * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
+   */
+  addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void;
 
   /**
    * Configures the error handling middleware for the application.
@@ -204,6 +214,23 @@ class Middleware implements IMiddleware {
     const middleware = middlewareResolver("cookieSession", options);
 
     const middlewareExist = this.middlewareExists("cookieSession");
+
+    if (middleware && !middlewareExist) {
+      this.middlewares.push(middleware);
+    }
+  }
+
+  /**
+   * Adds a middleware to serve the favicon to the middleware collection.
+   * The favicon is the icon that is displayed in the browser tab for the application.
+   *
+   * @param path - The path to the favicon file.
+   * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
+   */
+  addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void {
+    const middleware = middlewareResolver("serveFavicon", path, options);
+
+    const middlewareExist = this.middlewareExists("serveFavicon");
 
     if (middleware && !middlewareExist) {
       this.middlewares.push(middleware);
