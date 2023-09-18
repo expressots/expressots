@@ -20,7 +20,9 @@ function copyRecursiveSync(src, dest) {
 }
 
 if (process.argv.length < 4) {
-  console.error("Usage: node copy.js <origin1> <origin2> ... <destination>");
+  process.stderr.write(
+    "Usage: node copy.js <origin1> <origin2> ... <destination>\n",
+  );
   process.exit(1);
 }
 
@@ -29,6 +31,5 @@ const destination = process.argv[process.argv.length - 1];
 for (let i = 2; i < process.argv.length - 1; i++) {
   const origin = process.argv[i];
   copyRecursiveSync(origin, path.join(destination, path.basename(origin)));
-  console.log(`Copied: ${origin} to ${destination}`);
+  process.stdout.write(`Copied: ${origin} to ${destination}\n`);
 }
-
