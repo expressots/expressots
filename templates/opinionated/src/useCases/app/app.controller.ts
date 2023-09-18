@@ -3,7 +3,7 @@ import { Get, controller } from "@expressots/adapter-express";
 import { AppUseCase } from "./app.usecase";
 
 @controller("/")
-class AppController extends BaseController {
+export class AppController extends BaseController {
     constructor(private appUseCase: AppUseCase) {
         super();
     }
@@ -13,5 +13,3 @@ class AppController extends BaseController {
         return this.appUseCase.execute();
     }
 }
-
-export { AppController };

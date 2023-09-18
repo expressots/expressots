@@ -10,7 +10,7 @@ import {
 } from "@expressots/adapter-express";
 
 @controller("/user/delete")
-class UserDeleteController extends BaseController {
+export class UserDeleteController extends BaseController {
     constructor(private userDeleteUseCase: UserDeleteUseCase) {
         super();
     }
@@ -27,5 +27,3 @@ class UserDeleteController extends BaseController {
         );
     }
 }
-
-export { UserDeleteController };

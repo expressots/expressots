@@ -10,7 +10,7 @@ import { IEntity } from "@entities/base.entity";
  * @decorator @provideSingleton(InMemoryDB)
  */
 @provideSingleton(InMemoryDB)
-class InMemoryDB {
+export class InMemoryDB {
     private tables: Record<string, IEntity[]> = {};
 
     /**
@@ -69,5 +69,3 @@ class InMemoryDB {
         console.table(table);
     }
 }
-
-export { InMemoryDB };

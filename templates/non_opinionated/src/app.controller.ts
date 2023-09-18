@@ -4,7 +4,7 @@ import { AppUseCase } from "./app.usecase";
 import { Get, controller, response } from "@expressots/adapter-express";
 
 @controller("/")
-class AppController extends BaseController {
+export class AppController extends BaseController {
     constructor(private appUseCase: AppUseCase) {
         super();
     }
@@ -14,5 +14,3 @@ class AppController extends BaseController {
         return res.send(this.appUseCase.execute());
     }
 }
-
-export { AppController };

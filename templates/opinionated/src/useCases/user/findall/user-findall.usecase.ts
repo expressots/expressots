@@ -4,7 +4,7 @@ import { UserRepository } from "@repositories/user/user.repository";
 import { FindAllUserResponseDTO } from "./user-findall.dto";
 
 @provide(FindAllUserUseCase)
-class FindAllUserUseCase {
+export class FindAllUserUseCase {
     constructor(private userRepository: UserRepository) {}
 
     execute(): FindAllUserResponseDTO[] | null {
@@ -26,5 +26,3 @@ class FindAllUserUseCase {
         }
     }
 }
-
-export { FindAllUserUseCase };

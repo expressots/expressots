@@ -4,7 +4,7 @@ import { provide } from "inversify-binding-decorators";
 import { UserDeleteRequestDTO, UserDeleteResponseDTO } from "./user-delete.dto";
 
 @provide(UserDeleteUseCase)
-class UserDeleteUseCase {
+export class UserDeleteUseCase {
     constructor(
         private userRepository: UserRepository,
         private report: Report,
@@ -31,5 +31,3 @@ class UserDeleteUseCase {
         throw error;
     }
 }
-
-export { UserDeleteUseCase };

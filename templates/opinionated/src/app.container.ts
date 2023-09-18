@@ -5,10 +5,8 @@ import { UserModule } from "@useCases/user/user.module";
 
 const appContainer = new AppContainer();
 
-const container: Container = appContainer.create([
+export const container: Container = appContainer.create([
     // Add your modules here
     AppModule,
     UserModule,
 ]);
-
-export { container };
