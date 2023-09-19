@@ -50,13 +50,13 @@ Please delete options that are not relevant.
 
 ## Report an Issue or a Bug
 
-If you find a bug in the source code, you can help us by submitting an issue in the **[Issue reporting channel](https://github.com/expressots/expressots/issues)**. Event better, you can submit a **[Pull Request](https://github.com/expressots/expressots/pulls)** with a fix.
+If you find a bug in the source code, you can help us by submitting an issue in the **[Issue reporting channel](https://github.com/expressots/expressots/issues)**. Even better, you can submit a **[Pull Request](https://github.com/expressots/expressots/pulls)** with a fix.
 
 ## Request a feature
 
 You can request a new feature by submitting an issue in the **[Issue reporting channel](https://github.com/expressots/expressots/issues)**.
 
-If you would like to implement the new feature, please submit an issue describing your proposal first. Thi will allow us to provide feedback, ensure that the feature is aligned with the project goals and that you are not duplicating work.
+If you would like to implement the new feature, please submit an issue describing your proposal first. This will allow us to provide feedback, ensure that the feature is aligned with the project goals and that you are not duplicating work.
 
 ## Coding Guidelines
 
