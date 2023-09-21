@@ -1,5 +1,30 @@
 
 
+## [2.2.0](https://github.com/expressots/expressots/compare/2.1.0...2.2.0) (2023-09-21)
+
+
+### Features
+
+* add middleware based routing ([3d7720e](https://github.com/expressots/expressots/commit/3d7720e21807117333d60e7f2b7bb01789b96060))
+* add serve-favicon middleware ([024bdc4](https://github.com/expressots/expressots/commit/024bdc4d8d4f9890175975d052ca09c5b4e245cf))
+* add serve-favicon middleware ([0733697](https://github.com/expressots/expressots/commit/0733697ed66a7133e60ec6fa09bdaeb0bf1985d7))
+
+
+### Bug Fixes
+
+* add chore message to pre-commit hook ([45ae428](https://github.com/expressots/expressots/commit/45ae428652bb6e4f49cb2a6334686be0dee3669d))
+* add middleware validation based on path ([7035153](https://github.com/expressots/expressots/commit/7035153dededd3ca7c5159544f4ab79baee2c4d7))
+* re-write cp, mv and rm improving performance ([68d68ad](https://github.com/expressots/expressots/commit/68d68ad11385ca783fa5c51e3092937a6f898ac6))
+* update contribute_howto doc ([4bf6e12](https://github.com/expressots/expressots/commit/4bf6e121091e894a7675ff78959ab4647ec04f6d))
+* update contribute_howto doc ([fbbe47d](https://github.com/expressots/expressots/commit/fbbe47d6df76211fadd736fab864aa41e0313ec9))
+* update templates for v2 scaffold ([74811f3](https://github.com/expressots/expressots/commit/74811f3ac54610be7367de75f37363dc0c107dbc))
+
+
+### Build System
+
+* **scripts:** add cross platform build scripts ([e6cecbc](https://github.com/expressots/expressots/commit/e6cecbc6b7a309f00aa6cd60f6d8207dc8d4c5cb))
+* **scripts:** add cross platform build scripts ([8b5c133](https://github.com/expressots/expressots/commit/8b5c133e4e28d67b8a7edca5b04bfe04a6d12540))
+
 ## [2.1.0](https://github.com/expressots/expressots/compare/2.0.0...2.1.0) (2023-09-16)
 
 
