@@ -178,7 +178,6 @@ class Middleware implements IMiddleware {
         ? m.middleware.middlewares.some((mw) => mw?.name === middlewareName)
         : m.middleware?.name === middlewareName,
     );
-
     return middlewareIndex !== -1;
   }
 
@@ -227,7 +226,6 @@ class Middleware implements IMiddleware {
    */
   addCompression(options?: CompressionOptions): void {
     const middleware = middlewareResolver("compression", options);
-
     const middlewareExist = this.middlewareExists("compression");
 
     if (middleware && !middlewareExist) {
@@ -249,7 +247,6 @@ class Middleware implements IMiddleware {
     options?: CookieParserOptions | undefined,
   ): void {
     const middleware = middlewareResolver("cookieParser", secret, options);
-
     const middlewareExist = this.middlewareExists("cookieParser");
 
     if (middleware && !middlewareExist) {
@@ -356,13 +353,16 @@ class Middleware implements IMiddleware {
       };
     }
 
-    config.middlewares.forEach((m) => {
-      const middlewareName = m?.name || "anonymous";
-      const middlewareExist = this.middlewareExists(middlewareName);
+    if (config.path) {
+      // verify if middleware if path already exists
+      const middlewareIndex = this.middlewarePipeline.findIndex(
+        (m) =>
+          typeof m.middleware === "object" && m.middleware.path === config.path,
+      );
 
-      if (middlewareExist) {
+      if (middlewareIndex !== -1) {
         this.logger.warn(
-          `[${middlewareName}] already exists. Skipping...`,
+          `[${config.path}] route already exists. Skipping...`,
           "configure-service",
         );
       } else {
@@ -371,7 +371,24 @@ class Middleware implements IMiddleware {
           middleware: config,
         });
       }
-    });
+    } else {
+      config.middlewares.forEach((m) => {
+        const middlewareName = m?.name || "anonymous";
+        const middlewareExist = this.middlewareExists(middlewareName);
+        console.log(middlewareExist);
+        if (middlewareExist) {
+          this.logger.warn(
+            `[${middlewareName}] already exists. Skipping...`,
+            "configure-service",
+          );
+        } else {
+          this.middlewarePipeline.push({
+            timestamp: new Date(),
+            middleware: config,
+          });
+        }
+      });
+    }
   }
 
   /**
