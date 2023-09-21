@@ -11,11 +11,53 @@ import { middlewareResolver } from "./middleware-resolver";
 import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
 import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 
+/**
+ * ExpressHandler Type
+ *
+ * The ExpressHandler type is a union type that represents various types of Express middleware functions.
+ * It can be one of the following types:
+ * - express.ErrorRequestHandler: Handles errors in the middleware pipeline.
+ * - express.RequestParamHandler: Handles parameters in the middleware pipeline.
+ * - express.RequestHandler: General request handler.
+ * - undefined: Represents the absence of a handler.
+ */
 type ExpressHandler =
   | express.ErrorRequestHandler
   | express.RequestParamHandler
   | express.RequestHandler
   | undefined;
+
+/**
+ * MiddlewareArgs Type
+ *
+ * The MiddlewareArgs type represents arguments that can be passed to a middleware function.
+ * It can either be a string (a route or path) or an instance of ExpressHandler.
+ */
+type MiddlewareArgs = string | ExpressHandler;
+
+/**
+ * MiddlewareConfig Interface
+ *
+ * The MiddlewareConfig interface specifies the structure for middleware configuration objects.
+ * - path: Optional. The route path for which the middleware is configured.
+ * - middlewares: An array of ExpressHandler types that make up the middleware pipeline for the route specified by 'path'.
+ */
+type MiddlewareConfig = {
+  path?: string;
+  middlewares: Array<ExpressHandler>;
+};
+
+/**
+ * MiddlewarePipeline Interface
+ *
+ * The MiddlewarePipeline interface represents the metadata and actual middleware to be executed in a middleware pipeline.
+ * - timestamp: The date and time at which the middleware was added to the pipeline.
+ * - middleware: Can be either an ExpressHandler function or a MiddlewareConfig object defining a more complex middleware setup.
+ */
+interface MiddlewarePipeline {
+  timestamp: Date;
+  middleware: ExpressHandler | MiddlewareConfig;
+}
 
 /**
  * Interface for configuring and managing middlewares in the application.
@@ -93,14 +135,14 @@ interface IMiddleware {
    * @param middleware - The Express request handler function to be added to the middleware collection.
    *
    */
-  addMiddleware(middleware: express.RequestHandler): void;
+  addMiddleware(...middleware: Array<MiddlewareArgs>): void;
 
   /**
-   * Retrieves all the middlewares that have been added.
+   * Retrieves middleware pipeline in the order they were added.
    *
    * @returns An array of Express request handlers representing the middlewares.
    */
-  getMiddlewares(): Array<express.RequestHandler>;
+  getMiddlewarePipeline(): Array<MiddlewarePipeline>;
 
   /**
    * Gets the configured error handler middleware.
@@ -119,7 +161,7 @@ interface IMiddleware {
  */
 @provideSingleton(Middleware)
 class Middleware implements IMiddleware {
-  private middlewares: Array<express.RequestHandler> = [];
+  private middlewarePipeline: Array<MiddlewarePipeline> = [];
   private errorHandler: ExpressHandler | undefined;
   private logger: Logger = new Logger();
 
@@ -131,9 +173,10 @@ class Middleware implements IMiddleware {
    * @returns A boolean value indicating whether the middleware exists or not.
    */
   private middlewareExists(middlewareName: string): boolean {
-    const middlewares = this.getMiddlewares();
-    const middlewareIndex = middlewares.findIndex(
-      (m) => m.name === middlewareName,
+    const middlewareIndex = this.middlewarePipeline.findIndex((m) =>
+      typeof m.middleware === "object"
+        ? m.middleware.middlewares.some((mw) => mw?.name === middlewareName)
+        : m.middleware?.name === middlewareName,
     );
 
     return middlewareIndex !== -1;
@@ -153,7 +196,10 @@ class Middleware implements IMiddleware {
         "configure-service",
       );
     } else {
-      this.middlewares.push(express.json(options));
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: express.json(options),
+      });
     }
   }
 
@@ -167,7 +213,10 @@ class Middleware implements IMiddleware {
     const middlewareExist = this.middlewareExists("cors");
 
     if (middleware && !middlewareExist) {
-      this.middlewares.push(middleware);
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
     }
   }
 
@@ -182,7 +231,10 @@ class Middleware implements IMiddleware {
     const middlewareExist = this.middlewareExists("compression");
 
     if (middleware && !middlewareExist) {
-      this.middlewares.push(middleware);
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
     }
   }
 
@@ -201,7 +253,10 @@ class Middleware implements IMiddleware {
     const middlewareExist = this.middlewareExists("cookieParser");
 
     if (middleware && !middlewareExist) {
-      this.middlewares.push(middleware);
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
     }
   }
 
@@ -216,7 +271,10 @@ class Middleware implements IMiddleware {
     const middlewareExist = this.middlewareExists("cookieSession");
 
     if (middleware && !middlewareExist) {
-      this.middlewares.push(middleware);
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
     }
   }
 
@@ -233,7 +291,10 @@ class Middleware implements IMiddleware {
     const middlewareExist = this.middlewareExists("serveFavicon");
 
     if (middleware && !middlewareExist) {
-      this.middlewares.push(middleware);
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
     }
   }
 
@@ -266,7 +327,10 @@ class Middleware implements IMiddleware {
         "configure-service",
       );
     } else {
-      this.middlewares.push(express.static(root, options));
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: express.static(root, options),
+      });
     }
   }
 
@@ -276,26 +340,49 @@ class Middleware implements IMiddleware {
    * @param middleware - The Express request handler function to be added to the middleware collection.
    *
    */
-  addMiddleware(middleware: express.RequestHandler): void {
-    const middlewareExist = this.middlewareExists(middleware.name);
+  addMiddleware(...middleware: Array<MiddlewareArgs>): void {
+    let config: MiddlewareConfig;
 
-    if (middlewareExist) {
-      this.logger.warn(
-        `[${middleware.name}] already exists. Skipping...`,
-        "configure-service",
-      );
+    if (typeof middleware[0] === "string") {
+      const [path, ...middlewares] = middleware;
+      config = {
+        path,
+        middlewares: middlewares as Array<ExpressHandler>,
+      };
     } else {
-      this.middlewares.push(middleware);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      config = {
+        middlewares: middleware as Array<ExpressHandler>,
+      };
     }
+
+    config.middlewares.forEach((m) => {
+      const middlewareName = m?.name || "anonymous";
+      const middlewareExist = this.middlewareExists(middlewareName);
+
+      if (middlewareExist) {
+        this.logger.warn(
+          `[${middlewareName}] already exists. Skipping...`,
+          "configure-service",
+        );
+      } else {
+        this.middlewarePipeline.push({
+          timestamp: new Date(),
+          middleware: config,
+        });
+      }
+    });
   }
 
   /**
-   * Retrieves all the middlewares that have been added to the collection.
+   * Retrieves middleware pipeline in the order they were added.
    *
    * @returns An array of Express request handlers representing the middlewares.
    */
-  public getMiddlewares(): Array<express.RequestHandler> {
-    return this.middlewares;
+  public getMiddlewarePipeline(): Array<MiddlewarePipeline> {
+    return this.middlewarePipeline.sort((a, b) => {
+      return a.timestamp.getTime() - b.timestamp.getTime();
+    });
   }
 
   /**
