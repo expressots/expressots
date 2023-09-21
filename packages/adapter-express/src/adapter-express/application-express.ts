@@ -15,6 +15,17 @@ import { IApplicationExpress } from "./application-express.interface";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import { ApplicationBase } from "./application-base";
 
+type ExpressHandler =
+  | express.ErrorRequestHandler
+  | express.RequestParamHandler
+  | express.RequestHandler
+  | undefined;
+
+type MiddlewareConfig = {
+  path?: string;
+  middlewares: Array<ExpressHandler>;
+};
+
 /**
  * Enum representing possible server environments.
  */
@@ -33,7 +44,7 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
   private port: number;
   private environment: ServerEnvironment;
   private container: Container;
-  private middlewares: Array<express.RequestHandler> = [];
+  private middlewares: Array<ExpressHandler> = [];
 
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
@@ -62,13 +73,29 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
     await Promise.resolve(this.configureServices());
 
     const middleware = container.get<IMiddleware>(Middleware);
-    this.middlewares.push(...middlewares, ...middleware.getMiddlewares());
+    const sortedMiddlewarePipeline = middleware.getMiddlewarePipeline();
+    const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
+
+    this.middlewares.push(...middlewares, ...(pipeline as Array<ExpressHandler>));
+
+    const allMiddlewareEntries: Array<ExpressHandler | MiddlewareConfig> = [...this.middlewares];
 
     const expressServer = new InversifyExpressServer(container);
 
     expressServer.setConfig((app: express.Application) => {
-      this.middlewares.forEach((middleware) => {
-        app.use(middleware);
+      allMiddlewareEntries.forEach((entry) => {
+        if (typeof entry === "function") {
+          app.use(entry as express.RequestHandler);
+        } else {
+          const { path, middlewares } = entry as MiddlewareConfig;
+          middlewares.forEach((middleware) => {
+            if (path) {
+              app.use(path, middleware as express.RequestHandler);
+            } else {
+              app.use(middleware as express.RequestHandler);
+            }
+          });
+        }
       });
     });
 
