@@ -76,8 +76,9 @@
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^17.7.0",
-    "@expressots/core": "^1.9.1",
+    "@expressots/core": "^2.2.0",
     "@release-it/conventional-changelog": "^7.0.1",
+    "@types/express": "^4.17.17",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.4.9",
     "@typescript-eslint/eslint-plugin": "^6.6.0",
