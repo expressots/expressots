@@ -70,7 +70,7 @@ class AppFactory {
         case AppExpress:
           app = container.resolve(appTypeOrMiddlewares as new () => AppExpress);
           app.create(container);
-          return app as IApplicationExpress;
+          break;
         /* case AppFastify:
           app = container.resolve(appTypeOrMiddlewares as new () => AppFastify);
           await app.create(container);
@@ -78,8 +78,8 @@ class AppFactory {
         default:
           app = container.resolve(appTypeOrMiddlewares as new () => AppExpress);
           app.create(container);
-          return app as IApplicationExpress;
       }
+      return app as IApplicationExpress;
     } else {
       switch (httpServerFactory) {
         case AppExpress:
@@ -88,7 +88,7 @@ class AppFactory {
             container,
             appTypeOrMiddlewares as Array<express.RequestHandler>,
           );
-          return app as AppExpress;
+          break;
         /* case AppFastify:
           app = container.get<AppFastify>(AppFastify);
           await app.create(container, appTypeOrMiddlewares as Array<Handler>);
@@ -99,8 +99,8 @@ class AppFactory {
             container,
             appTypeOrMiddlewares as Array<express.RequestHandler>,
           );
-          return app as AppExpress;
       }
+      return app as AppExpress;
     }
   }
 
