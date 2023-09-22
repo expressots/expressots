@@ -375,7 +375,7 @@ class Middleware implements IMiddleware {
       config.middlewares.forEach((m) => {
         const middlewareName = m?.name || "anonymous";
         const middlewareExist = this.middlewareExists(middlewareName);
-        console.log(middlewareExist);
+
         if (middlewareExist) {
           this.logger.warn(
             `[${middlewareName}] already exists. Skipping...`,
