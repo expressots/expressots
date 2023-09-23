@@ -10,6 +10,7 @@ import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { middlewareResolver } from "./middleware-resolver";
 import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
 import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
+import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
 
 /**
  * ExpressHandler Type
@@ -103,6 +104,14 @@ interface IMiddleware {
    * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
    */
   addCookieSession(options: CookieSessionOptions): void;
+
+  /**
+   * Adds Morgan middleware to log HTTP requests.
+   *
+   * @param format - The log format. Can be a string or a function.
+   * @param options - Optional configuration options for Morgan. Defines the behavior of the logger like the output stream, buffer duration, etc.
+   */
+  addMorgan(format: string | FormatFn, options?: OptionsMorgan): void;
 
   /**
    * Adds a middleware to serve the favicon to the middleware collection.
@@ -227,6 +236,27 @@ class Middleware implements IMiddleware {
   addCompression(options?: CompressionOptions): void {
     const middleware = middlewareResolver("compression", options);
     const middlewareExist = this.middlewareExists("compression");
+
+    if (middleware && !middlewareExist) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
+    }
+  }
+
+  /**
+   * Adds Morgan middleware to log HTTP requests.
+   *
+   * @param format - The log format. Can be a string or a function.
+   * @param options - Optional configuration options for Morgan. Defines the behavior of the logger like the output stream, buffer duration, etc.
+   */
+  addMorgan(
+    format: string | FormatFn,
+    options?: OptionsMorgan | undefined,
+  ): void {
+    const middleware = middlewareResolver("morgan", format, options);
+    const middlewareExist = this.middlewareExists("morgan");
 
     if (middleware && !middlewareExist) {
       this.middlewarePipeline.push({

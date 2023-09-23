@@ -25,6 +25,7 @@ class MiddlewareResolver {
     cookieParser: "cookie-parser",
     cookieSession: "cookie-session",
     serveFavicon: "serve-favicon",
+    morgan: "morgan",
     // Add other middlewares
   };
 
