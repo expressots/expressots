@@ -1,5 +1,18 @@
 
 
+## [2.3.0](https://github.com/expressots/expressots/compare/2.2.1...2.3.0) (2023-09-25)
+
+
+### Features
+
+* add morgan middleware ([ffe5f36](https://github.com/expressots/expressots/commit/ffe5f36b447f7fafd3a44c90a304b3b9c5ec4481))
+* bump vitest from 0.34.4 to 0.34.5 ([e1a1da5](https://github.com/expressots/expressots/commit/e1a1da51ab35bf6bb24ba9073b270a490ab331d8))
+
+
+### Bug Fixes
+
+* add IMorgan interface to serve it types ([adb29e5](https://github.com/expressots/expressots/commit/adb29e505af79cf998f1288085695dfee8e5680d))
+
 ## [2.2.0](https://github.com/expressots/expressots/compare/2.1.0...2.2.0) (2023-09-21)
 
 

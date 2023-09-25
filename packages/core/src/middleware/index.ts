@@ -6,3 +6,4 @@ export { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session
 export { Keygrip } from "./interfaces/cookie-session/keygrip.interface";
 export { CookieParserOptions } from "./interfaces/cookie-parser.interface";
 export { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
+export * as IMorgan from "./interfaces/morgan.interface";
