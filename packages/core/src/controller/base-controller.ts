@@ -48,7 +48,11 @@ abstract class BaseController implements Controller {
    * @param {Object} [options={}] - An optional object containing data to be passed to the template.
    *
    */
-  protected callUseRender(res: Response, template: string, options = {}): void {
+  protected callUseRender(
+    res: Response,
+    template: string,
+    options: object = {},
+  ): void {
     return res.render(template, options);
   }
 
@@ -66,7 +70,7 @@ abstract class BaseController implements Controller {
   protected callUseRenderAsync(
     res: Response,
     template: string,
-    options = {},
+    options: object = {},
   ): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       res.render(template, options, (err, compiled) => {
