@@ -88,6 +88,7 @@ const enum PackageManager {
 	npm = "npm",
 	yarn = "yarn",
 	pnpm = "pnpm",
+	bun = "bun",
 }
 
 const projectForm = async (projectName: string, args: any[]): Promise<void> => {
@@ -100,7 +101,12 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 	// Resolving the argument order problem
 	for (const arg of args) {
 		if (args.length >= 3) {
-			if (arg === "npm" || arg === "yarn" || arg === "pnpm") {
+			if (
+				arg === "npm" ||
+				arg === "yarn" ||
+				arg === "pnpm" ||
+				arg === "bun"
+			) {
 				packageManager = arg as PackageManager;
 			} else if (arg === "non-opinionated" || arg === "opinionated") {
 				template = arg as keyof typeof Template;
@@ -132,7 +138,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 				type: "list",
 				name: "packageManager",
 				message: "Package manager",
-				choices: ["npm", "yarn", "pnpm"],
+				choices: ["npm", "yarn", "pnpm", "bun"],
 			},
 			{
 				type: "list",
@@ -168,6 +174,15 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 	};
 
 	if (answer.confirm) {
+		// Check if package manager is bun and OS is Windows
+		if (answer.packageManager === "bun" && process.platform === "win32") {
+			printError(
+				"bun is not supported on Windows. Please use",
+				"npm, yarn or pnpm",
+			);
+			process.exit(1);
+		}
+
 		await checkIfPackageManagerExists(answer.packageManager);
 		console.log("\n");
 		const progressBar = new SingleBar(
@@ -240,6 +255,9 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 				break;
 			case "pnpm":
 				console.log(chalk.bold.gray("$ pnpm run dev"));
+				break;
+			case "bun":
+				console.log(chalk.bold.gray("$ bun dev"));
 				break;
 		}
 

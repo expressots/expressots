@@ -23,7 +23,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 				.option("package-manager", {
 					describe: "The package manager to use",
 					type: "string",
-					choices: ["npm", "yarn", "pnpm"],
+					choices: ["npm", "yarn", "pnpm", "bun"],
 					alias: "p",
 				})
 				.option("directory", {
