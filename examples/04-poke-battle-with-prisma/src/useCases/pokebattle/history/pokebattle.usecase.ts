@@ -3,11 +3,11 @@ import {
   IPokebattleHistoryRequestDTO,
   IPokebattleHistoryResponseDTO,
 } from "./pokebattle.dto";
-import { HistoryRepository } from "@repositories/history/history.repository";
+import { BattleRepository } from "@repositories/battle/battle.repository";
 
 @provide(PokebattleUseCase)
 class PokebattleUseCase {
-  constructor(private historyRepository: HistoryRepository) {}
+  constructor(private historyRepository: BattleRepository) {}
 
   async execute(
     params: IPokebattleHistoryRequestDTO,

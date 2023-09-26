@@ -42,7 +42,6 @@ class UserRepository implements IUserRepository {
         password,
       }),
     });
-
     return this.mapToDTO(createdUser);
   }
 

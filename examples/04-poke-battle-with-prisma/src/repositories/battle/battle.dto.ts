@@ -1,4 +1,4 @@
-interface IHistoryDTO {
+interface IBattleDTO {
   id?: string;
   userName: string;
   playerId: string;
@@ -18,4 +18,4 @@ interface IHistoryDTO {
   isDraw: boolean;
 }
 
-export { IHistoryDTO };
+export { IBattleDTO };

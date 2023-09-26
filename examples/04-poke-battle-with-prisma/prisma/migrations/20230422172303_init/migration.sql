@@ -9,7 +9,7 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "History" (
+CREATE TABLE "Battle" (
     "id" TEXT NOT NULL,
     "log" JSONB[],
     "playerId" TEXT NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE "History" (
     "loserName" TEXT NOT NULL,
     "isDraw" BOOLEAN NOT NULL,
 
-    CONSTRAINT "History_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Battle_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

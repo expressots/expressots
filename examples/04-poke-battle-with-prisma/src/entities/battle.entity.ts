@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import { provide } from "inversify-binding-decorators";
 
-@provide(History)
-class History {
+@provide(Battle)
+class Battle {
   private _id: string;
   private _playerId: string;
   public log: {
@@ -61,4 +61,4 @@ class History {
   }
 }
 
-export { History };
+export { Battle };

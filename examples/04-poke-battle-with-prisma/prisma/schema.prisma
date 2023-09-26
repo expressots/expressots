@@ -16,10 +16,10 @@ model User {
   email    String    @unique
   name     String
   password String
-  History  History[]
+  Battle  Battle[]
 }
 
-model History {
+model Battle {
   id         String    @id @default(uuid())
   player     User      @relation(fields: [playerId], references: [id])
   log        Json[]

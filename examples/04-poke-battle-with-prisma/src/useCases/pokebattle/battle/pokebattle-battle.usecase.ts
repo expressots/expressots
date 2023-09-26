@@ -4,7 +4,7 @@ import {
   IPokebattleBattleRequestDTO,
   IPokebattleBattleResponseDTO,
 } from "./pokebattle-battle.dto";
-import { HistoryRepository } from "@repositories/history/history.repository";
+import { BattleRepository } from "@repositories/battle/battle.repository";
 
 import { TYPE_CHART } from "@providers/battle/typechart";
 import {
@@ -19,7 +19,7 @@ import {
 
 @provide(PokebattleBattleUseCase)
 class PokebattleBattleUseCase {
-  constructor(private historyRepository: HistoryRepository) {}
+  constructor(private historyRepository: BattleRepository) {}
 
   async execute({
     body,
