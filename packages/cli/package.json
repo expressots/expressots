@@ -47,15 +47,15 @@
 		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
-		"@expressots/boost-ts": "^1.1.1",
-		"chalk-animation": "^1",
-		"cli-progress": "^3.11.2",
-		"degit": "^2.8.4",
-		"glob": "^10.2.6",
-		"inquirer": "^8.0.0",
-		"mustache": "^4.2.0",
-		"ts-node": "^10.9.1",
-		"yargs": "^17.6.2"
+		"@expressots/boost-ts": "1.1.1",
+		"chalk-animation": "2.0.3",
+		"cli-progress": "3.11.2",
+		"degit": "2.8.4",
+		"glob": "10.2.6",
+		"inquirer": "8.0.0",
+		"mustache": "4.2.0",
+		"ts-node": "10.9.1",
+		"yargs": "17.6.2"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^17.7.1",
