@@ -5,6 +5,12 @@ import { projectForm } from "./form";
 type CommandModuleArgs = {};
 
 const createProject = (): CommandModule<CommandModuleArgs, any> => {
+	const packageManagers: Array<string> = ["npm", "yarn", "pnpm"];
+
+	if (process.platform !== "win32") {
+		packageManagers.push("bun");
+	}
+
 	return {
 		command: "new <project-name> [package-manager] [template] [directory]",
 		describe: "Create a new project",
@@ -23,7 +29,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 				.option("package-manager", {
 					describe: "The package manager to use",
 					type: "string",
-					choices: ["npm", "yarn", "pnpm", "bun"],
+					choices: packageManagers,
 					alias: "p",
 				})
 				.option("directory", {
