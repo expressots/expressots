@@ -73,12 +73,18 @@ export const createTemplate = async ({
 			routeSchema = path.replace(/\/$/, "");
 		}
 
+		let templateBasedSchematic = schematic;
+		if (schematic === "module") {
+			templateBasedSchematic = "module-default";
+		}
+
 		writeTemplate({
 			outputPath: `${usecaseDir}/${path}/${file}`,
 			template: {
-				path: `./templates/${schematic}.tpl`,
+				path: `./templates/${templateBasedSchematic}.tpl`,
 				data: {
 					className,
+					moduleName: className,
 					route: routeSchema,
 					construct: anyCaseToKebabCase(className),
 					method: getHttpMethod(method),
@@ -278,6 +284,7 @@ export const createTemplate = async ({
 			}
 		}
 	}
+
 	if (schematic === "service") {
 		console.log(
 			" ",
