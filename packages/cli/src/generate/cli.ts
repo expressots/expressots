@@ -18,6 +18,8 @@ const coerceSchematicAliases = (arg: string) => {
 			return "provider";
 		case "e":
 			return "entity";
+		case "m":
+			return "module";
 		default:
 			return arg;
 	}
@@ -37,6 +39,7 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 					"service",
 					"provider",
 					"entity",
+					"module",
 				] as const,
 				describe: "The schematic to generate",
 				type: "string",
