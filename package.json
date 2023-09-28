@@ -89,9 +89,6 @@
     "vite": "4.4.9",
     "vitest": "0.34.5"
   },
-  "peerDependencies": {
-    "@expressots/adapter-express": "latest"
-  },
   "release-it": {
     "git": {
       "commitMessage": "chore(release): ${version}"
