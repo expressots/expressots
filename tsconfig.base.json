@@ -8,7 +8,6 @@
     "checkJs": true,
     "allowJs": true,
     "declaration": true,
-    "declarationMap": true,
     "noImplicitAny": false,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
