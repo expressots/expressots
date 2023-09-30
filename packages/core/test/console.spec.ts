@@ -2,6 +2,7 @@
  * Chalk dependency is not needed anymore
  */
 import "reflect-metadata";
+import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { Console } from "../src/console";
 
 let spy: vi.SpyInstance;

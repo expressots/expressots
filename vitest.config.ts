@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 /**
  * @see {@link https://vitejs.dev/config/}
@@ -9,6 +9,14 @@ export default defineConfig({
     globals: true,
     coverage: {
       all: true,
+      include: ["**/core/**"],
+      exclude: [
+        "**/node_modules/**",
+        "**/test/**",
+        "**/benchmark/**",
+        "**/index.ts/**",
+      ],
+      reporter: ["text", "html", "json"],
     },
     // ref: https://vitest.dev/config/#testtimeout
     testTimeout: 10000,
