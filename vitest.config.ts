@@ -16,7 +16,7 @@ export default defineConfig({
         "**/benchmark/**",
         "**/index.ts/**",
       ],
-      reporter: ["text", "html", "lcov", "json", "clover"],
+      reporter: ["text", "html", "json"],
     },
     // ref: https://vitest.dev/config/#testtimeout
     testTimeout: 10000,
