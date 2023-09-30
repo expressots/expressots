@@ -9,6 +9,14 @@ export default defineConfig({
     globals: true,
     coverage: {
       all: true,
+      include: ["**/core/**"],
+      exclude: [
+        "**/node_modules/**",
+        "**/test/**",
+        "**/benchmark/**",
+        "**/index.ts/**",
+      ],
+      reporter: ["text", "html", "lcov", "json", "clover"],
     },
     // ref: https://vitest.dev/config/#testtimeout
     testTimeout: 10000,

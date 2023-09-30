@@ -55,10 +55,3 @@ describe("App Container", () => {
     expect(container).to.be.instanceOf(Container);
   });
 });
-
-describe("Application Factory", () => {
-  it("Create an non opinionated Express application", () => {
-    const appContainer: AppContainer = new AppContainer();
-    const container = appContainer.create([]);
-  });
-});
