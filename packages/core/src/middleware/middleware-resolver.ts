@@ -27,6 +27,7 @@ class MiddlewareResolver {
     serveFavicon: "serve-favicon",
     morgan: "morgan",
     rateLimit: "express-rate-limit",
+    helmet: "helmet",
     // Add other middlewares
   };
 
