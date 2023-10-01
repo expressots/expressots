@@ -1,11 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from "express";
 
+/**
+ * Method (in the form of middleware) to generate/retrieve a value based on the
+ * incoming request.
+ *
+ * @param request {Request} - The Express request object.
+ * @param response {Response} - The Express response object.
+ *
+ * @returns {T} - The value needed.
+ */
 type ValueDeterminingMiddleware<T> = (
   request: Request,
   response: Response,
 ) => T | Promise<T>;
 
+/**
+ * Express request handler that sends back a response when a client is
+ * rate-limited.
+ * @param request {Request} - The Express request object.
+ * @param response {Response} - The Express response object.
+ * @param next {NextFunction} - The Express `next` function, can be called to skip responding.
+ * @param optionsUsed {Options} - The options used to set up the middleware.
+ */
 type RateLimitExceededEventHandler = (
   request: Request,
   response: Response,
@@ -13,6 +30,12 @@ type RateLimitExceededEventHandler = (
   optionsUsed: RateLimitOptions,
 ) => void;
 
+/**
+ * Data returned from the `Store` when a client's hit counter is incremented.
+ *
+ * @property totalHits {number} - The number of hits for that client so far.
+ * @property resetTime {Date | undefined} - The time when the counter resets.
+ */
 type ClientRateLimitInfo = {
   totalHits: number;
   resetTime: Date | undefined;
@@ -188,20 +211,104 @@ interface Validations {
 type DraftHeadersVersion = "draft-6" | "draft-7";
 
 interface RateLimitOptions {
+  /**
+   * How long we should remember the requests.
+   *
+   * Defaults to `60000` ms (= 1 minute).
+   */
   windowMs?: number;
+  /**
+   * The maximum number of connections to allow during the `window` before
+   * rate limiting the client.
+   *
+   * Can be the limit itself as a number or express middleware that parses
+   * the request and then figures out the limit.
+   *
+   * Defaults to `5`.
+   */
   limit?: number | ValueDeterminingMiddleware<number>;
+  /**
+   * The response body to send back when a client is rate limited.
+   *
+   * Defaults to `'Too many requests, please try again later.'`
+   */
   message?: any | ValueDeterminingMiddleware<any>;
+  /**
+   * The HTTP status code to send back when a client is rate limited.
+   *
+   * Defaults to `HTTP 429 Too Many Requests` (RFC 6585).
+   */
   statusCode?: number;
+  /**
+   * Whether to send `X-RateLimit-*` headers with the rate limit and the number
+   * of requests.
+   *
+   * Defaults to `true` (for backward compatibility).
+   */
   legacyHeaders?: boolean;
+  /**
+   * Whether to enable support for the standardized rate limit headers (`RateLimit-*`).
+   *
+   * Defaults to `false` (for backward compatibility, but its use is recommended).
+   */
   standardHeaders?: false | DraftHeadersVersion;
+  /**
+   * The name of the property on the request object to store the rate limit info.
+   *
+   * Defaults to `rateLimit`.
+   */
   requestPropertyName?: string;
+  /**
+   * If `true`, the library will (by default) skip all requests that have a 4XX
+   * or 5XX status.
+   *
+   * Defaults to `false`.
+   */
   skipFailedRequests?: boolean;
+  /**
+   * If `true`, the library will (by default) skip all requests that have a
+   * status code less than 400.
+   *
+   * Defaults to `false`.
+   */
   skipSuccessfulRequests?: boolean;
+  /**
+   * Method to generate custom identifiers for clients.
+   *
+   * By default, the client's IP address is used.
+   */
   keyGenerator?: ValueDeterminingMiddleware<string>;
+  /**
+   * Express request handler that sends back a response when a client is
+   * rate-limited.
+   *
+   * By default, sends back the `statusCode` and `message` set via the options.
+   */
   handler?: RateLimitExceededEventHandler;
+  /**
+   * Method (in the form of middleware) to determine whether or not this request
+   * counts towards a client's quota.
+   *
+   * By default, skips no requests.
+   */
   skip?: ValueDeterminingMiddleware<boolean>;
+  /**
+   * Method to determine whether or not the request counts as 'succesful'. Used
+   * when either `skipSuccessfulRequests` or `skipFailedRequests` is set to true.
+   *
+   * By default, requests with a response status code less than 400 are considered
+   * successful.
+   */
   requestWasSuccessful?: ValueDeterminingMiddleware<boolean>;
+  /**
+   * The `Store` to use to store the hit count for each client.
+   *
+   * By default, the built-in `MemoryStore` will be used.
+   */
   store?: Store;
+  /**
+   * The list of validation checks that should run.
+   */
   validations?: Validations;
 }
 
