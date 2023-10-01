@@ -188,21 +188,21 @@ interface Validations {
 type DraftHeadersVersion = "draft-6" | "draft-7";
 
 interface RateLimitOptions {
-  windowMs: number;
-  limit: number | ValueDeterminingMiddleware<number>;
-  message: any | ValueDeterminingMiddleware<any>;
-  statusCode: number;
-  legacyHeaders: boolean;
-  standardHeaders: false | DraftHeadersVersion;
-  requestPropertyName: string;
-  skipFailedRequests: boolean;
-  skipSuccessfulRequests: boolean;
-  keyGenerator: ValueDeterminingMiddleware<string>;
-  handler: RateLimitExceededEventHandler;
-  skip: ValueDeterminingMiddleware<boolean>;
-  requestWasSuccessful: ValueDeterminingMiddleware<boolean>;
-  store: Store;
-  validations: Validations;
+  windowMs?: number;
+  limit?: number | ValueDeterminingMiddleware<number>;
+  message?: any | ValueDeterminingMiddleware<any>;
+  statusCode?: number;
+  legacyHeaders?: boolean;
+  standardHeaders?: false | DraftHeadersVersion;
+  requestPropertyName?: string;
+  skipFailedRequests?: boolean;
+  skipSuccessfulRequests?: boolean;
+  keyGenerator?: ValueDeterminingMiddleware<string>;
+  handler?: RateLimitExceededEventHandler;
+  skip?: ValueDeterminingMiddleware<boolean>;
+  requestWasSuccessful?: ValueDeterminingMiddleware<boolean>;
+  store?: Store;
+  validations?: Validations;
 }
 
 export { RateLimitOptions };

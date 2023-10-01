@@ -200,8 +200,8 @@ class Middleware implements IMiddleware {
   }
 
   public addRateLimiter(options?: RateLimitOptions): void {
-    const middleware = middlewareResolver("express-rate-limit", options);
-    const middlewareExist = this.middlewareExists("express-rate-limit");
+    const middleware = middlewareResolver("rateLimit", options);
+    const middlewareExist = this.middlewareExists("rateLimit");
 
     if (middleware && !middlewareExist) {
       this.middlewarePipeline.push({
