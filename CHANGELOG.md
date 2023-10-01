@@ -1,5 +1,35 @@
 
 
+## [2.4.0](https://github.com/expressots/expressots/compare/2.3.0...2.4.0) (2023-10-01)
+
+
+### Features
+
+* add interface for `express-rate-limit` ([86cf5d2](https://github.com/expressots/expressots/commit/86cf5d2d2bdbdd4acdd6f4a0597634790d99f972))
+* implement `express-rate-limit` in service ([e31a5f4](https://github.com/expressots/expressots/commit/e31a5f47b67ac01795b6ac64e639cd53078f8048))
+
+
+### Bug Fixes
+
+* add App container all tests ([d6c8212](https://github.com/expressots/expressots/commit/d6c8212ec80fe239b38e4ff592ed0be3e507cd99))
+* add cjs as default build ([d16cfa5](https://github.com/expressots/expressots/commit/d16cfa50238c2e299fffaf079fb62847de94e7d8))
+* add code coverage configuration ([3676e32](https://github.com/expressots/expressots/commit/3676e328833bd92ea7ebe28b567195bbd5c25bb2))
+* adjust reporter to text, html, json ([04acb04](https://github.com/expressots/expressots/commit/04acb04c2e9229f0531ffb990f22665d94506f2c))
+* remove adapter peer dependecy ([bad171b](https://github.com/expressots/expressots/commit/bad171be98f3b2ec58c3793836ba2000c3727dbc))
+* resolves all current issues ([877c121](https://github.com/expressots/expressots/commit/877c1216405e35b3b90f61caf13d73b20202eac5))
+
+
+### Documentation
+
+* add jsdoc to interfaces ([228d190](https://github.com/expressots/expressots/commit/228d190f7ca58c71e5bcd1f03ecf70b2e7fdbe03))
+
+
+### Code Refactoring
+
+* add types to default params ([b366e14](https://github.com/expressots/expressots/commit/b366e14d2b7d9322b4ea92ae3afdfbb834e42e16))
+* eliminate duplicate return statements ([b57fa85](https://github.com/expressots/expressots/commit/b57fa8517c5656fed71b73cc3c2b65834c8d8833))
+* revert changes due to future features ([89fce01](https://github.com/expressots/expressots/commit/89fce01f08ebd1539471e51808040e4383c3e6f4))
+
 ## [2.3.0](https://github.com/expressots/expressots/compare/2.2.1...2.3.0) (2023-09-25)
 
 
