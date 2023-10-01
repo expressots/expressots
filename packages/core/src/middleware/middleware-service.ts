@@ -11,6 +11,7 @@ import { middlewareResolver } from "./middleware-resolver";
 import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
 import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
+import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 
 /**
  * ExpressHandler Type
@@ -65,6 +66,14 @@ interface MiddlewarePipeline {
  * Provides methods to be added automatically in the application without the need to import packages.
  */
 interface IMiddleware {
+  /**
+   * Adds a Rate Limit middleware to the middleware collection.
+   * The rate limiter is responsible for adding dynamic rate limit and request throttling to the application.
+   *
+   * @param options - Optional configuration options for the JSON body parser.
+   */
+  addRateLimiter(options?: RateLimitOptions): void;
+
   /**
    * Adds a Body Parser middleware to the middleware collection.
    * The body parser is responsible for parsing the incoming request bodies in a middleware.
@@ -188,6 +197,18 @@ class Middleware implements IMiddleware {
         : m.middleware?.name === middlewareName,
     );
     return middlewareIndex !== -1;
+  }
+
+  public addRateLimiter(options?: RateLimitOptions): void {
+    const middleware = middlewareResolver("express-rate-limit", options);
+    const middlewareExist = this.middlewareExists("express-rate-limit");
+
+    if (middleware && !middlewareExist) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
+    }
   }
 
   /**
