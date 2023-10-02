@@ -70,7 +70,7 @@ interface IMiddleware {
    * Adds a Rate Limit middleware to the middleware collection.
    * The rate limiter is responsible for adding dynamic rate limit and request throttling to the application.
    *
-   * @param options - Optional configuration options for the JSON body parser.
+   * @param options - Optional configuration options for the rate limiter.
    */
   addRateLimiter(options?: RateLimitOptions): void;
 
