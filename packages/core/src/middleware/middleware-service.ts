@@ -11,6 +11,7 @@ import { middlewareResolver } from "./middleware-resolver";
 import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
 import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
+import { OptionsHelmet } from "./interfaces/helmet.interface";
 import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 
 /**
@@ -168,6 +169,14 @@ interface IMiddleware {
    * @returns The error handler middleware.
    */
   getErrorHandler(): ExpressHandler;
+
+  /**
+   * Adds Helmet middleware to enhance security by setting various HTTP headers.
+   *
+   * @param options - Optional configuration options for Helmet.
+   * @returns The configuration options for Helmet middleware.
+   */
+  addHelmet(options?: OptionsHelmet): void;
 }
 
 /**
@@ -338,6 +347,23 @@ class Middleware implements IMiddleware {
 
     const middlewareExist = this.middlewareExists("serveFavicon");
 
+    if (middleware && !middlewareExist) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
+    }
+  }
+
+  /**
+   * Adds a middleware to enhance security by setting various HTTP headers.
+   *
+   * @param options - Optional configuration options for Helmet.
+   *
+   */
+  addHelmet(options?: OptionsHelmet): void {
+    const middleware = middlewareResolver("helmet", options);
+    const middlewareExist = this.middlewareExists("helmet");
     if (middleware && !middlewareExist) {
       this.middlewarePipeline.push({
         timestamp: new Date(),
