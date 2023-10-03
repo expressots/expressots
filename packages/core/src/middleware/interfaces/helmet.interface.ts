@@ -1,249 +1,256 @@
-/// <reference types="node" />
-import type { IncomingMessage, ServerResponse } from "http";
+import { Request, Response } from "express";
+/**
+ * @typedef {string} cspDirectiveValue
+ * Possible values for Content Security Policy directives.
+ * Can be 'self', 'none', or a string.
+ */
+type cspDirectiveValue = 'self' | 'none' | string;
 
-/* Define a type for a function that returns a string and takes 'req' and 'res' as parameters */
-type ContentSecurityPolicyDirectiveValueFunction = (
-  req: IncomingMessage,
-  res: ServerResponse,
-) => string;
-
-/* Define a type that can either be a string or the above-defined function type */
-type ContentSecurityPolicyDirectiveValue =
-  | string
-  | ContentSecurityPolicyDirectiveValueFunction;
-
-/* Define an interface for Content Security Policy options */
-interface ContentSecurityPolicyOptions {
-  /**
-   * An optional flag to enable default settings.
-   */
-  useDefaults?: boolean;
-
-  /**
-   * Optional directives for Content Security Policy.
-   */
-  directives?: Record<
-    string,
-    null | Iterable<ContentSecurityPolicyDirectiveValue>
-  >;
-
-  /**
-   * An optional flag to set the policy to "report-only" mode.
-   */
-  reportOnly?: boolean;
+/**
+ * @interface directiveOptions
+ * Options for defining Content Security Policy directives.
+ */
+interface directiveOptions {
+    "default-src"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "base-uri"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "font-src"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "form-action"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "frame-ancestors"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "img-src"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "object-src"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "script-src"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "script-src-attr"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "style-src"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[],
+    "upgrade-insecure-requests"?: cspDirectiveValue[] | null | ((req: Request, res: Response) => string)[]
 }
 
-/* Define an interface for default directives */
-
-interface DEFAULT_DIRECTIVES {
-  "default-src"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "base-uri"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "font-src"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "form-action"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "frame-ancestors"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "img-src"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "object-src"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "script-src"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "script-src-attr"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "style-src"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-  "font-upgrade-insecure-requests"?: Iterable<ContentSecurityPolicyDirectiveValue>;
-}
-
-/* Define an interface for Content Security Policy */
+/**
+ * @interface ContentSecurityPolicy
+ * Defines a Content Security Policy configuration.
+ */
 interface ContentSecurityPolicy {
-  /**
-   * A function that sets Content Security Policy.
-   *
-   * @param options - Optional configuration options for Content Security Policy.
-   * @returns A middleware function.
-   */
-  (
-    options?: Readonly<ContentSecurityPolicyOptions>,
-  ): (
-    req: IncomingMessage,
-    res: ServerResponse,
-    next: (err?: Error) => void,
-  ) => void;
+    /**
+      * A function that sets Content Security Policy.
+      *
+      * @param {directiveOptions} options - Optional configuration options for Content Security Policy.
+      * @returns {Function} A middleware function.
+      */
+    useDefaults?: false,
+    // directives?: DEFAULT_DIRECTIVES,
+    directives?: directiveOptions;
+    reportOnly?: boolean,
 
-  /**
-   * A function to get default directives.
-   *
-   * @returns Default directives.
-   */
-  getDefaultDirectives: () => Record<string, Iterable<DEFAULT_DIRECTIVES>>;
-
-  /**
-   * A unique symbol for disabling default source.
-   */
-  readonly dangerouslyDisableDefaultSrc: unique symbol;
 }
 
-/* Define an interface for Cross-Origin Embedder Policy options */
+/**
+ * @typedef {Object} CrossOriginEmbedderPolicyOptions
+ * An optional policy for Cross-Origin Embedder Policy.
+ */
 interface CrossOriginEmbedderPolicyOptions {
-  /**
-   * An optional policy for Cross-Origin Embedder Policy.
-   */
-  policy?: "require-corp" | "credentialless";
+    /**
+     * An optional policy for Cross-Origin Embedder Policy.
+     */
+    policy?: "require-corp" | "credentialless";
 }
 
-/* Define an interface for Cross-Origin Opener Policy options */
+
+/**
+ * @typedef {Object} CrossOriginOpenerPolicyOptions
+ * An optional policy for Cross-Origin Opener Policy.
+ */
 interface CrossOriginOpenerPolicyOptions {
-  /**
-   * An optional policy for Cross-Origin Opener Policy.
-   */
-  policy?: "same-origin" | "same-origin-allow-popups" | "unsafe-none";
+    /**
+     * An optional policy for Cross-Origin Opener Policy.
+     */
+    policy?: "same-origin" | "same-origin-allow-popups" | "unsafe-none";
 }
 
-/* Define an interface for Cross-Origin Resource Policy options */
+/**
+ * @typedef {Object} CrossOriginResourcePolicyOptions
+ * An optional policy for Cross-Origin Resource Policy.
+ */
 interface CrossOriginResourcePolicyOptions {
-  /**
-   * An optional policy for Cross-Origin Resource Policy.
-   */
-  policy?: "same-origin" | "same-site" | "cross-origin";
+    /**
+     * An optional policy for Cross-Origin Resource Policy.
+     */
+    policy?: "same-origin" | "same-site" | "cross-origin";
 }
 
-/* Define a type alias for Referrer Policy tokens */
+
+/**
+ * @typedef {string} ReferrerPolicyToken
+ * A type alias for Referrer Policy tokens.
+ */
 type ReferrerPolicyToken =
-  | "no-referrer"
-  | "no-referrer-when-downgrade"
-  | "no-referrer"
-  | "no-referrer-when-downgrade"
-  | "same-origin"
-  | "origin"
-  | "strict-origin"
-  | "origin-when-cross-origin"
-  | "strict-origin-when-cross-origin"
-  | "unsafe-url"
-  | "";
+    | "no-referrer"
+    | "no-referrer-when-downgrade"
+    | "no-referrer"
+    | "no-referrer-when-downgrade"
+    | "same-origin"
+    | "origin"
+    | "strict-origin"
+    | "origin-when-cross-origin"
+    | "strict-origin-when-cross-origin"
+    | "unsafe-url"
+    | "";
 
-/* Define an interface for Referrer Policy options */
+/**
+ * @typedef {Object} ReferrerPolicyOptions
+ * An optional policy for Referrer Policy.
+ */
 interface ReferrerPolicyOptions {
-  /**
-   * An optional policy for Referrer Policy.
-   */
-  policy?: ReferrerPolicyToken | Array<ReferrerPolicyToken> | false;
+    /**
+     * An optional policy for Referrer Policy.
+     */
+    policy?: ReferrerPolicyToken | ReferrerPolicyToken[] | false;
 }
 
-/* Define an interface for Strict Transport Security options */
+/**
+ * @typedef {Object} StrictTransportSecurityOptions
+ * Options for Strict Transport Security.
+ */
 interface StrictTransportSecurityOptions {
-  /**
-   * An optional max age for Strict Transport Security.
-   */
-  maxAge?: number;
+    /**
+     * An optional max age for Strict Transport Security.
+     */
+    maxAge?: number;
 
-  /**
-   * An optional flag to include subdomains.
-   */
-  includeSubDomains?: boolean;
+    /**
+     * An optional flag to include subdomains.
+     */
+    includeSubDomains?: boolean;
 
-  /**
-   * An optional flag for preload.
-   */
-  preload?: boolean;
+    /**
+     * An optional flag for preload.
+     */
+    preload?: boolean;
 }
 
-/* Define a type alias for xContentTypeOptions */
+/**
+ * @typedef {boolean|string} xContentTypeOptions
+ * Options for X-Content-Type-Options.
+ */
 type xContentTypeOptions = false | "nosniff";
 
-/* Define an interface for X-DNS-Prefetch-Control options */
+
+/**
+ * @typedef {Object} XDnsPrefetchControlOptions
+ * Options for X-DNS-Prefetch-Control.
+ */
 interface XDnsPrefetchControlOptions {
-  /**
-   * An optional flag to allow DNS prefetching.
-   */
-  allow?: boolean;
+    /**
+     * An optional flag to allow DNS prefetching.
+     */
+    allow?: boolean;
 }
 
-/* Define an interface for X-Frame-Options options */
+/**
+ * @typedef {Object} XFrameOptionsOptions
+ * Options for X-Frame-Options.
+ */
 interface XFrameOptionsOptions {
-  /**
-   * An optional action for X-Frame-Options.
-   */
-  action?: "deny" | "sameorigin" | false;
+    /**
+     * An optional action for X-Frame-Options.
+     */
+    action?: "deny" | "sameorigin" | false;
 }
 
-/* Define an interface for X-Permitted-Cross-Domain-Policies options */
+/**
+ * @typedef {Object} XPermittedCrossDomainPoliciesOptions
+ * Options for X-Permitted-Cross-Domain-Policies.
+ */
 interface XPermittedCrossDomainPoliciesOptions {
-  /**
-   * An optional policy for X-Permitted-Cross-Domain-Policies.
-   */
-  permittedPolicies?: "none" | "master-only" | "by-content-type" | "all";
+    /**
+     * An optional policy for X-Permitted-Cross-Domain-Policies.
+     */
+    permittedPolicies?: "none" | "master-only" | "by-content-type" | "all";
 }
 
-/* Define a type alias for xPoweredByOptions */
+/**
+ * @typedef {boolean} xPoweredByOptions
+ * Options for X-Powered-By.
+ */
 type xPoweredByOptions = false;
 
-/* Define a type alias for xXssProtectionOptions */
+/**
+ * @typedef {boolean} xXssProtectionOptions
+ * Options for X-XSS-Protection.
+ */
 type xXssProtectionOptions = false;
 
-/* Define an interface for Helmet options */
+
+/**
+ * @interface OptionsHelmet
+ * Options for Helmet middleware.
+ */
 export interface OptionsHelmet {
-  /**
-   * An optional Content Security Policy.
-   */
-  contentSecurityPolicy?: ContentSecurityPolicy;
+    /**
+     * An optional Content Security Policy.
+     */
+    contentSecurityPolicy?: ContentSecurityPolicy | false;
 
-  /**
-   * An optional Cross-Origin Embedder Policy.
-   */
-  crossOriginEmbedderPolicy?: CrossOriginEmbedderPolicyOptions | boolean;
+    /**
+     * An optional Cross-Origin Embedder Policy.
+     */
+    crossOriginEmbedderPolicy?: CrossOriginEmbedderPolicyOptions | Boolean;
 
-  /**
-   * An optional Cross-Origin Opener Policy.
-   */
-  crossOriginOpenerPolicy?: boolean | CrossOriginOpenerPolicyOptions;
+    /**
+     * An optional Cross-Origin Opener Policy.
+     */
+    crossOriginOpenerPolicy?: Boolean | CrossOriginOpenerPolicyOptions;
 
-  /**
-   * An optional Cross-Origin Resource Policy.
-   */
-  crossOriginResourcePolicy?: boolean | CrossOriginResourcePolicyOptions;
+    /**
+     * An optional Cross-Origin Resource Policy.
+     */
+    crossOriginResourcePolicy?: Boolean | CrossOriginResourcePolicyOptions;
 
-  /**
-   * An optional flag for originAgentCluster.
-   */
-  originAgentCluster?: false;
+    /**
+     * An optional flag for originAgentCluster.
+     */
+    originAgentCluster?: false;
 
-  /**
-   * An optional Referrer Policy.
-   */
-  referrerPolicy?: ReferrerPolicyOptions;
+    /**
+     * An optional Referrer Policy.
+     */
+    referrerPolicy?: ReferrerPolicyOptions;
 
-  /**
-   * An optional Strict Transport Security.
-   */
-  strictTransportSecurity?: StrictTransportSecurityOptions;
+    /**
+     * An optional Strict Transport Security.
+     */
+    strictTransportSecurity?: StrictTransportSecurityOptions;
 
-  /**
-   * An optional X-Content-Type-Options.
-   */
-  xContentTypeOptions?: xContentTypeOptions;
+    /**
+     * An optional X-Content-Type-Options.
+     */
+    xContentTypeOptions?: xContentTypeOptions;
 
-  /**
-   * An optional X-DNS-Prefetch-Control.
-   */
-  xDnsPrefetchControl?: XDnsPrefetchControlOptions;
+    /**
+     * An optional X-DNS-Prefetch-Control.
+     */
+    xDnsPrefetchControl?: XDnsPrefetchControlOptions;
 
-  /**
-   * An optional X-Download-Options.
-   */
-  xDownloadOptions?: boolean | "noopen";
+    /**
+     * An optional X-Download-Options.
+     */
+    xDownloadOptions?: boolean | "noopen";
 
-  /**
-   * An optional X-Frame-Options.
-   */
-  xFrameOptions?: XFrameOptionsOptions;
+    /**
+     * An optional X-Frame-Options.
+     */
+    xFrameOptions?: XFrameOptionsOptions;
 
-  /**
-   * An optional X-Permitted-Cross-Domain-Policies.
-   */
-  xPermittedCrossDomainPolicies?: XPermittedCrossDomainPoliciesOptions;
+    /**
+     * An optional X-Permitted-Cross-Domain-Policies.
+     */
+    xPermittedCrossDomainPolicies?: XPermittedCrossDomainPoliciesOptions;
 
-  /**
-   * An optional X-Powered-By.
-   */
-  xPoweredBy?: xPoweredByOptions;
+    /**
+     * An optional X-Powered-By.
+     */
+    xPoweredBy?: xPoweredByOptions;
 
-  /**
-   * An optional X-XSS-Protection.
-   */
-  xXssProtection?: xXssProtectionOptions;
+    /**
+     * An optional X-XSS-Protection.
+     */
+    xXssProtection?: xXssProtectionOptions;
 }
