@@ -13,6 +13,7 @@ import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
 import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
+import { MulterOptions } from "./interfaces/multer.interface";
 
 /**
  * ExpressHandler Type
@@ -177,6 +178,14 @@ interface IMiddleware {
    * @returns The configuration options for Helmet middleware.
    */
   addHelmet(options?: OptionsHelmet): void;
+
+  /**
+   * Adds Multer middleware for handling multipart/form-data, typically used for file uploads.
+   *
+   * @param options - Optional configuration options for Multer.
+   */
+  addMulter(options?: MulterOptions): void;
+
 }
 
 /**
@@ -351,6 +360,19 @@ class Middleware implements IMiddleware {
       this.middlewarePipeline.push({
         timestamp: new Date(),
         middleware,
+      });
+    }
+  }
+
+  public addMulter(options?: MulterOptions): void {
+    const multerMiddleware = middlewareResolver("multer", options);
+
+    const middlewareExist = this.middlewareExists("multer");
+
+    if (multerMiddleware && !middlewareExist) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: multerMiddleware,
       });
     }
   }
