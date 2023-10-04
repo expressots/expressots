@@ -28,6 +28,7 @@ class MiddlewareResolver {
     morgan: "morgan",
     helmet: "helmet",
     rateLimit: "express-rate-limit",
+    multer: "multer",
     // Add other middlewares
   };
 
