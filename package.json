@@ -64,7 +64,8 @@
     "test:watch": "vitest",
     "format": "prettier --write \"packages/**/*.ts\" --cache",
     "lint": "eslint \"packages/**/*.ts\"",
-    "lint:fix": "eslint \"packages/**/*.ts\" --fix"
+    "lint:fix": "eslint \"packages/**/*.ts\" --fix",
+    "postinstall": "npm run prepare"
   },
   "dependencies": {
     "inversify": "^6.0.1",
