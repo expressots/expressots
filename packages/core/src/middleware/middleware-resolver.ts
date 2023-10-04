@@ -26,6 +26,8 @@ class MiddlewareResolver {
     cookieSession: "cookie-session",
     serveFavicon: "serve-favicon",
     morgan: "morgan",
+    
+    helmet: "helmet",
     rateLimit: "express-rate-limit",
     helmet: "helmet",
     // Add other middlewares
