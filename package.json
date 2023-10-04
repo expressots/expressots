@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -88,7 +88,7 @@
     "release-it": "^16.1.5",
     "ts-jest": "^29.0.5",
     "typescript": "^5.0.3",
-    "vite": "4.4.9",
+    "vite": "4.4.10",
     "vitest": "0.34.6"
   },
   "release-it": {

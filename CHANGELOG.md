@@ -1,5 +1,20 @@
 
 
+## [2.5.0](https://github.com/expressots/expressots/compare/2.4.0...2.5.0) (2023-10-04)
+
+
+### Features
+
+* bump vite from 4.4.9 to 4.4.10 ([5be4adc](https://github.com/expressots/expressots/commit/5be4adc18d84c3affa57d248dd07801bda4dd5b9))
+* bump vitest from 0.34.5 to 0.34.6 ([11ca77f](https://github.com/expressots/expressots/commit/11ca77f29d19d1de05b2ae2a56b9e306311621bf))
+* **core:** add helmet middleware ([7648afb](https://github.com/expressots/expressots/commit/7648afb68054c1e69990f7d33efe35ec4d99b464)), closes [#107](https://github.com/expressots/expressots/issues/107)
+
+
+### Bug Fixes
+
+* adjust interface, remove duplicated helmet registry ([376c065](https://github.com/expressots/expressots/commit/376c0654d655ee8d29c0649d83ec6fb7cf860791))
+* remove duplicate optionslhelmet interface ([93bfdea](https://github.com/expressots/expressots/commit/93bfdea0057614b0a2e449817fb095ed23112011))
+
 ## [2.4.0](https://github.com/expressots/expressots/compare/2.3.0...2.4.0) (2023-10-01)
 
 
