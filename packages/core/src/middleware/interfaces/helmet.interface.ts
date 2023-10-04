@@ -12,49 +12,49 @@ type cspDirectiveValue = "self" | "none" | string;
  */
 interface directiveOptions {
   "default-src"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "base-uri"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "font-src"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "form-action"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "frame-ancestors"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "img-src"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "object-src"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "script-src"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "script-src-attr"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "style-src"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
   "upgrade-insecure-requests"?:
-    | cspDirectiveValue[]
+    | Array<cspDirectiveValue>
     | null
-    | ((req: Request, res: Response) => string)[];
+    | Array<(req: Request, res: Response) => string>;
 }
 
 /**
@@ -132,7 +132,7 @@ interface ReferrerPolicyOptions {
   /**
    * An optional policy for Referrer Policy.
    */
-  policy?: ReferrerPolicyToken | ReferrerPolicyToken[] | false;
+  policy?: ReferrerPolicyToken | Array<ReferrerPolicyToken> | false;
 }
 
 /**
@@ -220,17 +220,17 @@ export interface OptionsHelmet {
   /**
    * An optional Cross-Origin Embedder Policy.
    */
-  crossOriginEmbedderPolicy?: CrossOriginEmbedderPolicyOptions | Boolean;
+  crossOriginEmbedderPolicy?: CrossOriginEmbedderPolicyOptions | boolean;
 
   /**
    * An optional Cross-Origin Opener Policy.
    */
-  crossOriginOpenerPolicy?: Boolean | CrossOriginOpenerPolicyOptions;
+  crossOriginOpenerPolicy?: boolean | CrossOriginOpenerPolicyOptions;
 
   /**
    * An optional Cross-Origin Resource Policy.
    */
-  crossOriginResourcePolicy?: Boolean | CrossOriginResourcePolicyOptions;
+  crossOriginResourcePolicy?: boolean | CrossOriginResourcePolicyOptions;
 
   /**
    * An optional flag for originAgentCluster.
