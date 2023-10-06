@@ -330,6 +330,12 @@ function prismaPackage(answer: any): void {
 		schema: `${answer.schemaPath}/prisma/${answer.schemaName}.prisma`,
 	};
 
+	// Add the Prisma script to the package.json
+	packageJson.scripts = {
+		...packageJson.scripts,
+		prisma: "npx @expressots/prisma codegen",
+	};
+
 	// Save the package.json file
 	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
