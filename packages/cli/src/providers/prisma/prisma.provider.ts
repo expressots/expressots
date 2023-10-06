@@ -137,7 +137,11 @@ const prismaProvider = async (
 			console.log(
 				`Installing @expressots/prisma with ${packageManager}...`,
 			);
-			//await execProcess({ commandArg: packageManager, args: ["add", `@expressots/prisma@${version}`], directory: process.cwd() });
+			await execProcess({
+				commandArg: packageManager,
+				args: ["add", `@expressots/prisma@${version}`],
+				directory: process.cwd(),
+			});
 		} else {
 			printError(
 				`Could not find a package manager installed in this project.\nPlease install prisma and @expressots/prisma manually.`,
