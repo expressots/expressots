@@ -1,11 +1,12 @@
 import chalk from "chalk";
-import inquirer from "inquirer";
+import inquirer, { PromptModule } from "inquirer";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { printError } from "../../utils/cli-ui";
 import path from "node:path";
 import { exit } from "node:process";
 import Compiler from "../../utils/compiler";
+import { hasFolder } from "../../utils/find-folder";
 
 const prismaProvider = async (
 	version: string,
@@ -157,6 +158,31 @@ const prismaProvider = async (
 
 		// Init prisma
 		console.log(`Initializing prisma...`);
+
+		const prismaFolder = hasFolder(process.cwd(), ["node_modules", ".git"]);
+
+		if (prismaFolder.found) {
+			const prismaEnquirer = await inquirer.prompt([
+				{
+					type: "confirm",
+					name: "confirm",
+					message:
+						"Prisma is already initialized. Do you want to override it?",
+					default: true,
+				},
+			]);
+
+			if (prismaEnquirer?.confirm === false) {
+				console.log(chalk.red("Prisma init aborted!"));
+				return;
+			}
+
+			fs.rmSync(prismaFolder.path, {
+				recursive: true,
+				force: true,
+			});
+		}
+
 		await execProcess({
 			commandArg: "npx",
 			args: [
