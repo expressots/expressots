@@ -270,7 +270,7 @@ const prismaProvider = async (
 		);
 
 		console.log("Now configure your database connection in the project.");
-		console.log(chalk.green("Prisma provider added successfully!"));
+		console.log(chalk.green("\n👍 Prisma provider added successfully!"));
 	} else {
 		console.log(chalk.red("Prisma provider not added!"));
 	}
@@ -293,21 +293,40 @@ async function execProcess({
 			cwd: directory,
 		});
 
+		console.log(chalk.bold.blue(`Executing: ${command} ${args.join(" ")}`));
+		console.log(chalk.yellow("---------------------------------------"));
+
 		installProcess.stdout.on("data", (data) => {
-			console.log(`${data}`);
+			console.log(chalk.green(data.toString().trim())); // Display regular messages in green
 		});
 
 		installProcess.stderr.on("data", (data) => {
-			console.error(`${data}`);
+			console.error(chalk.red(data.toString().trim())); // Display error messages in red
 		});
 
 		installProcess.on("close", (code) => {
 			if (code === 0) {
+				console.log(
+					chalk.bold.green("---------------------------------------"),
+				);
+				console.log(chalk.bold.green("Installation Done!"));
 				resolve("Installation Done!");
 			} else {
+				console.error(
+					chalk.bold.red("---------------------------------------"),
+				);
+				console.error(
+					chalk.bold.red(
+						`Command ${command} ${args.join(
+							" ",
+						)} exited with code ${code}`,
+					),
+				);
 				reject(
 					new Error(
-						`Command ${command} ${args} exited with code ${code}`,
+						`Command ${command} ${args.join(
+							" ",
+						)} exited with code ${code}`,
 					),
 				);
 				exit(1);
