@@ -11,7 +11,7 @@ interface IProviders {
 		schemaPath: string;
 		entitiesPath: string;
 		entityNamePattern: string;
-	}
+	};
 }
 
 /**
