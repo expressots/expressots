@@ -184,7 +184,7 @@ interface IMiddleware {
    *
    * @param options - Optional configuration options for Multer.
    */
-  addMulter(options?: MulterOptions): void;
+  addMulter(options?: Multer.MulterOptions): void;
 
 }
 
