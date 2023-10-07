@@ -13,7 +13,7 @@ import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
 import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
-import { MulterOptions } from "./interfaces/multer.interface";
+import { Multer } from "./interfaces/multer.interface";
 
 /**
  * ExpressHandler Type
