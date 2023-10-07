@@ -364,7 +364,7 @@ class Middleware implements IMiddleware {
     }
   }
 
-  public addMulter(options?: MulterOptions): void {
+  public addMulter(options?: Multer.MulterOptions): void {
     const multerMiddleware = middlewareResolver("multer", options);
 
     const middlewareExist = this.middlewareExists("multer");
