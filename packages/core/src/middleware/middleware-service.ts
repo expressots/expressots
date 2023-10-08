@@ -139,7 +139,7 @@ interface IMiddleware {
    * @param options - Optional configuration options for Session.
    *
    */
-  addSession(options?: SessionOptions): void;
+  addSession(options: SessionOptions): void;
 
   /**
    * Configures the error handling middleware for the application.
@@ -387,7 +387,7 @@ class Middleware implements IMiddleware {
    * @param options - Optional configuration options for Session.
    *
    */
-  addSession(options?: SessionOptions): void {
+  addSession(options: SessionOptions): void {
     const middleware = middlewareResolver("session", options);
     const middlewareExist = this.middlewareExists("session");
     if (middleware && !middlewareExist) {
