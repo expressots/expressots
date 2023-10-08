@@ -28,7 +28,7 @@ class MiddlewareResolver {
     morgan: "morgan",
     helmet: "helmet",
     rateLimit: "express-rate-limit",
-    session: "exporess-session",
+    session: "express-session",
     // Add other middlewares
   };
 
