@@ -383,9 +383,9 @@ class Middleware implements IMiddleware {
 
   /**
    * Add a middleware to enable express-session.
-   * 
+   *
    * @param options - Optional configuration options for Session.
-   * 
+   *
    */
   addSession(options?: SessionOptions): void {
     const middleware = middlewareResolver("session", options);
