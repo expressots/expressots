@@ -134,6 +134,14 @@ interface IMiddleware {
   addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void;
 
   /**
+   * Add a middleware to enable express-session.
+   *
+   * @param options - Optional configuration options for Session.
+   *
+   */
+  addSession(options?: SessionOptions): void;
+
+  /**
    * Configures the error handling middleware for the application.
    *
    * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
