@@ -14,6 +14,7 @@ import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
 import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
+import { passportOptions } from "./interfaces/passport.interface";
 
 /**
  * ExpressHandler Type
@@ -186,6 +187,15 @@ interface IMiddleware {
    * @returns The configuration options for Helmet middleware.
    */
   addHelmet(options?: OptionsHelmet): void;
+
+  /**
+    * Adds Passport middleware to enable authentication in the application.
+    *
+    * @param options - Optional configuration options for Passport middleware.
+    *                 You can provide custom authentication and serialization functions through these options.
+    */
+  addPassport(options?: passportOptions): void;
+
 }
 
 /**
@@ -397,6 +407,38 @@ class Middleware implements IMiddleware {
       });
     }
   }
+
+  /**
+ * Adds Passport middleware to enable authentication in the application.
+ *
+ * @param options - Optional configuration options for Passport middleware.
+ *                 You can provide custom authentication and serialization functions through these options.
+ */
+  addPassport(options?: passportOptions): void {
+
+    // We must use the `connect.session()` middleware _before_ `passport.initialize()`.
+
+    const sessionMiddleware = !!(options?.session) ? middlewareResolver("passport", options) : null;
+    const sessionMiddlewareExist = this.middlewareExists("passport.session");
+    if (sessionMiddleware && !sessionMiddlewareExist) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: sessionMiddleware,
+      });
+    }
+
+    const initializeMiddleware = !!(options?.initialize) ? middlewareResolver("passport", options) : null;
+    const initializeMiddlewareExist = this.middlewareExists("passport.initialize");
+    if (initializeMiddleware && !initializeMiddlewareExist) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: initializeMiddleware
+      });
+    }
+
+  }
+
+  // addPassport()
 
   /**
    * Configures the error handling middleware for the application.
