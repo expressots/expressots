@@ -1,5 +1,20 @@
 
 
+## [2.6.0](https://github.com/expressots/expressots/compare/2.5.0...2.6.0) (2023-10-09)
+
+
+### Features
+
+* Added express-session middleware for expressots ([9d0c79f](https://github.com/expressots/expressots/commit/9d0c79f7c4b18cfcac17443c7f76c4384a563471))
+* bump vite from 4.4.10 to 4.4.11 ([45c8a80](https://github.com/expressots/expressots/commit/45c8a804e85875743cc18d95ec5441e19b7df7d3))
+
+
+### Bug Fixes
+
+* Auto setup husky with project setup and installation ([dcdc279](https://github.com/expressots/expressots/commit/dcdc279f9dffe82e739396df763f494c97a3e914))
+* remove prepare husky install from lib ([ba9b536](https://github.com/expressots/expressots/commit/ba9b5363904a7d8981ec49705d5fbf22e20c8dbd))
+* typo ([079aad6](https://github.com/expressots/expressots/commit/079aad6c125fcd100cde5cf98ce84125e7381879))
+
 ## [2.5.0](https://github.com/expressots/expressots/compare/2.4.0...2.5.0) (2023-10-04)
 
 
