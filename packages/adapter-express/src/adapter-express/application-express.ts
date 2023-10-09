@@ -45,6 +45,7 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
   private environment: ServerEnvironment;
   private container: Container;
   private middlewares: Array<ExpressHandler> = [];
+  private globalPrefix: string | undefined;
 
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
@@ -80,7 +81,9 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
 
     const allMiddlewareEntries: Array<ExpressHandler | MiddlewareConfig> = [...this.middlewares];
 
-    const expressServer = new InversifyExpressServer(container);
+    const expressServer = new InversifyExpressServer(container, null, {
+      rootPath: this.globalPrefix ? this.globalPrefix : "/",
+    });
 
     expressServer.setConfig((app: express.Application) => {
       allMiddlewareEntries.forEach((entry) => {
@@ -136,6 +139,19 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
     });
 
     await Promise.resolve(this.postServerInitialization());
+  }
+
+  /**
+   * Sets the global route prefix for the application.
+   *
+   * @public
+   * @method setGlobalRoutePrefix
+   *
+   * @param {string} prefix - The prefix to use for all routes.
+   * @use Use this method inside of `configureServices()` hook.
+   */
+  public setGlobalRoutePrefix(prefix: string): void {
+    this.globalPrefix = prefix;
   }
 
   /**
