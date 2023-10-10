@@ -1,5 +1,16 @@
 
 
+## [1.1.1](https://github.com/expressots/adapter-express/compare/1.1.0...1.1.1) (2023-10-10)
+
+
+### Bug Fixes
+
+* add global prefix on opinionated ([d9d5a06](https://github.com/expressots/adapter-express/commit/d9d5a0669241ed14541a1452aa0deaa12c1109b4))
+* add global route prefix for both templates ([046fd2c](https://github.com/expressots/adapter-express/commit/046fd2c2e2c5beacf9602f929b223713d48e8b9c))
+* adjust build pipeline ([4f164a2](https://github.com/expressots/adapter-express/commit/4f164a2f6ee5c23512a8e6643b90a74891ec52c4))
+* adjust build script and remove esm build option ([b35af7b](https://github.com/expressots/adapter-express/commit/b35af7b9ea91935572920314eddc8f5258bca4bc))
+* path in codeql analysis report ([035aa16](https://github.com/expressots/adapter-express/commit/035aa16a9d62de8d7e2b39bae052d8d5499799da))
+
 ## 1.1.0 (2023-09-21)
 
 
