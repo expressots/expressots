@@ -2,27 +2,18 @@
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames":true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "checkJs": true,
     "allowJs": true,
     "declaration": true,
-    "declarationMap": true,
     "noImplicitAny": false,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": [
-      "node",
-      "reflect-metadata",
-      "jest"
-    ],    
-},
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-  ]
+    "types": ["node", "reflect-metadata", "jest"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
 }
