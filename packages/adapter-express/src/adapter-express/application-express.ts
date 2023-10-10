@@ -65,12 +65,10 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
    * @param middlewares - An array of Express middlewares to be applied.
    * @returns The configured Application instance.
    */
-  public async create(
+  private async init(
     container: Container,
     middlewares: Array<express.RequestHandler> = [],
   ): Promise<ApplicationExpress> {
-    this.container = container;
-
     await Promise.resolve(this.configureServices());
 
     const middleware = container.get<IMiddleware>(Middleware);
@@ -82,7 +80,7 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
     const allMiddlewareEntries: Array<ExpressHandler | MiddlewareConfig> = [...this.middlewares];
 
     const expressServer = new InversifyExpressServer(container, null, {
-      rootPath: this.globalPrefix ? this.globalPrefix : "/",
+      rootPath: this.globalPrefix as string,
     });
 
     expressServer.setConfig((app: express.Application) => {
@@ -113,6 +111,23 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
   }
 
   /**
+   * Create and configure the Express application.
+   * @param container - The InversifyJS container.
+   * @param middlewares - An array of Express middlewares to be applied.
+   * @returns The configured Application instance.
+   */
+  public async create(
+    container: Container,
+    middlewares: Array<ExpressHandler> = [],
+  ): Promise<ApplicationExpress> {
+    this.container = container;
+    this.middlewares = middlewares;
+    this.globalPrefix = this.globalPrefix || "/";
+
+    return this;
+  }
+
+  /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
    * @param environment - The server environment.
@@ -123,6 +138,10 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
     environment: ServerEnvironment,
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void> {
+    /* Initializes the application and executes the middleware pipeline */
+    await this.init(this.container, this.middlewares as Array<express.RequestHandler>);
+
+    /* Sets the port and environment */
     this.port = port;
     this.environment = environment;
     this.app.set("env", environment);
@@ -148,7 +167,7 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
    * @method setGlobalRoutePrefix
    *
    * @param {string} prefix - The prefix to use for all routes.
-   * @use Use this method inside of `configureServices()` hook.
+   *
    */
   public setGlobalRoutePrefix(prefix: string): void {
     this.globalPrefix = prefix;
