@@ -1,9 +1,7 @@
-import "reflect-metadata";
 import dotenv from "dotenv";
-import path from "path";
 import fs from "fs";
-import { EnvValidatorProvider } from "../src/provider/environment/env-validator.provider";
-import { Logger, LogLevel } from "../src/provider/logger/logger-service";
+import "reflect-metadata";
+import { EnvValidatorProvider } from "../env-validator.provider";
 
 vi.mock("fs");
 vi.mock("path");
@@ -13,7 +11,6 @@ vi.mock("../src/provider/logger", () => ({
   },
 }));
 
-const log = new Logger();
 const Environments = new EnvValidatorProvider();
 
 describe("EnvValidatorProvider", () => {
@@ -34,12 +31,10 @@ describe("EnvValidatorProvider", () => {
 
   describe("CheckAll", () => {
     let originalEnv: NodeJS.ProcessEnv;
-    let logSpy: vi.SpyInstance;
 
     beforeEach(() => {
       originalEnv = process.env;
       process.env = {};
-      logSpy = vi.spyOn(log, "info").mockImplementation();
       vi.spyOn(fs, "existsSync").mockReturnValue(true);
     });
 
