@@ -2,7 +2,7 @@ import { inject } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./base-repository.interface";
 import { IEntity } from "@entities/base.entity";
-import { InMemoryDB } from "@providers/db-in-memory/db-in-memory.provider";
+import { InMemoryDB } from "@expressots/core";
 
 @provide(BaseRepository)
 export class BaseRepository<T extends IEntity> implements IBaseRepository<T> {
