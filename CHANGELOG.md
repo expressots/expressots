@@ -1,5 +1,23 @@
 
 
+## [2.7.0](https://github.com/expressots/expressots/compare/2.6.0...2.7.0) (2023-10-17)
+
+
+### Features
+
+* add db in memory as provider ([b656f22](https://github.com/expressots/expressots/commit/b656f2297e0e985dd5184c611f795edddf6c5b2d))
+* modify IMemoryDB interface name ([fd1d440](https://github.com/expressots/expressots/commit/fd1d440eb947f377955bfc2a969d3e7ca4ffaa3e))
+
+
+### Bug Fixes
+
+* remove db in memory from template opinionated ([0516c8c](https://github.com/expressots/expressots/commit/0516c8c4e9c0e1a4b8aae3fab5842136a0565a39))
+
+
+### Tests
+
+* improve collocation and fix console tests ([52bdf98](https://github.com/expressots/expressots/commit/52bdf98cfcbbffc58841b1b67c6ce2a1f6fe308b))
+
 ## [2.6.0](https://github.com/expressots/expressots/compare/2.5.0...2.6.0) (2023-10-09)
 
 
