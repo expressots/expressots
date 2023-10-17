@@ -5,6 +5,7 @@ import { hideBin } from "yargs/helpers";
 import { generateProject } from "./generate";
 import { infoProject } from "./info";
 import { createProject } from "./new";
+import { generateProviders } from "./providers";
 
 export const CLI_VERSION = "1.3.4";
 
@@ -13,6 +14,7 @@ console.log(`\n[🐎 Expressots]\n`);
 yargs(hideBin(process.argv))
 	.scriptName("expressots")
 	.command(createProject())
+	.command(generateProviders())
 	.command(generateProject())
 	.command(infoProject())
 	.example("$0 new expressots-demo", "Create interactively")
