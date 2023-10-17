@@ -6,10 +6,10 @@ import {
     Select,
     PrismaAction,
 } from "@expressots/prisma";
+import { provide } from "inversify-binding-decorators";
 import { IBaseRepository } from "./base-repository.interface";
-import { injectable } from "inversify";
 
-@injectable()
+@provide(BaseRepository)
 class BaseRepository<ModelName extends ModelsOf<PrismaClient>>
     implements IBaseRepository<ModelName>
 {
