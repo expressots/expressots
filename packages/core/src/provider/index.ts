@@ -4,5 +4,5 @@ export { EnvValidatorProvider as Env } from "./environment/env-validator.provide
 export { ValidateDTO } from "./dto-validator/dto-validator.provider";
 export {
   InMemoryDB,
-  IInMemoryDBEntity,
+  IMemoryDBEntity,
 } from "./db-in-memory/db-in-memory.provider";

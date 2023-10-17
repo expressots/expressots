@@ -4,7 +4,7 @@ import { provideSingleton } from "../../decorator";
  * Base interface that defines the structure of an entity.
  * @interface InMemoryDBEntity
  */
-export interface IInMemoryDBEntity {
+export interface IMemoryDBEntity {
   id: string;
 }
 
@@ -18,7 +18,7 @@ export interface IInMemoryDBEntity {
  */
 @provideSingleton(InMemoryDB)
 export class InMemoryDB {
-  private tables: Record<string, Array<IInMemoryDBEntity>> = {};
+  private tables: Record<string, Array<IMemoryDBEntity>> = {};
 
   /**
    * getTable Method
@@ -28,7 +28,7 @@ export class InMemoryDB {
    * @param tableName - The name of the table to retrieve.
    * @returns {IEntity[]} - An array of entities.
    */
-  public getTable(tableName: string): Array<IInMemoryDBEntity> {
+  public getTable(tableName: string): Array<IMemoryDBEntity> {
     if (!this.tables[tableName]) {
       this.tables[tableName] = [];
     }
