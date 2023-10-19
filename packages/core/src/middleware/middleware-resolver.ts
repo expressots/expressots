@@ -19,18 +19,20 @@ class MiddlewareResolver {
    * A registry object mapping middleware names to their corresponding package names.
    * It is used to identify and require the middleware from the current working directory.
    */
-  private middlewareRegistry: { [key: string]: string } = {
+  private middlewareRegistry = {
     cors: "cors",
     compression: "compression",
     cookieParser: "cookie-parser",
     cookieSession: "cookie-session",
     serveFavicon: "serve-favicon",
     morgan: "morgan",
+    "passport.initialize": "passport",
+    "passport.session": "passport",
     helmet: "helmet",
     rateLimit: "express-rate-limit",
     session: "express-session",
     // Add other middlewares
-  };
+  } as const;
 
   /**
    * Retrieves a middleware by its name and optionally configures it with provided options.
@@ -65,6 +67,16 @@ class MiddlewareResolver {
 
     if (hasMiddleware) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
+      if (middlewareName === "passport.session") {
+        // Configure passport session
+        const passport = require(hasMiddleware);
+        return passport.session(...(options.session))
+      }
+      if (middlewareName === "passport.initialize") {
+        // Configure passport initialize
+        const passport = require(hasMiddleware);
+        return passport.initialize(...(options.initialize))
+      }
       const middleware = require(hasMiddleware);
       return middleware(...options) || middleware.default(...options);
     }
