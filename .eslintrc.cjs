@@ -21,6 +21,7 @@ module.exports = {
     "node_modules",
     ".eslintrc.cjs",
     "packages/core/test",
+    "**/packages/core/src/**/*.spec.ts",
     "scripts",
   ],
   rules: {

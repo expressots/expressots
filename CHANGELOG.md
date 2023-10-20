@@ -1,5 +1,38 @@
 
 
+## [2.7.0](https://github.com/expressots/expressots/compare/2.6.0...2.7.0) (2023-10-17)
+
+
+### Features
+
+* add db in memory as provider ([b656f22](https://github.com/expressots/expressots/commit/b656f2297e0e985dd5184c611f795edddf6c5b2d))
+* modify IMemoryDB interface name ([fd1d440](https://github.com/expressots/expressots/commit/fd1d440eb947f377955bfc2a969d3e7ca4ffaa3e))
+
+
+### Bug Fixes
+
+* remove db in memory from template opinionated ([0516c8c](https://github.com/expressots/expressots/commit/0516c8c4e9c0e1a4b8aae3fab5842136a0565a39))
+
+
+### Tests
+
+* improve collocation and fix console tests ([52bdf98](https://github.com/expressots/expressots/commit/52bdf98cfcbbffc58841b1b67c6ce2a1f6fe308b))
+
+## [2.6.0](https://github.com/expressots/expressots/compare/2.5.0...2.6.0) (2023-10-09)
+
+
+### Features
+
+* Added express-session middleware for expressots ([9d0c79f](https://github.com/expressots/expressots/commit/9d0c79f7c4b18cfcac17443c7f76c4384a563471))
+* bump vite from 4.4.10 to 4.4.11 ([45c8a80](https://github.com/expressots/expressots/commit/45c8a804e85875743cc18d95ec5441e19b7df7d3))
+
+
+### Bug Fixes
+
+* Auto setup husky with project setup and installation ([dcdc279](https://github.com/expressots/expressots/commit/dcdc279f9dffe82e739396df763f494c97a3e914))
+* remove prepare husky install from lib ([ba9b536](https://github.com/expressots/expressots/commit/ba9b5363904a7d8981ec49705d5fbf22e20c8dbd))
+* typo ([079aad6](https://github.com/expressots/expressots/commit/079aad6c125fcd100cde5cf98ce84125e7381879))
+
 ## [2.5.0](https://github.com/expressots/expressots/compare/2.4.0...2.5.0) (2023-10-04)
 
 

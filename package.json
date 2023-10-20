@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "2.5.0",
+  "version": "2.7.0",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -64,8 +64,7 @@
     "test:watch": "vitest",
     "format": "prettier --write \"packages/**/*.ts\" --cache",
     "lint": "eslint \"packages/**/*.ts\"",
-    "lint:fix": "eslint \"packages/**/*.ts\" --fix",
-    "postinstall": "npm run prepare"
+    "lint:fix": "eslint \"packages/**/*.ts\" --fix"
   },
   "dependencies": {
     "inversify": "^6.0.1",
