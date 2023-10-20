@@ -193,7 +193,7 @@ interface IMiddleware {
    *
    * @param options - Optional configuration options for Multer.
    */
-  addMulter(options?: Multer.MulterOptions): void;
+  setupMulter(options?: Multer.MulterOptions): void;
 
 }
 
@@ -373,7 +373,7 @@ class Middleware implements IMiddleware {
     }
   }
 
-  public addMulter(options?: Multer.MulterOptions): void {
+  public setupMulter(options?: Multer.MulterOptions): void {
     const multerMiddleware = middlewareResolver("multer", options);
 
     const middlewareExist = this.middlewareExists("multer");
