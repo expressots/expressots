@@ -69,7 +69,7 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.7.1",
+    "@commitlint/cli": "^18.0.0",
     "@commitlint/config-conventional": "^17.7.0",
     "@expressots/core": "^2.2.0",
     "@release-it/conventional-changelog": "^7.0.1",
