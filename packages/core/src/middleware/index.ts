@@ -9,5 +9,5 @@ export { Keygrip } from "./interfaces/cookie-session/keygrip.interface";
 export { CookieParserOptions } from "./interfaces/cookie-parser.interface";
 export { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 export { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
-export { Multer } from "./interfaces/multer.interface";
+export { multer } from "./interfaces/multer.interface";
 export * as IMorgan from "./interfaces/morgan.interface";

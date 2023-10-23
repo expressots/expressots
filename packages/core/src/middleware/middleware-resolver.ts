@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
 import { Logger } from "../provider/logger/logger-service";
+import { ExpressHandler } from "./middleware-service";
 
 /**
  * MiddlewareResolver class is responsible for resolving and retrieving Express middlewares
@@ -85,7 +86,7 @@ class MiddlewareResolver {
 function middlewareResolver(
   middleware: string,
   ...options: any
-): express.RequestHandler | null {
+): ExpressHandler | null {
   const resolver = new MiddlewareResolver();
   return resolver.getMiddleware(middleware, ...options);
 }

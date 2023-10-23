@@ -13,7 +13,7 @@ import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
 import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
-import { Multer } from "./interfaces/multer.interface";
+import { multer } from "./interfaces/multer.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
 
 /**
@@ -26,7 +26,7 @@ import { SessionOptions } from "./interfaces/express-session.interface";
  * - express.RequestHandler: General request handler.
  * - undefined: Represents the absence of a handler.
  */
-type ExpressHandler =
+export type ExpressHandler =
   | express.ErrorRequestHandler
   | express.RequestParamHandler
   | express.RequestHandler
@@ -193,8 +193,7 @@ interface IMiddleware {
    *
    * @param options - Optional configuration options for Multer.
    */
-  setupMulter(options?: Multer.MulterOptions): void;
-
+  setupMulter(options?: multer.Options): multer.Multer;
 }
 
 /**
@@ -373,17 +372,16 @@ class Middleware implements IMiddleware {
     }
   }
 
-  public setupMulter(options?: Multer.MulterOptions): void {
+  public setupMulter(options?: multer.Options): multer.Multer {
     const multerMiddleware = middlewareResolver("multer", options);
 
     const middlewareExist = this.middlewareExists("multer");
 
     if (multerMiddleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware: multerMiddleware,
-      });
+      return multerMiddleware as unknown as multer.Multer;
     }
+
+    return null as unknown as multer.Multer;
   }
 
   /**

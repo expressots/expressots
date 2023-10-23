@@ -1,67 +1,299 @@
-import express, { Express } from "express";
+/* eslint-disable @typescript-eslint/array-type */
+/* eslint-disable @typescript-eslint/no-namespace */
+import { RequestHandler } from "express";
+import { Readable } from "stream";
 
-
-export namespace Multer {
-
-    /**
-     * Represents a file uploaded through Multer.
-     *
-     * @interface File
-     * @property {string} fieldname - The field name associated with the file.
-     * @property {string} originalname - The original name of the file.
-     * @property {string} encoding - The encoding type of the file.
-     * @property {string} mimetype - The MIME type of the file.
-     * @property {number} size - The size of the file in bytes.
-     * @property {string} destination - The directory where the file is stored.
-     * @property {string} filename - The name of the file within the destination.
-     * @property {string} path - The full path to the file.
-     * @property {Buffer} buffer - The file data as a Buffer.
-     */
-    export interface File {
+declare global {
+  namespace Express {
+    namespace Multer {
+      /** Object containing file metadata and access information. */
+      interface File {
+        /** Name of the form field associated with this file. */
         fieldname: string;
+        /** Name of the file on the uploader's computer. */
         originalname: string;
+        /**
+         * Value of the `Content-Transfer-Encoding` header for this file.
+         * @deprecated since July 2015
+         * @see RFC 7578, Section 4.7
+         */
         encoding: string;
+        /** Value of the `Content-Type` header for this file. */
         mimetype: string;
+        /** Size of the file in bytes. */
         size: number;
+        /**
+         * A readable stream of this file. Only available to the `_handleFile`
+         * callback for custom `StorageEngine`s.
+         */
+        stream: Readable;
+        /** `DiskStorage` only: Directory to which this file has been uploaded. */
         destination: string;
+        /** `DiskStorage` only: Name of this file within `destination`. */
         filename: string;
+        /** `DiskStorage` only: Full path to the uploaded file. */
         path: string;
+        /** `MemoryStorage` only: A Buffer containing the entire file. */
         buffer: Buffer;
+      }
     }
 
+    interface Request {
+      /** `Multer.File` object populated by `single()` middleware. */
+      file?: Multer.File | undefined;
+      /**
+       * Array or dictionary of `Multer.File` object populated by `array()`,
+       * `fields()`, and `any()` middleware.
+       */
+      files?:
+        | {
+            [fieldname: string]: Multer.File[];
+          }
+        | Multer.File[]
+        | undefined;
+    }
+  }
+}
+
+export declare namespace multer {
+  /**
+   * @see {@link https://github.com/expressjs/multer#api}
+   */
+  export interface Multer {
     /**
-     * Interface for defining a custom storage engine for Multer.
+     * Returns middleware that processes a single file associated with the
+     * given form field.
      *
-     * @interface StorageEngine
+     * The `Request` object will be populated with a `file` object containing
+     * information about the processed file.
+     *
+     * @param fieldName Name of the multipart form field to process.
      */
-    export interface StorageEngine {
-        /**
-         * Method to handle the uploaded file.
-         *
-         * @function
-         * @name StorageEngine#_handleFile
-         * @param {Express.Request} req - The Express request object.
-         * @param {File} file - The file being uploaded.
-         * @param {(error: Error | null, info: Partial<File>) => void} callback - Callback function to indicate completion or error.
-         * @returns {void}
-         */
-        _handleFile(req: Express.Request, file: File, callback: (error: Error | null, info: Partial<File>) => void): void;
+    single(fieldName: string): RequestHandler;
+    /**
+     * Returns middleware that processes multiple files sharing the same field
+     * name.
+     *
+     * The `Request` object will be populated with a `files` array containing
+     * an information object for each processed file.
+     *
+     * @param fieldName Shared name of the multipart form fields to process.
+     * @param maxCount Optional. Maximum number of files to process. (default: Infinity)
+     * @throws `MulterError('LIMIT_UNEXPECTED_FILE')` if more than `maxCount` files are associated with `fieldName`
+     */
+    array(fieldName: string, maxCount?: number): RequestHandler;
+    /**
+     * Returns middleware that processes multiple files associated with the
+     * given form fields.
+     *
+     * The `Request` object will be populated with a `files` object which
+     * maps each field name to an array of the associated file information
+     * objects.
+     *
+     * @param fields Array of `Field` objects describing multipart form fields to process.
+     * @throws `MulterError('LIMIT_UNEXPECTED_FILE')` if more than `maxCount` files are associated with `fieldName` for any field.
+     */
+    fields(fields: ReadonlyArray<Field>): RequestHandler;
+    /**
+     * Returns middleware that processes all files contained in the multipart
+     * request.
+     *
+     * The `Request` object will be populated with a `files` array containing
+     * an information object for each processed file.
+     */
+    any(): RequestHandler;
+    /**
+     * Returns middleware that accepts only non-file multipart form fields.
+     *
+     * @throws `MulterError('LIMIT_UNEXPECTED_FILE')` if any file is encountered.
+     */
+    none(): RequestHandler;
+  }
 
-        /**
-         * Method to remove a file.
-         *
-         * @function
-         * @name StorageEngine#_removeFile
-         * @param {Express.Request} req - The Express request object.
-         * @param {File} file - The file to be removed.
-         * @param {(error: Error | null) => void} callback - Callback function to indicate completion or error.
-         * @returns {void}
-         */
-        _removeFile(req: Express.Request, file: File, callback: (error: Error | null) => void): void;
-    }
+  /**
+   * Returns a `StorageEngine` implementation configured to store files on
+   * the local file system.
+   *
+   * A string or function may be specified to determine the destination
+   * directory, and a function to determine filenames. If no options are set,
+   * files will be stored in the system's temporary directory with random 32
+   * character filenames.
+   */
+  function diskStorage(options: DiskStorageOptions): StorageEngine;
 
-    export interface MulterOptions {
-        storage?: StorageEngine | undefined;
-        fileFilter?: (req: Express.Request, file: File, callback: (error: Error | null, acceptFile: boolean) => void) => void;
-    }
+  /**
+   * Returns a `StorageEngine` implementation configured to store files in
+   * memory as `Buffer` objects.
+   */
+  function memoryStorage(): StorageEngine;
+
+  type ErrorCode =
+    | "LIMIT_PART_COUNT"
+    | "LIMIT_FILE_SIZE"
+    | "LIMIT_FILE_COUNT"
+    | "LIMIT_FIELD_KEY"
+    | "LIMIT_FIELD_VALUE"
+    | "LIMIT_FIELD_COUNT"
+    | "LIMIT_UNEXPECTED_FILE";
+
+  class MulterError extends Error {
+    constructor(code: ErrorCode, field?: string);
+    /** Name of the MulterError constructor. */
+    name: string;
+    /** Identifying error code. */
+    code: ErrorCode;
+    /** Descriptive error message. */
+    message: string;
+    /** Name of the multipart form field associated with this error. */
+    field?: string | undefined;
+  }
+
+  /**
+   * a function to control which files should be uploaded and which should be skipped
+   * pass a boolean to indicate if the file should be accepted
+   * pass an error if something goes wrong
+   */
+  interface FileFilterCallback {
+    (error: Error): void;
+    (error: null, acceptFile: boolean): void;
+  }
+
+  /** Options for initializing a Multer instance. */
+  export interface Options {
+    /**
+     * A `StorageEngine` responsible for processing files uploaded via Multer.
+     * Takes precedence over `dest`.
+     */
+    storage?: StorageEngine | undefined;
+    /**
+     * The destination directory for uploaded files. If `storage` is not set
+     * and `dest` is, Multer will create a `DiskStorage` instance configured
+     * to store files at `dest` with random filenames.
+     *
+     * Ignored if `storage` is set.
+     */
+    dest?: string | undefined;
+    /**
+     * An object specifying various limits on incoming data. This object is
+     * passed to Busboy directly, and the details of properties can be found
+     * at https://github.com/mscdex/busboy#busboy-methods.
+     */
+    limits?:
+      | {
+          /** Maximum size of each form field name in bytes. (Default: 100) */
+          fieldNameSize?: number | undefined;
+          /** Maximum size of each form field value in bytes. (Default: 1048576) */
+          fieldSize?: number | undefined;
+          /** Maximum number of non-file form fields. (Default: Infinity) */
+          fields?: number | undefined;
+          /** Maximum size of each file in bytes. (Default: Infinity) */
+          fileSize?: number | undefined;
+          /** Maximum number of file fields. (Default: Infinity) */
+          files?: number | undefined;
+          /** Maximum number of parts (non-file fields + files). (Default: Infinity) */
+          parts?: number | undefined;
+          /** Maximum number of headers. (Default: 2000) */
+          headerPairs?: number | undefined;
+        }
+      | undefined;
+    /** Preserve the full path of the original filename rather than the basename. (Default: false) */
+    preservePath?: boolean | undefined;
+    /**
+     * Optional function to control which files are uploaded. This is called
+     * for every file that is processed.
+     *
+     * @param req The Express `Request` object.
+     * @param file Object containing information about the processed file.
+     * @param callback  a function to control which files should be uploaded and which should be skipped.
+     */
+    fileFilter?(req: Request, file: File, callback: FileFilterCallback): void;
+  }
+
+  /**
+   * Implementations of this interface are responsible for storing files
+   * encountered by Multer and returning information on how to access them
+   * once stored. Implementations must also provide a method for removing
+   * files in the event that an error occurs.
+   */
+  interface StorageEngine {
+    /**
+     * Store the file described by `file`, then invoke the callback with
+     * information about the stored file.
+     *
+     * File contents are available as a stream via `file.stream`. Information
+     * passed to the callback will be merged with `file` for subsequent
+     * middleware.
+     *
+     * @param req The Express `Request` object.
+     * @param file Object with `stream`, `fieldname`, `originalname`, `encoding`, and `mimetype` defined.
+     * @param callback Callback to specify file information.
+     */
+    _handleFile(
+      req: Request,
+      file: File,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      callback: (error?: any, info?: Partial<File>) => void,
+    ): void;
+    /**
+     * Remove the file described by `file`, then invoke the callback with.
+     *
+     * `file` contains all the properties available to `_handleFile`, as
+     * well as those returned by `_handleFile`.
+     *
+     * @param req The Express `Request` object.
+     * @param file Object containing information about the processed file.
+     * @param callback Callback to indicate completion.
+     */
+    _removeFile(
+      req: Request,
+      file: Express.Multer.File,
+      callback: (error: Error | null) => void,
+    ): void;
+  }
+
+  interface DiskStorageOptions {
+    /**
+     * A string or function that determines the destination path for uploaded
+     * files. If a string is passed and the directory does not exist, Multer
+     * attempts to create it recursively. If neither a string or a function
+     * is passed, the destination defaults to `os.tmpdir()`.
+     *
+     * @param req The Express `Request` object.
+     * @param file Object containing information about the processed file.
+     * @param callback Callback to determine the destination path.
+     */
+    destination?:
+      | string
+      | ((
+          req: Request,
+          file: Express.Multer.File,
+          callback: (error: Error | null, destination: string) => void,
+        ) => void)
+      | undefined;
+    /**
+     * A function that determines the name of the uploaded file. If nothing
+     * is passed, Multer will generate a 32 character pseudorandom hex string
+     * with no extension.
+     *
+     * @param req The Express `Request` object.
+     * @param file Object containing information about the processed file.
+     * @param callback Callback to determine the name of the uploaded file.
+     */
+    filename?(
+      req: Request,
+      file: Express.Multer.File,
+      callback: (error: Error | null, filename: string) => void,
+    ): void;
+  }
+
+  /**
+   * An object describing a field name and the maximum number of files with
+   * that field name to accept.
+   */
+  interface Field {
+    /** The field name. */
+    name: string;
+    /** Optional maximum number of files per field to accept. (Default: Infinity) */
+    maxCount?: number | undefined;
+  }
 }
