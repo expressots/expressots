@@ -1,0 +1,42 @@
+{
+  "name": "expressots-experimetal-opinionated",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "author": "",
+  "license": "UNLICENSED",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "expressots build  --experimental",
+    "dev": "expressots dev  --experimental",
+    "prod": "node dist/main.js",
+    "test": "jest",
+    "test:cov": "jest --coverage",
+    "test:watch": "jest --watchAll",
+    "format": "eslint \"src/**/*.ts\" --fix",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@expressots/core": "latest"
+  },
+  "devDependencies": {
+    "@swc/jest": "^0.2.29",
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.3",
+    "@types/node": "^20.4.10",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "eslint": "^8.47.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "inversify": "^6.0.1",
+    "inversify-binding-decorators": "^4.0.0",
+    "inversify-express-utils": "^6.4.3",
+    "jest": "^29.6.2",
+    "prettier": "^3.0.2",
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^5.1.6"
+  }
+}
