@@ -83,7 +83,7 @@
     "@vitest/coverage-v8": "^0.34.6",
     "eslint": "^8.48.0",
     "eslint-config-prettier": "^9.0.0",
-    "husky": "^8.0.3",
+    "husky": "^9.0.10",
     "prettier": "3.1.1",
     "release-it": "^16.1.5",
     "ts-jest": "^29.0.5",
