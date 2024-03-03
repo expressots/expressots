@@ -119,14 +119,14 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
                 app.use(path, mid as express.RequestHandler);
               } else {
                 const middleware = mid as unknown as ExpressoMiddleware;
-                middleware.use = middleware.use.bind(middleware.use);
+                middleware.use = middleware.use.bind(middleware);
                 app.use(middleware.use as express.RequestHandler);
               }
             }
           });
         } else {
           const middleware = entry as ExpressoMiddleware;
-          middleware.use = middleware.use.bind(middleware.use);
+          middleware.use = middleware.use.bind(middleware);
           app.use(middleware.use);
         }
       });
