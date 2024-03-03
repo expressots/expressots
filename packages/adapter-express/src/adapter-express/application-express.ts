@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import process from "process";
@@ -25,6 +25,27 @@ type MiddlewareConfig = {
   path?: string;
   middlewares: Array<ExpressHandler>;
 };
+
+/**
+ * Expresso middleware interface.
+ */
+interface IExpressoMiddleware {
+  //readonly name: string;
+  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
+
+/**
+ * Abstract class for creating custom Expresso middleware.
+ * Custom middleware classes should extend this class and implement the use method.
+ *
+ */
+abstract class ExpressoMiddleware implements IExpressoMiddleware {
+  get name(): string {
+    return this.constructor.name;
+  }
+
+  abstract use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
 
 /**
  * Enum representing possible server environments.
@@ -77,7 +98,9 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
 
     this.middlewares.push(...middlewares, ...(pipeline as Array<ExpressHandler>));
 
-    const allMiddlewareEntries: Array<ExpressHandler | MiddlewareConfig> = [...this.middlewares];
+    const allMiddlewareEntries: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [
+      ...this.middlewares,
+    ];
 
     const expressServer = new InversifyExpressServer(container, null, {
       rootPath: this.globalPrefix as string,
@@ -87,15 +110,24 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
       allMiddlewareEntries.forEach((entry) => {
         if (typeof entry === "function") {
           app.use(entry as express.RequestHandler);
-        } else {
+          // eslint-disable-next-line no-prototype-builtins
+        } else if (entry?.hasOwnProperty("path")) {
           const { path, middlewares } = entry as MiddlewareConfig;
-          middlewares.forEach((middleware) => {
+          middlewares.forEach((mid) => {
             if (path) {
-              app.use(path, middleware as express.RequestHandler);
-            } else {
-              app.use(middleware as express.RequestHandler);
+              if (typeof mid === "function") {
+                app.use(path, mid as express.RequestHandler);
+              } else {
+                const middleware = mid as unknown as ExpressoMiddleware;
+                middleware.use = middleware.use.bind(middleware.use);
+                app.use(middleware.use as express.RequestHandler);
+              }
             }
           });
+        } else {
+          const middleware = entry as ExpressoMiddleware;
+          middleware.use = middleware.use.bind(middleware.use);
+          app.use(middleware.use);
         }
       });
     });
