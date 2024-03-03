@@ -747,8 +747,8 @@ class Middleware implements IMiddleware {
       } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
         return {
           timestamp: m.timestamp.toISOString(),
-          path: (m.middleware as MiddlewareConfig).path,
-          middleware: (m.middleware as IExpressoMiddleware).constructor,
+          path: (m.middleware as MiddlewareConfig).path ?? "Global",
+          middleware: (m.middleware as IExpressoMiddleware).constructor.name,
         };
       } else {
         return {
