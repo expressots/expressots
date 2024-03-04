@@ -231,13 +231,6 @@ interface IMiddleware {
   addMiddleware(options: MiddlewareOptions): void;
 
   /**
-   * Retrieves middleware pipeline in the order they were added.
-   *
-   * @returns An array of Express request handlers representing the middlewares.
-   */
-  getMiddlewarePipeline(): Array<MiddlewarePipeline>;
-
-  /**
    * View middleware pipeline formatted.
    * @returns void
    */
