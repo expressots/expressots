@@ -17,6 +17,7 @@ import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
 import { multer } from "./interfaces/multer.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
+import { provide } from "inversify-binding-decorators";
 
 /**
  * ExpressHandler Type
@@ -47,6 +48,7 @@ interface IExpressoMiddleware {
  * Custom middleware classes should extend this class and implement the use method.
  *
  */
+@provide(ExpressoMiddleware)
 export abstract class ExpressoMiddleware implements IExpressoMiddleware {
   get name(): string {
     return this.constructor.name;
