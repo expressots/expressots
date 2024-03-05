@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import process from "process";
@@ -15,16 +15,54 @@ import { IApplicationExpress } from "./application-express.interface";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import { ApplicationBase } from "./application-base";
 
+/**
+ * ExpressHandler Type
+ *
+ * The ExpressHandler type is a union type that represents various types of Express middleware functions.
+ * It can be one of the following types:
+ * - express.ErrorRequestHandler: Handles errors in the middleware pipeline.
+ * - express.RequestParamHandler: Handles parameters in the middleware pipeline.
+ * - express.RequestHandler: General request handler.
+ * - undefined: Represents the absence of a handler.
+ */
 type ExpressHandler =
   | express.ErrorRequestHandler
   | express.RequestParamHandler
   | express.RequestHandler
   | undefined;
 
+/**
+ * MiddlewareConfig Interface
+ *
+ * The MiddlewareConfig interface specifies the structure for middleware configuration objects.
+ * - path: Optional. The route path for which the middleware is configured.
+ * - middlewares: An array of ExpressHandler types that make up the middleware pipeline for the route specified by 'path'.
+ */
 type MiddlewareConfig = {
   path?: string;
   middlewares: Array<ExpressHandler>;
 };
+
+/**
+ * Expresso middleware interface.
+ */
+interface IExpressoMiddleware {
+  //readonly name: string;
+  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
+
+/**
+ * Abstract class for creating custom Expresso middleware.
+ * Custom middleware classes should extend this class and implement the use method.
+ *
+ */
+abstract class ExpressoMiddleware implements IExpressoMiddleware {
+  get name(): string {
+    return this.constructor.name;
+  }
+
+  abstract use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
 
 /**
  * Enum representing possible server environments.
@@ -60,6 +98,40 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
   }
 
   /**
+   * Configures the Express application with the provided middleware entries.
+   * @param app - The Express application instance.
+   * @param middlewareEntries - An array of Express middleware entries to be applied.
+   */
+  private async configureMiddleware(
+    app: express.Application,
+    middlewareEntries: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware>,
+  ): Promise<void> {
+    for (const entry of middlewareEntries) {
+      if (typeof entry === "function") {
+        app.use(entry as express.RequestHandler);
+        // eslint-disable-next-line no-prototype-builtins
+      } else if (entry?.hasOwnProperty("path")) {
+        const { path, middlewares } = entry as MiddlewareConfig;
+        for (const mid of middlewares) {
+          if (path) {
+            if (typeof mid === "function") {
+              app.use(path, mid as express.RequestHandler);
+            } else {
+              const middleware = mid as unknown as ExpressoMiddleware;
+              middleware.use = middleware.use.bind(middleware);
+              app.use(path, middleware.use);
+            }
+          }
+        }
+      } else {
+        const middleware = entry as ExpressoMiddleware;
+        middleware.use = middleware.use.bind(middleware);
+        app.use(middleware.use);
+      }
+    }
+  }
+
+  /**
    * Create and configure the Express application.
    * @param container - The InversifyJS container.
    * @param middlewares - An array of Express middlewares to be applied.
@@ -69,7 +141,7 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
     container: Container,
     middlewares: Array<express.RequestHandler> = [],
   ): Promise<ApplicationExpress> {
-    await Promise.resolve(this.configureServices());
+    await this.configureServices();
 
     const middleware = container.get<IMiddleware>(Middleware);
     const sortedMiddlewarePipeline = middleware.getMiddlewarePipeline();
@@ -77,27 +149,12 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
 
     this.middlewares.push(...middlewares, ...(pipeline as Array<ExpressHandler>));
 
-    const allMiddlewareEntries: Array<ExpressHandler | MiddlewareConfig> = [...this.middlewares];
-
     const expressServer = new InversifyExpressServer(container, null, {
       rootPath: this.globalPrefix as string,
     });
 
     expressServer.setConfig((app: express.Application) => {
-      allMiddlewareEntries.forEach((entry) => {
-        if (typeof entry === "function") {
-          app.use(entry as express.RequestHandler);
-        } else {
-          const { path, middlewares } = entry as MiddlewareConfig;
-          middlewares.forEach((middleware) => {
-            if (path) {
-              app.use(path, middleware as express.RequestHandler);
-            } else {
-              app.use(middleware as express.RequestHandler);
-            }
-          });
-        }
-      });
+      this.configureMiddleware(app, this.middlewares);
     });
 
     expressServer.setErrorConfig((app: express.Application) => {
