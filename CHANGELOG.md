@@ -1,5 +1,36 @@
 
 
+## [2.8.0](https://github.com/expressots/expressots/compare/2.7.0...2.8.0) (2024-3-5)
+
+
+### Features
+
+* add middleware handler, config and expresso ([df60183](https://github.com/expressots/expressots/commit/df601837a771662723f25f185622de8c912f6721))
+* add provide annotation to abstract class ExpressMiddleware ([49e762e](https://github.com/expressots/expressots/commit/49e762e035053d67a977d54d9f448334e931134b))
+* Added it into options wiring ([58e58c1](https://github.com/expressots/expressots/commit/58e58c11693d8dfc8e235bbc5b8d62aa35493ec9))
+* Added multer middleware for expressots ([522db5d](https://github.com/expressots/expressots/commit/522db5d58dd4521fd03528cf4178cbbc951a0537))
+* bump @commitlint/cli from 17.8.1 to 18.0.0 ([4ddcbd4](https://github.com/expressots/expressots/commit/4ddcbd49ffe65cfa7a15b253515bb7f3446046ee))
+* bump @commitlint/config-conventional from 17.8.1 to 18.0.0 ([91e1237](https://github.com/expressots/expressots/commit/91e12370f9736188805df20d4f7da378720ac43b))
+* bump husky from 8.0.3 to 9.0.11 ([#170](https://github.com/expressots/expressots/issues/170)) ([342983f](https://github.com/expressots/expressots/commit/342983fe59d6ccc409f887f7a1c8f65c9469a8d7))
+* bump prettier from 3.0.3 to 3.1.1 ([#145](https://github.com/expressots/expressots/issues/145)) ([2e7b812](https://github.com/expressots/expressots/commit/2e7b81226c65468edacae51407ce56c78c66a85b))
+* bump prettier from 3.1.1 to 3.2.5 ([#166](https://github.com/expressots/expressots/issues/166)) ([49c148c](https://github.com/expressots/expressots/commit/49c148c2fae6b4e0260650fbbcf559c69075d9bc))
+* bump reflect-metadata from 0.1.14 to 0.2.1 ([#148](https://github.com/expressots/expressots/issues/148)) ([f444982](https://github.com/expressots/expressots/commit/f444982ccbedb75f3c26b982a2a5d5d336857aae))
+* bump vite from 4.4.11 to 4.5.0 ([344161c](https://github.com/expressots/expressots/commit/344161cdf0cd7f54ffaa069023241aaea04d7c5d))
+* comments addressed ([8c3f55a](https://github.com/expressots/expressots/commit/8c3f55a901874c1e9c33d415157fa0a2beab9c56))
+* correct expresso middleware path ([0879c10](https://github.com/expressots/expressots/commit/0879c104810256f5143dcb2206579debaf0e6a97))
+* Include multer as resolver ([056d4d9](https://github.com/expressots/expressots/commit/056d4d99801f9f4af2932bcee333a1fa652b45a8))
+* remove getmiddleware pipeline from interface ([0577527](https://github.com/expressots/expressots/commit/057752754e257552eddebf031cf977f663b093ed))
+* Remove multer dependency / Added dynamic multer usage behavior ([6a4530b](https://github.com/expressots/expressots/commit/6a4530be243c961e5bfe50340d2c41742332e186))
+* Remove multer dependency with interface defined ([5a0acd2](https://github.com/expressots/expressots/commit/5a0acd228166efc2de8f4be7078c21ed6fd34634))
+* Remove multer dependency with interface defined ([8133621](https://github.com/expressots/expressots/commit/8133621108bb7f2017088d59ae6145da8606ebf7))
+* update reflect metadata on templates ([#152](https://github.com/expressots/expressots/issues/152)) ([75a3312](https://github.com/expressots/expressots/commit/75a33122e0f468b9e28040b8e7eb6747252e4c6b))
+
+
+### Bug Fixes
+
+* interface types and middleware return multer ([b5223fd](https://github.com/expressots/expressots/commit/b5223fdc22eaaf1cb9b315b2aa77ad0e615e8ed3))
+* remove codesee build ([#177](https://github.com/expressots/expressots/issues/177)) ([812e06d](https://github.com/expressots/expressots/commit/812e06da1b91cc7a4b0685ec70b0f0de1bd4517b))
+
 ## [2.7.0](https://github.com/expressots/expressots/compare/2.6.0...2.7.0) (2023-10-17)
 
 
