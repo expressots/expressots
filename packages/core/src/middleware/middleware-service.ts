@@ -1,6 +1,8 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
+
 import { provideSingleton } from "../decorator/index";
 import defaultErrorHandler from "../error/error-handler-middleware";
+
 import { Logger } from "../provider/logger/logger-service";
 import { OptionsJson } from "./interfaces/body-parser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
@@ -15,6 +17,7 @@ import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
 import { multer } from "./interfaces/multer.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
+import { provide } from "inversify-binding-decorators";
 
 /**
  * ExpressHandler Type
@@ -33,12 +36,41 @@ export type ExpressHandler =
   | undefined;
 
 /**
- * MiddlewareArgs Type
- *
- * The MiddlewareArgs type represents arguments that can be passed to a middleware function.
- * It can either be a string (a route or path) or an instance of ExpressHandler.
+ * Expresso middleware interface.
  */
-type MiddlewareArgs = string | ExpressHandler;
+interface IExpressoMiddleware {
+  //readonly name: string;
+  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
+
+/**
+ * Abstract class for creating custom Expresso middleware.
+ * Custom middleware classes should extend this class and implement the use method.
+ *
+ */
+@provide(ExpressoMiddleware)
+export abstract class ExpressoMiddleware implements IExpressoMiddleware {
+  get name(): string {
+    return this.constructor.name;
+  }
+
+  abstract use(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> | void;
+}
+
+/**
+ * MiddlewareOptions Type
+ *
+ * The MiddlewareOptions type represents arguments that can be passed to a middleware function.
+ * It can either be a expressjs request handler function, a middleware configuration object that is composed by a route and an expressjs handler or
+ */
+export type MiddlewareOptions =
+  | ExpressHandler
+  | MiddlewareConfig
+  | IExpressoMiddleware;
 
 /**
  * MiddlewareConfig Interface
@@ -49,7 +81,7 @@ type MiddlewareArgs = string | ExpressHandler;
  */
 type MiddlewareConfig = {
   path?: string;
-  middlewares: Array<ExpressHandler>;
+  middlewares: Array<ExpressHandler | IExpressoMiddleware>;
 };
 
 /**
@@ -61,7 +93,21 @@ type MiddlewareConfig = {
  */
 interface MiddlewarePipeline {
   timestamp: Date;
-  middleware: ExpressHandler | MiddlewareConfig;
+  middleware: ExpressHandler | MiddlewareConfig | IExpressoMiddleware;
+}
+
+/**
+ * MiddlewareType Enum
+ *
+ * The MiddlewareType enum represents the various types of middleware that can be added to the middleware collection.
+ * - Config: Middleware configuration object.
+ * - ExpressHandler: Express request handler function.
+ * - IExpressoMiddleware: Custom Expresso middleware.
+ */
+enum MiddlewareType {
+  Config,
+  ExpressHandler,
+  IExpressoMiddleware,
 }
 
 /**
@@ -161,17 +207,36 @@ interface IMiddleware {
   /**
    * Adds a middleware to the middleware collection.
    *
-   * @param middleware - The Express request handler function to be added to the middleware collection.
+   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
+   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
    *
+   * @example Express Handler
+   *  const middleware = (req, res, next) => {
+   *  // Your middleware logic here
+   *  next();
+   * }
+   *
+   * @example Middleware Configuration Object
+   * const middleware = {
+   *  path: "/",
+   *  middlewares: [] // Array of Express Handlers
+   * }
+   *
+   * @example Expresso Middleware
+   * class CustomMiddleware implements IExpressoMiddleware {
+   *  use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
+   *   // Your middleware logic here
+   *   next();
+   *  }
+   * }
    */
-  addMiddleware(...middleware: Array<MiddlewareArgs>): void;
+  addMiddleware(options: MiddlewareOptions): void;
 
   /**
-   * Retrieves middleware pipeline in the order they were added.
-   *
-   * @returns An array of Express request handlers representing the middlewares.
+   * View middleware pipeline formatted.
+   * @returns void
    */
-  getMiddlewarePipeline(): Array<MiddlewarePipeline>;
+  viewMiddlewarePipeline(): void;
 
   /**
    * Gets the configured error handler middleware.
@@ -210,6 +275,24 @@ class Middleware implements IMiddleware {
   private logger: Logger = new Logger();
 
   /**
+   * Retrieves the type of the middleware.
+   *
+   * @param middleware - The middleware to be checked.
+   *
+   * @returns The type of the middleware.
+   */
+  private getMiddlewareType(middleware: MiddlewareOptions): MiddlewareType {
+    // eslint-disable-next-line no-prototype-builtins
+    if (middleware?.hasOwnProperty("path")) {
+      return MiddlewareType.Config;
+    } else if (middleware instanceof Function) {
+      return MiddlewareType.ExpressHandler;
+    } else {
+      return MiddlewareType.IExpressoMiddleware;
+    }
+  }
+
+  /**
    * Checks if a middleware with the given name exists in the middleware collection.
    *
    * @param middlewareName - The name of the middleware to be checked.
@@ -217,12 +300,14 @@ class Middleware implements IMiddleware {
    * @returns A boolean value indicating whether the middleware exists or not.
    */
   private middlewareExists(middlewareName: string): boolean {
-    const middlewareIndex = this.middlewarePipeline.findIndex((m) =>
-      typeof m.middleware === "object"
-        ? m.middleware.middlewares.some((mw) => mw?.name === middlewareName)
-        : m.middleware?.name === middlewareName,
-    );
-    return middlewareIndex !== -1;
+    return this.middlewarePipeline.some((m) => {
+      if (m.middleware instanceof Function) {
+        return m.middleware.name === middlewareName;
+      } else if (m.middleware instanceof Object) {
+        return (m.middleware as MiddlewareConfig).path === middlewareName;
+      }
+      return false;
+    });
   }
 
   public addRateLimiter(options?: RateLimitOptions): void {
@@ -455,62 +540,171 @@ class Middleware implements IMiddleware {
   }
 
   /**
-   * Adds a middleware to the middleware collection.
-   *
-   * @param middleware - The Express request handler function to be added to the middleware collection.
-   *
+   * Helper method to add middleware configuration objects to the middleware collection.
+   * @param middleware - The middleware configuration object to be added to the middleware collection.
+   * @returns void
    */
-  addMiddleware(...middleware: Array<MiddlewareArgs>): void {
-    let config: MiddlewareConfig;
+  private addConfigMiddleware(middleware: MiddlewareConfig): void {
+    // eslint-disable-next-line no-case-declarations
+    const config = middleware as MiddlewareConfig;
+    let routeExists: boolean = false;
 
-    if (typeof middleware[0] === "string") {
-      const [path, ...middlewares] = middleware;
-      config = {
-        path,
-        middlewares: middlewares as Array<ExpressHandler>,
-      };
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      config = {
-        middlewares: middleware as Array<ExpressHandler>,
-      };
+    if (config.middlewares.length === 0) {
+      this.logger.warn(
+        `No middlewares in the route [${config.path}]. Skipping...`,
+        "configure-service",
+      );
+      return;
     }
 
-    if (config.path) {
-      // verify if middleware if path already exists
-      const middlewareIndex = this.middlewarePipeline.findIndex(
-        (m) =>
-          typeof m.middleware === "object" && m.middleware.path === config.path,
-      );
+    if (this.middlewarePipeline.length === 0) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: config,
+      });
+    } else {
+      this.middlewarePipeline.forEach((m) => {
+        if ((m.middleware as MiddlewareConfig).path === config.path) {
+          this.logger.warn(
+            `[${config.path}] route already exists. Skipping...`,
+            "configure-service",
+          );
 
-      if (middlewareIndex !== -1) {
-        this.logger.warn(
-          `[${config.path}] route already exists. Skipping...`,
-          "configure-service",
-        );
-      } else {
+          routeExists = true;
+        }
+      });
+
+      if (!routeExists) {
         this.middlewarePipeline.push({
           timestamp: new Date(),
           middleware: config,
         });
       }
-    } else {
-      config.middlewares.forEach((m) => {
-        const middlewareName = m?.name || "anonymous";
-        const middlewareExist = this.middlewareExists(middlewareName);
+    }
+  }
 
-        if (middlewareExist) {
+  /**
+   * Helper method to add express request handler functions to the middleware collection.
+   * @param middleware - The express request handler function to be added to the middleware collection.
+   * @returns void
+   */
+  private addExpressHandlerMiddleware(middleware: ExpressHandler): void {
+    let middlewareExists: boolean = false;
+
+    if (this.middlewarePipeline.length === 0) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
+
+      return;
+    }
+
+    this.middlewarePipeline.forEach((m) => {
+      const mType = this.getMiddlewareType(m.middleware);
+
+      if (mType === MiddlewareType.ExpressHandler) {
+        if ((m.middleware as ExpressHandler)?.name === middleware?.name) {
           this.logger.warn(
-            `[${middlewareName}] already exists. Skipping...`,
+            `[${middleware?.name}] already exists. Skipping...`,
             "configure-service",
           );
-        } else {
-          this.middlewarePipeline.push({
-            timestamp: new Date(),
-            middleware: config,
-          });
+
+          middlewareExists = true;
+          return;
         }
+      }
+    });
+
+    if (!middlewareExists) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
       });
+    }
+  }
+
+  /**
+   * Helper method to add custom Expresso middleware to the middleware collection.
+   * @param middleware - The custom Expresso middleware to be added to the middleware collection.
+   * @returns void
+   */
+  private addIExpressoMiddleware(middleware: IExpressoMiddleware): void {
+    let middlewareExists: boolean = false;
+
+    if (this.middlewarePipeline.length === 0) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
+
+      return;
+    }
+
+    this.middlewarePipeline.forEach((m) => {
+      const mType = this.getMiddlewareType(m.middleware);
+
+      if (mType === MiddlewareType.IExpressoMiddleware) {
+        if (
+          (m.middleware as IExpressoMiddleware).constructor.name ===
+          middleware.constructor.name
+        ) {
+          this.logger.warn(
+            `[${middleware.constructor.name}] already exists. Skipping...`,
+            "configure-service",
+          );
+
+          middlewareExists = true;
+          return;
+        }
+      }
+    });
+
+    if (!middlewareExists) {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware,
+      });
+    }
+  }
+
+  /**
+   * Adds a middleware to the middleware collection.
+   *
+   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
+   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
+   *
+   * @example Express Handler
+   *  const middleware = (req, res, next) => {
+   *    // Your middleware logic here
+   *    next();
+   *  }
+   *
+   * @example Middleware Configuration Object
+   *  const middleware = {
+   *    path: "/",
+   *    middlewares: [] // Array of Express Handlers
+   *  }
+   *
+   * @example Expresso Middleware
+   *  class CustomMiddleware implements IExpressoMiddleware {
+   *    use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
+   *    // Your middleware logic here
+   *      next();
+   *    }
+   *  }
+   */
+  addMiddleware(options: MiddlewareOptions): void {
+    switch (this.getMiddlewareType(options)) {
+      case MiddlewareType.Config:
+        this.addConfigMiddleware(options as MiddlewareConfig);
+        break;
+      case MiddlewareType.ExpressHandler:
+        this.addExpressHandlerMiddleware(options as ExpressHandler);
+        break;
+      case MiddlewareType.IExpressoMiddleware:
+        this.addIExpressoMiddleware(options as IExpressoMiddleware);
+        break;
     }
   }
 
@@ -523,6 +717,44 @@ class Middleware implements IMiddleware {
     return this.middlewarePipeline.sort((a, b) => {
       return a.timestamp.getTime() - b.timestamp.getTime();
     });
+  }
+
+  /**
+   * View middleware pipeline formatted.
+   * @returns void
+   */
+  public viewMiddlewarePipeline(): void {
+    const sortedMiddlewarePipeline = this.getMiddlewarePipeline();
+
+    const formattedPipeline = sortedMiddlewarePipeline.map((m) => {
+      const middlewareType = this.getMiddlewareType(m.middleware);
+
+      if (middlewareType === MiddlewareType.Config) {
+        const middlewareNames = (
+          m.middleware as MiddlewareConfig
+        ).middlewares.map((mw) => (mw as ExpressHandler)?.name || "Anonymous");
+
+        return {
+          timestamp: m.timestamp.toISOString(),
+          path: (m.middleware as MiddlewareConfig).path,
+          middleware: `[${middlewareNames.join(", ")}]`,
+        };
+      } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
+        return {
+          timestamp: m.timestamp.toISOString(),
+          path: (m.middleware as MiddlewareConfig).path ?? "Global",
+          middleware: (m.middleware as IExpressoMiddleware).constructor.name,
+        };
+      } else {
+        return {
+          timestamp: m.timestamp.toISOString(),
+          path: "Global",
+          middleware: (m.middleware as ExpressHandler)?.name,
+        };
+      }
+    });
+
+    console.table(formattedPipeline);
   }
 
   /**
