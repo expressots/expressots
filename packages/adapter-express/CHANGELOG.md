@@ -1,5 +1,15 @@
 
 
+## [1.2.0](https://github.com/expressots/adapter-express/compare/1.1.1...1.2.0) (2024-3-5)
+
+
+### Features
+
+* add expressots middleware support ([809f148](https://github.com/expressots/adapter-express/commit/809f148a2b9a6bb0aa41f231595b3a4c394574ee))
+* bump @commitlint/cli from 17.8.1 to 18.0.0 ([15fbb1a](https://github.com/expressots/adapter-express/commit/15fbb1a84c758df25b60f2a893fd44829db3c0dc))
+* fix middleware binding to constructor ([3a6f7dc](https://github.com/expressots/adapter-express/commit/3a6f7dca40889133b09630582c775156392c4fd7))
+* fix path call on expresso middleware ([934ae17](https://github.com/expressots/adapter-express/commit/934ae17110489315536e28b71cde24f5f18d88dc))
+
 ## [1.1.1](https://github.com/expressots/adapter-express/compare/1.1.0...1.1.1) (2023-10-10)
 
 
