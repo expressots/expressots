@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2022",
+    "target": "ES2021",
     "moduleResolution": "node",
     "outDir": "lib/cjs",
     "declarationDir": "lib/cjs/types"
