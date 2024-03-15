@@ -58,6 +58,7 @@
     "build": "npm run clean && npm run build:cjs && npm run copy",
     "build:esm": "tsc -p tsconfig.esm.json && npm run rename:esm",
     "build:cjs": "tsc -p tsconfig.cjs.json",
+    "prepublish": "npm run build && npm pack",
     "release": "release-it",
     "coverage": "vitest run --coverage",
     "test": "vitest run --reporter default",
