@@ -1,6 +1,6 @@
 import express from "express";
 import { Container } from "inversify";
-import { Logger } from "../provider/logger/logger-service";
+import { Logger } from "../provider/logger/logger.provider";
 import { AppExpress, IApplicationExpress } from "@expressots/adapter-express";
 //import { AppFastify } from "./fastify/application-fastify";
 //import { IApplicationFastify } from "./fastify/application-fastify.interface";

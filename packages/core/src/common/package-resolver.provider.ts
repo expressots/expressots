@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Logger } from "../provider/logger/logger-service";
+import { Logger } from "../provider/logger/logger.provider";
 
 /**
  * Resolve package from the current working directory.

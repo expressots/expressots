@@ -3,7 +3,7 @@ import "reflect-metadata";
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { StatusCode } from "../../error/status-code";
 import { packageResolver } from "../../common/package-resolver.provider";
-import { Logger } from "../logger/logger-service";
+import { Logger } from "../logger/logger.provider";
 
 /**
  * Validate the DTO using class-validator and class-transformer.

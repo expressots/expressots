@@ -3,7 +3,7 @@ import "reflect-metadata";
 import { BindingScopeEnum, interfaces } from "inversify";
 import { AppFactory } from "../application";
 import { provideSingleton } from "../decorator";
-import { Logger } from "./logger/logger-service";
+import { Logger } from "./logger/logger.provider";
 
 export interface IProvider {
   name: string;

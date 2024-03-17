@@ -1,5 +1,5 @@
 import { provide } from "inversify-binding-decorators";
-import { Logger } from "../provider/logger/logger-service";
+import { Logger } from "../provider/logger/logger.provider";
 import { AppError } from "./app-error";
 
 /**
