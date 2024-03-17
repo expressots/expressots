@@ -1,8 +1,9 @@
+import dotenv from "dotenv";
+import { injectable } from "inversify";
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
-import { provide } from "inversify-binding-decorators";
 import { Logger } from "../logger/logger-service";
+import { IProvider } from "../provider-manager";
 
 type DefaultValueType = string | number | boolean | undefined;
 
@@ -11,8 +12,13 @@ type DefaultValueType = string | number | boolean | undefined;
  * It validates, loads, and retrieves environment variables from the .env file.
  * @provide EnvValidatorProvider
  */
-@provide(EnvValidatorProvider)
-class EnvValidatorProvider {
+@injectable()
+class EnvValidatorProvider implements IProvider {
+  name: string = "EnvValidatorProvider";
+  version: string = "0.0.1";
+  author: string = "Richard Zampieri";
+  repo: string = "internal";
+
   private logger: Logger;
 
   constructor() {
