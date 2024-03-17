@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { injectable } from "inversify";
 import fs from "fs";
 import path from "path";
-import { Logger } from "../logger/logger-service";
+import { Logger } from "../logger/logger.provider";
 import { IProvider } from "../provider-manager";
 
 type DefaultValueType = string | number | boolean | undefined;

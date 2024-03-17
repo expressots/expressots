@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
-import { Logger } from "../provider/logger/logger-service";
+import { Logger } from "../provider/logger/logger.provider";
 import { ExpressHandler } from "./middleware-service";
 
 /**

@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { provideSingleton } from "../decorator/index";
 import defaultErrorHandler from "../error/error-handler-middleware";
 
-import { Logger } from "../provider/logger/logger-service";
+import { Logger } from "../provider/logger/logger.provider";
 import { OptionsJson } from "./interfaces/body-parser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
 import { CorsOptions } from "./interfaces/cors.interface";
