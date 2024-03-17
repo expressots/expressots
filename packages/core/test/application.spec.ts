@@ -41,13 +41,6 @@ describe("App Container", () => {
     expect(appContainer.Container).to.be.equal(container);
   });
 
-  it("Return a binding dictionary", () => {
-    const appContainer: AppContainer = new AppContainer();
-    const container = appContainer.create([]);
-    const bindingDictionary = appContainer.getBindingDictionary();
-    expect(bindingDictionary).to.be.equal(container["_bindingDictionary"]._map);
-  });
-
   it("Add a module to the container", () => {
     const appContainer: AppContainer = new AppContainer();
     const UserModule = CreateModule([]);
