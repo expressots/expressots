@@ -19,7 +19,7 @@
     "keywords": [],
     "dependencies": {
         "@expressots/adapter-express": "latest",
-        "@expressots/core": "latest",
+        "@expressots/core": "file:../../expressots-core-2.8.0.tgz",
         "dotenv": "16.0.3",
         "express": "4.18.2",
         "inversify": "6.0.1",
