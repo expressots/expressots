@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { AppUseCase } from "../src/app.usecase";
+import { AppUseCase } from "../src/app/app.usecase";
 
 describe("AppUseCase", () => {
     it("returns Hello Expresso TS!", () => {
