@@ -13,6 +13,7 @@ import { AppExpress, IApplicationExpress } from "@expressots/adapter-express";
  * either using a custom application type or with provided middlewares.
  */
 class AppFactory {
+  public static container: Container;
   private static logger: Logger = new Logger();
   /**
    * Creates an instance of the application using a custom application type.
@@ -63,6 +64,9 @@ class AppFactory {
   ): Promise<
     IApplicationExpress | /*IApplicationFastify |*/ AppExpress /*| AppFastify*/
   > {
+    // Set the container for the application global access
+    AppFactory.container = container;
+
     let app: AppExpress /*| AppFastify*/ = {} as AppExpress; /*| AppFastify*/
 
     if (this.isOpinionated(appTypeOrMiddlewares)) {

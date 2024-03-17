@@ -82,12 +82,6 @@ interface Binding {
 }
 
 /**
- * Type alias for ServiceIdentifier, used to specify a unique identifier for a service.
- * It's usually a symbol, but can be other types as well.
- */
-type ServiceIdentifier = typeof Symbol;
-
-/**
  * Interface for container options that can be passed to the AppContainer class.
  */
 interface ContainerOptions {
@@ -101,6 +95,11 @@ interface ContainerOptions {
    * Allows skipping of base class checks when working with derived classes.
    */
   skipBaseClassChecks?: boolean;
+
+  /**
+   * Allows auto-binding of injectable classes.
+   */
+  autoBindInjectable?: boolean;
 }
 
 /**
@@ -134,16 +133,18 @@ class AppContainer {
   /**
    * Creates and configures a new dependency injection container.
    * @param modules - An array of ContainerModule instances to load into the container.
-   * @param defaultScope - The default scope to use for bindings. Scoped (Request) by default, but offers Singleton and Transient as well.
    * @returns The configured dependency injection container.
    */
   public create(modules: Array<ContainerModule>): Container {
     const containerOptions: interfaces.ContainerOptions = {
-      autoBindInjectable: true,
+      autoBindInjectable: this.options.autoBindInjectable
+        ? this.options.autoBindInjectable
+        : true,
       ...this.options,
     };
 
     this.container = new Container(containerOptions);
+    this.container.bind(Container).toConstantValue(this.container);
     this.container.load(buildProviderModule(), ...modules);
 
     return this.container;
@@ -151,10 +152,26 @@ class AppContainer {
 
   /**
    * Retrieves the binding dictionary of the container.
-   * @returns The binding dictionary of the container.
+   * @returns(void) Print table of the binding dictionary of the container.
    */
-  public getBindingDictionary(): Map<ServiceIdentifier, Array<Binding>> {
-    return this.container["_bindingDictionary"]._map;
+  public viewContainerBindings(): void {
+    const dictionary = this.container["_bindingDictionary"]._map;
+    const entries: Array<[string, Array<Binding>]> = Array.from(
+      dictionary.entries(),
+    );
+
+    const table = entries
+      .map(([identifier, bindings]) => {
+        return bindings.map((binding) => ({
+          "Service Identifier": identifier,
+          Scope: binding.scope,
+          Type: binding.type,
+          Cache: binding.cache !== null ? "Yes" : "No",
+        }));
+      })
+      .flat();
+
+    console.table(table);
   }
 
   /**

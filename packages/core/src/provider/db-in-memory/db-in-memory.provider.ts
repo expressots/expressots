@@ -1,4 +1,5 @@
-import { provideSingleton } from "../../decorator";
+import { injectable } from "inversify";
+import { IProvider } from "../provider-manager";
 
 /*
  * Base interface that defines the structure of an entity.
@@ -16,8 +17,14 @@ export interface IMemoryDBEntity {
  *
  * @decorator @provideSingleton(InMemoryDB)
  */
-@provideSingleton(InMemoryDB)
-export class InMemoryDB {
+//@provideSingleton(InMemoryDB)
+@injectable()
+export class InMemoryDB implements IProvider {
+  name: string = "InMemoryDB";
+  version: string = "0.0.1";
+  author: string = "Richard Zampieri";
+  repo: string = "internal";
+
   private tables: Record<string, Array<IMemoryDBEntity>> = {};
 
   /**

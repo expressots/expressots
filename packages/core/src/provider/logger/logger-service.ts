@@ -1,5 +1,6 @@
-import { provide } from "inversify-binding-decorators";
+import { injectable } from "inversify";
 import { Color, colorCodes } from "../../common/color-service.provider";
+import { IProvider } from "../provider-manager";
 
 /**
  * Represents the different logging levels.
@@ -20,9 +21,14 @@ function colorText(text: string, color: Color): string {
 /**
  * Class that provides logging functionality with colorized text.
  */
-@provide(Logger)
-class Logger {
+@injectable()
+class Logger implements IProvider {
   private pid: number;
+
+  name: string = "Logger";
+  version: string = "0.0.1";
+  author: string = "Richard Zampieri";
+  repo: string = "internal";
 
   constructor() {
     this.pid = process.pid;
