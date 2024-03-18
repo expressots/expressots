@@ -448,6 +448,8 @@ const schematicFolder = (schematic: string): string | undefined => {
 			return "providers";
 		case "entity":
 			return "entities";
+		case "middleware":
+			return "providers/middlewares";
 	}
 
 	return undefined;
