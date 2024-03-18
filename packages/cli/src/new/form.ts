@@ -145,8 +145,8 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 				name: "template",
 				message: "Select a template",
 				choices: [
-					"Non-Opinionated :: A simple ExpressoTS project.",
 					"Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
+					"Non-Opinionated :: A simple ExpressoTS project.",
 				],
 			},
 			{

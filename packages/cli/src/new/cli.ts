@@ -23,7 +23,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 				.option("template", {
 					describe: "The project template to use",
 					type: "string",
-					choices: ["non-opinionated", "opinionated"],
+					choices: ["opinionated", "non-opinionated"],
 					alias: "t",
 				})
 				.option("package-manager", {
