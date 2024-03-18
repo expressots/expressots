@@ -2,8 +2,8 @@ import "reflect-metadata";
 
 import { BindingScopeEnum, Container } from "inversify";
 import { describe, expect, it } from "vitest";
-import { AppContainer } from "../src/application/app-container";
-import { CreateModule } from "../src/container-module/container-module";
+import { AppContainer } from "../app-container";
+import { CreateModule } from "../../container-module/container-module";
 
 describe("App Container", () => {
   it("Create an App container", () => {
