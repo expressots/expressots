@@ -80,8 +80,8 @@ function changePackageName({
 }
 
 enum Template {
-	"non-opinionated" = 0,
-	"opinionated" = 1,
+	"non-opinionated" = "Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
+	opinionated = "Opinionated :: Automatically scaffolds resources into a preset project structure. (Recommended)",
 }
 
 const enum PackageManager {
@@ -279,6 +279,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 				),
 			),
 		);
+		console.log("\n");
 	}
 };
 
