@@ -2,6 +2,7 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { runCommandModule } from "./commands/project.commands";
 import { generateProject } from "./generate";
 import { infoProject } from "./info";
 import { createProject } from "./new";
@@ -13,6 +14,7 @@ console.log(`\n[🐎 Expressots]\n`);
 
 yargs(hideBin(process.argv))
 	.scriptName("expressots")
+	.command(runCommandModule)
 	.command(createProject())
 	.command(generateProviders())
 	.command(generateProject())
