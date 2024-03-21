@@ -80,8 +80,8 @@ function changePackageName({
 }
 
 enum Template {
-	"non-opinionated" = "Non-Opinionated :: A simple ExpressoTS project.",
-	opinionated = "Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
+	"non-opinionated" = "Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
+	opinionated = "Opinionated :: Automatically scaffolds resources into a preset project structure. (Recommended)",
 }
 
 const enum PackageManager {
@@ -145,8 +145,10 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 				name: "template",
 				message: "Select a template",
 				choices: [
-					"Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
-					"Non-Opinionated :: A simple ExpressoTS project.",
+					`Opinionated :: Automatically scaffolds resources into a preset project structure. (${chalk.yellow(
+						"Recommended",
+					)})`,
+					"Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
 				],
 			},
 			{
@@ -239,7 +241,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 
 		console.log("\n");
 		console.log(
-			"🐎 Project ",
+			"🐎 Project",
 			chalk.green(answer.name),
 			"created successfully!",
 		);
@@ -277,6 +279,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 				),
 			),
 		);
+		console.log("\n");
 	}
 };
 
