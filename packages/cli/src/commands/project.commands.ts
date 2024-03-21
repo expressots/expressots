@@ -1,9 +1,8 @@
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
-import rimraf from "rimraf";
 import { Argv, CommandModule } from "yargs";
-
+// TODO: To validate on non opinionated template
 /**
  * Helper function to execute a command
  * @param command The command to execute
@@ -44,7 +43,7 @@ const compileTypescript = async () => {
 };
 
 // Helper to copy files
-const copyFiles = () => {
+const copyFiles = async () => {
 	const filesToCopy = [
 		"./register-path.js",
 		"tsconfig.build.json",
@@ -80,6 +79,7 @@ const runCommand = async ({ command }: { command: string }): Promise<void> => {
 			case "dev":
 				// Use execSync or spawn to run ts-node-dev programmatically
 				execCmd("tsnd", [
+					"--transpile-only",
 					"-r",
 					"dotenv/config",
 					"-r",
@@ -90,7 +90,7 @@ const runCommand = async ({ command }: { command: string }): Promise<void> => {
 			case "build":
 				await cleanDist();
 				await compileTypescript();
-				copyFiles();
+				await copyFiles();
 				break;
 			case "prod":
 				// Ensure environment variables are set
