@@ -2,7 +2,30 @@ import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import { Argv, CommandModule } from "yargs";
-// TODO: To validate on non opinionated template
+import Compiler from "../utils/compiler";
+
+/**
+ * Load the configuration from the compiler
+ * @param compiler The compiler to load the configuration from
+ * @returns The configuration
+ */
+
+const opinionatedConfig: Array<string> = [
+	"--transpile-only",
+	"-r",
+	"dotenv/config",
+	"-r",
+	"tsconfig-paths/register",
+	"./src/main.ts",
+];
+
+const nonOpinionatedConfig: Array<string> = [
+	"--transpile-only",
+	"-r",
+	"dotenv/config",
+	"./src/main.ts",
+];
+
 /**
  * Helper function to execute a command
  * @param command The command to execute
@@ -44,11 +67,17 @@ const compileTypescript = async () => {
 
 // Helper to copy files
 const copyFiles = async () => {
-	const filesToCopy = [
-		"./register-path.js",
-		"tsconfig.build.json",
-		"package.json",
-	];
+	const { opinionated } = await Compiler.loadConfig();
+	let filesToCopy: Array<string> = [];
+	if (opinionated) {
+		filesToCopy = [
+			"./register-path.js",
+			"tsconfig.build.json",
+			"package.json",
+		];
+	} else {
+		filesToCopy = ["tsconfig.json", "package.json"];
+	}
 	filesToCopy.forEach((file) => {
 		fs.copyFile(file, path.join("./dist", path.basename(file)));
 	});
@@ -74,18 +103,15 @@ export const runCommandModule: CommandModule<{}, { command: string }> = {
 };
 
 const runCommand = async ({ command }: { command: string }): Promise<void> => {
+	const { opinionated } = await Compiler.loadConfig();
 	try {
 		switch (command) {
 			case "dev":
 				// Use execSync or spawn to run ts-node-dev programmatically
-				execCmd("tsnd", [
-					"--transpile-only",
-					"-r",
-					"dotenv/config",
-					"-r",
-					"tsconfig-paths/register",
-					"./src/main.ts",
-				]);
+				execCmd(
+					"tsnd",
+					opinionated ? opinionatedConfig : nonOpinionatedConfig,
+				);
 				break;
 			case "build":
 				await cleanDist();
@@ -93,14 +119,20 @@ const runCommand = async ({ command }: { command: string }): Promise<void> => {
 				await copyFiles();
 				break;
 			case "prod":
+				let config: Array<string> = [];
+				if (opinionated) {
+					config = [
+						"-r",
+						"dotenv/config",
+						"-r",
+						"./dist/register-path.js",
+						"./dist/src/main.js",
+					];
+				} else {
+					config = ["-r", "dotenv/config", "./dist/main.js"];
+				}
 				// Ensure environment variables are set
-				execCmd("node", [
-					"-r",
-					"dotenv/config",
-					"-r",
-					"./dist/register-path.js",
-					"./dist/src/main.js",
-				]);
+				execCmd("node", config);
 				break;
 			default:
 				console.log(`Unknown command: ${command}`);
