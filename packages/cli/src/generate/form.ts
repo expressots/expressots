@@ -328,7 +328,6 @@ const splitTarget = async ({
 		target.includes("\\") ||
 		target.includes("//")
 	) {
-		//pathContent = target.split("/").filter((item) => item !== "");
 		if (schematic === "service") schematic = "controller";
 		if (
 			schematic === "service" ||
@@ -450,6 +449,8 @@ const schematicFolder = (schematic: string): string | undefined => {
 			return "entities";
 		case "middleware":
 			return "providers/middlewares";
+		case "module":
+			return "useCases";
 	}
 
 	return undefined;
