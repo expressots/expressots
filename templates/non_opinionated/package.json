@@ -6,10 +6,9 @@
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
-        "prebuild": "rm -rf ./dist",
-        "build": "tsc -p tsconfig.build.json",
-        "dev": "tsnd ./src/main.ts",
-        "prod": "node ./dist/main.js",
+        "build": "npm run build",
+        "dev": "npm run dev",
+        "prod": "npm run prod",
         "test": "jest",
         "test:watch": "jest --watchAll",
         "test:cov": "jest --coverage",
