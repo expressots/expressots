@@ -6,9 +6,9 @@
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
-        "build": "npm run build",
-        "dev": "npm run dev",
-        "prod": "npm run prod",
+        "build": "expressots run build",
+        "dev": "expressots run dev",
+        "prod": "expressots run prod",
         "test": "jest",
         "test:watch": "jest --watchAll",
         "test:cov": "jest --coverage",
