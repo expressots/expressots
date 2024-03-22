@@ -6,10 +6,9 @@
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
-        "prebuild": "rm -rf ./dist",
-        "build": "tsc -p tsconfig.build.json && cp -R ./register-path.js tsconfig.build.json package.json ./dist",
-        "dev": "tsnd -r dotenv/config -r tsconfig-paths/register ./src/main.ts",
-        "prod": "node -r dotenv/config -r ./dist/register-path.js ./dist/src/main.js",
+        "build": "npm run build",
+        "dev": "npm run dev",
+        "prod": "npm run prod",
         "test": "jest",
         "test:watch": "jest --watchAll",
         "test:cov": "jest --coverage",
