@@ -1,5 +1,28 @@
 
 
+## [1.6.0](https://github.com/expressots/expressots-cli/compare/1.5.0...1.6.0) (2024-03-22)
+
+
+### Features
+
+* add expressots custom project command ([d85f4a5](https://github.com/expressots/expressots-cli/commit/d85f4a5600c89026ea7eac48bf52f492805f6e6e))
+* add middleware scaffold ([5ffcac1](https://github.com/expressots/expressots-cli/commit/5ffcac103bf163c577c89142c2290b51277def18))
+* adjust templates and module creation ([56aaea6](https://github.com/expressots/expressots-cli/commit/56aaea6fb872232bad2133b6d75bbde25441d1b1))
+* cmds add for op and nonop templates ([53b450f](https://github.com/expressots/expressots-cli/commit/53b450f2b034df294744727a7c73e68a3488a42f))
+* improve dev command performance and rm nonused pkgs ([ecc693d](https://github.com/expressots/expressots-cli/commit/ecc693d0b9f8425b1d95b82d0f461c5c1c4b350b))
+
+
+### Bug Fixes
+
+* **cli.ts:** fix the order of choices in the "template" option to match the order in the form ([52d783f](https://github.com/expressots/expressots-cli/commit/52d783f9640cc9ef4ec18dc769297c34e040d9d5))
+
+
+### Code Refactoring
+
+* adjust op and nop templates, proj confirm msg ([d2bbc2e](https://github.com/expressots/expressots-cli/commit/d2bbc2e8fcfeebcb064d8c2278bfa1ad02464cc4))
+* adjust sponsor message spacing ([a1ff88d](https://github.com/expressots/expressots-cli/commit/a1ff88df86940f3a63baca9c11a5fb83a89a46a8))
+* improve new cmd cli performance ([1782206](https://github.com/expressots/expressots-cli/commit/1782206b3991269598a071c18dd8b406946d0755))
+
 ## [1.5.0](https://github.com/expressots/expressots-cli/compare/1.4.0...1.5.0) (2023-10-21)
 
 
