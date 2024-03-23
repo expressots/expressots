@@ -78,7 +78,7 @@
     "@expressots/adapter-express": "latest",
     "@release-it/conventional-changelog": "7.0.1",
     "@types/express": "4.17.17",
-    "@types/node": "20.4.9",
+    "@types/node": "20.11.30",
     "@typescript-eslint/eslint-plugin": "6.6.0",
     "@typescript-eslint/parser": "6.6.0",
     "@vitest/coverage-v8": "0.34.6",
