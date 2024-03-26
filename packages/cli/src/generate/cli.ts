@@ -20,7 +20,7 @@ const coerceSchematicAliases = (arg: string) => {
 			return "entity";
 		case "mo":
 			return "module";
-		case "m":
+		case "mi":
 			return "middleware";
 		default:
 			return arg;
@@ -29,7 +29,7 @@ const coerceSchematicAliases = (arg: string) => {
 
 const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
-		command: "generate [schematic] [path]",
+		command: "generate [schematic] [path] [method]",
 		describe: "Scaffold a new resource",
 		aliases: ["g"],
 		builder: (yargs: Argv): Argv => {
