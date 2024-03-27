@@ -16,6 +16,6 @@
 		// "statusBar.foreground": "#38e715"
 	},
 	"editor.rulers": [120],
-	"cSpell.words": ["usecase"],
+	"cSpell.words": ["nonopinionated", "usecase"],
 	"typescript.tsdk": "node_modules\\typescript\\lib"
 }

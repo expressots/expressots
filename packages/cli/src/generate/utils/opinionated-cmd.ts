@@ -48,7 +48,6 @@ export async function opinionatedProcess(
 				opinionated,
 				sourceRoot,
 			});
-
 			await generateUseCase(
 				f.outputPath,
 				f.className,
@@ -74,7 +73,6 @@ export async function opinionatedProcess(
 				opinionated,
 				sourceRoot,
 			});
-
 			await generateModuleService(
 				f.className,
 				f.moduleName,

@@ -1,3 +1,4 @@
+import { s } from "vitest/dist/reporters-cb94c88b";
 import Compiler from "../utils/compiler";
 import { nonOpinionatedProcess } from "./utils/nonopininated-cmd";
 import { opinionatedProcess } from "./utils/opinionated-cmd";
@@ -39,8 +40,13 @@ export const createTemplate = async ({
 			sourceRoot,
 		);
 	} else {
-		// pass folder = "" to avoid the creation of the module
-		returnFile = await nonOpinionatedProcess();
+		returnFile = await nonOpinionatedProcess(
+			schematic,
+			target,
+			method,
+			opinionated,
+			sourceRoot,
+		);
 	}
 
 	return returnFile;
