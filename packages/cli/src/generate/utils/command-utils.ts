@@ -303,6 +303,11 @@ const pathEdgeCase = (path: string[]): string => {
 	return `${path.join("/")}${path.length > 0 ? "/" : ""}`;
 };
 
+/**
+ * Extract the first word from a file and convert it to the scaffold pattern
+ * @param file
+ * @returns the first word in the scaffold pattern
+ */
 export async function extractFirstWord(file: string) {
 	const f = file.split(".")[0];
 

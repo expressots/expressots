@@ -4,6 +4,7 @@ import {
 	anyCaseToPascalCase,
 } from "@expressots/boost-ts";
 import * as nodePath from "node:path";
+import fs from "fs";
 import { printGenerateSuccess } from "../../utils/cli-ui";
 import {
 	extractFirstWord,
@@ -13,6 +14,7 @@ import {
 	validateAndPrepareFile,
 	writeTemplate,
 } from "./command-utils";
+import { addControllerToModule } from "../../utils/add-controller-to-module";
 
 export async function opinionatedProcess(
 	schematic: string,
@@ -395,13 +397,28 @@ async function generateModuleService(
 	const newModulePath = nodePath
 		.join(folderToScaffold, path, "..")
 		.normalize();
-	const newModuleOutputPath = `${newModulePath}/${newModuleFile}.module.ts`;
+	const newModuleName = `${newModuleFile}.module.ts`;
+	const newModuleOutputPath = `${newModulePath}/${newModuleName}`;
 
 	const controllerPathLength = path.split("/").length - 1 - 1;
 	const controllerPath = path.split("/")[controllerPathLength];
-	const controllerFileName = `./${controllerPath}/${file
+	const controllerName = file
 		.replace("module", "controller")
-		.replace(".ts", "")}`;
+		.replace(".ts", "");
+	const controllerFileName = `./${controllerPath}/${controllerName}`;
+	const controllerFullPath = nodePath
+		.join(folderToScaffold, path, "..", newModuleName)
+		.normalize();
+
+	// Verify if the module file is already created
+	if (fs.existsSync(newModuleOutputPath)) {
+		await addControllerToModule(
+			controllerFullPath,
+			`${className}Controller`,
+			controllerFileName,
+		);
+		return;
+	}
 
 	writeTemplate({
 		outputPath: newModuleOutputPath,
