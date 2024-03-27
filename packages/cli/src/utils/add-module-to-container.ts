@@ -90,7 +90,7 @@ async function addModuleToContainer(
 
 	if (!modulePathRegex.test(modulePath)) {
 		if (path.split("/").length > 1) {
-			newImport = `import { ${moduleName}Module } from "${usecaseDir}${modulePath}/${name}.module";`;
+			newImport = `import { ${moduleName}Module } from "${usecaseDir}${name.toLowerCase()}/${name.toLowerCase()}.module";`;
 		} else {
 			newImport = `import { ${moduleName}Module } from "${usecaseDir}${name}.module";`;
 		}

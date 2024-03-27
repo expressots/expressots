@@ -15,6 +15,7 @@ import {
 	writeTemplate,
 } from "./command-utils";
 import { addControllerToModule } from "../../utils/add-controller-to-module";
+import { addModuleToContainer } from "../../utils/add-module-to-container";
 
 export async function opinionatedProcess(
 	schematic: string,
@@ -410,7 +411,6 @@ async function generateModuleService(
 		.join(folderToScaffold, path, "..", newModuleName)
 		.normalize();
 
-	// Verify if the module file is already created
 	if (fs.existsSync(newModuleOutputPath)) {
 		await addControllerToModule(
 			controllerFullPath,
@@ -431,6 +431,12 @@ async function generateModuleService(
 			},
 		},
 	});
+
+	await addModuleToContainer(
+		anyCaseToPascalCase(moduleName),
+		`${moduleName}/${file.replace(".ts", "")}`,
+		path,
+	);
 }
 
 /**
