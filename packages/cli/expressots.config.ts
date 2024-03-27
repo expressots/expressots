@@ -2,7 +2,7 @@ import { ExpressoConfig, Pattern } from "./src/types";
 
 const config: ExpressoConfig = {
 	sourceRoot: "src",
-	scaffoldPattern: Pattern.KEBAB_CASE,
+	scaffoldPattern: Pattern.CAMEL_CASE,
 	opinionated: true,
 };
 

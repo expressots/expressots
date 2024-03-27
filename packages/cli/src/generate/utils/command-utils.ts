@@ -73,7 +73,7 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 			schematic: fp.schematic,
 		},
 	);
-	const outputPath = `${folderToScaffold}/${path}/${file}`;
+	const outputPath = `${folderToScaffold}/${path}${file}`;
 	await verifyIfFileExists(outputPath, fp.schematic);
 	mkdirSync(`${folderToScaffold}/${path}`, { recursive: true });
 
@@ -302,3 +302,22 @@ export const getNameWithScaffoldPattern = async (name: string) => {
 const pathEdgeCase = (path: string[]): string => {
 	return `${path.join("/")}${path.length > 0 ? "/" : ""}`;
 };
+
+export async function extractFirstWord(file: string) {
+	const f = file.split(".")[0];
+
+	const regex = /(?:-|(?<=[a-z])(?=[A-Z]))/;
+	const firstWord = f.split(regex)[0];
+
+	const config = await Compiler.loadConfig();
+	switch (config.scaffoldPattern) {
+		case Pattern.LOWER_CASE:
+			return anyCaseToLowerCase(firstWord);
+		case Pattern.KEBAB_CASE:
+			return anyCaseToKebabCase(firstWord);
+		case Pattern.PASCAL_CASE:
+			return anyCaseToPascalCase(firstWord);
+		case Pattern.CAMEL_CASE:
+			return anyCaseToCamelCase(firstWord);
+	}
+}

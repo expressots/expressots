@@ -3,8 +3,10 @@ import {
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
 } from "@expressots/boost-ts";
+import * as nodePath from "node:path";
 import { printGenerateSuccess } from "../../utils/cli-ui";
 import {
+	extractFirstWord,
 	FileOutput,
 	getFileNameWithoutExtension,
 	getHttpMethod,
@@ -62,9 +64,26 @@ export async function opinionatedProcess(
 			});
 			await generateDTO(f.outputPath, f.className, f.moduleName, f.path);
 
+			f = await validateAndPrepareFile({
+				schematic: "module",
+				target,
+				method,
+				opinionated,
+				sourceRoot,
+			});
+
+			await generateModuleService(
+				f.className,
+				f.moduleName,
+				f.path,
+				f.file,
+				f.folderToScaffold,
+			);
+
 			await printGenerateSuccess("controller", f.file);
 			await printGenerateSuccess("usecase", f.file);
 			await printGenerateSuccess("dto", f.file);
+			await printGenerateSuccess("module", f.file);
 			break;
 		case "usecase":
 			await generateUseCase(
@@ -128,235 +147,6 @@ export async function opinionatedProcess(
 			break;
 	}
 
-	/* if (schematic !== "service") {
-		// add to guarantee that the routing will always be the last part of the path
-		const routeSchema = nodePath.basename(path);
-
-		let templateBasedSchematic = schematic;
-		if (schematic === "module") {
-			templateBasedSchematic = "module-default";
-		}
-
-		writeTemplate({
-			outputPath,
-			template: {
-				path: `./templates/${templateBasedSchematic}.tpl`,
-				data: {
-					className,
-					moduleName: className,
-					route: routeSchema,
-					construct: anyCaseToKebabCase(className),
-					method: getHttpMethod(method),
-				},
-			},
-		});
-	} else {
-		for await (const resource of ["controller-service", "usecase", "dto"]) {
-			const currentSchematic = resource.replace(
-				"controller-service",
-				"controller",
-			);
-
-			const schematicFile = file.replace(
-				`controller.ts`,
-				`${currentSchematic}.ts`,
-			);
-
-			console.log(
-				" ",
-				chalk.greenBright(`[${currentSchematic}]`.padEnd(14)),
-				chalk.bold.white(`${schematicFile} created! ✔️`),
-			);
-
-			let templateBasedMethod = "";
-			if (method) {
-				if (
-					resource === "controller-service" ||
-					resource === "controller"
-				) {
-					if (method === "get")
-						templateBasedMethod = `./templates/${resource}.tpl`;
-					else
-						templateBasedMethod = `./templates/${resource}-${method}.tpl`;
-				} else {
-					templateBasedMethod = `./templates/${resource}.tpl`;
-				}
-
-				if (resource === "usecase") {
-					templateBasedMethod = `./templates/${resource}-op.tpl`;
-				}
-
-				if (resource === "usecase") {
-					if (method === "get")
-						templateBasedMethod = `./templates/${resource}.tpl`;
-					if (method === "post")
-						templateBasedMethod = `./templates/${resource}-${method}.tpl`;
-				}
-			} else {
-				templateBasedMethod = `./templates/${resource}.tpl`;
-			}
-
-			// add to guarantee that the routing will always be the last part of the path
-			let routeSchema = "";
-
-			if (
-				target.includes("/") ||
-				target.includes("\\") ||
-				target.includes("//")
-			) {
-				routeSchema = path.split("/").pop();
-			} else {
-				routeSchema = path.replace(/\/$/, "");
-			}
-
-			writeTemplate({
-				outputPath,
-				template: {
-					path: templateBasedMethod,
-					data: {
-						className,
-						fileName: getFileNameWithoutExtension(file),
-						useCase: anyCaseToCamelCase(className),
-						route: routeSchema, //path.replace(/\/$/, ''),
-						construct: anyCaseToKebabCase(className),
-						method: getHttpMethod(method),
-					},
-				},
-			});
-		}
-	}
-
-	// Module generation
-	if (["controller", "service"].includes(schematic)) {
-		let moduleExist = false;
-		let moduleOutPath = "";
-
-		if (
-			target.includes("/") ||
-			target.includes("\\") ||
-			target.includes("//")
-		) {
-			if (modulePath === "") {
-				moduleExist = existsSync(
-					`${folderToScaffold}/${moduleName}.module.ts`,
-				);
-				moduleOutPath = `${folderToScaffold}/${moduleName}.module.ts`;
-			} else {
-				moduleExist = existsSync(
-					`${folderToScaffold}/${modulePath}/${moduleName}.module.ts`,
-				);
-				moduleOutPath = `${folderToScaffold}/${modulePath}/${moduleName}.module.ts`;
-			}
-		} else {
-			moduleExist = existsSync(
-				`${folderToScaffold}/${moduleName}/${moduleName}.module.ts`,
-			);
-			if (modulePath === "") {
-				moduleExist = existsSync(
-					`${folderToScaffold}/${moduleName}.module.ts`,
-				);
-				moduleOutPath = `${folderToScaffold}/${moduleName}.module.ts`;
-			} else {
-				moduleExist = existsSync(
-					`${folderToScaffold}/${moduleName}/${moduleName}.module.ts`,
-				);
-				moduleOutPath = `${folderToScaffold}/${moduleName}/${moduleName}.module.ts`;
-			}
-		}
-
-		let controllerPath = "./";
-		const pathCount = path.split("/").length;
-
-		if (path === "") {
-			controllerPath += `${file.slice(0, file.lastIndexOf("."))}`;
-		} else if (pathCount === 1) {
-			controllerPath += `${path}/${file.slice(0, file.lastIndexOf("."))}`;
-		} else if (pathCount === 2) {
-			controllerPath += `${path.split("/")[1]}/${file.slice(
-				0,
-				file.lastIndexOf("."),
-			)}`;
-		} else {
-			const segments: string[] = path
-				.split("/")
-				.filter((segment) => segment !== "");
-			controllerPath += `${segments[segments.length - 1]}/${file.slice(
-				0,
-				file.lastIndexOf("."),
-			)}`;
-		}
-
-		if (moduleExist) {
-			if (
-				target.includes("/") ||
-				target.includes("\\") ||
-				target.includes("//")
-			) {
-				await addControllerToModule(
-					`${folderToScaffold}/${modulePath}/${moduleName}.module.ts`,
-					`${className}Controller`,
-					controllerPath,
-				);
-			} else {
-				if (modulePath === "") {
-					await addControllerToModule(
-						`${folderToScaffold}/${moduleName}.module.ts`,
-						`${className}Controller`,
-						controllerPath,
-					);
-				} else {
-					await addControllerToModule(
-						`${folderToScaffold}/${moduleName}/${moduleName}.module.ts`,
-						`${className}Controller`,
-						controllerPath,
-					);
-				}
-			}
-		} else {
-			writeTemplate({
-				outputPath: moduleOutPath,
-				template: {
-					path: `./templates/module.tpl`,
-					data: {
-						moduleName:
-							moduleName[0].toUpperCase() + moduleName.slice(1),
-						className,
-						path: controllerPath,
-					},
-				},
-			});
-
-			console.log(
-				" ",
-				chalk.greenBright(`[module]`.padEnd(14)),
-				chalk.bold.white(`${moduleName}.module created! ✔️`),
-			);
-
-			if (
-				target.includes("/") ||
-				target.includes("\\") ||
-				target.includes("//")
-			) {
-				await addModuleToContainer(moduleName, modulePath, path);
-			} else {
-				await addModuleToContainer(moduleName, moduleName, path);
-			}
-		}
-	}
-
-	if (schematic === "service") {
-		console.log(
-			" ",
-			chalk.greenBright(`[${schematic}]`.padEnd(14)),
-			chalk.bold.yellow(`${file.split(".")[0]} created! ✔️`),
-		);
-	} else {
-		console.log(
-			" ",
-			chalk.greenBright(`[${schematic}]`.padEnd(14)),
-			chalk.bold.white(`${file.split(".")[0]} ${schematic} created! ✔️`),
-		);
-	} */
 	return f.file;
 }
 
@@ -582,6 +372,45 @@ async function generateMiddleware(
 				className,
 				moduleName,
 				path,
+			},
+		},
+	});
+}
+
+/**
+ * Generate a module for service scaffolding
+ * @param outputPath - The output path
+ * @param className - The class name
+ * @param moduleName - The module name
+ * @param path - The path
+ */
+async function generateModuleService(
+	className: string,
+	moduleName: string,
+	path: string,
+	file: string,
+	folderToScaffold: string,
+): Promise<void> {
+	const newModuleFile = await extractFirstWord(file);
+	const newModulePath = nodePath
+		.join(folderToScaffold, path, "..")
+		.normalize();
+	const newModuleOutputPath = `${newModulePath}/${newModuleFile}.module.ts`;
+
+	const controllerPathLength = path.split("/").length - 1 - 1;
+	const controllerPath = path.split("/")[controllerPathLength];
+	const controllerFileName = `./${controllerPath}/${file
+		.replace("module", "controller")
+		.replace(".ts", "")}`;
+
+	writeTemplate({
+		outputPath: newModuleOutputPath,
+		template: {
+			path: "../templates/opinionated/module-service.tpl",
+			data: {
+				className,
+				moduleName: anyCaseToPascalCase(moduleName),
+				path: controllerFileName,
 			},
 		},
 	});
