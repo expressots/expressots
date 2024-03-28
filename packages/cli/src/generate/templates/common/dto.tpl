@@ -1,3 +1,3 @@
-export interface I{{className}}RequestDTO {}
+export interface I{{className}}Request{{schematic}} {}
 
-export interface I{{className}}ResponseDTO {}
+export interface I{{className}}Response{{schematic}} {}

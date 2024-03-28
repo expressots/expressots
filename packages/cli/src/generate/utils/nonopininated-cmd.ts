@@ -3,6 +3,7 @@ import {
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
 } from "@expressots/boost-ts";
+import { ExpressoConfig } from "../../@types";
 
 import { printGenerateSuccess } from "../../utils/cli-ui";
 import {
@@ -17,32 +18,37 @@ export async function nonOpinionatedProcess(
 	schematic: string,
 	target: string,
 	method: string,
-	opinionated: boolean,
-	sourceRoot: string,
+	expressoConfig: ExpressoConfig,
 ): Promise<string> {
 	let f: FileOutput = await validateAndPrepareFile({
 		schematic,
 		target,
 		method,
-		opinionated,
-		sourceRoot,
+		expressoConfig,
 	});
 	switch (schematic) {
 		case "service":
+			f = await validateAndPrepareFile({
+				schematic: "controller",
+				target,
+				method,
+				expressoConfig,
+			});
 			await generateController(
 				f.outputPath,
 				f.className,
 				f.path,
 				method,
 				f.file,
+				f.schematic,
 			);
+			await printGenerateSuccess(f.schematic, f.file);
 
 			f = await validateAndPrepareFile({
 				schematic: "usecase",
 				target,
 				method,
-				opinionated,
-				sourceRoot,
+				expressoConfig,
 			});
 			await generateUseCase(
 				f.outputPath,
@@ -50,36 +56,40 @@ export async function nonOpinionatedProcess(
 				f.moduleName,
 				f.path,
 				f.fileName,
+				f.schematic,
 				"../templates/nonopinionated/usecase.tpl",
 			);
+			await printGenerateSuccess(f.schematic, f.file);
 
 			f = await validateAndPrepareFile({
 				schematic: "dto",
 				target,
 				method,
-				opinionated,
-				sourceRoot,
+				expressoConfig,
 			});
-			await generateDTO(f.outputPath, f.className, f.moduleName, f.path);
+			await generateDTO(
+				f.outputPath,
+				f.className,
+				f.moduleName,
+				f.path,
+				f.schematic,
+			);
+			await printGenerateSuccess(f.schematic, f.file);
 
 			f = await validateAndPrepareFile({
 				schematic: "module",
 				target,
 				method,
-				opinionated,
-				sourceRoot,
+				expressoConfig,
 			});
 			await generateModule(
 				f.outputPath,
 				f.className,
 				f.moduleName,
 				f.path,
+				f.schematic,
 			);
-
-			await printGenerateSuccess("controller", f.file);
-			await printGenerateSuccess("usecase", f.file);
-			await printGenerateSuccess("dto", f.file);
-			await printGenerateSuccess("module", f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "usecase":
 			await generateUseCase(
@@ -88,8 +98,9 @@ export async function nonOpinionatedProcess(
 				f.moduleName,
 				f.path,
 				f.fileName,
+				f.schematic,
 			);
-			await printGenerateSuccess(schematic, f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "controller":
 			await generateController(
@@ -98,12 +109,19 @@ export async function nonOpinionatedProcess(
 				f.path,
 				method,
 				f.file,
+				f.schematic,
 			);
-			await printGenerateSuccess(schematic, f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "dto":
-			await generateDTO(f.outputPath, f.className, f.moduleName, f.path);
-			await printGenerateSuccess(schematic, f.file);
+			await generateDTO(
+				f.outputPath,
+				f.className,
+				f.moduleName,
+				f.path,
+				f.schematic,
+			);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "provider":
 			await generateProvider(
@@ -111,8 +129,9 @@ export async function nonOpinionatedProcess(
 				f.className,
 				f.moduleName,
 				f.path,
+				f.schematic,
 			);
-			await printGenerateSuccess(schematic, f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "entity":
 			await generateEntity(
@@ -120,8 +139,9 @@ export async function nonOpinionatedProcess(
 				f.className,
 				f.moduleName,
 				f.path,
+				f.schematic,
 			);
-			await printGenerateSuccess(schematic, f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "middleware":
 			await generateMiddleware(
@@ -129,8 +149,9 @@ export async function nonOpinionatedProcess(
 				f.className,
 				f.moduleName,
 				f.path,
+				f.schematic,
 			);
-			await printGenerateSuccess(schematic, f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 		case "module":
 			await generateModule(
@@ -138,8 +159,9 @@ export async function nonOpinionatedProcess(
 				f.className,
 				f.moduleName,
 				f.path,
+				f.schematic,
 			);
-			await printGenerateSuccess(schematic, f.file);
+			await printGenerateSuccess(f.schematic, f.file);
 			break;
 	}
 
@@ -161,6 +183,7 @@ async function generateUseCase(
 	moduleName: string,
 	path: string,
 	fileName: string,
+	schematic: string,
 	template?: string,
 ): Promise<void> {
 	writeTemplate({
@@ -174,6 +197,7 @@ async function generateUseCase(
 				moduleName,
 				path,
 				fileName,
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
@@ -193,6 +217,7 @@ async function generateController(
 	path: string,
 	method: string,
 	file: string,
+	schematic: string,
 ): Promise<void> {
 	const templateBasedMethod = "../templates/nonopinionated/controller.tpl";
 	writeTemplate({
@@ -208,6 +233,7 @@ async function generateController(
 					: path.replace(/\/$/, ""),
 				construct: anyCaseToKebabCase(className),
 				method: getHttpMethod(method),
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
@@ -225,6 +251,7 @@ async function generateDTO(
 	className: string,
 	moduleName: string,
 	path: string,
+	schematic: string,
 ): Promise<void> {
 	writeTemplate({
 		outputPath,
@@ -234,6 +261,7 @@ async function generateDTO(
 				className,
 				moduleName,
 				path,
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
@@ -251,6 +279,7 @@ async function generateProvider(
 	className: string,
 	moduleName: string,
 	path: string,
+	schematic: string,
 ): Promise<void> {
 	writeTemplate({
 		outputPath,
@@ -260,6 +289,7 @@ async function generateProvider(
 				className,
 				moduleName,
 				path,
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
@@ -277,6 +307,7 @@ async function generateEntity(
 	className: string,
 	moduleName: string,
 	path: string,
+	schematic: string,
 ): Promise<void> {
 	writeTemplate({
 		outputPath,
@@ -286,6 +317,7 @@ async function generateEntity(
 				className,
 				moduleName,
 				path,
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
@@ -303,6 +335,7 @@ async function generateMiddleware(
 	className: string,
 	moduleName: string,
 	path: string,
+	schematic: string,
 ): Promise<void> {
 	writeTemplate({
 		outputPath,
@@ -312,6 +345,7 @@ async function generateMiddleware(
 				className,
 				moduleName,
 				path,
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
@@ -329,6 +363,7 @@ async function generateModule(
 	className: string,
 	moduleName: string,
 	path: string,
+	schematic: string,
 ): Promise<void> {
 	writeTemplate({
 		outputPath,
@@ -340,6 +375,7 @@ async function generateModule(
 					? anyCaseToPascalCase(className)
 					: anyCaseToPascalCase(moduleName),
 				path,
+				schematic: anyCaseToPascalCase(schematic),
 			},
 		},
 	});

@@ -11,7 +11,7 @@ import {
 import { printError } from "../../utils/cli-ui";
 import { verifyIfFileExists } from "../../utils/verify-file-exists";
 import Compiler from "../../utils/compiler";
-import { Pattern } from "../../types";
+import { ExpressoConfig, Pattern } from "../../types";
 
 /**
  * File preparation
@@ -26,8 +26,7 @@ export type FilePreparation = {
 	schematic: string;
 	target: string;
 	method: string;
-	opinionated: boolean;
-	sourceRoot: string;
+	expressoConfig: ExpressoConfig;
 };
 
 /**
@@ -49,6 +48,7 @@ export type FileOutput = {
 	outputPath: string;
 	folderToScaffold: string;
 	fileName: string;
+	schematic: string;
 };
 
 /**
@@ -57,7 +57,8 @@ export type FileOutput = {
  * @returns the file created
  */
 export async function validateAndPrepareFile(fp: FilePreparation) {
-	if (fp.sourceRoot === "") {
+	const { sourceRoot, scaffoldSchematics, opinionated } = fp.expressoConfig;
+	if (sourceRoot === "") {
 		printError(
 			"You must specify a source root in your expressots.config.ts",
 			"sourceRoot",
@@ -66,18 +67,25 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 	}
 
 	let folderSchematic = "";
-	if (fp.opinionated) {
+	if (opinionated) {
 		folderSchematic = schematicFolder(fp.schematic);
 	}
 
-	const folderToScaffold = `${fp.sourceRoot}/${folderSchematic}`;
+	const folderToScaffold = `${sourceRoot}/${folderSchematic}`;
 	const { path, file, className, moduleName, modulePath } = await splitTarget(
 		{
 			target: fp.target,
 			schematic: fp.schematic,
 		},
 	);
-	const outputPath = `${folderToScaffold}/${path}/${file}`;
+	const fileBaseSchema =
+		scaffoldSchematics?.[fp.schematic as keyof typeof scaffoldSchematics];
+	const validateFileSchema =
+		fileBaseSchema !== undefined
+			? file.replace(fp.schematic, fileBaseSchema)
+			: file;
+
+	const outputPath = `${folderToScaffold}/${path}/${validateFileSchema}`;
 	await verifyIfFileExists(outputPath, fp.schematic);
 	mkdirSync(`${folderToScaffold}/${path}`, { recursive: true });
 
@@ -90,6 +98,7 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 		outputPath,
 		folderToScaffold,
 		fileName: getFileNameWithoutExtension(file),
+		schematic: fileBaseSchema !== undefined ? fileBaseSchema : fp.schematic,
 	};
 }
 

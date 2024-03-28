@@ -27,25 +27,23 @@ export const createTemplate = async ({
 	path: target,
 	method,
 }: CreateTemplateProps) => {
-	const { opinionated, sourceRoot } = await Compiler.loadConfig();
+	const config = await Compiler.loadConfig();
 
 	let returnFile = "";
 
-	if (opinionated) {
+	if (config.opinionated) {
 		returnFile = await opinionatedProcess(
 			schematic,
 			target,
 			method,
-			opinionated,
-			sourceRoot,
+			config,
 		);
 	} else {
 		returnFile = await nonOpinionatedProcess(
 			schematic,
 			target,
 			method,
-			opinionated,
-			sourceRoot,
+			config,
 		);
 	}
 

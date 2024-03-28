@@ -1,4 +1,4 @@
 import { ContainerModule } from "inversify";
 import { CreateModule } from "@expressots/core";
 
-export const {{moduleName}}Module: ContainerModule = CreateModule([]);
+export const {{moduleName}}{{schematic}}: ContainerModule = CreateModule([]);

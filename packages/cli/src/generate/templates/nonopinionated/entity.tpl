@@ -1,4 +1,4 @@
 import { provide } from "inversify-binding-decorators";
 
-@provide({{className}})
-export class {{className}} {}
+@provide({{className}}{{schematic}})
+export class {{className}}{{schematic}} {}

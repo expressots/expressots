@@ -1,8 +1,8 @@
 import { provide } from "inversify-binding-decorators";
 
-@provide({{className}}UseCase)
-export class {{className}}UseCase {
+@provide({{className}}{{schematic}})
+export class {{className}}{{schematic}} {
     execute() {
-        return "Use Case";
+        return "{{schematic}}";
     }
 }

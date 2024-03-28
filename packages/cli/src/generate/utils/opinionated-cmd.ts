@@ -16,20 +16,19 @@ import {
 } from "./command-utils";
 import { addControllerToModule } from "../../utils/add-controller-to-module";
 import { addModuleToContainer } from "../../utils/add-module-to-container";
+import { ExpressoConfig } from "../../@types";
 
 export async function opinionatedProcess(
 	schematic: string,
 	target: string,
 	method: string,
-	opinionated: boolean,
-	sourceRoot: string,
+	expressoConfig: ExpressoConfig,
 ): Promise<string> {
 	let f: FileOutput = await validateAndPrepareFile({
 		schematic,
 		target,
 		method,
-		opinionated,
-		sourceRoot,
+		expressoConfig,
 	});
 	switch (schematic) {
 		case "service":
@@ -45,8 +44,7 @@ export async function opinionatedProcess(
 				schematic: "usecase",
 				target,
 				method,
-				opinionated,
-				sourceRoot,
+				expressoConfig,
 			});
 			await generateUseCase(
 				f.outputPath,
@@ -61,8 +59,7 @@ export async function opinionatedProcess(
 				schematic: "dto",
 				target,
 				method,
-				opinionated,
-				sourceRoot,
+				expressoConfig,
 			});
 			await generateDTO(f.outputPath, f.className, f.moduleName, f.path);
 
@@ -70,8 +67,7 @@ export async function opinionatedProcess(
 				schematic: "module",
 				target,
 				method,
-				opinionated,
-				sourceRoot,
+				expressoConfig,
 			});
 			await generateModuleService(
 				f.className,
