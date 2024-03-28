@@ -24,7 +24,7 @@ export async function opinionatedProcess(
 	method: string,
 	expressoConfig: ExpressoConfig,
 ): Promise<string> {
-	let f: FileOutput = await validateAndPrepareFile({
+	const f: FileOutput = await validateAndPrepareFile({
 		schematic,
 		target,
 		method,
@@ -40,41 +40,42 @@ export async function opinionatedProcess(
 				f.file,
 			);
 
-			f = await validateAndPrepareFile({
+			const u = await validateAndPrepareFile({
 				schematic: "usecase",
 				target,
 				method,
 				expressoConfig,
 			});
-			await generateUseCase(
-				f.outputPath,
-				f.className,
-				f.moduleName,
-				f.path,
-				f.fileName,
-				"../templates/opinionated/usecase-service.tpl",
+			await generateUseCaseService(
+				u.outputPath,
+				u.className,
+				method,
+				u.moduleName,
+				u.path,
+				u.fileName,
 			);
 
-			f = await validateAndPrepareFile({
+			const d = await validateAndPrepareFile({
 				schematic: "dto",
 				target,
 				method,
 				expressoConfig,
 			});
-			await generateDTO(f.outputPath, f.className, f.moduleName, f.path);
+			await generateDTO(d.outputPath, d.className, d.moduleName, d.path);
 
-			f = await validateAndPrepareFile({
+			const m = await validateAndPrepareFile({
 				schematic: "module",
 				target,
 				method,
 				expressoConfig,
 			});
 			await generateModuleService(
-				f.className,
-				f.moduleName,
-				f.path,
-				f.file,
-				f.folderToScaffold,
+				f.outputPath,
+				m.className,
+				m.moduleName,
+				m.path,
+				m.file,
+				m.folderToScaffold,
 			);
 
 			await printGenerateSuccess("controller", f.file);
@@ -214,18 +215,62 @@ async function generateControllerService(
  * @param path - The path
  * @param template - The template
  */
+async function generateUseCaseService(
+	outputPath: string,
+	className: string,
+	method: string,
+	moduleName: string,
+	path: string,
+	fileName: string,
+): Promise<void> {
+	let templateBasedMethod = "";
+
+	switch (method) {
+		case "put":
+			templateBasedMethod =
+				"../templates/opinionated/usecase-service.tpl";
+			break;
+		case "patch":
+			templateBasedMethod =
+				"../templates/opinionated/usecase-service.tpl";
+			break;
+		case "post":
+			templateBasedMethod =
+				"../templates/opinionated/usecase-service.tpl";
+			break;
+		case "delete":
+			templateBasedMethod =
+				"../templates/opinionated/usecase-service-delete.tpl";
+			break;
+		default:
+			templateBasedMethod = "../templates/opinionated/usecase.tpl";
+			break;
+	}
+	writeTemplate({
+		outputPath,
+		template: {
+			path: templateBasedMethod,
+			data: {
+				className,
+				moduleName,
+				path,
+				fileName,
+			},
+		},
+	});
+}
+
 async function generateUseCase(
 	outputPath: string,
 	className: string,
 	moduleName: string,
 	path: string,
 	fileName: string,
-	template?: string,
 ): Promise<void> {
 	writeTemplate({
 		outputPath,
 		template: {
-			path: template ? template : "../templates/opinionated/usecase.tpl",
+			path: "../templates/opinionated/usecase.tpl",
 			data: {
 				className,
 				moduleName,
@@ -382,6 +427,7 @@ async function generateMiddleware(
  * @param path - The path
  */
 async function generateModuleService(
+	outputPathController: string,
 	className: string,
 	moduleName: string,
 	path: string,
@@ -393,14 +439,18 @@ async function generateModuleService(
 		.join(folderToScaffold, path, "..")
 		.normalize();
 	const newModuleName = `${newModuleFile}.module.ts`;
-	const newModuleOutputPath = `${newModulePath}/${newModuleName}`;
+	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
+		"\\",
+		"/",
+	);
 
-	const controllerPathLength = path.split("/").length - 1 - 1;
-	const controllerPath = path.split("/")[controllerPathLength];
-	const controllerName = file
-		.replace("module", "controller")
-		.replace(".ts", "");
-	const controllerFileName = `./${controllerPath}/${controllerName}`;
+	const controllerToModule = nodePath
+		.relative(newModuleOutputPath, outputPathController)
+		.normalize()
+		.replace(/\.ts$/, "")
+		.replace(/\\/g, "/")
+		.replace(/\.\./g, ".");
+
 	const controllerFullPath = nodePath
 		.join(folderToScaffold, path, "..", newModuleName)
 		.normalize();
@@ -409,7 +459,7 @@ async function generateModuleService(
 		await addControllerToModule(
 			controllerFullPath,
 			`${className}Controller`,
-			controllerFileName,
+			controllerToModule,
 		);
 		return;
 	}
@@ -421,7 +471,7 @@ async function generateModuleService(
 			data: {
 				className,
 				moduleName: anyCaseToPascalCase(moduleName),
-				path: controllerFileName,
+				path: controllerToModule,
 			},
 		},
 	});

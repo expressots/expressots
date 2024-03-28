@@ -92,10 +92,10 @@ async function addModuleToContainer(
 		if (path.split("/").length > 1) {
 			newImport = `import { ${moduleName}Module } from "${usecaseDir}${name.toLowerCase()}/${name.toLowerCase()}.module";`;
 		} else {
-			newImport = `import { ${moduleName}Module } from "${usecaseDir}${name}.module";`;
+			newImport = `import { ${moduleName}Module } from "${usecaseDir}${name.toLowerCase()}.module";`;
 		}
 	} else {
-		newImport = `import { ${moduleName}Module } from "${usecaseDir}${name}/${name}.module";`;
+		newImport = `import { ${moduleName}Module } from "${usecaseDir}${name}/${name.toLowerCase()}.module";`;
 	}
 
 	if (

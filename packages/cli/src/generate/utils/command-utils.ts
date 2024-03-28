@@ -66,10 +66,34 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 		process.exit(1);
 	}
 
-	let folderSchematic = "";
 	if (opinionated) {
-		folderSchematic = schematicFolder(fp.schematic);
+		const folderSchematic = schematicFolder(fp.schematic);
+
+		const folderToScaffold = `${sourceRoot}/${folderSchematic}`;
+		const { path, file, className, moduleName, modulePath } =
+			await splitTarget({
+				target: fp.target,
+				schematic: fp.schematic,
+			});
+
+		const outputPath = `${folderToScaffold}/${path}/${file}`;
+		await verifyIfFileExists(outputPath, fp.schematic);
+		mkdirSync(`${folderToScaffold}/${path}`, { recursive: true });
+
+		return {
+			path,
+			file,
+			className,
+			moduleName,
+			modulePath,
+			outputPath,
+			folderToScaffold,
+			fileName: getFileNameWithoutExtension(file),
+			schematic: fp.schematic,
+		};
 	}
+
+	const folderSchematic = "";
 
 	const folderToScaffold = `${sourceRoot}/${folderSchematic}`;
 	const { path, file, className, moduleName, modulePath } = await splitTarget(
@@ -78,6 +102,7 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 			schematic: fp.schematic,
 		},
 	);
+
 	const fileBaseSchema =
 		scaffoldSchematics?.[fp.schematic as keyof typeof scaffoldSchematics];
 	const validateFileSchema =

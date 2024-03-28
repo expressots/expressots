@@ -3,7 +3,7 @@ import { ExpressoConfig, Pattern } from "./src/types";
 const config: ExpressoConfig = {
 	sourceRoot: "src",
 	scaffoldPattern: Pattern.KEBAB_CASE,
-	opinionated: true,
+	opinionated: false,
 	scaffoldSchematics: {
 		entity: "model",
 		provider: "adapter",
