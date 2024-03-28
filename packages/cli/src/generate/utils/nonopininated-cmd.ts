@@ -256,7 +256,7 @@ async function generateDTO(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/dto.tpl",
+			path: "../templates/nonopinionated/dto.tpl",
 			data: {
 				className,
 				moduleName,
@@ -284,7 +284,7 @@ async function generateProvider(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/provider.tpl",
+			path: "../templates/nonopinionated/provider.tpl",
 			data: {
 				className,
 				moduleName,
@@ -340,7 +340,7 @@ async function generateMiddleware(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/middleware.tpl",
+			path: "../templates/nonopinionated/middleware.tpl",
 			data: {
 				className,
 				moduleName,
@@ -368,7 +368,7 @@ async function generateModule(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/module.tpl",
+			path: "../templates/nonopinionated/module.tpl",
 			data: {
 				className,
 				moduleName: className

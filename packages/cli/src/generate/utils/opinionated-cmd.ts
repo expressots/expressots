@@ -225,7 +225,7 @@ async function generateUseCase(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: template ? template : "../templates/usecase.tpl",
+			path: template ? template : "../templates/opinionated/usecase.tpl",
 			data: {
 				className,
 				moduleName,
@@ -286,7 +286,7 @@ async function generateDTO(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/dto.tpl",
+			path: "../templates/opinionated/dto.tpl",
 			data: {
 				className,
 				moduleName,
@@ -312,7 +312,7 @@ async function generateProvider(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/provider.tpl",
+			path: "../templates/opinionated/provider.tpl",
 			data: {
 				className,
 				moduleName,
@@ -364,7 +364,7 @@ async function generateMiddleware(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/middleware.tpl",
+			path: "../templates/opinionated/middleware.tpl",
 			data: {
 				className,
 				moduleName,
@@ -449,7 +449,7 @@ async function generateModule(
 	writeTemplate({
 		outputPath,
 		template: {
-			path: "../templates/common/module.tpl",
+			path: "../templates/opinionated/module.tpl",
 			data: {
 				className,
 				moduleName: anyCaseToPascalCase(moduleName),
