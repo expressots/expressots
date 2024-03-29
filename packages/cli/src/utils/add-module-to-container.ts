@@ -127,10 +127,7 @@ async function addModuleToContainer(
 	await fs.promises.writeFile(containerData.path, newFileContent, "utf8");
 }
 
-async function addModuleToContainerNestedPath(
-	name: string,
-	path?: string,
-) {
+async function addModuleToContainerNestedPath(name: string, path?: string) {
 	const containerData: AppContainerType = await validateAppContainer();
 
 	const moduleName = (name[0].toUpperCase() + name.slice(1)).trimStart();
@@ -143,12 +140,12 @@ async function addModuleToContainerNestedPath(
 		usecaseDir = `./`;
 	}
 
-	if (path.endsWith('/')) {
+	if (path.endsWith("/")) {
 		path = path.slice(0, -1);
 	}
-	
+
 	const newImport = `import { ${moduleName}Module } from "${usecaseDir}${path}.module";`;
-	
+
 	if (
 		containerData.imports.includes(newImport) &&
 		containerData.modules.includes(`${moduleName}Module`)
