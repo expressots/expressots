@@ -127,4 +127,55 @@ async function addModuleToContainer(
 	await fs.promises.writeFile(containerData.path, newFileContent, "utf8");
 }
 
-export { addModuleToContainer };
+async function addModuleToContainerNestedPath(
+	name: string,
+	path?: string,
+) {
+	const containerData: AppContainerType = await validateAppContainer();
+
+	const moduleName = (name[0].toUpperCase() + name.slice(1)).trimStart();
+	const { opinionated } = await Compiler.loadConfig();
+
+	let usecaseDir: string;
+	if (opinionated) {
+		usecaseDir = `@useCases/`;
+	} else {
+		usecaseDir = `./`;
+	}
+
+	if (path.endsWith('/')) {
+		path = path.slice(0, -1);
+	}
+	
+	const newImport = `import { ${moduleName}Module } from "${usecaseDir}${path}.module";`;
+	
+	if (
+		containerData.imports.includes(newImport) &&
+		containerData.modules.includes(`${moduleName}Module`)
+	) {
+		return;
+	}
+
+	containerData.imports.push(newImport);
+	containerData.modules.push(`${moduleName}Module`);
+
+	const newModule = containerData.modules.join(", ");
+	const newModuleDeclaration = `.create([${newModule}]`;
+
+	const newFileContent = [
+		...containerData.imports,
+		...containerData.notImports,
+	]
+		.join("\n")
+		.replace(containerData.regex, newModuleDeclaration);
+
+	console.log(
+		" ",
+		chalk.greenBright(`[container]`.padEnd(14)),
+		chalk.bold.white(`${moduleName}Module added to ${APP_CONTAINER}! ✔️`),
+	);
+
+	await fs.promises.writeFile(containerData.path, newFileContent, "utf8");
+}
+
+export { addModuleToContainer, addModuleToContainerNestedPath };

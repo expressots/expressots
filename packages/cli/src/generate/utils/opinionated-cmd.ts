@@ -16,7 +16,7 @@ import {
 	writeTemplate,
 } from "./command-utils";
 import { addControllerToModule } from "../../utils/add-controller-to-module";
-import { addModuleToContainer } from "../../utils/add-module-to-container";
+import { addModuleToContainer, addModuleToContainerNestedPath } from "../../utils/add-module-to-container";
 import { ExpressoConfig } from "../../@types";
 
 export async function opinionatedProcess(
@@ -87,9 +87,7 @@ export async function opinionatedProcess(
 				await generateModuleServiceNestedPath(
 					f.outputPath,
 					m.className,
-					m.moduleName,
 					m.path,
-					m.file,
 					m.folderToScaffold,
 				);
 			} else if (pathStyle === PathStyle.Single) {
@@ -567,16 +565,15 @@ async function generateModuleServiceSinglePath(
 async function generateModuleServiceNestedPath(
 	outputPathController: string,
 	className: string,
-	moduleName: string,
 	path: string,
-	file: string,
 	folderToScaffold: string,
 ): Promise<void> {
-	const newModuleFile = await extractFirstWord(file);
+	const moduleFileName = nodePath.basename(path, '/');
 	const newModulePath = nodePath
 		.join(folderToScaffold, path, "..")
 		.normalize();
-	const newModuleName = `${newModuleFile}.module.ts`;
+
+	const newModuleName = `${moduleFileName}.module.ts`;
 	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
 		"\\",
 		"/",
@@ -608,15 +605,14 @@ async function generateModuleServiceNestedPath(
 			path: "../templates/opinionated/module-service.tpl",
 			data: {
 				className,
-				moduleName: anyCaseToPascalCase(moduleName),
+				moduleName: anyCaseToPascalCase(moduleFileName),
 				path: controllerToModule,
 			},
 		},
 	});
 
-	await addModuleToContainer(
-		anyCaseToPascalCase(moduleName),
-		`${moduleName}/${file.replace(".ts", "")}`,
+	await addModuleToContainerNestedPath(
+		anyCaseToPascalCase(moduleFileName),
 		path,
 	);
 }
