@@ -2,8 +2,27 @@ import chalk from "chalk";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { CLI_VERSION } from "../cli";
 import { printError } from "../utils/cli-ui";
+import { exec } from "child_process";
+import util from "util";
+
+const execPromisified = util.promisify(exec);
+
+async function getCLIVersion(): Promise<string> {
+	try {
+		const { stdout } = await execPromisified("npm list -g @expressots/cli");
+		const version = stdout;
+		const versionRegex = /@expressots\/cli@(\d+\.\d+\.\d+)/;
+		const versionMatch: string = version.match(versionRegex)?.[1];
+		return versionMatch;
+	} catch (error) {
+		printError(
+			"CLI version not available.",
+			"Unable to get the CLI version.",
+		);
+	}
+	return "";
+}
 
 function getInfosFromPackage() {
 	try {
@@ -16,10 +35,12 @@ function getInfosFromPackage() {
 		const packageJson = JSON.parse(fileContents);
 
 		console.log(chalk.green("ExpressoTS Project:"));
-		console.log(chalk.bold(`\tName: ${packageJson.name}`));
-		console.log(chalk.bold(`\tDescription: ${packageJson.description}`));
-		console.log(chalk.bold(`\tVersion: ${packageJson.version}`));
-		console.log(chalk.bold(`\tAuthor: ${packageJson.author}`));
+		console.log(chalk.white(`\tName: ${packageJson.name}`));
+		console.log(chalk.white(`\tDescription: ${packageJson.description}`));
+		console.log(chalk.white(`\tVersion: ${packageJson.version}`));
+		console.log(chalk.white(`\tAuthor: ${packageJson.author}`));
+
+		//getCLIVersion();
 	} catch (error) {
 		printError(
 			"No project information available.",
@@ -28,15 +49,16 @@ function getInfosFromPackage() {
 	}
 }
 
-const infoForm = async (): Promise<void> => {
-	console.log(chalk.green("System informations:"));
-	console.log(chalk.bold(`\tOS Version: ${os.version()}`));
-	console.log(chalk.bold(`\tNodeJS version: ${process.version}`));
+const infoForm = (): void => {
+	const cliVersion = "1.6.0"; //await getCLIVersion();
+	getInfosFromPackage();
+
+	console.log(chalk.green("System information:"));
+	console.log(chalk.white(`\tOS Version: ${os.version()}`));
+	console.log(chalk.white(`\tNodeJS version: ${process.version}`));
 
 	console.log(chalk.green("CLI Version:"));
-	console.log(chalk.bold(`\tCurrent version: v${CLI_VERSION}`));
-
-	getInfosFromPackage();
+	console.log(chalk.white(`\tCurrent version: v${cliVersion}`));
 };
 
 export { infoForm };

@@ -51,6 +51,7 @@
 		"@expressots/boost-ts": "1.1.1",
 		"chalk-animation": "2.0.3",
 		"cli-progress": "3.11.2",
+		"cli-table3": "^0.6.4",
 		"degit": "2.8.4",
 		"glob": "10.2.6",
 		"inquirer": "8.0.0",
