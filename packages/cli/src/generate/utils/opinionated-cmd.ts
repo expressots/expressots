@@ -11,6 +11,7 @@ import {
 	FileOutput,
 	getFileNameWithoutExtension,
 	getHttpMethod,
+	PathStyle,
 	validateAndPrepareFile,
 	writeTemplate,
 } from "./command-utils";
@@ -23,6 +24,7 @@ export async function opinionatedProcess(
 	target: string,
 	method: string,
 	expressoConfig: ExpressoConfig,
+	pathStyle: string,
 ): Promise<string> {
 	const f: FileOutput = await validateAndPrepareFile({
 		schematic,
@@ -69,14 +71,19 @@ export async function opinionatedProcess(
 				method,
 				expressoConfig,
 			});
-			await generateModuleService(
-				f.outputPath,
-				m.className,
-				m.moduleName,
-				m.path,
-				m.file,
-				m.folderToScaffold,
-			);
+
+			if (pathStyle === PathStyle.Sugar) {
+				await generateModuleServiceSugarPath(
+					f.outputPath,
+					m.className,
+					m.moduleName,
+					m.path,
+					m.file,
+					m.folderToScaffold,
+				);
+			} else if (pathStyle === PathStyle.Nested) {
+			} else if (pathStyle === PathStyle.Single) {
+			}
 
 			await printGenerateSuccess("controller", f.file);
 			await printGenerateSuccess("usecase", f.file);
@@ -426,7 +433,7 @@ async function generateMiddleware(
  * @param moduleName - The module name
  * @param path - The path
  */
-async function generateModuleService(
+async function generateModuleServiceSugarPath(
 	outputPathController: string,
 	className: string,
 	moduleName: string,

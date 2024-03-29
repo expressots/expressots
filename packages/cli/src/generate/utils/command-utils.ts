@@ -13,6 +13,13 @@ import { verifyIfFileExists } from "../../utils/verify-file-exists";
 import Compiler from "../../utils/compiler";
 import { ExpressoConfig, Pattern } from "../../types";
 
+export const enum PathStyle {
+	None = "none",
+	Single = "single",
+	Nested = "nested",
+	Sugar = "sugar",
+}
+
 /**
  * File preparation
  * @param schematic
@@ -364,3 +371,21 @@ export async function extractFirstWord(file: string) {
 			return anyCaseToCamelCase(firstWord);
 	}
 }
+
+/**
+ * Check if the path is a nested path, a single path or a sugar path
+ * @param path
+ * @returns the path style
+ */
+export const checkPathStyle = (path: string): PathStyle => {
+	const singleOrNestedPathRegex = /\/|\\/;
+	const sugarPathRegex = /^\w+-\w+$/;
+
+	if (singleOrNestedPathRegex.test(path)) {
+		return PathStyle.Nested;
+	} else if (sugarPathRegex.test(path)) {
+		return PathStyle.Sugar;
+	} else {
+		return PathStyle.Single;
+	}
+};

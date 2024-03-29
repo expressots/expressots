@@ -1,5 +1,5 @@
-import { s } from "vitest/dist/reporters-cb94c88b";
 import Compiler from "../utils/compiler";
+import { checkPathStyle } from "./utils/command-utils";
 import { nonOpinionatedProcess } from "./utils/nonopininated-cmd";
 import { opinionatedProcess } from "./utils/opinionated-cmd";
 
@@ -28,15 +28,16 @@ export const createTemplate = async ({
 	method,
 }: CreateTemplateProps) => {
 	const config = await Compiler.loadConfig();
+	const pathStyle = checkPathStyle(target);
 
 	let returnFile = "";
-
 	if (config.opinionated) {
 		returnFile = await opinionatedProcess(
 			schematic,
 			target,
 			method,
 			config,
+			pathStyle,
 		);
 	} else {
 		returnFile = await nonOpinionatedProcess(
