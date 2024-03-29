@@ -1,5 +1,36 @@
 
 
+## [1.7.0](https://github.com/expressots/expressots-cli/compare/1.6.0...1.7.0) (2024-03-29)
+
+
+### Features
+
+* add expressotsconfig scaffoldName schematics changeable by user ([964804f](https://github.com/expressots/expressots-cli/commit/964804f05d2d234f2ab87cf02ac158a583d2d102))
+* add Nested path validation ([0a105bb](https://github.com/expressots/expressots-cli/commit/0a105bb6abacc2a9b62f948df304ab34f5fb7f19))
+* add path command style to opinionated services ([3dea624](https://github.com/expressots/expressots-cli/commit/3dea624160a689ee82e75d4171752c98d5506b16))
+* add single and sugar path validation ([b5738e5](https://github.com/expressots/expressots-cli/commit/b5738e50cfc6d26a068bffa2dd7e9e342e4f0c76))
+* fixed nested resource gen e add fn comments ([3a2c26c](https://github.com/expressots/expressots-cli/commit/3a2c26ce46b3491db41b327ba3377e422e3fd91b))
+* resource list panel ([249cc73](https://github.com/expressots/expressots-cli/commit/249cc73fd5251274e2742aada1a68b4c457c4f8e))
+
+
+### Bug Fixes
+
+* adjust linter ([8ef1714](https://github.com/expressots/expressots-cli/commit/8ef1714ed6f03a5b7d7ebd960597069ab8fa05ab))
+
+
+### Code Refactoring
+
+* add controller service to module ([1b7b94a](https://github.com/expressots/expressots-cli/commit/1b7b94a04671b3c0c06ca42d3015cf00ce00da60))
+* add generate module service scaffold ([f634c13](https://github.com/expressots/expressots-cli/commit/f634c132d7d2fe4ded5116ce594b75980eb320e6))
+* add module to container ([c2768fb](https://github.com/expressots/expressots-cli/commit/c2768fb652c901080602650c45ebd662f17f8d2e))
+* adjust form console msg on error in existing project ([44f17f1](https://github.com/expressots/expressots-cli/commit/44f17f1d053adead04ba607920499b1b5408af5b))
+* adjust opinionated path module insertion ([e9b3822](https://github.com/expressots/expressots-cli/commit/e9b382235f90f118786b2a9e270a229015cf1297))
+* adjust templates ([fda129f](https://github.com/expressots/expressots-cli/commit/fda129f3c931711859eae12ec245653c09f37af7))
+* create nonop & op command file ([0c63f67](https://github.com/expressots/expressots-cli/commit/0c63f67a7e3da729dc6cceff40a89f6aa3adb7cf))
+* redo all nonop generator resources ([249c1bd](https://github.com/expressots/expressots-cli/commit/249c1bdde2ad9187f05f85e43f25bd1b92f3c162))
+* remove the cli version from info cmd ([4056a5e](https://github.com/expressots/expressots-cli/commit/4056a5e0d2e85a43ff44ce8da571c0af1acd0785))
+* restructure all generate scaffold methods ([cdddaa1](https://github.com/expressots/expressots-cli/commit/cdddaa1a29466d93369d1052ae9db65e0dc8b4c8))
+
 ## [1.6.0](https://github.com/expressots/expressots-cli/compare/1.5.0...1.6.0) (2024-03-22)
 
 
