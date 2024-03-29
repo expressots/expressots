@@ -211,6 +211,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 
 			await emitter.clone(answer.name);
 		} catch (err: any) {
+			console.log("\n");
 			printError(
 				"Project already exists or Folder is not empty",
 				answer.name,
