@@ -1,5 +1,18 @@
 
 
+## [2.9.1](https://github.com/expressots/expressots/compare/2.9.0...2.9.1) (2024-03-29)
+
+
+### Bug Fixes
+
+* add non opinionated scaffold schematics name change ([35cf0cb](https://github.com/expressots/expressots/commit/35cf0cb32c621d7b5112b0306b2001bb34c210ed))
+
+
+### Code Refactoring
+
+* add expressots project commands ([523cf19](https://github.com/expressots/expressots/commit/523cf1908f3ba36377738082bf24783e45117626))
+* adjust expressots build, dev, prod ([7be37a7](https://github.com/expressots/expressots/commit/7be37a7b8291ea88ab69ce72b4723780d278d405))
+
 ## [2.9.0](https://github.com/expressots/expressots/compare/2.8.0...2.9.0) (2024-03-18)
 
 
