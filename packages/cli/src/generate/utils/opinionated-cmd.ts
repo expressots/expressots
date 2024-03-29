@@ -73,6 +73,7 @@ export async function opinionatedProcess(
 			});
 
 			if (pathStyle === PathStyle.Sugar) {
+				console.log("Sugar");
 				await generateModuleServiceSugarPath(
 					f.outputPath,
 					m.className,
@@ -82,7 +83,25 @@ export async function opinionatedProcess(
 					m.folderToScaffold,
 				);
 			} else if (pathStyle === PathStyle.Nested) {
+				console.log("Nested");
+				await generateModuleServiceNestedPath(
+					f.outputPath,
+					m.className,
+					m.moduleName,
+					m.path,
+					m.file,
+					m.folderToScaffold,
+				);
 			} else if (pathStyle === PathStyle.Single) {
+				console.log("Single");
+				await generateModuleServiceSinglePath(
+					f.outputPath,
+					m.className,
+					m.moduleName,
+					m.path,
+					m.file,
+					m.folderToScaffold,
+				);
 			}
 
 			await printGenerateSuccess("controller", f.file);
@@ -434,6 +453,118 @@ async function generateMiddleware(
  * @param path - The path
  */
 async function generateModuleServiceSugarPath(
+	outputPathController: string,
+	className: string,
+	moduleName: string,
+	path: string,
+	file: string,
+	folderToScaffold: string,
+): Promise<void> {
+	const newModuleFile = await extractFirstWord(file);
+	const newModulePath = nodePath
+		.join(folderToScaffold, path, "..")
+		.normalize();
+	const newModuleName = `${newModuleFile}.module.ts`;
+	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
+		"\\",
+		"/",
+	);
+
+	const controllerToModule = nodePath
+		.relative(newModuleOutputPath, outputPathController)
+		.normalize()
+		.replace(/\.ts$/, "")
+		.replace(/\\/g, "/")
+		.replace(/\.\./g, ".");
+
+	const controllerFullPath = nodePath
+		.join(folderToScaffold, path, "..", newModuleName)
+		.normalize();
+
+	if (fs.existsSync(newModuleOutputPath)) {
+		await addControllerToModule(
+			controllerFullPath,
+			`${className}Controller`,
+			controllerToModule,
+		);
+		return;
+	}
+
+	writeTemplate({
+		outputPath: newModuleOutputPath,
+		template: {
+			path: "../templates/opinionated/module-service.tpl",
+			data: {
+				className,
+				moduleName: anyCaseToPascalCase(moduleName),
+				path: controllerToModule,
+			},
+		},
+	});
+
+	await addModuleToContainer(
+		anyCaseToPascalCase(moduleName),
+		`${moduleName}/${file.replace(".ts", "")}`,
+		path,
+	);
+}
+
+async function generateModuleServiceSinglePath(
+	outputPathController: string,
+	className: string,
+	moduleName: string,
+	path: string,
+	file: string,
+	folderToScaffold: string,
+): Promise<void> {
+	const newModuleFile = await extractFirstWord(file);
+	const newModulePath = nodePath.join(folderToScaffold, path).normalize();
+	const newModuleName = `${newModuleFile}.module.ts`;
+	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
+		"\\",
+		"/",
+	);
+
+	const controllerToModule = nodePath
+		.relative(newModuleOutputPath, outputPathController)
+		.normalize()
+		.replace(/\.ts$/, "")
+		.replace(/\\/g, "/")
+		.replace(/\.\./g, ".");
+
+	const controllerFullPath = nodePath
+		.join(folderToScaffold, path, "..", newModuleName)
+		.normalize();
+
+	if (fs.existsSync(newModuleOutputPath)) {
+		await addControllerToModule(
+			controllerFullPath,
+			`${className}Controller`,
+			controllerToModule,
+		);
+		return;
+	}
+
+	writeTemplate({
+		outputPath: newModuleOutputPath,
+		template: {
+			path: "../templates/opinionated/module-service.tpl",
+			data: {
+				className,
+				moduleName: anyCaseToPascalCase(moduleName),
+				path: controllerToModule,
+			},
+		},
+	});
+
+	await addModuleToContainer(
+		anyCaseToPascalCase(moduleName),
+		`${moduleName}/${file.replace(".ts", "")}`,
+		path,
+	);
+}
+
+async function generateModuleServiceNestedPath(
 	outputPathController: string,
 	className: string,
 	moduleName: string,
