@@ -1,8 +1,8 @@
 import { BaseController, StatusCode } from "@expressots/core";
-import { controller, {{method}}, param, response } from "@expressots/adapter-express";
+import { controller, Get, response } from "@expressots/adapter-express";
 import { Response } from "express";
 import { {{className}}UseCase } from "./{{fileName}}.usecase";
-import { I{{className}}RequestDTO, I{{className}}ResponseDTO } from "./{{fileName}}.dto";
+import { I{{className}}ResponseDTO } from "./{{fileName}}.dto";
 
 @controller("/{{{route}}}")
 export class {{className}}Controller extends BaseController {
@@ -10,12 +10,12 @@ export class {{className}}Controller extends BaseController {
 	    super();
 	}
 
-    @{{method}}("/:id")
-    execute(@param("id") id: string, @response() res: Response): I{{className}}ResponseDTO {
+    @Get("/")
+    execute(@response() res: Response): I{{className}}ResponseDTO {
         return this.callUseCase(
-            this.{{useCase}}UseCase.execute(id),
+            this.{{useCase}}UseCase.execute(),
             res,
             StatusCode.OK,
-      );
+        );
     }
 }

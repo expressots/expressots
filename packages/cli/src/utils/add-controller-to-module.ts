@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-async function addControllerToModule(
+export async function addControllerToModule(
 	filePath: string,
 	controllerName: string,
 	controllerPath: string,
@@ -54,5 +54,3 @@ async function addControllerToModule(
 
 	await fs.promises.writeFile(filePath, newFileContent, "utf8");
 }
-
-export { addControllerToModule };

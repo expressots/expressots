@@ -4,11 +4,10 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { runCommandModule } from "./commands/project.commands";
 import { generateProject } from "./generate";
+import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
 import { createProject } from "./new";
 import { generateProviders } from "./providers";
-
-export const CLI_VERSION = "1.3.4";
 
 console.log(`\n[🐎 Expressots]\n`);
 
@@ -19,6 +18,7 @@ yargs(hideBin(process.argv))
 	.command(generateProviders())
 	.command(generateProject())
 	.command(infoProject())
+	.command(helpCommand())
 	.example("$0 new expressots-demo", "Create interactively")
 	.example("$0 new expressots-demo -d ./", "Create interactively with path")
 	.example("$0 new expressots-demo -p yarn -t opinionated", "Create silently")
