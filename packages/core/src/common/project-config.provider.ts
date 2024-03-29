@@ -45,6 +45,15 @@ interface ExpressoConfig {
   sourceRoot: string;
   opinionated: boolean;
   providers?: IProviders;
+  scaffoldSchematics?: {
+    entity?: string;
+    controller?: string;
+    usecase?: string;
+    dto?: string;
+    module?: string;
+    provider?: string;
+    middleware?: string;
+  };
 }
 
 export { ExpressoConfig, Pattern };
