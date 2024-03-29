@@ -14,6 +14,13 @@ import {
 	writeTemplate,
 } from "./command-utils";
 
+/**
+ * Process the non-opinionated command
+ * @param schematic - The schematic
+ * @param target - The target
+ * @param method - The method
+ * @param expressoConfig - The expresso config
+ */
 export async function nonOpinionatedProcess(
 	schematic: string,
 	target: string,

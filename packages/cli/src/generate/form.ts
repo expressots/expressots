@@ -17,9 +17,9 @@ type CreateTemplateProps = {
 
 /**
  * Create a template based on the schematic
- * @param schematic
- * @param path
- * @param method
+ * @param schematic - the schematic to create
+ * @param path - the path to create the schematic
+ * @param method - the http method
  * @returns the file created
  */
 export const createTemplate = async ({

@@ -16,9 +16,21 @@ import {
 	writeTemplate,
 } from "./command-utils";
 import { addControllerToModule } from "../../utils/add-controller-to-module";
-import { addModuleToContainer, addModuleToContainerNestedPath } from "../../utils/add-module-to-container";
+import {
+	addModuleToContainer,
+	addModuleToContainerNestedPath,
+} from "../../utils/add-module-to-container";
 import { ExpressoConfig } from "../../@types";
 
+/**
+ * Process commands for opinionated service scaffolding
+ * @param schematic - Resource to scaffold
+ * @param target - Target path
+ * @param method - HTTP method
+ * @param expressoConfig - Expresso configuration [expressots.config.ts]
+ * @param pathStyle - Path command style [sugar, nested, single]
+ * @returns
+ */
 export async function opinionatedProcess(
 	schematic: string,
 	target: string,
@@ -73,7 +85,6 @@ export async function opinionatedProcess(
 			});
 
 			if (pathStyle === PathStyle.Sugar) {
-				console.log("Sugar");
 				await generateModuleServiceSugarPath(
 					f.outputPath,
 					m.className,
@@ -83,7 +94,6 @@ export async function opinionatedProcess(
 					m.folderToScaffold,
 				);
 			} else if (pathStyle === PathStyle.Nested) {
-				console.log("Nested");
 				await generateModuleServiceNestedPath(
 					f.outputPath,
 					m.className,
@@ -91,7 +101,6 @@ export async function opinionatedProcess(
 					m.folderToScaffold,
 				);
 			} else if (pathStyle === PathStyle.Single) {
-				console.log("Single");
 				await generateModuleServiceSinglePath(
 					f.outputPath,
 					m.className,
@@ -284,6 +293,14 @@ async function generateUseCaseService(
 	});
 }
 
+/**
+ * Generate a use case
+ * @param outputPath - The output path
+ * @param className - The class name
+ * @param moduleName - The module name
+ * @param path - The path
+ * @param fileName - The file name
+ */
 async function generateUseCase(
 	outputPath: string,
 	className: string,
@@ -444,7 +461,7 @@ async function generateMiddleware(
 }
 
 /**
- * Generate a module for service scaffolding
+ * Generate a module for service scaffolding with sugar path
  * @param outputPath - The output path
  * @param className - The class name
  * @param moduleName - The module name
@@ -507,6 +524,13 @@ async function generateModuleServiceSugarPath(
 	);
 }
 
+/**
+ * Generate a module for service scaffolding with single path
+ * @param outputPath - The output path
+ * @param className - The class name
+ * @param moduleName - The module name
+ * @param path - The path
+ */
 async function generateModuleServiceSinglePath(
 	outputPathController: string,
 	className: string,
@@ -562,13 +586,21 @@ async function generateModuleServiceSinglePath(
 	);
 }
 
+/**
+ * Generate a module for service scaffolding with nested path
+ * @param outputPathController
+ * @param className
+ * @param path
+ * @param folderToScaffold
+ * @returns
+ */
 async function generateModuleServiceNestedPath(
 	outputPathController: string,
 	className: string,
 	path: string,
 	folderToScaffold: string,
 ): Promise<void> {
-	const moduleFileName = nodePath.basename(path, '/');
+	const moduleFileName = nodePath.basename(path, "/");
 	const newModulePath = nodePath
 		.join(folderToScaffold, path, "..")
 		.normalize();
