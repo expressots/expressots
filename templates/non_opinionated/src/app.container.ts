@@ -1,5 +1,5 @@
 import { AppContainer } from "@expressots/core";
-import { AppModule } from "./app/app.module";
+import { AppModule } from "./app.module";
 
 export const appContainer: AppContainer = new AppContainer({
     autoBindInjectable: false,
