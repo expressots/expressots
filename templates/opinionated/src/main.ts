@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import { ServerEnvironment } from "@expressots/adapter-express";
 import { AppFactory } from "@expressots/core";
-import { App } from "@providers/application/application.provider";
+import { App } from "@providers/app/app.provider";
 import { container } from "./app.container";
 
 async function bootstrap() {
