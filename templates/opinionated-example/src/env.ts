@@ -7,6 +7,10 @@ const ENV = {
         ENVIRONMENT: process.env.ENVIRONMENT as string,
         PORT: Number(process.env.PORT),
     },
+    Log: {
+        FILE: process.env.FILE as string,
+        FOLDER: process.env.FOLDER as string,
+    },
 };
 
 export default ENV;

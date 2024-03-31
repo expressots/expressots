@@ -1,5 +1,46 @@
 
 
+## [2.9.1](https://github.com/expressots/expressots/compare/2.9.0...2.9.1) (2024-03-29)
+
+
+### Bug Fixes
+
+* add non opinionated scaffold schematics name change ([35cf0cb](https://github.com/expressots/expressots/commit/35cf0cb32c621d7b5112b0306b2001bb34c210ed))
+
+
+### Code Refactoring
+
+* add expressots project commands ([523cf19](https://github.com/expressots/expressots/commit/523cf1908f3ba36377738082bf24783e45117626))
+* adjust expressots build, dev, prod ([7be37a7](https://github.com/expressots/expressots/commit/7be37a7b8291ea88ab69ce72b4723780d278d405))
+
+## [2.9.0](https://github.com/expressots/expressots/compare/2.8.0...2.9.0) (2024-03-18)
+
+
+### Features
+
+* add plugin pattern on provider manager ([f56d5b3](https://github.com/expressots/expressots/commit/f56d5b3a2ebdcca8e61e91e831ce43e6e2a90c57))
+
+
+### Bug Fixes
+
+* change expressots version to latest ([d42f0c9](https://github.com/expressots/expressots/commit/d42f0c9987ffa7a8ecc213500e39364182ba800e))
+* lock lib ver, add tsconfig to package ([298201c](https://github.com/expressots/expressots/commit/298201c1442821cf63f7ed788d7f76a6a7fe79e0))
+* lock versions, update to es2021 ([1ca53ca](https://github.com/expressots/expressots/commit/1ca53ca8ad6e52aea136fe48a99aab389456de93))
+* remove the appcontainer return dictionary method ([3dddb86](https://github.com/expressots/expressots/commit/3dddb86bf35e08e42f43c960e796756f2b938805))
+* rename logger-service to logger.provider ([3344717](https://github.com/expressots/expressots/commit/33447175665ed36c3581143bc451bf27fb4b778b))
+
+
+### Code Refactoring
+
+* adjust core op template and add full example ([ca5a843](https://github.com/expressots/expressots/commit/ca5a8436ae5a2afb57f426f6dc8b8efa0050f6b1))
+* non opinionated templated structure change ([8caf0d1](https://github.com/expressots/expressots/commit/8caf0d12b3751c61dfa16bb4a70722c64763ffcd))
+* update eslint config inferrable types ([845101f](https://github.com/expressots/expressots/commit/845101fa6472ab4874a220ef63ea4e8296fbd7a6))
+
+
+### Continuous Integrations
+
+* add prepublish script ([7b1478e](https://github.com/expressots/expressots/commit/7b1478e7cf1ec44b63e9f1a99354e49cb4ddaa7d))
+
 ## [2.8.0](https://github.com/expressots/expressots/compare/2.7.0...2.8.0) (2024-3-5)
 
 
