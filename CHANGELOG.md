@@ -1,5 +1,40 @@
 
 
+## [2.10.0](https://github.com/expressots/expressots/compare/2.9.1...2.10.0) (2024-03-31)
+
+
+### Features
+
+* bump @commitlint/cli from 18.0.0 to 19.2.1 ([cbdf106](https://github.com/expressots/expressots/commit/cbdf106fc72605ecd8a66300cfe5951e50c3102c))
+* bump @commitlint/config-conventional from 18.6.3 to 19.1.0 ([3e283c5](https://github.com/expressots/expressots/commit/3e283c5bc40ebaf1e4528e07a01fb10e552b33ab))
+* bump @release-it/conventional-changelog from 7.0.1 to 7.0.2 ([5916d10](https://github.com/expressots/expressots/commit/5916d108e878b4104fbbede6f873e8c5ec533d81))
+* bump @types/express from 4.17.17 to 4.17.21 ([9d3ce90](https://github.com/expressots/expressots/commit/9d3ce906b23918183df2f237fd5f2954564290d3))
+* bump @types/node from 20.4.9 to 20.12.2 ([b62d698](https://github.com/expressots/expressots/commit/b62d698156fee5811eaa4b76f19786b36f476a8f))
+* bump @typescript-eslint/eslint-plugin from 6.6.0 to 6.21.0 ([f03e326](https://github.com/expressots/expressots/commit/f03e326106777964229ed3b9fef3008a30751101))
+* bump eslint from 8.48.0 to 8.57.0 ([c58c68b](https://github.com/expressots/expressots/commit/c58c68bc82b055b3a459b745b2906485d7968923))
+* bump eslint-config-prettier from 9.0.0 to 9.1.0 ([6003fd9](https://github.com/expressots/expressots/commit/6003fd9c43d3b108cf23c2d5e882e85f9a86adb3))
+* bump inversify from 6.0.1 to 6.0.2 ([dffffdd](https://github.com/expressots/expressots/commit/dffffddbf01181da7b117ffd37cf04324e65ac89))
+* bump reflect-metadata from 0.2.1 to 0.2.2 ([eb606cd](https://github.com/expressots/expressots/commit/eb606cdb28bad0a62b1e88a906fbbba297518120))
+* bump release-it from 16.1.5 to 16.3.0 ([ac94b32](https://github.com/expressots/expressots/commit/ac94b3274c9e1c0b6ffd3813bb3853f9b6648312))
+* bump typescript from 4.9.5 to 5.4.3 ([2f7d8a3](https://github.com/expressots/expressots/commit/2f7d8a3c8640e91034b92dfdfc133006ac777155))
+* bump vite from 4.5.0 to 5.2.7 ([c53a852](https://github.com/expressots/expressots/commit/c53a852d7701b49464deb0a5499faa17396bd5fc))
+* bump vitest and @vitest/coverage-v8 ([dd561f8](https://github.com/expressots/expressots/commit/dd561f8b1caf163e453347d46ca7d40529bcd833))
+
+
+### Bug Fixes
+
+* update inversify, reflect-metadata and express version, remove vulnerabilites ([62a7e92](https://github.com/expressots/expressots/commit/62a7e923c40145bf9a8899007292c02035348dad))
+* update typescript to 5.2.2 rm conflict on eslin-tstree ([26e160d](https://github.com/expressots/expressots/commit/26e160ddc37e35ce5ef80af62ddf539409ee8f1c))
+
+
+### Code Refactoring
+
+* separate template tests from core ([57e6a98](https://github.com/expressots/expressots/commit/57e6a9863cc4a27039a6ba5978d9eda678fc920c))
+* update app provider opinionated template ([9e45fcd](https://github.com/expressots/expressots/commit/9e45fcd01c8351cc931522e18a30434294aae695))
+* update express types ([6a546d2](https://github.com/expressots/expressots/commit/6a546d2b4a4d12c6f807591a71c33887acebd29c))
+* update non opinionated template ([77dd2cc](https://github.com/expressots/expressots/commit/77dd2cc00cff014a006dc56b7fa6f76dce9be25b))
+* update non opinionated template ([f9d3b16](https://github.com/expressots/expressots/commit/f9d3b169f7db2d09223f8e94d19e082b544e35c9))
+
 ## [2.9.1](https://github.com/expressots/expressots/compare/2.9.0...2.9.1) (2024-03-29)
 
 
