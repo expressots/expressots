@@ -21,7 +21,7 @@
         "@expressots/adapter-express": "latest",
         "@expressots/core": "latest",
         "dotenv": "16.0.3",
-        "express": "4.18.2",
+        "express": "4.19.2",
         "inversify": "6.0.1",
         "inversify-binding-decorators": "4.0.0",
         "reflect-metadata": "0.2.1",
