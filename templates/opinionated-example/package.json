@@ -25,7 +25,7 @@
         "inversify": "6.0.1",
         "inversify-binding-decorators": "4.0.0",
         "reflect-metadata": "0.2.1",
-        "tsconfig-paths": "4.1.2"
+        "tsconfig-paths": "4.2.0"
     },
     "devDependencies": {
         "@types/express": "4.17.17",
