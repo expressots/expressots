@@ -1,3 +1,4 @@
 export * from "./express-utils";
-export { AppExpress, ServerEnvironment } from "./application-express";
-export { IApplicationExpress } from "./application-express.interface";
+export { AppExpress } from "./application-express";
+export { IWebServerPublic } from "./application-express.interface";
+export { IWebServer, IWebServerConstructor, ServerEnvironment } from "./application-express.types";

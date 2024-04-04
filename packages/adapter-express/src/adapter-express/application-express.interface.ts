@@ -1,11 +1,10 @@
 import { IApplicationMessageToConsole, RenderTemplateOptions } from "@expressots/core";
-import { ServerEnvironment } from "./application-express";
+import { ServerEnvironment } from "./application-express.types";
 
 /**
- * Interface representing the Application class for Expressjs
- * @interface IApplicationExpress
+ * Public Interface for the WebServer application.
  */
-interface IApplicationExpress {
+export interface IWebServerPublic {
   /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
@@ -16,7 +15,7 @@ interface IApplicationExpress {
     port: number,
     environment: ServerEnvironment,
     consoleMessage?: IApplicationMessageToConsole,
-  ): Promise<void> | void;
+  ): Promise<void>;
 
   /**
    * Configures the application's view engine based on the provided configuration options.
@@ -31,5 +30,3 @@ interface IApplicationExpress {
    */
   setEngine<T extends RenderTemplateOptions>(options: T): void;
 }
-
-export { IApplicationExpress };
