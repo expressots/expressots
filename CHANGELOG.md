@@ -1,5 +1,26 @@
 
 
+## [2.11.0](https://github.com/expressots/expressots/compare/2.10.0...2.11.0) (2024-04-04)
+
+
+### Features
+
+* bump @types/node from 20.12.2 to 20.12.3 ([430ada9](https://github.com/expressots/expressots/commit/430ada937b04ad12ca26dad1decabffe0b5299ab))
+
+
+### Bug Fixes
+
+* update adpater version to latest ([89c671d](https://github.com/expressots/expressots/commit/89c671d2905ceea8877ee5cc6c6fc8ddae262549))
+* update console tests ([c639466](https://github.com/expressots/expressots/commit/c6394663749fe4ebda9ce0b54ccaa7e83593d0df))
+* upgrade tsconfig-paths from 4.1.2 to 4.2.0 ([fc373a6](https://github.com/expressots/expressots/commit/fc373a64d41174351439a356afd3708aba0e8661))
+* upgrade tsconfig-paths from 4.1.2 to 4.2.0 ([e8f0d68](https://github.com/expressots/expressots/commit/e8f0d68a02999d8bcf9936c1973b62a9c97119ac))
+
+
+### Code Refactoring
+
+* appfactory class ([3fde40a](https://github.com/expressots/expressots/commit/3fde40a8754e22ad377e58d2c5a0b16fcf116dd0))
+* rename items for standardization and improve doc ([d01f4d1](https://github.com/expressots/expressots/commit/d01f4d191a09716fde688404506ea7895efaf127))
+
 ## [2.10.0](https://github.com/expressots/expressots/compare/2.9.1...2.10.0) (2024-03-31)
 
 
