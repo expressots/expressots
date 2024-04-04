@@ -1,5 +1,13 @@
 
 
+## [1.2.1](https://github.com/expressots/adapter-express/compare/1.2.0...1.2.1) (2024-04-04)
+
+
+### Code Refactoring
+
+* adapter expressto to be used in AppFactory ([239501e](https://github.com/expressots/adapter-express/commit/239501e41bfd98ecc0893a50c34de58dd8914d9e))
+* rename items for standardization and improve doc ([2e691d5](https://github.com/expressots/adapter-express/commit/2e691d50731e8d4d689fe4b4420daab8ba2f5803))
+
 ## [1.2.0](https://github.com/expressots/adapter-express/compare/1.1.1...1.2.0) (2024-3-5)
 
 
