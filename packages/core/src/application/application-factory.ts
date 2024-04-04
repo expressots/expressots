@@ -36,7 +36,6 @@ class AppFactory {
     container: Container,
     webServerType: IWebServerConstructor<T>,
   ): Promise<IWebServerPublic> {
-    // Set the container to the static property.
     AppFactory.container = container;
 
     if (isWebServerConstructor<T>(webServerType)) {
