@@ -39,6 +39,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   private container: Container;
   private globalPrefix: string = "/";
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
+  private console: Console;
 
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
@@ -58,6 +59,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
    */
   async configure(container: Container): Promise<void> {
     this.container = container;
+    this.console = this.container.get(Console);
   }
 
   /**
@@ -138,17 +140,14 @@ class AppExpress extends ApplicationBase implements IWebServer {
     environment: ServerEnvironment,
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void> {
-    /* Initializes the application and executes the middleware pipeline */
     await this.init();
 
-    /* Sets the port and environment */
     this.port = port;
     this.environment = environment;
     this.app.set("env", environment);
 
     this.app.listen(this.port, () => {
-      const console: Console = this.container.get<Console>(Console);
-      console.messageServer(this.port, this.environment, consoleMessage);
+      this.console.messageServer(this.port, this.environment, consoleMessage);
 
       (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
         (signal) => {
@@ -157,7 +156,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
       );
     });
 
-    await Promise.resolve(this.postServerInitialization());
+    await this.postServerInitialization();
   }
 
   /**

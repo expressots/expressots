@@ -23,10 +23,9 @@ import { provide } from "inversify-binding-decorators";
 @provide(ApplicationBase)
 export abstract class ApplicationBase {
   /**
-   * Method to configure services that should be initialized
-   * before the server starts. It must be implemented by the
-   * extending class to set up necessary services or configurations.
-   * Can return a Promise for async configuration.
+   * Implement this method to set up required services or configurations before
+   * the server starts. This is essential for initializing dependencies or settings
+   * necessary for server operation. Supports asynchronous setup with a Promise.
    *
    * @abstract
    * @returns {void | Promise<void>}
@@ -34,10 +33,9 @@ export abstract class ApplicationBase {
   protected abstract configureServices(): void | Promise<void>;
 
   /**
-   * Method to configure services or actions that should be executed
-   * after the server starts. It allows the extending class to perform
-   * any necessary operations once the server is up and running.
-   * Can return a Promise for async execution.
+   * Implement this method to execute actions or configurations after the server
+   * has started. Use this for operations that need to run once the server is
+   * operational. Supports asynchronous execution with a Promise.
    *
    * @abstract
    * @returns {void | Promise<void>}
@@ -45,14 +43,10 @@ export abstract class ApplicationBase {
   protected abstract postServerInitialization(): void | Promise<void>;
 
   /**
-   * Method to perform any necessary actions or cleanup after the server
-   * is shutting down. This might include closing database connections,
-   * stopping background tasks, or other cleanup activities. It provides
-   * a clean exit point for the server.
-   * Can return a Promise for async cleanup.
-   *
-   * @abstract
-   * @returns {void | Promise<void>}
+   * Implement this method to handle cleanup and final actions when the server
+   * is shutting down. Ideal for closing resources, stopping tasks, or other
+   * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
+   * cleanup with a Promise.
    */
   protected abstract serverShutdown(): void | Promise<void>;
 }
