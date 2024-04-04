@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { Console } from "..";
-import { bgColorCodes, colorCodes } from "../../common/color-service.provider";
+import { bgColorCodes, colorCodes } from "../../common/color-codes";
 
 let spy: vi.SpyInstance;
 let consoleInstance: Console;
