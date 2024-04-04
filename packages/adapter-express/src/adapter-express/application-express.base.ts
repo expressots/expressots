@@ -21,7 +21,7 @@ import { provide } from "inversify-binding-decorators";
  * @abstract
  */
 @provide(ApplicationBase)
-abstract class ApplicationBase {
+export abstract class ApplicationBase {
   /**
    * Method to configure services that should be initialized
    * before the server starts. It must be implemented by the
@@ -56,5 +56,3 @@ abstract class ApplicationBase {
    */
   protected abstract serverShutdown(): void | Promise<void>;
 }
-
-export { ApplicationBase };

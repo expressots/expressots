@@ -1,89 +1,44 @@
-import express, { Request, Response, NextFunction } from "express";
-import { Container } from "inversify";
-import { provide } from "inversify-binding-decorators";
-import process from "process";
 import {
   Console,
   IApplicationMessageToConsole,
-  IMiddleware,
-  Middleware,
-  Logger,
   IHandlebars,
+  Logger,
+  Middleware,
   RenderTemplateOptions,
 } from "@expressots/core";
-import { IApplicationExpress } from "./application-express.interface";
+import express from "express";
+import { Container } from "inversify";
+import { provide } from "inversify-binding-decorators";
+import process from "process";
+import { ApplicationBase } from "./application-express.base";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
-import { ApplicationBase } from "./application-base";
+import {
+  ExpressHandler,
+  ExpressoMiddleware,
+  IWebServer,
+  MiddlewareConfig,
+  ServerEnvironment,
+} from "./application-express.types";
 
 /**
- * ExpressHandler Type
- *
- * The ExpressHandler type is a union type that represents various types of Express middleware functions.
- * It can be one of the following types:
- * - express.ErrorRequestHandler: Handles errors in the middleware pipeline.
- * - express.RequestParamHandler: Handles parameters in the middleware pipeline.
- * - express.RequestHandler: General request handler.
- * - undefined: Represents the absence of a handler.
+ * The AppExpress class provides methods for configuring and running an Express application.
+ * @class AppExpress
+ * @implements {IWebServer} - Interface for the WebServer application implementation.
+ * @extends {ApplicationBase} - Base class for the application implementation that provides lifecycle hooks.
+ * @method configure - Configures the InversifyJS container.
+ * @method listen - Start listening on the given port and environment.
+ * @method setGlobalRoutePrefix - Sets the global route prefix for the application.
+ * @method setEngine - Configures the application's view engine based on the provided configuration options.
+ * @method isDevelopment - Verifies if the current environment is development.
  */
-type ExpressHandler =
-  | express.ErrorRequestHandler
-  | express.RequestParamHandler
-  | express.RequestHandler
-  | undefined;
-
-/**
- * MiddlewareConfig Interface
- *
- * The MiddlewareConfig interface specifies the structure for middleware configuration objects.
- * - path: Optional. The route path for which the middleware is configured.
- * - middlewares: An array of ExpressHandler types that make up the middleware pipeline for the route specified by 'path'.
- */
-type MiddlewareConfig = {
-  path?: string;
-  middlewares: Array<ExpressHandler>;
-};
-
-/**
- * Expresso middleware interface.
- */
-interface IExpressoMiddleware {
-  //readonly name: string;
-  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
-}
-
-/**
- * Abstract class for creating custom Expresso middleware.
- * Custom middleware classes should extend this class and implement the use method.
- *
- */
-abstract class ExpressoMiddleware implements IExpressoMiddleware {
-  get name(): string {
-    return this.constructor.name;
-  }
-
-  abstract use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
-}
-
-/**
- * Enum representing possible server environments.
- */
-enum ServerEnvironment {
-  Development = "development",
-  Production = "production",
-}
-
-/**
- * The Application class provides a way to configure and manage an Express application.
- * @provide Application
- */
-@provide(ApplicationExpress)
-class ApplicationExpress extends ApplicationBase implements IApplicationExpress {
+@provide(AppExpress)
+class AppExpress extends ApplicationBase implements IWebServer {
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
   private container: Container;
-  private middlewares: Array<ExpressHandler> = [];
-  private globalPrefix: string | undefined;
+  private globalPrefix: string = "/";
+  private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
 
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
@@ -95,6 +50,14 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
   private handleExit(): void {
     this.serverShutdown();
     process.exit(0);
+  }
+
+  /**
+   * Configures the InversifyJS container.
+   * @param container - The InversifyJS container.
+   */
+  async configure(container: Container): Promise<void> {
+    this.container = container;
   }
 
   /**
@@ -137,19 +100,16 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
    * @param middlewares - An array of Express middlewares to be applied.
    * @returns The configured Application instance.
    */
-  private async init(
-    container: Container,
-    middlewares: Array<express.RequestHandler> = [],
-  ): Promise<ApplicationExpress> {
+  private async init(): Promise<AppExpress> {
     await this.configureServices();
 
-    const middleware = container.get<IMiddleware>(Middleware);
+    const middleware = this.container.get(Middleware);
     const sortedMiddlewarePipeline = middleware.getMiddlewarePipeline();
     const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
 
-    this.middlewares.push(...middlewares, ...(pipeline as Array<ExpressHandler>));
+    this.middlewares.push(...(pipeline as Array<ExpressHandler>));
 
-    const expressServer = new InversifyExpressServer(container, null, {
+    const expressServer = new InversifyExpressServer(this.container, null, {
       rootPath: this.globalPrefix as string,
     });
 
@@ -168,23 +128,6 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
   }
 
   /**
-   * Create and configure the Express application.
-   * @param container - The InversifyJS container.
-   * @param middlewares - An array of Express middlewares to be applied.
-   * @returns The configured Application instance.
-   */
-  public async create(
-    container: Container,
-    middlewares: Array<ExpressHandler> = [],
-  ): Promise<ApplicationExpress> {
-    this.container = container;
-    this.middlewares = middlewares;
-    this.globalPrefix = this.globalPrefix || "/";
-
-    return this;
-  }
-
-  /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
    * @param environment - The server environment.
@@ -196,7 +139,7 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void> {
     /* Initializes the application and executes the middleware pipeline */
-    await this.init(this.container, this.middlewares as Array<express.RequestHandler>);
+    await this.init();
 
     /* Sets the port and environment */
     this.port = port;
@@ -265,16 +208,6 @@ class ApplicationExpress extends ApplicationBase implements IApplicationExpress 
       .error("isDevelopment() method must be called on `PostServerInitialization`", "application");
     return false;
   }
-
-  /**
-   * Verifies if the current environment is production.
-   *
-   * @returns A boolean value indicating whether the current environment is production or not.
-   *
-   */
-  public get ExpressApp(): express.Application {
-    return this.app;
-  }
 }
 
-export { ApplicationExpress as AppExpress, ServerEnvironment };
+export { AppExpress };
