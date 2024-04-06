@@ -7,7 +7,7 @@ import { provideSingleton, provideTransient } from "../decorator";
 /**
  * Key to be used for storing and retrieving binding type metadata.
  */
-const BINDING_TYPE_METADATA_KEY = "binding-type";
+export const BINDING_TYPE_METADATA_KEY = "binding-type";
 
 /**
  * The scope decorator is a higher order function that can be used to decorate a class with a binding type.
@@ -44,7 +44,7 @@ type controllerType = Map<symbol, new () => any>;
  * @provide BaseModule
  */
 @provide(BaseModule)
-class BaseModule {
+export class BaseModule {
   /**
    * Create a map of symbols for the provided controllers.
    * @param controllers - An array of controller classes.
