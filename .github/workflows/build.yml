@@ -35,6 +35,17 @@ jobs:
         env:
           CI: true
 
+      - name: Run Code Coverage
+        working-directory: packages/core
+        run: npm run coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          working-directory: .
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: expressots/expressots
+
       - name: Set up .npmrc
         run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
 

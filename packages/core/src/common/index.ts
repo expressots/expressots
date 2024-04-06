@@ -1,1 +1,1 @@
-export { Pattern, ExpressoConfig } from "./project-config.provider";
+export { Pattern, ExpressoConfig } from "./project-config";

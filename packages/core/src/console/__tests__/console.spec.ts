@@ -1,8 +1,19 @@
 import "reflect-metadata";
-import { Console } from "..";
-import { bgColorCodes, colorCodes } from "../../common/color-service.provider";
 
-let spy: vi.SpyInstance;
+import {
+  vi,
+  beforeEach,
+  afterEach,
+  describe,
+  it,
+  expect,
+  MockInstance,
+} from "vitest";
+
+import { Console } from "..";
+import { bgColorCodes, colorCodes } from "../../common/color-codes";
+
+let spy: MockInstance;
 let consoleInstance: Console;
 
 beforeEach(() => {

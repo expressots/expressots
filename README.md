@@ -1,6 +1,10 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
+
+[![Codecov][codecov-shield]][codecov-url]
+[![NPM][npm-shield]][npm-url]
+![Build][build-shield]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -44,6 +48,7 @@
 </details>
 
 <!-- ABOUT THE PROJECT -->
+
 # About The Project
 
 ExpressoTS is a [Typescript](https://www.typescriptlang.org/) + [Node.js](https://nodejs.org/en/) lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🐎
@@ -92,6 +97,12 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
+[codecov-url]: https://codecov.io/gh/expressots/expressots
+[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/expressots/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
+[npm-url]: https://www.npmjs.com/package/@expressots/core
+[npm-shield]: https://img.shields.io/npm/v/%40expressots%2Fcore?style=for-the-badge&logo=npm&color=9B3922
+[build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/expressots/build.yml?branch=main&style=for-the-badge&logo=github
 [contributors-shield]: https://img.shields.io/github/contributors/expressots/expressots?style=for-the-badge
 [contributors-url]: https://github.com/expressots/expressots/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/expressots/expressots?style=for-the-badge
