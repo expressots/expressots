@@ -19,7 +19,7 @@
     "dependencies": {
         "@expressots/adapter-express": "latest",
         "@expressots/core": "latest",
-        "dotenv": "16.0.3",
+        "dotenv": "16.4.5",
         "express": "4.19.2",
         "inversify": "6.0.2",
         "inversify-binding-decorators": "4.0.0",
