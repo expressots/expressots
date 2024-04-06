@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { codecovVitePlugin } from "@codecov/vite-plugin";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 /**
@@ -6,7 +7,14 @@ import tsconfigPaths from "vite-tsconfig-paths";
  * @see {@link https://vitest.dev/config/}
  */
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  plugins: [
+    tsconfigPaths(),
+    codecovVitePlugin({
+      enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+      bundleName: "expresso-ts-core-coverage",
+      uploadToken: process.env.CODECOV_TOKEN,
+    }),
+  ],
   test: {
     globals: true,
     environment: "node",
