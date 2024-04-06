@@ -35,9 +35,14 @@ jobs:
         env:
           CI: true
 
+      - name: Run Code Coverage
+        working-directory: packages/core
+        run: npm run coverage
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
+          working-directory: packages/core
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: expressots/expressots
 
