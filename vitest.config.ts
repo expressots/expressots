@@ -11,7 +11,7 @@ export default defineConfig({
     tsconfigPaths(),
     codecovVitePlugin({
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-      bundleName: "<bundle project name>",
+      bundleName: "expresso-ts-core-coverage",
       uploadToken: process.env.CODECOV_TOKEN,
     }),
   ],
