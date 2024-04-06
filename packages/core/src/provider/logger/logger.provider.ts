@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { Color, colorCodes } from "../../common/color-service.provider";
+import { Color, colorCodes } from "../../common/color-codes";
 import { IProvider } from "../provider-manager";
 
 /**

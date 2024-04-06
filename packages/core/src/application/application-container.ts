@@ -108,11 +108,10 @@ interface ContainerOptions {
  * and the ability to skip base class checks. The container can be loaded with multiple
  * ContainerModule instances, facilitating modular and organized code.
  *
- * Usage:
- * const appContainer = new AppContainer(options);
- * const container = appContainer.create(modules);
- *
- * @provide AppContainer
+ * @example
+ * ```typescript
+ * const container = new AppContainer();
+ * container.create([new MyModule()]);
  */
 @provide(AppContainer)
 class AppContainer {
@@ -121,7 +120,10 @@ class AppContainer {
 
   /**
    * Constructs the AppContainer instance.
-   * @param options - The options for creating the container. Can include custom default scope and skip base class checks setting.
+   * @param options - The options for creating the container with default request scope.
+   * @option options.defaultScope - The default scope for bindings in the container.
+   * @option options.skipBaseClassChecks - Allows skipping of base class checks when working with derived classes.
+   * @option options.autoBindInjectable - Allows auto-binding of injectable classes.
    */
   constructor(options?: ContainerOptions) {
     this.options = {
