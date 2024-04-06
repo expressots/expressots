@@ -1,6 +1,8 @@
+import "reflect-metadata";
+
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import dotenv from "dotenv";
 import fs from "fs";
-import "reflect-metadata";
 import { EnvValidatorProvider } from "../env-validator.provider";
 
 vi.mock("fs");
@@ -47,6 +49,29 @@ describe("EnvValidatorProvider", () => {
       vi.spyOn(dotenv, "config").mockImplementation();
       Environments.checkAll();
       expect(dotenv.config).toHaveBeenCalled();
+    });
+
+    it('should correctly convert "true", "1", and "yes" to true', () => {
+      expect("true".AsBoolean()).toBe(true);
+      expect("1".AsBoolean()).toBe(true);
+      expect("yes".AsBoolean()).toBe(true);
+      expect("TRUE".AsBoolean()).toBe(true); // Testing case-insensitivity
+      expect("Yes".AsBoolean()).toBe(true); // Testing case-insensitivity
+    });
+
+    it('should correctly convert "false", "0", and "no" to false', () => {
+      expect("false".AsBoolean()).toBe(false);
+      expect("0".AsBoolean()).toBe(false);
+      expect("no".AsBoolean()).toBe(false);
+      expect("FALSE".AsBoolean()).toBe(false); // Testing case-insensitivity
+      expect("No".AsBoolean()).toBe(false); // Testing case-insensitivity
+    });
+
+    it("should return undefined for any other values", () => {
+      expect("maybe".AsBoolean()).toBeUndefined();
+      expect("2".AsBoolean()).toBeUndefined();
+      expect("".AsBoolean()).toBeUndefined();
+      expect("yesn't".AsBoolean()).toBeUndefined();
     });
   });
 });

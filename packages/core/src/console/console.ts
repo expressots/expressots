@@ -1,9 +1,5 @@
 import { provide } from "inversify-binding-decorators";
-import {
-  ColorStyle,
-  bgColorCodes,
-  colorCodes,
-} from "../common/color-service.provider";
+import { ColorStyle, bgColorCodes, colorCodes } from "../common/color-codes";
 
 /**
  * Interface representing application message details for console output.
