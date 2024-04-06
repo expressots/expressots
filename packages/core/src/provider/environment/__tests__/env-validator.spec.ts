@@ -1,6 +1,8 @@
+import "reflect-metadata";
+
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import dotenv from "dotenv";
 import fs from "fs";
-import "reflect-metadata";
 import { EnvValidatorProvider } from "../env-validator.provider";
 
 vi.mock("fs");

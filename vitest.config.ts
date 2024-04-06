@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     globals: true,
+    environment: "node",
     setupFiles: ["reflect-metadata"],
     exclude: [
       "**/node_modules/**",
