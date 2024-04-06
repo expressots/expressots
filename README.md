@@ -1,6 +1,8 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
+
+[![Codecov][codecov-shield]][codecov-url]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -44,6 +46,7 @@
 </details>
 
 <!-- ABOUT THE PROJECT -->
+
 # About The Project
 
 ExpressoTS is a [Typescript](https://www.typescriptlang.org/) + [Node.js](https://nodejs.org/en/) lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🐎
@@ -92,6 +95,7 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
 [contributors-shield]: https://img.shields.io/github/contributors/expressots/expressots?style=for-the-badge
 [contributors-url]: https://github.com/expressots/expressots/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/expressots/expressots?style=for-the-badge
@@ -105,3 +109,5 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/expresso-ts/
 [product-screenshot]: images/screenshot.png
+[codecov-url]: https://codecov.io/gh/expressots/expressots
+[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/expressots/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
