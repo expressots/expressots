@@ -1,10 +1,6 @@
 import { BindingScopeEnum } from "inversify";
-import { describe, afterEach, expect, it, vi } from "vitest";
-import { BaseModule } from "../container-module"; // Adjust the import path
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+import { describe, expect, it, vi } from "vitest";
+import { BaseModule } from "../container-module";
 
 describe("BaseModule.createContainerModule", () => {
   vi.mock("inversify", async () => {
