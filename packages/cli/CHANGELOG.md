@@ -1,5 +1,12 @@
 
 
+## [1.7.1](https://github.com/expressots/expressots-cli/compare/1.7.0...1.7.1) (2024-04-11)
+
+
+### Bug Fixes
+
+* update nonop controller and usecase template ([1a84a3a](https://github.com/expressots/expressots-cli/commit/1a84a3a3c52df1a67077f7380a3b7c19c7ad26c9))
+
 ## [1.7.0](https://github.com/expressots/expressots-cli/compare/1.6.0...1.7.0) (2024-03-29)
 
 
