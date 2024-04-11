@@ -39,6 +39,7 @@
 		"cp:templates": "cp -r ./src/generate/templates ./bin/generate/templates && cp -r ./src/providers/prisma/templates ./bin/providers/prisma/templates",
 		"clean": "rimraf ./bin",
 		"prepublish": "npm run build && npm pack",
+		"publish": "npm publish --tag latest",
 		"format": "prettier --write \"./src/**/*.ts\" --cache",
 		"lint": "eslint \"./src/**/*.ts\"",
 		"lint:fix": "eslint \"./src/**/*.ts\" --fix",
