@@ -62,6 +62,29 @@ export class BaseModule {
     return symbols;
   }
 
+  public static bindToScope(
+    symbol: symbol,
+    target: new () => any,
+    bindingType: interfaces.BindingScope,
+    bind: interfaces.Bind,
+  ) {
+    switch (bindingType) {
+      case BindingScopeEnum.Singleton:
+        bind(symbol).to(target).inSingletonScope();
+        break;
+      case BindingScopeEnum.Transient:
+        bind(symbol).to(target).inTransientScope();
+        provideTransient(target);
+        break;
+      case BindingScopeEnum.Request:
+        bind(symbol).to(target).inRequestScope();
+        break;
+      default:
+        bind(symbol).to(target).inRequestScope();
+        break;
+    }
+  }
+
   /**
    * Create an InversifyJS ContainerModule for the provided controllers.
    * @param controllers - An array of controller classes.
@@ -77,37 +100,13 @@ export class BaseModule {
     return new ContainerModule((bind) => {
       for (const [symbol, target] of symbols) {
         if (scope) {
-          switch (scope) {
-            case BindingScopeEnum.Singleton:
-              bind(symbol).to(target).inSingletonScope();
-              break;
-            case BindingScopeEnum.Transient:
-              bind(symbol).to(target).inTransientScope();
-              break;
-            case BindingScopeEnum.Request:
-              bind(symbol).to(target).inRequestScope();
-              break;
-          }
+          BaseModule.bindToScope(symbol, target, scope, bind);
         } else {
           const bindingType = Reflect.getMetadata(
             BINDING_TYPE_METADATA_KEY,
             target,
           );
-
-          switch (bindingType) {
-            case BindingScopeEnum.Singleton:
-              bind(symbol).to(target).inSingletonScope();
-              break;
-            case BindingScopeEnum.Transient:
-              bind(symbol).to(target).inTransientScope();
-              break;
-            case BindingScopeEnum.Request:
-              bind(symbol).to(target).inRequestScope();
-              break;
-            default:
-              bind(symbol).to(target).inRequestScope();
-              break;
-          }
+          BaseModule.bindToScope(symbol, target, bindingType, bind);
         }
       }
     });
