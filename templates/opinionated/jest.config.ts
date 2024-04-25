@@ -2,6 +2,7 @@ import type { JestConfigWithTsJest } from "ts-jest";
 
 const jestConfig: JestConfigWithTsJest = {
     preset: "ts-jest",
+    rootDir: "./",
     testEnvironment: "node",
     verbose: true,
     automock: false,
