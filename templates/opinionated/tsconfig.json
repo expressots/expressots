@@ -27,6 +27,6 @@
         "skipLibCheck": true,
         "types": ["reflect-metadata", "node", "jest"]
     },
-    "include": [".", "src/**/*.ts"],
-    "exclude": ["node_modules", "dist", "test"]
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules", "dist", "test/**/*.ts"]
 }
