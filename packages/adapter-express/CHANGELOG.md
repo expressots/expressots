@@ -1,5 +1,12 @@
 
 
+## [1.2.2](https://github.com/expressots/adapter-express/compare/1.2.1...1.2.2) (2024-04-25)
+
+
+### Bug Fixes
+
+* validate parameter types in param decorator by default ([b7a8657](https://github.com/expressots/adapter-express/commit/b7a8657598ce51a6fa44c3a388d38106b47ad70d))
+
 ## [1.2.1](https://github.com/expressots/adapter-express/compare/1.2.0...1.2.1) (2024-04-04)
 
 
