@@ -11,7 +11,6 @@ import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
 import process from "process";
 import { ApplicationBase } from "./application-express.base";
-import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import {
   ExpressHandler,
   ExpressoMiddleware,
@@ -19,6 +18,7 @@ import {
   MiddlewareConfig,
   ServerEnvironment,
 } from "./application-express.types";
+import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -33,6 +33,7 @@ import {
  */
 @provide(AppExpress)
 class AppExpress extends ApplicationBase implements IWebServer {
+  private logger: Logger = new Logger();
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
@@ -142,7 +143,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   ): Promise<void> {
     await this.init();
 
-    this.port = port;
+    this.port = port || 3000;
     this.environment = environment;
     this.app.set("env", environment);
 
@@ -206,6 +207,22 @@ class AppExpress extends ApplicationBase implements IWebServer {
       .get<Logger>(Logger)
       .error("isDevelopment() method must be called on `PostServerInitialization`", "application");
     return false;
+  }
+
+  /**
+   * Get the underlying HTTP server. (default: Express.js)
+   * @returns The underlying HTTP server after initialization.
+   */
+  public async getHttpServer(): Promise<express.Application> {
+    if (!this.app) {
+      this.logger.error(
+        "The method can only be called in `app.provider` or in e2e tests with supertest.",
+        "adapter-express",
+      );
+
+      throw new Error("Incorrect usage of `getHttpServer` method");
+    }
+    return this.app;
   }
 }
 
