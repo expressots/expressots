@@ -23,6 +23,7 @@ module.exports = {
     "packages/core/test",
     "**/packages/core/src/**/*.spec.ts",
     "scripts",
+    "vitest.config.ts",
   ],
   rules: {
     "@typescript-eslint/adjacent-overload-signatures": "error",
