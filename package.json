@@ -82,7 +82,7 @@
     "@types/node": "20.12.7",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
-    "@vitest/coverage-v8": "1.4.0",
+    "@vitest/coverage-v8": "1.5.2",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "husky": "9.0.11",
@@ -91,7 +91,7 @@
     "typescript": "5.2.2",
     "vite": "5.2.8",
     "vite-tsconfig-paths": "4.3.2",
-    "vitest": "1.4.0"
+    "vitest": "1.5.2"
   },
   "release-it": {
     "git": {
