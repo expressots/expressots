@@ -12,7 +12,7 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node", "reflect-metadata", "jest"]
+    "types": ["node", "reflect-metadata"]
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["node_modules"]
