@@ -35,13 +35,13 @@ jobs:
           CI: true
 
       - name: Run Code Coverage
-        working-directory: packages/core
+        working-directory: ./src
         run: npm run coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
-          working-directory: ./src
+          working-directory: .
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Set up .npmrc
