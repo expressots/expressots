@@ -57,7 +57,10 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "release": "release-it",
     "prepublish": "npm run build && npm pack",
-    "test": "jest",
+    "publish": "npm publish --tag latest",
+    "test": "vitest run --reporter default",
+    "test:watch": "vitest run --watch",
+    "coverage": "vitest run --coverage",
     "format": "prettier --write \"src/**/*.ts\" --cache",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix"

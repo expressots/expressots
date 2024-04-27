@@ -1,11 +1,10 @@
-name: Build
+name: Build and Test
 
 on:
   push:
     branches:
       - main
   pull_request:
-    # The branches below must be a subset of the branches above
     branches: ["main"]
   pull_request_target:
     types: [opened, synchronize, reopened]
@@ -29,13 +28,24 @@ jobs:
       - name: Build
         run: npm run build
 
-      #- name: Unit Tests
-      #  working-directory: .
-      #  run: npm test
-      #  env:
-      #    CI: true
+      - name: Unit Tests
+        working-directory: ./src
+        run: npm run test
+        env:
+          CI: true
 
-      #- name: Set up .npmrc
-      #  run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
-      #- name: Install dependencies
-      #  run: npm ci
+      - name: Run Code Coverage
+        working-directory: packages/core
+        run: npm run coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          working-directory: ./src
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Set up .npmrc
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
+
+      - name: Install dependencies
+        run: npm ci
