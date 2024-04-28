@@ -98,10 +98,10 @@ const prismaProvider = async (
 		)
 			? "npm"
 			: fs.existsSync("yarn.lock")
-			? "yarn"
-			: fs.existsSync("pnpm-lock.yaml")
-			? "pnpm"
-			: null;
+				? "yarn"
+				: fs.existsSync("pnpm-lock.yaml")
+					? "pnpm"
+					: null;
 
 		if (packageManager) {
 			// Install prisma in the project

@@ -53,7 +53,7 @@ export async function opinionatedProcess(
 				method,
 				f.file,
 			);
-			
+
 			const u = await validateAndPrepareFile({
 				schematic: "usecase",
 				target,

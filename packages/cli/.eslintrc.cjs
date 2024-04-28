@@ -16,11 +16,12 @@ module.exports = {
 		jest: true,
 	},
 	ignorePatterns: [
-		"./bin/*",
+		"bin/*",
 		"node_modules/*",
 		"expressots.config.ts",
 		"commitlint.config.ts",
-		"./vitest.config.ts",
+		"vitest.config.ts",
+		".eslintrc.cjs",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",
