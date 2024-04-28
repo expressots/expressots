@@ -45,7 +45,7 @@ export async function opinionatedProcess(
 		expressoConfig,
 	});
 	switch (schematic) {
-		case "service":
+		case "service": {
 			await generateControllerService(
 				f.outputPath,
 				f.className,
@@ -53,7 +53,7 @@ export async function opinionatedProcess(
 				method,
 				f.file,
 			);
-
+			
 			const u = await validateAndPrepareFile({
 				schematic: "usecase",
 				target,
@@ -116,6 +116,7 @@ export async function opinionatedProcess(
 			await printGenerateSuccess("dto", f.file);
 			await printGenerateSuccess("module", f.file);
 			break;
+		}
 		case "usecase":
 			await generateUseCase(
 				f.outputPath,
