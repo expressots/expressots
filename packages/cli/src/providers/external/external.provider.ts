@@ -51,7 +51,7 @@ const externalProvider = async (): Promise<void> => {
 		try {
 			const emitter = degit(`expressots/expressots-provider-template`);
 			await emitter.clone(providerInfo.providerName);
-			printInfo(providerInfo.providerName);
+			await printInfo(providerInfo.providerName);
 
 			resolve();
 		} catch (err: any) {
