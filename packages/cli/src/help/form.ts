@@ -8,7 +8,7 @@ const helpForm = async (): Promise<void> => {
 			chalk.green("Alias"),
 			chalk.green("Description"),
 		],
-		colWidths: [15, 10, 60],
+		colWidths: [15, 15, 60],
 	});
 
 	table.push(
@@ -26,6 +26,7 @@ const helpForm = async (): Promise<void> => {
 		["dto", "g d", "Generate a dto"],
 		["entity", "g e", "Generate an entity"],
 		["provider", "g p", "Generate a provider"],
+		["provider external", "a provider", "Generate an external provider"],
 		["module", "g mo", "Generate a module"],
 		["middleware", "g mi", "Generate a middleware"],
 	);

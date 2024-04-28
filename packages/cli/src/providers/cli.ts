@@ -1,4 +1,5 @@
 import { Argv, CommandModule } from "yargs";
+import { externalProvider } from "./external/external.provider";
 import { prismaProvider } from "./prisma/prisma.provider";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -12,9 +13,10 @@ const generateProviders = (): CommandModule<CommandModuleArgs, any> => {
 		builder: (yargs: Argv): Argv => {
 			yargs
 				.positional("provider", {
-					choices: ["prisma"] as const,
+					choices: ["prisma", "provider"] as const,
 					describe: "The provider to add to the project",
 					type: "string",
+					alias: "p",
 				})
 				.option("library-version", {
 					describe: "The library version to install",
@@ -34,6 +36,8 @@ const generateProviders = (): CommandModule<CommandModuleArgs, any> => {
 		handler: async ({ provider, libraryVersion, providerVersion }) => {
 			if (provider === "prisma") {
 				await prismaProvider(libraryVersion, providerVersion);
+			} else if (provider === "provider") {
+				await externalProvider();
 			}
 		},
 	};
