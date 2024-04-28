@@ -2,6 +2,9 @@
 
 <!-- PROJECT SHIELDS -->
 
+[![Codecov][codecov-shield]][codecov-url]
+[![NPM][npm-shield]][npm-url]
+![Build][build-shield]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -95,6 +98,11 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
+[codecov-url]: https://codecov.io/gh/expressots/expressots-cli
+[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/expressots-cli/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
+[npm-url]: https://www.npmjs.com/package/@expressots/expressots-cli
+[npm-shield]: https://img.shields.io/npm/v/@expressots/expressots-cli?style=for-the-badge&logo=npm&color=9B3922
+[build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/expressots-cli/build.yaml?branch=main&style=for-the-badge&logo=github
 [contributors-shield]: https://img.shields.io/github/contributors/expressots/expressots-cli?style=for-the-badge
 [contributors-url]: https://github.com/expressots/expressots-cli/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/expressots/expressots-cli?style=for-the-badge
