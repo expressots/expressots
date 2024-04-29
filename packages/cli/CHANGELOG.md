@@ -1,5 +1,37 @@
 
 
+## [1.8.0](https://github.com/expressots/expressots-cli/compare/1.7.1...1.8.0) (2024-04-29)
+
+
+### Features
+
+* add code coverage ([034f078](https://github.com/expressots/expressots-cli/commit/034f078c4bc6d33193600e176f6ca25bc6b175f6))
+* add external provider scaffold ([8ed033b](https://github.com/expressots/expressots-cli/commit/8ed033b3a3d64febd03b93fbca1cd571d6a46d39))
+* add vitest configuration ([c1e4521](https://github.com/expressots/expressots-cli/commit/c1e45217bd098fe70fe6545997bdc18af46648e8))
+* rename .env.example to .env during project creation ([94bc93d](https://github.com/expressots/expressots-cli/commit/94bc93d450887e4e3cee35b22a17b2229e26c3a2))
+* update readme shields ([241b83b](https://github.com/expressots/expressots-cli/commit/241b83bc4191d8f9b8837d4a2d8ef9ccb58c7f77))
+
+
+### Bug Fixes
+
+* add coverage folder to eslint ignore pattern ([61c4df1](https://github.com/expressots/expressots-cli/commit/61c4df1cc23e4a6266c47c8c1ed1be7f06f1cdd2))
+* add coverage to gitignore ([53b9cfd](https://github.com/expressots/expressots-cli/commit/53b9cfd384623e078e5fee91710514f9a3bd4b56))
+* adjust package version dependencies ([067170b](https://github.com/expressots/expressots-cli/commit/067170bf2a01fb449624979b89366f2d6a0902ec))
+* adjust sheild for npm & build ([416595f](https://github.com/expressots/expressots-cli/commit/416595ffe7be630d058444d994abd617b49d0db2))
+* npm package installation progress message ([93f9c83](https://github.com/expressots/expressots-cli/commit/93f9c8394a65f2008c408f1fa9fd5e163100951a))
+* remove codesee workflow ([afc492b](https://github.com/expressots/expressots-cli/commit/afc492b735d819a1e58c32c8f6bb78055c73532a))
+
+
+### Code Refactoring
+
+* update index help and await print ([17dda21](https://github.com/expressots/expressots-cli/commit/17dda210e7643f95a9e0903d2ae584080dd6de1b))
+
+
+### Continuous Integrations
+
+* update package dependencies, lint issues ([54f81b7](https://github.com/expressots/expressots-cli/commit/54f81b752cc5c1a22d2f1386bf9ffc78d9608902))
+* update pull request workflow ([9695b00](https://github.com/expressots/expressots-cli/commit/9695b00ddb798a2cc574ded560789e1703e8a582))
+
 ## [1.7.1](https://github.com/expressots/expressots-cli/compare/1.7.0...1.7.1) (2024-04-11)
 
 
