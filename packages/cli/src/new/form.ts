@@ -28,9 +28,21 @@ async function packageManagerInstall({
 		});
 
 		installProcess.stdout.on("data", (data: Buffer) => {
-			progressBar.increment(5, {
-				doing: `${data.toString().trim()}`,
-			});
+			const output = data.toString().trim();
+
+			const npmProgressMatch = output.match(
+				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
+			);
+
+			if (npmProgressMatch) {
+				const [, current, total, task] = npmProgressMatch;
+				const progress = Math.round(
+					(parseInt(current) / parseInt(total)) * 100,
+				);
+				progressBar.update(progress, { doing: task });
+			} else {
+				progressBar.increment(5, { doing: output });
+			}
 		});
 
 		installProcess.on("close", (code) => {
@@ -211,7 +223,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 					"| {percentage}% || {doing}",
 				hideCursor: true,
 			},
-			Presets.shades_classic,
+			Presets.rect,
 		);
 
 		progressBar.start(100, 0, {
