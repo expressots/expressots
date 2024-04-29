@@ -36,3 +36,5 @@ expressots.config.ts
 *.tgz
 
 *.container.ts
+
+coverage/
