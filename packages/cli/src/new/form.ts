@@ -79,6 +79,22 @@ function changePackageName({
 	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
+function renameEnvFile(directory: string): void {
+	try {
+		const envExamplePath = path.join(directory, ".env.example");
+		const envPath = path.join(directory, ".env");
+
+		if (!fs.existsSync(envExamplePath)) {
+			throw new Error(`File not found: ${envExamplePath}`);
+		}
+
+		fs.renameSync(envExamplePath, envPath);
+	} catch (error: any) {
+		printError("Error renaming .env.example file", ".env.example to .env");
+		process.exit(1);
+	}
+}
+
 enum Template {
 	"non-opinionated" = "Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
 	opinionated = "Opinionated :: Automatically scaffolds resources into a preset project structure. (Recommended)",
@@ -235,6 +251,8 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 			directory: answer.name,
 			name: projName,
 		});
+
+		renameEnvFile(answer.name);
 
 		progressBar.update(100);
 
