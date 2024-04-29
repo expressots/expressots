@@ -22,6 +22,7 @@ module.exports = {
 		"commitlint.config.ts",
 		"vitest.config.ts",
 		".eslintrc.cjs",
+		"coverage/*",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",

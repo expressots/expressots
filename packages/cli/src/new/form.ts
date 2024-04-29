@@ -28,9 +28,21 @@ async function packageManagerInstall({
 		});
 
 		installProcess.stdout.on("data", (data: Buffer) => {
-			progressBar.increment(5, {
-				doing: `${data.toString().trim()}`,
-			});
+			const output = data.toString().trim();
+
+			const npmProgressMatch = output.match(
+				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
+			);
+
+			if (npmProgressMatch) {
+				const [, current, total, task] = npmProgressMatch;
+				const progress = Math.round(
+					(parseInt(current) / parseInt(total)) * 100,
+				);
+				progressBar.update(progress, { doing: task });
+			} else {
+				progressBar.increment(5, { doing: output });
+			}
 		});
 
 		installProcess.on("close", (code) => {
@@ -77,6 +89,22 @@ function changePackageName({
 
 	// Save the package.json file
 	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+
+function renameEnvFile(directory: string): void {
+	try {
+		const envExamplePath = path.join(directory, ".env.example");
+		const envPath = path.join(directory, ".env");
+
+		if (!fs.existsSync(envExamplePath)) {
+			throw new Error(`File not found: ${envExamplePath}`);
+		}
+
+		fs.renameSync(envExamplePath, envPath);
+	} catch (error: any) {
+		printError("Error renaming .env.example file", ".env.example to .env");
+		process.exit(1);
+	}
 }
 
 enum Template {
@@ -195,7 +223,7 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 					"| {percentage}% || {doing}",
 				hideCursor: true,
 			},
-			Presets.shades_classic,
+			Presets.rect,
 		);
 
 		progressBar.start(100, 0, {
@@ -235,6 +263,8 @@ const projectForm = async (projectName: string, args: any[]): Promise<void> => {
 			directory: answer.name,
 			name: projName,
 		});
+
+		renameEnvFile(answer.name);
 
 		progressBar.update(100);
 
