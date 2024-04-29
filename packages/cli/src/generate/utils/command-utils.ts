@@ -223,8 +223,10 @@ export const splitTarget = async ({
 		const isKebabCase = kebabCaseRegex.test(name);
 		if (isCamelCase || isKebabCase) {
 			const [wordName, ...path] = name
-				?.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)
-				.map((word) => word.toLowerCase());
+				? name
+						.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)
+						.map((word) => word.toLowerCase())
+				: [];
 
 			return {
 				path: `${wordName}/${pathEdgeCase(path)}${pathEdgeCase(

@@ -118,7 +118,7 @@ const runCommand = async ({ command }: { command: string }): Promise<void> => {
 				await compileTypescript();
 				await copyFiles();
 				break;
-			case "prod":
+			case "prod": {
 				let config: Array<string> = [];
 				if (opinionated) {
 					config = [
@@ -134,6 +134,7 @@ const runCommand = async ({ command }: { command: string }): Promise<void> => {
 				// Ensure environment variables are set
 				execCmd("node", config);
 				break;
+			}
 			default:
 				console.log(`Unknown command: ${command}`);
 		}

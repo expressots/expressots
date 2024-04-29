@@ -1,20 +1,27 @@
 module.exports = {
+	extends: [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"eslint-config-prettier",
+		"prettier",
+	],
 	parser: "@typescript-eslint/parser",
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
-	plugins: ["@typescript-eslint/eslint-plugin"],
-	extends: ["plugin:@typescript-eslint/recommended"],
+	plugins: ["@typescript-eslint"],
 	root: true,
 	env: {
 		node: true,
+		jest: true,
 	},
 	ignorePatterns: [
 		"bin/*",
 		"node_modules/*",
 		"expressots.config.ts",
 		"commitlint.config.ts",
-		"vite.config.ts",
+		"vitest.config.ts",
+		".eslintrc.cjs",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",
@@ -26,5 +33,6 @@ module.exports = {
 		"no-trailing-spaces": ["error", { skipBlankLines: true }],
 		"no-multi-spaces": ["error", { ignoreEOLComments: true }],
 		"no-multi-spaces": "off",
+		"no-async-promise-executor": "off",
 	},
 };
