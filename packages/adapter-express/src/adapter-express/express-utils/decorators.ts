@@ -28,6 +28,9 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
       target,
     };
 
+    const statusCode = Reflect.getOwnMetadata("status_code", target);
+    Reflect.defineMetadata("status_code", statusCode, Reflect, path);
+
     decorate(injectable(), target);
     Reflect.defineMetadata(METADATA_KEY.controller, currentMetadata, target);
 
@@ -37,6 +40,16 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
     const newMetadata = [currentMetadata, ...previousMetadata];
 
     Reflect.defineMetadata(METADATA_KEY.controller, newMetadata, Reflect);
+  };
+}
+
+export function http(code: number) {
+  return (
+    target: object,
+    key: string | symbol,
+    descriptor: TypedPropertyDescriptor<any>,
+  ): void => {
+    Reflect.defineMetadata("status_code", code, target.constructor);
   };
 }
 
