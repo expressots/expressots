@@ -1,3 +1,4 @@
+import express from "express";
 import { IApplicationMessageToConsole, RenderTemplateOptions } from "@expressots/core";
 import { ServerEnvironment } from "./application-express.types";
 
@@ -29,4 +30,10 @@ export interface IWebServerPublic {
    *                      This includes the extension name, view path, and the engine function itself.
    */
   setEngine<T extends RenderTemplateOptions>(options: T): void;
+
+  /**
+   * Get the underlying HTTP server. (default: Express.js)
+   * @returns The underlying HTTP server after initialization.
+   */
+  getHttpServer(): Promise<express.Application>;
 }

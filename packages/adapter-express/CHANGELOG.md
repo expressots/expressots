@@ -1,5 +1,12 @@
 
 
+## [1.3.0](https://github.com/expressots/adapter-express/compare/1.2.2...1.3.0) (2024-04-26)
+
+
+### Features
+
+* returns httpServer for e2e testing with supertest ([97999fb](https://github.com/expressots/adapter-express/commit/97999fbc7ac977e47caf023d7541e588ef50d548))
+
 ## [1.2.2](https://github.com/expressots/adapter-express/compare/1.2.1...1.2.2) (2024-04-25)
 
 

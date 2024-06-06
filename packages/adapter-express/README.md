@@ -2,6 +2,9 @@
 
 <!-- PROJECT SHIELDS -->
 
+[![Codecov][codecov-shield]][codecov-url]
+[![NPM][npm-shield]][npm-url]
+![Build][build-shield]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -95,6 +98,11 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
+[codecov-url]: https://codecov.io/gh/expressots/adapter-express
+[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/adapter-express/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
+[npm-url]: https://www.npmjs.com/package/@expressots/adapter-express
+[npm-shield]: https://img.shields.io/npm/v/@expressots/adapter-express?style=for-the-badge&logo=npm&color=9B3922
+[build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/adapter-express/build.yaml?branch=main&style=for-the-badge&logo=github
 [contributors-shield]: https://img.shields.io/github/contributors/expressots/adapter-express?style=for-the-badge
 [contributors-url]: https://github.com/expressots/adapter-express/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/expressots/adapter-express?style=for-the-badge
