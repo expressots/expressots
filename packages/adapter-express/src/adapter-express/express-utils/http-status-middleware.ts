@@ -9,35 +9,33 @@ import { ExpressoMiddleware } from "@expressots/core";
  */
 export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
   use(req: Request, res: Response, next: NextFunction): void | Promise<void> {
-    const routeHandler = req.route.stack.find((layer) => layer.method === req.method.toLowerCase());
+    const statusCodeMapping = Reflect.getMetadata("http_code", Reflect);
+    const path = req.path.endsWith("/") ? req.path.slice(0, -1) : req.path;
 
-    if (routeHandler) {
-      const handler = routeHandler.handle;
-      const target = handler.constructor;
-      const key = handler.name;
-      const statusCode = Reflect.getMetadata("status_code", target, key);
-      if (statusCode) {
-        res.status(statusCode);
-      } else {
-        switch (req.method.toLowerCase()) {
-          case "get":
-            res.statusCode = 200;
-            break;
-          case "post":
-            res.statusCode = 201;
-            break;
-          case "put":
-            res.statusCode = 204;
-            break;
-          case "delete":
-            res.statusCode = 204;
-            break;
-          default:
-            res.statusCode = 200;
-            break;
-        }
+    const statusCode = statusCodeMapping[path];
+
+    if (statusCode) {
+      res.status(statusCode);
+    } else {
+      switch (req.method.toLowerCase()) {
+        case "get":
+          res.statusCode = 200;
+          break;
+        case "post":
+          res.statusCode = 201;
+          break;
+        case "put":
+          res.statusCode = 204;
+          break;
+        case "delete":
+          res.statusCode = 204;
+          break;
+        default:
+          res.statusCode = 200;
+          break;
       }
     }
+
     next();
 
     /* const statusCode = Reflect.getMetadata("status_code", Reflect, req.path);

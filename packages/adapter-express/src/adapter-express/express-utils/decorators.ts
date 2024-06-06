@@ -22,16 +22,31 @@ export const injectHttpContext = inject(TYPE.HttpContext);
  */
 export function controller(path: string, ...middleware: Array<Middleware>) {
   return (target: NewableFunction): void => {
-    const currentMetadata: ControllerMethodMetadata = {
+    const currentMetadata: ControllerMetadata = {
       middleware,
       path,
-      target,
-      key: "",
-      method: "get",
+      target
     };
 
-    const statusCode = Reflect.getOwnMetadata("status_code", target, key);
-    Reflect.defineMetadata("status_code", statusCode, target, path);
+    const pathMetadata = Reflect.getOwnMetadata("path", Reflect);
+    const statusCodeMetadata = Reflect.getOwnMetadata("status_code", Reflect);
+
+    let statusCodePathMapping = Reflect.getOwnMetadata("http_code", Reflect);
+
+    if (!statusCodePathMapping) {
+      statusCodePathMapping = {};
+    }
+
+    for (const key in pathMetadata) {
+      if (statusCodeMetadata && statusCodeMetadata[key]) {
+        const realPath = pathMetadata[key] === "/" ? path : `${path}${pathMetadata[key]}`;
+        statusCodePathMapping[realPath] = statusCodeMetadata[key];
+      }
+    }
+
+    Reflect.defineMetadata("http_code", statusCodePathMapping, Reflect);
+    Reflect.deleteMetadata("status_code", Reflect);
+    Reflect.deleteMetadata("path", Reflect);
 
     decorate(injectable(), target);
     Reflect.defineMetadata(METADATA_KEY.controller, currentMetadata, target);
@@ -48,7 +63,16 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
 export function Http(code: number) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   return (target: object, key: string | symbol, descriptor: TypedPropertyDescriptor<any>): void => {
-    Reflect.defineMetadata("status_code", code, target, key);
+    let httpCodeMetadata = Reflect.getOwnMetadata("status_code", Reflect);
+
+    if (httpCodeMetadata) {
+      httpCodeMetadata[key] = code;
+    } else {
+      httpCodeMetadata = {};
+      httpCodeMetadata[key] = code;
+    }
+
+    Reflect.defineMetadata("status_code", httpCodeMetadata, Reflect);
   };
 }
 
@@ -130,6 +154,17 @@ function enhancedHttpMethod(
     };
     let metadataList: Array<ControllerMethodMetadata> = [];
 
+    let pathMetadata = Reflect.getOwnMetadata("path", Reflect);
+
+    if (pathMetadata) {
+      pathMetadata[key] = path;
+    } else {
+      pathMetadata = {};
+      pathMetadata[key] = path;
+    }
+
+    Reflect.defineMetadata("path", pathMetadata, Reflect)
+
     if (!Reflect.hasOwnMetadata(METADATA_KEY.controllerMethod, target.constructor)) {
       Reflect.defineMetadata(METADATA_KEY.controllerMethod, metadataList, target.constructor);
     } else {
@@ -169,6 +204,17 @@ export function httpMethod(
     };
 
     let metadataList: Array<ControllerMethodMetadata> = [];
+
+    let pathMetadata = Reflect.getOwnMetadata("path", Reflect);
+
+    if (pathMetadata) {
+      pathMetadata[key] = path;
+    } else {
+      pathMetadata = {};
+      pathMetadata[key] = path;
+    }
+
+    Reflect.defineMetadata("path", pathMetadata, Reflect)
 
     if (!Reflect.hasOwnMetadata(METADATA_KEY.controllerMethod, target.constructor)) {
       Reflect.defineMetadata(METADATA_KEY.controllerMethod, metadataList, target.constructor);
