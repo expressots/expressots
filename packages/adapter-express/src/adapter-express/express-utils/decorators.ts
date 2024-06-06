@@ -22,14 +22,16 @@ export const injectHttpContext = inject(TYPE.HttpContext);
  */
 export function controller(path: string, ...middleware: Array<Middleware>) {
   return (target: NewableFunction): void => {
-    const currentMetadata: ControllerMetadata = {
+    const currentMetadata: ControllerMethodMetadata = {
       middleware,
       path,
       target,
+      key: "",
+      method: "get",
     };
 
-    const statusCode = Reflect.getOwnMetadata("status_code", target);
-    Reflect.defineMetadata("status_code", statusCode, Reflect, path);
+    const statusCode = Reflect.getOwnMetadata("status_code", target, key);
+    Reflect.defineMetadata("status_code", statusCode, target, path);
 
     decorate(injectable(), target);
     Reflect.defineMetadata(METADATA_KEY.controller, currentMetadata, target);
@@ -43,13 +45,10 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
   };
 }
 
-export function http(code: number) {
-  return (
-    target: object,
-    key: string | symbol,
-    descriptor: TypedPropertyDescriptor<any>,
-  ): void => {
-    Reflect.defineMetadata("status_code", code, target.constructor);
+export function Http(code: number) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  return (target: object, key: string | symbol, descriptor: TypedPropertyDescriptor<any>): void => {
+    Reflect.defineMetadata("status_code", code, target, key);
   };
 }
 
