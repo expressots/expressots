@@ -19,6 +19,7 @@ import {
   ServerEnvironment,
 } from "./application-express.types";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
+import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -111,6 +112,9 @@ class AppExpress extends ApplicationBase implements IWebServer {
     const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
 
     this.middlewares.push(...(pipeline as Array<ExpressHandler>));
+
+    /* Apply the status code to the response */
+    this.middlewares.unshift(new HttpStatusCodeMiddleware() as ExpressoMiddleware);
 
     const expressServer = new InversifyExpressServer(this.container, null, {
       rootPath: this.globalPrefix as string,

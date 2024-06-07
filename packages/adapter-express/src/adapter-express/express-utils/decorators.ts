@@ -1,7 +1,13 @@
 import "reflect-metadata";
 
 import { inject, injectable, decorate } from "inversify";
-import { TYPE, METADATA_KEY, PARAMETER_TYPE, HTTP_VERBS_ENUM } from "./constants";
+import {
+  TYPE,
+  METADATA_KEY,
+  PARAMETER_TYPE,
+  HTTP_VERBS_ENUM,
+  HTTP_CODE_METADATA,
+} from "./constants";
 import type {
   Controller,
   ControllerMetadata,
@@ -28,6 +34,26 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
       target,
     };
 
+    const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
+    const statusCodeMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.statusCode, Reflect);
+
+    let statusCodePathMapping = Reflect.getOwnMetadata(HTTP_CODE_METADATA.httpCode, Reflect);
+
+    if (!statusCodePathMapping) {
+      statusCodePathMapping = {};
+    }
+
+    for (const key in pathMetadata) {
+      if (statusCodeMetadata && statusCodeMetadata[key]) {
+        const realPath = pathMetadata[key] === "/" ? path : `${path}${pathMetadata[key]}`;
+        statusCodePathMapping[realPath] = statusCodeMetadata[key];
+      }
+    }
+
+    Reflect.defineMetadata(HTTP_CODE_METADATA.httpCode, statusCodePathMapping, Reflect);
+    Reflect.deleteMetadata(HTTP_CODE_METADATA.statusCode, Reflect);
+    Reflect.deleteMetadata(HTTP_CODE_METADATA.path, Reflect);
+
     decorate(injectable(), target);
     Reflect.defineMetadata(METADATA_KEY.controller, currentMetadata, target);
 
@@ -37,6 +63,35 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
     const newMetadata = [currentMetadata, ...previousMetadata];
 
     Reflect.defineMetadata(METADATA_KEY.controller, newMetadata, Reflect);
+  };
+}
+
+/**
+ * Http decorator to define the status code for a route
+ * @param code
+ * @returns MethodDecorator
+ * @example
+ * ```ts
+ * @Http(200)
+ * @Get("/")
+ * hello() {
+ *  return "Hello World";
+ * }
+ * ```
+ */
+export function Http(code: number) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  return (target: object, key: string | symbol, descriptor: TypedPropertyDescriptor<any>): void => {
+    let httpCodeMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.statusCode, Reflect);
+
+    if (httpCodeMetadata) {
+      httpCodeMetadata[key] = code;
+    } else {
+      httpCodeMetadata = {};
+      httpCodeMetadata[key] = code;
+    }
+
+    Reflect.defineMetadata(HTTP_CODE_METADATA.statusCode, httpCodeMetadata, Reflect);
   };
 }
 
@@ -103,6 +158,11 @@ export function Delete(path: string, ...middleware: Array<Middleware>): HandlerD
   return enhancedHttpMethod("delete", path, ...middleware);
 }
 
+/**
+ * Decorator to allow OPTIONS HTTP method
+ * @param path route path
+ * @param middleware array of middleware to be applied to the route
+ */
 function enhancedHttpMethod(
   method: keyof typeof HTTP_VERBS_ENUM,
   path: string,
@@ -117,6 +177,17 @@ function enhancedHttpMethod(
       target,
     };
     let metadataList: Array<ControllerMethodMetadata> = [];
+
+    let pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
+
+    if (pathMetadata) {
+      pathMetadata[key] = path;
+    } else {
+      pathMetadata = {};
+      pathMetadata[key] = path;
+    }
+
+    Reflect.defineMetadata(HTTP_CODE_METADATA.path, pathMetadata, Reflect);
 
     if (!Reflect.hasOwnMetadata(METADATA_KEY.controllerMethod, target.constructor)) {
       Reflect.defineMetadata(METADATA_KEY.controllerMethod, metadataList, target.constructor);
@@ -142,6 +213,12 @@ function enhancedHttpMethod(
   };
 }
 
+/**
+ * Decorator to allow custom HTTP method
+ * @param method custom HTTP method
+ * @param path route path
+ * @param middleware array of middleware to be applied to the route
+ */
 export function httpMethod(
   method: keyof typeof HTTP_VERBS_ENUM,
   path: string,
@@ -157,6 +234,17 @@ export function httpMethod(
     };
 
     let metadataList: Array<ControllerMethodMetadata> = [];
+
+    let pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
+
+    if (pathMetadata) {
+      pathMetadata[key] = path;
+    } else {
+      pathMetadata = {};
+      pathMetadata[key] = path;
+    }
+
+    Reflect.defineMetadata(HTTP_CODE_METADATA.path, pathMetadata, Reflect);
 
     if (!Reflect.hasOwnMetadata(METADATA_KEY.controllerMethod, target.constructor)) {
       Reflect.defineMetadata(METADATA_KEY.controllerMethod, metadataList, target.constructor);
@@ -233,12 +321,20 @@ export const next: () => ParameterDecorator = paramDecoratorFactory(PARAMETER_TY
  */
 export const principal: () => ParameterDecorator = paramDecoratorFactory(PARAMETER_TYPE.PRINCIPAL);
 
+/**
+ * Parameter decorator to inject the request user object
+ * @returns ParameterDecorator
+ */
 function paramDecoratorFactory(
   parameterType: PARAMETER_TYPE,
 ): (name?: string) => ParameterDecorator {
   return (name?: string): ParameterDecorator => params(parameterType, name);
 }
 
+/**
+ * Parameter decorator to inject the request object
+ * @returns ParameterDecorator
+ */
 export function params(type: PARAMETER_TYPE, parameterName?: string): ParameterDecorator {
   return (
     target: unknown | Controller,
@@ -276,6 +372,12 @@ export function params(type: PARAMETER_TYPE, parameterName?: string): ParameterD
   };
 }
 
+/**
+ * Converts a string value to the specified type.
+ * @param value The value to convert.
+ * @param type The type to convert the value to.
+ * @returns The converted value.
+ */
 function convertToType(value: string, type: unknown): string | number | boolean {
   if (type === Number) {
     return Number(value);
