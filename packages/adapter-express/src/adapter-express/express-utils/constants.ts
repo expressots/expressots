@@ -11,6 +11,12 @@ export const METADATA_KEY = {
   httpContext: "inversify-express-utils:httpcontext",
 };
 
+export const HTTP_CODE_METADATA = {
+  httpCode: "inversify-express-utils:httpcode",
+  statusCode: "inversify-express-utils:statuscode",
+  path: "inversify-express-utils:path",
+};
+
 export enum PARAMETER_TYPE {
   REQUEST,
   RESPONSE,
