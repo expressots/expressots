@@ -1,5 +1,56 @@
 
 
+## [2.12.0](https://github.com/expressots/expressots/compare/2.11.0...2.12.0) (2024-06-07)
+
+
+### Features
+
+* add code coverage report ([b4d4982](https://github.com/expressots/expressots/commit/b4d4982cf4cd8a0af647c5c20c5ce9aa1818d754))
+* add codecov plugin bundler ([9cef3c2](https://github.com/expressots/expressots/commit/9cef3c2cf6624d24eb82b70e87dd0a2ba4ed50f6))
+* add codecov plugin bundler ([1edd11f](https://github.com/expressots/expressots/commit/1edd11ff618aaeb0c51d286941c0792038fab982))
+* bump @expressots/adapter-express from 1.2.1 to 1.2.2 ([6492983](https://github.com/expressots/expressots/commit/6492983a14a37589937a0586975b92969c7cbfa6))
+* bump @types/node from 20.12.3 to 20.12.5 ([74924bf](https://github.com/expressots/expressots/commit/74924bf07cb5b7033c8faa70afa2462c6b37a527))
+* bump @types/node from 20.12.5 to 20.12.7 ([a040456](https://github.com/expressots/expressots/commit/a04045644b140044f75ffa950adc8f132648da00))
+* bump @typescript-eslint/eslint-plugin from 7.5.0 to 7.6.0 ([05e60bc](https://github.com/expressots/expressots/commit/05e60bc05e8b183b0a219df185a8fbb371e78e4e))
+* bump @typescript-eslint/parser from 6.6.0 to 7.5.0 ([d2ade4b](https://github.com/expressots/expressots/commit/d2ade4b11bf3eebf996d34a8df7bf4ef96a33fcf))
+* bump @typescript-eslint/parser from 7.5.0 to 7.6.0 ([6e06f7c](https://github.com/expressots/expressots/commit/6e06f7c71dc332908ac309a1ddb009b5d21c4d13))
+* bump prettier from 3.2.5 to 3.3.0 ([8f68fa4](https://github.com/expressots/expressots/commit/8f68fa442cc58c92ada69577d3956e7681f701f2))
+* update adapter express ver ([afcfd42](https://github.com/expressots/expressots/commit/afcfd4242e7c26291c84cacbde56902901a526bc))
+
+
+### Bug Fixes
+
+* update codecov actions ([e1637e1](https://github.com/expressots/expressots/commit/e1637e19aabdd93960f29d3c1bd11ca7504443ee))
+* update codecov actions ([4c2330f](https://github.com/expressots/expressots/commit/4c2330f01426332b01233c1ecd91e9e68b353ba1))
+* upgrade dotenv from 16.0.3 to 16.4.5 ([29fb00f](https://github.com/expressots/expressots/commit/29fb00f3de2ce398634662244ef454efebceb20a))
+* upgrade dotenv from 16.0.3 to 16.4.5 ([de7f53e](https://github.com/expressots/expressots/commit/de7f53e4d442296bd8e6da5bf41a2acbb0f421f1))
+* upgrade dotenv from 16.0.3 to 16.4.5 ([e325d6c](https://github.com/expressots/expressots/commit/e325d6cdfa834b8cde67dd993e9f1c7b9cd19e84))
+* upgrade inversify from 6.0.1 to 6.0.2 ([0975b5c](https://github.com/expressots/expressots/commit/0975b5c02079575104e0c2b151c4ec0e85dcbd0e))
+* upgrade reflect-metadata from 0.2.1 to 0.2.2 ([ff93c46](https://github.com/expressots/expressots/commit/ff93c4698630bd0c202012188e13fcd1b06c0c15))
+
+
+### Documentation
+
+* add codecov badge ([3964037](https://github.com/expressots/expressots/commit/39640373ed98db226b4d7ec4b6dce0fe48d6b53c))
+* add npm and build badge ([79a0b87](https://github.com/expressots/expressots/commit/79a0b87b0c09007221cf618e664a4ae9fedea67d))
+
+
+### Code Refactoring
+
+* container module scope binding for unit test and remove vitest config from tsconfig base ([a93bd31](https://github.com/expressots/expressots/commit/a93bd3115ad855281f9783915d93c74d689c3fae))
+* remove vitest/eslint conflict, review pr template ([5e63d64](https://github.com/expressots/expressots/commit/5e63d6475034ca62db4991a77bc5fb0581b1b0e0))
+* update adapter version to 1.4 ([ab53902](https://github.com/expressots/expressots/commit/ab53902edbc94d79b69a814d90d26030702c7465))
+* update dependencies and jest config ([807c03e](https://github.com/expressots/expressots/commit/807c03e3dbf3441d3535392ecabd5246e462059a))
+
+
+### Tests
+
+* add unit test application, common, console ([78c1989](https://github.com/expressots/expressots/commit/78c19895c1ed441fb5eee255fd28f1639fa89989))
+* add unit test container, controller. decorator ([20591ea](https://github.com/expressots/expressots/commit/20591ea164a95fd2bbe5caa3483fd25d3582c2d7))
+* add unit test env validator ([4eb63d5](https://github.com/expressots/expressots/commit/4eb63d5f16f4dcc73c4b3dff56c9cd07ef4f4f0d))
+* add unit test error module ([4442d8e](https://github.com/expressots/expressots/commit/4442d8e9130fd16ed5698c6d395adf391d5c6224))
+* add unit test middleware, provider, db, dto ([65e88ce](https://github.com/expressots/expressots/commit/65e88ce942aa8053b2a2cf6b0ae8283538ae44f0))
+
 ## [2.11.0](https://github.com/expressots/expressots/compare/2.10.0...2.11.0) (2024-04-04)
 
 
