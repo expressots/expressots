@@ -1,5 +1,29 @@
 
 
+## [1.4.0](https://github.com/expressots/adapter-express/compare/1.3.0...1.4.0) (2024-06-07)
+
+
+### Features
+
+* Add http code decorator ([f0f6e0a](https://github.com/expressots/adapter-express/commit/f0f6e0aa034636d7df67d5f1cef83adb6a3af8bc))
+* add vitest and setup codecov in the ci ([14fd527](https://github.com/expressots/adapter-express/commit/14fd527a097d981778f2b3ba2a68effb68865d8f))
+* adjust doc, update metadata const for http decorator ([773f297](https://github.com/expressots/adapter-express/commit/773f297fee340b5d8de6a134454425328ddbbc03))
+* dev-http decorator changes ([8088f5c](https://github.com/expressots/adapter-express/commit/8088f5c2ef391abbe33d1e8750bef9a6fe34f699))
+* fix issues where decorator does not function properly when used multiple times in same file ([919815f](https://github.com/expressots/adapter-express/commit/919815f4f1232f9a319ed887a99f8c214b40341d))
+
+
+### Bug Fixes
+
+* build shield workflow status ([3e5d6c8](https://github.com/expressots/adapter-express/commit/3e5d6c814cb5ed71cfa7a4f5e65f77ad359671f6))
+* code coverage upload path ([aef20eb](https://github.com/expressots/adapter-express/commit/aef20eb2767506e7d9c7773233727c96cb5ca9b7))
+* remove codesee ci config ([043c423](https://github.com/expressots/adapter-express/commit/043c423c52d00c814c6357c1e7f6ed7caed3b2ac))
+* remove the decorator incorrect call in the library due mismatch on tsconfig ([58dbb52](https://github.com/expressots/adapter-express/commit/58dbb5258a7c2155dd34b1841dbfbe15884f4e21))
+
+
+### Code Refactoring
+
+* readme badges npm, coverage and build added ([d643acd](https://github.com/expressots/adapter-express/commit/d643acde38df4866155a0164f08c2d7f0261c705))
+
 ## [1.3.0](https://github.com/expressots/adapter-express/compare/1.2.2...1.3.0) (2024-04-26)
 
 
