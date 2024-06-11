@@ -26,11 +26,7 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
     if (statusCode) {
       res.status(statusCode);
     } else {
-      const patternMatchStatusCode = this.findMatchingParameterPath(
-        path,
-        statusCodeMapping,
-        formattedMethod,
-      );
+      const patternMatchStatusCode = this.findMatchingParameterPath(path, statusCodeMapping);
 
       if (patternMatchStatusCode) {
         res.status(patternMatchStatusCode);
@@ -48,11 +44,7 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
    * @param method - The method to check.
    * @returns The status code if found, otherwise null.
    **/
-  private findMatchingParameterPath(
-    path: string,
-    mapping: Record<string, number>,
-    method: string,
-  ): number | null {
+  private findMatchingParameterPath(path: string, mapping: Record<string, number>): number | null {
     for (const pathCode in mapping) {
       const patternCheck = new RegExp("^" + pathCode.replace(/:[^\s/]+/g, "([^/]+)") + "$");
 
