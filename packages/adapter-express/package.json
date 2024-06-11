@@ -86,7 +86,7 @@
     "eslint-config-prettier": "9.0.0",
     "husky": "8.0.3",
     "prettier": "3.3.1",
-    "release-it": "16.1.5",
+    "release-it": "16.3.0",
     "ts-jest": "29.0.5",
     "typescript": "5.2.2",
     "vite": "^5.2.8",
