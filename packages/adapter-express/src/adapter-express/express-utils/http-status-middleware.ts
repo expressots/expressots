@@ -14,7 +14,6 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
     let path = req.path.endsWith("/") ? req.path.slice(0, -1) : req.path;
     const formattedMethod = req.method.toLowerCase();
 
-    console.log("status code mapping", statusCodeMapping);
     if (path === "/" || path === "") {
       path = "/";
     }
