@@ -12,13 +12,16 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
   use(req: Request, res: Response, next: NextFunction): void | Promise<void> {
     const statusCodeMapping = Reflect.getMetadata(HTTP_CODE_METADATA.httpCode, Reflect);
     let path = req.path.endsWith("/") ? req.path.slice(0, -1) : req.path;
+    const formattedMethod = req.method.toLowerCase();
+
     console.log("status code mapping", statusCodeMapping);
     if (path === "/" || path === "") {
       path = "/";
     }
 
-    const statusCode =
-      statusCodeMapping[`${path}/-${req.method.toLowerCase()}`] || statusCodeMapping[path];
+    path = `${path}/-${formattedMethod}`;
+
+    const statusCode = statusCodeMapping[path];
 
     if (statusCode) {
       res.status(statusCode);
@@ -26,7 +29,7 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
       const patternMatchStatusCode = this.findMatchingParameterPath(
         path,
         statusCodeMapping,
-        req.method.toLowerCase(),
+        formattedMethod,
       );
 
       if (patternMatchStatusCode) {
@@ -54,7 +57,7 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
       const patternCheck = new RegExp("^" + pathCode.replace(/:[^\s/]+/g, "([^/]+)") + "$");
 
       if (patternCheck.test(path)) {
-        return mapping[`${pathCode}/-${method}`] || mapping[pathCode];
+        return mapping[pathCode];
       }
     }
 

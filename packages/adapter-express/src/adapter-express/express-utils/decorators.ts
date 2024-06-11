@@ -44,12 +44,8 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
         const realPath =
           pathMetadata[key]["path"] === "/" ? path : `${path}${pathMetadata[key]["path"]}`;
 
-        if (statusCodePathMapping[realPath]) {
-          statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] =
-            statusCodeMetadata[key];
-        } else {
-          statusCodePathMapping[realPath] = statusCodeMetadata[key];
-        }
+        statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] =
+          statusCodeMetadata[key];
       }
     }
 
