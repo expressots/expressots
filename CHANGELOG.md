@@ -1,5 +1,17 @@
 
 
+## [2.13.0](https://github.com/expressots/expressots/compare/2.12.0...2.13.0) (2024-06-11)
+
+
+### Features
+
+* bump prettier from 3.3.0 to 3.3.1 ([90ff872](https://github.com/expressots/expressots/commit/90ff8725e2bba2e72d76d1b9288510dd5434bd0b))
+
+
+### Code Refactoring
+
+* update adapter-express to latest ([3905e9a](https://github.com/expressots/expressots/commit/3905e9a60ddc5b12df13a0b61e9e82e0ee74df9b))
+
 ## [2.12.0](https://github.com/expressots/expressots/compare/2.11.0...2.12.0) (2024-06-07)
 
 
