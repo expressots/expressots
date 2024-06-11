@@ -1,5 +1,32 @@
 
 
+## [1.5.0](https://github.com/expressots/adapter-express/compare/1.4.0...1.5.0) (2024-06-11)
+
+
+### Features
+
+* bump @commitlint/config-conventional from 17.7.0 to 19.2.2 ([c4db260](https://github.com/expressots/adapter-express/commit/c4db260694b492e5744dc7c59ce4edae23053ec8))
+* bump @release-it/conventional-changelog from 7.0.1 to 7.0.2 ([d063fd9](https://github.com/expressots/adapter-express/commit/d063fd9ff2b405eb69197b70cad72334d814b6bf))
+* bump eslint-config-prettier from 9.0.0 to 9.1.0 ([20ca753](https://github.com/expressots/adapter-express/commit/20ca753e4297889506af98e6caa5b1f374aded59))
+* bump husky from 8.0.3 to 9.0.11 ([8cb065e](https://github.com/expressots/adapter-express/commit/8cb065e49e209b2a6ab56d07a712df30596350ca))
+* bump prettier from 3.0.3 to 3.3.1 ([872c7ba](https://github.com/expressots/adapter-express/commit/872c7ba7072c1cfb36a7efe74be0b41f6aea541b))
+* bump prettier from 3.3.1 to 3.3.2 ([5edd349](https://github.com/expressots/adapter-express/commit/5edd3490f1a6fa48a65694a9c146c2ec69a264d3))
+* bump release-it from 16.1.5 to 16.3.0 ([5febf25](https://github.com/expressots/adapter-express/commit/5febf2517dec9857d59ec189829262dafcc63fbd))
+
+
+### Bug Fixes
+
+* decorator method case confict fix ([cdf0fbd](https://github.com/expressots/adapter-express/commit/cdf0fbd6c864a0e538372dc102664538112f0e30))
+* init commit ([55359bf](https://github.com/expressots/adapter-express/commit/55359bf31acfdf0186f6916cd0dc1897d1f24cd2))
+* patch issue where not using http decorator shows incorrect code ([975e451](https://github.com/expressots/adapter-express/commit/975e45112181088bcb9d8f1487e8272deb49d3df))
+* remove comments and logs for prod build ([cd0151b](https://github.com/expressots/adapter-express/commit/cd0151be92f1cb73b6040a72db6d4f1268ae6cfc))
+* remove unused method param in find param pattern ([fd40872](https://github.com/expressots/adapter-express/commit/fd4087276672a6b3c34563736892e4065a497bfa))
+
+
+### Code Refactoring
+
+* without and with decor in the same route conflict ([469f65e](https://github.com/expressots/adapter-express/commit/469f65e9248aefe5db084608684ca211204c2f5b))
+
 ## [1.4.0](https://github.com/expressots/adapter-express/compare/1.3.0...1.4.0) (2024-06-07)
 
 
