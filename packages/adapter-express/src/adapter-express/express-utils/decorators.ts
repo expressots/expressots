@@ -34,19 +34,18 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
       target,
     };
 
-    const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
-    const statusCodeMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.statusCode, Reflect);
-
-    let statusCodePathMapping = Reflect.getOwnMetadata(HTTP_CODE_METADATA.httpCode, Reflect);
-
-    if (!statusCodePathMapping) {
-      statusCodePathMapping = {};
-    }
+    const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect) || {};
+    const statusCodeMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.statusCode, Reflect) || {};
+    const statusCodePathMapping =
+      Reflect.getOwnMetadata(HTTP_CODE_METADATA.httpCode, Reflect) || {};
 
     for (const key in pathMetadata) {
       if (statusCodeMetadata && statusCodeMetadata[key]) {
-        const realPath = pathMetadata[key] === "/" ? path : `${path}${pathMetadata[key]}`;
-        statusCodePathMapping[realPath] = statusCodeMetadata[key];
+        const realPath =
+          pathMetadata[key]["path"] === "/" ? path : `${path}${pathMetadata[key]["path"]}`;
+
+        statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] =
+          statusCodeMetadata[key];
       }
     }
 
@@ -181,10 +180,16 @@ function enhancedHttpMethod(
     let pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
 
     if (pathMetadata) {
-      pathMetadata[key] = path;
+      pathMetadata[key] = {
+        path,
+        method,
+      };
     } else {
       pathMetadata = {};
-      pathMetadata[key] = path;
+      pathMetadata[key] = {
+        path,
+        method,
+      };
     }
 
     Reflect.defineMetadata(HTTP_CODE_METADATA.path, pathMetadata, Reflect);
@@ -238,10 +243,16 @@ export function httpMethod(
     let pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
 
     if (pathMetadata) {
-      pathMetadata[key] = path;
+      pathMetadata[key] = {
+        path,
+        method,
+      };
     } else {
       pathMetadata = {};
-      pathMetadata[key] = path;
+      pathMetadata[key] = {
+        path,
+        method,
+      };
     }
 
     Reflect.defineMetadata(HTTP_CODE_METADATA.path, pathMetadata, Reflect);
