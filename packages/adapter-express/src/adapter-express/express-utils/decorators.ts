@@ -34,21 +34,19 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
       target,
     };
 
-    const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect);
-    const statusCodeMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.statusCode, Reflect);
-
-    let statusCodePathMapping = Reflect.getOwnMetadata(HTTP_CODE_METADATA.httpCode, Reflect);
-
-    if (!statusCodePathMapping) {
-      statusCodePathMapping = {};
-    }
+    const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect) || {};
+    const statusCodeMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.statusCode, Reflect) || {};
+    const statusCodePathMapping =
+      Reflect.getOwnMetadata(HTTP_CODE_METADATA.httpCode, Reflect) || {};
 
     for (const key in pathMetadata) {
       if (statusCodeMetadata && statusCodeMetadata[key]) {
-        let realPath = pathMetadata[key]["path"] === "/" ? path : `${path}${pathMetadata[key]["path"]}`;
+        const realPath =
+          pathMetadata[key]["path"] === "/" ? path : `${path}${pathMetadata[key]["path"]}`;
 
         if (statusCodePathMapping[realPath]) {
-          statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] = statusCodeMetadata[key];
+          statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] =
+            statusCodeMetadata[key];
         } else {
           statusCodePathMapping[realPath] = statusCodeMetadata[key];
         }
@@ -188,13 +186,13 @@ function enhancedHttpMethod(
     if (pathMetadata) {
       pathMetadata[key] = {
         path,
-        method
+        method,
       };
     } else {
       pathMetadata = {};
       pathMetadata[key] = {
         path,
-        method
+        method,
       };
     }
 
@@ -251,13 +249,13 @@ export function httpMethod(
     if (pathMetadata) {
       pathMetadata[key] = {
         path,
-        method
+        method,
       };
     } else {
       pathMetadata = {};
       pathMetadata[key] = {
         path,
-        method
+        method,
       };
     }
 
