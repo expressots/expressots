@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn } from "node:child_process";
 import { Presets, SingleBar } from "cli-progress";
 import degit from "degit";
 import inquirer from "inquirer";
@@ -27,7 +27,11 @@ async function packageManagerInstall({
 			cwd: directory,
 		});
 
-		installProcess.stdout.on("data", (data: Buffer) => {
+		installProcess.on("error", (error) => {
+			reject(new Error(`Failed to start subprocess: ${error.message}`));
+		});
+
+		installProcess.stdout?.on("data", (data: Buffer) => {
 			const output = data.toString().trim();
 
 			const npmProgressMatch = output.match(

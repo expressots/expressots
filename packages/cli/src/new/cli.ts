@@ -1,5 +1,6 @@
 import { Argv, CommandModule } from "yargs";
 import { projectForm } from "./form";
+import semver from "semver";
 
 type CommandModuleArgs = object;
 
@@ -37,6 +38,19 @@ const commandOptions = (yargs: Argv): Argv => {
 		.implies("template", "package-manager");
 };
 
+const checkNodeVersion = (): void => {
+	const minVersion = "18.0.0";
+	const maxVersion = "20.7.0";
+	const currentVersion = process.version;
+
+	if (!semver.satisfies(currentVersion, `>=${minVersion} <=${maxVersion}`)) {
+		console.error(
+			`Node.js version ${currentVersion} is not supported. Please use a version between ${minVersion} and ${maxVersion}.`,
+		);
+		process.exit(1);
+	}
+};
+
 const createProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "new <project-name> [package-manager] [template] [directory]",
@@ -48,6 +62,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 			template,
 			directory,
 		}) => {
+			checkNodeVersion();
 			return await projectForm(projectName, [
 				packageManager,
 				template,
