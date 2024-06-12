@@ -1,5 +1,16 @@
 
 
+## [1.8.1](https://github.com/expressots/expressots-cli/compare/1.8.0...1.8.1) (2024-06-12)
+
+
+### Bug Fixes
+
+* add node version restriction ([9cf3416](https://github.com/expressots/expressots-cli/commit/9cf3416a8379d35487f9224751c84c2cab8b8ae4))
+* adjust engine version ([5834ab5](https://github.com/expressots/expressots-cli/commit/5834ab5c099305f436bd196a3c1967fc6bef9826))
+* remove test lib cli ([1d1772b](https://github.com/expressots/expressots-cli/commit/1d1772bf9fb888e7d87875280a71bc0bfdb8b82a))
+* update codecov plugin version ([a1f6ded](https://github.com/expressots/expressots-cli/commit/a1f6ded7161744be8459d7ad0e842a1b17657c6e))
+* update engine on ci/cd ([8ebc317](https://github.com/expressots/expressots-cli/commit/8ebc31724bd487d1aaa148385056ba438bd63fda))
+
 ## [1.8.0](https://github.com/expressots/expressots-cli/compare/1.7.1...1.8.0) (2024-04-29)
 
 
