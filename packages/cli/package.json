@@ -50,7 +50,6 @@
 	},
 	"dependencies": {
 		"@expressots/boost-ts": "1.1.1",
-		"@expressots/cli": "file:expressots-cli-1.8.0.tgz",
 		"chalk-animation": "2.0.3",
 		"cli-progress": "3.11.2",
 		"cli-table3": "^0.6.4",
