@@ -47,10 +47,10 @@
     "server-side"
   ],
   "engines": {
-    "node": ">=18.10.0"
+    "node": ">=18.18.0"
   },
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
     "rename:esm": "node scripts/mv.js lib/esm/index.js lib/esm/index.mjs",
