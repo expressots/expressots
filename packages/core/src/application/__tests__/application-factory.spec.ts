@@ -12,8 +12,6 @@ import {
 import { Container } from "inversify";
 import { AppFactory } from "../application-factory";
 
-// TODO: How to test external libraries such as '@expressots/adapter-express'?
-
 interface IHandlebars {
   extName: string;
   viewPath: string;
@@ -46,7 +44,11 @@ class AppExpress implements IWebServer {
   }
 }
 
-let spy: MockInstance;
+class MockLogger {
+  error = vi.fn();
+}
+
+let spy: any;
 let containerInstance: Container;
 
 beforeEach(() => {
@@ -66,5 +68,21 @@ describe("Application Factory", () => {
     );
 
     expect(serverInstance).toBeDefined();
+  });
+
+  it("should throw an error when given an invalid web server type", async () => {
+    (AppFactory as any).logger = new MockLogger();
+
+    try {
+      await AppFactory.create(containerInstance, {} as any);
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toBe("Invalid web server type.");
+    }
+
+    expect((AppFactory as any).logger.error).toHaveBeenCalledWith(
+      "Invalid web server type.",
+      "app-factory:create",
+    );
   });
 });
