@@ -1,9 +1,9 @@
 import { AppExpress } from "@expressots/adapter-express";
-import { provide } from "inversify-binding-decorators";
 import {
     Env,
     IMiddleware,
     Middleware,
+    provide,
     ProviderManager,
 } from "@expressots/core";
 import { container } from "../../app.container";
