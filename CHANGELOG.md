@@ -1,5 +1,19 @@
 
 
+## [2.14.1](https://github.com/expressots/expressots/compare/2.14.0...2.14.1) (2024-07-04)
+
+
+### Code Refactoring
+
+* add tests for in memory db ([6914f15](https://github.com/expressots/expressots/commit/6914f156b1fae0b09ba2926e964dc7376a47b67f))
+* in memory db internal provider ([168547b](https://github.com/expressots/expressots/commit/168547b79d1b1e72b9ffdc06ec1bd5f7bebae150))
+* remove inversify binding dependency ([593620c](https://github.com/expressots/expressots/commit/593620c10c3bce3c4177e92ba75a74bb45a0c789))
+
+
+### Tests
+
+* increase code coverage ([ae71339](https://github.com/expressots/expressots/commit/ae713397c8f85a49b746cfb2a26c8b83a0e2727f))
+
 ## [2.14.0](https://github.com/expressots/expressots/compare/2.13.0...2.14.0) (2024-07-04)
 
 
