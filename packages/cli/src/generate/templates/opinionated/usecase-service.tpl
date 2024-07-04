@@ -1,4 +1,4 @@
-import { provide } from "inversify-binding-decorators";
+import { provide } from "@expressots/core";
 import { I{{className}}RequestDTO, I{{className}}ResponseDTO } from "./{{fileName}}.dto";
 
 @provide({{className}}UseCase)

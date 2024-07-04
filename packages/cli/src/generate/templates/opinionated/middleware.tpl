@@ -1,6 +1,5 @@
-import { ExpressoMiddleware } from "@expressots/core";
+import { ExpressoMiddleware, provide } from "@expressots/core";
 import { NextFunction, Request, Response } from "express";
-import { provide } from "inversify-binding-decorators";
 
 @provide({{className}}Middleware)
 export class {{className}}Middleware extends ExpressoMiddleware {
