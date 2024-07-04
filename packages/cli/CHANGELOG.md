@@ -1,5 +1,12 @@
 
 
+## [1.8.2](https://github.com/expressots/expressots-cli/compare/1.8.1...1.8.2) (2024-07-04)
+
+
+### Code Refactoring
+
+* remove inversify binding decorators  [@provide](https://github.com/provide) ([a566490](https://github.com/expressots/expressots-cli/commit/a566490edcc2c3d1249470dd879a4884ba4b9c63))
+
 ## [1.8.1](https://github.com/expressots/expressots-cli/compare/1.8.0...1.8.1) (2024-06-12)
 
 
