@@ -1,5 +1,29 @@
 
 
+## [2.14.0](https://github.com/expressots/expressots/compare/2.13.0...2.14.0) (2024-07-04)
+
+
+### Features
+
+* bump @types/node from 20.12.7 to 20.14.9 ([ca36368](https://github.com/expressots/expressots/commit/ca3636841c54ff43968e40f8005b35a262920d50))
+* bump @typescript-eslint/eslint-plugin from 7.6.0 to 7.15.0 ([3255f6a](https://github.com/expressots/expressots/commit/3255f6ae16279afa35f49585c8f223f2e88c4de9))
+* bump @typescript-eslint/parser from 7.6.0 to 7.15.0 ([3ac1c8c](https://github.com/expressots/expressots/commit/3ac1c8c478eb2695062ff590ef0773d276eeebaf))
+* bump prettier from 3.3.1 to 3.3.2 ([56c3299](https://github.com/expressots/expressots/commit/56c329900954002d58feb0572ae6dd8f3c12b0ab))
+* bump release-it and @release-it/conventional-changelog ([c68612f](https://github.com/expressots/expressots/commit/c68612fffbe1afe5586127a74a85607de7a63cb0))
+* bump typescript from 5.2.2 to 5.5.3 ([ee338de](https://github.com/expressots/expressots/commit/ee338de2e7c8da77f5bd39afc42a438be708744a))
+* bump vite from 5.2.8 to 5.3.3 ([0299602](https://github.com/expressots/expressots/commit/02996021fec87041dfbeee187a8f77bf3aadcd13))
+
+
+### Bug Fixes
+
+* engine bump & husky init script ([57d0549](https://github.com/expressots/expressots/commit/57d0549e4e93dd18b94bb182c29ad487963d0131))
+
+
+### Code Refactoring
+
+* [@provide](https://github.com/provide) is available through core ([6c315e4](https://github.com/expressots/expressots/commit/6c315e4ca68eb079f09d6e4a5b0f689f9bbf810c))
+* add test to validate the decorator [@provide](https://github.com/provide) ([e4981c4](https://github.com/expressots/expressots/commit/e4981c44e63197cf812f4d4f3fb010bc7f0c2e4a))
+
 ## [2.13.0](https://github.com/expressots/expressots/compare/2.12.0...2.13.0) (2024-06-11)
 
 
