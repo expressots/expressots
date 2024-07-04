@@ -6,3 +6,7 @@ export {
   InMemoryDB,
   IMemoryDBEntity,
 } from "./db-in-memory/db-in-memory.provider";
+export {
+  BaseRepository,
+  IBaseRepository,
+} from "./db-in-memory/base-repo.repository";
