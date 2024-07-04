@@ -63,4 +63,57 @@ describe("Application Container", () => {
       skipBaseClassChecks: false,
     });
   });
+
+  it("create a container without autoBindInjectable option", () => {
+    const options: ContainerOptions = {
+      defaultScope: BindingScopeEnum.Singleton,
+      skipBaseClassChecks: true,
+    };
+
+    appContainerInstance = new AppContainer(options);
+    const container = appContainerInstance.create([containerModuleInstance]);
+
+    expect(container).toBeInstanceOf(Container);
+    expect(appContainerInstance.getContainerOptions()).toEqual({
+      defaultScope: BindingScopeEnum.Singleton,
+      autoBindInjectable: true, // This should default to true
+      skipBaseClassChecks: true,
+    });
+  });
+
+  it("create a container with autoBindInjectable set to true explicitly", () => {
+    const options: ContainerOptions = {
+      autoBindInjectable: true,
+    };
+
+    appContainerInstance = new AppContainer(options);
+    const container = appContainerInstance.create([containerModuleInstance]);
+
+    expect(container).toBeInstanceOf(Container);
+    expect(appContainerInstance.getContainerOptions()).toEqual({
+      defaultScope: BindingScopeEnum.Request,
+      autoBindInjectable: true,
+      skipBaseClassChecks: false,
+    });
+  });
+
+  it("viewContainerBindings should output container bindings to the console", () => {
+    const consoleTableSpy = vi
+      .spyOn(console, "table")
+      .mockImplementation(() => {});
+
+    appContainerInstance = new AppContainer();
+    appContainerInstance.create([containerModuleInstance]);
+
+    appContainerInstance.viewContainerBindings();
+
+    expect(consoleTableSpy).toHaveBeenCalled();
+
+    consoleTableSpy.mockRestore();
+  });
+
+  it("should return the container instance", () => {
+    const container = appContainerInstance.create([containerModuleInstance]);
+    expect(appContainerInstance.Container).toBe(container);
+  });
 });

@@ -1,4 +1,6 @@
-import { describe, afterEach, expect, it, vi } from "vitest";
+import "reflect-metadata";
+
+import { describe, afterEach, beforeEach, expect, it, vi } from "vitest";
 import { provide } from "inversify-binding-decorators";
 import { BindingScopeEnum } from "inversify";
 import { provideSingleton, provideTransient } from "../../decorator";

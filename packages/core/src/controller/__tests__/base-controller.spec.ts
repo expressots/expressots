@@ -52,4 +52,39 @@ describe("BaseController", () => {
       key: "value",
     });
   });
+
+  it("callUseRenderAsync resolves with rendered content", async () => {
+    class TestController extends BaseController {}
+    const controller = new TestController();
+
+    mockResponse.render = vi.fn((template, options, callback) => {
+      callback(null, "Rendered Content");
+    });
+
+    const result = await (controller as any).callUseRenderAsync(
+      mockResponse as Response,
+      "templateName",
+      { key: "value" },
+    );
+
+    expect(result).toBe("Rendered Content");
+  });
+
+  it("callUseRenderAsync rejects with an error", async () => {
+    class TestController extends BaseController {}
+    const controller = new TestController();
+
+    const error = new Error("Render Error");
+    mockResponse.render = vi.fn((template, options, callback) => {
+      callback(error);
+    });
+
+    await expect(
+      (controller as any).callUseRenderAsync(
+        mockResponse as Response,
+        "templateName",
+        { key: "value" },
+      ),
+    ).rejects.toThrow("Render Error");
+  });
 });
