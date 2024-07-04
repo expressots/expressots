@@ -2,7 +2,12 @@ import "reflect-metadata";
 
 import { Container } from "inversify";
 import { describe, expect, it } from "vitest";
-import { provideSingleton, provideTransient } from "../scope-binding";
+import { provide, provideSingleton, provideTransient } from "../scope-binding";
+
+@provide()
+class MyProvideService {
+  public id = Math.random();
+}
 
 @provideSingleton()
 class MySingletonService {
@@ -15,6 +20,15 @@ class MyTransient {
 }
 
 describe("scope binding definitions", () => {
+  it("define a binding", () => {
+    const container: Container = new Container();
+    container.bind(MyProvideService).to(MyProvideService);
+
+    const instance1 = container.get(MyProvideService);
+    const instance2 = container.get(MyProvideService);
+    expect(instance1.id).not.toBe(instance2.id);
+  });
+
   it("define a singleton binding", () => {
     const container: Container = new Container();
     container

@@ -3,6 +3,22 @@
 import { fluentProvide } from "inversify-binding-decorators";
 
 /**
+ * Provides a binding for the given identifier.
+ *
+ * @param identifier - The identifier (e.g., symbol, string, class) for the dependency being registered.
+ * @returns A fluent interface for further configuring the binding.
+ *
+ * @example
+ * ```typescript
+ * @provide(ServiceIdentifier)
+ * class MyService {}
+ * ```
+ */
+const provide = (identifier: any) => {
+  return fluentProvide(identifier).done();
+};
+
+/**
  * Provides a singleton binding for the given identifier.
  *
  * @remarks
@@ -40,4 +56,4 @@ const provideTransient = (identifier: any) => {
   return fluentProvide(identifier).inTransientScope().done();
 };
 
-export { provideSingleton, provideTransient };
+export { provide, provideSingleton, provideTransient };
