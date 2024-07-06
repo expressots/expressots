@@ -59,7 +59,7 @@
 		"mustache": "4.2.0",
 		"semver": "7.6.2",
 		"ts-node": "10.9.1",
-		"yargs": "17.6.2"
+		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@codecov/vite-plugin": "^0.0.1-beta.9",
