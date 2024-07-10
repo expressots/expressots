@@ -51,9 +51,6 @@
   },
   "scripts": {
     "prepare": "husky",
-    "git:update:submodules": "git submodule update --init --recursive",
-    "git:pull:submodules": "git submodule foreach git pull origin main",
-    "git:push:submodules": "git submodule foreach git push origin main",
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
     "rename:esm": "node scripts/mv.js lib/esm/index.js lib/esm/index.mjs",

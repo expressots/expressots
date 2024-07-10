@@ -1,9 +1,0 @@
-[submodule "packages/jwt"]
-	path = packages/jwt
-	url = https://github.com/expressots/jwt.git
-[submodule "packages/adapter-express"]
-	path = packages/adapter-express
-	url = https://github.com/expressots/adapter-express.git
-[submodule "packages/stack"]
-	path = packages/stack
-	url = https://github.com/expressots/expressots-stackblitz.git
