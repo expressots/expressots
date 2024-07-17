@@ -178,7 +178,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Configures the application's view engine based on the provided configuration options.
-   */ 
+   */
   private async configEngine(): Promise<void> {
     if (this.renderOptions.engine) {
       switch (this.renderOptions.engine) {
@@ -205,7 +205,6 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * @param {EngineOptions} [options] - The configuration options for the view engine
    */
   public async setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void> {
-
     packageResolver(engine, options);
 
     try {
