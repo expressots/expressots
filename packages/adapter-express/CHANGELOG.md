@@ -1,5 +1,27 @@
 
 
+## [1.6.0](https://github.com/expressots/adapter-express/compare/1.5.0...1.6.0) (2024-07-17)
+
+
+### Features
+
+* add render support for EJS and HBS ([8618655](https://github.com/expressots/adapter-express/commit/861865564bcdb2d90d7a083bf19f76918e810744))
+* adjust version of core package ([a699bd4](https://github.com/expressots/adapter-express/commit/a699bd4e24fd86474f2c678798abcdd311bce0f1))
+* bump @types/node from 20.14.9 to 20.14.10 ([9a1291b](https://github.com/expressots/adapter-express/commit/9a1291b7c5174d68e079f2b46b0cd140cf4332c1))
+* bump @typescript-eslint/eslint-plugin from 7.15.0 to 7.16.1 ([e7d3c9a](https://github.com/expressots/adapter-express/commit/e7d3c9aea3e260417af7a77694e0c0511e0307b7))
+* bump @typescript-eslint/parser from 7.15.0 to 7.16.1 ([2a99945](https://github.com/expressots/adapter-express/commit/2a99945f749015301b7e53d9bbfa151aa9adb0f6))
+* bump prettier from 3.3.2 to 3.3.3 ([d7de72a](https://github.com/expressots/adapter-express/commit/d7de72a87b8ca503ff37d6ce0974ceb53af51dfe))
+* bump release-it from 17.4.1 to 17.6.0 ([c36aeb6](https://github.com/expressots/adapter-express/commit/c36aeb6a51e446bb3757421fe613fd3202dfaf16))
+* bump typescript from 5.2.2 to 5.5.3 ([53f9f96](https://github.com/expressots/adapter-express/commit/53f9f96f65d2b4652126f7f42c2b9774f0db7328))
+* bump vitest and @vitest/coverage-v8 ([b2dae7e](https://github.com/expressots/adapter-express/commit/b2dae7e4e247e288a5fe8fefe135e47925b2f122))
+* bump vitest and @vitest/coverage-v8 ([b3221eb](https://github.com/expressots/adapter-express/commit/b3221eba32cc85e304fef1cb98389dcae0566c24))
+* linter adjust ([e43d222](https://github.com/expressots/adapter-express/commit/e43d2221ec3f869d60dc2b967ab325e3aaecc97b))
+
+
+### Bug Fixes
+
+* bump node version 18.18 and removed deprecated install in husky ([778ed79](https://github.com/expressots/adapter-express/commit/778ed79c3595fd239656d8182623635a8fff16d0))
+
 ## [1.5.0](https://github.com/expressots/adapter-express/compare/1.4.0...1.5.0) (2024-06-11)
 
 
