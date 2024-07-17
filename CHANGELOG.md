@@ -1,5 +1,28 @@
 
 
+## [2.15.0](https://github.com/expressots/expressots/compare/2.14.1...2.15.0) (2024-07-17)
+
+
+### Features
+
+* bump @types/node from 20.14.9 to 20.14.10 ([2061291](https://github.com/expressots/expressots/commit/20612919e11dcaaebe06cf740e7513efc80acdf9))
+* bump @typescript-eslint/eslint-plugin from 7.15.0 to 7.16.0 ([4c33e38](https://github.com/expressots/expressots/commit/4c33e38d1d3c7041c72758d1b9001b7e0788927a))
+* bump @typescript-eslint/parser from 7.15.0 to 7.16.0 ([db38183](https://github.com/expressots/expressots/commit/db381837868cb0701b332ac5f23437c3bd5ba180))
+* bump prettier from 3.3.2 to 3.3.3 ([1d3ee41](https://github.com/expressots/expressots/commit/1d3ee41902344a5fde5e79a0f6fafdde52ea31cd))
+* bump release-it from 17.4.1 to 17.5.0 ([a4aa310](https://github.com/expressots/expressots/commit/a4aa3103f0b9df81dfa78f4de34ea3fbc7e407c9))
+* bump vitest and @vitest/coverage-v8 ([f186dc3](https://github.com/expressots/expressots/commit/f186dc30c271267f0995276216a616f7b99e21ef))
+
+
+### Bug Fixes
+
+* remove git modules cmds ([be88854](https://github.com/expressots/expressots/commit/be888548ed225feb43ad6db6929bf8d820ff8e1b))
+* update index ([ebb6e8e](https://github.com/expressots/expressots/commit/ebb6e8ece46e343203136e8fc502a95ce23c2440))
+
+
+### Code Refactoring
+
+* remove render from core ([70ba135](https://github.com/expressots/expressots/commit/70ba135593466cccb5d895029c588e544434dd26))
+
 ## [2.14.1](https://github.com/expressots/expressots/compare/2.14.0...2.14.1) (2024-07-04)
 
 
