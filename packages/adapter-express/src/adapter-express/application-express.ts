@@ -1,11 +1,4 @@
-import {
-  Console,
-  IApplicationMessageToConsole,
-  IHandlebars,
-  Logger,
-  Middleware,
-  RenderTemplateOptions,
-} from "@expressots/core";
+import { Console, IApplicationMessageToConsole, Logger, Middleware } from "@expressots/core";
 import express from "express";
 import { Container } from "inversify";
 import { provide } from "inversify-binding-decorators";
@@ -18,8 +11,12 @@ import {
   MiddlewareConfig,
   ServerEnvironment,
 } from "./application-express.types";
-import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
+import { InversifyExpressServer } from "./express-utils/inversify-express-server";
+import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
+import { Engine, EngineOptions, RenderOptions } from "./render/engine";
+import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
+import { packageResolver } from "./render/resolve-render";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -42,6 +39,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   private globalPrefix: string = "/";
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
   private console: Console;
+  private renderOptions: RenderOptions = {} as RenderOptions;
 
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
@@ -146,6 +144,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void> {
     await this.init();
+    await this.configEngine();
 
     this.port = port || 3000;
     this.environment = environment;
@@ -179,21 +178,44 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Configures the application's view engine based on the provided configuration options.
+   */ 
+  private async configEngine(): Promise<void> {
+    if (this.renderOptions.engine) {
+      switch (this.renderOptions.engine) {
+        case Engine.HBS:
+          await setEngineHandlebars(this.app, this.renderOptions.options as HandlebarsOptions);
+          break;
+        case Engine.EJS:
+          await setEngineEjs(this.app, this.renderOptions.options as EjsOptions);
+          break;
+        default:
+          throw new Error("Unsupported engine type!");
+      }
+    }
+  }
+
+  /**
+   * Configures the application's view engine based on the provided configuration options.
    *
    * @public
    * @method setEngine
    * @template T - A generic type extending from RenderTemplateOptions.
    *
-   * @param {T} options - An object of type T (must be an object that extends RenderTemplateOptions)
-   *                      that provides the configuration options for setting the view engine.
-   *                      This includes the extension name, view path, and the engine function itself.
+   * @param {Engine} engine - The view engine to set
+   * @param {EngineOptions} [options] - The configuration options for the view engine
    */
-  public setEngine<T extends RenderTemplateOptions>(options: T): void {
-    if ("extName" in options) {
-      const { extName, viewPath, engine } = options as IHandlebars;
-      this.app.engine(extName, engine);
-      this.app.set("view engine", extName);
-      this.app.set("views", viewPath);
+  public async setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void> {
+
+    packageResolver(engine, options);
+
+    try {
+      if (options) {
+        this.renderOptions = { engine, options };
+      } else {
+        this.renderOptions = { engine };
+      }
+    } catch (error: unknown) {
+      this.logger.error((error as Error).message, "adapter-express");
     }
   }
 

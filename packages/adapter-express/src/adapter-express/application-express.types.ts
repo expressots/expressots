@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
-import { IApplicationMessageToConsole, RenderTemplateOptions } from "@expressots/core";
+import { IApplicationMessageToConsole } from "@expressots/core";
 import { Container } from "inversify";
+import { Engine, EngineOptions } from "./render/engine";
 
 /**
  * Interface for the WebServer application implementation.
@@ -12,7 +13,7 @@ export interface IWebServer {
     environment: ServerEnvironment,
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void>;
-  setEngine<T extends RenderTemplateOptions>(options: T): void;
+  setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
 }
 
 /**
