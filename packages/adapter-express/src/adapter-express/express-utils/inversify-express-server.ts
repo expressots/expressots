@@ -267,10 +267,9 @@ export class InversifyExpressServer {
         } else if (value instanceof Function) {
           value();
         } else if (!res.headersSent) {
-          if (value === undefined) {
-            res.status(204);
+          if (value !== undefined) {
+            res.send(value);
           }
-          res.send(value);
         }
       } catch (err) {
         next(err);
