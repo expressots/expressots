@@ -16,6 +16,7 @@ import { InversifyExpressServer } from "./express-utils/inversify-express-server
 import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
 import { Engine, EngineOptions, RenderOptions } from "./render/engine";
 import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
+import { PugOptions, setEnginePug } from "./render/pug/pug.config";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -186,6 +187,9 @@ class AppExpress extends ApplicationBase implements IWebServer {
           break;
         case Engine.EJS:
           await setEngineEjs(this.app, this.renderOptions.options as EjsOptions);
+          break;
+        case Engine.PUG:
+          await setEnginePug(this.app, this.renderOptions.options as PugOptions);
           break;
         default:
           throw new Error("Unsupported engine type!");
