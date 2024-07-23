@@ -1,5 +1,20 @@
 
 
+## [1.7.0](https://github.com/expressots/adapter-express/compare/1.6.0...1.7.0) (2024-07-23)
+
+
+### Features
+
+* add @Render decorator ([522d6e2](https://github.com/expressots/adapter-express/commit/522d6e27163b1ec638a9d5328fb3bf5f81054c5c))
+* add pug engine support ([a879f96](https://github.com/expressots/adapter-express/commit/a879f9642dccd74a49b9188a25fcd1bbf30eb8ba))
+* bump husky from 9.0.11 to 9.1.1 ([7c1678a](https://github.com/expressots/adapter-express/commit/7c1678abf4a78e52483fff190524c5658dba1100))
+* bump vite from 5.3.3 to 5.3.4 ([86f51a3](https://github.com/expressots/adapter-express/commit/86f51a3f5f920fcc7a760730e877ae830fa574e5))
+
+
+### Bug Fixes
+
+* add options to ejs and hbs support ([b52ce5c](https://github.com/expressots/adapter-express/commit/b52ce5c3860ea7d859534d96cee030dbc4ffc19c))
+
 ## [1.6.0](https://github.com/expressots/adapter-express/compare/1.5.0...1.6.0) (2024-07-17)
 
 
