@@ -1,6 +1,7 @@
 import { Application } from "express";
 import { join } from "path";
 import { Options } from "./ejs.types";
+import { packageResolver } from "../resolve-render";
 
 /**
  * Ejs options
@@ -37,6 +38,8 @@ export async function setEngineEjs(
   app: Application,
   options: EjsOptions = EJS_DEFAULTS,
 ): Promise<void> {
+  packageResolver("ejs");
+
   app.set("view engine", options.viewEngine || EJS_DEFAULTS.viewEngine);
   app.set("views", options.viewsDir || EJS_DEFAULTS.viewsDir);
 

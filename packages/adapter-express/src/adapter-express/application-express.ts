@@ -16,7 +16,6 @@ import { InversifyExpressServer } from "./express-utils/inversify-express-server
 import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
 import { Engine, EngineOptions, RenderOptions } from "./render/engine";
 import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
-import { packageResolver } from "./render/resolve-render";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -205,8 +204,6 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * @param {EngineOptions} [options] - The configuration options for the view engine
    */
   public async setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void> {
-    packageResolver(engine, options);
-
     try {
       if (options) {
         this.renderOptions = { engine, options };
