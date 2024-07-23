@@ -40,6 +40,7 @@ import type {
   RoutingConfig,
 } from "./interfaces";
 import type { OutgoingHttpHeaders } from "node:http";
+import { getRenderMetadata } from "./decorators";
 
 export class InversifyExpressServer {
   private _router: Router;
@@ -245,7 +246,7 @@ export class InversifyExpressServer {
     controllerName: string,
     key: string,
     parameterMetadata: Array<ParameterMetadata>,
-  ): express.RequestHandler {
+  ): RequestHandler {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         const args = this.extractParameters(req, res, next, parameterMetadata);
@@ -253,13 +254,18 @@ export class InversifyExpressServer {
         httpContext.container.bind<HttpContext>(TYPE.HttpContext).toConstantValue(httpContext);
 
         // invoke controller's action
-        const value = await (
-          httpContext.container.getNamed<BaseController>(TYPE.Controller, controllerName)[
-            key
-          ] as ControllerHandler
-        )(...args);
+        const controller = httpContext.container.getNamed<BaseController>(
+          TYPE.Controller,
+          controllerName,
+        );
+        const value = await (controller[key] as ControllerHandler)(...args);
 
-        if (value instanceof HttpResponseMessage) {
+        const { template, defaultData } = getRenderMetadata(controller, key);
+
+        if (template) {
+          const data = value || defaultData || {};
+          res.render(template, data as Record<string, unknown>);
+        } else if (value instanceof HttpResponseMessage) {
           await this.handleHttpResponseMessage(value, res);
         } else if (instanceOfIHttpActionResult(value)) {
           const httpResponseMessage = await value.executeAsync();

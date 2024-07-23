@@ -20,6 +20,7 @@ export type RenderOptions = {
 export enum Engine {
   HBS = "hbs",
   EJS = "ejs",
+  PUG = "pug",
 }
 
 /**

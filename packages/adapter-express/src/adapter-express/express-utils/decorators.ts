@@ -7,6 +7,7 @@ import {
   PARAMETER_TYPE,
   HTTP_VERBS_ENUM,
   HTTP_CODE_METADATA,
+  RENDER_METADATA_KEY,
 } from "./constants";
 import type {
   Controller,
@@ -381,6 +382,29 @@ export function params(type: PARAMETER_TYPE, parameterName?: string): ParameterD
       (target as Controller).constructor,
     );
   };
+}
+
+/**
+ * Render decorator to define the template and default data for a route
+ * @param template The template to render
+ * @param defaultData The default data to pass to the template
+ * @returns
+ */
+export function Render(template: string, defaultData?: Record<string, unknown>): MethodDecorator {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor): void => {
+    Reflect.defineMetadata(RENDER_METADATA_KEY, { template, defaultData }, target, propertyKey);
+  };
+}
+
+export function getRenderMetadata(
+  target: object,
+  propertyKey: string | symbol,
+): {
+  template?: string;
+  defaultData?: Record<string, unknown>;
+} {
+  return Reflect.getMetadata(RENDER_METADATA_KEY, target, propertyKey) || {};
 }
 
 /**

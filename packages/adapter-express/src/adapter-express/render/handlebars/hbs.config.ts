@@ -1,6 +1,7 @@
 import express from "express";
 import { join } from "path";
 import { Logger } from "@expressots/core";
+import { packageResolver } from "../resolve-render";
 
 /**
  * Handlebars options
@@ -11,9 +12,9 @@ import { Logger } from "@expressots/core";
  *
  */
 export type HandlebarsOptions = {
-  viewsDir?: string | Array<string>;
   viewEngine?: string;
-  serverOptions?: unknown;
+  viewsDir?: string;
+  partialsDir?: string;
 };
 
 /**
@@ -23,10 +24,15 @@ export type HandlebarsOptions = {
  * @default
  */
 const HANDLEBARS_DEFAULTS: HandlebarsOptions = {
-  viewsDir: join(process.cwd(), "views"),
   viewEngine: "hbs",
-  serverOptions: {},
+  viewsDir: join(process.cwd(), "views"),
+  partialsDir: join(process.cwd(), "views/partials"),
 };
+
+/**
+ * Default partials directory
+ */
+const DEFAULT_PARTIALS_DIR: string = join(process.cwd(), "views/partials");
 
 /**
  * Set Handlebars as the view engine
@@ -40,21 +46,12 @@ export async function setEngineHandlebars(
   const logger = new Logger();
 
   try {
+    const hbs = packageResolver("hbs");
+
+    hbs.registerPartials(options.partialsDir || DEFAULT_PARTIALS_DIR);
+
     app.set("view engine", options.viewEngine || (HANDLEBARS_DEFAULTS.viewEngine as string));
     app.set("views", options.viewsDir || (HANDLEBARS_DEFAULTS.viewsDir as string));
-
-    if (Array.isArray(options.viewsDir)) {
-      options.viewsDir.forEach((dir) => {
-        app.set("views", dir);
-      });
-    }
-
-    if (options.serverOptions) {
-      app.locals = {
-        ...app.locals,
-        ...(options.serverOptions as Record<string, unknown>),
-      };
-    }
   } catch (error: unknown) {
     logger.error((error as Error).message, "handlebars-config");
   }
