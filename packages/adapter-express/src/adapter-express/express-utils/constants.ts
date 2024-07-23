@@ -17,6 +17,8 @@ export const HTTP_CODE_METADATA = {
   path: "inversify-express-utils:path",
 };
 
+export const RENDER_METADATA_KEY = Symbol("Render");
+
 export enum PARAMETER_TYPE {
   REQUEST,
   RESPONSE,
