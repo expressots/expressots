@@ -52,13 +52,12 @@
 		"@expressots/boost-ts": "1.1.1",
 		"chalk-animation": "2.0.3",
 		"cli-progress": "3.12.0",
-		"cli-table3": "0.6.4",
+		"cli-table3": "0.6.5",
 		"degit": "2.8.4",
 		"glob": "10.4.1",
 		"inquirer": "8.2.6",
 		"mustache": "4.2.0",
 		"semver": "7.6.2",
-		"ts-node": "10.9.1",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
