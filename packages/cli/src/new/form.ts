@@ -125,13 +125,12 @@ const enum PackageManager {
 
 type TemplateKeys = keyof typeof Template;
 
-type ProjectFormArgs = [
-	PackageManager,
-	TemplateKeys,
-	string,
-];
+type ProjectFormArgs = [PackageManager, TemplateKeys, string];
 
-const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<void> => {
+const projectForm = async (
+	projectName: string,
+	args: ProjectFormArgs,
+): Promise<void> => {
 	let answer: {
 		name: string;
 		packageManager: string;
