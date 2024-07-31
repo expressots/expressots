@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn } from "node:child_process";
 import { Presets, SingleBar } from "cli-progress";
 import degit from "degit";
 import inquirer from "inquirer";
@@ -27,10 +27,26 @@ async function packageManagerInstall({
 			cwd: directory,
 		});
 
-		installProcess.stdout.on("data", (data: Buffer) => {
-			progressBar.increment(5, {
-				doing: `${data.toString().trim()}`,
-			});
+		installProcess.on("error", (error) => {
+			reject(new Error(`Failed to start subprocess: ${error.message}`));
+		});
+
+		installProcess.stdout?.on("data", (data: Buffer) => {
+			const output = data.toString().trim();
+
+			const npmProgressMatch = output.match(
+				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
+			);
+
+			if (npmProgressMatch) {
+				const [, current, total, task] = npmProgressMatch;
+				const progress = Math.round(
+					(parseInt(current) / parseInt(total)) * 100,
+				);
+				progressBar.update(progress, { doing: task });
+			} else {
+				progressBar.increment(5, { doing: output });
+			}
 		});
 
 		installProcess.on("close", (code) => {
@@ -79,9 +95,25 @@ function changePackageName({
 	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
+function renameEnvFile(directory: string): void {
+	try {
+		const envExamplePath = path.join(directory, ".env.example");
+		const envPath = path.join(directory, ".env");
+
+		if (!fs.existsSync(envExamplePath)) {
+			throw new Error(`File not found: ${envExamplePath}`);
+		}
+
+		fs.renameSync(envExamplePath, envPath);
+	} catch (error: any) {
+		printError("Error renaming .env.example file", ".env.example to .env");
+		process.exit(1);
+	}
+}
+
 enum Template {
-	"non-opinionated" = "Non-Opinionated :: A simple ExpressoTS project.",
-	opinionated = "Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
+	"non-opinionated" = "Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
+	opinionated = "Opinionated :: Automatically scaffolds resources into a preset project structure. (Recommended)",
 }
 
 const enum PackageManager {
@@ -137,8 +169,10 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 				name: "template",
 				message: "Select a template",
 				choices: [
-					"Non-Opinionated :: A simple ExpressoTS project.",
-					"Opinionated :: A complete ExpressoTS project with an opinionated structure and features.",
+					`Opinionated :: Automatically scaffolds resources into a preset project structure. (${chalk.yellow(
+						"Recommended",
+					)})`,
+					"Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
 				],
 			},
 			{
@@ -185,7 +219,7 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 					"| {percentage}% || {doing}",
 				hideCursor: true,
 			},
-			Presets.shades_classic,
+			Presets.rect,
 		);
 
 		progressBar.start(100, 0, {
@@ -201,6 +235,7 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 
 			await emitter.clone(answer.name);
 		} catch (err: any) {
+			console.log("\n");
 			printError(
 				"Project already exists or Folder is not empty",
 				answer.name,
@@ -225,13 +260,15 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 			name: projectName,
 		});
 
+		renameEnvFile(answer.name);
+
 		progressBar.update(100);
 
 		progressBar.stop();
 
 		console.log("\n");
 		console.log(
-			"🐎 Project ",
+			"🐎 Project",
 			chalk.green(answer.name),
 			"created successfully!",
 		);
@@ -269,6 +306,7 @@ const projectForm = async (projectName: string, args: ProjectFormArgs): Promise<
 				),
 			),
 		);
+		console.log("\n");
 	}
 };
 

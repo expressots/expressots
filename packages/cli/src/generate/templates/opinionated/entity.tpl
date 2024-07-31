@@ -1,8 +1,8 @@
-import { provide } from "inversify-binding-decorators";
+import { provide } from "@expressots/core";
 import { randomUUID } from "node:crypto";
 
-@provide({{className}})
-export class {{className}} {
+@provide({{className}}Entity)
+export class {{className}}Entity {
     id: string;
 
     constructor() {

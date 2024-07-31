@@ -1,23 +1,21 @@
 {
-    "cSpell.ignoreWords": [
-        "Expresso"
-    ],
-    "workbench.colorCustomizations": {
-        // "activityBar.foreground": "#38e715",
-        // "activityBarBadge.background": "#248d0f",
-        // "activityBarBadge.foreground": "#fcfcfc",
-        // "sideBar.border": "#38e715",
-        // "sideBarTitle.foreground": "#38e715",
-        // "sideBarSectionHeader.border": "#38e715",
-        // "editorGroupHeader.border": "#38e715",
-        // "editorGroupHeader.tabsBorder": "#38e715",
-        // "tab.border": "#38e715",
-        // "tab.activeBorderTop": "#38e715",
-        // "panel.border": "#38e715",
-        // "statusBar.border": "#38e715",
-        // "statusBar.foreground": "#38e715"
-    },
-    "editor.rulers": [
-        120
-    ],
+	"cSpell.ignoreWords": ["Expresso"],
+	"workbench.colorCustomizations": {
+		// "activityBar.foreground": "#38e715",
+		// "activityBarBadge.background": "#248d0f",
+		// "activityBarBadge.foreground": "#fcfcfc",
+		// "sideBar.border": "#38e715",
+		// "sideBarTitle.foreground": "#38e715",
+		// "sideBarSectionHeader.border": "#38e715",
+		// "editorGroupHeader.border": "#38e715",
+		// "editorGroupHeader.tabsBorder": "#38e715",
+		// "tab.border": "#38e715",
+		// "tab.activeBorderTop": "#38e715",
+		// "panel.border": "#38e715",
+		// "statusBar.border": "#38e715",
+		// "statusBar.foreground": "#38e715"
+	},
+	"editor.rulers": [120],
+	"cSpell.words": ["nonopinionated", "usecase"],
+	"typescript.tsdk": "node_modules\\typescript\\lib"
 }
