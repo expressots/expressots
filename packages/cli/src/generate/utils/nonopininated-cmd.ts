@@ -204,7 +204,10 @@ async function generateUseCase(
 				moduleName,
 				path,
 				fileName,
-				schematic: anyCaseToPascalCase(schematic),
+				schematic:
+					schematic === "usecase"
+						? "UseCase"
+						: anyCaseToPascalCase(schematic),
 			},
 		},
 	});
