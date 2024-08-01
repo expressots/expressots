@@ -11,7 +11,7 @@
 		"expressots": "bin/cli.js"
 	},
 	"engines": {
-		"node": ">=18.18.0"
+		"node": ">=18.0.0"
 	},
 	"funding": {
 		"type": "github",
@@ -31,7 +31,7 @@
 		"Scaffolding"
 	],
 	"scripts": {
-		"prepare": "husky install",
+		"prepare": "husky",
 		"start:build": "npm run build && npm run start",
 		"start": "node ./bin/cli.js",
 		"start:dev": "tsnd ./src/cli.ts",
@@ -58,6 +58,7 @@
 		"inquirer": "8.2.6",
 		"mustache": "4.2.0",
 		"semver": "7.6.2",
+		"ts-node": "10.9.2",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
