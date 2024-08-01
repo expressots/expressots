@@ -64,7 +64,7 @@
         "@expressots/core": "2.15.0",
         "@release-it/conventional-changelog": "8.0.1",
         "@types/express": "4.17.21",
-        "@types/node": "20.14.10",
+        "@types/node": "22.0.2",
         "@typescript-eslint/eslint-plugin": "7.16.1",
         "@typescript-eslint/parser": "7.16.1",
         "@vitest/coverage-v8": "2.0.3",
@@ -82,60 +82,60 @@
         "rimraf": "6.0.1"
     },
     "release-it": {
-    "git": {
-      "commitMessage": "chore(release): ${version}"
-    },
-    "github": {
-      "release": true
-    },
-    "npm": {
-      "publish": false
-    },
-    "plugins": {
-      "@release-it/conventional-changelog": {
-        "infile": "CHANGELOG.md",
-        "preset": {
-          "name": "conventionalcommits",
-          "types": [
-            {
-              "type": "feat",
-              "section": "Features"
-            },
-            {
-              "type": "fix",
-              "section": "Bug Fixes"
-            },
-            {
-              "type": "perf",
-              "section": "Performance Improvements"
-            },
-            {
-              "type": "revert",
-              "section": "Reverts"
-            },
-            {
-              "type": "docs",
-              "section": "Documentation"
-            },
-            {
-              "type": "refactor",
-              "section": "Code Refactoring"
-            },
-            {
-              "type": "test",
-              "section": "Tests"
-            },
-            {
-              "type": "build",
-              "section": "Build System"
-            },
-            {
-              "type": "ci",
-              "section": "Continuous Integrations"
+        "git": {
+            "commitMessage": "chore(release): ${version}"
+        },
+        "github": {
+            "release": true
+        },
+        "npm": {
+            "publish": false
+        },
+        "plugins": {
+            "@release-it/conventional-changelog": {
+                "infile": "CHANGELOG.md",
+                "preset": {
+                    "name": "conventionalcommits",
+                    "types": [
+                        {
+                            "type": "feat",
+                            "section": "Features"
+                        },
+                        {
+                            "type": "fix",
+                            "section": "Bug Fixes"
+                        },
+                        {
+                            "type": "perf",
+                            "section": "Performance Improvements"
+                        },
+                        {
+                            "type": "revert",
+                            "section": "Reverts"
+                        },
+                        {
+                            "type": "docs",
+                            "section": "Documentation"
+                        },
+                        {
+                            "type": "refactor",
+                            "section": "Code Refactoring"
+                        },
+                        {
+                            "type": "test",
+                            "section": "Tests"
+                        },
+                        {
+                            "type": "build",
+                            "section": "Build System"
+                        },
+                        {
+                            "type": "ci",
+                            "section": "Continuous Integrations"
+                        }
+                    ]
+                }
             }
-          ]
         }
-      }
     }
-}
 }
