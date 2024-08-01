@@ -1,5 +1,29 @@
 
 
+## [1.9.0](https://github.com/expressots/expressots-cli/compare/1.8.2...1.9.0) (2024-08-01)
+
+
+### Features
+
+* improve package install performance ([b7ac564](https://github.com/expressots/expressots-cli/commit/b7ac564d4fc8adf54134c87d2f6e566e21790dae))
+
+
+### Bug Fixes
+
+* update nodejs latest version ([565a069](https://github.com/expressots/expressots-cli/commit/565a069aea5934c8b5aacce18c1a12e8bb60987b))
+* update usecase to UseCase nonop template ([e690cda](https://github.com/expressots/expressots-cli/commit/e690cda45912ae1bfcb7b4b2144ef964ade89a05))
+* upgrade cli-progress from 3.11.2 to 3.12.0 ([f637b88](https://github.com/expressots/expressots-cli/commit/f637b88c8e12e5e8a8dffe37ddb5d83e05650cbf))
+* upgrade inquirer from 8.0.0 to 8.2.6 ([5e51ec5](https://github.com/expressots/expressots-cli/commit/5e51ec57be9313aea87e8ce6942749daba572c2d))
+* upgrade yargs from 17.6.2 to 17.7.2 ([61f343f](https://github.com/expressots/expressots-cli/commit/61f343f8e3596a2373502c4729bb5a97479d23d3))
+
+
+### Code Refactoring
+
+* **createProject:** add types and remove useless projectForm args iteration ([0a8d7eb](https://github.com/expressots/expressots-cli/commit/0a8d7eb5ac211e18a08f3442fee8a7b8551e3584))
+* update 'new' cmd removing unnecessary options ([6d1da80](https://github.com/expressots/expressots-cli/commit/6d1da808a5a1e98266ee83f05c1b08b3c9404952))
+* update boost-ts deps ([8deb32e](https://github.com/expressots/expressots-cli/commit/8deb32ea3abee378493bfc962c5bff8446b16763))
+* update cli-table3 and remove ts-node ([4bfa3bc](https://github.com/expressots/expressots-cli/commit/4bfa3bc3ff1a670e06dc95eb552978925fb4d597))
+
 ## [1.8.2](https://github.com/expressots/expressots-cli/compare/1.8.1...1.8.2) (2024-07-04)
 
 
