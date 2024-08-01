@@ -23,12 +23,17 @@ async function packageManagerInstall({
 			? `${packageManager}.cmd`
 			: packageManager;
 
-		const installProcess = spawn(command, ["install"], {
+		const installProcess = spawn(command, ["install", "--prefer-offline"], {
 			cwd: directory,
 			shell: true,
+			timeout: 600000,
 		});
 
+		// eslint-disable-next-line prefer-const
+		let installTimeout: NodeJS.Timeout;
+
 		installProcess.on("error", (error) => {
+			clearTimeout(installTimeout);
 			reject(new Error(`Failed to start subprocess: ${error.message}`));
 		});
 
@@ -51,6 +56,7 @@ async function packageManagerInstall({
 		});
 
 		installProcess.on("close", (code) => {
+			clearTimeout(installTimeout);
 			if (code === 0) {
 				resolve("Installation Done!");
 			} else {
@@ -61,6 +67,11 @@ async function packageManagerInstall({
 				);
 			}
 		});
+
+		installTimeout = setTimeout(() => {
+			installProcess.kill("SIGKILL");
+			reject(new Error("Installation took too long. Aborted!"));
+		}, 600000);
 	});
 }
 
@@ -81,18 +92,11 @@ function changePackageName({
 	directory: string;
 	name: string;
 }): void {
-	// Get the absolute path of the input directory parameter
 	const absDirPath = path.resolve(directory);
-
-	// Load the package.json file
 	const packageJsonPath = path.join(absDirPath, "package.json");
 	const fileContents = fs.readFileSync(packageJsonPath, "utf-8");
 	const packageJson = JSON.parse(fileContents);
-
-	// Change the name
 	packageJson.name = name;
-
-	// Save the package.json file
 	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
