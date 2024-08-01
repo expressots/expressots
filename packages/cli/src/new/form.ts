@@ -25,6 +25,7 @@ async function packageManagerInstall({
 
 		const installProcess = spawn(command, ["install"], {
 			cwd: directory,
+			shell: true,
 		});
 
 		installProcess.on("error", (error) => {

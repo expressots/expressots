@@ -1,6 +1,8 @@
 import { Argv, CommandModule } from "yargs";
 import { projectForm } from "./form";
 import semver from "semver";
+import { printWarning } from "../utils/cli-ui";
+import chalk from "chalk";
 
 type CommandModuleArgs = object;
 
@@ -40,14 +42,12 @@ const commandOptions = (yargs: Argv): Argv => {
 
 const checkNodeVersion = (): void => {
 	const minVersion = "18.0.0";
-	const maxVersion = "20.7.0";
+	const maxVersion = "22.5.1";
 	const currentVersion = process.version;
 
 	if (!semver.satisfies(currentVersion, `>=${minVersion} <=${maxVersion}`)) {
-		console.error(
-			`Node.js version ${currentVersion} is not supported. Please use a version between ${minVersion} and ${maxVersion}.`,
-		);
-		process.exit(1);
+		const msg: string = `Node.js version [${chalk.bold(chalk.white(currentVersion))}] is not tested. Please use a version between ${minVersion} and ${maxVersion}.`;
+		printWarning(msg);
 	}
 };
 
