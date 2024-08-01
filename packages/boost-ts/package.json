@@ -1,13 +1,13 @@
 {
     "name": "@expressots/boost-ts",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "Expressots: Boost is a collection of libraries for the TypeScript programming language designed to enhance its capabilities across various domains. (@boost-ts)",
     "types": "./dist/index.d.ts",
     "license": "MIT",
     "keywords": [],
     "repository": {
         "type": "git",
-        "url": "https://github.com/expressots/boost-ts.git"
+        "url": "git+https://github.com/expressots/boost-ts.git"
     },
     "publishConfig": {
         "access": "public"
@@ -20,6 +20,7 @@
         "start": "tsnd --respawn --transpile-only --ignore-watch node_modules src/main.ts",
         "build": "rimraf dist && tsc -p tsconfig.json",
         "build:prod": "npm run build && node dist/main.js",
+        "prepublish": "npm run build && npm pack",
         "test": "jest"
     },
     "devDependencies": {
@@ -31,6 +32,6 @@
         "typescript": "5.0.2"
     },
     "dependencies": {
-        "rimraf": "^6.0.1"
+        "rimraf": "6.0.1"
     }
 }
