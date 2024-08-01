@@ -1,6 +1,6 @@
 {
     "name": "@expressots/boost-ts",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Expressots: Boost is a collection of libraries for the TypeScript programming language designed to enhance its capabilities across various domains. (@boost-ts)",
     "main": "./lib/cjs/index.js",
     "types": "./lib/cjs/types/index.d.ts",
