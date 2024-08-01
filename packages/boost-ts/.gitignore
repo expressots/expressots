@@ -1,6 +1,7 @@
 # Regular folders
 dist/
 node_modules/
+lib
 
 # Ignore lock files
 *-lock.json
