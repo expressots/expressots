@@ -7,7 +7,8 @@ import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
 import { createProject } from "./new";
-import { generateProviders } from "./providers";
+import { createExternalProviderCMD } from "./providers/create/cli";
+import { addProviderCMD } from "./providers";
 
 console.log(`\n[🐎 Expressots]\n`);
 
@@ -15,7 +16,8 @@ yargs(hideBin(process.argv))
 	.scriptName("expressots")
 	.command(runCommandModule)
 	.command(createProject())
-	.command(generateProviders())
+	.command(createExternalProviderCMD())
+	.command(addProviderCMD())
 	.command(generateProject())
 	.command(infoProject())
 	.command(helpCommand())
