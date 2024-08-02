@@ -10,8 +10,9 @@ import { createProject } from "./new";
 import { createExternalProviderCMD } from "./providers/create/cli";
 import { addProviderCMD } from "./providers";
 import chalk from "chalk";
+import { stdout } from "process";
 
-console.log(`\n${[chalk.bold.green("🐎 Expressots")]}\n`);
+stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
 yargs(hideBin(process.argv))
 	.scriptName("expressots")
