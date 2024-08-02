@@ -86,7 +86,7 @@ const copyFiles = async () => {
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const runCommandModule: CommandModule<{}, { command: string }> = {
 	command: "run <command>",
-	describe: "Runs a specified command (dev, build, prod)",
+	describe: "Run command (dev, build, prod).",
 	builder: (yargs: Argv) => {
 		return yargs.positional("command", {
 			describe: "The command to run",

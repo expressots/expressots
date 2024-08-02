@@ -54,7 +54,7 @@ const checkNodeVersion = (): void => {
 const createProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "new <project-name> [package-manager] [template] [directory]",
-		describe: "Create a new project",
+		describe: "Create ExpressoTS application.",
 		builder: commandOptions,
 		handler: async ({
 			projectName,

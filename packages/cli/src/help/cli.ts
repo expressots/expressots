@@ -7,7 +7,7 @@ type CommandModuleArgs = {};
 const helpCommand = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "resources",
-		describe: "Resource list",
+		describe: "Resource list.",
 		aliases: ["r"],
 		handler: async () => {
 			await helpForm();

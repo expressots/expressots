@@ -10,7 +10,7 @@ export const createExternalProviderCMD = (): CommandModule<
 > => {
 	return {
 		command: "create [provider]",
-		describe: "Scaffold a new provider",
+		describe: "Create a provider.",
 		builder: (yargs: Argv): Argv => {
 			yargs.option("provider", {
 				describe: "Provider name",

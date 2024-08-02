@@ -7,7 +7,7 @@ type CommandModuleArgs = {};
 export const addProviderCMD = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "add <provider> [version]",
-		describe: "Add an external provider to the project",
+		describe: "Add provider to the project.",
 		builder: (yargs: Argv): Argv => {
 			yargs
 				.positional("provider", {
