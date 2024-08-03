@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
-import { Argv, CommandModule } from "yargs";
+import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
-import os from "os";
 
 /**
  * Load the configuration from the compiler
@@ -29,6 +29,30 @@ const nonOpinionatedConfig: Array<string> = [
 	"dotenv/config",
 	"./src/main.ts",
 ];
+
+export const devCommand: CommandModule<object, object> = {
+	command: "dev",
+	describe: "Start development server.",
+	handler: async () => {
+		await runCommand({ command: "dev" });
+	},
+};
+
+export const buildCommand: CommandModule<object, object> = {
+	command: "build",
+	describe: "Build the project.",
+	handler: async () => {
+		await runCommand({ command: "build" });
+	},
+};
+
+export const prodCommand: CommandModule<object, object> = {
+	command: "prod",
+	describe: "Run in production mode.",
+	handler: async () => {
+		await runCommand({ command: "prod" });
+	},
+};
 
 /**
  * Helper function to execute a command
@@ -59,19 +83,25 @@ function execCmd(
 	});
 }
 
-// Helper to delete the dist directory
+/**
+ * Helper function to clean the dist directory
+ */
 const cleanDist = async (): Promise<void> => {
 	await fs.rm("./dist", { recursive: true, force: true });
 	printSuccess("Deleted dist directory", "clean-dist");
 };
 
-// Helper to compile TypeScript
+/**
+ * Helper function to compile TypeScript
+ */
 const compileTypescript = async () => {
 	await execCmd("npx", ["tsc", "-p", "tsconfig.build.json"]);
 	printSuccess("Built successfully", "compile-typescript");
 };
 
-// Helper to copy files
+/**
+ * Helper function to copy files to the dist directory
+ */
 const copyFiles = async () => {
 	const { opinionated } = await Compiler.loadConfig();
 	let filesToCopy: Array<string> = [];
@@ -89,37 +119,19 @@ const copyFiles = async () => {
 	});
 };
 
-// Helper clear screen
+/**
+ * Helper function to clear the screen
+ */
 const clearScreen = () => {
 	const platform = os.platform();
 	const command = platform === "win32" ? "cls" : "clear";
 	spawn(command, { stdio: "inherit", shell: true });
 };
 
-export const devCommand: CommandModule<object, object> = {
-	command: "dev",
-	describe: "Start development server.",
-	handler: async () => {
-		await runCommand({ command: "dev" });
-	},
-};
-
-export const buildCommand: CommandModule<object, object> = {
-	command: "build",
-	describe: "Build the project.",
-	handler: async () => {
-		await runCommand({ command: "build" });
-	},
-};
-
-export const prodCommand: CommandModule<object, object> = {
-	command: "prod",
-	describe: "Run in production mode.",
-	handler: async () => {
-		await runCommand({ command: "prod" });
-	},
-};
-
+/**
+ * Helper function to run a command
+ * @param command The command to run
+ */
 export const runCommand = async ({
 	command,
 }: {

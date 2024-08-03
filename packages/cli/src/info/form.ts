@@ -2,7 +2,8 @@ import chalk from "chalk";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { printError } from "../utils/cli-ui";
+import { printError, printSuccess } from "../utils/cli-ui";
+import axios from "axios";
 
 function getInfosFromPackage() {
 	try {
@@ -27,12 +28,23 @@ function getInfosFromPackage() {
 	}
 }
 
-const infoForm = (): void => {
+export const infoForm = (): void => {
 	getInfosFromPackage();
 
 	console.log(chalk.green("System information:"));
 	console.log(chalk.white(`\tOS Version: ${os.version()}`));
 	console.log(chalk.white(`\tNodeJS version: ${process.version}`));
+	currentCLIVersion();
 };
 
-export { infoForm };
+async function currentCLIVersion(): Promise<void> {
+	try {
+		const response = await axios.get(
+			"https://api.github.com/repos/expressots/expressots-cli/releases",
+		);
+		const latestRelease = `v${response.data[0].tag_name}`;
+		printSuccess("CLI version:", latestRelease);
+	} catch (error: Error | any) {
+		printError("Error:", error.message);
+	}
+}
