@@ -1,5 +1,24 @@
 
 
+## [1.10.0](https://github.com/expressots/expressots-cli/compare/1.9.0...1.10.0) (2024-08-03)
+
+
+### Features
+
+* adjust ui and add dev, build, prod as individual cmd ([f505478](https://github.com/expressots/expressots-cli/commit/f50547898976030fd1979f12eedc148f8d2dff47))
+* provider add(existing) and create(external) options ([afe9fa2](https://github.com/expressots/expressots-cli/commit/afe9fa20885c809ddbce69835f30be16e8c60096))
+
+
+### Bug Fixes
+
+* use stdout.write for optimal performance main menu ([9279fbf](https://github.com/expressots/expressots-cli/commit/9279fbf9feb1ec8fe2dbe4cf90e738f42ac82040))
+
+
+### Code Refactoring
+
+* snyk glob security update ([7e465b4](https://github.com/expressots/expressots-cli/commit/7e465b4169f53bcdf0f00332653428c4cdda7b1f))
+* update ui command text ([5e76626](https://github.com/expressots/expressots-cli/commit/5e766263976917ab2707075090956454180c39fb))
+
 ## [1.9.0](https://github.com/expressots/expressots-cli/compare/1.8.2...1.9.0) (2024-08-01)
 
 
