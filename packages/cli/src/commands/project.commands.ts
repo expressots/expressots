@@ -2,7 +2,9 @@ import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import { Argv, CommandModule } from "yargs";
+import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
+import os from "os";
 
 /**
  * Load the configuration from the compiler
@@ -12,6 +14,7 @@ import Compiler from "../utils/compiler";
 
 const opinionatedConfig: Array<string> = [
 	"--transpile-only",
+	"--clear",
 	"-r",
 	"dotenv/config",
 	"-r",
@@ -21,6 +24,7 @@ const opinionatedConfig: Array<string> = [
 
 const nonOpinionatedConfig: Array<string> = [
 	"--transpile-only",
+	"--clear",
 	"-r",
 	"dotenv/config",
 	"./src/main.ts",
@@ -58,11 +62,13 @@ function execCmd(
 // Helper to delete the dist directory
 const cleanDist = async (): Promise<void> => {
 	await fs.rm("./dist", { recursive: true, force: true });
+	printSuccess("Deleted dist directory", "clean-dist");
 };
 
 // Helper to compile TypeScript
 const compileTypescript = async () => {
 	await execCmd("npx", ["tsc", "-p", "tsconfig.build.json"]);
+	printSuccess("Built successfully", "compile-typescript");
 };
 
 // Helper to copy files
@@ -83,31 +89,47 @@ const copyFiles = async () => {
 	});
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const runCommandModule: CommandModule<{}, { command: string }> = {
-	command: "run <command>",
-	describe: "Run command (dev, build, prod).",
-	builder: (yargs: Argv) => {
-		return yargs.positional("command", {
-			describe: "The command to run",
-			type: "string",
-			choices: ["dev", "build", "prod"],
-		});
-	},
-	handler: async (argv) => {
-		const { command } = argv;
-		// Now call your original runCommand function with the command
-		// Ensure runCommand is properly defined to handle these commands
-		await runCommand({ command });
+// Helper clear screen
+const clearScreen = () => {
+	const platform = os.platform();
+	const command = platform === "win32" ? "cls" : "clear";
+	spawn(command, { stdio: "inherit", shell: true });
+};
+
+export const devCommand: CommandModule<object, object> = {
+	command: "dev",
+	describe: "Start development server.",
+	handler: async () => {
+		await runCommand({ command: "dev" });
 	},
 };
 
-const runCommand = async ({ command }: { command: string }): Promise<void> => {
+export const buildCommand: CommandModule<object, object> = {
+	command: "build",
+	describe: "Build the project.",
+	handler: async () => {
+		await runCommand({ command: "build" });
+	},
+};
+
+export const prodCommand: CommandModule<object, object> = {
+	command: "prod",
+	describe: "Run in production mode.",
+	handler: async () => {
+		await runCommand({ command: "prod" });
+	},
+};
+
+export const runCommand = async ({
+	command,
+}: {
+	command: string;
+}): Promise<void> => {
 	const { opinionated } = await Compiler.loadConfig();
+
 	try {
 		switch (command) {
 			case "dev":
-				// Use execSync or spawn to run ts-node-dev programmatically
 				execCmd(
 					"tsnd",
 					opinionated ? opinionatedConfig : nonOpinionatedConfig,
@@ -131,16 +153,15 @@ const runCommand = async ({ command }: { command: string }): Promise<void> => {
 				} else {
 					config = ["-r", "dotenv/config", "./dist/main.js"];
 				}
-				// Ensure environment variables are set
+				clearScreen();
 				execCmd("node", config);
 				break;
 			}
 			default:
-				console.log(`Unknown command: ${command}`);
+				printError(`Unknown command: `, command);
+				break;
 		}
-	} catch (error) {
-		console.error("Error executing command:", error);
+	} catch (error: Error | any) {
+		printError("Error executing command:", error.message);
 	}
 };
-
-export { runCommand };

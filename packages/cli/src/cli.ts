@@ -2,7 +2,11 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { runCommandModule } from "./commands/project.commands";
+import {
+	devCommand,
+	buildCommand,
+	prodCommand,
+} from "./commands/project.commands";
 import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
@@ -16,8 +20,10 @@ stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
 yargs(hideBin(process.argv))
 	.scriptName("expressots")
-	.command(runCommandModule)
 	.command(createProject())
+	.command(devCommand)
+	.command(buildCommand)
+	.command(prodCommand)
 	.command(createExternalProviderCMD())
 	.command(addProviderCMD())
 	.command(generateProject())
