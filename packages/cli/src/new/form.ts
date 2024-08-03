@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { centerText } from "../utils/center-text";
 import { printError } from "../utils/cli-ui";
+import { changePackageName } from "../utils/change-package-info";
 
 async function packageManagerInstall({
 	packageManager,
@@ -83,21 +84,6 @@ async function checkIfPackageManagerExists(packageManager: string) {
 		printError("Package manager not found!", packageManager);
 		process.exit(1);
 	}
-}
-
-function changePackageName({
-	directory,
-	name,
-}: {
-	directory: string;
-	name: string;
-}): void {
-	const absDirPath = path.resolve(directory);
-	const packageJsonPath = path.join(absDirPath, "package.json");
-	const fileContents = fs.readFileSync(packageJsonPath, "utf-8");
-	const packageJson = JSON.parse(fileContents);
-	packageJson.name = name;
-	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
 function renameEnvFile(directory: string): void {

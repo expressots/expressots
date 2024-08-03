@@ -2,35 +2,36 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { runCommandModule } from "./commands/project.commands";
+import {
+	devCommand,
+	buildCommand,
+	prodCommand,
+} from "./commands/project.commands";
 import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
 import { createProject } from "./new";
-import { generateProviders } from "./providers";
+import { createExternalProviderCMD } from "./providers/create/cli";
+import { addProviderCMD } from "./providers";
+import chalk from "chalk";
+import { stdout } from "process";
 
-console.log(`\n[🐎 Expressots]\n`);
+stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
 yargs(hideBin(process.argv))
 	.scriptName("expressots")
-	.command(runCommandModule)
 	.command(createProject())
-	.command(generateProviders())
+	.command(devCommand)
+	.command(buildCommand)
+	.command(prodCommand)
+	.command(createExternalProviderCMD())
+	.command(addProviderCMD())
 	.command(generateProject())
 	.command(infoProject())
 	.command(helpCommand())
-	.example("$0 new expressots-demo", "Create interactively")
-	.example("$0 new expressots-demo -d ./", "Create interactively with path")
-	.example("$0 new expressots-demo -p yarn -t opinionated", "Create silently")
-	.example(
-		"$0 new expressots-demo -p yarn -t opinionated -d ./",
-		"Create silently with path",
-	)
-	.example("$0 generate service user-create", "Scaffold a service")
-	.example("$0 info", "Show CLI details")
 	.demandCommand(1, "You need at least one command before moving on")
 	.epilog(
-		"For more information: \n" +
+		`${chalk.bold.green("For more information:")} \n\n` +
 			"🌐 visit:\t https://expresso-ts.com\n" +
 			"💖 Sponsor:\t https://github.com/sponsors/expressots",
 	)

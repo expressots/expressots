@@ -7,6 +7,15 @@ export function printError(message: string, component: string): void {
 	);
 }
 
+export function printSuccess(message: string, component: string): void {
+	stdout.write(
+		chalk.green(
+			`${message}:`,
+			chalk.bold(chalk.white(`[${component}] ✔️\n`)),
+		),
+	);
+}
+
 export function printWarning(message: string, component?: string): void {
 	if (component === undefined) {
 		stdout.write(chalk.yellow(`${message} ⚠️\n`));

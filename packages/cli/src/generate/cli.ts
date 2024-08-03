@@ -30,7 +30,7 @@ const coerceSchematicAliases = (arg: string) => {
 const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "generate [schematic] [path] [method]",
-		describe: "Scaffold a new resource",
+		describe: "Generate ExpressoTS resource.",
 		aliases: ["g"],
 		builder: (yargs: Argv): Argv => {
 			yargs.positional("schematic", {

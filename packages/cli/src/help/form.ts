@@ -25,8 +25,8 @@ const helpForm = async (): Promise<void> => {
 		["usecase", "g u", "Generate a usecase"],
 		["dto", "g d", "Generate a dto"],
 		["entity", "g e", "Generate an entity"],
-		["provider", "g p", "Generate a provider"],
-		["provider external", "a provider", "Generate an external provider"],
+		["provider", "add", "Add provider to the project"],
+		["provider", "create", "Create a provider"],
 		["module", "g mo", "Generate a module"],
 		["middleware", "g mi", "Generate a middleware"],
 	);
