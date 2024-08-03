@@ -54,7 +54,7 @@
 		"cli-progress": "3.12.0",
 		"cli-table3": "0.6.5",
 		"degit": "2.8.4",
-		"glob": "10.4.1",
+		"glob": "10.4.5",
 		"inquirer": "8.2.6",
 		"mustache": "4.2.0",
 		"semver": "7.6.2",
