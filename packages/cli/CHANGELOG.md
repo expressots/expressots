@@ -1,5 +1,23 @@
 
 
+## [1.11.0](https://github.com/expressots/expressots-cli/compare/1.10.0...1.11.0) (2024-08-04)
+
+
+### Features
+
+* add command validation and better error message ([f70cf27](https://github.com/expressots/expressots-cli/commit/f70cf27c3bbfa53234c95d21a55a11c50aace7f2))
+
+
+### Bug Fixes
+
+* user outDir in tsconfig build can be changed to any name ([4abb6ab](https://github.com/expressots/expressots-cli/commit/4abb6ab19aaf284e7f976e64a2205e6217144d6c))
+* validate outDir absence in build json ([1907684](https://github.com/expressots/expressots-cli/commit/1907684fee64b5c54556f2570049f5299e9a6e12))
+
+
+### Code Refactoring
+
+* remove prisma provider ([ea7af9c](https://github.com/expressots/expressots-cli/commit/ea7af9c552c7bd69548b066fc4bd7bd0e06337f0))
+
 ## [1.10.0](https://github.com/expressots/expressots-cli/compare/1.9.0...1.10.0) (2024-08-03)
 
 
