@@ -1,17 +1,23 @@
 import { spawn } from "child_process";
-import { promises as fs } from "fs";
+import { promises as fs, readFileSync } from "fs";
 import os from "os";
-import path from "path";
+import path, { join } from "path";
 import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
+
+/**
+ * Load tsconfig path and extract outDir
+ */
+const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
+const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
+const outDir = tsconfig.compilerOptions.outDir || "dist";
 
 /**
  * Load the configuration from the compiler
  * @param compiler The compiler to load the configuration from
  * @returns The configuration
  */
-
 const opinionatedConfig: Array<string> = [
 	"--transpile-only",
 	"--clear",
@@ -30,6 +36,11 @@ const nonOpinionatedConfig: Array<string> = [
 	"./src/main.ts",
 ];
 
+/**
+ * Dev command module
+ * @type {CommandModule<object, object>}
+ * @returns The command module
+ */
 export const devCommand: CommandModule<object, object> = {
 	command: "dev",
 	describe: "Start development server.",
@@ -38,6 +49,11 @@ export const devCommand: CommandModule<object, object> = {
 	},
 };
 
+/**
+ * Build command module
+ * @type {CommandModule<object, object>}
+ * @returns The command module
+ */
 export const buildCommand: CommandModule<object, object> = {
 	command: "build",
 	describe: "Build the project.",
@@ -46,6 +62,11 @@ export const buildCommand: CommandModule<object, object> = {
 	},
 };
 
+/**
+ * Prod command module
+ * @type {CommandModule<object, object>}
+ * @returns The command module
+ */
 export const prodCommand: CommandModule<object, object> = {
 	command: "prod",
 	describe: "Run in production mode.",
@@ -87,8 +108,8 @@ function execCmd(
  * Helper function to clean the dist directory
  */
 const cleanDist = async (): Promise<void> => {
-	await fs.rm("./dist", { recursive: true, force: true });
-	printSuccess("Deleted dist directory", "clean-dist");
+	await fs.rm(outDir, { recursive: true, force: true });
+	printSuccess(`Clean ${outDir} directory`, "clean-dist");
 };
 
 /**
@@ -115,7 +136,7 @@ const copyFiles = async () => {
 		filesToCopy = ["tsconfig.json", "package.json"];
 	}
 	filesToCopy.forEach((file) => {
-		fs.copyFile(file, path.join("./dist", path.basename(file)));
+		fs.copyFile(file, join(outDir, path.basename(file)));
 	});
 };
 
@@ -159,11 +180,11 @@ export const runCommand = async ({
 						"-r",
 						"dotenv/config",
 						"-r",
-						"./dist/register-path.js",
-						"./dist/src/main.js",
+						`./${outDir}/register-path.js`,
+						`./${outDir}/src/main.js`,
 					];
 				} else {
-					config = ["-r", "dotenv/config", "./dist/main.js"];
+					config = ["-r", "dotenv/config", `./${outDir}/main.js`];
 				}
 				clearScreen();
 				execCmd("node", config);

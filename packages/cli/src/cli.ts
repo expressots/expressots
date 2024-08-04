@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 
+import chalk from "chalk";
+import { stdout } from "process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import {
-	devCommand,
 	buildCommand,
+	devCommand,
 	prodCommand,
 } from "./commands/project.commands";
 import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
 import { createProject } from "./new";
-import { createExternalProviderCMD } from "./providers/create/cli";
 import { addProviderCMD } from "./providers";
-import chalk from "chalk";
-import { stdout } from "process";
+import { createExternalProviderCMD } from "./providers/create/cli";
 import { printError } from "./utils/cli-ui";
-import { c } from "vite/dist/node/types.d-aGj9QkWt";
 
 stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
