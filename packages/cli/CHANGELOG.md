@@ -1,5 +1,12 @@
 
 
+## [1.11.1](https://github.com/expressots/expressots-cli/compare/1.11.0...1.11.1) (2024-08-04)
+
+
+### Bug Fixes
+
+* broken tsconfig deps ([d4fbc8b](https://github.com/expressots/expressots-cli/commit/d4fbc8b3cfce99fc084f27b2f365758302526720))
+
 ## [1.11.0](https://github.com/expressots/expressots-cli/compare/1.10.0...1.11.0) (2024-08-04)
 
 
