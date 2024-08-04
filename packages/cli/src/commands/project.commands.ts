@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { promises as fs, readFileSync } from "fs";
+import { promises as fs, readFileSync, existsSync, mkdirSync } from "fs";
 import os from "os";
 import path, { join } from "path";
 import { CommandModule } from "yargs";
@@ -7,11 +7,37 @@ import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
 
 /**
- * Load tsconfig path and extract outDir
+ * Helper function to load and extract outDir from tsconfig.build.json
  */
-const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
-const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
-const outDir = tsconfig.compilerOptions.outDir;
+function getOutDir(): string {
+	const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
+
+	if (!existsSync(tsconfigBuildPath)) {
+		printError(
+			"Cannot find tsconfig.build.json. Please create one in the root directory",
+			"tsconfig-build-path",
+		);
+		process.exit(1);
+	}
+
+	const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
+	const outDir = tsconfig.compilerOptions.outDir;
+
+	if (!outDir) {
+		printError(
+			"Cannot find outDir in tsconfig.build.json. Please provide an outDir.",
+			"tsconfig-build-path",
+		);
+		process.exit(1);
+	}
+
+	if (!existsSync(outDir)) {
+		mkdirSync(outDir, { recursive: true });
+		printSuccess(`Created outDir: ${outDir}`, "outdir-creation");
+	}
+
+	return outDir;
+}
 
 /**
  * Load the configuration from the compiler
@@ -107,7 +133,7 @@ function execCmd(
 /**
  * Helper function to clean the dist directory
  */
-const cleanDist = async (): Promise<void> => {
+const cleanDist = async (outDir: string): Promise<void> => {
 	await fs.rm(outDir, { recursive: true, force: true });
 	printSuccess(`Clean ${outDir} directory`, "clean-dist");
 };
@@ -123,7 +149,7 @@ const compileTypescript = async () => {
 /**
  * Helper function to copy files to the dist directory
  */
-const copyFiles = async () => {
+const copyFiles = async (outDir: string) => {
 	const { opinionated } = await Compiler.loadConfig();
 	let filesToCopy: Array<string> = [];
 	if (opinionated) {
@@ -159,6 +185,7 @@ export const runCommand = async ({
 	command: string;
 }): Promise<void> => {
 	const { opinionated } = await Compiler.loadConfig();
+	const outDir = getOutDir();
 
 	try {
 		switch (command) {
@@ -176,9 +203,9 @@ export const runCommand = async ({
 					);
 					process.exit(1);
 				}
-				await cleanDist();
+				await cleanDist(outDir);
 				await compileTypescript();
-				await copyFiles();
+				await copyFiles(outDir);
 				break;
 			case "prod": {
 				if (!outDir) {
