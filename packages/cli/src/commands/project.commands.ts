@@ -1,17 +1,23 @@
 import { spawn } from "child_process";
-import { promises as fs } from "fs";
-import path from "path";
-import { Argv, CommandModule } from "yargs";
+import { promises as fs, readFileSync } from "fs";
+import os from "os";
+import path, { join } from "path";
+import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
-import os from "os";
+
+/**
+ * Load tsconfig path and extract outDir
+ */
+const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
+const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
+const outDir = tsconfig.compilerOptions.outDir;
 
 /**
  * Load the configuration from the compiler
  * @param compiler The compiler to load the configuration from
  * @returns The configuration
  */
-
 const opinionatedConfig: Array<string> = [
 	"--transpile-only",
 	"--clear",
@@ -29,6 +35,45 @@ const nonOpinionatedConfig: Array<string> = [
 	"dotenv/config",
 	"./src/main.ts",
 ];
+
+/**
+ * Dev command module
+ * @type {CommandModule<object, object>}
+ * @returns The command module
+ */
+export const devCommand: CommandModule<object, object> = {
+	command: "dev",
+	describe: "Start development server.",
+	handler: async () => {
+		await runCommand({ command: "dev" });
+	},
+};
+
+/**
+ * Build command module
+ * @type {CommandModule<object, object>}
+ * @returns The command module
+ */
+export const buildCommand: CommandModule<object, object> = {
+	command: "build",
+	describe: "Build the project.",
+	handler: async () => {
+		await runCommand({ command: "build" });
+	},
+};
+
+/**
+ * Prod command module
+ * @type {CommandModule<object, object>}
+ * @returns The command module
+ */
+export const prodCommand: CommandModule<object, object> = {
+	command: "prod",
+	describe: "Run in production mode.",
+	handler: async () => {
+		await runCommand({ command: "prod" });
+	},
+};
 
 /**
  * Helper function to execute a command
@@ -59,19 +104,25 @@ function execCmd(
 	});
 }
 
-// Helper to delete the dist directory
+/**
+ * Helper function to clean the dist directory
+ */
 const cleanDist = async (): Promise<void> => {
-	await fs.rm("./dist", { recursive: true, force: true });
-	printSuccess("Deleted dist directory", "clean-dist");
+	await fs.rm(outDir, { recursive: true, force: true });
+	printSuccess(`Clean ${outDir} directory`, "clean-dist");
 };
 
-// Helper to compile TypeScript
+/**
+ * Helper function to compile TypeScript
+ */
 const compileTypescript = async () => {
 	await execCmd("npx", ["tsc", "-p", "tsconfig.build.json"]);
 	printSuccess("Built successfully", "compile-typescript");
 };
 
-// Helper to copy files
+/**
+ * Helper function to copy files to the dist directory
+ */
 const copyFiles = async () => {
 	const { opinionated } = await Compiler.loadConfig();
 	let filesToCopy: Array<string> = [];
@@ -85,41 +136,23 @@ const copyFiles = async () => {
 		filesToCopy = ["tsconfig.json", "package.json"];
 	}
 	filesToCopy.forEach((file) => {
-		fs.copyFile(file, path.join("./dist", path.basename(file)));
+		fs.copyFile(file, join(outDir, path.basename(file)));
 	});
 };
 
-// Helper clear screen
+/**
+ * Helper function to clear the screen
+ */
 const clearScreen = () => {
 	const platform = os.platform();
 	const command = platform === "win32" ? "cls" : "clear";
 	spawn(command, { stdio: "inherit", shell: true });
 };
 
-export const devCommand: CommandModule<object, object> = {
-	command: "dev",
-	describe: "Start development server.",
-	handler: async () => {
-		await runCommand({ command: "dev" });
-	},
-};
-
-export const buildCommand: CommandModule<object, object> = {
-	command: "build",
-	describe: "Build the project.",
-	handler: async () => {
-		await runCommand({ command: "build" });
-	},
-};
-
-export const prodCommand: CommandModule<object, object> = {
-	command: "prod",
-	describe: "Run in production mode.",
-	handler: async () => {
-		await runCommand({ command: "prod" });
-	},
-};
-
+/**
+ * Helper function to run a command
+ * @param command The command to run
+ */
 export const runCommand = async ({
 	command,
 }: {
@@ -136,22 +169,37 @@ export const runCommand = async ({
 				);
 				break;
 			case "build":
+				if (!outDir) {
+					printError(
+						"Cannot build project. Please provide an outDir in tsconfig.build.json",
+						"build-command",
+					);
+					process.exit(1);
+				}
 				await cleanDist();
 				await compileTypescript();
 				await copyFiles();
 				break;
 			case "prod": {
+				if (!outDir) {
+					printError(
+						"Cannot run in prod mode. Please provide an outDir in tsconfig.build.json",
+						"prod-command",
+					);
+					process.exit(1);
+				}
+
 				let config: Array<string> = [];
 				if (opinionated) {
 					config = [
 						"-r",
 						"dotenv/config",
 						"-r",
-						"./dist/register-path.js",
-						"./dist/src/main.js",
+						`./${outDir}/register-path.js`,
+						`./${outDir}/src/main.js`,
 					];
 				} else {
-					config = ["-r", "dotenv/config", "./dist/main.js"];
+					config = ["-r", "dotenv/config", `./${outDir}/main.js`];
 				}
 				clearScreen();
 				execCmd("node", config);
