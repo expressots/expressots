@@ -11,7 +11,7 @@ import Compiler from "../utils/compiler";
  */
 const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
 const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
-const outDir = tsconfig.compilerOptions.outDir || "dist";
+const outDir = tsconfig.compilerOptions.outDir;
 
 /**
  * Load the configuration from the compiler
@@ -169,11 +169,26 @@ export const runCommand = async ({
 				);
 				break;
 			case "build":
+				if (!outDir) {
+					printError(
+						"Cannot build project. Please provide an outDir in tsconfig.build.json",
+						"build-command",
+					);
+					process.exit(1);
+				}
 				await cleanDist();
 				await compileTypescript();
 				await copyFiles();
 				break;
 			case "prod": {
+				if (!outDir) {
+					printError(
+						"Cannot run in prod mode. Please provide an outDir in tsconfig.build.json",
+						"prod-command",
+					);
+					process.exit(1);
+				}
+
 				let config: Array<string> = [];
 				if (opinionated) {
 					config = [
