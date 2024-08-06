@@ -28,8 +28,8 @@ class AppFactory {
 
   /**
    * Create an instance of a web server.
-   * @param container - InversifyJS container to resolve dependencies.
-   * @param webServerType - Constructor of a class that implements IWebServer, or array of middlewares.
+   * @param container - Dependency injection container.
+   * @param webServerType - Constructor of a class that implements IWebServer.
    * @returns A promise that resolves to an instance of IWebServer.
    */
   public static async create<T extends IWebServer>(
