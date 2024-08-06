@@ -33,6 +33,7 @@ export default defineConfig({
         "**/node_modules/**",
         "**/lib/**",
         "**/test/**",
+        "**/__tests__/**",
         "**/benchmark/**",
         "**/index.ts/**",
         "templates/**",
