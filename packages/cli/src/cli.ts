@@ -37,7 +37,6 @@ yargs(hideBin(process.argv))
 	.fail((msg, err, yargs) => {
 		if (msg) {
 			if (msg.includes("Unknown argument")) {
-				// Get the command name
 				const command = process.argv[2];
 
 				if (command === "run") {

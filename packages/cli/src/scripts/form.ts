@@ -1,9 +1,8 @@
-import chalk from "chalk";
-import { printError } from "../utils/cli-ui";
-import path from "path";
+import { ExecSyncOptions, execSync } from "child_process";
 import fs from "fs";
 import inquirer from "inquirer";
-import { execSync, ExecSyncOptions } from "child_process";
+import path from "path";
+import { printError, printWarning } from "../utils/cli-ui";
 
 const cwd = process.cwd();
 const packageJsonPath = path.join(cwd, "package.json");
@@ -16,10 +15,7 @@ function readPackageJson(): PackageJson {
 	try {
 		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 	} catch (e) {
-		printError(
-			`Error reading package.json: ${chalk.bold(chalk.white(packageJsonPath))}\n${e}`,
-			"scripts-command",
-		);
+		printError(`Error reading package.json`, "scripts-command");
 		process.exit(1);
 	}
 }
@@ -27,7 +23,7 @@ function readPackageJson(): PackageJson {
 function listScripts(packageJson: PackageJson): Record<string, string> {
 	const scripts = packageJson.scripts || {};
 	if (Object.keys(scripts).length === 0) {
-		console.log(chalk.bold.yellow("No scripts found in package.json."));
+		printWarning("No scripts found in package.json", "scripts-command");
 		process.exit(0);
 	}
 	return scripts;
@@ -76,8 +72,8 @@ function executeScripts(
 
 			execSync(command, options);
 		} catch (e) {
-			printError(
-				`Failed to run: ${chalk.bold(chalk.white(script))}\n${e}`,
+			printWarning(
+				`Command ${script} cancelled or failed - ${e}`,
 				"scripts-command",
 			);
 		}
@@ -105,8 +101,8 @@ export const scriptsForm = async (scriptArgs: string[] = []): Promise<void> => {
 
 	if (!runner) {
 		printError(
-			"No package manager found!",
-			"Please ensure you have npm, yarn, or pnpm installed.",
+			"No package manager found! Please ensure you have npm, yarn, or pnpm installed.",
+			"scripts-command",
 		);
 		process.exit(1);
 	}
