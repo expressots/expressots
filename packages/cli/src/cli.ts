@@ -16,6 +16,7 @@ import { createProject } from "./new";
 import { addProviderCMD } from "./providers";
 import { createExternalProviderCMD } from "./providers/create/cli";
 import { printError } from "./utils/cli-ui";
+import { scriptsCommand } from "./scripts";
 
 stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
@@ -28,6 +29,7 @@ yargs(hideBin(process.argv))
 	.command(createExternalProviderCMD())
 	.command(addProviderCMD())
 	.command(generateProject())
+	.command(scriptsCommand())
 	.command(infoProject())
 	.command(helpCommand())
 	.demandCommand(1, "You need at least one command before moving on")
@@ -35,7 +37,6 @@ yargs(hideBin(process.argv))
 	.fail((msg, err, yargs) => {
 		if (msg) {
 			if (msg.includes("Unknown argument")) {
-				// Get the command name
 				const command = process.argv[2];
 
 				if (command === "run") {

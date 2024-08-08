@@ -15,6 +15,7 @@ const helpForm = async (): Promise<void> => {
 		["new project", "new", "Generate a new project"],
 		["info", "i", "Provides project information"],
 		["resources", "r", "Displays cli commands and resources"],
+		["scripts", "scripts", "Run scripts list or specific scripts"],
 		["help", "h", "Show command help"],
 		[
 			"service",
