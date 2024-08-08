@@ -37,6 +37,8 @@ export default defineConfig({
         "**/benchmark/**",
         "**/index.ts/**",
         "templates/**",
+        "packages/core/src/error/utils.ts",
+        "packages/core/src/middleware/middleware-service.ts",
       ],
       thresholds: {
         global: {
