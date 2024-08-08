@@ -4,6 +4,7 @@ export {
   ExpressHandler,
   ExpressoMiddleware,
   MiddlewareOptions,
+  ErrorHandlerOptions,
 } from "./middleware-service";
 export { OptionsJson } from "./interfaces/body-parser.interface";
 export { CorsOptions } from "./interfaces/cors.interface";

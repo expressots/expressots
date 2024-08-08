@@ -53,7 +53,7 @@ describe("Middleware Service", () => {
 
   it("returns the error handler middleware", () => {
     const customErrorHandler = vi.fn((err, req, res, next) => next());
-    middlewareManager.setErrorHandler(customErrorHandler);
+    middlewareManager.setErrorHandler({ errorHandler: customErrorHandler });
 
     const errorHandler = middlewareManager.getErrorHandler();
 

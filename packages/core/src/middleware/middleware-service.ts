@@ -111,6 +111,18 @@ enum MiddlewareType {
 }
 
 /**
+ * ErrorHandlerOptions Interface
+ *
+ * The ErrorHandlerOptions interface specifies the configuration options for the error handler middleware.
+ * @param errorHandler: An Express error handler function that takes care of processing errors and formulating the response.
+ * @param showStackTrace: A boolean value indicating whether to include the stack trace in the error response. The default value is false.
+ */
+export interface ErrorHandlerOptions {
+  errorHandler?: ExpressHandler;
+  showStackTrace?: boolean;
+}
+
+/**
  * Interface for configuring and managing middlewares in the application.
  * Provides methods to be added automatically in the application without the need to import packages.
  */
@@ -191,9 +203,11 @@ interface IMiddleware {
   /**
    * Configures the error handling middleware for the application.
    *
-   * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
+   * @param options - The object containing the configuration options for the error handler middleware.
+   * @param errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
+   * @param showStackTrace - A boolean value indicating whether to show the stack trace in the response.
    */
-  setErrorHandler(errorHandling?: ExpressHandler): void;
+  setErrorHandler(options?: ErrorHandlerOptions): void;
 
   /**
    * Adds a middleware to serve static files from the specified root directory.
@@ -506,11 +520,17 @@ class Middleware implements IMiddleware {
   /**
    * Configures the error handling middleware for the application.
    *
-   * @param errorHandling - The Express error handler function that takes care of processing errors and formulating the response.
+   * @param options - The object containing the configuration options for the error handler middleware.
+   * @param errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
+   * @param showStackTrace - A boolean value indicating whether to show the stack trace in the response.
    */
-  setErrorHandler(errorHandling?: ExpressHandler): void {
+  setErrorHandler(options: ErrorHandlerOptions = {}): void {
+    const { errorHandler: errorHandling, showStackTrace } = options;
+
     if (!errorHandling) {
-      this.errorHandler = defaultErrorHandler;
+      this.errorHandler = (error, req, res, next): void => {
+        defaultErrorHandler(error, req, res, next, showStackTrace);
+      };
     } else {
       this.errorHandler = errorHandling;
     }
