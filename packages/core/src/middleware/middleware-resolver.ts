@@ -31,6 +31,7 @@ class MiddlewareResolver {
     rateLimit: "express-rate-limit",
     multer: "multer",
     session: "express-session",
+    urlencoded: "urlencodedParser",
     // Add other middlewares
   };
 

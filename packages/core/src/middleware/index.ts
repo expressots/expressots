@@ -17,4 +17,5 @@ export { CookieParserOptions } from "./interfaces/cookie-parser.interface";
 export { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 export { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 export { multer } from "./interfaces/multer.interface";
+export { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 export * as IMorgan from "./interfaces/morgan.interface";
