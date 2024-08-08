@@ -18,6 +18,7 @@ import { OptionsHelmet } from "./interfaces/helmet.interface";
 import { multer } from "./interfaces/multer.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
 import { provide } from "inversify-binding-decorators";
+import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 
 /**
  * ExpressHandler Type
@@ -127,6 +128,14 @@ export interface ErrorHandlerOptions {
  * Provides methods to be added automatically in the application without the need to import packages.
  */
 interface IMiddleware {
+  /**
+   * Adds a URL Encoded Parser middleware to the middleware collection.
+   * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
+   *
+   * @param options - Optional configuration options for the URL Encoded Parser.
+   */
+  addUrlEncodedParser(options?: OptionsUrlencoded): void;
+
   /**
    * Adds a Rate Limit middleware to the middleware collection.
    * The rate limiter is responsible for adding dynamic rate limit and request throttling to the application.
@@ -322,6 +331,28 @@ class Middleware implements IMiddleware {
       }
       return false;
     });
+  }
+
+  /**
+   * Adds a URL Encoded Parser middleware to the middleware collection.
+   * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
+   *
+   * @param options - Optional configuration options for the URL Encoded Parser.
+   */
+  addUrlEncodedParser(options?: OptionsUrlencoded): void {
+    const middlewareExist = this.middlewareExists("urlencodedParser");
+
+    if (middlewareExist) {
+      this.logger.warn(
+        `[urlencodedParser] already exists. Skipping...`,
+        "configure-service",
+      );
+    } else {
+      this.middlewarePipeline.push({
+        timestamp: new Date(),
+        middleware: express.urlencoded(options),
+      });
+    }
   }
 
   public addRateLimiter(options?: RateLimitOptions): void {
