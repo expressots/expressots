@@ -74,7 +74,7 @@
   },
   "devDependencies": {
     "@codecov/vite-plugin": "^0.0.1-beta.5",
-    "@commitlint/cli": "19.2.1",
+    "@commitlint/cli": "19.4.0",
     "@commitlint/config-conventional": "19.1.0",
     "@expressots/adapter-express": "latest",
     "@release-it/conventional-changelog": "8.0.1",
