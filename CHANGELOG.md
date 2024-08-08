@@ -1,5 +1,31 @@
 
 
+## [2.16.0](https://github.com/expressots/expressots/compare/2.15.0...2.16.0) (2024-08-08)
+
+
+### Features
+
+* add stack trace option on defaultErrorHandler middleware ([c9005ed](https://github.com/expressots/expressots/commit/c9005ed4e28bd76f7622f1bd006d90b18e8b0cf6))
+* add urlEncodedParser default middleware ([ec44767](https://github.com/expressots/expressots/commit/ec44767e41d8a1a208bb2be1120bb13a97942b20))
+* bump release-it from 17.5.0 to 17.6.0 ([bbdc3c8](https://github.com/expressots/expressots/commit/bbdc3c8ad692775f96f26ba3da952f38441aa58e))
+
+
+### Bug Fixes
+
+* remove express dependency and middlewares.spec ([b538cce](https://github.com/expressots/expressots/commit/b538cce0a9b61e43988d3190973dd79993da833b))
+
+
+### Code Refactoring
+
+* adjust command dev, build, prod ([c819625](https://github.com/expressots/expressots/commit/c819625327a3e9632d418eed0e26af7fa80dcdcc))
+* remove opinionated template example ([bca45ac](https://github.com/expressots/expressots/commit/bca45ac19e4415452e6194468d54a6f34ec5c5d7))
+
+
+### Tests
+
+* ignore middleware service, utils ([6c3e6f7](https://github.com/expressots/expressots/commit/6c3e6f7af7c656ec15e5a5ced23af05eef8a0872))
+* ignore spec on coverage & better comments in app-factory ([698053d](https://github.com/expressots/expressots/commit/698053deeb538fdfdff6ed4a75fd616052df4f58))
+
 ## [2.15.0](https://github.com/expressots/expressots/compare/2.14.1...2.15.0) (2024-07-17)
 
 
