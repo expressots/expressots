@@ -1,5 +1,17 @@
 
 
+## [1.12.0](https://github.com/expressots/expressots-cli/compare/1.11.1...1.12.0) (2024-08-08)
+
+
+### Features
+
+* add the script command ([158cf6e](https://github.com/expressots/expressots-cli/commit/158cf6efad1e3b262d941c802fb37893c6075849))
+
+
+### Bug Fixes
+
+* adjusts in the print warning and error msgs ([d17e583](https://github.com/expressots/expressots-cli/commit/d17e5837ce82f899bcd4a6655796527e60219f09))
+
 ## [1.11.1](https://github.com/expressots/expressots-cli/compare/1.11.0...1.11.1) (2024-08-04)
 
 
