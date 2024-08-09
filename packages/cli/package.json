@@ -58,7 +58,7 @@
 		"glob": "10.4.5",
 		"inquirer": "8.2.6",
 		"mustache": "4.2.0",
-		"semver": "7.6.2",
+		"semver": "7.6.3",
 		"ts-node": "10.9.2",
 		"yargs": "17.7.2"
 	},
