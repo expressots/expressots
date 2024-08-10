@@ -195,9 +195,12 @@ export class InversifyExpressServer {
     this._app.use(this._routingConfig.rootPath, this._router);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private isExpressoMiddleware(middlewareItem: any): middlewareItem is IExpressoMiddleware {
-    return middlewareItem && typeof middlewareItem.use === "function";
+  private isExpressoMiddleware(middlewareItem: Middleware): middlewareItem is IExpressoMiddleware {
+    return (
+      typeof middlewareItem === "object" &&
+      "use" in middlewareItem &&
+      typeof middlewareItem.use === "function"
+    );
   }
 
   private resolveMiddleware(...middleware: Array<Middleware>): Array<express.RequestHandler> {
