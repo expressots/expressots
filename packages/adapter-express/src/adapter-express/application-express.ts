@@ -114,6 +114,8 @@ class AppExpress extends ApplicationBase implements IWebServer {
     /* Apply the status code to the response */
     this.middlewares.unshift(new HttpStatusCodeMiddleware() as ExpressoMiddleware);
 
+    /* Get middlewares from the @controller and http decorators */
+
     const expressServer = new InversifyExpressServer(this.container, null, {
       rootPath: this.globalPrefix as string,
     });

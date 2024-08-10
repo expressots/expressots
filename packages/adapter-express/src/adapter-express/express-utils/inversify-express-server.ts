@@ -34,6 +34,7 @@ import type {
   ControllerMethodMetadata,
   ExtractedParameters,
   HttpContext,
+  IExpressoMiddleware,
   Middleware,
   ParameterMetadata,
   Principal,
@@ -168,7 +169,7 @@ export class InversifyExpressServer {
       const parameterMetadata = getControllerParameterMetadata(controller.constructor);
 
       if (controllerMetadata && methodMetadata) {
-        const controllerMiddleware = this.resolveMidleware(...controllerMetadata.middleware);
+        const controllerMiddleware = this.resolveMiddleware(...controllerMetadata.middleware);
 
         methodMetadata.forEach((metadata: ControllerMethodMetadata) => {
           let paramList: Array<ParameterMetadata> = [];
@@ -180,7 +181,7 @@ export class InversifyExpressServer {
             metadata.key,
             paramList,
           );
-          const routeMiddleware = this.resolveMidleware(...metadata.middleware);
+          const routeMiddleware = this.resolveMiddleware(...metadata.middleware);
           this._router[metadata.method](
             `${controllerMetadata.path}${metadata.path}`,
             ...controllerMiddleware,
@@ -194,8 +195,19 @@ export class InversifyExpressServer {
     this._app.use(this._routingConfig.rootPath, this._router);
   }
 
-  private resolveMidleware(...middleware: Array<Middleware>): Array<express.RequestHandler> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private isExpressoMiddleware(middlewareItem: any): middlewareItem is IExpressoMiddleware {
+    return middlewareItem && typeof middlewareItem.use === "function";
+  }
+
+  private resolveMiddleware(...middleware: Array<Middleware>): Array<express.RequestHandler> {
     return middleware.map((middlewareItem) => {
+      if (this.isExpressoMiddleware(middlewareItem)) {
+        return (req: Request, res: Response, next: NextFunction): void => {
+          middlewareItem.use(req, res, next);
+        };
+      }
+
       if (!this._container.isBound(middlewareItem)) {
         return middlewareItem as express.RequestHandler;
       }
