@@ -19,6 +19,8 @@ import type {
   Middleware,
   ParameterMetadata,
 } from "./interfaces";
+import { packageResolver } from "./resolver-multer";
+import { RequestHandler } from "express";
 
 export const injectHttpContext = inject(TYPE.HttpContext);
 
@@ -422,4 +424,139 @@ function convertToType(value: string, type: unknown): string | number | boolean 
     return value === "true" || value === "1";
   }
   return value;
+}
+
+export interface StorageEngine {
+  _handleFile(
+    req: unknown,
+    file: MulterFile,
+    callback: (error?: Error | null, info?: Partial<MulterFile>) => void,
+  ): void;
+  _removeFile(req: unknown, file: MulterFile, callback: (error: Error | null) => void): void;
+}
+
+export interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination?: string;
+  filename?: string;
+  path?: string;
+  buffer?: Buffer;
+}
+
+export interface MulterLimits {
+  fieldNameSize?: number;
+  fieldSize?: number;
+  fields?: number;
+  fileSize?: number;
+  files?: number;
+  parts?: number;
+  headerPairs?: number;
+}
+
+export interface MulterOptions {
+  dest?: string;
+  storage?: StorageEngine;
+  limits?: MulterLimits;
+  fileFilter?: FileFilter;
+}
+
+export type FileFilterCallback = (error: Error | null, acceptFile: boolean) => void;
+export type FileFilter = (req: unknown, file: MulterFile, callback: FileFilterCallback) => void;
+type FieldOptions = { fieldName: string; maxCount?: number };
+
+/**
+ * File upload decorator to handle file uploads
+ * @param options
+ * @param multerOptions
+ * @returns MethodDecorator
+ */
+export function FileUpload(
+  options?: FieldOptions | Array<FieldOptions> | { none?: boolean; any?: boolean },
+  multerOptions?: MulterOptions,
+): MethodDecorator {
+  const multer = packageResolver("multer");
+
+  if (!multer) {
+    throw new Error("Multer package not found.");
+  }
+
+  const upload = multer(multerOptions);
+  const method = inferMulterMethod(options);
+
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
+  ): void {
+    const originalMethod = descriptor.value;
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    descriptor.value = function (...args: Array<any>): any {
+      const req = args[0];
+      const res = args[1];
+      // const next = args[2];
+
+      const multerMiddleware = getMulterMiddleware(upload, options, method);
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      multerMiddleware(req, res, (err: any) => {
+        if (err) {
+          return res.status(400).json({ error: err.message });
+        }
+        return originalMethod.apply(this, args);
+      });
+    };
+  };
+}
+
+/**
+ * Infer the multer method to use based on the provided options
+ * @param options
+ * @returns
+ */
+function inferMulterMethod(
+  options?: FieldOptions | Array<FieldOptions> | { none?: boolean; any?: boolean },
+): "single" | "array" | "fields" | "none" | "any" {
+  if (typeof options === "object" && "none" in options && options.none) return "none";
+  if (typeof options === "object" && "any" in options && options.any) return "any";
+  if (Array.isArray(options)) return "fields";
+  if (typeof options === "object" && "fieldName" in options && options.maxCount !== undefined)
+    return "array";
+  if (typeof options === "object" && "fieldName" in options) return "single";
+  throw new Error("Invalid options provided for FileUpload.");
+}
+
+/**
+ * Get the multer middleware based on the method
+ * @param upload
+ * @param options
+ * @param method
+ * @returns
+ */
+function getMulterMiddleware(
+  upload: any,
+  options: FieldOptions | Array<FieldOptions> | { none?: boolean; any?: boolean },
+  method: "single" | "array" | "fields" | "none" | "any",
+): RequestHandler {
+  switch (method) {
+    case "single":
+      return upload.single((options as FieldOptions).fieldName);
+    case "array":
+      return upload.array((options as FieldOptions).fieldName, (options as FieldOptions).maxCount);
+    case "fields": {
+      const fieldsOptions = (options as Array<FieldOptions>).map((opt) => ({
+        name: opt.fieldName,
+        maxCount: opt.maxCount,
+      }));
+      return upload.fields(fieldsOptions);
+    }
+    case "none":
+      return upload.none();
+    case "any":
+      return upload.any();
+    default:
+      throw new Error(`Unsupported Multer method: ${method}`);
+  }
 }
