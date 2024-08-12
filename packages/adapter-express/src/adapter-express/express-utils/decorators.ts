@@ -20,7 +20,8 @@ import type {
   ParameterMetadata,
 } from "./interfaces";
 import { packageResolver } from "./resolver-multer";
-import { RequestHandler } from "express";
+import { RequestHandler, Request, Response, NextFunction } from "express";
+import { Report, StatusCode } from "@expressots/core";
 
 export const injectHttpContext = inject(TYPE.HttpContext);
 
@@ -472,6 +473,7 @@ type FieldOptions = { fieldName: string; maxCount?: number };
  * File upload decorator to handle file uploads
  * @param options
  * @param multerOptions
+ * @default { none: true }
  * @returns MethodDecorator
  */
 export function FileUpload(
@@ -479,13 +481,17 @@ export function FileUpload(
   multerOptions?: MulterOptions,
 ): MethodDecorator {
   const multer = packageResolver("multer");
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  let upload: any;
+  let method: "single" | "array" | "fields" | "none" | "any" = "none";
+  if (multer) {
+    if (options === undefined) {
+      options = { none: true };
+    }
 
-  if (!multer) {
-    throw new Error("Multer package not found.");
+    upload = multer(multerOptions);
+    method = inferMulterMethod(options);
   }
-
-  const upload = multer(multerOptions);
-  const method = inferMulterMethod(options);
 
   return function (
     target: object,
@@ -495,15 +501,18 @@ export function FileUpload(
     const originalMethod = descriptor.value;
     /* eslint-disable @typescript-eslint/no-explicit-any */
     descriptor.value = function (...args: Array<any>): any {
-      const req = args[0];
-      const res = args[1];
-      // const next = args[2];
+      const req = args[0] as Request;
+      const res = args[1] as Response;
+      const next = args[2] as NextFunction;
 
-      const multerMiddleware = getMulterMiddleware(upload, options, method);
-      /* eslint-disable @typescript-eslint/no-explicit-any */
+      const multerMiddleware: RequestHandler = getMulterMiddleware(upload, options, method);
       multerMiddleware(req, res, (err: any) => {
         if (err) {
-          return res.status(400).json({ error: err.message });
+          if (typeof next === "function") {
+            return next(err);
+          } else {
+            return res.status(400).json({ error: err.message });
+          }
         }
         return originalMethod.apply(this, args);
       });
@@ -519,13 +528,20 @@ export function FileUpload(
 function inferMulterMethod(
   options?: FieldOptions | Array<FieldOptions> | { none?: boolean; any?: boolean },
 ): "single" | "array" | "fields" | "none" | "any" {
-  if (typeof options === "object" && "none" in options && options.none) return "none";
-  if (typeof options === "object" && "any" in options && options.any) return "any";
+  const report: Report = new Report();
+
+  if ((options as { none?: boolean }).none) return "none";
+  if ((options as { any?: boolean }).any) return "any";
   if (Array.isArray(options)) return "fields";
-  if (typeof options === "object" && "fieldName" in options && options.maxCount !== undefined)
+  if ((options as FieldOptions).fieldName && (options as FieldOptions).maxCount !== undefined)
     return "array";
-  if (typeof options === "object" && "fieldName" in options) return "single";
-  throw new Error("Invalid options provided for FileUpload.");
+  if ((options as FieldOptions).fieldName) return "single";
+
+  throw report.error(
+    "Invalid options provided for FileUpload.",
+    StatusCode.InternalServerError,
+    "multer-decorator",
+  );
 }
 
 /**
@@ -540,6 +556,8 @@ function getMulterMiddleware(
   options: FieldOptions | Array<FieldOptions> | { none?: boolean; any?: boolean },
   method: "single" | "array" | "fields" | "none" | "any",
 ): RequestHandler {
+  const report: Report = new Report();
+
   switch (method) {
     case "single":
       return upload.single((options as FieldOptions).fieldName);
@@ -557,6 +575,10 @@ function getMulterMiddleware(
     case "any":
       return upload.any();
     default:
-      throw new Error(`Unsupported Multer method: ${method}`);
+      throw report.error(
+        `Unsupported Multer method: ${method}`,
+        StatusCode.InternalServerError,
+        "multer-decorator",
+      );
   }
 }
