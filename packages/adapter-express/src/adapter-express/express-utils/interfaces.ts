@@ -16,7 +16,12 @@ interface ConstructorFunction<T = Record<string, unknown>> {
 
 export type DecoratorTarget<T = unknown> = ConstructorFunction<T> | Prototype<T>;
 
-export type Middleware = string | symbol | RequestHandler;
+export interface IExpressoMiddleware {
+  //readonly name: string;
+  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
+
+export type Middleware = string | symbol | RequestHandler | IExpressoMiddleware;
 
 export type ControllerHandler = (...params: Array<unknown>) => unknown;
 export type BaseController = Record<string, ControllerHandler>;

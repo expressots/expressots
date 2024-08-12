@@ -103,7 +103,7 @@ export function Http(code: number) {
  * @param middleware array of middleware to be applied to all routes defined in path logic
  */
 export function All(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
-  return httpMethod("all", path, ...middleware);
+  return Method("all", path, ...middleware);
 }
 
 /**
@@ -121,7 +121,7 @@ export function Get(path: string, ...middleware: Array<Middleware>): HandlerDeco
  * @param middleware array of middleware to be applied to the route
  */
 export function Post(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
-  return httpMethod("post", path, ...middleware);
+  return Method("post", path, ...middleware);
 }
 
 /**
@@ -148,7 +148,7 @@ export function Patch(path: string, ...middleware: Array<Middleware>): HandlerDe
  * @param middleware array of middleware to be applied to the route
  */
 export function Head(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
-  return httpMethod("head", path, ...middleware);
+  return Method("head", path, ...middleware);
 }
 
 /**
@@ -227,7 +227,7 @@ function enhancedHttpMethod(
  * @param path route path
  * @param middleware array of middleware to be applied to the route
  */
-export function httpMethod(
+export function Method(
   method: keyof typeof HTTP_VERBS_ENUM,
   path: string,
   ...middleware: Array<Middleware>
