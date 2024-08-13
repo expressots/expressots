@@ -20,7 +20,7 @@ import type {
   ParameterMetadata,
 } from "./interfaces";
 import { packageResolver } from "./resolver-multer";
-import { RequestHandler, Request, Response, NextFunction } from "express";
+import { RequestHandler, Request, Response } from "express";
 import { Report, StatusCode } from "@expressots/core";
 
 export const injectHttpContext = inject(TYPE.HttpContext);
@@ -503,16 +503,12 @@ export function FileUpload(
     descriptor.value = function (...args: Array<any>): any {
       const req = args[0] as Request;
       const res = args[1] as Response;
-      const next = args[2] as NextFunction;
+      // const next = args[2] as NextFunction;
 
       const multerMiddleware: RequestHandler = getMulterMiddleware(upload, options, method);
       multerMiddleware(req, res, (err: any) => {
         if (err) {
-          if (typeof next === "function") {
-            return next(err);
-          } else {
-            return res.status(400).json({ error: err.message });
-          }
+          return res.status(400).json({ error: err.message });
         }
         return originalMethod.apply(this, args);
       });
