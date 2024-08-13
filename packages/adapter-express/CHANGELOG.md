@@ -1,5 +1,27 @@
 
 
+## [1.8.0](https://github.com/expressots/adapter-express/compare/1.7.0...1.8.0) (2024-08-13)
+
+
+### Features
+
+* add expressots middleware in decorators ([055ead9](https://github.com/expressots/adapter-express/commit/055ead94334dd5ea735ddf04a16a322d56d566cc))
+* add FileUpload decorator ([a4f62b1](https://github.com/expressots/adapter-express/commit/a4f62b1cd377625c55218069599a7a262493e3f5))
+
+
+### Bug Fixes
+
+* adjust error msgs and package resolver ([34a0fcd](https://github.com/expressots/adapter-express/commit/34a0fcde6e637130e328733f48130408fa881a67))
+* adjust isExpressoMiddleware function param types ([edc0888](https://github.com/expressots/adapter-express/commit/edc0888489df4c9f33a5b97af0820ce8f90904e9))
+* return message ([32d656e](https://github.com/expressots/adapter-express/commit/32d656ec2b05a807599e428c9bd0389849c2165d))
+
+
+### Code Refactoring
+
+* bump expresso core deps & remove husky deprecated code ([a9b243f](https://github.com/expressots/adapter-express/commit/a9b243fd35b877c839da2871401574cf30db808e))
+* httpMethod to Method decorator ([5e853a0](https://github.com/expressots/adapter-express/commit/5e853a04358430e9e6f658bf0d0b68b7e2708a24))
+* remove unnecessary comments ([72c4a15](https://github.com/expressots/adapter-express/commit/72c4a157055fffdfbaad19a69ea124ca0eb7fa13))
+
 ## [1.7.0](https://github.com/expressots/adapter-express/compare/1.6.0...1.7.0) (2024-07-23)
 
 
