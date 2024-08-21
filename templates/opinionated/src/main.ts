@@ -1,7 +1,4 @@
-import "reflect-metadata";
-
-import { ServerEnvironment } from "@expressots/adapter-express";
-import { AppFactory } from "@expressots/core";
+import { AppFactory, ServerEnvironment } from "@expressots/core";
 import { App } from "@providers/app/app.provider";
 import { container } from "./app.container";
 
