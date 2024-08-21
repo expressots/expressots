@@ -1,5 +1,12 @@
 
 
+## [2.16.1](https://github.com/expressots/expressots/compare/2.16.0...2.16.1) (2024-08-21)
+
+
+### Bug Fixes
+
+* remove reflect-metadata from main, add server env types ([43a5a33](https://github.com/expressots/expressots/commit/43a5a33d64381456930800555aef3ba0c6d1fd29))
+
 ## [2.16.0](https://github.com/expressots/expressots/compare/2.15.0...2.16.0) (2024-08-08)
 
 
