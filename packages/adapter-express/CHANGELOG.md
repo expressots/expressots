@@ -1,5 +1,12 @@
 
 
+## [1.8.1](https://github.com/expressots/adapter-express/compare/1.8.0...1.8.1) (2024-08-21)
+
+
+### Bug Fixes
+
+* remove server env export & update core deps ([38e1afd](https://github.com/expressots/adapter-express/commit/38e1afddbfc5f47cb9e65c3ed560f8a551ff2172))
+
 ## [1.8.0](https://github.com/expressots/adapter-express/compare/1.7.0...1.8.0) (2024-08-13)
 
 
