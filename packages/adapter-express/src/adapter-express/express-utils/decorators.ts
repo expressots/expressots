@@ -501,8 +501,8 @@ export function FileUpload(
     const originalMethod = descriptor.value;
     /* eslint-disable @typescript-eslint/no-explicit-any */
     descriptor.value = function (...args: Array<any>): any {
-      const req = args[0] as Request;
-      const res = args[1] as Response;
+      const req = args.find((el) => el.url) as Request; // url always exists on request object so it's safe to assume it exists
+      const res = args.find((el) => el.json) as Response; // same case for res.json, it always exists, so it's safe to assume it exists
       // const next = args[2] as NextFunction;
 
       const multerMiddleware: RequestHandler = getMulterMiddleware(upload, options, method);
