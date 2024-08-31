@@ -23,7 +23,7 @@ export class App extends AppExpress {
         this.provider.register(Env);
 
         this.middleware.addBodyParser();
-        this.middleware.setErrorHandler();
+        this.middleware.setErrorHandler({ showStackTrace: true });
     }
 
     protected postServerInitialization(): void {
