@@ -20,7 +20,7 @@ import type {
   ParameterMetadata,
 } from "./interfaces";
 import { packageResolver } from "./resolver-multer";
-import { RequestHandler, Request, Response } from "express";
+import { RequestHandler, Request, Response, NextFunction } from "express";
 import { Report, StatusCode } from "@expressots/core";
 
 export const injectHttpContext = inject(TYPE.HttpContext);
@@ -427,15 +427,26 @@ function convertToType(value: string, type: unknown): string | number | boolean 
   return value;
 }
 
+/**
+ * Express middleware arguments type definition
+ */
+type ExpressMiddlewareArgs = [Request, Response, NextFunction?];
+
+/**
+ * Multer storage engine interface
+ */
 export interface StorageEngine {
   _handleFile(
-    req: unknown,
+    req: Request,
     file: MulterFile,
     callback: (error?: Error | null, info?: Partial<MulterFile>) => void,
   ): void;
-  _removeFile(req: unknown, file: MulterFile, callback: (error: Error | null) => void): void;
+  _removeFile(req: Request, file: MulterFile, callback: (error: Error | null) => void): void;
 }
 
+/**
+ * Multer file interface
+ */
 export interface MulterFile {
   fieldname: string;
   originalname: string;
@@ -448,6 +459,9 @@ export interface MulterFile {
   buffer?: Buffer;
 }
 
+/**
+ * Multer limits interface
+ */
 export interface MulterLimits {
   fieldNameSize?: number;
   fieldSize?: number;
@@ -458,6 +472,9 @@ export interface MulterLimits {
   headerPairs?: number;
 }
 
+/**
+ * Multer options interface
+ */
 export interface MulterOptions {
   dest?: string;
   storage?: StorageEngine;
@@ -466,8 +483,26 @@ export interface MulterOptions {
 }
 
 export type FileFilterCallback = (error: Error | null, acceptFile: boolean) => void;
-export type FileFilter = (req: unknown, file: MulterFile, callback: FileFilterCallback) => void;
+export type FileFilter = (req: Request, file: MulterFile, callback: FileFilterCallback) => void;
 type FieldOptions = { fieldName: string; maxCount?: number };
+
+/**
+ * Type guard to check if an object is a Request
+ */
+function isRequest(obj: unknown): obj is Request {
+  return (
+    typeof obj === "object" && obj !== null && "method" in obj && "headers" in obj && "url" in obj
+  );
+}
+
+/**
+ * Type guard to check if an object is a Response
+ */
+function isResponse(obj: unknown): obj is Response {
+  return (
+    typeof obj === "object" && obj !== null && "status" in obj && "json" in obj && "send" in obj
+  );
+}
 
 /**
  * File upload decorator to handle file uploads
@@ -482,8 +517,9 @@ export function FileUpload(
 ): MethodDecorator {
   const multer = packageResolver("multer");
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  let upload: any;
+  let upload: RequestHandler;
   let method: "single" | "array" | "fields" | "none" | "any" = "none";
+
   if (multer) {
     if (options === undefined) {
       options = { none: true };
@@ -498,19 +534,28 @@ export function FileUpload(
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ): void {
-    const originalMethod = descriptor.value;
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    descriptor.value = function (...args: Array<any>): any {
-      const req = args.find((el) => el.url) as Request; // url always exists on request object so it's safe to assume it exists
-      const res = args.find((el) => el.json) as Response; // same case for res.json, it always exists, so it's safe to assume it exists
-      // const next = args[2] as NextFunction;
+    const originalMethod = descriptor.value as (...args: ExpressMiddlewareArgs) => unknown;
+    descriptor.value = function (...args: ExpressMiddlewareArgs): any {
+      const req = args.find(isRequest) as Request;
+      const res = args.find(isResponse) as Response;
 
       const multerMiddleware: RequestHandler = getMulterMiddleware(upload, options, method);
       multerMiddleware(req, res, (err: any) => {
         if (err) {
           return res.status(400).json({ error: err.message });
         }
-        return originalMethod.apply(this, args);
+
+        const result = originalMethod.apply(this, args);
+
+        if (
+          res &&
+          result &&
+          typeof result != "undefined" &&
+          !isRequest(result) &&
+          !isResponse(result)
+        ) {
+          return res.send(result);
+        }
       });
     };
   };
