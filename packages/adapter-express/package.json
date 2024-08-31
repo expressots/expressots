@@ -1,6 +1,6 @@
 {
   "name": "@expressots/adapter-express",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@adapter-express)",
   "author": "",
   "main": "./lib/cjs/index.js",
