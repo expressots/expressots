@@ -1,5 +1,17 @@
 
 
+## [2.16.2](https://github.com/expressots/expressots/compare/2.16.1...2.16.2) (2024-09-02)
+
+
+### Code Refactoring
+
+* add stackTrace app provider and add @expressots/cli to devDependencies ([212c681](https://github.com/expressots/expressots/commit/212c681eb32e4319545254f62d079da4b457a89a))
+* add test and coverage for base controller and error middleware ([5ddb7b2](https://github.com/expressots/expressots/commit/5ddb7b2265d8a7bcd3298133d5f7bb6c14e6d7ef))
+* adjust error middleware code property ([ef4e9b8](https://github.com/expressots/expressots/commit/ef4e9b8c2b93e5e3431172f60a28c433858557ae))
+* remove render from base controller, add usecase as type T ([9002129](https://github.com/expressots/expressots/commit/9002129f5f1eddd9da7c3b1f641e225d3776159a))
+* update templates main.ts removing reflect and serverenv type ([e5a789c](https://github.com/expressots/expressots/commit/e5a789c2a158eef1c0de658f00bb833e1eb8f644))
+* update templates nonop & add .env gitignore ([304cf88](https://github.com/expressots/expressots/commit/304cf885e9e9da7dbc7c24184868b1a557d93d04))
+
 ## [2.16.1](https://github.com/expressots/expressots/compare/2.16.0...2.16.1) (2024-08-21)
 
 
