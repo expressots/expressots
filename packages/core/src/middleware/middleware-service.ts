@@ -560,7 +560,7 @@ class Middleware implements IMiddleware {
 
     if (!errorHandling) {
       this.errorHandler = (error, req, res, next): void => {
-        defaultErrorHandler(error, req, res, next, showStackTrace);
+        defaultErrorHandler(error, res, next, showStackTrace);
       };
     } else {
       this.errorHandler = errorHandling;
