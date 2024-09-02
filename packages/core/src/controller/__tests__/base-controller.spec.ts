@@ -8,10 +8,6 @@ describe("BaseController", () => {
     mockResponse = {
       json: vi.fn(),
       status: vi.fn().mockReturnThis(),
-      render: vi.fn(),
-      renderAsync: vi.fn((template, options, callback) =>
-        callback(null, "Rendered Content"),
-      ),
     };
   });
 
@@ -40,51 +36,18 @@ describe("BaseController", () => {
     expect(mockResponse.json).toHaveBeenCalledWith(useCaseData);
   });
 
-  it("callUseRender renders the correct template with options", () => {
+  it("callUseCaseAsync handles errors correctly", async () => {
     class TestController extends BaseController {}
     const controller = new TestController();
 
-    (controller as any).callUseRender(mockResponse, "templateName", {
-      key: "value",
+    const error = new Error("Test error");
+    const useCasePromise = Promise.reject(error);
+    await controller["callUseCaseAsync"](useCasePromise, mockResponse, 200);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: "An unexpected error occurred.",
+      error: error.message,
     });
-
-    expect(mockResponse.render).toHaveBeenCalledWith("templateName", {
-      key: "value",
-    });
-  });
-
-  it("callUseRenderAsync resolves with rendered content", async () => {
-    class TestController extends BaseController {}
-    const controller = new TestController();
-
-    mockResponse.render = vi.fn((template, options, callback) => {
-      callback(null, "Rendered Content");
-    });
-
-    const result = await (controller as any).callUseRenderAsync(
-      mockResponse as Response,
-      "templateName",
-      { key: "value" },
-    );
-
-    expect(result).toBe("Rendered Content");
-  });
-
-  it("callUseRenderAsync rejects with an error", async () => {
-    class TestController extends BaseController {}
-    const controller = new TestController();
-
-    const error = new Error("Render Error");
-    mockResponse.render = vi.fn((template, options, callback) => {
-      callback(error);
-    });
-
-    await expect(
-      (controller as any).callUseRenderAsync(
-        mockResponse as Response,
-        "templateName",
-        { key: "value" },
-      ),
-    ).rejects.toThrow("Render Error");
   });
 });
