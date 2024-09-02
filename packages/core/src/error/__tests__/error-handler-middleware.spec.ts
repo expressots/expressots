@@ -4,7 +4,6 @@ import { AppError } from "../app-error";
 import { StatusCode } from "../status-code";
 
 describe("defaultErrorHandler", () => {
-  const mockReq = {} as any; // Minimal mock for Request, as it may not be directly used
   let mockRes: any;
   const mockNext = vi.fn(); // Mock for NextFunction, though typically not used in error handling
 
@@ -22,11 +21,11 @@ describe("defaultErrorHandler", () => {
       "TestService",
     );
 
-    defaultErrorHandler(testError, mockReq, mockRes, mockNext);
+    defaultErrorHandler(testError, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(StatusCode.NotFound);
     expect(mockRes.json).toHaveBeenCalledWith({
-      statusCode: StatusCode.NotFound,
+      code: StatusCode.NotFound,
       error: "Not Found",
     });
   });
@@ -34,11 +33,11 @@ describe("defaultErrorHandler", () => {
   it("handles generic errors by setting status to 500 and returning a generic error message", () => {
     const testError = new Error("Generic error");
 
-    defaultErrorHandler(testError, mockReq, mockRes, mockNext);
+    defaultErrorHandler(testError, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(StatusCode.InternalServerError);
     expect(mockRes.json).toHaveBeenCalledWith({
-      statusCode: StatusCode.InternalServerError,
+      code: StatusCode.InternalServerError,
       error: "An unexpected error occurred.",
     });
   });
