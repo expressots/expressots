@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Response } from "express";
 import { provide } from "inversify-binding-decorators";
 import { Controller } from "@expressots/adapter-express";
@@ -15,12 +14,17 @@ abstract class BaseController implements Controller {
    * @param res - The Express response object.
    * @param successStatusCode - The HTTP status code to return upon successful execution.
    */
-  protected async callUseCaseAsync(
-    useCase: Promise<any>,
+  protected async callUseCaseAsync<T>(
+    useCase: Promise<T>,
     res: Response,
-    successStatusCode: number,
-  ): Promise<any> {
-    return res.status(successStatusCode).json(await useCase);
+    successStatusCode: number = 200,
+  ): Promise<void> {
+    try {
+      const result = await useCase;
+      res.status(successStatusCode).json(result);
+    } catch (error: Error | unknown) {
+      this.handleError(res, error);
+    }
   }
 
   /**
@@ -29,56 +33,29 @@ abstract class BaseController implements Controller {
    * @param res - The Express response object.
    * @param successStatusCode - The HTTP status code to return upon successful execution.
    */
-  protected callUseCase(
-    useCase: any,
+  protected callUseCase<T>(
+    useCase: T,
     res: Response,
-    successStatusCode: number,
-  ): any {
-    return res.status(successStatusCode).json(useCase);
-  }
-
-  /**
-   * Synchronously renders a template with the given options using the Express `Response` object's render method.
-   *
-   * @protected
-   * @method callUseRender
-   *
-   * @param {Response} res - The Express `Response` object.
-   * @param {string} template - The name of the template to render.
-   * @param {Object} [options={}] - An optional object containing data to be passed to the template.
-   *
-   */
-  protected callUseRender(
-    res: Response,
-    template: string,
-    options: object = {},
+    successStatusCode: number = 200,
   ): void {
-    return res.render(template, options);
+    try {
+      res.status(successStatusCode).json(useCase);
+    } catch (error: Error | unknown) {
+      this.handleError(res, error);
+    }
   }
 
   /**
-   * Asynchronously renders a template with the given options using the Express `Response` object's render method.
+   * Handles errors by sending a 500 status with an error message.
+   * This method can be extended to provide more detailed error handling.
    *
-   * @protected
-   * @method callUseRenderAsync
-   *
-   * @param {Response} res - The Express `Response` object.
-   * @param {string} template - The name of the template to render.
-   * @param {Object} [options={}] - An optional object containing data to be passed to the template.
-   *
+   * @param res - The Express response object.
+   * @param error - The error that occurred during the execution of the use case.
    */
-  protected callUseRenderAsync(
-    res: Response,
-    template: string,
-    options: object = {},
-  ): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      res.render(template, options, (err, compiled) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(compiled);
-      });
+  private handleError(res: Response, error: unknown): void {
+    res.status(500).json({
+      message: "An unexpected error occurred.",
+      error: error instanceof Error ? error.message : error,
     });
   }
 }
