@@ -1,8 +1,8 @@
 {
-  "name": "@expressots/package-name",
+  "name": "@expressots/shared",
   "version": "0.0.1",
-  "description": "Expressots - modern, fast, lightweight nodejs web framework (@package-name)",
-  "author": "",
+  "description": "Shared library for ExpressoTS modules 🐎",
+  "author": "Richard Zampieri <richard.zampieri@expresso-ts.com>",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/types/index.d.ts",
   "exports": {
@@ -28,10 +28,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/<<repo_name>>"
+    "url": "https://github.com/expressots/shared"
   },
   "bugs": {
-    "url": "https://github.com/expressots/<<repo_name>>/issues"
+    "url": "https://github.com/expressots/shared/issues"
   },
   "publishConfig": {
     "access": "public"
@@ -71,24 +71,22 @@
   },
   "devDependencies": {
     "@codecov/vite-plugin": "0.0.1-beta.6",
-    "@commitlint/cli": "18.0.0",
-    "@commitlint/config-conventional": "17.7.0",
-    "@expressots/core": "latest",
-    "@release-it/conventional-changelog": "7.0.1",
-    "@types/node": "20.4.9",
-    "@typescript-eslint/eslint-plugin": "6.6.0",
-    "@typescript-eslint/parser": "6.6.0",
-    "@vitest/coverage-v8": "1.4.0",
-    "eslint": "8.48.0",
-    "eslint-config-prettier": "9.0.0",
-    "husky": "8.0.3",
-    "prettier": "3.0.3",
-    "release-it": "16.1.5",
-    "ts-jest": "29.0.5",
-    "typescript": "5.2.2",
-    "vite": "5.2.8",
+    "@commitlint/cli": "19.4.1",
+    "@commitlint/config-conventional": "19.2.2",
+    "@release-it/conventional-changelog": "8.0.1",
+    "@types/node": "20.14.10",
+    "@typescript-eslint/eslint-plugin": "7.16.1",
+    "@typescript-eslint/parser": "7.16.1",
+    "@vitest/coverage-v8": "2.0.3",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "9.1.0",
+    "husky": "9.1.1",
+    "prettier": "3.3.3",
+    "release-it": "17.6.0",
+    "typescript": "5.5.3",
+    "vite": "5.3.4",
     "vite-tsconfig-paths": "4.3.2",
-    "vitest": "1.4.0"
+    "vitest": "2.0.3"
   },
   "release-it": {
     "git": {
