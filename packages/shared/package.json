@@ -50,7 +50,7 @@
     "node": ">=18.10.0"
   },
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
     "build": "npm run clean && npm run build:cjs && npm run copy",
@@ -70,7 +70,7 @@
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "0.0.1-beta.6",
+    "@codecov/vite-plugin": "^0.0.1-beta.12",
     "@commitlint/cli": "19.4.1",
     "@commitlint/config-conventional": "19.2.2",
     "@release-it/conventional-changelog": "8.0.1",
