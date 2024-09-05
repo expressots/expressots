@@ -1,0 +1,10 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ES2021",
+		"moduleResolution": "node",
+		"outDir": "lib/cjs",
+		"declarationDir": "lib/cjs/types"
+	}
+}

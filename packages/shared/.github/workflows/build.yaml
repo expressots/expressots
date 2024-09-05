@@ -1,0 +1,51 @@
+# name: Build and Test
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches: ["main"]
+#   pull_request_target:
+#     types: [opened, synchronize, reopened]
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
+
+#       - name: Use Node.js
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: "18.11.0"
+
+#       - name: Install Dependencies
+#         run: npm install
+
+#       - name: Build
+#         run: npm run build
+
+#       - name: Unit Tests
+#         working-directory: ./src
+#         run: npm run test
+#         env:
+#           CI: true
+
+#       - name: Run Code Coverage
+#         working-directory: ./src
+#         run: npm run coverage
+
+#       - name: Upload coverage reports to Codecov
+#         uses: codecov/codecov-action@v4.0.1
+#         with:
+#           working-directory: .
+#           token: ${{ secrets.CODECOV_TOKEN }}
+
+#       - name: Set up .npmrc
+#         run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
+
+#       - name: Install dependencies
+#         run: npm ci
