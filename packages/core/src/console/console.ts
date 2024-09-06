@@ -1,4 +1,3 @@
-import { provide } from "inversify-binding-decorators";
 import { ColorStyle, bgColorCodes, colorCodes } from "../common/color-codes";
 
 /**
@@ -13,7 +12,6 @@ interface IApplicationMessageToConsole {
  * The Console class provides methods for displaying styled messages in the console.
  * @provide Console
  */
-@provide(Console)
 class Console {
   /**
    * Print a message to the console with the specified color style.

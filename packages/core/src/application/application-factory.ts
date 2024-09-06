@@ -22,7 +22,7 @@ function isWebServerConstructor<T extends IWebServer>(
  *
  * Responsible for creating an instance of the IWebServer implementation using a custom application type.
  */
-class AppFactory {
+export class AppFactory {
   public static container: Container;
   private static logger: Logger = new Logger();
 
@@ -48,5 +48,3 @@ class AppFactory {
     }
   }
 }
-
-export { AppFactory };

@@ -1,6 +1,5 @@
-import { provide } from "inversify-binding-decorators";
-import { IMemoryDBEntity, InMemoryDB } from "./db-in-memory.provider";
 import { inject } from "../../di/inversify";
+import { IMemoryDBEntity, InMemoryDB } from "./db-in-memory.provider";
 
 /*
  * Base Repository
@@ -23,7 +22,6 @@ export interface IBaseRepository<T extends IMemoryDBEntity> {
  *
  * @decorator @provide(BaseRepository)
  */
-@provide(BaseRepository)
 export class BaseRepository<T extends IMemoryDBEntity>
   implements IBaseRepository<T>
 {

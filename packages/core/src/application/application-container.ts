@@ -1,11 +1,12 @@
 import "reflect-metadata";
+
+import { buildProviderModule } from "inversify-binding-decorators";
 import {
   BindingScopeEnum,
   Container,
   ContainerModule,
   interfaces,
 } from "../di/inversify";
-import { buildProviderModule, provide } from "inversify-binding-decorators";
 
 /**
  * Represents a single binding in the dependency injection container.
@@ -114,7 +115,6 @@ interface ContainerOptions {
  * const container = new AppContainer();
  * container.create([new MyModule()]);
  */
-@provide(AppContainer)
 class AppContainer {
   private container!: Container;
   private options: ContainerOptions;

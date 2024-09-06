@@ -43,7 +43,6 @@ type controllerType = Map<symbol, new () => any>;
  * The BaseModule class provides methods for creating InversifyJS container modules.
  * @provide BaseModule
  */
-@provide(BaseModule)
 export class BaseModule {
   /**
    * Create a map of symbols for the provided controllers.
