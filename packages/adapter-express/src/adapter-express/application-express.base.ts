@@ -1,5 +1,3 @@
-import { provide } from "inversify-binding-decorators";
-
 /**
  * Abstract class ApplicationBase.
  *
@@ -20,7 +18,6 @@ import { provide } from "inversify-binding-decorators";
  * @export
  * @abstract
  */
-@provide(ApplicationBase)
 export abstract class ApplicationBase {
   /**
    * Implement this method to set up required services or configurations before

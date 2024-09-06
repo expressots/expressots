@@ -7,7 +7,7 @@ import express, {
   Response,
   Router,
 } from "express";
-import { interfaces } from "inversify";
+import { interfaces } from "../../di/di.interfaces";
 import { BaseMiddleware } from "./base-middleware";
 import {
   getControllersFromMetadata,
@@ -157,7 +157,7 @@ export class InversifyExpressServer {
 
       this._container
         .bind(TYPE.Controller)
-        .to(constructor as new (...args: Array<never>) => unknown)
+        .to(constructor as new (...args: Array<unknown>) => unknown)
         .whenTargetNamed(name);
     });
 

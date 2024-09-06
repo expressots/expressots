@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction } from "express";
 import { IApplicationMessageToConsole } from "@expressots/core";
-import { Container } from "inversify";
+import { interfaces } from "../di/di.interfaces";
 import { Engine, EngineOptions } from "./render/engine";
 
 /**
  * Interface for the WebServer application implementation.
  */
 export interface IWebServer {
-  configure(container: Container): Promise<void>;
+  configure(container: interfaces.Container): Promise<void>;
   listen(
     port: number,
     environment: ServerEnvironment,

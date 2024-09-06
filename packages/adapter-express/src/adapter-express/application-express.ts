@@ -1,13 +1,7 @@
-import {
-  Console,
-  IApplicationMessageToConsole,
-  Logger,
-  Middleware,
-  provide,
-} from "@expressots/core";
+import { Console, IApplicationMessageToConsole, Logger, Middleware } from "@expressots/core";
 import express from "express";
-import { interfaces } from "../di/di.interfaces";
 import process from "process";
+import { interfaces } from "../di/di.interfaces";
 import { ApplicationBase } from "./application-express.base";
 import {
   ExpressHandler,
@@ -34,7 +28,6 @@ import { PugOptions, setEnginePug } from "./render/pug/pug.config";
  * @method setEngine - Configures the application's view engine based on the provided configuration options.
  * @method isDevelopment - Verifies if the current environment is development.
  */
-@provide(AppExpress)
 class AppExpress extends ApplicationBase implements IWebServer {
   private logger: Logger = new Logger();
   private app: express.Application;
@@ -43,7 +36,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   private container: interfaces.Container;
   private globalPrefix: string = "/";
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
-  private console: Console;
+  private console: Console = new Console();
   private renderOptions: RenderOptions = {} as RenderOptions;
 
   protected configureServices(): void | Promise<void> {}
@@ -64,7 +57,6 @@ class AppExpress extends ApplicationBase implements IWebServer {
    */
   async configure(container: interfaces.Container): Promise<void> {
     this.container = container;
-    this.console = this.container.get(Console);
   }
 
   /**

@@ -1,5 +1,5 @@
 import type { Application, NextFunction, Request, RequestHandler, Response } from "express";
-import { interfaces as inversifyInterfaces } from "inversify";
+import { interfaces as inversifyInterfaces } from "../../di/di.interfaces";
 import { HTTP_VERBS_ENUM, PARAMETER_TYPE } from "./constants";
 import { HttpResponseMessage } from "./httpResponseMessage";
 

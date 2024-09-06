@@ -1,4 +1,4 @@
-import { interfaces } from "inversify";
+import { interfaces } from "../../di/di.interfaces";
 import { METADATA_KEY, NO_CONTROLLERS_FOUND, TYPE } from "./constants";
 import type {
   BaseController,

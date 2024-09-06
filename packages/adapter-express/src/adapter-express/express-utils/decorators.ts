@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { inject, injectable, decorate } from "inversify";
+import { inject, injectable, decorate } from "@expressots/core";
 import {
   TYPE,
   METADATA_KEY,
