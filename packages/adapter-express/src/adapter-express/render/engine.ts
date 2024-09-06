@@ -1,5 +1,6 @@
 import { EjsOptions } from "./ejs/ejs.config";
 import { HandlebarsOptions } from "./handlebars/hbs.config";
+import { PugOptions } from "./pug/pug.config";
 
 /**
  * The configuration options for the view engine.
@@ -28,4 +29,4 @@ export enum Engine {
  * @typedef {HandlebarsOptions | EjsOptions} EngineOptions
  * @public
  */
-export type EngineOptions = HandlebarsOptions | EjsOptions;
+export type EngineOptions = HandlebarsOptions | EjsOptions | PugOptions;

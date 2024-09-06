@@ -67,8 +67,6 @@
   },
   "dependencies": {
     "dotenv": "16.4.5",
-    "inversify": "6.0.2",
-    "inversify-binding-decorators": "4.0.0",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {

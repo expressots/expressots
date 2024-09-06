@@ -1,7 +1,12 @@
-import { Console, IApplicationMessageToConsole, Logger, Middleware } from "@expressots/core";
+import {
+  Console,
+  IApplicationMessageToConsole,
+  Logger,
+  Middleware,
+  provide,
+} from "@expressots/core";
 import express from "express";
-import { Container } from "inversify";
-import { provide } from "inversify-binding-decorators";
+import { interfaces } from "../di/di.interfaces";
 import process from "process";
 import { ApplicationBase } from "./application-express.base";
 import {
@@ -35,7 +40,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
-  private container: Container;
+  private container: interfaces.Container;
   private globalPrefix: string = "/";
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
   private console: Console;
@@ -57,7 +62,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * Configures the InversifyJS container.
    * @param container - The InversifyJS container.
    */
-  async configure(container: Container): Promise<void> {
+  async configure(container: interfaces.Container): Promise<void> {
     this.container = container;
     this.console = this.container.get(Console);
   }

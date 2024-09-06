@@ -4,6 +4,7 @@ import { ServerEnvironment } from "./application-express.types";
 
 /**
  * Public Interface for the WebServer application.
+ * @public API
  */
 export interface IWebServerPublic {
   /**
