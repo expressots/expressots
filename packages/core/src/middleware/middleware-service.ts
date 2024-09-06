@@ -17,7 +17,7 @@ import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 import { OptionsHelmet } from "./interfaces/helmet.interface";
 import { multer } from "./interfaces/multer.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
-import { provide } from "inversify-binding-decorators";
+import { provide } from "../di/binding-decorator";
 import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 
 /**

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BindingScopeEnum, ContainerModule, interfaces } from "../di/inversify";
-import { provide } from "inversify-binding-decorators";
 import { provideSingleton, provideTransient } from "../decorator";
+import { provide } from "../di/binding-decorator";
 
 /**
  * Key to be used for storing and retrieving binding type metadata.

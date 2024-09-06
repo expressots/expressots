@@ -1,4 +1,4 @@
-import { provide } from "inversify-binding-decorators";
+import { provide } from "../di/binding-decorator";
 import { Logger } from "../provider/logger/logger.provider";
 import { AppError } from "./app-error";
 

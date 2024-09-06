@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { fluentProvide } from "inversify-binding-decorators";
+
+import { fluentProvide } from "../di/binding-decorator";
 
 /**
  * Provides a binding for the given identifier.

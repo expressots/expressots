@@ -1,12 +1,12 @@
 import "reflect-metadata";
 
-import { buildProviderModule } from "inversify-binding-decorators";
 import {
   BindingScopeEnum,
   Container,
   ContainerModule,
   interfaces,
 } from "../di/inversify";
+import { buildProviderModule } from "../di/binding-decorator";
 
 /**
  * Represents a single binding in the dependency injection container.
