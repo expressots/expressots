@@ -1,6 +1,6 @@
 import { provide } from "inversify-binding-decorators";
 import { IMemoryDBEntity, InMemoryDB } from "./db-in-memory.provider";
-import { inject } from "inversify";
+import { inject } from "../../di/inversify";
 
 /*
  * Base Repository

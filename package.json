@@ -68,7 +68,6 @@
     "lint:fix": "eslint \"packages/**/*.ts\" --fix"
   },
   "dependencies": {
-    "inversify": "6.0.2",
     "inversify-binding-decorators": "4.0.0",
     "reflect-metadata": "0.2.2"
   },
@@ -76,7 +75,7 @@
     "@codecov/vite-plugin": "^0.0.1-beta.5",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
-    "@expressots/adapter-express": "latest",
+    "@expressots/adapter-express": "file:../../adapter-express/expressots-adapter-express-1.8.2.tgz",
     "@release-it/conventional-changelog": "8.0.1",
     "@types/express": "4.17.21",
     "@types/node": "20.14.10",

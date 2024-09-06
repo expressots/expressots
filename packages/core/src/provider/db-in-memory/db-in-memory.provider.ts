@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { injectable } from "../../di/inversify";
 import { IProvider } from "../provider-manager";
 
 /*

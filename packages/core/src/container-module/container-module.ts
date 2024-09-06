@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BindingScopeEnum, ContainerModule, interfaces } from "inversify";
+import { BindingScopeEnum, ContainerModule, interfaces } from "../di/inversify";
 import { provide } from "inversify-binding-decorators";
 import { provideSingleton, provideTransient } from "../decorator";
 

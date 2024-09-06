@@ -3,7 +3,7 @@ import {
   IWebServerPublic,
   IWebServerConstructor,
 } from "@expressots/adapter-express";
-import { Container } from "inversify";
+import { Container } from "../di/inversify";
 import { Logger } from "../provider/logger/logger.provider";
 
 /**

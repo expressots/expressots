@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
-import { injectable } from "inversify";
 import fs from "fs";
 import path from "path";
+import { injectable } from "../../di/inversify";
 import { Logger } from "../logger/logger.provider";
 import { IProvider } from "../provider-manager";
 

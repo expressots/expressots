@@ -4,7 +4,7 @@ import {
   Container,
   ContainerModule,
   interfaces,
-} from "inversify";
+} from "../di/inversify";
 import { buildProviderModule, provide } from "inversify-binding-decorators";
 
 /**

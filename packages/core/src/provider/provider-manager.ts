@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { BindingScopeEnum, interfaces } from "inversify";
+import { BindingScopeEnum, interfaces } from "../di/inversify";
 import { AppFactory } from "../application";
 import { provideSingleton } from "../decorator";
 import { Logger } from "./logger/logger.provider";

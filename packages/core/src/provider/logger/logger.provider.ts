@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { injectable } from "../../di/inversify";
 import { Color, colorCodes } from "../../common/color-codes";
 import { IProvider } from "../provider-manager";
 
