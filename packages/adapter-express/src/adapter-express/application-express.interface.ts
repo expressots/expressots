@@ -1,5 +1,5 @@
 import express from "express";
-import { IApplicationMessageToConsole } from "@expressots/core";
+import { IConsoleMessage } from "@expressots/core";
 import { Environment } from "./application-express.types";
 
 /**
@@ -13,11 +13,7 @@ export interface IWebServerPublic {
    * @param environment - Environment. (default: ServerEnvironment.Development)
    * @param consoleMessage - Optional message to display in the console.
    */
-  listen(
-    port: number,
-    environment?: Environment,
-    consoleMessage?: IApplicationMessageToConsole,
-  ): Promise<void>;
+  listen(port: number, environment?: Environment, consoleMessage?: IConsoleMessage): Promise<void>;
 
   /**
    * Get the underlying HTTP server. (default: Express.js)

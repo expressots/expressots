@@ -1,4 +1,4 @@
-import { Console, IApplicationMessageToConsole, Logger, Middleware } from "@expressots/core";
+import { Console, IConsoleMessage, Logger, Middleware } from "@expressots/core";
 import express from "express";
 import process from "process";
 import { interfaces } from "../di/di.interfaces";
@@ -139,7 +139,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   public async listen(
     port: number,
     environment?: Environment,
-    consoleMessage?: IApplicationMessageToConsole,
+    consoleMessage?: IConsoleMessage,
   ): Promise<void> {
     await this.init();
     await this.configEngine();

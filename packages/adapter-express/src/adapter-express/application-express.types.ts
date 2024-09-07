@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
-import { IApplicationMessageToConsole } from "@expressots/core";
+import { IConsoleMessage } from "@expressots/core";
 import { interfaces } from "../di/di.interfaces";
 import { Engine, EngineOptions } from "./render/engine";
 
@@ -8,11 +8,7 @@ import { Engine, EngineOptions } from "./render/engine";
  */
 export interface IWebServer {
   configure(container: interfaces.Container): Promise<void>;
-  listen(
-    port: number,
-    environment?: Environment,
-    consoleMessage?: IApplicationMessageToConsole,
-  ): Promise<void>;
+  listen(port: number, environment?: Environment, consoleMessage?: IConsoleMessage): Promise<void>;
   setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
 }
 
