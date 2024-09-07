@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ServerEnvironment } from "../server-env.types";
+import { ServerEnvironment } from "../application.types";
 
 describe("Server Environment", () => {
   it("should return production", () => {

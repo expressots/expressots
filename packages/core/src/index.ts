@@ -1,5 +1,4 @@
 export * from "./application";
-export * from "./common";
 export * from "./console";
 export * from "./container-module";
 export * from "./controller";
