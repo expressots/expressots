@@ -30,13 +30,13 @@ import { PugOptions, setEnginePug } from "./render/pug/pug.config";
  */
 class AppExpress extends ApplicationBase implements IWebServer {
   private logger: Logger = new Logger();
+  private console: Console = new Console();
   private app: express.Application;
   private port: number;
   private environment: ServerEnvironment;
   private container: interfaces.Container;
   private globalPrefix: string = "/";
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
-  private console: Console = new Console();
   private renderOptions: RenderOptions = {} as RenderOptions;
 
   protected configureServices(): void | Promise<void> {}
@@ -134,6 +134,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * @param port - The port number to listen on.
    * @param environment - The server environment.
    * @param consoleMessage - Optional message to display in the console.
+   * @public API
    */
   public async listen(
     port: number,
@@ -162,12 +163,9 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Sets the global route prefix for the application.
-   *
-   * @public
    * @method setGlobalRoutePrefix
-   *
    * @param {string} prefix - The prefix to use for all routes.
-   *
+   * @public API
    */
   public setGlobalRoutePrefix(prefix: string): void {
     this.globalPrefix = prefix;
@@ -196,13 +194,12 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Configures the application's view engine based on the provided configuration options.
-   *
-   * @public
    * @method setEngine
    * @template T - A generic type extending from RenderTemplateOptions.
    *
    * @param {Engine} engine - The view engine to set
    * @param {EngineOptions} [options] - The configuration options for the view engine
+   * @public API
    */
   public async setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void> {
     try {
@@ -218,8 +215,8 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Verifies if the current environment is development.
-   *
    * @returns A boolean value indicating whether the current environment is development or not.
+   * @public API
    */
   protected isDevelopment(): boolean {
     if (this.app) {
@@ -235,6 +232,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   /**
    * Get the underlying HTTP server. (default: Express.js)
    * @returns The underlying HTTP server after initialization.
+   * @public API
    */
   public async getHttpServer(): Promise<express.Application> {
     if (!this.app) {
