@@ -159,6 +159,7 @@ class AppContainer {
    */
   public viewContainerBindings(): void {
     const dictionary = this.container["_bindingDictionary"]._map;
+
     const entries: Array<[string, Array<Binding>]> = Array.from(
       dictionary.entries(),
     );
