@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Logger } from "../provider/logger/logger.provider";
+import { Logger } from "../logger/logger.provider";
 
 /**
  * Resolve package from the current working directory.
@@ -7,7 +7,10 @@ import { Logger } from "../provider/logger/logger.provider";
  * @param options
  * @returns
  */
-function packageResolver(packageName: string, ...options: Array<any>): any {
+export async function packageResolver(
+  packageName: string,
+  ...options: Array<any>
+): Promise<any> {
   const logger: Logger = new Logger();
 
   try {
@@ -16,8 +19,7 @@ function packageResolver(packageName: string, ...options: Array<any>): any {
     });
 
     if (hasPackage) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const packageResolved = require(hasPackage);
+      const packageResolved = await import(hasPackage);
 
       if (typeof packageResolved === "function") {
         return packageResolved(...options);
@@ -38,5 +40,3 @@ function packageResolver(packageName: string, ...options: Array<any>): any {
     );
   }
 }
-
-export { packageResolver };

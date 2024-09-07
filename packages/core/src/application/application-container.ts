@@ -114,6 +114,8 @@ interface ContainerOptions {
  * ```typescript
  * const container = new AppContainer();
  * container.create([new MyModule()]);
+ * ```
+ * @public API
  */
 class AppContainer {
   private container!: Container;
@@ -137,6 +139,7 @@ class AppContainer {
    * Creates and configures a new dependency injection container.
    * @param modules - An array of ContainerModule instances to load into the container.
    * @returns The configured dependency injection container.
+   * @public API
    */
   public create(modules: Array<ContainerModule>): Container {
     const containerOptions: interfaces.ContainerOptions = {
@@ -156,6 +159,7 @@ class AppContainer {
   /**
    * Retrieves the binding dictionary of the container.
    * @returns(void) Print table of the binding dictionary of the container.
+   * @public API
    */
   public viewContainerBindings(): void {
     const dictionary = this.container["_bindingDictionary"]._map;

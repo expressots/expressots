@@ -1,9 +1,11 @@
-import { ColorStyle, bgColorCodes, colorCodes } from "../common/color-codes";
+import { stdout } from "process";
+import { ColorStyle, bgColorCodes, colorCodes } from "./color-codes";
 
 /**
  * Interface representing application message details for console output.
+ * @public API
  */
-interface IApplicationMessageToConsole {
+export interface IConsoleMessage {
   appName: string;
   appVersion: string;
 }
@@ -12,7 +14,7 @@ interface IApplicationMessageToConsole {
  * The Console class provides methods for displaying styled messages in the console.
  * @provide Console
  */
-class Console {
+export class Console {
   /**
    * Print a message to the console with the specified color style.
    * @param message - The message to be printed.
@@ -24,8 +26,8 @@ class Console {
   ): Promise<void> {
     const textColor = "black";
     const bgColor = colorStyle;
-    console.log(
-      `${bgColorCodes[bgColor]}${colorCodes[textColor]}${message}\x1b[0m`,
+    stdout.write(
+      `${bgColorCodes[bgColor]}${colorCodes[textColor]}${message}\x1b[0m\n`,
     );
   }
 
@@ -38,10 +40,10 @@ class Console {
   public async messageServer(
     port: number,
     environment: string,
-    consoleMessage?: IApplicationMessageToConsole,
+    consoleMessage?: IConsoleMessage,
   ): Promise<void> {
-    const appConsoleMessage: IApplicationMessageToConsole = {
-      appName: consoleMessage?.appName || "Application",
+    const appConsoleMessage: IConsoleMessage = {
+      appName: consoleMessage?.appName || "App",
       appVersion: consoleMessage?.appVersion || "not provided",
     };
 
@@ -50,9 +52,6 @@ class Console {
     switch (environment.toLowerCase()) {
       case "development":
         terminalColor = ColorStyle.Yellow;
-        break;
-      case "staging":
-        terminalColor = ColorStyle.Blue;
         break;
       case "production":
         terminalColor = ColorStyle.Green;
@@ -63,11 +62,9 @@ class Console {
     }
 
     this.printColor(
-      `${appConsoleMessage.appName} version ${appConsoleMessage.appVersion} is running on ` +
-        `port ${port} - Environment: ${environment}`,
+      `[${appConsoleMessage.appName}] version [${appConsoleMessage.appVersion}] is running on ` +
+        `port [${port}] - Environment: [${environment}]`,
       terminalColor,
     );
   }
 }
-
-export { Console, IApplicationMessageToConsole };
