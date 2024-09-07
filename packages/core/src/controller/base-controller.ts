@@ -1,10 +1,12 @@
 import { Controller } from "@expressots/adapter-express";
 import { Response } from "express";
+import { injectable } from "../di/inversify";
 /**
  * The BaseController class is an abstract base class for controllers.
  * It provides methods for handling use case calls and sending appropriate responses.
  * @provide BaseController
  */
+@injectable()
 export abstract class BaseController implements Controller {
   /**
    * Calls an asynchronous use case and sends an appropriate response based on the result.
