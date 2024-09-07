@@ -8,7 +8,7 @@ import {
   ExpressoMiddleware,
   IWebServer,
   MiddlewareConfig,
-  ServerEnvironment,
+  Environment,
 } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
@@ -33,7 +33,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
   private console: Console = new Console();
   private app: express.Application;
   private port: number;
-  private environment: ServerEnvironment;
+  private environment?: Environment;
   private container: interfaces.Container;
   private globalPrefix: string = "/";
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
@@ -138,15 +138,15 @@ class AppExpress extends ApplicationBase implements IWebServer {
    */
   public async listen(
     port: number,
-    environment: ServerEnvironment,
+    environment?: Environment,
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void> {
     await this.init();
     await this.configEngine();
 
     this.port = port || 3000;
-    this.environment = environment;
-    this.app.set("env", environment);
+    this.environment = environment || "development";
+    this.app.set("env", this.environment);
 
     this.app.listen(this.port, () => {
       this.console.messageServer(this.port, this.environment, consoleMessage);
@@ -220,7 +220,7 @@ class AppExpress extends ApplicationBase implements IWebServer {
    */
   protected isDevelopment(): boolean {
     if (this.app) {
-      return this.app.get("env") === ServerEnvironment.Development;
+      return this.app.get("env") === "development";
     }
 
     this.container

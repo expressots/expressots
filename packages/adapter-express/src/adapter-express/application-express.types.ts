@@ -10,7 +10,7 @@ export interface IWebServer {
   configure(container: interfaces.Container): Promise<void>;
   listen(
     port: number,
-    environment: ServerEnvironment,
+    environment?: Environment,
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void>;
   setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
@@ -79,3 +79,14 @@ export enum ServerEnvironment {
   Development = "development",
   Production = "production",
 }
+
+/**
+ * Type representing possible server environments.
+ */
+export type TypeServerEnvironment = "development" | "production";
+
+/**
+ * Type representing possible server environments.
+ * @public API
+ */
+export type Environment = ServerEnvironment | TypeServerEnvironment | undefined;

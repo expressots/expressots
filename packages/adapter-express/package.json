@@ -66,7 +66,6 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
-    "dotenv": "16.4.5",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {

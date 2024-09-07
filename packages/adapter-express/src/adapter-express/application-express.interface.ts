@@ -1,6 +1,6 @@
-import { IApplicationMessageToConsole } from "@expressots/core";
 import express from "express";
-import { ServerEnvironment } from "./application-express.types";
+import { IApplicationMessageToConsole } from "@expressots/core";
+import { Environment } from "./application-express.types";
 
 /**
  * Public Interface for the WebServer application.
@@ -10,12 +10,12 @@ export interface IWebServerPublic {
   /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
-   * @param environment - The server environment.
+   * @param environment - Environment. (default: ServerEnvironment.Development)
    * @param consoleMessage - Optional message to display in the console.
    */
   listen(
     port: number,
-    environment: ServerEnvironment,
+    environment?: Environment,
     consoleMessage?: IApplicationMessageToConsole,
   ): Promise<void>;
 
