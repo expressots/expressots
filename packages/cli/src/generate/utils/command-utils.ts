@@ -11,7 +11,7 @@ import {
 import { printError } from "../../utils/cli-ui";
 import { verifyIfFileExists } from "../../utils/verify-file-exists";
 import Compiler from "../../utils/compiler";
-import { ExpressoConfig, Pattern } from "../../types";
+import { ExpressoConfig, Pattern } from "@expressots/shared";
 
 export const enum PathStyle {
 	None = "none",

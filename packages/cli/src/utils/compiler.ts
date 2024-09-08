@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "path";
 import { RegisterOptions, Service } from "ts-node";
-import { ExpressoConfig } from "../types";
+import { ExpressoConfig } from "@expressots/shared";
 import { printError } from "./cli-ui";
 
 /**

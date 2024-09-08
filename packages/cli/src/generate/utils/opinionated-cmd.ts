@@ -20,7 +20,7 @@ import {
 	addModuleToContainer,
 	addModuleToContainerNestedPath,
 } from "../../utils/add-module-to-container";
-import { ExpressoConfig } from "../../@types";
+import { ExpressoConfig } from "@expressots/shared";
 
 /**
  * Process commands for opinionated service scaffolding
