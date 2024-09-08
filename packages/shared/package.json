@@ -1,6 +1,6 @@
 {
   "name": "@expressots/shared",
-  "version": "0.0.1",
+  "version": "0.0.1-beta-1",
   "description": "Shared library for ExpressoTS modules 🐎",
   "author": "Richard Zampieri <richard.zampieri@expresso-ts.com>",
   "main": "./lib/cjs/index.js",
@@ -39,12 +39,13 @@
   "keywords": [
     "expressots",
     "nodejs",
-    "microservices",
     "typescript",
     "clean-architecture",
     "typescript-framework",
     "framework",
-    "server-side"
+    "server-side",
+    "backend",
+    "library"
   ],
   "engines": {
     "node": ">=18.10.0"
@@ -74,6 +75,7 @@
     "@commitlint/cli": "19.4.1",
     "@commitlint/config-conventional": "19.2.2",
     "@release-it/conventional-changelog": "8.0.1",
+    "@types/express": "4.17.21",
     "@types/node": "20.14.10",
     "@typescript-eslint/eslint-plugin": "7.16.1",
     "@typescript-eslint/parser": "7.16.1",
