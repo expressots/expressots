@@ -60,3 +60,6 @@ templates/opinionated/public
 
 # ignore pack files
 *.tgz
+
+# Config files
+expressots.config.ts

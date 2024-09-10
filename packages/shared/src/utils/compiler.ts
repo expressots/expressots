@@ -83,5 +83,3 @@ export class Compiler {
     return globalConfigObject.default;
   }
 }
-
-export default Compiler;

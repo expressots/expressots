@@ -9,5 +9,4 @@ export const LINE_REGEX =
  * ENV_VAR_REGEX is a regular expression that matches an environment variable in the command line.
  * It is used to parse the options passed in the command line.
  */
-export const ENV_VAR_REGEX =
-  /^dotenv_config_(encoding|path|debug|override|vaultEnvKey)=(.+)$/;
+export const ENV_VAR_REGEX = /^dotenv_config_(encoding|path|debug|override|vaultEnvKey)=(.+)$/;
