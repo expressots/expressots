@@ -16,6 +16,7 @@ import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
 import { Engine, EngineOptions, RenderOptions } from "./render/engine";
 import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
 import { PugOptions, setEnginePug } from "./render/pug/pug.config";
+import { config, ExpressoConfig } from "@expressots/shared";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -31,6 +32,7 @@ import { PugOptions, setEnginePug } from "./render/pug/pug.config";
 class AppExpress extends ApplicationBase implements IWebServer {
   private logger: Logger = new Logger();
   private console: Console = new Console();
+  private expressoConfig: ExpressoConfig;
   private app: express.Application;
   private port: number;
   private environment?: Environment;
@@ -55,8 +57,12 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * Configures the InversifyJS container.
    * @param container - The InversifyJS container.
    */
-  async configure(container: interfaces.Container): Promise<void> {
+  public async configure(
+    container: interfaces.Container,
+    expressoConfig?: ExpressoConfig,
+  ): Promise<void> {
     this.container = container;
+    this.expressoConfig = expressoConfig;
   }
 
   /**
@@ -147,6 +153,18 @@ class AppExpress extends ApplicationBase implements IWebServer {
     this.port = port || 3000;
     this.environment = environment || "development";
     this.app.set("env", this.environment);
+
+    if (this.expressoConfig.env) {
+      switch (this.environment) {
+        case "development":
+          config({ path: ".env.development" });
+          break;
+        case "production":
+          config({ path: ".env.production" });
+          break;
+      }
+      this.port = process.env.PORT ? parseInt(process.env.PORT, 10) : this.port ? this.port : 3000;
+    }
 
     this.app.listen(this.port, () => {
       this.console.messageServer(this.port, this.environment, consoleMessage);

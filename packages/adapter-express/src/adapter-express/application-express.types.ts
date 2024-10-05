@@ -2,12 +2,13 @@ import express, { Request, Response, NextFunction } from "express";
 import { IConsoleMessage } from "@expressots/core";
 import { interfaces } from "../di/di.interfaces";
 import { Engine, EngineOptions } from "./render/engine";
+import { ExpressoConfig } from "@expressots/shared";
 
 /**
  * Interface for the WebServer application implementation.
  */
 export interface IWebServer {
-  configure(container: interfaces.Container): Promise<void>;
+  configure(container: interfaces.Container, expressoConfig?: ExpressoConfig): Promise<void>;
   listen(port: number, environment?: Environment, consoleMessage?: IConsoleMessage): Promise<void>;
   setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
 }
@@ -74,12 +75,13 @@ export abstract class ExpressoMiddleware implements IExpressoMiddleware {
 export enum ServerEnvironment {
   Development = "development",
   Production = "production",
+  Remote = "remote",
 }
 
 /**
  * Type representing possible server environments.
  */
-export type TypeServerEnvironment = "development" | "production";
+export type TypeServerEnvironment = "development" | "production" | "remote";
 
 /**
  * Type representing possible server environments.
