@@ -1,6 +1,7 @@
 import { Console, IConsoleMessage, Logger, Middleware } from "@expressots/core";
 import express from "express";
 import process from "process";
+import fs from "fs";
 import { interfaces } from "../di/di.interfaces";
 import { ApplicationBase } from "./application-express.base";
 import {
@@ -29,7 +30,7 @@ import { config, ExpressoConfig } from "@expressots/shared";
  * @method setEngine - Configures the application's view engine based on the provided configuration options.
  * @method isDevelopment - Verifies if the current environment is development.
  */
-class AppExpress extends ApplicationBase implements IWebServer {
+export class AppExpress extends ApplicationBase implements IWebServer {
   private logger: Logger = new Logger();
   private console: Console = new Console();
   private expressoConfig: ExpressoConfig;
@@ -142,28 +143,62 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * @param consoleMessage - Optional message to display in the console.
    * @public API
    */
+  listen(): Promise<void>;
+  listen(port: number): Promise<void>;
+  listen(environment: Environment): Promise<void>;
+  listen(consoleMessage: IConsoleMessage): Promise<void>;
+  listen(port: number, environment: Environment): Promise<void>;
+  listen(port: number, consoleMessage: IConsoleMessage): Promise<void>;
+  listen(environment: Environment, consoleMessage: IConsoleMessage): Promise<void>;
   public async listen(
-    port: number,
-    environment?: Environment,
-    consoleMessage?: IConsoleMessage,
+    portOrEnvOrMsg?: number | Environment | IConsoleMessage,
+    envOrMsg?: Environment | IConsoleMessage,
+    msg?: IConsoleMessage,
   ): Promise<void> {
+    let port: number = 3000;
+    let environment: Environment = "development";
+    let consoleMessage: IConsoleMessage | undefined;
+
+    if (typeof portOrEnvOrMsg === "number") {
+      port = portOrEnvOrMsg;
+      if (typeof envOrMsg === "string") {
+        environment = envOrMsg;
+        if (msg) {
+          consoleMessage = msg;
+        }
+      } else if (envOrMsg && typeof envOrMsg === "object") {
+        consoleMessage = envOrMsg;
+      }
+    } else if (typeof portOrEnvOrMsg === "string") {
+      environment = portOrEnvOrMsg;
+      if (envOrMsg && typeof envOrMsg === "object") {
+        consoleMessage = envOrMsg;
+      }
+    } else if (portOrEnvOrMsg && typeof portOrEnvOrMsg === "object") {
+      consoleMessage = portOrEnvOrMsg;
+    }
+
     await this.init();
     await this.configEngine();
 
-    this.port = port || 3000;
-    this.environment = environment || "development";
+    this.port = port;
+    this.environment = environment;
     this.app.set("env", this.environment);
 
-    if (this.expressoConfig.env) {
-      switch (this.environment) {
-        case "development":
-          config({ path: ".env.development" });
-          break;
-        case "production":
-          config({ path: ".env.production" });
-          break;
+    if (this.expressoConfig?.env && this.expressoConfig.env[this.environment]) {
+      const envFilename = this.expressoConfig.env[this.environment];
+
+      if (!fs.existsSync(envFilename)) {
+        this.logger.error(`Environment file ${envFilename} does not exist.`, "adapter-express");
+        process.exit(1);
+      } else {
+        config({ path: envFilename });
+        this.port = process.env.PORT
+          ? parseInt(process.env.PORT, 10)
+          : this.port
+            ? this.port
+            : 3000;
       }
-      this.port = process.env.PORT ? parseInt(process.env.PORT, 10) : this.port ? this.port : 3000;
     }
 
     this.app.listen(this.port, () => {
@@ -264,5 +299,3 @@ class AppExpress extends ApplicationBase implements IWebServer {
     return this.app;
   }
 }
-
-export { AppExpress };

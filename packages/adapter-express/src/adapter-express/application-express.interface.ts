@@ -13,7 +13,14 @@ export interface IWebServerPublic {
    * @param environment - Environment. (default: ServerEnvironment.Development)
    * @param consoleMessage - Optional message to display in the console.
    */
-  listen(port: number, environment?: Environment, consoleMessage?: IConsoleMessage): Promise<void>;
+  listen(): Promise<void>;
+  listen(port: number): Promise<void>;
+  listen(environment: Environment): Promise<void>;
+  listen(consoleMessage: IConsoleMessage): Promise<void>;
+  listen(port: number, environment: Environment): Promise<void>;
+  listen(port: number, consoleMessage: IConsoleMessage): Promise<void>;
+  listen(environment: Environment, consoleMessage: IConsoleMessage): Promise<void>;
+  listen(port: number, environment: Environment, consoleMessage: IConsoleMessage): Promise<void>;
 
   /**
    * Get the underlying HTTP server. (default: Express.js)
