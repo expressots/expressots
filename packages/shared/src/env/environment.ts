@@ -351,3 +351,8 @@ export function populate(
     console.log("Final process.env object:", envObject);
   }
 }
+
+/**
+ * Test swap for private functions
+ */
+export { _parseVault, _vaultPath, _dotenvKey, _instructions, _resolveHome };

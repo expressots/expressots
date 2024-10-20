@@ -53,13 +53,13 @@ export class Compiler {
     return compiler;
   }
 
-  private static interopRequireDefault(obj: any): { default: any } {
+  public static interopRequireDefault(obj: any): { default: any } {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const module = require(obj);
     return module && module.__esModule ? module : { default: module };
   }
 
-  private static async findConfig(dir: string): Promise<string> {
+  public static async findConfig(dir: string): Promise<string> {
     const configPath = path.join(dir, "expressots.config.ts");
     const exists = existsSync(configPath);
 

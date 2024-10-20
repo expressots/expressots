@@ -19,6 +19,7 @@ public/css/main.css
 
 # Coverage reports
 coverage
+.early.coverage
 
 # API keys and secrets
 .env

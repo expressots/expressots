@@ -30,11 +30,25 @@ export function log(message: string, logLevel: LogLevel = LogLevel.Info): void {
 }
 
 export function printError(message: string, component: string): void {
-  console.error(chalk.red(`${message}:`, chalk.bold(chalk.white(`[${component}] ❌`))));
+  const formattedMessage = message ? `${message}: ` : ": ";
+  const formattedComponent = component ? `[${component}]` : "[]";
+
+  const output = chalk.red(
+    `${formattedMessage}${chalk.bold(chalk.white(`${formattedComponent} ❌\n`))}`,
+  );
+
+  stdout.write(output);
 }
 
 export function printSuccess(message: string, component: string): void {
-  stdout.write(chalk.green(`${message}:`, chalk.bold(chalk.white(`[${component}] ✔️\n`))));
+  const formattedMessage = message ? `${message}: ` : ": ";
+  const formattedComponent = component ? `[${component}]` : "[]";
+
+  const output = chalk.green(
+    `${formattedMessage}${chalk.bold(chalk.white(`${formattedComponent} ✔️\n`))}`,
+  );
+
+  stdout.write(output);
 }
 
 export function printWarning(message: string, component?: string): void {
@@ -46,17 +60,18 @@ export function printWarning(message: string, component?: string): void {
 }
 
 export async function printGenerateError(schematic: string, file: string): Promise<void> {
-  console.error(
-    " ",
-    chalk.redBright(`[${schematic}]`.padEnd(14)),
-    chalk.bold.white(`${file.split(".")[0]} not created! ❌`),
-  );
+  const schematicFormatted = `[${schematic}]`.padEnd(14);
+  const fileNameFormatted = chalk.bold.white(`${file.split(".")[0]} not created! ❌\n`);
+
+  const output = chalk.redBright(schematicFormatted) + fileNameFormatted;
+
+  stdout.write(output);
 }
 
 export async function printGenerateSuccess(schematic: string, file: string): Promise<void> {
-  console.log(
-    " ",
-    chalk.greenBright(`[${schematic}]`.padEnd(14)),
-    chalk.bold.white(`${file.split(".")[0]} created! ✔️`),
-  );
+  const schematicFormatted = `[${schematic}]`.padEnd(14);
+  const fileNameFormatted = chalk.bold.white(`${file.split(".")[0]} created! ✔️\n`);
+
+  const output = chalk.greenBright(schematicFormatted) + fileNameFormatted;
+  stdout.write(output);
 }

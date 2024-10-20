@@ -22,7 +22,7 @@ module.exports = {
     ".eslintrc.cjs",
     "**/__tests__/*.spec.ts",
     "expressots.config.ts",
-    "vitest.config.ts",
+    "jest.config.ts",
   ],
   rules: {
     "@typescript-eslint/adjacent-overload-signatures": "error",

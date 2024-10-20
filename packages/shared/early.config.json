@@ -1,0 +1,9 @@
+{
+  "generatedTestStructure": "categories",
+  "testStructureVariant": "siblingFolder",
+  "showAllTreeSrcFiles": true,
+  "testFramework": "jest",
+  "testSuffix": "spec",
+  "testFileName": "camelCase",
+  "earlPanelEnabled": true
+}
