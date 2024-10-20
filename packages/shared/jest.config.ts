@@ -9,6 +9,7 @@ const config: JestConfigWithTsJest = {
         tsconfig: "tsconfig.json",
         roots: ["<rootDir>/src"],
         testRegex: ".*\\.spec\\.ts$",
+        testPathIgnorePatterns: ["/node_modules/", "/lib/"],
         collectCoverageFrom: ["src/**/*.ts", "!**/*.spec.ts", "!src/**/index.ts"],
         moduleNameMapper: {
           "^@src/(.*)$": "<rootDir>/src/$1",
