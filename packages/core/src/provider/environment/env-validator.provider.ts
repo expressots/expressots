@@ -1,9 +1,9 @@
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { injectable } from "../../di/inversify";
 import { Logger } from "../logger/logger.provider";
 import { IProvider } from "../provider-manager";
+import { config } from "@expressots/shared";
 
 type DefaultValueType = string | number | boolean | undefined;
 
@@ -56,7 +56,7 @@ class EnvValidatorProvider implements IProvider {
     }
 
     // Load the environment variables from the .env file
-    const dotenvConfigOutput = dotenv.config({ path: envFilePath });
+    const dotenvConfigOutput = config({ path: envFilePath });
     const dotEnvParsed = dotenvConfigOutput.parsed;
 
     /* Verify if all environment variables are defined */
