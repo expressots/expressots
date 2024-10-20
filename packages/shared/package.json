@@ -68,7 +68,8 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
-    "reflect-metadata": "0.2.2"
+    "reflect-metadata": "0.2.2",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@codecov/vite-plugin": "^0.0.1-beta.12",
