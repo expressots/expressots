@@ -20,7 +20,7 @@ module.exports = {
     "lib",
     "node_modules",
     ".eslintrc.cjs",
-    "**/__tests__/*.spec.ts",
+    "**/*.spec.ts",
     "expressots.config.ts",
     "jest.config.ts",
   ],
