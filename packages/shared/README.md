@@ -1,6 +1,7 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
+
 [![Codecov][codecov-shield]][codecov-url]
 [![NPM][npm-shield]][npm-url]
 ![Build][build-shield]
@@ -47,6 +48,7 @@
 </details>
 
 <!-- ABOUT THE PROJECT -->
+
 # About The Project
 
 ExpressoTS is a [Typescript](https://www.typescriptlang.org/) + [Node.js](https://nodejs.org/en/) lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🐎
@@ -96,21 +98,21 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
-[codecov-url]: https://codecov.io/gh/expressots/expressots-project-template
-[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/expressots-project-template/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
-[npm-url]: https://www.npmjs.com/package/@expressots/expressots-project-template
-[npm-shield]: https://img.shields.io/npm/v/@expressots/expressots-project-template?style=for-the-badge&logo=npm&color=9B3922
+[codecov-url]: https://codecov.io/gh/expressots/shared
+[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/shared/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
+[npm-url]: https://www.npmjs.com/package/@expressots/shared
+[npm-shield]: https://img.shields.io/npm/v/@expressots/shared?style=for-the-badge&logo=npm&color=9B3922
 [build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/adapter-express/build.yaml?branch=main&style=for-the-badge&logo=github
-[contributors-shield]: https://img.shields.io/github/contributors/expressots/expressots-project-template?style=for-the-badge
-[contributors-url]: https://github.com/expressots/expressots-project-template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/expressots/expressots-project-template?style=for-the-badge
-[forks-url]: https://github.com/expressots/expressots-project-template/forks
-[stars-shield]: https://img.shields.io/github/stars/expressots/expressots-project-template?style=for-the-badge
-[stars-url]: https://github.com/expressots/expressots-project-template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/expressots/expressots-project-template?style=for-the-badge
-[issues-url]: https://github.com/expressots/expressots-project-template/issues
-[license-shield]: https://img.shields.io/github/license/expressots/expressots-project-template?style=for-the-badge
-[license-url]: https://github.com/expressots/expressots-project-template/blob/main/LICENSE
+[contributors-shield]: https://img.shields.io/github/contributors/expressots/shared?style=for-the-badge
+[contributors-url]: https://github.com/expressots/shared/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/expressots/shared?style=for-the-badge
+[forks-url]: https://github.com/expressots/shared/forks
+[stars-shield]: https://img.shields.io/github/stars/expressots/shared?style=for-the-badge
+[stars-url]: https://github.com/expressots/shared/stargazers
+[issues-shield]: https://img.shields.io/github/issues/expressots/shared?style=for-the-badge
+[issues-url]: https://github.com/expressots/shared/issues
+[license-shield]: https://img.shields.io/github/license/expressots/shared?style=for-the-badge
+[license-url]: https://github.com/expressots/shared/blob/main/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/expresso-ts/
 [product-screenshot]: images/screenshot.png
