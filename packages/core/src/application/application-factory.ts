@@ -21,6 +21,7 @@ function isWebServerConstructor<T extends IWebServer>(
  * AppFactory Class
  *
  * Responsible for creating an instance of the IWebServer implementation using a custom application type.
+ * Crazy stuff
  */
 class AppFactory {
   public static container: Container;
