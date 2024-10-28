@@ -50,7 +50,6 @@
 	},
 	"dependencies": {
 		"@expressots/boost-ts": "1.3.0",
-		"@expressots/shared": "file:../shared/expressots-shared-0.0.1-beta.1.tgz",
 		"axios": "^1.7.3",
 		"chalk-animation": "2.0.3",
 		"cli-progress": "3.12.0",
@@ -67,6 +66,7 @@
 		"@codecov/vite-plugin": "^0.0.1-beta.9",
 		"@commitlint/cli": "19.2.1",
 		"@commitlint/config-conventional": "19.1.0",
+		"@expressots/shared": "file:../shared/expressots-shared-0.0.1-beta.1.tgz",
 		"@release-it/conventional-changelog": "7.0.2",
 		"@types/chalk-animation": "1.6.1",
 		"@types/cli-progress": "3.11.0",
