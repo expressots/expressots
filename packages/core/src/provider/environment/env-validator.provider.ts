@@ -42,7 +42,7 @@ export class EnvValidatorProvider implements IProvider {
   /**
    * Validates and loads all environment variables from the .env file.
    * If the .env file does not exist or any environment variables are not set, the process will exit with an error.
-   * @param envFile -  
+   * @param envFile -
    * @public API
    */
   public checkFile(envFile: string): void {
