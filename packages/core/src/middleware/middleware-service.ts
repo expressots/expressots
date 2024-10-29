@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, ErrorRequestHandler, RequestParamHandler, RequestHandler, urlencoded, json, static as expressStatic } from "express";
 
 import { provideSingleton } from "../decorator/index";
 import defaultErrorHandler from "../error/error-handler-middleware";
@@ -31,9 +31,9 @@ import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
  * - undefined: Represents the absence of a handler.
  */
 export type ExpressHandler =
-  | express.ErrorRequestHandler
-  | express.RequestParamHandler
-  | express.RequestHandler
+  | ErrorRequestHandler
+  | RequestParamHandler
+  | RequestHandler
   | undefined;
 
 /**
@@ -350,7 +350,7 @@ class Middleware implements IMiddleware {
     } else {
       this.middlewarePipeline.push({
         timestamp: new Date(),
-        middleware: express.urlencoded(options),
+        middleware: urlencoded(options),
       });
     }
   }
@@ -383,7 +383,7 @@ class Middleware implements IMiddleware {
     } else {
       this.middlewarePipeline.push({
         timestamp: new Date(),
-        middleware: express.json(options),
+        middleware: json(options),
       });
     }
   }
@@ -585,7 +585,7 @@ class Middleware implements IMiddleware {
     } else {
       this.middlewarePipeline.push({
         timestamp: new Date(),
-        middleware: express.static(root, options),
+        middleware: expressStatic(root, options),
       });
     }
   }
