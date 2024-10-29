@@ -151,7 +151,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
     this.environment = this.environment || "development";
     this.app.set("env", this.environment);
 
-    this.port = typeof port === "string" ? parseInt(port, 10) : port;
+    this.port = typeof port === "string" ? parseInt(port, 10) : port || 3000;
     this.app.listen(this.port, () => {
       this.console.messageServer(this.port, this.environment, appInfo);
 
