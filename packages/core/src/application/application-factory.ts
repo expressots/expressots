@@ -5,7 +5,6 @@ import {
 } from "@expressots/adapter-express";
 import { Container } from "../di/inversify";
 import { Logger } from "../provider/logger/logger.provider";
-import { Compiler, ExpressoConfig } from "@expressots/shared";
 
 /**
  * Type guard to check if input is a constructor type of IWebServer.
@@ -40,11 +39,9 @@ export class AppFactory {
   ): Promise<IWebServerPublic> {
     AppFactory.container = container;
 
-    const config: ExpressoConfig = await Compiler.loadConfig();
-
     if (isWebServerConstructor<T>(webServerType)) {
       const webServerInstance: T = new webServerType();
-      await webServerInstance.configure(container, config);
+      await webServerInstance.configure(container);
       return webServerInstance as unknown as IWebServerPublic;
     } else {
       this.logger.error("Invalid web server type.", "app-factory:create");
