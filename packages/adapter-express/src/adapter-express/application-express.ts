@@ -144,17 +144,14 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @param appInfo - Optional message to display the app name and version.
    * @public API
    */
-  public async listen(
-    port: number | string,
-    appInfo?: IConsoleMessage,
-  ): Promise<void> {
+  public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
     await this.init();
     await this.configEngine();
-    
+
     this.environment = this.environment || "development";
     this.app.set("env", this.environment);
-    
-    this.port = (typeof port === "string")? parseInt(port, 10) : port;
+
+    this.port = typeof port === "string" ? parseInt(port, 10) : port;
     this.app.listen(this.port, () => {
       this.console.messageServer(this.port, this.environment, appInfo);
 
@@ -246,14 +243,17 @@ export class AppExpress extends ApplicationBase implements IWebServer {
     this.environment = environment;
 
     if (options === undefined) {
-      config({path: ".env"})
+      config({ path: ".env" });
     } else {
       if (!options.env[environment]) {
-        this.logger.error(`Environment configuration for [${environment}] does not exist.`, "adapter-express");
+        this.logger.error(
+          `Environment configuration for [${environment}] does not exist.`,
+          "adapter-express",
+        );
         process.exit(1);
       } else {
         const envFileName = options.env[environment];
-        
+
         if (!fs.existsSync(envFileName)) {
           this.logger.error(`Environment file [${envFileName}] does not exist.`, "adapter-express");
           process.exit(1);

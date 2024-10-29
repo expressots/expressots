@@ -13,7 +13,7 @@ export interface IWebServerPublic {
    * @param consoleMessage - Optional message to display in the console.
    */
   listen(port: number | string, consoleMessage?: IConsoleMessage): Promise<void>;
-  
+
   /**
    * Get the underlying HTTP server. (default: Express.js)
    * @returns The underlying HTTP server after initialization.

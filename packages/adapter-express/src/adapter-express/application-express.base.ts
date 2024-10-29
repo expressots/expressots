@@ -19,7 +19,6 @@
  * @abstract
  */
 export abstract class ApplicationBase {
-
   /**
    * Implement this method to set up global configurations for the server.
    * This method is called before any other server initialization methods.
@@ -59,7 +58,7 @@ export abstract class ApplicationBase {
    * is shutting down. Ideal for closing resources, stopping tasks, or other
    * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
    * cleanup with a Promise.
-   * 
+   *
    * @abstract
    * @returns {void | Promise<void>}
    * @public API

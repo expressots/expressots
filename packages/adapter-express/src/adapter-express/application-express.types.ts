@@ -12,7 +12,7 @@ export interface IWebServer {
   initEnvironment(environment: Environment, options?: IEnvironment): void;
 
   listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
-  
+
   setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
 }
 
@@ -100,5 +100,5 @@ export interface IEnvironment {
   env: {
     development?: string;
     production?: string;
-  }
+  };
 }
