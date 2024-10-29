@@ -1,4 +1,14 @@
-import { Request, Response, NextFunction, ErrorRequestHandler, RequestParamHandler, RequestHandler, urlencoded, json, static as expressStatic } from "express";
+import {
+  Request,
+  Response,
+  NextFunction,
+  ErrorRequestHandler,
+  RequestParamHandler,
+  RequestHandler,
+  urlencoded,
+  json,
+  static as expressStatic,
+} from "express";
 
 import { provideSingleton } from "../decorator/index";
 import defaultErrorHandler from "../error/error-handler-middleware";
