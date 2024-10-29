@@ -19,7 +19,6 @@ export const enum Pattern {
  * @property {Pattern} scaffoldPattern - The pattern to use when scaffolding files.
  * @property {string} sourceRoot - The root directory for the source files.
  * @property {boolean} opinionated - Whether or not to use the opinionated configuration.
- * @property {object} env - The environment variables to use for development and production.
  * @property {IProviders} providers - Specific configuration for each provider added.
  * @public API
  */
@@ -27,10 +26,6 @@ export interface ExpressoConfig {
   scaffoldPattern: Pattern;
   sourceRoot: string;
   opinionated: boolean;
-  env?: {
-    development?: string;
-    production?: string;
-  };
   scaffoldSchematics?: {
     entity?: string;
     controller?: string;
