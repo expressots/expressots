@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames":true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "checkJs": true,
+    "allowJs": true,
+    "declaration": true,
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": [
+      "node",
+      "reflect-metadata",
+      "vitest/globals"
+    ],    
+},
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/*.spec.ts",
+    "scripts/**/*",
+  ]
+}
