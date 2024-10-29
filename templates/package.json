@@ -1,25 +1,8 @@
 {
-  "name": "@expressots/package-name",
+  "name": "@expressots/templates",
   "version": "0.0.1",
-  "description": "Expressots - modern, fast, lightweight nodejs web framework (@package-name)",
-  "author": "",
-  "main": "./lib/cjs/index.js",
-  "types": "./lib/cjs/types/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./lib/esm/types/index.d.ts",
-        "default": "./lib/esm/index.mjs"
-      },
-      "require": {
-        "types": "./lib/cjs/types/index.d.ts",
-        "default": "./lib/cjs/index.js"
-      }
-    }
-  },
-  "files": [
-    "lib/**/*"
-  ],
+  "description": "Expressots templates",
+  "author": "Richard Zampieri",
   "license": "MIT",
   "homepage": "https://expresso-ts.com",
   "funding": {
@@ -28,66 +11,29 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/<<repo_name>>"
+    "url": "https://github.com/expressots/templates"
   },
   "bugs": {
-    "url": "https://github.com/expressots/<<repo_name>>/issues"
-  },
-  "publishConfig": {
-    "access": "public"
+    "url": "https://github.com/expressots/expressots/issues"
   },
   "keywords": [
     "expressots",
-    "nodejs",
-    "microservices",
-    "typescript",
-    "clean-architecture",
-    "typescript-framework",
-    "framework",
-    "server-side"
+    "templates",
+    "framework"
   ],
-  "engines": {
-    "node": ">=18.10.0"
-  },
   "scripts": {
-    "prepare": "husky install",
-    "clean": "node scripts/rm.js lib",
-    "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
-    "build": "npm run clean && npm run build:cjs && npm run copy",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
-    "release": "release-it",
-    "prepublish": "npm run build && npm pack",
-    "publish": "npm publish --tag latest",
-    "test": "vitest run --reporter default",
-    "test:watch": "vitest run --watch",
-    "coverage": "vitest run --coverage",
-    "format": "prettier --write \"src/**/*.ts\" --cache",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix"
+    "prepare": "husky",
+    "release": "release-it"
   },
   "dependencies": {
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "^0.0.1-beta.6",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.2.2",
-    "@expressots/core": "2.16.1",
     "@release-it/conventional-changelog": "8.0.1",
-    "@types/node": "20.14.10",
-    "@typescript-eslint/eslint-plugin": "7.16.1",
-    "@typescript-eslint/parser": "7.16.1",
-    "@vitest/coverage-v8": "2.0.3",
-    "eslint": "8.57.0",
-    "eslint-config-prettier": "9.1.0",
     "husky": "9.1.1",
-    "prettier": "3.3.3",
-    "release-it": "17.6.0",
-    "typescript": "5.5.3",
-    "vite": "5.3.4",
-    "vite-tsconfig-paths": "4.3.2",
-    "vitest": "2.0.3"
+    "release-it": "17.6.0"
   },
   "release-it": {
     "git": {
