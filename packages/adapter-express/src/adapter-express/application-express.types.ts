@@ -1,24 +1,18 @@
-import express, { Request, Response, NextFunction } from "express";
 import { IConsoleMessage } from "@expressots/core";
+import express, { NextFunction, Request, Response } from "express";
 import { interfaces } from "../di/di.interfaces";
 import { Engine, EngineOptions } from "./render/engine";
-import { ExpressoConfig } from "@expressots/shared";
 
 /**
  * Interface for the WebServer application implementation.
  */
 export interface IWebServer {
-  configure(container: interfaces.Container, expressoConfig?: ExpressoConfig): Promise<void>;
+  configure(container: interfaces.Container): Promise<void>;
 
-  listen(): Promise<void>;
-  listen(port: number): Promise<void>;
-  listen(environment: Environment): Promise<void>;
-  listen(consoleMessage: IConsoleMessage): Promise<void>;
-  listen(port: number, environment: Environment): Promise<void>;
-  listen(port: number, consoleMessage: IConsoleMessage): Promise<void>;
-  listen(environment: Environment, consoleMessage: IConsoleMessage): Promise<void>;
-  listen(port: number, environment: Environment, consoleMessage: IConsoleMessage): Promise<void>;
+  initEnvironment(environment: Environment, options?: IEnvironment): void;
 
+  listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
+  
   setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
 }
 
@@ -97,3 +91,14 @@ export type TypeServerEnvironment = "development" | "production" | "remote";
  * @public API
  */
 export type Environment = ServerEnvironment | TypeServerEnvironment | undefined;
+
+/**
+ * Interface for environment configuration options.
+ * @public API
+ */
+export interface IEnvironment {
+  env: {
+    development?: string;
+    production?: string;
+  }
+}

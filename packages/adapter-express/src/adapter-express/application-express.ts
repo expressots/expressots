@@ -1,15 +1,17 @@
 import { Console, IConsoleMessage, Logger, Middleware } from "@expressots/core";
+import { config } from "@expressots/shared";
 import express from "express";
-import process from "process";
 import fs from "fs";
+import process from "process";
 import { interfaces } from "../di/di.interfaces";
 import { ApplicationBase } from "./application-express.base";
 import {
+  Environment,
   ExpressHandler,
   ExpressoMiddleware,
+  IEnvironment,
   IWebServer,
   MiddlewareConfig,
-  Environment,
 } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
@@ -17,7 +19,6 @@ import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
 import { Engine, EngineOptions, RenderOptions } from "./render/engine";
 import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
 import { PugOptions, setEnginePug } from "./render/pug/pug.config";
-import { config, ExpressoConfig } from "@expressots/shared";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -33,7 +34,6 @@ import { config, ExpressoConfig } from "@expressots/shared";
 export class AppExpress extends ApplicationBase implements IWebServer {
   private logger: Logger = new Logger();
   private console: Console = new Console();
-  private expressoConfig: ExpressoConfig;
   private app: express.Application;
   private port: number;
   private environment?: Environment;
@@ -42,6 +42,12 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
   private renderOptions: RenderOptions = {} as RenderOptions;
 
+  constructor() {
+    super();
+    this.globalConfiguration();
+  }
+
+  protected globalConfiguration(): void | Promise<void> {}
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
   protected serverShutdown(): void | Promise<void> {}
@@ -58,12 +64,8 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * Configures the InversifyJS container.
    * @param container - The InversifyJS container.
    */
-  public async configure(
-    container: interfaces.Container,
-    expressoConfig?: ExpressoConfig,
-  ): Promise<void> {
+  public async configure(container: interfaces.Container): Promise<void> {
     this.container = container;
-    this.expressoConfig = expressoConfig;
   }
 
   /**
@@ -139,70 +141,22 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
-   * @param environment - The server environment.
-   * @param consoleMessage - Optional message to display in the console.
+   * @param appInfo - Optional message to display the app name and version.
    * @public API
    */
-  listen(): Promise<void>;
-  listen(port: number): Promise<void>;
-  listen(environment: Environment): Promise<void>;
-  listen(consoleMessage: IConsoleMessage): Promise<void>;
-  listen(port: number, environment: Environment): Promise<void>;
-  listen(port: number, consoleMessage: IConsoleMessage): Promise<void>;
-  listen(environment: Environment, consoleMessage: IConsoleMessage): Promise<void>;
   public async listen(
-    portOrEnvOrMsg?: number | Environment | IConsoleMessage,
-    envOrMsg?: Environment | IConsoleMessage,
-    msg?: IConsoleMessage,
+    port: number | string,
+    appInfo?: IConsoleMessage,
   ): Promise<void> {
-    let port: number = 3000;
-    let environment: Environment = "development";
-    let consoleMessage: IConsoleMessage | undefined;
-
-    if (typeof portOrEnvOrMsg === "number") {
-      port = portOrEnvOrMsg;
-      if (typeof envOrMsg === "string") {
-        environment = envOrMsg;
-        if (msg) {
-          consoleMessage = msg;
-        }
-      } else if (envOrMsg && typeof envOrMsg === "object") {
-        consoleMessage = envOrMsg;
-      }
-    } else if (typeof portOrEnvOrMsg === "string") {
-      environment = portOrEnvOrMsg;
-      if (envOrMsg && typeof envOrMsg === "object") {
-        consoleMessage = envOrMsg;
-      }
-    } else if (portOrEnvOrMsg && typeof portOrEnvOrMsg === "object") {
-      consoleMessage = portOrEnvOrMsg;
-    }
-
     await this.init();
     await this.configEngine();
-
-    this.port = port;
-    this.environment = environment;
+    
+    this.environment = this.environment || "development";
     this.app.set("env", this.environment);
-
-    if (this.expressoConfig?.env && this.expressoConfig.env[this.environment]) {
-      const envFilename = this.expressoConfig.env[this.environment];
-
-      if (!fs.existsSync(envFilename)) {
-        this.logger.error(`Environment file ${envFilename} does not exist.`, "adapter-express");
-        process.exit(1);
-      } else {
-        config({ path: envFilename });
-        this.port = process.env.PORT
-          ? parseInt(process.env.PORT, 10)
-          : this.port
-            ? this.port
-            : 3000;
-      }
-    }
-
+    
+    this.port = (typeof port === "string")? parseInt(port, 10) : port;
     this.app.listen(this.port, () => {
-      this.console.messageServer(this.port, this.environment, consoleMessage);
+      this.console.messageServer(this.port, this.environment, appInfo);
 
       (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
         (signal) => {
@@ -280,6 +234,34 @@ export class AppExpress extends ApplicationBase implements IWebServer {
       .get<Logger>(Logger)
       .error("isDevelopment() method must be called on `PostServerInitialization`", "application");
     return false;
+  }
+
+  /**
+   * Load environment variables from the specified file based on the environment configuration.
+   * @param environment - The environment to load configuration for.
+   * @param options - The options to use for loading the environment configuration.
+   * @public API
+   */
+  public initEnvironment(environment: Environment, options?: IEnvironment): void {
+    this.environment = environment;
+
+    if (options === undefined) {
+      config({path: ".env"})
+    } else {
+      if (!options.env[environment]) {
+        this.logger.error(`Environment configuration for [${environment}] does not exist.`, "adapter-express");
+        process.exit(1);
+      } else {
+        const envFileName = options.env[environment];
+        
+        if (!fs.existsSync(envFileName)) {
+          this.logger.error(`Environment file [${envFileName}] does not exist.`, "adapter-express");
+          process.exit(1);
+        } else {
+          config({ path: envFileName });
+        }
+      }
+    }
   }
 
   /**

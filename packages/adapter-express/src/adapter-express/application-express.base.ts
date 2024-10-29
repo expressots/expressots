@@ -19,6 +19,19 @@
  * @abstract
  */
 export abstract class ApplicationBase {
+
+  /**
+   * Implement this method to set up global configurations for the server.
+   * This method is called before any other server initialization methods.
+   * Use this method to configure global settings that apply to the entire
+   * server application. Supports asynchronous setup with a Promise.
+   *
+   * @abstract
+   * @returns {void | Promise<void>}
+   * @public API
+   */
+  protected abstract globalConfiguration(): void | Promise<void>;
+
   /**
    * Implement this method to set up required services or configurations before
    * the server starts. This is essential for initializing dependencies or settings
@@ -26,6 +39,7 @@ export abstract class ApplicationBase {
    *
    * @abstract
    * @returns {void | Promise<void>}
+   * @public API
    */
   protected abstract configureServices(): void | Promise<void>;
 
@@ -36,6 +50,7 @@ export abstract class ApplicationBase {
    *
    * @abstract
    * @returns {void | Promise<void>}
+   * @public API
    */
   protected abstract postServerInitialization(): void | Promise<void>;
 
@@ -44,6 +59,10 @@ export abstract class ApplicationBase {
    * is shutting down. Ideal for closing resources, stopping tasks, or other
    * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
    * cleanup with a Promise.
+   * 
+   * @abstract
+   * @returns {void | Promise<void>}
+   * @public API
    */
   protected abstract serverShutdown(): void | Promise<void>;
 }
