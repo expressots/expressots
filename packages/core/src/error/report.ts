@@ -29,24 +29,27 @@ class Report {
    * @throws An object of the custom type AppError, which includes details about the error.
    */
   public error(
-    error: Error | string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    error: Error | string | object | any,
     statusCode?: number,
     service?: string,
   ): AppError {
-    let appError: AppError = {} as AppError;
+    let message = "";
 
-    if (error instanceof Error) {
-      appError = new AppError(error.message, statusCode, service);
+    if (error == null) {
+      // error is null or undefined
+      message = "";
+    } else if (typeof error === "string") {
+      message = error;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "object" && "message" in error) {
+      message = error.message;
     } else {
-      appError = new AppError(error, statusCode, service);
+      message = String(error);
     }
-
-    this.logger.error(
-      appError.message,
-      appError.service || "service-undefined",
-    );
-
-    return appError;
+  
+    return new AppError(message, statusCode, service);
   }
 }
 

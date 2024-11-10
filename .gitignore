@@ -60,3 +60,4 @@ templates/opinionated/public
 
 # ignore pack files
 *.tgz
+.early.coverage
