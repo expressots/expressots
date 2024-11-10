@@ -7,6 +7,7 @@ import {
   interfaces,
 } from "../di/inversify";
 import { buildProviderModule } from "../di/binding-decorator";
+import { Logger } from "../provider";
 
 /**
  * Represents a single binding in the dependency injection container.
@@ -84,27 +85,6 @@ interface Binding {
 }
 
 /**
- * Interface for container options that can be passed to the AppContainer class.
- */
-interface ContainerOptions {
-  /**
-   * The default scope for bindings in the container.
-   * It can be set to Request (default), Singleton, or Transient.
-   */
-  defaultScope?: interfaces.BindingScope;
-
-  /**
-   * Allows skipping of base class checks when working with derived classes.
-   */
-  skipBaseClassChecks?: boolean;
-
-  /**
-   * Allows auto-binding of injectable classes.
-   */
-  autoBindInjectable?: boolean;
-}
-
-/**
  * The AppContainer class provides a container for managing dependency injection.
  * It allows the creation of a container with custom options, including default binding scope
  * and the ability to skip base class checks. The container can be loaded with multiple
@@ -117,9 +97,10 @@ interface ContainerOptions {
  * ```
  * @public API
  */
-class AppContainer {
+export class AppContainer {
   private container!: Container;
-  private options: ContainerOptions;
+  private options: interfaces.ContainerOptions;
+  private logger: Logger;
 
   /**
    * Constructs the AppContainer instance.
@@ -128,7 +109,7 @@ class AppContainer {
    * @option options.skipBaseClassChecks - Allows skipping of base class checks when working with derived classes.
    * @option options.autoBindInjectable - Allows auto-binding of injectable classes.
    */
-  constructor(options?: ContainerOptions) {
+  constructor(options?: interfaces.ContainerOptions) {
     this.options = {
       defaultScope: BindingScopeEnum.Request,
       ...options,
@@ -185,18 +166,16 @@ class AppContainer {
   /**
    * Retrieves the container options.
    * @returns The container options.
+   * @public API
    */
   public getContainerOptions(): interfaces.ContainerOptions {
+  this.logger = new Logger();
+
+    if(!this.container) {
+      this.logger.error("Container not created yet.", "app-container");
+      return;
+    }
+
     return this.container.options;
   }
-
-  /**
-   * Retrieves the container.
-   * @returns The container.
-   */
-  public get Container(): Container {
-    return this.container;
-  }
 }
-
-export { AppContainer };
