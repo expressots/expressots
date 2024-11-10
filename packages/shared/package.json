@@ -69,25 +69,25 @@
   },
   "dependencies": {
     "reflect-metadata": "0.2.2",
-    "ts-node": "^10.9.2"
+    "ts-node": "10.9.2"
   },
   "devDependencies": {
     "@commitlint/cli": "19.4.1",
     "@commitlint/config-conventional": "19.2.2",
     "@release-it/conventional-changelog": "8.0.1",
     "@types/express": "4.17.21",
-    "@types/jest": "^29.5.13",
+    "@types/jest": "29.5.13",
     "@types/node": "20.14.10",
     "@typescript-eslint/eslint-plugin": "7.16.1",
     "@typescript-eslint/parser": "7.16.1",
-    "chalk": "^4.1.2",
+    "chalk": "4.1.2",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "husky": "9.1.1",
-    "jest": "^29.7.0",
+    "jest": "29.7.0",
     "prettier": "3.3.3",
     "release-it": "17.6.0",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "29.2.5",
     "typescript": "5.5.3"
   },
   "release-it": {
