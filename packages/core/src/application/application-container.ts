@@ -169,9 +169,9 @@ export class AppContainer {
    * @public API
    */
   public getContainerOptions(): interfaces.ContainerOptions {
-  this.logger = new Logger();
+    this.logger = new Logger();
 
-    if(!this.container) {
+    if (!this.container) {
       this.logger.error("Container not created yet.", "app-container");
       return;
     }

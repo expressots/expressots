@@ -220,25 +220,25 @@ namespace interfaces {
     matchesTag(key: string | number | symbol): (value: unknown) => boolean;
   }
 
-/**
- * Interface for container options that can be passed to the AppContainer class.
- * @public API
- */
-  export interface ContainerOptions {
   /**
-   * Allows auto-binding of injectable classes.
+   * Interface for container options that can be passed to the AppContainer class.
+   * @public API
    */
+  export interface ContainerOptions {
+    /**
+     * Allows auto-binding of injectable classes.
+     */
     autoBindInjectable?: boolean;
 
-  /**
-   * The default scope for bindings in the container.
-   * It can be set to Request (default), Singleton, or Transient.
-   */
+    /**
+     * The default scope for bindings in the container.
+     * It can be set to Request (default), Singleton, or Transient.
+     */
     defaultScope?: BindingScope | undefined;
-  
-  /**
-   * Allows skipping of base class checks when working with derived classes.
-   */
+
+    /**
+     * Allows skipping of base class checks when working with derived classes.
+     */
     skipBaseClassChecks?: boolean;
   }
 
