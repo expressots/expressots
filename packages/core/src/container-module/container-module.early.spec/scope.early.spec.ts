@@ -16,7 +16,7 @@ jest.mock("../../di/binding-decorator", () => ({
 }));
 
 beforeEach(() => {
-    jest.clearAllMocks();
+  jest.clearAllMocks();
 });
 
 describe("scope() scope method", () => {

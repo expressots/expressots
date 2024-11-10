@@ -122,7 +122,7 @@ export class AppContainer {
    * @returns The configured dependency injection container.
    * @public API
    */
-  public create(modules: Array<ContainerModule>): Container {  
+  public create(modules: Array<ContainerModule>): Container {
     const containerOptions: interfaces.ContainerOptions = {
       autoBindInjectable: this.options.autoBindInjectable
         ? this.options.autoBindInjectable

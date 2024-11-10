@@ -48,7 +48,7 @@ class Report {
     } else {
       message = String(error);
     }
-  
+
     return new AppError(message, statusCode, service);
   }
 }

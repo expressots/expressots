@@ -5,8 +5,6 @@ import { Container, ContainerModule, interfaces } from "../../di/inversify";
 import { AppContainer } from "../application-container";
 import { skip } from "node:test";
 
-
-
 describe("AppContainer.create() create method", () => {
   let appContainer: AppContainer;
   let mockModules: Array<ContainerModule>;
@@ -17,7 +15,7 @@ describe("AppContainer.create() create method", () => {
     mockOptions = {
       defaultScope: "Request",
       autoBindInjectable: true,
-      skipBaseClassChecks:false,
+      skipBaseClassChecks: false,
     };
     appContainer = new AppContainer(mockOptions);
   });
@@ -51,7 +49,7 @@ describe("AppContainer.create() create method", () => {
       // Arrange
       const customOptions: interfaces.ContainerOptions = {
         autoBindInjectable: false,
-        skipBaseClassChecks:true,
+        skipBaseClassChecks: true,
       };
       appContainer = new AppContainer(customOptions as any);
 

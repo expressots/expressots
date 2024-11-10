@@ -4,21 +4,21 @@ import { fluentProvide } from "../../di/binding-decorator";
 import { provide } from "../scope-binding";
 
 jest.mock("../../di/binding-decorator", () => {
-    const doneMock = jest.fn(() => "mockedDoneResult");
-    const fluentProvideMock = jest.fn(() => ({
-      done: doneMock,
-    }));
-    return {
-      fluentProvide: fluentProvideMock,
-      __doneMock: doneMock, // Expose doneMock for assertions
-    };
-});
-  
-beforeEach(() => {
-    jest.clearAllMocks();
+  const doneMock = jest.fn(() => "mockedDoneResult");
+  const fluentProvideMock = jest.fn(() => ({
+    done: doneMock,
+  }));
+  return {
+    fluentProvide: fluentProvideMock,
+    __doneMock: doneMock, // Expose doneMock for assertions
+  };
 });
 
-describe("provide() provide method", () => { 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe("provide() provide method", () => {
   describe("Happy Path", () => {
     it("should return the result of fluentProvide.done() when called with a valid identifier", () => {
       // Arrange
@@ -28,7 +28,10 @@ describe("provide() provide method", () => {
       const result = provide(identifier);
 
       // Assert
-      const { fluentProvide, __doneMock: doneMock } = require("../../di/binding-decorator");
+      const {
+        fluentProvide,
+        __doneMock: doneMock,
+      } = require("../../di/binding-decorator");
 
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
       expect(doneMock).toHaveBeenCalled();
@@ -45,7 +48,10 @@ describe("provide() provide method", () => {
       const result = provide(identifier);
 
       // Assert
-      const { fluentProvide, __doneMock: doneMock } = require("../../di/binding-decorator");
+      const {
+        fluentProvide,
+        __doneMock: doneMock,
+      } = require("../../di/binding-decorator");
 
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
       expect(doneMock).toHaveBeenCalled();
@@ -60,7 +66,10 @@ describe("provide() provide method", () => {
       const result = provide(identifier);
 
       // Assert
-      const { fluentProvide, __doneMock: doneMock } = require("../../di/binding-decorator");
+      const {
+        fluentProvide,
+        __doneMock: doneMock,
+      } = require("../../di/binding-decorator");
 
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
       expect(doneMock).toHaveBeenCalled();

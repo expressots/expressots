@@ -62,11 +62,18 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
 
       // Assert
       expect(module).toBeInstanceOf(ContainerModule);
-      module.registry(mockBind as any, mockUnbind, mockIsBound, mockRebind, mockUnbindAsync, mockOnActivation, mockOnDeactivation);
+      module.registry(
+        mockBind as any,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+        mockUnbindAsync,
+        mockOnActivation,
+        mockOnDeactivation,
+      );
       expect(mockBind).toHaveBeenCalledWith(Symbol.for("MockController"));
       expect(mockTo).toHaveBeenCalledWith(MockController);
       expect(mockInSingletonScope).toHaveBeenCalled();
-
     });
 
     it("should create a ContainerModule with transient scope for controllers", () => {
@@ -86,7 +93,15 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
 
       // Assert
       expect(module).toBeInstanceOf(ContainerModule);
-      module.registry(mockBind as any, mockUnbind, mockIsBound, mockRebind, mockUnbindAsync, mockOnActivation, mockOnDeactivation);
+      module.registry(
+        mockBind as any,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+        mockUnbindAsync,
+        mockOnActivation,
+        mockOnDeactivation,
+      );
       expect(mockBind).toHaveBeenCalledWith(Symbol.for("MockController"));
       expect(mockTo).toHaveBeenCalledWith(MockController);
       expect(mockInTransientScope).toHaveBeenCalled();
@@ -103,7 +118,15 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
 
       // Assert
       expect(module).toBeInstanceOf(ContainerModule);
-      module.registry(mockBind as any, mockUnbind, mockIsBound, mockRebind, mockUnbindAsync, mockOnActivation, mockOnDeactivation);
+      module.registry(
+        mockBind as any,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+        mockUnbindAsync,
+        mockOnActivation,
+        mockOnDeactivation,
+      );
       expect(mockBind).toHaveBeenCalledWith(Symbol.for("MockController"));
       expect(mockTo).toHaveBeenCalledWith(MockController);
       expect(mockInRequestScope).toHaveBeenCalled();
@@ -115,7 +138,15 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
 
       // Assert
       expect(module).toBeInstanceOf(ContainerModule);
-      module.registry(mockBind as any, mockUnbind, mockIsBound, mockRebind, mockUnbindAsync, mockOnActivation, mockOnDeactivation);
+      module.registry(
+        mockBind as any,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+        mockUnbindAsync,
+        mockOnActivation,
+        mockOnDeactivation,
+      );
       expect(mockBind).not.toHaveBeenCalled();
     });
 
@@ -133,7 +164,15 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
 
       // Assert
       expect(module).toBeInstanceOf(ContainerModule);
-      module.registry(mockBind as any, mockUnbind, mockIsBound, mockRebind, mockUnbindAsync, mockOnActivation, mockOnDeactivation);
+      module.registry(
+        mockBind as any,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+        mockUnbindAsync,
+        mockOnActivation,
+        mockOnDeactivation,
+      );
       expect(mockBind).toHaveBeenCalledWith(Symbol.for("MockController"));
       expect(mockTo).toHaveBeenCalledWith(MockController);
     });

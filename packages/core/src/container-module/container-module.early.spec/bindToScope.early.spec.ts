@@ -33,7 +33,7 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
     mockBind = jest.fn().mockImplementation((symbol: symbol) => {
       return {
         to: mockTo,
-      }
+      };
     });
   });
 
@@ -67,7 +67,9 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
       expect(mockBind).toHaveBeenCalledWith(symbol);
       expect(mockTo).toHaveBeenCalledWith(target);
       expect(mockInTransientScope).toHaveBeenCalled();
-      expect(require("../../decorator").provideTransient).toHaveBeenCalledWith(target);
+      expect(require("../../decorator").provideTransient).toHaveBeenCalledWith(
+        target,
+      );
     });
 
     it("should bind to request scope when bindingType is Request", () => {
@@ -88,19 +90,19 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
 
   // Edge Case Tests
   describe("Edge Cases", () => {
-   it("should default to request scope when bindingType is unknown", () => {
-          // Arrange
-          const symbol = Symbol("TestUnknown");
-          const target = class TestUnknown {};
-          const bindingType = "UnknownScope" as any;
-          
-          // Act
-          BaseModule.bindToScope(symbol, target, bindingType, mockBind);
-    
-          // Assert
-          expect(mockBind).toHaveBeenCalledWith(symbol);
-          expect(mockTo).toHaveBeenCalledWith(target);
-          expect(mockInRequestScope).toHaveBeenCalled();
+    it("should default to request scope when bindingType is unknown", () => {
+      // Arrange
+      const symbol = Symbol("TestUnknown");
+      const target = class TestUnknown {};
+      const bindingType = "UnknownScope" as any;
+
+      // Act
+      BaseModule.bindToScope(symbol, target, bindingType, mockBind);
+
+      // Assert
+      expect(mockBind).toHaveBeenCalledWith(symbol);
+      expect(mockTo).toHaveBeenCalledWith(target);
+      expect(mockInRequestScope).toHaveBeenCalled();
     });
 
     it("should handle undefined bindingType gracefully", () => {

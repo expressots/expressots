@@ -42,7 +42,10 @@ describe("defaultErrorHandler() function", () => {
 
   // Happy Path: Handling AppError
   it("should handle AppError correctly by setting the status and sending a JSON response", () => {
-    const mockAppError = new AppError("Mock error message", StatusCode.BadRequest);
+    const mockAppError = new AppError(
+      "Mock error message",
+      StatusCode.BadRequest,
+    );
 
     defaultErrorHandler(
       mockAppError,
@@ -69,7 +72,9 @@ describe("defaultErrorHandler() function", () => {
       false,
     );
 
-    expect(mockResponse.status).toHaveBeenCalledWith(StatusCode.InternalServerError);
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      StatusCode.InternalServerError,
+    );
     expect(mockResponse.json).toHaveBeenCalledWith({
       code: StatusCode.InternalServerError,
       error: "An unexpected error occurred.",
@@ -80,12 +85,7 @@ describe("defaultErrorHandler() function", () => {
   it("should call beautifyStackTrace when showStackTrace is true and error has a stack", () => {
     const mockError = new MockError();
 
-    defaultErrorHandler(
-      mockError,
-      mockResponse as any,
-      mockNextFunction,
-      true,
-    );
+    defaultErrorHandler(mockError, mockResponse as any, mockNextFunction, true);
 
     expect(beautifyStackTrace).toHaveBeenCalledWith(mockError.stack);
   });

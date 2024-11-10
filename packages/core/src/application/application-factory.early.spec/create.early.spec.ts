@@ -8,7 +8,6 @@ import {
 } from "../../../../../node_modules/@expressots/adapter-express";
 import { AppFactory } from "../application-factory";
 
-
 // Mock classes and interfaces
 class MockContainer {
   // Add any necessary mock properties or methods here
