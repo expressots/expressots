@@ -3,89 +3,71 @@
 import { Application } from "express";
 import {
   IWebServer,
-  IWebServerConstructor,
   IWebServerPublic,
 } from "../../../../../node_modules/@expressots/adapter-express";
 import { AppFactory } from "../application-factory";
-
-// Mock classes and interfaces
-class MockContainer {
-  // Add any necessary mock properties or methods here
-}
-
-interface MockIWebServerConstructor extends IWebServerConstructor<IWebServer> {
-  new (): MockIWebServer;
-}
-
-class MockIWebServer implements IWebServerPublic {
-  getHttpServer(): Promise<Application> {
-    throw new Error("Method not implemented.");
-  }
-  listen(port: number | string, appInfo?: any): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  initEnvironment(): void {
-    throw new Error("Method not implemented.");
-  }
-  configure = jest.fn().mockResolvedValue(undefined);
-}
+import { Logger } from "../../provider/logger/logger.provider";
 
 describe("AppFactory.create() create method", () => {
-  let mockContainer: MockContainer;
-  let mockWebServerConstructor: MockIWebServerConstructor;
-  let mockWebServerInstance: MockIWebServer;
+  type Engine = any; // Import or define actual types if available
+  type EngineOptions = any;
+
+  class MockWebServer implements IWebServer {
+    getHttpServer(): Promise<Application> {
+      return Promise.resolve({} as Application);
+    }
+    listen(port: number | string, appInfo?: any): Promise<void> {
+      return Promise.resolve();
+    }
+    initEnvironment(): void {}
+    setEngine<T extends EngineOptions>(
+      engine: Engine,
+      options?: T,
+    ): Promise<void> {
+      return Promise.resolve();
+    }
+  }
+
+  let loggerErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    mockContainer = new MockContainer() as any;
-    mockWebServerInstance = new MockIWebServer() as any;
-    mockWebServerConstructor = jest.fn(() => mockWebServerInstance) as any;
+    // Reset mocks before each test
+    jest.clearAllMocks();
+
+    // Spy on the Logger's error method
+    loggerErrorSpy = jest.spyOn(Logger.prototype, "error");
+  });
+
+  afterEach(() => {
+    // Restore spies after each test
+    loggerErrorSpy.mockRestore();
   });
 
   describe("Happy Path", () => {
-    it("should create and configure a web server instance successfully", async () => {
-      // Arrange
-      const expectedInstance =
-        mockWebServerInstance as unknown as IWebServerPublic;
-
+    it("should create a web server instance successfully", async () => {
       // Act
-      const result = await AppFactory.create(
-        mockContainer as any,
-        mockWebServerConstructor as any,
-      );
+      const result = await AppFactory.create(MockWebServer);
 
       // Assert
-      expect(result).toBe(expectedInstance);
-      expect(mockWebServerConstructor).toHaveBeenCalledTimes(1);
-      expect(mockWebServerInstance.configure).toHaveBeenCalledWith(
-        mockContainer,
-      );
+      expect(result).toBeInstanceOf(MockWebServer);
     });
   });
 
   describe("Edge Cases", () => {
     it("should throw an error if webServerType is not a constructor", async () => {
       // Arrange
-      const invalidWebServerType = {} as any;
+      const invalidWebServerType = {};
 
       // Act & Assert
       await expect(
-        AppFactory.create(mockContainer as any, invalidWebServerType),
+        AppFactory.create(invalidWebServerType as any),
       ).rejects.toThrow("Invalid web server type.");
-    });
 
-    it("should handle the case where configure method rejects", async () => {
-      // Arrange
-      mockWebServerInstance.configure.mockRejectedValue(
-        new Error("Configuration failed"),
+      // Verify that the logger's error method was called
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        "Invalid web server type.",
+        "app-factory:create",
       );
-
-      // Act & Assert
-      await expect(
-        AppFactory.create(
-          mockContainer as any,
-          mockWebServerConstructor as any,
-        ),
-      ).rejects.toThrow("Configuration failed");
     });
   });
 });

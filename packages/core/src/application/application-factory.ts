@@ -10,7 +10,7 @@ import { Logger } from "../provider/logger/logger.provider";
  * @param input - Input to check.
  * @returns True if input is a constructor type of IWebServer.
  */
-function isWebServerConstructor<T extends IWebServer>(
+export function isWebServerConstructor<T extends IWebServer>(
   input: unknown,
 ): input is IWebServerConstructor<T> {
   return input && typeof input === "function";

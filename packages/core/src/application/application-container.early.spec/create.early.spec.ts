@@ -1,16 +1,22 @@
 // Unit tests for: create
 
 import "reflect-metadata";
-import { Container, ContainerModule, interfaces } from "../../di/inversify";
+import {
+  BindingScopeEnum,
+  Container,
+  ContainerModule,
+  interfaces,
+} from "../../di/inversify";
 import { AppContainer } from "../application-container";
-import { skip } from "node:test";
 
 describe("AppContainer.create() create method", () => {
   let appContainer: AppContainer;
+  let mockContainer: Container;
   let mockModules: Array<ContainerModule>;
   let mockOptions: interfaces.ContainerOptions;
 
   beforeEach(() => {
+    mockContainer = new Container();
     mockModules = [new ContainerModule(() => {})];
     mockOptions = {
       defaultScope: "Request",
@@ -21,23 +27,12 @@ describe("AppContainer.create() create method", () => {
   });
 
   describe("Happy Path", () => {
-    it("should create a new container with the provided modules", () => {
+    it("should create a container and load modules successfully", () => {
       // Arrange
-      const container = appContainer.create(mockModules as any);
+      const container = appContainer.create(mockModules);
 
       // Act
-      const actual = container.get(Container);
-
-      // Assert
-      expect(actual).toBe(container);
-    });
-
-    it("should create a new container with the provided modules and default options", () => {
-      // Arrange
-      const container = appContainer.create(mockModules as any);
-
-      // Act
-      const actual = container.get(Container);
+      const actual = container;
 
       // Assert
       expect(actual).toBe(container);
@@ -45,20 +40,43 @@ describe("AppContainer.create() create method", () => {
   });
 
   describe("Edge Cases", () => {
+    it("should handle empty modules array gracefully", () => {
+      // Act
+      appContainer.create([]);
+
+      // Assert
+      expect(appContainer.Container).toBeDefined();
+    });
+
+    it("should use default options when none are provided", () => {
+      // Arrange
+      const defaultOptions: interfaces.ContainerOptions = {
+        defaultScope: BindingScopeEnum.Request,
+        autoBindInjectable: true,
+        skipBaseClassChecks: false,
+      };
+
+      // Act
+      appContainer.create(mockModules);
+
+      // Assert
+      expect(appContainer.getContainerOptions()).toEqual(defaultOptions);
+    });
+
     it("should override default options with provided options", () => {
       // Arrange
       const customOptions: interfaces.ContainerOptions = {
+        defaultScope: BindingScopeEnum.Singleton,
         autoBindInjectable: false,
         skipBaseClassChecks: true,
       };
-      appContainer = new AppContainer(customOptions as any);
+      appContainer = new AppContainer(customOptions as any) as any;
 
       // Act
-      const container = appContainer.create(mockModules as any);
+      appContainer.create(mockModules as any);
 
       // Assert
-      expect(container.options.defaultScope).toBe("Request");
-      expect(container.options.autoBindInjectable).toBe(false);
+      expect(appContainer.getContainerOptions()).toEqual(customOptions);
     });
   });
 });

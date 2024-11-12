@@ -21,7 +21,7 @@ describe("ProviderManager.get() get method", () => {
   beforeEach(() => {
     mockContainer = new MockContainer();
     mockLogger = new MockLogger();
-    providerManager = new ProviderManager() as any;
+    providerManager = new ProviderManager(mockContainer as any) as any;
     (providerManager as any).container = mockContainer as any;
     (providerManager as any).logger = mockLogger as any;
   });
