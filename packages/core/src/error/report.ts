@@ -1,5 +1,5 @@
-import { provide } from "../di/binding-decorator";
-import { Logger } from "../provider/logger/logger.provider";
+import { injectable } from "../di/inversify";
+import { IProvider } from "../provider";
 import { AppError } from "./app-error";
 
 /**
@@ -7,15 +7,15 @@ import { AppError } from "./app-error";
  * It is responsible for creating a standardized error object, logging it,
  * and then throwing the error for further handling.
  */
-@provide(Report)
-class Report {
+@injectable()
+export class Report implements IProvider {
+  name: string = "Report Provider";
+  version: string = "3.0.0";
+  author: string = "Richard Zampieri";
+  repo: string = "https://github.com/expressots/expressots";
+
   static stack: string;
-  private logger: Logger;
-
-  constructor() {
-    this.logger = new Logger();
-  }
-
+  
   /**
    * The Error method is responsible for generating a standardized error object,
    * logging the error, and then throwing it for further handling.
@@ -52,5 +52,3 @@ class Report {
     return new AppError(message, statusCode, service);
   }
 }
-
-export { Report };

@@ -1,34 +1,32 @@
 import {
-  Request,
-  Response,
-  NextFunction,
   ErrorRequestHandler,
-  RequestParamHandler,
-  RequestHandler,
-  urlencoded,
-  json,
   static as expressStatic,
+  json,
+  NextFunction,
+  Request,
+  RequestHandler,
+  RequestParamHandler,
+  Response,
+  urlencoded,
 } from "express";
 
-import { provideSingleton } from "../decorator/index";
 import defaultErrorHandler from "../error/error-handler-middleware";
 
 import { Logger } from "../provider/logger/logger.provider";
 import { OptionsJson } from "./interfaces/body-parser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
-import { CorsOptions } from "./interfaces/cors.interface";
 import { CookieParserOptions } from "./interfaces/cookie-parser.interface";
-import { ServeStaticOptions } from "./interfaces/serve-static.interface";
-import { middlewareResolver } from "./middleware-resolver";
 import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
-import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
-import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
+import { CorsOptions } from "./interfaces/cors.interface";
 import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
-import { OptionsHelmet } from "./interfaces/helmet.interface";
-import { multer } from "./interfaces/multer.interface";
 import { SessionOptions } from "./interfaces/express-session.interface";
-import { provide } from "../di/binding-decorator";
+import { OptionsHelmet } from "./interfaces/helmet.interface";
+import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
+import { multer } from "./interfaces/multer.interface";
+import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
+import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
+import { middlewareResolver } from "./middleware-resolver";
 
 /**
  * ExpressHandler Type
@@ -59,7 +57,6 @@ interface IExpressoMiddleware {
  * Custom middleware classes should extend this class and implement the use method.
  *
  */
-@provide(ExpressoMiddleware)
 export abstract class ExpressoMiddleware implements IExpressoMiddleware {
   get name(): string {
     return this.constructor.name;
@@ -301,7 +298,6 @@ interface IMiddleware {
  *
  * @see IConfigure
  */
-@provideSingleton(Middleware)
 class Middleware implements IMiddleware {
   private middlewarePipeline: Array<MiddlewarePipeline> = [];
   private errorHandler: ExpressHandler | undefined;
@@ -828,4 +824,5 @@ class Middleware implements IMiddleware {
   }
 }
 
-export { Middleware, IMiddleware };
+export { IMiddleware, Middleware };
+

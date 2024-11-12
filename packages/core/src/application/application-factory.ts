@@ -1,9 +1,8 @@
 import {
   IWebServer,
-  IWebServerPublic,
   IWebServerConstructor,
+  IWebServerPublic,
 } from "@expressots/adapter-express";
-import { Container } from "../di/inversify";
 import { Logger } from "../provider/logger/logger.provider";
 
 /**
@@ -24,7 +23,6 @@ function isWebServerConstructor<T extends IWebServer>(
  * @public API
  */
 export class AppFactory {
-  public static container: Container;
   private static logger: Logger = new Logger();
 
   /**
@@ -34,17 +32,14 @@ export class AppFactory {
    * @returns A promise that resolves to an instance of IWebServer.
    */
   public static async create<T extends IWebServer>(
-    container: Container,
     webServerType: IWebServerConstructor<T>,
   ): Promise<IWebServerPublic> {
-    AppFactory.container = container;
 
     if (isWebServerConstructor<T>(webServerType)) {
       const webServerInstance: T = new webServerType();
-      await webServerInstance.configure(container);
       return webServerInstance as unknown as IWebServerPublic;
     } else {
-      this.logger.error("Invalid web server type.", "app-factory:create");
+      AppFactory.logger.error("Invalid web server type.", "app-factory:create");
       throw new Error("Invalid web server type.");
     }
   }

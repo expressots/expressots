@@ -10,81 +10,6 @@ import { buildProviderModule } from "../di/binding-decorator";
 import { Logger } from "../provider";
 
 /**
- * Represents a single binding in the dependency injection container.
- */
-interface Binding {
-  /**
-   * Unique identifier for this binding.
-   */
-  id: number;
-
-  /**
-   * Indicates whether this binding is activated.
-   */
-  activated: boolean;
-
-  /**
-   * Symbol used to identify the service.
-   */
-  serviceIdentifier: symbol;
-
-  /**
-   * Scope of the binding (e.g., 'Singleton', 'Transient', 'Request').
-   */
-  scope: string;
-
-  /**
-   * Type of the binding (e.g., 'Instance', 'Factory', 'Provider').
-   */
-  type: string;
-
-  /**
-   * Object used to match or constrain the binding.
-   */
-  constraint: object;
-
-  /**
-   * The actual implementation type of the service.
-   */
-  implementationType: object;
-
-  /**
-   * Cached instance, used if the binding's scope allows it.
-   */
-  cache: object | null;
-
-  /**
-   * Optional factory to create the service instance.
-   */
-  factory: object | null;
-
-  /**
-   * Optional provider to create the service instance.
-   */
-  provider: object | null;
-
-  /**
-   * Function to run when activating a new instance.
-   */
-  onActivation: object | null;
-
-  /**
-   * Function to run when deactivating an instance.
-   */
-  onDeactivation: object | null;
-
-  /**
-   * Optional dynamic value that can be used to resolve the service.
-   */
-  dynamicValue: object | null;
-
-  /**
-   * Module ID where the binding is defined, useful for debugging.
-   */
-  moduleId: number;
-}
-
-/**
  * The AppContainer class provides a container for managing dependency injection.
  * It allows the creation of a container with custom options, including default binding scope
  * and the ability to skip base class checks. The container can be loaded with multiple
@@ -122,7 +47,7 @@ export class AppContainer {
    * @returns The configured dependency injection container.
    * @public API
    */
-  public create(modules: Array<ContainerModule>): Container {
+  public create(modules: Array<ContainerModule>): void {
     const containerOptions: interfaces.ContainerOptions = {
       autoBindInjectable: this.options.autoBindInjectable
         ? this.options.autoBindInjectable
@@ -133,8 +58,6 @@ export class AppContainer {
     this.container = new Container(containerOptions);
     this.container.bind(Container).toConstantValue(this.container);
     this.container.load(buildProviderModule(), ...modules);
-
-    return this.container;
   }
 
   /**
@@ -145,7 +68,7 @@ export class AppContainer {
   public viewContainerBindings(): void {
     const dictionary = this.container["_bindingDictionary"]._map;
 
-    const entries: Array<[string, Array<Binding>]> = Array.from(
+    const entries: Array<[string, Array<interfaces.Binding>]> = Array.from(
       dictionary.entries(),
     );
 
@@ -177,5 +100,14 @@ export class AppContainer {
     }
 
     return this.container.options;
+  }
+
+  /**
+   * Retrieves the container instance.
+   * @returns The container instance.
+   * @public API
+   */
+  public get Container(): Container {
+    return this.container;
   }
 }

@@ -1,10 +1,10 @@
-import "reflect-metadata";
-
 import { BindingScopeEnum, interfaces } from "../di/inversify";
-import { AppFactory } from "../application";
-import { provideSingleton } from "../decorator";
 import { Logger } from "./logger/logger.provider";
 
+/**
+ * Provider Interface - Represents a provider object with name, version, author, and repository information.
+ * @public API
+ */
 export interface IProvider {
   name: string;
   version: string;
@@ -14,11 +14,24 @@ export interface IProvider {
 
 type ClassType<T> = new () => T;
 
-@provideSingleton(ProviderManager)
+/**
+ * ProviderManager Class - A class for managing dependency injection providers.
+ * @public API
+ */
 export class ProviderManager {
-  private container: interfaces.Container = AppFactory.container;
+  private container: interfaces.Container;
   private logger: Logger = new Logger();
 
+  constructor(container: interfaces.Container) {
+    this.container = container;
+  }
+
+  /**
+   * Register a provider with the container.
+   * @param serviceIdentifier - The service identifier for the provider.
+   * @param scope - The binding scope for the provider.
+   * @public API
+   */
   public register(
     serviceIdentifier: interfaces.ServiceIdentifier<unknown>,
     scope: interfaces.BindingScope = BindingScopeEnum.Request,
@@ -44,6 +57,12 @@ export class ProviderManager {
     }
   }
 
+  /**
+   * Get a provider from the container.
+   * @param provider - The provider class to get from the container.
+   * @returns An instance of the provider.
+   * @public API
+   */
   public get<P>(provider: ClassType<P>): P {
     const serviceIdentifier = this.container.get<P>(provider);
 
