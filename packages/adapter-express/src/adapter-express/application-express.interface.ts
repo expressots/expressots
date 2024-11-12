@@ -47,7 +47,7 @@ export interface IWebServerConstructor<T extends IWebServer> {
 export interface IWebServerPublic {
   /**
    * Start listening on the given port.
-   * @param port - The port number to listen on.   
+   * @param port - The port number to listen on.
    * @param consoleMessage - Optional App info message to display on startup.
    */
   listen(port: number | string, consoleMessage?: IConsoleMessage): Promise<void>;

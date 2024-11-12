@@ -72,7 +72,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @option skipBaseClassChecks - Skip the base class checks for the container.
    * @option autoBindInjectable - Automatically bind the injectable classes.
    * @option defaultScope - The default scope to use for bindings.
-   * 
+   *
    * @returns The configured AppContainer instance.
    * @public API
    */
