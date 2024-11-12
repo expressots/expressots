@@ -170,7 +170,7 @@ export class Middleware implements IMiddleware {
    * Adds a URL Encoded Parser middleware to the middleware collection.
    * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
    *
-   * @param options - Optional configuration options for the URL Encoded Parser.   
+   * @param options - Optional configuration options for the URL Encoded Parser.
    */
   addUrlEncodedParser(options?: OptionsUrlencoded): void {
     const middlewareExist = this.middlewareExists("urlencodedParser");
