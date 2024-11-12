@@ -1,18 +1,16 @@
-import { Console, IConsoleMessage, Logger, Middleware } from "@expressots/core";
+import { AppContainer, Console, IConsoleMessage, Logger, Middleware, ProviderManager, ExpressoMiddleware } from "@expressots/core";
 import { config } from "@expressots/shared";
 import express from "express";
 import fs from "fs";
-import process from "process";
+import process, { exit } from "process";
 import { interfaces } from "../di/di.interfaces";
 import { ApplicationBase } from "./application-express.base";
 import {
   Environment,
   ExpressHandler,
-  ExpressoMiddleware,
-  IEnvironment,
-  IWebServer,
   MiddlewareConfig,
 } from "./application-express.types";
+import { IEnvironment, IWebServer } from "./application-express.interface";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
@@ -37,9 +35,11 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   private app: express.Application;
   private port: number;
   private environment?: Environment;
-  private container: interfaces.Container;
+  private appContainer: AppContainer;
   private globalPrefix: string = "/";
+  private middlewareManager: Middleware;
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
+  private providerManager: ProviderManager;
   private renderOptions: RenderOptions = {} as RenderOptions;
 
   constructor() {
@@ -63,9 +63,41 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   /**
    * Configures the InversifyJS container.
    * @param container - The InversifyJS container.
+   * @param appModules - An array of application modules to be loaded into the container.
+   * @param containerOptions - Container global configuration options.
    */
-  public async configure(container: interfaces.Container): Promise<void> {
-    this.container = container;
+  public configContainer(appModules: Array<interfaces.ContainerModule>, containerOptions?: interfaces.ContainerOptions): AppContainer {
+    this.appContainer = new AppContainer(containerOptions? containerOptions : {});
+
+    if (!appModules) {
+      this.logger.error("No modules provided for container configuration", "adapter-express");
+      return;
+    }
+
+    this.appContainer.create(appModules);
+    
+    this.providerManager = new ProviderManager(this.appContainer.Container);
+    this.middlewareManager = new Middleware();
+
+    return this.appContainer;
+  }
+
+  /**
+   * Get the ProviderManager instance.
+   * @returns The ProviderManager instance.
+   * @public API
+   */
+  public get Provider(): ProviderManager {
+    return this.providerManager;
+  }
+
+  /**
+   * Get the Middleware instance.
+   * @returns The Middleware instance.
+   * @public API
+   */
+  public get Middleware(): Middleware {
+    return this.middlewareManager;
   }
 
   /**
@@ -109,10 +141,15 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @returns The configured Application instance.
    */
   private async init(): Promise<AppExpress> {
+    
+    if (!this.appContainer) {
+      this.logger.error("No container provided for application configuration", "adapter-express");
+      exit(1);
+    }
+
     await this.configureServices();
 
-    const middleware = this.container.get(Middleware);
-    const sortedMiddlewarePipeline = middleware.getMiddlewarePipeline();
+    const sortedMiddlewarePipeline = this.Middleware.getMiddlewarePipeline();
     const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
 
     this.middlewares.push(...(pipeline as Array<ExpressHandler>));
@@ -120,7 +157,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
     /* Apply the status code to the response */
     this.middlewares.unshift(new HttpStatusCodeMiddleware() as ExpressoMiddleware);
 
-    const expressServer = new InversifyExpressServer(this.container, null, {
+    const expressServer = new InversifyExpressServer(this.appContainer.Container, null, {
       rootPath: this.globalPrefix as string,
     });
 
@@ -129,8 +166,8 @@ export class AppExpress extends ApplicationBase implements IWebServer {
     });
 
     expressServer.setErrorConfig((app: express.Application) => {
-      if (middleware.getErrorHandler()) {
-        app.use(middleware.getErrorHandler() as express.ErrorRequestHandler);
+      if (this.Middleware.getErrorHandler()) {
+        app.use(this.Middleware.getErrorHandler() as express.ErrorRequestHandler);
       }
     });
 
@@ -227,7 +264,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
       return this.app.get("env") === "development";
     }
 
-    this.container
+    this.appContainer.Container
       .get<Logger>(Logger)
       .error("isDevelopment() method must be called on `PostServerInitialization`", "application");
     return false;

@@ -1,5 +1,46 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { IConsoleMessage } from "@expressots/core";
+import { Engine, EngineOptions } from "./render/engine";
+import { Environment } from "./application-express.types";
+
+/**
+ * ExpressoTS Class middleware interface.
+ */
+export interface IExpressoMiddleware {
+  //readonly name: string;
+  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
+
+/**
+ * Interface for environment configuration options.
+ * @public API
+ */
+export interface IEnvironment {
+  env: {
+    development?: string;
+    production?: string;
+  };
+}
+
+/**
+ * Interface for the WebServer application implementation.
+ */
+export interface IWebServer {
+  //configure(container: interfaces.Container): Promise<void>;
+
+  initEnvironment(environment: Environment, options?: IEnvironment): void;
+
+  listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
+
+  setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
+}
+
+/**
+ * Constructor type for IWebServer.
+ */
+export interface IWebServerConstructor<T extends IWebServer> {
+  new (): T;
+}
 
 /**
  * Public Interface for the WebServer application.
@@ -21,3 +62,4 @@ export interface IWebServerPublic {
    */
   getHttpServer(): Promise<express.Application>;
 }
+

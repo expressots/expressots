@@ -1,27 +1,4 @@
-import { IConsoleMessage } from "@expressots/core";
-import express, { NextFunction, Request, Response } from "express";
-import { interfaces } from "../di/di.interfaces";
-import { Engine, EngineOptions } from "./render/engine";
-
-/**
- * Interface for the WebServer application implementation.
- */
-export interface IWebServer {
-  configure(container: interfaces.Container): Promise<void>;
-
-  initEnvironment(environment: Environment, options?: IEnvironment): void;
-
-  listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
-
-  setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
-}
-
-/**
- * Constructor type for IWebServer.
- */
-export interface IWebServerConstructor<T extends IWebServer> {
-  new (): T;
-}
+import express from "express";
 
 /**
  * ExpressHandler Type
@@ -52,27 +29,6 @@ export type MiddlewareConfig = {
 };
 
 /**
- * Expresso middleware interface.
- */
-interface IExpressoMiddleware {
-  //readonly name: string;
-  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
-}
-
-/**
- * Abstract class for creating custom Expresso middleware.
- * Custom middleware classes should extend this class and implement the use method.
- *
- */
-export abstract class ExpressoMiddleware implements IExpressoMiddleware {
-  get name(): string {
-    return this.constructor.name;
-  }
-
-  abstract use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
-}
-
-/**
  * Enum representing possible server environments.
  */
 export enum ServerEnvironment {
@@ -91,14 +47,3 @@ export type TypeServerEnvironment = "development" | "production" | "remote";
  * @public API
  */
 export type Environment = ServerEnvironment | TypeServerEnvironment | undefined;
-
-/**
- * Interface for environment configuration options.
- * @public API
- */
-export interface IEnvironment {
-  env: {
-    development?: string;
-    production?: string;
-  };
-}
