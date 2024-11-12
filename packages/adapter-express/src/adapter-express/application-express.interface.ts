@@ -62,4 +62,3 @@ export interface IWebServerPublic {
    */
   getHttpServer(): Promise<express.Application>;
 }
-

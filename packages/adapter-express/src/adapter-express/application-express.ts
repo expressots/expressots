@@ -1,15 +1,19 @@
-import { AppContainer, Console, IConsoleMessage, Logger, Middleware, ProviderManager, ExpressoMiddleware } from "@expressots/core";
+import {
+  AppContainer,
+  Console,
+  IConsoleMessage,
+  Logger,
+  Middleware,
+  ProviderManager,
+  ExpressoMiddleware,
+} from "@expressots/core";
 import { config } from "@expressots/shared";
 import express from "express";
 import fs from "fs";
 import process, { exit } from "process";
 import { interfaces } from "../di/di.interfaces";
 import { ApplicationBase } from "./application-express.base";
-import {
-  Environment,
-  ExpressHandler,
-  MiddlewareConfig,
-} from "./application-express.types";
+import { Environment, ExpressHandler, MiddlewareConfig } from "./application-express.types";
 import { IEnvironment, IWebServer } from "./application-express.interface";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
@@ -66,8 +70,11 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @param appModules - An array of application modules to be loaded into the container.
    * @param containerOptions - Container global configuration options.
    */
-  public configContainer(appModules: Array<interfaces.ContainerModule>, containerOptions?: interfaces.ContainerOptions): AppContainer {
-    this.appContainer = new AppContainer(containerOptions? containerOptions : {});
+  public configContainer(
+    appModules: Array<interfaces.ContainerModule>,
+    containerOptions?: interfaces.ContainerOptions,
+  ): AppContainer {
+    this.appContainer = new AppContainer(containerOptions ? containerOptions : {});
 
     if (!appModules) {
       this.logger.error("No modules provided for container configuration", "adapter-express");
@@ -75,7 +82,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
     }
 
     this.appContainer.create(appModules);
-    
+
     this.providerManager = new ProviderManager(this.appContainer.Container);
     this.middlewareManager = new Middleware();
 
@@ -141,7 +148,6 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @returns The configured Application instance.
    */
   private async init(): Promise<AppExpress> {
-    
     if (!this.appContainer) {
       this.logger.error("No container provided for application configuration", "adapter-express");
       exit(1);
@@ -264,9 +270,10 @@ export class AppExpress extends ApplicationBase implements IWebServer {
       return this.app.get("env") === "development";
     }
 
-    this.appContainer.Container
-      .get<Logger>(Logger)
-      .error("isDevelopment() method must be called on `PostServerInitialization`", "application");
+    this.appContainer.Container.get<Logger>(Logger).error(
+      "isDevelopment() method must be called on `PostServerInitialization`",
+      "application",
+    );
     return false;
   }
 
