@@ -26,8 +26,6 @@ export interface IEnvironment {
  * Interface for the WebServer application implementation.
  */
 export interface IWebServer {
-  //configure(container: interfaces.Container): Promise<void>;
-
   initEnvironment(environment: Environment, options?: IEnvironment): void;
 
   listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
@@ -48,10 +46,9 @@ export interface IWebServerConstructor<T extends IWebServer> {
  */
 export interface IWebServerPublic {
   /**
-   * Start listening on the given port and environment.
-   * @param port - The port number to listen on.
-   * @param environment - Environment. (default: ServerEnvironment.Development)
-   * @param consoleMessage - Optional message to display in the console.
+   * Start listening on the given port.
+   * @param port - The port number to listen on.   
+   * @param consoleMessage - Optional App info message to display on startup.
    */
   listen(port: number | string, consoleMessage?: IConsoleMessage): Promise<void>;
 

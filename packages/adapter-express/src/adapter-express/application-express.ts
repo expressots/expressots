@@ -6,6 +6,7 @@ import {
   Middleware,
   ProviderManager,
   ExpressoMiddleware,
+  IMiddleware,
 } from "@expressots/core";
 import { config } from "@expressots/shared";
 import express from "express";
@@ -41,7 +42,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   private environment?: Environment;
   private appContainer: AppContainer;
   private globalPrefix: string = "/";
-  private middlewareManager: Middleware;
+  private middlewareManager: IMiddleware;
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
   private providerManager: ProviderManager;
   private renderOptions: RenderOptions = {} as RenderOptions;
@@ -65,10 +66,15 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   }
 
   /**
-   * Configures the InversifyJS container.
-   * @param container - The InversifyJS container.
+   * Initialize the InversifyJS container with the provided modules and options.
    * @param appModules - An array of application modules to be loaded into the container.
    * @param containerOptions - Container global configuration options.
+   * @option skipBaseClassChecks - Skip the base class checks for the container.
+   * @option autoBindInjectable - Automatically bind the injectable classes.
+   * @option defaultScope - The default scope to use for bindings.
+   * 
+   * @returns The configured AppContainer instance.
+   * @public API
    */
   public configContainer(
     appModules: Array<interfaces.ContainerModule>,
@@ -103,7 +109,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @returns The Middleware instance.
    * @public API
    */
-  public get Middleware(): Middleware {
+  public get Middleware(): IMiddleware {
     return this.middlewareManager;
   }
 
@@ -155,7 +161,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
 
     await this.configureServices();
 
-    const sortedMiddlewarePipeline = this.Middleware.getMiddlewarePipeline();
+    const sortedMiddlewarePipeline = (this.Middleware as Middleware).getMiddlewarePipeline();
     const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
 
     this.middlewares.push(...(pipeline as Array<ExpressHandler>));
@@ -281,6 +287,16 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * Load environment variables from the specified file based on the environment configuration.
    * @param environment - The environment to load configuration for.
    * @param options - The options to use for loading the environment configuration.
+   * @option env - The environment configuration options.
+   * @example
+   * ```typescript
+   * {
+            env: {
+                development: ".env.development",
+                production: ".env.production"
+            }
+        }
+    * ```
    * @public API
    */
   public initEnvironment(environment: Environment, options?: IEnvironment): void {
