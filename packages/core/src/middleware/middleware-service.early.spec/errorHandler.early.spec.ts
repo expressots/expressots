@@ -8,7 +8,7 @@ type CustomErrorHandler = (
   req: Request,
   res: Response,
   next: NextFunction,
-  showStackTrace?: boolean
+  showStackTrace?: boolean,
 ) => any;
 
 describe("errorHandler() errorHandler method", () => {
@@ -58,9 +58,7 @@ describe("errorHandler() errorHandler method", () => {
     });
   });
 
-  describe("Edge Cases", () => {
-    
-  });
+  describe("Edge Cases", () => {});
 });
 
 // End of unit tests for: errorHandler

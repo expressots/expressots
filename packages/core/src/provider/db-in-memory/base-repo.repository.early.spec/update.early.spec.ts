@@ -47,18 +47,18 @@ describe("BaseRepository.update() update method", () => {
   });
 
   describe("Edge Cases", () => {
-      let repository: BaseRepository<any>;
-      let mockInMemoryDB: InMemoryDB;
-  
-      beforeEach(() => {
-          mockInMemoryDB = {
-              getTable: jest.fn().mockReturnValue([]),
-              printTable: jest.fn()
-          } as unknown as InMemoryDB;
-  
-          repository = new BaseRepository<any>("testTable");
-          (repository as any).inMemoryDB = mockInMemoryDB;
-      });
+    let repository: BaseRepository<any>;
+    let mockInMemoryDB: InMemoryDB;
+
+    beforeEach(() => {
+      mockInMemoryDB = {
+        getTable: jest.fn().mockReturnValue([]),
+        printTable: jest.fn(),
+      } as unknown as InMemoryDB;
+
+      repository = new BaseRepository<any>("testTable");
+      (repository as any).inMemoryDB = mockInMemoryDB;
+    });
 
     it("should handle updating an entity with no changes gracefully", () => {
       // Arrange

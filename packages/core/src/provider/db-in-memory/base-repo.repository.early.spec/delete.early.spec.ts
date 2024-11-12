@@ -41,8 +41,6 @@ describe("BaseRepository.delete() delete method", () => {
   });
 
   describe("Edge Cases", () => {
-    
-
     it("should handle deletion from an empty table gracefully", () => {
       // Act
       const result = repository.delete("1");

@@ -57,7 +57,9 @@ describe("InMemoryDB.printTable() printTable method", () => {
       db.printTable("nonExistentTable");
 
       // Assert: Check if the no tables exist message is printed
-      expect(consoleSpy).toHaveBeenCalledWith("Table 'nonExistentTable' is empty.");
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Table 'nonExistentTable' is empty.",
+      );
     });
 
     it("should handle printing a table with special characters in the name", () => {

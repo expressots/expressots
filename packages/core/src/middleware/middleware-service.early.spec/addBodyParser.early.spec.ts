@@ -6,7 +6,7 @@ import { Middleware } from "../middleware-service";
 
 // Mocking the express module
 jest.mock("express", () => {
-    const actualExpress = jest.requireActual("express");
+  const actualExpress = jest.requireActual("express");
   return {
     ...actualExpress,
     json: jest.fn(),

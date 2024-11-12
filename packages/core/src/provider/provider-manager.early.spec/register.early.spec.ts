@@ -52,7 +52,7 @@ describe("ProviderManager.register() register method", () => {
       mockContainer.bind.mockReturnValue({
         toSelf: jest.fn().mockReturnThis(),
         inRequestScope: jest.fn(),
-    });
+      });
 
       // Act
       providerManager.register(
@@ -72,10 +72,10 @@ describe("ProviderManager.register() register method", () => {
       const mockServiceIdentifier: MockServiceIdentifier = "TestService";
       mockContainer.isBound.mockReturnValue(false);
 
-        mockContainer.bind.mockReturnValue({
-            toSelf: jest.fn().mockReturnThis(),
-            inSingletonScope: jest.fn(),
-        });
+      mockContainer.bind.mockReturnValue({
+        toSelf: jest.fn().mockReturnThis(),
+        inSingletonScope: jest.fn(),
+      });
 
       // Act
       providerManager.register(
@@ -95,10 +95,10 @@ describe("ProviderManager.register() register method", () => {
       const mockServiceIdentifier: MockServiceIdentifier = "TestService";
       mockContainer.isBound.mockReturnValue(false);
 
-        mockContainer.bind.mockReturnValue({
-            toSelf: jest.fn().mockReturnThis(),
-            inTransientScope: jest.fn(),
-        });
+      mockContainer.bind.mockReturnValue({
+        toSelf: jest.fn().mockReturnThis(),
+        inTransientScope: jest.fn(),
+      });
 
       // Act
       providerManager.register(
@@ -138,7 +138,7 @@ describe("ProviderManager.register() register method", () => {
       mockContainer.bind.mockReturnValue({
         toSelf: jest.fn().mockReturnThis(),
         inRequestScope: jest.fn(),
-    });
+      });
 
       // Act
       providerManager.register(
