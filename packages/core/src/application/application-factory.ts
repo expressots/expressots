@@ -34,7 +34,6 @@ export class AppFactory {
   public static async create<T extends IWebServer>(
     webServerType: IWebServerConstructor<T>,
   ): Promise<IWebServerPublic> {
-
     if (isWebServerConstructor<T>(webServerType)) {
       const webServerInstance: T = new webServerType();
       return webServerInstance as unknown as IWebServerPublic;

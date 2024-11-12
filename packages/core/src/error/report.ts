@@ -15,7 +15,7 @@ export class Report implements IProvider {
   repo: string = "https://github.com/expressots/expressots";
 
   static stack: string;
-  
+
   /**
    * The Error method is responsible for generating a standardized error object,
    * logging the error, and then throwing it for further handling.

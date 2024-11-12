@@ -825,4 +825,3 @@ class Middleware implements IMiddleware {
 }
 
 export { IMiddleware, Middleware };
-
