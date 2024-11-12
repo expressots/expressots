@@ -10,7 +10,7 @@ import { Logger } from "../logger/logger.provider";
  * @param type - The type of the DTO to validate.
  * @returns A RequestHandler function.
  * @throws An exception if the DTO is invalid.
- *
+ * @public API
  */
 export function ValidateDTO<T extends object>(
   type: new () => T,

@@ -45,7 +45,6 @@ export class AppContainer {
    * Creates and configures a new dependency injection container.
    * @param modules - An array of ContainerModule instances to load into the container.
    * @returns The configured dependency injection container.
-   * @public API
    */
   public create(modules: Array<ContainerModule>): void {
     const containerOptions: interfaces.ContainerOptions = {

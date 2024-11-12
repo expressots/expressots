@@ -13,6 +13,7 @@ export const BINDING_TYPE_METADATA_KEY = "binding-type";
  * The scope decorator is a higher order function that can be used to decorate a class with a binding type.
  * @param binding An instance of interfaces.BindingScope which represents the binding type.
  * @returns A decorator function that can be used to decorate a class with a binding type.
+ * @public API
  */
 const scope = (binding: interfaces.BindingScope) => {
   return function (target: any) {
@@ -89,6 +90,7 @@ export class BaseModule {
    * @param controllers - An array of controller classes.
    * @param scope - An optional binding scope to be used for all controllers.
    * @returns A ContainerModule with the controller bindings.
+   * @public API
    */
   public static createContainerModule(
     controllers: Array<any>,

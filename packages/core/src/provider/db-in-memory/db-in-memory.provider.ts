@@ -16,14 +16,14 @@ export interface IMemoryDBEntity {
  * It is particularly useful for developers starting with ExpressoTS without any database connection.
  *
  * @decorator @provideSingleton(InMemoryDB)
+ * @public API
  */
-//@provideSingleton(InMemoryDB)
 @injectable()
 export class InMemoryDB implements IProvider {
-  name: string = "InMemoryDB";
-  version: string = "0.0.1";
+  name: string = "In Memory DB Provider";
+  version: string = "3.0.0";
   author: string = "Richard Zampieri";
-  repo: string = "internal";
+  repo: string = "https://github.com/expressots/expressots";
 
   private tables: Record<string, Array<IMemoryDBEntity>> = {};
 
@@ -34,6 +34,7 @@ export class InMemoryDB implements IProvider {
    *
    * @param tableName - The name of the table to retrieve.
    * @returns {IEntity[]} - An array of entities.
+   * @public API
    */
   public getTable(tableName: string): Array<IMemoryDBEntity> {
     if (!this.tables[tableName]) {
@@ -46,6 +47,7 @@ export class InMemoryDB implements IProvider {
    * showTables Method
    *
    * Prints a list of all tables in the in-memory database to the standard output.
+   * @public API
    */
   public showTables(): void {
     if (!this.tables) {
@@ -66,6 +68,7 @@ export class InMemoryDB implements IProvider {
    * If the table doesn't exist or is empty, it notifies the user.
    *
    * @param tableName - The name of the table to print.
+   * @public API
    */
   public printTable(tableName: string): void {
     if (!this.tables) {

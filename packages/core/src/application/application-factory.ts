@@ -27,7 +27,6 @@ export class AppFactory {
 
   /**
    * Create an instance of a web server.
-   * @param container - Dependency injection container.
    * @param webServerType - Constructor of a class that implements IWebServer.
    * @returns A promise that resolves to an instance of IWebServer.
    */

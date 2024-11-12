@@ -20,15 +20,16 @@ function colorText(text: string, color: Color): string {
 
 /**
  * Class that provides logging functionality with colorized text.
+ * @public API
  */
 @injectable()
 class Logger implements IProvider {
   private pid: number;
 
-  name: string = "Logger";
-  version: string = "0.0.1";
+  name: string = "Logger Provider";
+  version: string = "3.0.0";
   author: string = "Richard Zampieri";
-  repo: string = "internal";
+  repo: string = "https://github.com/expressots/expressots";
 
   constructor() {
     this.pid = process.pid;
@@ -104,6 +105,7 @@ class Logger implements IProvider {
    *
    * @param message - The message to log.
    * @param module - Optional module name.
+   * @public API
    */
   public msg(message: string, module?: string): void {
     process.stdout.write(this.formatMessage("NONE", message, module));
@@ -114,6 +116,7 @@ class Logger implements IProvider {
    *
    * @param message - The message to log.
    * @param module - Optional module name.
+   * @public API
    */
   public info(message: string, module?: string): void {
     process.stdout.write(this.formatMessage("INFO", message, module));
@@ -124,6 +127,7 @@ class Logger implements IProvider {
    *
    * @param message - The message to log.
    * @param module - Optional module name.
+   * @public API
    */
   public warn(message: string, module?: string): void {
     process.stdout.write(this.formatMessage("WARN", message, module));
@@ -134,6 +138,7 @@ class Logger implements IProvider {
    *
    * @param message - The message to log.
    * @param module - Optional module name.
+   * @public API
    */
   public error(message: string, module?: string): void {
     process.stderr.write(this.formatMessage("ERROR", message, module));

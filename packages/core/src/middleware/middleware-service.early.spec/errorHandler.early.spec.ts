@@ -1,7 +1,8 @@
 // Unit tests for: errorHandler
 
 import { NextFunction, Request, Response } from "express";
-import { ErrorHandlerOptions, Middleware } from "../middleware-service";
+import { Middleware } from "../middleware-service";
+import { ErrorHandlerOptions } from "../middleware-interface";
 
 type CustomErrorHandler = (
   err: any,

@@ -11,11 +11,12 @@ type DefaultValueType = string | number | boolean | undefined;
  * The EnvValidatorProvider class provides utility methods for working with environment variables.
  * It validates, loads, and retrieves environment variables from the .env file.
  * @provide EnvValidatorProvider
+ * @public API
  */
 @injectable()
 export class EnvValidatorProvider implements IProvider {
-  name: string = "EnvValidatorProvider";
-  version: string = "0.0.1";
+  name: string = "Env Validator Provider";
+  version: string = "3.0.0";
   author: string = "Richard Zampieri";
   repo: string = "https://github.com/expressots/expressots";
 

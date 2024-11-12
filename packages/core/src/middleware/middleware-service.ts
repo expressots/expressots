@@ -11,6 +11,7 @@ import {
 } from "express";
 
 import defaultErrorHandler from "../error/error-handler-middleware";
+import { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
 
 import { Logger } from "../provider/logger/logger.provider";
 import { OptionsJson } from "./interfaces/body-parser.interface";
@@ -119,186 +120,14 @@ enum MiddlewareType {
 }
 
 /**
- * ErrorHandlerOptions Interface
- *
- * The ErrorHandlerOptions interface specifies the configuration options for the error handler middleware.
- * @param errorHandler: An Express error handler function that takes care of processing errors and formulating the response.
- * @param showStackTrace: A boolean value indicating whether to include the stack trace in the error response. The default value is false.
- */
-export interface ErrorHandlerOptions {
-  errorHandler?: ExpressHandler;
-  showStackTrace?: boolean;
-}
-
-/**
- * Interface for configuring and managing middlewares in the application.
- * Provides methods to be added automatically in the application without the need to import packages.
- */
-interface IMiddleware {
-  /**
-   * Adds a URL Encoded Parser middleware to the middleware collection.
-   * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
-   *
-   * @param options - Optional configuration options for the URL Encoded Parser.
-   */
-  addUrlEncodedParser(options?: OptionsUrlencoded): void;
-
-  /**
-   * Adds a Rate Limit middleware to the middleware collection.
-   * The rate limiter is responsible for adding dynamic rate limit and request throttling to the application.
-   *
-   * @param options - Optional configuration options for the rate limiter.
-   */
-  addRateLimiter(options?: RateLimitOptions): void;
-
-  /**
-   * Adds a Body Parser middleware to the middleware collection.
-   * The body parser is responsible for parsing the incoming request bodies in a middleware.
-   *
-   * @param options - Optional configuration options for the JSON body parser.
-   */
-  addBodyParser(options?: OptionsJson): void;
-
-  /**
-   * Adds Cross-Origin Resource Sharing (CORS) middleware to enable or control cross-origin requests.
-   *
-   * @param options - Optional configuration options for CORS. Defines the behavior of CORS requests like allowed origins, methods, headers, etc.
-   */
-  addCors(options?: CorsOptions): void;
-
-  /**
-   * Adds Compression middleware to reduce the size of the response body and improve the speed of the client-server communication.
-   *
-   * @param options - Optional configuration options for Compression. Allows fine-tuning the compression behavior, such as setting the compression level, threshold, and filter functions to determine which requests should be compressed.
-   */
-  addCompression(options?: CompressionOptions): void;
-
-  /**
-   * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
-   *
-   * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
-   * @param options - Optional configuration options for Cookie Parser.
-   */
-  addCookieParser(
-    secret?: string | Array<string> | undefined,
-    options?: CookieParserOptions,
-  ): void;
-
-  /**
-   * Adds Cookie Session middleware to enable cookie-based sessions.
-   *
-   * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
-   */
-  addCookieSession(options: CookieSessionOptions): void;
-
-  /**
-   * Adds Morgan middleware to log HTTP requests.
-   *
-   * @param format - The log format. Can be a string or a function.
-   * @param options - Optional configuration options for Morgan. Defines the behavior of the logger like the output stream, buffer duration, etc.
-   */
-  addMorgan(format: string | FormatFn, options?: OptionsMorgan): void;
-
-  /**
-   * Adds a middleware to serve the favicon to the middleware collection.
-   * The favicon is the icon that is displayed in the browser tab for the application.
-   *
-   * @param path - The path to the favicon file.
-   * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
-   */
-  addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void;
-
-  /**
-   * Add a middleware to enable express-session.
-   *
-   * @param options - Optional configuration options for Session.
-   *
-   */
-  addSession(options: SessionOptions): void;
-
-  /**
-   * Configures the error handling middleware for the application.
-   *
-   * @param options - The object containing the configuration options for the error handler middleware.
-   * @param errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
-   * @param showStackTrace - A boolean value indicating whether to show the stack trace in the response.
-   */
-  setErrorHandler(options?: ErrorHandlerOptions): void;
-
-  /**
-   * Adds a middleware to serve static files from the specified root directory.
-   * Allows the application to serve files like images, CSS, JavaScript, etc.
-   *
-   * @param root - The root directory from which the static assets are to be served.
-   * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
-   */
-  serveStatic(root: string, options?: ServeStaticOptions): void;
-
-  /**
-   * Adds a middleware to the middleware collection.
-   *
-   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
-   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
-   *
-   * @example Express Handler
-   *  const middleware = (req, res, next) => {
-   *  // Your middleware logic here
-   *  next();
-   * }
-   *
-   * @example Middleware Configuration Object
-   * const middleware = {
-   *  path: "/",
-   *  middlewares: [] // Array of Express Handlers
-   * }
-   *
-   * @example Expresso Middleware
-   * class CustomMiddleware implements IExpressoMiddleware {
-   *  use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
-   *   // Your middleware logic here
-   *   next();
-   *  }
-   * }
-   */
-  addMiddleware(options: MiddlewareOptions): void;
-
-  /**
-   * View middleware pipeline formatted.
-   * @returns void
-   */
-  viewMiddlewarePipeline(): void;
-
-  /**
-   * Gets the configured error handler middleware.
-   *
-   * @returns The error handler middleware.
-   */
-  getErrorHandler(): ExpressHandler;
-
-  /**
-   * Adds Helmet middleware to enhance security by setting various HTTP headers.
-   *
-   * @param options - Optional configuration options for Helmet.
-   * @returns The configuration options for Helmet middleware.
-   */
-  addHelmet(options?: OptionsHelmet): void;
-
-  /**
-   * Adds Multer middleware for handling multipart/form-data, typically used for file uploads.
-   *
-   * @param options - Optional configuration options for Multer.
-   */
-  setupMulter(options?: multer.Options): multer.Multer;
-}
-
-/**
  * Singleton class that implements the IConfigure interface.
  * Manages the middleware configuration for the application,
  * including adding Body Parser and retrieving all configured middlewares.
  *
  * @see IConfigure
+ * @public API
  */
-class Middleware implements IMiddleware {
+export class Middleware implements IMiddleware {
   private middlewarePipeline: Array<MiddlewarePipeline> = [];
   private errorHandler: ExpressHandler | undefined;
   private logger: Logger = new Logger();
@@ -307,7 +136,6 @@ class Middleware implements IMiddleware {
    * Retrieves the type of the middleware.
    *
    * @param middleware - The middleware to be checked.
-   *
    * @returns The type of the middleware.
    */
   private getMiddlewareType(middleware: MiddlewareOptions): MiddlewareType {
@@ -325,7 +153,6 @@ class Middleware implements IMiddleware {
    * Checks if a middleware with the given name exists in the middleware collection.
    *
    * @param middlewareName - The name of the middleware to be checked.
-   *
    * @returns A boolean value indicating whether the middleware exists or not.
    */
   private middlewareExists(middlewareName: string): boolean {
@@ -343,7 +170,7 @@ class Middleware implements IMiddleware {
    * Adds a URL Encoded Parser middleware to the middleware collection.
    * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
    *
-   * @param options - Optional configuration options for the URL Encoded Parser.
+   * @param options - Optional configuration options for the URL Encoded Parser.   
    */
   addUrlEncodedParser(options?: OptionsUrlencoded): void {
     const middlewareExist = this.middlewareExists("urlencodedParser");
@@ -823,5 +650,3 @@ class Middleware implements IMiddleware {
     return this.errorHandler;
   }
 }
-
-export { IMiddleware, Middleware };
