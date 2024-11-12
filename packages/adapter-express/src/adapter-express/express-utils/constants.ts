@@ -48,9 +48,6 @@ export enum HTTP_VERBS_ENUM {
 export const DUPLICATED_CONTROLLER_NAME = (name: string): string =>
   `Two controllers cannot have the same name: ${name}`;
 
-export const NO_CONTROLLERS_FOUND =
-  "No controllers" +
-  "have been found! Please ensure that you have register" +
-  "at least one Controller.";
+export const NO_CONTROLLERS_FOUND = "No controller found! Please ensure that you have register at least one Controller.";
 
 export const DEFAULT_ROUTING_ROOT_PATH = "/";
