@@ -68,7 +68,7 @@
     "lint:fix": "eslint \"packages/**/*.ts\" --fix"
   },
   "dependencies": {
-    "inversify": "6.0.2",
+    "inversify": "6.1.3",
     "inversify-binding-decorators": "4.0.0",
     "reflect-metadata": "0.2.2"
   },
