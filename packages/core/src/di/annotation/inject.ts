@@ -8,7 +8,7 @@ import { injectBase } from "./inject_base";
  * @example
  * ```typescript
  * class Engine {}
- * 
+ *
  * class Car {
  *  constructor(@inject(Engine) engine: Engine) {}
  * }
