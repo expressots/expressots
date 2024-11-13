@@ -1,6 +1,11 @@
 import * as ERRORS_MSGS from "../constants/error_msgs";
 import * as METADATA_KEY from "../constants/metadata_keys";
 
+/**
+ * Marks a class as injectable.
+ * @returns A decorator function
+ * @public API
+ */
 function injectable() {
   return function <T extends abstract new (...args: Array<unknown>) => unknown>(
     target: T,

@@ -11,18 +11,18 @@ import { fluentProvide } from "../di/binding-decorator";
  *
  * @example
  * ```typescript
- * @provide(ServiceIdentifier)
+ * provide(ServiceIdentifier)
  * class MyService {}
  * ```
+ * @public API
  */
-const provide = (identifier: any) => {
+export const provide = (identifier: any) => {
   return fluentProvide(identifier).done();
 };
 
 /**
  * Provides a singleton binding for the given identifier.
  *
- * @remarks
  * Singleton binding ensures that the same instance of a dependency is reused within the entire container.
  *
  * @param identifier - The identifier (e.g., symbol, string, class) for the dependency being registered.
@@ -30,18 +30,18 @@ const provide = (identifier: any) => {
  *
  * @example
  * ```typescript
- * @provideSingleton(ServiceIdentifier)
+ * provideSingleton(ServiceIdentifier)
  * class MyService {}
  * ```
+ * @public API
  */
-const provideSingleton = (identifier: any) => {
+export const provideSingleton = (identifier: any) => {
   return fluentProvide(identifier).inSingletonScope().done();
 };
 
 /**
  * Provides a transient binding for the given identifier.
  *
- * @remarks
  * Transient binding ensures that a new instance of a dependency is created every time it is resolved.
  *
  * @param identifier - The identifier (e.g., symbol, string, class) for the dependency being registered.
@@ -49,12 +49,11 @@ const provideSingleton = (identifier: any) => {
  *
  * @example
  * ```typescript
- * @provideTransient(ServiceIdentifier)
+ * provideTransient(ServiceIdentifier)
  * class MyService {}
  * ```
+ * @public API
  */
-const provideTransient = (identifier: any) => {
+export const provideTransient = (identifier: any) => {
   return fluentProvide(identifier).inTransientScope().done();
 };
-
-export { provide, provideSingleton, provideTransient };
