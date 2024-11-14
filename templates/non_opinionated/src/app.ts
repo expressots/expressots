@@ -1,14 +1,7 @@
 import { AppExpress } from "@expressots/adapter-express";
-import {
-    Env,
-    IMiddleware,
-    Middleware,
-    provide,
-    ProviderManager,
-} from "@expressots/core";
-import { container } from "../../app.container";
+import { AppContainer, Env } from "@expressots/core";
+import { AppModule } from "@useCases/app/app.module";
 
-@provide(App)
 export class App extends AppExpress {
     private middleware: IMiddleware;
     private provider: ProviderManager;
@@ -19,18 +12,18 @@ export class App extends AppExpress {
         this.provider = container.get(ProviderManager);
     }
 
-    protected configureServices(): void {
+    protected configureServices(): void | Promise<void> {
         this.provider.register(Env);
 
         this.middleware.addBodyParser();
         this.middleware.setErrorHandler({ showStackTrace: true });
     }
 
-    protected postServerInitialization(): void {
+    protected postServerInitialization(): void | Promise<void> {
         if (this.isDevelopment()) {
             this.provider.get(Env).checkAll();
         }
     }
 
-    protected serverShutdown(): void {}
+    protected serverShutdown(): void | Promise<void> {}
 }

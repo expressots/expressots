@@ -1,4 +1,5 @@
 import "reflect-metadata";
+
 import { AppUseCase } from "../src/useCases/app/app.usecase";
 
 describe("AppUseCase", () => {

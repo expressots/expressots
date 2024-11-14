@@ -25,9 +25,6 @@
     "prepare": "husky",
     "release": "release-it"
   },
-  "dependencies": {
-    "reflect-metadata": "0.2.2"
-  },
   "devDependencies": {
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.2.2",
