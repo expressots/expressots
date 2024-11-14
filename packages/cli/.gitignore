@@ -38,3 +38,4 @@ expressots.config.ts
 *.container.ts
 
 coverage/
+.early.coverage
