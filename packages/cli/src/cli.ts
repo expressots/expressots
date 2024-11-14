@@ -18,6 +18,12 @@ import { createExternalProviderCMD } from "./providers/create/cli";
 import { printError } from "./utils/cli-ui";
 import { scriptsCommand } from "./scripts";
 
+/**
+ * The current version of the ExpressoTS Bundle.
+ * core, adapters, and cli.
+ */
+export const BUNDLE_VERSION = "2.16.2";
+
 stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
 yargs(hideBin(process.argv))

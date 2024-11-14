@@ -8,6 +8,7 @@ import path from "node:path";
 import { centerText } from "../utils/center-text";
 import { printError } from "../utils/cli-ui";
 import { changePackageName } from "../utils/change-package-info";
+import { BUNDLE_VERSION } from "../cli";
 
 async function packageManagerInstall({
 	packageManager,
@@ -220,7 +221,7 @@ const projectForm = async (
 
 		try {
 			const emitter = degit(
-				`expressots/expressots/templates/${templates[template]}`,
+				`expressots/templates/${templates[template]}#${BUNDLE_VERSION}`,
 			);
 
 			await emitter.clone(answer.name);
