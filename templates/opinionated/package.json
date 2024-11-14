@@ -21,7 +21,7 @@
         "@expressots/core": "latest",
         "dotenv": "16.4.5",
         "express": "4.21.1",
-        "inversify": "6.0.2",
+        "inversify": "6.0.3",
         "reflect-metadata": "0.2.2",
         "tsconfig-paths": "4.2.0"
     },
