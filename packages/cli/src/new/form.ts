@@ -25,43 +25,68 @@ async function packageManagerInstall({
 			? `${packageManager}.cmd`
 			: packageManager;
 
-		const installProcess = spawn(command, ["install", "--prefer-offline"], {
+		let installCommand: string = "install --prefer-offline";
+		if (packageManager === "yarn") {
+			installCommand = "install --ignore-engines";
+		} else if (packageManager === "bun" || packageManager === "pnpm" || packageManager === "yarn")  {
+			installCommand = "install";
+		}
+
+		const installProcess = spawn(command, [installCommand], {
 			cwd: directory,
 			shell: true,
 			timeout: 600000,
 		});
 
-		// eslint-disable-next-line prefer-const
-		let installTimeout: NodeJS.Timeout;
+		// Simulate incremental progress
+		let progress = 0;
+		const interval = setInterval(() => {
+			if (progress < 90) {
+				progress += 5;
+				progressBar.update(progress);
+			}
+		}, 1000);
 
-		installProcess.on("error", (error) => {
-			clearTimeout(installTimeout);
-			reject(new Error(`Failed to start subprocess: ${error.message}`));
-		});
-
+		// Handle stdout for meaningful output or progress feedback
 		installProcess.stdout?.on("data", (data: Buffer) => {
 			const output = data.toString().trim();
 
-			const npmProgressMatch = output.match(
+			// Remove all data from || to the end of the line
+			const cleanedOutput = output.replace(/\|\|.*$/g, "");
+
+			// Match and handle npm-specific progress
+			const npmProgressMatch = cleanedOutput.match(
 				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
 			);
 
 			if (npmProgressMatch) {
 				const [, current, total, task] = npmProgressMatch;
-				const progress = Math.round(
+				progress = Math.round(
 					(parseInt(current) / parseInt(total)) * 100,
 				);
 				progressBar.update(progress, { doing: task });
 			} else {
-				progressBar.increment(5, { doing: output });
+				// Update "task" without changing the progress
+				progressBar.update(progress, { doing: cleanedOutput });
 			}
 		});
 
+		// Handle errors
+		installProcess.on("error", (error) => {
+			clearInterval(interval); // Stop interval on error
+			progressBar.stop();
+			reject(new Error(`Failed to start subprocess: ${error.message}`));
+		});
+
+		// Finalize progress on close
 		installProcess.on("close", (code) => {
-			clearTimeout(installTimeout);
+			clearInterval(interval); // Stop interval when the process ends
 			if (code === 0) {
+				progressBar.update(100, { doing: "Complete!" }); // Finalize progress
+				progressBar.stop();
 				resolve("Installation Done!");
 			} else {
+				progressBar.stop();
 				reject(
 					new Error(
 						`${packageManager} install exited with code ${code}`,
@@ -69,11 +94,6 @@ async function packageManagerInstall({
 				);
 			}
 		});
-
-		installTimeout = setTimeout(() => {
-			installProcess.kill("SIGKILL");
-			reject(new Error("Installation took too long. Aborted!"));
-		}, 600000);
 	});
 }
 
