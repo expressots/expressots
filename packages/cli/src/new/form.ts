@@ -28,7 +28,11 @@ async function packageManagerInstall({
 		let installCommand: string = "install --prefer-offline";
 		if (packageManager === "yarn") {
 			installCommand = "install --ignore-engines";
-		} else if (packageManager === "bun" || packageManager === "pnpm" || packageManager === "yarn")  {
+		} else if (
+			packageManager === "bun" ||
+			packageManager === "pnpm" ||
+			packageManager === "yarn"
+		) {
 			installCommand = "install";
 		}
 
