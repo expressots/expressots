@@ -11,7 +11,7 @@
 		"expressots": "bin/cli.js"
 	},
 	"engines": {
-		"node": ">=18.0.0"
+		"node": ">=18.20.5"
 	},
 	"funding": {
 		"type": "github",
@@ -35,9 +35,9 @@
 		"start:build": "npm run build && npm run start",
 		"start": "node ./bin/cli.js",
 		"start:dev": "tsnd ./src/cli.ts",
-		"build": "npm run clean && tsc -p tsconfig.json && yarn cp:templates && chmod +x ./bin/cli.js",
-		"cp:templates": "cp -r ./src/generate/templates ./bin/generate/templates",
-		"clean": "rimraf ./bin",
+		"build": "npm run clean && tsc -p tsconfig.json && npm run cp:templates && node scripts/chmod.js ./bin/cli.js",
+		"cp:templates": "node scripts/cp.js ./src/generate/templates ./bin/generate/templates",
+		"clean": "node scripts/rm.js bin",
 		"prepublish": "npm run build && npm pack",
 		"publish": "npm publish --tag latest",
 		"format": "prettier --write \"./src/**/*.ts\" --cache",
@@ -49,7 +49,7 @@
 		"test:watch": "jest --watch"
 	},
 	"dependencies": {
-		"@expressots/boost-ts": "1.3.0",
+		"@expressots/boost-ts": "file:../boost-ts/expressots-boost-ts-1.3.0.tgz",
 		"axios": "^1.7.3",
 		"chalk-animation": "2.0.3",
 		"cli-progress": "3.12.0",
@@ -86,7 +86,6 @@
 		"prettier": "3.2.5",
 		"reflect-metadata": "0.2.2",
 		"release-it": "16.3.0",
-		"rimraf": "5.0.5",
 		"shx": "0.3.4",
 		"ts-jest": "^29.2.5",
 		"ts-node-dev": "2.0.0",

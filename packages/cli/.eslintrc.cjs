@@ -23,6 +23,7 @@ module.exports = {
 		"jest.config.ts",
 		".eslintrc.cjs",
 		"coverage/*",
+		"scripts/*",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",
