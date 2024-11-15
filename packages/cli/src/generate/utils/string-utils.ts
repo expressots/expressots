@@ -4,9 +4,9 @@
  * @returns The converted string in camelCase.
  */
 export function anyCaseToCamelCase(str: string): string {
-    return str
-      .replace(/[-_]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
-      .replace(/^[A-Z]/, (char) => char.toLowerCase());
+	return str
+		.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ""))
+		.replace(/^[A-Z]/, (char) => char.toLowerCase());
 }
 
 /**
@@ -15,10 +15,10 @@ export function anyCaseToCamelCase(str: string): string {
  * @returns The converted string in kebab-case.
  */
 export function anyCaseToKebabCase(str: string): string {
-    return str
-      .replace(/([a-z0-9])([A-Z])/g, '$1-$2') // Convert camelCase and PascalCase to kebab-case
-      .replace(/_/g, '-') // Convert snake_case to kebab-case
-      .toLowerCase(); // Ensure all characters are lowercase
+	return str
+		.replace(/([a-z0-9])([A-Z])/g, "$1-$2") // Convert camelCase and PascalCase to kebab-case
+		.replace(/_/g, "-") // Convert snake_case to kebab-case
+		.toLowerCase(); // Ensure all characters are lowercase
 }
 
 /**
@@ -27,9 +27,9 @@ export function anyCaseToKebabCase(str: string): string {
  * @returns The converted string in PascalCase.
  */
 export function anyCaseToPascalCase(str: string): string {
-    return str
-      .replace(/[-_]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
-      .replace(/^[a-z]/, (char) => char.toUpperCase());
+	return str
+		.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ""))
+		.replace(/^[a-z]/, (char) => char.toUpperCase());
 }
 
 /**
@@ -38,10 +38,10 @@ export function anyCaseToPascalCase(str: string): string {
  * @returns The converted string in snake_case.
  */
 export function anyCaseToSnakeCase(str: string): string {
-    return str
-      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-      .replace(/[-]+/g, '_')
-      .toLowerCase();
+	return str
+		.replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+		.replace(/[-]+/g, "_")
+		.toLowerCase();
 }
 
 /**
@@ -50,7 +50,9 @@ export function anyCaseToSnakeCase(str: string): string {
  * @returns The converted string in UPPER CASE.
  */
 export function anyCaseToUpperCase(str: string): string {
-    return str.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toUpperCase() : '')).toUpperCase();
+	return str
+		.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ""))
+		.toUpperCase();
 }
 
 /**
@@ -59,5 +61,7 @@ export function anyCaseToUpperCase(str: string): string {
  * @returns The converted string in lower case.
  */
 export function anyCaseToLowerCase(str: string): string {
-    return str.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toLowerCase() : '')).toLowerCase();
+	return str
+		.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toLowerCase() : ""))
+		.toLowerCase();
 }
