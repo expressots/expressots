@@ -49,8 +49,7 @@
 		"test:watch": "jest --watch"
 	},
 	"dependencies": {
-		"@expressots/boost-ts": "file:../boost-ts/expressots-boost-ts-1.3.0.tgz",
-		"axios": "^1.7.3",
+		"axios": "1.7.7",
 		"chalk-animation": "2.0.3",
 		"cli-progress": "3.12.0",
 		"cli-table3": "0.6.5",

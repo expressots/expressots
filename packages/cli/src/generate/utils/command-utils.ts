@@ -6,7 +6,7 @@ import {
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
 	anyCaseToLowerCase,
-} from "@expressots/boost-ts";
+} from "./string-utils";
 
 import { printError } from "../../utils/cli-ui";
 import { verifyIfFileExists } from "../../utils/verify-file-exists";

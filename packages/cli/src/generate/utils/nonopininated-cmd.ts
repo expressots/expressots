@@ -2,7 +2,7 @@ import {
 	anyCaseToCamelCase,
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
-} from "@expressots/boost-ts";
+} from "./string-utils";
 import { ExpressoConfig } from "@expressots/shared";
 
 import { printGenerateSuccess } from "../../utils/cli-ui";

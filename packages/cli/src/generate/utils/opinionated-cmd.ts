@@ -2,7 +2,7 @@ import {
 	anyCaseToCamelCase,
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
-} from "@expressots/boost-ts";
+} from "./string-utils";
 import * as nodePath from "node:path";
 import fs from "fs";
 import { printGenerateSuccess } from "../../utils/cli-ui";
