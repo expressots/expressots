@@ -2,7 +2,7 @@ import {
   IWebServer,
   IWebServerConstructor,
   IWebServerPublic,
-} from "@expressots/adapter-express";
+} from "@expressots/shared";
 import { Logger } from "../provider/logger/logger.provider";
 
 /**

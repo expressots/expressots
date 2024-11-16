@@ -1,14 +1,6 @@
 import { stdout } from "process";
+import { IConsoleMessage } from "@expressots/shared";
 import { ColorStyle, bgColorCodes, colorCodes } from "./color-codes";
-
-/**
- * Interface representing application message details for console output.
- * @public API
- */
-export interface IConsoleMessage {
-  appName: string;
-  appVersion: string;
-}
 
 /**
  * The Console class provides methods for displaying styled messages in the console.
