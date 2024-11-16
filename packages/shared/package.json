@@ -47,9 +47,6 @@
     "backend",
     "library"
   ],
-  "engines": {
-    "node": ">=18.10.0"
-  },
   "scripts": {
     "prepare": "husky",
     "clean": "node scripts/rm.js lib",
