@@ -165,7 +165,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
     this.middlewares.push(...(pipeline as Array<ExpressHandler>));
 
     /* Apply the status code to the response */
-    this.middlewares.unshift(new HttpStatusCodeMiddleware() as ExpressoMiddleware);
+    this.middlewares.unshift(new HttpStatusCodeMiddleware(this.globalPrefix) as ExpressoMiddleware);
 
     const expressServer = new InversifyExpressServer(this.appContainer.Container, null, {
       rootPath: this.globalPrefix as string,

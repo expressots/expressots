@@ -9,16 +9,25 @@ import { HTTP_CODE_METADATA } from "./constants";
  * @returns express.RequestHandler
  */
 export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
+  private globalPrefix: string;
+
+  constructor(globalPrefix: string = "/") {
+    super();
+    this.globalPrefix = globalPrefix;
+  }
+
   use(req: Request, res: Response, next: NextFunction): void | Promise<void> {
     const statusCodeMapping = Reflect.getMetadata(HTTP_CODE_METADATA.httpCode, Reflect);
-    let path = req.path.endsWith("/") ? req.path.slice(0, -1) : req.path;
-    const formattedMethod = req.method.toLowerCase();
 
-    if (path === "/" || path === "") {
-      path = "/";
+    let path = req.path;
+    if (this.globalPrefix !== "/" && path.startsWith(this.globalPrefix)) {
+      path = path.slice(this.globalPrefix.length);
     }
 
-    path = `${path}/-${formattedMethod}`;
+    path = path.endsWith("/") ? path.slice(0, -1) : path;
+    const formattedMethod = req.method.toLowerCase();
+
+    path = `${path || "/"}/-${formattedMethod}`;
 
     const statusCode = statusCodeMapping[path];
 
