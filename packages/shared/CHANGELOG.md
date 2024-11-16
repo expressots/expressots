@@ -1,5 +1,22 @@
 
 
+## [0.2.0](https://github.com/expressots/shared/compare/0.1.0...0.2.0) (2024-11-16)
+
+
+### Features
+
+* add interfaces for console, middleware, and environment; update index exports ([30d7dbb](https://github.com/expressots/shared/commit/30d7dbb0c24af12e4537f626be816f2f5d8a81a0))
+
+
+### Bug Fixes
+
+* standardize quotes in middleware interface file ([6b3f045](https://github.com/expressots/shared/commit/6b3f0459c3ba0bf58d1de920335c6ef7dd438e32))
+
+
+### Tests
+
+* enhance coverage for configDotenv function and add edge case handling ([58612bd](https://github.com/expressots/shared/commit/58612bd0040b592133bac687cfb29b9c6ece2a94))
+
 ## 0.1.0 (2024-11-10)
 
 
