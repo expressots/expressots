@@ -1,3 +1,7 @@
+import express from "express";
+import fs from "fs";
+import process, { exit } from "process";
+
 import {
   AppContainer,
   Console,
@@ -8,20 +12,14 @@ import {
   ExpressoMiddleware,
   IMiddleware,
 } from "@expressots/core";
-import { config } from "@expressots/shared";
-import express from "express";
-import fs from "fs";
-import process, { exit } from "process";
+import { config, RenderEngine, Env, Server } from "@expressots/shared";
+
 import { interfaces } from "../di/di.interfaces";
 import { ApplicationBase } from "./application-express.base";
-import { Environment, ExpressHandler, MiddlewareConfig } from "./application-express.types";
-import { IEnvironment, IWebServer } from "./application-express.interface";
+import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
-import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
-import { Engine, EngineOptions, RenderOptions } from "./render/engine";
-import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
-import { PugOptions, setEnginePug } from "./render/pug/pug.config";
+import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -34,18 +32,18 @@ import { PugOptions, setEnginePug } from "./render/pug/pug.config";
  * @method setEngine - Configures the application's view engine based on the provided configuration options.
  * @method isDevelopment - Verifies if the current environment is development.
  */
-export class AppExpress extends ApplicationBase implements IWebServer {
+export class AppExpress extends ApplicationBase implements Server.IWebServer {
   private logger: Logger = new Logger();
   private console: Console = new Console();
   private app: express.Application;
   private port: number;
-  private environment?: Environment;
+  private environment?: Env.Environment;
   private appContainer: AppContainer;
   private globalPrefix: string = "/";
   private middlewareManager: IMiddleware;
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
   private providerManager: ProviderManager;
-  private renderOptions: RenderOptions = {} as RenderOptions;
+  private renderOptions: RenderEngine.RenderOptions = {} as RenderEngine.RenderOptions;
 
   constructor() {
     super();
@@ -230,14 +228,17 @@ export class AppExpress extends ApplicationBase implements IWebServer {
   private async configEngine(): Promise<void> {
     if (this.renderOptions.engine) {
       switch (this.renderOptions.engine) {
-        case Engine.HBS:
-          await setEngineHandlebars(this.app, this.renderOptions.options as HandlebarsOptions);
+        case RenderEngine.Engine.HBS:
+          await setEngineHandlebars(
+            this.app,
+            this.renderOptions.options as RenderEngine.HandlebarsOptions,
+          );
           break;
-        case Engine.EJS:
-          await setEngineEjs(this.app, this.renderOptions.options as EjsOptions);
+        case RenderEngine.Engine.EJS:
+          await setEngineEjs(this.app, this.renderOptions.options as RenderEngine.EjsOptions);
           break;
-        case Engine.PUG:
-          await setEnginePug(this.app, this.renderOptions.options as PugOptions);
+        case RenderEngine.Engine.PUG:
+          await setEnginePug(this.app, this.renderOptions.options as RenderEngine.PugOptions);
           break;
         default:
           throw new Error("Unsupported engine type!");
@@ -254,7 +255,10 @@ export class AppExpress extends ApplicationBase implements IWebServer {
    * @param {EngineOptions} [options] - The configuration options for the view engine
    * @public API
    */
-  public async setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void> {
+  public async setEngine<T extends RenderEngine.EngineOptions>(
+    engine: RenderEngine.Engine,
+    options?: T,
+  ): Promise<void> {
     try {
       if (options) {
         this.renderOptions = { engine, options };
@@ -299,7 +303,7 @@ export class AppExpress extends ApplicationBase implements IWebServer {
     * ```
    * @public API
    */
-  public initEnvironment(environment: Environment, options?: IEnvironment): void {
+  public initEnvironment(environment: Env.Environment, options?: Env.IEnvironment): void {
     this.environment = environment;
 
     if (options === undefined) {

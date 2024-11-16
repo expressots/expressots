@@ -1,4 +1,5 @@
-export { EjsOptions as EJS } from "./ejs/ejs.config";
-export { HandlebarsOptions as HBS } from "./handlebars/hbs.config";
-export { PugOptions as PUG } from "./pug/pug.config";
-export { Engine } from "./engine";
+import { RenderEngine } from "@expressots/shared";
+
+export type EJS = RenderEngine.EjsOptions;
+export type HBS = RenderEngine.HandlebarsOptions;
+export type PUG = RenderEngine.PugOptions;

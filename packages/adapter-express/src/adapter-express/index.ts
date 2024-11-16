@@ -4,7 +4,8 @@ export {
   IWebServerPublic,
   IWebServer,
   IWebServerConstructor,
+  Environment,
   IEnvironment,
-} from "./application-express.interface";
-export { Environment } from "./application-express.types";
+  RenderEngine,
+} from "@expressots/shared";
 export * from "./render";

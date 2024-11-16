@@ -27,23 +27,3 @@ export type MiddlewareConfig = {
   path?: string;
   middlewares: Array<ExpressHandler>;
 };
-
-/**
- * Enum representing possible server environments.
- */
-export enum ServerEnvironment {
-  Development = "development",
-  Production = "production",
-  Remote = "remote",
-}
-
-/**
- * Type representing possible server environments.
- */
-export type TypeServerEnvironment = "development" | "production" | "remote";
-
-/**
- * Type representing possible server environments.
- * @public API
- */
-export type Environment = ServerEnvironment | TypeServerEnvironment | undefined;
