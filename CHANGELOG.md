@@ -1,5 +1,54 @@
 
 
+## [2.17.0](https://github.com/expressots/expressots/compare/2.16.2...2.17.0) (2024-11-17)
+
+
+### Features
+
+* add di impl and remove inversify deps ([9ff6302](https://github.com/expressots/expressots/commit/9ff630214aa655ddd51af511175c2b2d5429a3ef))
+* add env configuration load from expressots.config ([fc61d44](https://github.com/expressots/expressots/commit/fc61d44457a7899c576f8ef9bf4a21c65008280a))
+* remove binding decor deps & offer as core ([a8aeecc](https://github.com/expressots/expressots/commit/a8aeecc8876b954fbb3cad1918e41e2e0b29febf))
+
+
+### Bug Fixes
+
+* adjust env validator to load files dynamically ([09d0cc3](https://github.com/expressots/expressots/commit/09d0cc3f9da354dcd3a5c50e8f3d8fbab192cb94))
+* adjust env validator to load files dynamically ([d1c5a2e](https://github.com/expressots/expressots/commit/d1c5a2ebdd4b192f5e450a0f08fb84d219dbb32e))
+* update license reference ([acb5f7e](https://github.com/expressots/expressots/commit/acb5f7e95ef61796841f1cd999cc185fe2c9b662))
+* view binding tables info ([f93abb6](https://github.com/expressots/expressots/commit/f93abb64b869af33299977163d5e36387bf57d7b))
+
+
+### Code Refactoring
+
+* change express types deps ([c10336b](https://github.com/expressots/expressots/commit/c10336b896076f06e98152ce23d0d5850b5a4c97))
+* clean up code by removing unnecessary whitespace and improving formatting ([2090efd](https://github.com/expressots/expressots/commit/2090efd73dea7e9de938072d527e076ae28aeb92))
+* enhance doc by adding [@public](https://github.com/public) API annotations and cleaning up comments ([f98a52c](https://github.com/expressots/expressots/commit/f98a52c4fa5b620d275fc561c9a7af6a13b0088b))
+* make basecontroller injectable ([d2ef5a7](https://github.com/expressots/expressots/commit/d2ef5a77b8d359ba576862f048cae52ab87fe4fc))
+* move config to shared lib ([d14bb98](https://github.com/expressots/expressots/commit/d14bb9876b8290a903eb97ae03b77f43a9f750cd))
+* remove provide decorators for items not in container ([fb0ecd3](https://github.com/expressots/expressots/commit/fb0ecd3e2ee03346b9aed4d3b2c0f2a0fbde58c4))
+* remove unnecessary whitespace in inject.ts documentation example ([538039b](https://github.com/expressots/expressots/commit/538039bb3bfce30b784cbb8c7617a8ad4c165af7))
+* remove unnecessary whitespace in URL Encoded Parser documentation ([d81610d](https://github.com/expressots/expressots/commit/d81610d1f679993abd6a899246701d41d6ae2e53))
+* remove unused Compiler and ExpressoConfig imports from AppFactory ([913d919](https://github.com/expressots/expressots/commit/913d9190e24ef1bb332227291032591037fef87a))
+* remove vitest configuration and update types in tsconfig ([047f7a2](https://github.com/expressots/expressots/commit/047f7a2ff4487b5a512dd428510a7506607b2d9a))
+* reorg files application, console, color and logger ([2bb619e](https://github.com/expressots/expressots/commit/2bb619e62d6a1f9501c39588d16bb86e4773dd4a))
+* simplify application container and factory, enhance provider interface ([2f32b1d](https://github.com/expressots/expressots/commit/2f32b1dfcc2a6ed2458cf88e7530024ebaba05af))
+* update @expressots/shared dependency to version 0.2.0 ([61b5c27](https://github.com/expressots/expressots/commit/61b5c277d1d9408a76c232248d2d3edaa468a8f4))
+* update app factory and container tests, improve mocks and error handling ([9852507](https://github.com/expressots/expressots/commit/98525075ac644f6ae1703fd8c53097e195815a00))
+* update container and interface ([4be3fd5](https://github.com/expressots/expressots/commit/4be3fd5b2a949d4995dc95984be87c53cf844992))
+* update ContainerOptions interface and improve AppContainer logging ([b31de0d](https://github.com/expressots/expressots/commit/b31de0d3603d05d0152479db18c9ae4abee278a8))
+* update decorators to export and enhance doc with [@public](https://github.com/public) API annotations ([a935933](https://github.com/expressots/expressots/commit/a9359338c82c11fc6c1e1c6881a271de0e4bc80a))
+* update express imports and usage in middleware-service ([f8046bd](https://github.com/expressots/expressots/commit/f8046bde624ddbb5dc152a511e79913d509a5384))
+* update Jest configuration and improve mock handling for express ([47ae688](https://github.com/expressots/expressots/commit/47ae688030c25dfd3c8510dbefcc7623c49c38a2))
+* update package dependencies and migrate interfaces to @expressots/shared ([4cf1582](https://github.com/expressots/expressots/commit/4cf15824ee2fc801fa177a7b1ee37eab0e0bd940))
+
+
+### Tests
+
+* add unit tests for middleware, provider and repository methods ([2de4d6e](https://github.com/expressots/expressots/commit/2de4d6eafef8dad278fa4281f0789aabbc9c2a59))
+* adding early ai agent tests p1 ([7e74f01](https://github.com/expressots/expressots/commit/7e74f01e60e34a65f93ef358dabd83ec5e4a75d9))
+* adding early ai agent tests p2 ([0ef25d2](https://github.com/expressots/expressots/commit/0ef25d25c3a22944bbe37272886cc2d65bb74ad0))
+* improve unit tests formatting and edge case handling ([8439e5d](https://github.com/expressots/expressots/commit/8439e5dd650ba6c3d7ca092a17052fed3034a6fe))
+
 ## [2.16.2](https://github.com/expressots/expressots/compare/2.16.1...2.16.2) (2024-09-02)
 
 
