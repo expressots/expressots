@@ -7,12 +7,12 @@ export class App extends AppExpress {
 
     protected globalConfiguration(): void | Promise<void> {
         this.setGlobalRoutePrefix("/v1");
-        
+
         this.initEnvironment("development", {
             env: {
-                development: ".env",
-                production: ".env"
-            }
+                development: ".env.development",
+                production: ".env.production",
+            },
         });
     }
 
@@ -20,12 +20,12 @@ export class App extends AppExpress {
         this.Provider.register(Env);
 
         this.Middleware.addBodyParser();
-        this.Middleware.setErrorHandler({showStackTrace: true});
+        this.Middleware.setErrorHandler({ showStackTrace: true });
     }
 
     protected async postServerInitialization(): Promise<void> {
         if (this.isDevelopment()) {
-            this.Provider.get(Env).checkFile(".env");
+            this.Provider.get(Env).checkFile(".env.development");
         }
     }
 

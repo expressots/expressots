@@ -1,4 +1,4 @@
-import { ExpressoConfig, Pattern } from "@expressots/core";
+import { ExpressoConfig, Pattern } from "@expressots/shared";
 
 const config: ExpressoConfig = {
     sourceRoot: "src",
