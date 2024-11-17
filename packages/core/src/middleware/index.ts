@@ -1,11 +1,10 @@
 export {
-  IMiddleware,
   Middleware,
   ExpressHandler,
   ExpressoMiddleware,
   MiddlewareOptions,
-  ErrorHandlerOptions,
 } from "./middleware-service";
+export { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
 export { OptionsJson } from "./interfaces/body-parser.interface";
 export { CorsOptions } from "./interfaces/cors.interface";
 export { CompressionOptions } from "./interfaces/compression.interface";

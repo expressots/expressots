@@ -46,9 +46,6 @@
     "framework",
     "server-side"
   ],
-  "engines": {
-    "node": ">=18.18.0"
-  },
   "scripts": {
     "prepare": "husky",
     "clean": "node scripts/rm.js lib",
@@ -60,38 +57,35 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "prepublish": "npm run build && npm pack",
     "release": "release-it",
-    "coverage": "vitest run --coverage",
-    "test": "vitest run --reporter default",
-    "test:watch": "vitest",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
     "format": "prettier --write \"packages/**/*.ts\" --cache",
     "lint": "eslint \"packages/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/*.ts\" --fix"
   },
   "dependencies": {
-    "inversify": "6.0.2",
-    "inversify-binding-decorators": "4.0.0",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
     "@codecov/vite-plugin": "^0.0.1-beta.5",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
-    "@expressots/adapter-express": "latest",
+    "@expressots/shared": "0.2.0",
     "@release-it/conventional-changelog": "8.0.1",
     "@types/express": "4.17.21",
+    "@types/jest": "^29.5.14",
     "@types/node": "20.14.10",
     "@typescript-eslint/eslint-plugin": "7.16.0",
     "@typescript-eslint/parser": "7.16.0",
-    "@vitest/coverage-v8": "2.0.2",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "husky": "9.0.11",
+    "jest": "^29.7.0",
     "prettier": "3.3.3",
     "release-it": "17.6.0",
-    "typescript": "5.5.3",
-    "vite": "5.4.10",
-    "vite-tsconfig-paths": "4.3.2",
-    "vitest": "2.0.2"
+    "ts-jest": "^29.2.5",
+    "typescript": "5.5.3"
   },
   "release-it": {
     "git": {

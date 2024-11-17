@@ -1,1 +1,2 @@
-export { Console, IApplicationMessageToConsole } from "./console";
+export { IConsoleMessage } from "@expressots/shared";
+export { Console } from "./console";
