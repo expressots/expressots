@@ -6,7 +6,7 @@ export class App extends AppExpress {
     private config: AppContainer = this.configContainer([AppModule]);
 
     protected globalConfiguration(): void | Promise<void> {
-        this.setGlobalRoutePrefix("/api");
+        this.setGlobalRoutePrefix("/v1");
         
         this.initEnvironment("development", {
             env: {

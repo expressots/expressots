@@ -1,29 +1,22 @@
 import { AppExpress } from "@expressots/adapter-express";
-import { AppContainer, Env } from "@expressots/core";
-import { AppModule } from "@useCases/app/app.module";
+import { AppContainer, CreateModule } from "@expressots/core";
+import { AppController } from "./controller";
 
 export class App extends AppExpress {
-    private middleware: IMiddleware;
-    private provider: ProviderManager;
+    private config: AppContainer = this.configContainer([
+        CreateModule([AppController]),
+    ]);
 
-    constructor() {
-        super();
-        this.middleware = container.get<IMiddleware>(Middleware);
-        this.provider = container.get(ProviderManager);
+    protected globalConfiguration(): void | Promise<void> {
+        this.setGlobalRoutePrefix("/v1");
     }
 
-    protected configureServices(): void | Promise<void> {
-        this.provider.register(Env);
-
-        this.middleware.addBodyParser();
-        this.middleware.setErrorHandler({ showStackTrace: true });
+    protected configureServices(): void {
+        this.Middleware.addBodyParser();
+        this.Middleware.setErrorHandler({ showStackTrace: true });
     }
 
-    protected postServerInitialization(): void | Promise<void> {
-        if (this.isDevelopment()) {
-            this.provider.get(Env).checkAll();
-        }
-    }
+    protected async postServerInitialization(): Promise<void> {}
 
-    protected serverShutdown(): void | Promise<void> {}
+    protected serverShutdown(): void {}
 }
