@@ -1,10 +1,4 @@
-import { AppFactory, ServerEnvironment } from "@expressots/core";
-import { container } from "./app.container";
-import { App } from "./app.provider";
+import { AppFactory } from "@expressots/core";
+import { App } from "app";
 
-async function bootstrap() {
-    const app = await AppFactory.create(container, App);
-    await app.listen(3000, ServerEnvironment.Development);
-}
-
-bootstrap();
+AppFactory.create(App).then((app) => app.listen(3000));

@@ -1,95 +1,92 @@
 {
-  "name": "@expressots/templates",
-  "version": "2.16.2",
-  "description": "Expressots templates",
-  "author": "Richard Zampieri",
-  "license": "MIT",
-  "homepage": "https://expresso-ts.com",
-  "funding": {
-    "type": "github",
-    "url": "https://github.com/sponsors/expressots"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/expressots/templates"
-  },
-  "bugs": {
-    "url": "https://github.com/expressots/expressots/issues"
-  },
-  "keywords": [
-    "expressots",
-    "templates",
-    "framework"
-  ],
-  "scripts": {
-    "prepare": "husky",
-    "release": "release-it"
-  },
-  "dependencies": {
-    "reflect-metadata": "0.2.2"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "19.2.1",
-    "@commitlint/config-conventional": "19.2.2",
-    "@release-it/conventional-changelog": "8.0.1",
-    "husky": "9.1.1",
-    "release-it": "17.6.0"
-  },
-  "release-it": {
-    "git": {
-      "commitMessage": "chore(release): ${version}"
+    "name": "@expressots/templates",
+    "version": "3.0.0-beta.1",
+    "description": "Expressots templates",
+    "author": "Richard Zampieri",
+    "license": "MIT",
+    "homepage": "https://expresso-ts.com",
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/expressots"
     },
-    "github": {
-      "release": true
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/expressots/templates"
     },
-    "npm": {
-      "publish": false
+    "bugs": {
+        "url": "https://github.com/expressots/expressots/issues"
     },
-    "plugins": {
-      "@release-it/conventional-changelog": {
-        "infile": "CHANGELOG.md",
-        "preset": {
-          "name": "conventionalcommits",
-          "types": [
-            {
-              "type": "feat",
-              "section": "Features"
-            },
-            {
-              "type": "fix",
-              "section": "Bug Fixes"
-            },
-            {
-              "type": "perf",
-              "section": "Performance Improvements"
-            },
-            {
-              "type": "revert",
-              "section": "Reverts"
-            },
-            {
-              "type": "docs",
-              "section": "Documentation"
-            },
-            {
-              "type": "refactor",
-              "section": "Code Refactoring"
-            },
-            {
-              "type": "test",
-              "section": "Tests"
-            },
-            {
-              "type": "build",
-              "section": "Build System"
-            },
-            {
-              "type": "ci",
-              "section": "Continuous Integrations"
+    "keywords": [
+        "expressots",
+        "templates",
+        "framework"
+    ],
+    "scripts": {
+        "prepare": "husky",
+        "release": "release-it"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "19.2.1",
+        "@commitlint/config-conventional": "19.2.2",
+        "@release-it/conventional-changelog": "8.0.1",
+        "husky": "9.1.1",
+        "release-it": "17.6.0"
+    },
+    "release-it": {
+        "git": {
+            "commitMessage": "chore(release): ${version}"
+        },
+        "github": {
+            "release": true
+        },
+        "npm": {
+            "publish": false
+        },
+        "plugins": {
+            "@release-it/conventional-changelog": {
+                "infile": "CHANGELOG.md",
+                "preset": {
+                    "name": "conventionalcommits",
+                    "types": [
+                        {
+                            "type": "feat",
+                            "section": "Features"
+                        },
+                        {
+                            "type": "fix",
+                            "section": "Bug Fixes"
+                        },
+                        {
+                            "type": "perf",
+                            "section": "Performance Improvements"
+                        },
+                        {
+                            "type": "revert",
+                            "section": "Reverts"
+                        },
+                        {
+                            "type": "docs",
+                            "section": "Documentation"
+                        },
+                        {
+                            "type": "refactor",
+                            "section": "Code Refactoring"
+                        },
+                        {
+                            "type": "test",
+                            "section": "Tests"
+                        },
+                        {
+                            "type": "build",
+                            "section": "Build System"
+                        },
+                        {
+                            "type": "ci",
+                            "section": "Continuous Integrations"
+                        }
+                    ]
+                }
             }
-          ]
         }
-      }
     }
-  }
 }
