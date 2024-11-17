@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "2.17.0",
+  "version": "3.0.0-beta.1",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
