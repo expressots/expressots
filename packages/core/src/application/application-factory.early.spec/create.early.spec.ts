@@ -1,10 +1,7 @@
 // Unit tests for: create
 
 import { Application } from "express";
-import {
-  IWebServer,
-  IWebServerPublic,
-} from "../../../../../node_modules/@expressots/adapter-express";
+import { IWebServer, IWebServerPublic } from "@expressots/shared";
 import { AppFactory } from "../application-factory";
 import { Logger } from "../../provider/logger/logger.provider";
 

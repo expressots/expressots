@@ -2,7 +2,8 @@
 
 import { stdout } from "process";
 import { ColorStyle, bgColorCodes, colorCodes } from "../color-codes";
-import { Console, IConsoleMessage } from "../console";
+import { Console } from "../console";
+import { IConsoleMessage } from "@expressots/shared";
 
 jest.mock("process", () => ({
   stdout: {

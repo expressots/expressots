@@ -1,17 +1,7 @@
 // Unit tests for: addBodyParser
 
-import { json } from "express";
 import { Logger } from "../../provider/logger/logger.provider";
 import { Middleware } from "../middleware-service";
-
-// Mocking the express module
-jest.mock("express", () => {
-  const actualExpress = jest.requireActual("express");
-  return {
-    ...actualExpress,
-    json: jest.fn(),
-  };
-});
 
 // Mocking the necessary modules
 jest.mock("../middleware-resolver", () => {
@@ -51,7 +41,6 @@ describe("Middleware.addBodyParser() addBodyParser method", () => {
       // Arrange
       const mockOptions: MockOptionsJson = { limit: "1mb" };
       const mockJsonMiddleware = jest.fn();
-      (json as jest.Mock).mockReturnValue(mockJsonMiddleware);
 
       // Act
       middleware.addBodyParser(mockOptions as any);
@@ -59,7 +48,7 @@ describe("Middleware.addBodyParser() addBodyParser method", () => {
       // Assert
       expect(middleware["middlewarePipeline"]).toHaveLength(1);
       expect(middleware["middlewarePipeline"][0].middleware).toBe(
-        mockJsonMiddleware,
+        "mockedJsonMiddleware",
       );
     });
 
@@ -80,7 +69,6 @@ describe("Middleware.addBodyParser() addBodyParser method", () => {
     it("should handle undefined options gracefully", () => {
       // Arrange
       const mockJsonMiddleware = jest.fn();
-      (json as jest.Mock).mockReturnValue(mockJsonMiddleware);
 
       // Act
       middleware.addBodyParser(undefined as any);
@@ -88,7 +76,7 @@ describe("Middleware.addBodyParser() addBodyParser method", () => {
       // Assert
       expect(middleware["middlewarePipeline"]).toHaveLength(1);
       expect(middleware["middlewarePipeline"][0].middleware).toBe(
-        mockJsonMiddleware,
+        "mockedJsonMiddleware",
       );
     });
 
@@ -96,7 +84,6 @@ describe("Middleware.addBodyParser() addBodyParser method", () => {
       // Arrange
       const mockOptions: MockOptionsJson = {};
       const mockJsonMiddleware = jest.fn();
-      (json as jest.Mock).mockReturnValue(mockJsonMiddleware);
 
       // Act
       middleware.addBodyParser(mockOptions as any);
@@ -104,7 +91,7 @@ describe("Middleware.addBodyParser() addBodyParser method", () => {
       // Assert
       expect(middleware["middlewarePipeline"]).toHaveLength(1);
       expect(middleware["middlewarePipeline"][0].middleware).toBe(
-        mockJsonMiddleware,
+        "mockedJsonMiddleware",
       );
     });
   });
