@@ -12,8 +12,8 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node", "reflect-metadata", "vitest/globals"]
+    "types": ["node", "reflect-metadata", "jest"]
   },
   "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules", "**/__tests__/*.spec.ts", "scripts/**/*"]
+  "exclude": ["node_modules", "src/**/*.spec.ts", "scripts/**/*"]
 }
