@@ -1,6 +1,6 @@
 import { AppExpress } from "@expressots/adapter-express";
 import { AppContainer, CreateModule } from "@expressots/core";
-import { AppController } from "./controller";
+import { AppController } from "./app.controller";
 
 export class App extends AppExpress {
     private config: AppContainer = this.configContainer([
