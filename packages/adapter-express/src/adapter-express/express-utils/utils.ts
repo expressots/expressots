@@ -1,4 +1,5 @@
-import { interfaces } from "inversify";
+import { Logger } from "@expressots/core";
+import { interfaces } from "../../di/di.interfaces";
 import { METADATA_KEY, NO_CONTROLLERS_FOUND, TYPE } from "./constants";
 import type {
   BaseController,
@@ -17,6 +18,8 @@ export function getControllersFromContainer(
     return container.getAll<BaseController>(TYPE.Controller);
   }
   if (forceControllers) {
+    const logger: Logger = new Logger();
+    logger.error(NO_CONTROLLERS_FOUND, "adapter-express");
     throw new Error(NO_CONTROLLERS_FOUND);
   } else {
     return [];

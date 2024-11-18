@@ -1,22 +1,25 @@
-import { Console, IApplicationMessageToConsole, Logger, Middleware } from "@expressots/core";
 import express from "express";
-import { Container } from "inversify";
-import { provide } from "inversify-binding-decorators";
-import process from "process";
-import { ApplicationBase } from "./application-express.base";
+import fs from "fs";
+import process, { exit } from "process";
+
 import {
-  ExpressHandler,
+  AppContainer,
+  Console,
+  IConsoleMessage,
+  Logger,
+  Middleware,
+  ProviderManager,
   ExpressoMiddleware,
-  IWebServer,
-  MiddlewareConfig,
-  ServerEnvironment,
-} from "./application-express.types";
+  IMiddleware,
+} from "@expressots/core";
+import { config, RenderEngine, Env, Server } from "@expressots/shared";
+
+import { interfaces } from "../di/di.interfaces";
+import { ApplicationBase } from "./application-express.base";
+import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
-import { EjsOptions, setEngineEjs } from "./render/ejs/ejs.config";
-import { Engine, EngineOptions, RenderOptions } from "./render/engine";
-import { HandlebarsOptions, setEngineHandlebars } from "./render/handlebars/hbs.config";
-import { PugOptions, setEnginePug } from "./render/pug/pug.config";
+import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -29,18 +32,25 @@ import { PugOptions, setEnginePug } from "./render/pug/pug.config";
  * @method setEngine - Configures the application's view engine based on the provided configuration options.
  * @method isDevelopment - Verifies if the current environment is development.
  */
-@provide(AppExpress)
-class AppExpress extends ApplicationBase implements IWebServer {
+export class AppExpress extends ApplicationBase implements Server.IWebServer {
   private logger: Logger = new Logger();
+  private console: Console = new Console();
   private app: express.Application;
   private port: number;
-  private environment: ServerEnvironment;
-  private container: Container;
+  private environment?: Env.Environment;
+  private appContainer: AppContainer;
   private globalPrefix: string = "/";
+  private middlewareManager: IMiddleware;
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
-  private console: Console;
-  private renderOptions: RenderOptions = {} as RenderOptions;
+  private providerManager: ProviderManager;
+  private renderOptions: RenderEngine.RenderOptions = {} as RenderEngine.RenderOptions;
 
+  constructor() {
+    super();
+    this.globalConfiguration();
+  }
+
+  protected globalConfiguration(): void | Promise<void> {}
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
   protected serverShutdown(): void | Promise<void> {}
@@ -54,12 +64,51 @@ class AppExpress extends ApplicationBase implements IWebServer {
   }
 
   /**
-   * Configures the InversifyJS container.
-   * @param container - The InversifyJS container.
+   * Initialize the InversifyJS container with the provided modules and options.
+   * @param appModules - An array of application modules to be loaded into the container.
+   * @param containerOptions - Container global configuration options.
+   * @option skipBaseClassChecks - Skip the base class checks for the container.
+   * @option autoBindInjectable - Automatically bind the injectable classes.
+   * @option defaultScope - The default scope to use for bindings.
+   *
+   * @returns The configured AppContainer instance.
+   * @public API
    */
-  async configure(container: Container): Promise<void> {
-    this.container = container;
-    this.console = this.container.get(Console);
+  public configContainer(
+    appModules: Array<interfaces.ContainerModule>,
+    containerOptions?: interfaces.ContainerOptions,
+  ): AppContainer {
+    this.appContainer = new AppContainer(containerOptions ? containerOptions : {});
+
+    if (!appModules) {
+      this.logger.error("No modules provided for container configuration", "adapter-express");
+      return;
+    }
+
+    this.appContainer.create(appModules);
+
+    this.providerManager = new ProviderManager(this.appContainer.Container);
+    this.middlewareManager = new Middleware();
+
+    return this.appContainer;
+  }
+
+  /**
+   * Get the ProviderManager instance.
+   * @returns The ProviderManager instance.
+   * @public API
+   */
+  public get Provider(): ProviderManager {
+    return this.providerManager;
+  }
+
+  /**
+   * Get the Middleware instance.
+   * @returns The Middleware instance.
+   * @public API
+   */
+  public get Middleware(): IMiddleware {
+    return this.middlewareManager;
   }
 
   /**
@@ -103,18 +152,22 @@ class AppExpress extends ApplicationBase implements IWebServer {
    * @returns The configured Application instance.
    */
   private async init(): Promise<AppExpress> {
+    if (!this.appContainer) {
+      this.logger.error("No container provided for application configuration", "adapter-express");
+      exit(1);
+    }
+
     await this.configureServices();
 
-    const middleware = this.container.get(Middleware);
-    const sortedMiddlewarePipeline = middleware.getMiddlewarePipeline();
+    const sortedMiddlewarePipeline = (this.Middleware as Middleware).getMiddlewarePipeline();
     const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
 
     this.middlewares.push(...(pipeline as Array<ExpressHandler>));
 
     /* Apply the status code to the response */
-    this.middlewares.unshift(new HttpStatusCodeMiddleware() as ExpressoMiddleware);
+    this.middlewares.unshift(new HttpStatusCodeMiddleware(this.globalPrefix) as ExpressoMiddleware);
 
-    const expressServer = new InversifyExpressServer(this.container, null, {
+    const expressServer = new InversifyExpressServer(this.appContainer.Container, null, {
       rootPath: this.globalPrefix as string,
     });
 
@@ -123,8 +176,8 @@ class AppExpress extends ApplicationBase implements IWebServer {
     });
 
     expressServer.setErrorConfig((app: express.Application) => {
-      if (middleware.getErrorHandler()) {
-        app.use(middleware.getErrorHandler() as express.ErrorRequestHandler);
+      if (this.Middleware.getErrorHandler()) {
+        app.use(this.Middleware.getErrorHandler() as express.ErrorRequestHandler);
       }
     });
 
@@ -135,23 +188,19 @@ class AppExpress extends ApplicationBase implements IWebServer {
   /**
    * Start listening on the given port and environment.
    * @param port - The port number to listen on.
-   * @param environment - The server environment.
-   * @param consoleMessage - Optional message to display in the console.
+   * @param appInfo - Optional message to display the app name and version.
+   * @public API
    */
-  public async listen(
-    port: number,
-    environment: ServerEnvironment,
-    consoleMessage?: IApplicationMessageToConsole,
-  ): Promise<void> {
+  public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
     await this.init();
     await this.configEngine();
 
-    this.port = port || 3000;
-    this.environment = environment;
-    this.app.set("env", environment);
+    this.environment = this.environment || "development";
+    this.app.set("env", this.environment);
 
+    this.port = typeof port === "string" ? parseInt(port, 10) : port || 3000;
     this.app.listen(this.port, () => {
-      this.console.messageServer(this.port, this.environment, consoleMessage);
+      this.console.messageServer(this.port, this.environment, appInfo);
 
       (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
         (signal) => {
@@ -165,12 +214,9 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Sets the global route prefix for the application.
-   *
-   * @public
    * @method setGlobalRoutePrefix
-   *
    * @param {string} prefix - The prefix to use for all routes.
-   *
+   * @public API
    */
   public setGlobalRoutePrefix(prefix: string): void {
     this.globalPrefix = prefix;
@@ -182,14 +228,17 @@ class AppExpress extends ApplicationBase implements IWebServer {
   private async configEngine(): Promise<void> {
     if (this.renderOptions.engine) {
       switch (this.renderOptions.engine) {
-        case Engine.HBS:
-          await setEngineHandlebars(this.app, this.renderOptions.options as HandlebarsOptions);
+        case RenderEngine.Engine.HBS:
+          await setEngineHandlebars(
+            this.app,
+            this.renderOptions.options as RenderEngine.HandlebarsOptions,
+          );
           break;
-        case Engine.EJS:
-          await setEngineEjs(this.app, this.renderOptions.options as EjsOptions);
+        case RenderEngine.Engine.EJS:
+          await setEngineEjs(this.app, this.renderOptions.options as RenderEngine.EjsOptions);
           break;
-        case Engine.PUG:
-          await setEnginePug(this.app, this.renderOptions.options as PugOptions);
+        case RenderEngine.Engine.PUG:
+          await setEnginePug(this.app, this.renderOptions.options as RenderEngine.PugOptions);
           break;
         default:
           throw new Error("Unsupported engine type!");
@@ -199,15 +248,17 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Configures the application's view engine based on the provided configuration options.
-   *
-   * @public
    * @method setEngine
    * @template T - A generic type extending from RenderTemplateOptions.
    *
    * @param {Engine} engine - The view engine to set
    * @param {EngineOptions} [options] - The configuration options for the view engine
+   * @public API
    */
-  public async setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void> {
+  public async setEngine<T extends RenderEngine.EngineOptions>(
+    engine: RenderEngine.Engine,
+    options?: T,
+  ): Promise<void> {
     try {
       if (options) {
         this.renderOptions = { engine, options };
@@ -221,23 +272,66 @@ class AppExpress extends ApplicationBase implements IWebServer {
 
   /**
    * Verifies if the current environment is development.
-   *
    * @returns A boolean value indicating whether the current environment is development or not.
+   * @public API
    */
   protected isDevelopment(): boolean {
     if (this.app) {
-      return this.app.get("env") === ServerEnvironment.Development;
+      return this.app.get("env") === "development";
     }
 
-    this.container
-      .get<Logger>(Logger)
-      .error("isDevelopment() method must be called on `PostServerInitialization`", "application");
+    this.appContainer.Container.get<Logger>(Logger).error(
+      "isDevelopment() method must be called on `PostServerInitialization`",
+      "application",
+    );
     return false;
+  }
+
+  /**
+   * Load environment variables from the specified file based on the environment configuration.
+   * @param environment - The environment to load configuration for.
+   * @param options - The options to use for loading the environment configuration.
+   * @option env - The environment configuration options.
+   * @example
+   * ```typescript
+   * {
+            env: {
+                development: ".env.development",
+                production: ".env.production"
+            }
+        }
+    * ```
+   * @public API
+   */
+  public initEnvironment(environment: Env.Environment, options?: Env.IEnvironment): void {
+    this.environment = environment;
+
+    if (options === undefined) {
+      config({ path: ".env" });
+    } else {
+      if (!options.env[environment]) {
+        this.logger.error(
+          `Environment configuration for [${environment}] does not exist.`,
+          "adapter-express",
+        );
+        process.exit(1);
+      } else {
+        const envFileName = options.env[environment];
+
+        if (!fs.existsSync(envFileName)) {
+          this.logger.error(`Environment file [${envFileName}] does not exist.`, "adapter-express");
+          process.exit(1);
+        } else {
+          config({ path: envFileName });
+        }
+      }
+    }
   }
 
   /**
    * Get the underlying HTTP server. (default: Express.js)
    * @returns The underlying HTTP server after initialization.
+   * @public API
    */
   public async getHttpServer(): Promise<express.Application> {
     if (!this.app) {
@@ -251,5 +345,3 @@ class AppExpress extends ApplicationBase implements IWebServer {
     return this.app;
   }
 }
-
-export { AppExpress };

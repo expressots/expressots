@@ -1,27 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
-import { IApplicationMessageToConsole } from "@expressots/core";
-import { Container } from "inversify";
-import { Engine, EngineOptions } from "./render/engine";
-
-/**
- * Interface for the WebServer application implementation.
- */
-export interface IWebServer {
-  configure(container: Container): Promise<void>;
-  listen(
-    port: number,
-    environment: ServerEnvironment,
-    consoleMessage?: IApplicationMessageToConsole,
-  ): Promise<void>;
-  setEngine<T extends EngineOptions>(engine: Engine, options?: T): Promise<void>;
-}
-
-/**
- * Constructor type for IWebServer.
- */
-export interface IWebServerConstructor<T extends IWebServer> {
-  new (): T;
-}
+import express from "express";
 
 /**
  * ExpressHandler Type
@@ -50,32 +27,3 @@ export type MiddlewareConfig = {
   path?: string;
   middlewares: Array<ExpressHandler>;
 };
-
-/**
- * Expresso middleware interface.
- */
-interface IExpressoMiddleware {
-  //readonly name: string;
-  use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
-}
-
-/**
- * Abstract class for creating custom Expresso middleware.
- * Custom middleware classes should extend this class and implement the use method.
- *
- */
-export abstract class ExpressoMiddleware implements IExpressoMiddleware {
-  get name(): string {
-    return this.constructor.name;
-  }
-
-  abstract use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
-}
-
-/**
- * Enum representing possible server environments.
- */
-export enum ServerEnvironment {
-  Development = "development",
-  Production = "production",
-}

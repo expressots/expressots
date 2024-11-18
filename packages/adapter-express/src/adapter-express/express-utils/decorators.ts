@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { inject, injectable, decorate } from "inversify";
+import { inject, injectable, decorate } from "@expressots/core";
 import {
   TYPE,
   METADATA_KEY,
@@ -29,6 +29,7 @@ export const injectHttpContext = inject(TYPE.HttpContext);
  * Controller decorator to define a new controller
  * @param path route path
  * @param middleware array of middleware to be applied to all routes in the controller
+ * @public API
  */
 export function controller(path: string, ...middleware: Array<Middleware>) {
   return (target: NewableFunction): void => {
@@ -73,14 +74,14 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
  * Http decorator to define the status code for a route
  * @param code
  * @returns MethodDecorator
- * @example
- * ```ts
+ * @example ```typescript
  * @Http(200)
  * @Get("/")
  * hello() {
  *  return "Hello World";
  * }
  * ```
+ * @public API
  */
 export function Http(code: number) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
@@ -102,6 +103,7 @@ export function Http(code: number) {
  * Decorator to allow accept all HTTP methods
  * @param path route path, wildcard
  * @param middleware array of middleware to be applied to all routes defined in path logic
+ * @public API
  */
 export function All(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return Method("all", path, ...middleware);
@@ -111,6 +113,7 @@ export function All(path: string, ...middleware: Array<Middleware>): HandlerDeco
  * Decorator to allow GET HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Get(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return enhancedHttpMethod("get", path, ...middleware);
@@ -120,6 +123,7 @@ export function Get(path: string, ...middleware: Array<Middleware>): HandlerDeco
  * Decorator to allow POST HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Post(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return Method("post", path, ...middleware);
@@ -129,6 +133,7 @@ export function Post(path: string, ...middleware: Array<Middleware>): HandlerDec
  * Decorator to allow PUT HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Put(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return enhancedHttpMethod("put", path, ...middleware);
@@ -138,6 +143,7 @@ export function Put(path: string, ...middleware: Array<Middleware>): HandlerDeco
  * Decorator to allow PATCH HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Patch(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return enhancedHttpMethod("patch", path, ...middleware);
@@ -147,6 +153,7 @@ export function Patch(path: string, ...middleware: Array<Middleware>): HandlerDe
  * Decorator to allow HEAD HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Head(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return Method("head", path, ...middleware);
@@ -156,6 +163,7 @@ export function Head(path: string, ...middleware: Array<Middleware>): HandlerDec
  * Decorator to allow DELETE HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Delete(path: string, ...middleware: Array<Middleware>): HandlerDecorator {
   return enhancedHttpMethod("delete", path, ...middleware);
@@ -227,6 +235,7 @@ function enhancedHttpMethod(
  * @param method custom HTTP method
  * @param path route path
  * @param middleware array of middleware to be applied to the route
+ * @public API
  */
 export function Method(
   method: keyof typeof HTTP_VERBS_ENUM,
@@ -349,6 +358,9 @@ function paramDecoratorFactory(
 /**
  * Parameter decorator to inject the request object
  * @returns ParameterDecorator
+ * @param type - The type of parameter to inject
+ * @param parameterName - The name of the parameter to inject
+ * @public API
  */
 export function params(type: PARAMETER_TYPE, parameterName?: string): ParameterDecorator {
   return (
@@ -391,7 +403,8 @@ export function params(type: PARAMETER_TYPE, parameterName?: string): ParameterD
  * Render decorator to define the template and default data for a route
  * @param template The template to render
  * @param defaultData The default data to pass to the template
- * @returns
+ * @returns MethodDecorator
+ * @public API
  */
 export function Render(template: string, defaultData?: Record<string, unknown>): MethodDecorator {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -510,6 +523,7 @@ function isResponse(obj: unknown): obj is Response {
  * @param multerOptions
  * @default { none: true }
  * @returns MethodDecorator
+ * @public API
  */
 export function FileUpload(
   options?: FieldOptions | Array<FieldOptions> | { none?: boolean; any?: boolean },
@@ -590,7 +604,7 @@ function inferMulterMethod(
  * @param upload
  * @param options
  * @param method
- * @returns
+ * @returns RequestHandler
  */
 function getMulterMiddleware(
   upload: any,

@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { injectable, interfaces as inversifyInterfaces } from "inversify";
+import { interfaces as inversifyInterfaces } from "../../di/di.interfaces";
 import type { HttpContext } from "./interfaces";
+import { injectable } from "@expressots/core";
 
 @injectable()
 export abstract class BaseMiddleware implements BaseMiddleware {
