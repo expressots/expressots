@@ -28,11 +28,9 @@ async function packageManagerInstall({
 		let installCommand: string = "install --prefer-offline";
 		if (packageManager === "yarn") {
 			installCommand = "install --ignore-engines";
-		} else if (
-			packageManager === "bun" ||
-			packageManager === "pnpm" ||
-			packageManager === "yarn"
-		) {
+		} else if (packageManager === "pnpm") {
+			installCommand = "install --silent";
+		} else if (packageManager === "bun" || packageManager === "yarn") {
 			installCommand = "install";
 		}
 
@@ -243,9 +241,11 @@ const projectForm = async (
 
 		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
 
+		const repo: string = `expressots/templates/${templates[template]}#${BUNDLE_VERSION}`;
+
 		try {
 			const emitter = degit(
-				`expressots/templates/${templates[template]}#${BUNDLE_VERSION}`,
+				`expressots/templates/${templates[template]}`,
 			);
 
 			await emitter.clone(answer.name);
@@ -274,8 +274,6 @@ const projectForm = async (
 			directory: answer.name,
 			name: projectName,
 		});
-
-		renameEnvFile(answer.name);
 
 		progressBar.update(100);
 

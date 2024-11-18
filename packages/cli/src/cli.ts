@@ -22,7 +22,7 @@ import { scriptsCommand } from "./scripts";
  * The current version of the ExpressoTS Bundle.
  * core, adapters, and cli.
  */
-export const BUNDLE_VERSION = "2.16.2";
+export const BUNDLE_VERSION = "3.0.0-beta.1";
 
 stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
