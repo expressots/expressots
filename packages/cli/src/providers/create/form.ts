@@ -57,7 +57,7 @@ export const createExternalProvider = async (
 		}
 
 		try {
-			const emitter = degit(`expressots/expressots-provider-template`);
+			const emitter = degit(`expressots/templates/provider`);
 			await emitter.clone(providerInfo.providerName);
 
 			changePackageName({
