@@ -13,7 +13,7 @@
         "removeComments": true,
         "noImplicitAny": false,
         "strictPropertyInitialization": false,
-        "types": ["reflect-metadata", "node", "jest"],
+        "types": ["node", "jest"],
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true
     },
