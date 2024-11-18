@@ -19,22 +19,16 @@ async function packageManagerInstall({
 	directory: string;
 	progressBar: SingleBar;
 }) {
+	const command: string =
+		process.platform === "win32" ? `${packageManager}.cmd` : packageManager;
+
+	const args = ["install", "--prefer-offline", "--silent"];
+	if (packageManager === "yarn") {
+		args.push("--ignore-engines");
+		args.splice(args.indexOf("--prefer-offline"), 1);
+	}
 	return new Promise((resolve, reject) => {
-		const isWindows: boolean = process.platform === "win32";
-		const command: string = isWindows
-			? `${packageManager}.cmd`
-			: packageManager;
-
-		let installCommand: string = "install --prefer-offline";
-		if (packageManager === "yarn") {
-			installCommand = "install --ignore-engines";
-		} else if (packageManager === "pnpm") {
-			installCommand = "install --silent";
-		} else if (packageManager === "bun" || packageManager === "yarn") {
-			installCommand = "install";
-		}
-
-		const installProcess = spawn(command, [installCommand], {
+		const installProcess = spawn(command, args, {
 			cwd: directory,
 			shell: true,
 			timeout: 600000,
