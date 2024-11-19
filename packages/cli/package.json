@@ -12,7 +12,7 @@
 		"ex": "bin/cli.js"
 	},
 	"engines": {
-		"node": ">=18.20.5"
+		"node": ">=20.18.0"
 	},
 	"funding": {
 		"type": "github",
