@@ -13,7 +13,7 @@ import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
 import { createProject } from "./new";
-import { addProviderCMD } from "./providers";
+import { addProviderCMD, removeProviderCMD } from "./providers";
 import { createExternalProviderCMD } from "./providers/create/cli";
 import { printError } from "./utils/cli-ui";
 import { scriptsCommand } from "./scripts";
@@ -34,6 +34,7 @@ yargs(hideBin(process.argv))
 	.command(prodCommand)
 	.command(createExternalProviderCMD())
 	.command(addProviderCMD())
+	.command(removeProviderCMD())
 	.command(generateProject())
 	.command(scriptsCommand())
 	.command(infoProject())

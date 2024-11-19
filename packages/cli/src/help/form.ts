@@ -27,7 +27,12 @@ const helpForm = async (): Promise<void> => {
 		["dto", "g d", "Generate a dto"],
 		["entity", "g e", "Generate an entity"],
 		["provider", "g p", "Generate internal provider"],
-		["provider", "add", "Add external provider to the project"],
+		[
+			"provider",
+			"add",
+			"Add provider to the project. Use -d to add as dev dependency",
+		],
+		["provider", "remove", "Remove provider from the project"],
 		["provider", "create", "Create external provider"],
 		["module", "g mo", "Generate a module"],
 		["middleware", "g mi", "Generate a middleware"],
