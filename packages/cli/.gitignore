@@ -35,7 +35,7 @@ expressots.config.ts
 
 *.tgz
 
-*.container.ts
+app.ts
 
 coverage/
 .early.coverage
