@@ -24,6 +24,7 @@ module.exports = {
 		".eslintrc.cjs",
 		"coverage/*",
 		"scripts/*",
+		"test/**/*.spec.ts",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",
