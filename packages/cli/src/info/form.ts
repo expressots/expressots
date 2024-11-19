@@ -1,9 +1,9 @@
 import chalk from "chalk";
-import path from "path";
 import fs from "fs";
 import os from "os";
+import path from "path";
+import { BUNDLE_VERSION } from "../cli";
 import { printError, printSuccess } from "../utils/cli-ui";
-import axios from "axios";
 
 function getInfosFromPackage() {
 	try {
@@ -34,17 +34,5 @@ export const infoForm = (): void => {
 	console.log(chalk.green("System information:"));
 	console.log(chalk.white(`\tOS Version: ${os.version()}`));
 	console.log(chalk.white(`\tNodeJS version: ${process.version}`));
-	currentCLIVersion();
+	printSuccess("CLI version:", BUNDLE_VERSION);
 };
-
-async function currentCLIVersion(): Promise<void> {
-	try {
-		const response = await axios.get(
-			"https://api.github.com/repos/expressots/expressots-cli/releases",
-		);
-		const latestRelease = `v${response.data[0].tag_name}`;
-		printSuccess("CLI version:", latestRelease);
-	} catch (error: Error | any) {
-		printError("Error:", error.message);
-	}
-}

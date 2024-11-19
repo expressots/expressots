@@ -8,6 +8,7 @@ import path from "node:path";
 import { centerText } from "../utils/center-text";
 import { printError } from "../utils/cli-ui";
 import { changePackageName } from "../utils/change-package-info";
+import { BUNDLE_VERSION } from "../cli";
 
 async function packageManagerInstall({
 	packageManager,
@@ -18,49 +19,70 @@ async function packageManagerInstall({
 	directory: string;
 	progressBar: SingleBar;
 }) {
-	return new Promise((resolve, reject) => {
-		const isWindows: boolean = process.platform === "win32";
-		const command: string = isWindows
-			? `${packageManager}.cmd`
-			: packageManager;
+	const command: string =
+		process.platform === "win32" ? `${packageManager}.cmd` : packageManager;
 
-		const installProcess = spawn(command, ["install", "--prefer-offline"], {
+	const args = ["install", "--prefer-offline", "--silent"];
+	if (packageManager === "yarn") {
+		args.push("--ignore-engines");
+		args.splice(args.indexOf("--prefer-offline"), 1);
+	}
+	return new Promise((resolve, reject) => {
+		const installProcess = spawn(command, args, {
 			cwd: directory,
 			shell: true,
 			timeout: 600000,
 		});
 
-		// eslint-disable-next-line prefer-const
-		let installTimeout: NodeJS.Timeout;
+		// Simulate incremental progress
+		let progress = 0;
+		const interval = setInterval(() => {
+			if (progress < 90) {
+				progress += 5;
+				progressBar.update(progress);
+			}
+		}, 1000);
 
-		installProcess.on("error", (error) => {
-			clearTimeout(installTimeout);
-			reject(new Error(`Failed to start subprocess: ${error.message}`));
-		});
-
+		// Handle stdout for meaningful output or progress feedback
 		installProcess.stdout?.on("data", (data: Buffer) => {
 			const output = data.toString().trim();
 
-			const npmProgressMatch = output.match(
+			// Remove all data from || to the end of the line
+			const cleanedOutput = output.replace(/\|\|.*$/g, "");
+
+			// Match and handle npm-specific progress
+			const npmProgressMatch = cleanedOutput.match(
 				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
 			);
 
 			if (npmProgressMatch) {
 				const [, current, total, task] = npmProgressMatch;
-				const progress = Math.round(
+				progress = Math.round(
 					(parseInt(current) / parseInt(total)) * 100,
 				);
 				progressBar.update(progress, { doing: task });
 			} else {
-				progressBar.increment(5, { doing: output });
+				// Update "task" without changing the progress
+				progressBar.update(progress, { doing: cleanedOutput });
 			}
 		});
 
+		// Handle errors
+		installProcess.on("error", (error) => {
+			clearInterval(interval); // Stop interval on error
+			progressBar.stop();
+			reject(new Error(`Failed to start subprocess: ${error.message}`));
+		});
+
+		// Finalize progress on close
 		installProcess.on("close", (code) => {
-			clearTimeout(installTimeout);
+			clearInterval(interval); // Stop interval when the process ends
 			if (code === 0) {
+				progressBar.update(100, { doing: "Complete!" }); // Finalize progress
+				progressBar.stop();
 				resolve("Installation Done!");
 			} else {
+				progressBar.stop();
 				reject(
 					new Error(
 						`${packageManager} install exited with code ${code}`,
@@ -68,11 +90,6 @@ async function packageManagerInstall({
 				);
 			}
 		});
-
-		installTimeout = setTimeout(() => {
-			installProcess.kill("SIGKILL");
-			reject(new Error("Installation took too long. Aborted!"));
-		}, 600000);
 	});
 }
 
@@ -218,9 +235,11 @@ const projectForm = async (
 
 		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
 
+		const repo: string = `expressots/templates/${templates[template]}#${BUNDLE_VERSION}`;
+
 		try {
 			const emitter = degit(
-				`expressots/expressots/templates/${templates[template]}`,
+				`expressots/templates/${templates[template]}`,
 			);
 
 			await emitter.clone(answer.name);
@@ -249,8 +268,6 @@ const projectForm = async (
 			directory: answer.name,
 			name: projectName,
 		});
-
-		renameEnvFile(answer.name);
 
 		progressBar.update(100);
 

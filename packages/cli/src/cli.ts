@@ -13,10 +13,16 @@ import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
 import { createProject } from "./new";
-import { addProviderCMD } from "./providers";
+import { addProviderCMD, removeProviderCMD } from "./providers";
 import { createExternalProviderCMD } from "./providers/create/cli";
 import { printError } from "./utils/cli-ui";
 import { scriptsCommand } from "./scripts";
+
+/**
+ * The current version of the ExpressoTS Bundle.
+ * core, adapters, and cli.
+ */
+export const BUNDLE_VERSION = "3.0.0-beta.1";
 
 stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
 
@@ -28,6 +34,7 @@ yargs(hideBin(process.argv))
 	.command(prodCommand)
 	.command(createExternalProviderCMD())
 	.command(addProviderCMD())
+	.command(removeProviderCMD())
 	.command(generateProject())
 	.command(scriptsCommand())
 	.command(infoProject())

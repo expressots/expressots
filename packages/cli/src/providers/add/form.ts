@@ -4,103 +4,141 @@ import fs from "node:fs";
 import { exit } from "node:process";
 import { printError } from "../../utils/cli-ui";
 
-export const addExternalProvider = async (
-	provider: string,
-	version: string,
-): Promise<void> => {
-	await installProvider(provider, version);
+type PackageManagerConfig = {
+	install: string;
+	addDev: string;
+	remove: string;
 };
 
-async function installProvider(provider: string, version: string) {
-	const packageManager = fs.existsSync(
-		"package-lock.json" || "yarn.lock" || "pnpm-lock.yaml",
-	)
-		? "npm"
-		: fs.existsSync("yarn.lock")
-			? "yarn"
-			: fs.existsSync("pnpm-lock.yaml")
-				? "pnpm"
-				: null;
+type PackageManager = {
+	npm: PackageManagerConfig;
+	yarn: PackageManagerConfig;
+	pnpm: PackageManagerConfig;
+};
 
-	if (packageManager) {
-		console.log(`Installing ${provider} provider ...`);
-		const currentVersion = version === "latest" ? "" : `@${version}`;
-		await execProcess({
-			commandArg: packageManager,
-			args: ["add", `${provider}${currentVersion}`, "--prefer-offline"],
-			directory: process.cwd(),
-		});
-	} else {
-		printError(
-			"No package manager found in the project",
-			"install-provider",
-		);
-		return;
+const PACKAGE_MANAGERS: PackageManager = {
+	npm: {
+		install: "install",
+		addDev: "install --save-dev",
+		remove: "uninstall",
+	},
+	yarn: {
+		install: "add",
+		addDev: "add --dev",
+		remove: "remove",
+	},
+	pnpm: {
+		install: "add",
+		addDev: "add --save-dev",
+		remove: "remove",
+	},
+};
+
+function detectPackageManager(): string | null {
+	const lockFiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"];
+	const managers = Object.keys(PACKAGE_MANAGERS);
+
+	for (let i = 0; i < lockFiles.length; i++) {
+		if (fs.existsSync(lockFiles[i])) {
+			return managers[i];
+		}
 	}
+	return null;
 }
 
 async function execProcess({
-	commandArg,
+	command,
 	args,
 	directory,
 }: {
-	commandArg: string;
+	command: string;
 	args: string[];
 	directory: string;
-}) {
+}): Promise<void> {
 	return new Promise((resolve, reject) => {
-		const isWindows: boolean = process.platform === "win32";
-		const command: string = isWindows ? `${commandArg}.cmd` : commandArg;
+		const isWindows = process.platform === "win32";
+		const execCommand = isWindows ? `${command}.cmd` : command;
 
-		const installProcess = spawn(command, args, {
+		const processRunner = spawn(execCommand, args, {
 			cwd: directory,
 			shell: true,
 		});
 
-		console.log(
-			chalk.bold.blue(`Executing: ${commandArg} ${args.join(" ")}`),
-		);
+		console.log(chalk.bold.blue(`Executing: ${command} ${args.join(" ")}`));
 		console.log(
 			chalk.yellow("-------------------------------------------------"),
 		);
 
-		installProcess.stdout.on("data", (data) => {
-			console.log(chalk.green(data.toString().trim())); // Display regular messages in green
+		processRunner.stdout.on("data", (data) => {
+			console.log(chalk.green(data.toString().trim()));
 		});
 
-		installProcess.stderr.on("data", (data) => {
-			console.error(chalk.red(data.toString().trim())); // Display error messages in red
+		processRunner.stderr.on("data", (data) => {
+			console.error(chalk.red(data.toString().trim()));
 		});
 
-		installProcess.on("close", (code) => {
+		processRunner.on("close", (code) => {
 			if (code === 0) {
 				console.log(
-					chalk.bold.green(
-						"-------------------------------------------------",
-					),
+					chalk.bold.green("Operation completed successfully!\n"),
 				);
-				console.log(chalk.bold.green("Installation Done!\n"));
-				resolve("Installation Done!");
+				resolve();
 			} else {
 				console.error(
-					chalk.bold.red("---------------------------------------"),
+					chalk.bold.red(`Command failed with exit code ${code}`),
 				);
-				console.error(
-					chalk.bold.red(
-						`Command ${command} ${args.join(
-							" ",
-						)} exited with code ${code}`,
-					),
-				);
-				reject(
-					new Error(
-						`Command ${command} ${args.join(
-							" ",
-						)} exited with code ${code}`,
-					),
-				);
+				reject(new Error(`Command failed with exit code ${code}`));
 				exit(1);
 			}
 		});
+	});
+}
+
+export async function addProvider(
+	packageName: string,
+	version?: string,
+	isDevDependency = false,
+): Promise<void> {
+	const packageManager = detectPackageManager();
+
+	if (!packageManager) {
+		printError("No package manager found in the project", "add-package");
+		return;
+	}
+
+	const pkgManagerConfig: PackageManagerConfig =
+		PACKAGE_MANAGERS[packageManager as keyof PackageManager];
+
+	const command = isDevDependency
+		? pkgManagerConfig.addDev
+		: pkgManagerConfig.install;
+	const versionSuffix = version && version !== "latest" ? `@${version}` : "";
+
+	console.log(
+		`${isDevDependency ? "Adding devDependency" : "Installing"} ${packageName}...`,
+	);
+	await execProcess({
+		command: packageManager,
+		args: [...command.split(" "), `${packageName}${versionSuffix}`],
+		directory: process.cwd(),
+	});
+}
+
+export async function removeProvider(packageName: string): Promise<void> {
+	const packageManager = detectPackageManager();
+
+	if (!packageManager) {
+		printError("No package manager found in the project", "remove-package");
+		return;
+	}
+
+	const command =
+		PACKAGE_MANAGERS[packageManager as keyof PackageManager].remove;
+
+	console.log(`Removing ${packageName}...`);
+	await execProcess({
+		command: packageManager,
+		args: [...command.split(" "), packageName],
+		directory: process.cwd(),
 	});
 }

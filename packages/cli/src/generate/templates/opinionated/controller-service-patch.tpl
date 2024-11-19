@@ -1,24 +1,14 @@
-import { BaseController, StatusCode } from "@expressots/core";
-import { controller, Patch, body, param, response } from "@expressots/adapter-express";
-import { Response } from "express";
+import { controller, Patch, body } from "@expressots/adapter-express";
+import { inject } from "@expressots/core";
 import { {{className}}UseCase } from "./{{fileName}}.usecase";
-import { I{{className}}RequestDTO, I{{className}}ResponseDTO } from "./{{fileName}}.dto";
+import { I{{className}}RequestDTO } from "./{{fileName}}.dto";
 
 @controller("/{{{route}}}")
-export class {{className}}Controller extends BaseController {
-    constructor(private {{useCase}}UseCase: {{className}}UseCase) {
-	    super();
-	}
+export class {{className}}Controller {
+    @inject({{className}}UseCase) private {{useCase}}UseCase: {{className}}UseCase;
 
     @Patch("/")
-    execute(
-        @body() payload: I{{className}}RequestDTO,
-        @response() res: Response,
-    ): I{{className}}ResponseDTO {
-        return this.callUseCase(
-            this.{{useCase}}UseCase.execute(payload),
-            res,
-            StatusCode.OK,
-        );
+    execute(@body() payload: I{{className}}RequestDTO) {
+        return this.{{useCase}}UseCase.execute(payload);
     }
 }

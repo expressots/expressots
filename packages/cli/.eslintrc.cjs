@@ -20,9 +20,11 @@ module.exports = {
 		"node_modules/*",
 		"expressots.config.ts",
 		"commitlint.config.ts",
-		"vitest.config.ts",
+		"jest.config.ts",
 		".eslintrc.cjs",
 		"coverage/*",
+		"scripts/*",
+		"test/**/*.spec.ts",
 	],
 	rules: {
 		"@typescript-eslint/interface-name-prefix": "off",

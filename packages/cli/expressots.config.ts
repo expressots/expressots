@@ -1,9 +1,13 @@
-import { ExpressoConfig, Pattern } from "./src/types";
+import { ExpressoConfig, Pattern } from "@expressots/shared";
 
 const config: ExpressoConfig = {
 	sourceRoot: "src",
 	scaffoldPattern: Pattern.KEBAB_CASE,
 	opinionated: false,
+	env: {
+		development: ".env.development",
+		production: ".env.production",
+	},
 	/* scaffoldSchematics: {
 		entity: "model",
 		provider: "adapter",

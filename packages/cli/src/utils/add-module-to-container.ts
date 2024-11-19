@@ -4,12 +4,12 @@ import fs from "node:fs";
 import { printError } from "./cli-ui";
 import Compiler from "./compiler";
 
-const APP_CONTAINER = "app.container.ts";
+const APP_CONTAINER = "app.ts";
 
 type AppContainerType = {
 	regex: RegExp;
 	path: string;
-	content: RegExpMatchArray;
+	content: string;
 	modules: string[];
 	imports: string[];
 	notImports: string[];
@@ -20,6 +20,7 @@ async function validateAppContainer(): Promise<AppContainerType> {
 	const imports: string[] = [];
 	const notImports: string[] = [];
 
+	// Locate the container file
 	const path = globSync(`./${sourceRoot}/${APP_CONTAINER}`, {
 		absolute: true,
 		ignore: "**/node_modules/**",
@@ -33,8 +34,10 @@ async function validateAppContainer(): Promise<AppContainerType> {
 		process.exit(1);
 	}
 
+	// Read the container file
 	const fileContent = await fs.promises.readFile(path[0], "utf8");
 
+	// Collect imports and other lines
 	fileContent.split("\n").forEach((line: string) => {
 		if (line.startsWith("import")) {
 			imports.push(line);
@@ -43,25 +46,30 @@ async function validateAppContainer(): Promise<AppContainerType> {
 		}
 	});
 
-	// Validate the file content
-	const moduleDeclarationRegex = /.create\(\s*\[([\s\S]*?)]/;
-	const moduleDeclarationMatch = fileContent.match(moduleDeclarationRegex);
+	// Regex to detect and extract modules from configContainer
+	const moduleRegex = /this\.configContainer\(\s*\[\s*([\s\S]*?)\s*]\s*\)/;
 
-	if (!moduleDeclarationMatch) {
-		printError("Container format incorrect!", APP_CONTAINER);
+	const moduleMatch = fileContent.match(moduleRegex);
+
+	if (!moduleMatch) {
+		printError(
+			"The App class does not contain a valid configContainer([]) declaration!",
+			APP_CONTAINER,
+		);
 		process.exit(1);
 	}
 
-	const modules = moduleDeclarationMatch[1]
+	// Extract modules if present
+	const modules = moduleMatch[1]
 		.trim()
 		.split(",")
 		.filter((m) => m.trim() !== "")
 		.map((m) => m.trim());
 
 	return {
-		regex: moduleDeclarationRegex,
+		regex: moduleRegex,
 		path: path[0],
-		content: moduleDeclarationMatch,
+		content: fileContent,
 		modules,
 		imports,
 		notImports,
@@ -73,6 +81,7 @@ async function addModuleToContainer(
 	modulePath?: string,
 	path?: string,
 ) {
+	console.log("To chamando esse cara");
 	const containerData: AppContainerType = await validateAppContainer();
 
 	const moduleName = (name[0].toUpperCase() + name.slice(1)).trimStart();
@@ -109,7 +118,7 @@ async function addModuleToContainer(
 	containerData.modules.push(`${moduleName}Module`);
 
 	const newModule = containerData.modules.join(", ");
-	const newModuleDeclaration = `.create([${newModule}]`;
+	const newModuleDeclaration = `this.configContainer([${newModule}])`;
 
 	const newFileContent = [
 		...containerData.imports,
@@ -157,7 +166,7 @@ async function addModuleToContainerNestedPath(name: string, path?: string) {
 	containerData.modules.push(`${moduleName}Module`);
 
 	const newModule = containerData.modules.join(", ");
-	const newModuleDeclaration = `.create([${newModule}]`;
+	const newModuleDeclaration = `this.configContainer([${newModule}])`;
 
 	const newFileContent = [
 		...containerData.imports,

@@ -45,22 +45,13 @@ function getOutDir(): string {
  * @returns The configuration
  */
 const opinionatedConfig: Array<string> = [
-	"--transpile-only",
-	"--clear",
-	"-r",
-	"dotenv/config",
+	"--watch",
 	"-r",
 	"tsconfig-paths/register",
 	"./src/main.ts",
 ];
 
-const nonOpinionatedConfig: Array<string> = [
-	"--transpile-only",
-	"--clear",
-	"-r",
-	"dotenv/config",
-	"./src/main.ts",
-];
+const nonOpinionatedConfig: Array<string> = ["--watch", "./src/main.ts"];
 
 /**
  * Dev command module
@@ -191,7 +182,7 @@ export const runCommand = async ({
 		switch (command) {
 			case "dev":
 				execCmd(
-					"tsnd",
+					"tsx",
 					opinionated ? opinionatedConfig : nonOpinionatedConfig,
 				);
 				break;
@@ -220,13 +211,11 @@ export const runCommand = async ({
 				if (opinionated) {
 					config = [
 						"-r",
-						"dotenv/config",
-						"-r",
 						`./${outDir}/register-path.js`,
 						`./${outDir}/src/main.js`,
 					];
 				} else {
-					config = ["-r", "dotenv/config", `./${outDir}/main.js`];
+					config = [`./${outDir}/main.js`];
 				}
 				clearScreen();
 				execCmd("node", config);
