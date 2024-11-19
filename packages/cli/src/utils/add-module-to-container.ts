@@ -166,7 +166,7 @@ async function addModuleToContainerNestedPath(name: string, path?: string) {
 	containerData.modules.push(`${moduleName}Module`);
 
 	const newModule = containerData.modules.join(", ");
-	const newModuleDeclaration = `.create([${newModule}]`;
+	const newModuleDeclaration = `this.configContainer([${newModule}])`;
 
 	const newFileContent = [
 		...containerData.imports,
