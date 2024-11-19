@@ -1,4 +1,3 @@
-import { ContainerModule } from "inversify";
-import { CreateModule } from "@expressots/core";
+import { CreateModule, ContainerModule } from "@expressots/core";
 
 export const {{moduleName}}Module: ContainerModule = CreateModule([]);

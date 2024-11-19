@@ -1,21 +1,13 @@
-import { BaseController, StatusCode } from "@expressots/core";
-import { controller, Get, response } from "@expressots/adapter-express";
-import { Response } from "express";
+import { controller, Get } from "@expressots/adapter-express";
+import { inject } from "@expressots/core";
 import { {{className}}UseCase } from "./{{fileName}}.usecase";
-import { I{{className}}ResponseDTO } from "./{{fileName}}.dto";
 
 @controller("/{{{route}}}")
-export class {{className}}Controller extends BaseController {
-    constructor(private {{useCase}}UseCase: {{className}}UseCase) {
-	    super();
-	}
-
+export class {{className}}Controller {
+    @inject({{className}}UseCase) private {{useCase}}UseCase: {{className}}UseCase;
+	
     @Get("/")
-    execute(@response() res: Response): I{{className}}ResponseDTO {
-        return this.callUseCase(
-            this.{{useCase}}UseCase.execute(),
-            res,
-            StatusCode.OK,
-        );
+    execute() {
+        return this.{{useCase}}UseCase.execute();
     }
 }
