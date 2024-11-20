@@ -5,8 +5,7 @@ import { getControllerMetadata } from "../utils";
 import "reflect-metadata";
 
 class MockController {
-  constructor() {
-  }
+  constructor() {}
 }
 
 describe("getControllerMetadata() getControllerMetadata method", () => {

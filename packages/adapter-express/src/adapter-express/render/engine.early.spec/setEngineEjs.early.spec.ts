@@ -69,10 +69,10 @@ describe("setEngineEjs() setEngineEjs method", () => {
       const options = {
         viewsDir: [],
       };
-  
+
       // Act
       await setEngineEjs(app, options);
-  
+
       // Assert
       expect(packageResolver).toHaveBeenCalledWith("ejs");
       expect(app.set).toHaveBeenCalledWith("view engine", EJS_DEFAULTS.viewEngine);

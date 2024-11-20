@@ -5,18 +5,15 @@ import { ApplicationBase } from "../application-express.base";
 class ConcreteApplication extends ApplicationBase {
   private servicesConfigured: boolean = false;
 
-  protected async globalConfiguration(): Promise<void> {
-  }
+  protected async globalConfiguration(): Promise<void> {}
 
   protected async configureServices(): Promise<void> {
     this.servicesConfigured = true;
   }
 
-  protected async postServerInitialization(): Promise<void> {
-  }
+  protected async postServerInitialization(): Promise<void> {}
 
-  protected async serverShutdown(): Promise<void> {
-  }
+  protected async serverShutdown(): Promise<void> {}
 
   public isServicesConfigured(): boolean {
     return this.servicesConfigured;

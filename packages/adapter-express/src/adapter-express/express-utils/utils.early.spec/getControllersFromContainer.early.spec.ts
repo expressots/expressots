@@ -37,7 +37,9 @@ describe("getControllersFromContainer() getControllersFromContainer method", () 
   it("should throw an error when no controllers are bound and forceControllers is true", () => {
     expect(() => {
       getControllersFromContainer(mockContainer as any, true);
-    }).toThrowError("No controller found! Please ensure that you have register at least one Controller.");
+    }).toThrowError(
+      "No controller found! Please ensure that you have register at least one Controller.",
+    );
   });
 });
 

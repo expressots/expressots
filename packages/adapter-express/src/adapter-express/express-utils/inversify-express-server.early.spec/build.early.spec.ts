@@ -36,7 +36,7 @@ class MockContainer {
   public get = jest.fn();
   public getNamed = jest.fn();
   public whenTargetNamed = jest.fn().mockReturnThis();
-} 
+}
 
 class MockAuthProvider {
   public getUser = jest.fn();
@@ -98,10 +98,10 @@ describe("InversifyExpressServer.build() build method", () => {
     it("should handle missing AuthProvider gracefully", () => {
       // Arrange
       server = new InversifyExpressServer(mockContainer as any);
-    
+
       // Act
       const app = server.build();
-    
+
       // Assert
       expect(app).toBeDefined();
       expect(mockContainer.bind).toHaveBeenCalledWith(TYPE.HttpContext);
@@ -109,7 +109,6 @@ describe("InversifyExpressServer.build() build method", () => {
       expect(mockContainer.whenTargetNamed).toHaveBeenCalledTimes(1);
       expect(mockContainer.whenTargetNamed).toHaveBeenCalledWith(expect.any(String));
     });
-    
 
     it("should handle missing controllers gracefully", () => {
       // Arrange

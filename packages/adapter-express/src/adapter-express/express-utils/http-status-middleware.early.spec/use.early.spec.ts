@@ -3,9 +3,9 @@
 import { NextFunction, Request, Response } from "express";
 import "reflect-metadata";
 import { HTTP_CODE_METADATA } from "../constants";
-import { HttpStatusCodeMiddleware } from '../http-status-middleware';
+import { HttpStatusCodeMiddleware } from "../http-status-middleware";
 
-describe('HttpStatusCodeMiddleware.use() use method', () => {
+describe("HttpStatusCodeMiddleware.use() use method", () => {
   let middleware: HttpStatusCodeMiddleware;
   let req: Partial<Request>;
   let res: Partial<Response>;
@@ -44,10 +44,10 @@ describe('HttpStatusCodeMiddleware.use() use method', () => {
     it("should set the default status code for GET method when no mapping is found", () => {
       // Arrange
       Reflect.defineMetadata(HTTP_CODE_METADATA.httpCode, {}, Reflect);
-    
+
       // Act
       middleware.use(req as Request, res as Response, next);
-    
+
       // Assert
       expect(res.statusCode).toBe(200);
       expect(next).toHaveBeenCalled();
@@ -57,10 +57,10 @@ describe('HttpStatusCodeMiddleware.use() use method', () => {
       // Arrange
       req.method = "POST";
       Reflect.defineMetadata(HTTP_CODE_METADATA.httpCode, {}, Reflect);
-    
+
       // Act
       middleware.use(req as Request, res as Response, next);
-    
+
       // Assert
       expect(res.statusCode).toBe(201);
       expect(next).toHaveBeenCalled();
@@ -106,10 +106,10 @@ describe('HttpStatusCodeMiddleware.use() use method', () => {
       // Arrange
       req.method = "UNKNOWN";
       Reflect.defineMetadata(HTTP_CODE_METADATA.httpCode, {}, Reflect);
-    
+
       // Act
       middleware.use(req as Request, res as Response, next);
-    
+
       // Assert
       expect(res.statusCode).toBe(200);
       expect(next).toHaveBeenCalled();

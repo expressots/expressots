@@ -55,15 +55,15 @@ describe("getControllersFromMetadata() getControllersFromMetadata method", () =>
       // Arrange
       const mockMetadata = [{ target: undefined }, { target: class ControllerC {} }];
       jest.spyOn(Reflect, "getMetadata").mockReturnValue(mockMetadata);
-    
+
       // Act
       const result = getControllersFromMetadata();
-    
+
       // Assert
-      expect(result).toContain(undefined); 
+      expect(result).toContain(undefined);
       expect(result).toContain(mockMetadata[1].target);
-      expect(result.filter((target) => target !== undefined)).toEqual([mockMetadata[1].target]); 
-    
+      expect(result.filter((target) => target !== undefined)).toEqual([mockMetadata[1].target]);
+
       // Cleanup
       jest.restoreAllMocks();
     });

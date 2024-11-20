@@ -94,10 +94,7 @@ describe("AppExpress.postServerInitialization() postServerInitialization method"
   describe("Happy Path", () => {
     it("should execute postServerInitialization without errors", async () => {
       // Arrange
-      const postServerInitializationSpy = jest.spyOn(
-        appExpress as any,
-        "postServerInitialization",
-      );
+      const postServerInitializationSpy = jest.spyOn(appExpress as any, "postServerInitialization");
 
       // Act
       await appExpress["postServerInitialization"]();
@@ -111,10 +108,7 @@ describe("AppExpress.postServerInitialization() postServerInitialization method"
     it("should handle missing appContainer gracefully", async () => {
       // Arrange
       appExpress["appContainer"] = undefined;
-      const postServerInitializationSpy = jest.spyOn(
-        appExpress as any,
-        "postServerInitialization",
-      );
+      const postServerInitializationSpy = jest.spyOn(appExpress as any, "postServerInitialization");
 
       // Act
       await appExpress["postServerInitialization"]();
@@ -126,10 +120,7 @@ describe("AppExpress.postServerInitialization() postServerInitialization method"
     it("should handle missing middlewareManager gracefully", async () => {
       // Arrange
       appExpress["middlewareManager"] = undefined;
-      const postServerInitializationSpy = jest.spyOn(
-        appExpress as any,
-        "postServerInitialization",
-      );
+      const postServerInitializationSpy = jest.spyOn(appExpress as any, "postServerInitialization");
 
       // Act
       await appExpress["postServerInitialization"]();
