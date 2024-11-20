@@ -91,7 +91,7 @@ ExpressoTS is an independent open source project with ongoing development made p
 
 ## License
 
-Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expressots/expressots/blob/main/LICENSE) for more information.
+Distributed under the MIT License. See [`LICENSE.md`](https://github.com/expressots/expressots/blob/main/LICENSE.md) for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -112,7 +112,7 @@ Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expres
 [issues-shield]: https://img.shields.io/github/issues/expressots/expressots?style=for-the-badge
 [issues-url]: https://github.com/expressots/expressots/issues
 [license-shield]: https://img.shields.io/github/license/expressots/expressots?style=for-the-badge
-[license-url]: https://github.com/expressots/expressots/blob/main/LICENSE
+[license-url]: https://github.com/expressots/expressots/blob/main/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/expresso-ts/
 [product-screenshot]: images/screenshot.png

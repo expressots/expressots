@@ -1,107 +1,13 @@
 import "reflect-metadata";
+
 import {
   BindingScopeEnum,
   Container,
   ContainerModule,
   interfaces,
-} from "inversify";
-import { buildProviderModule, provide } from "inversify-binding-decorators";
-
-/**
- * Represents a single binding in the dependency injection container.
- */
-interface Binding {
-  /**
-   * Unique identifier for this binding.
-   */
-  id: number;
-
-  /**
-   * Indicates whether this binding is activated.
-   */
-  activated: boolean;
-
-  /**
-   * Symbol used to identify the service.
-   */
-  serviceIdentifier: symbol;
-
-  /**
-   * Scope of the binding (e.g., 'Singleton', 'Transient', 'Request').
-   */
-  scope: string;
-
-  /**
-   * Type of the binding (e.g., 'Instance', 'Factory', 'Provider').
-   */
-  type: string;
-
-  /**
-   * Object used to match or constrain the binding.
-   */
-  constraint: object;
-
-  /**
-   * The actual implementation type of the service.
-   */
-  implementationType: object;
-
-  /**
-   * Cached instance, used if the binding's scope allows it.
-   */
-  cache: object | null;
-
-  /**
-   * Optional factory to create the service instance.
-   */
-  factory: object | null;
-
-  /**
-   * Optional provider to create the service instance.
-   */
-  provider: object | null;
-
-  /**
-   * Function to run when activating a new instance.
-   */
-  onActivation: object | null;
-
-  /**
-   * Function to run when deactivating an instance.
-   */
-  onDeactivation: object | null;
-
-  /**
-   * Optional dynamic value that can be used to resolve the service.
-   */
-  dynamicValue: object | null;
-
-  /**
-   * Module ID where the binding is defined, useful for debugging.
-   */
-  moduleId: number;
-}
-
-/**
- * Interface for container options that can be passed to the AppContainer class.
- */
-interface ContainerOptions {
-  /**
-   * The default scope for bindings in the container.
-   * It can be set to Request (default), Singleton, or Transient.
-   */
-  defaultScope?: interfaces.BindingScope;
-
-  /**
-   * Allows skipping of base class checks when working with derived classes.
-   */
-  skipBaseClassChecks?: boolean;
-
-  /**
-   * Allows auto-binding of injectable classes.
-   */
-  autoBindInjectable?: boolean;
-}
+} from "../di/inversify";
+import { buildProviderModule } from "../di/binding-decorator";
+import { Logger } from "../provider";
 
 /**
  * The AppContainer class provides a container for managing dependency injection.
@@ -113,11 +19,13 @@ interface ContainerOptions {
  * ```typescript
  * const container = new AppContainer();
  * container.create([new MyModule()]);
+ * ```
+ * @public API
  */
-@provide(AppContainer)
-class AppContainer {
+export class AppContainer {
   private container!: Container;
-  private options: ContainerOptions;
+  private options: interfaces.ContainerOptions;
+  private logger: Logger;
 
   /**
    * Constructs the AppContainer instance.
@@ -126,7 +34,7 @@ class AppContainer {
    * @option options.skipBaseClassChecks - Allows skipping of base class checks when working with derived classes.
    * @option options.autoBindInjectable - Allows auto-binding of injectable classes.
    */
-  constructor(options?: ContainerOptions) {
+  constructor(options?: interfaces.ContainerOptions) {
     this.options = {
       defaultScope: BindingScopeEnum.Request,
       ...options,
@@ -138,7 +46,7 @@ class AppContainer {
    * @param modules - An array of ContainerModule instances to load into the container.
    * @returns The configured dependency injection container.
    */
-  public create(modules: Array<ContainerModule>): Container {
+  public create(modules: Array<ContainerModule>): void {
     const containerOptions: interfaces.ContainerOptions = {
       autoBindInjectable: this.options.autoBindInjectable
         ? this.options.autoBindInjectable
@@ -149,17 +57,17 @@ class AppContainer {
     this.container = new Container(containerOptions);
     this.container.bind(Container).toConstantValue(this.container);
     this.container.load(buildProviderModule(), ...modules);
-
-    return this.container;
   }
 
   /**
    * Retrieves the binding dictionary of the container.
    * @returns(void) Print table of the binding dictionary of the container.
+   * @public API
    */
   public viewContainerBindings(): void {
     const dictionary = this.container["_bindingDictionary"]._map;
-    const entries: Array<[string, Array<Binding>]> = Array.from(
+
+    const entries: Array<[string, Array<interfaces.Binding>]> = Array.from(
       dictionary.entries(),
     );
 
@@ -180,18 +88,25 @@ class AppContainer {
   /**
    * Retrieves the container options.
    * @returns The container options.
+   * @public API
    */
   public getContainerOptions(): interfaces.ContainerOptions {
+    this.logger = new Logger();
+
+    if (!this.container) {
+      this.logger.error("Container not created yet.", "app-container");
+      return;
+    }
+
     return this.container.options;
   }
 
   /**
-   * Retrieves the container.
-   * @returns The container.
+   * Retrieves the container instance.
+   * @returns The container instance.
+   * @public API
    */
   public get Container(): Container {
     return this.container;
   }
 }
-
-export { AppContainer };

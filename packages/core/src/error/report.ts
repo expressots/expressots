@@ -1,5 +1,5 @@
-import { provide } from "inversify-binding-decorators";
-import { Logger } from "../provider/logger/logger.provider";
+import { injectable } from "../di/inversify";
+import { IProvider } from "../provider";
 import { AppError } from "./app-error";
 
 /**
@@ -7,14 +7,14 @@ import { AppError } from "./app-error";
  * It is responsible for creating a standardized error object, logging it,
  * and then throwing the error for further handling.
  */
-@provide(Report)
-class Report {
-  static stack: string;
-  private logger: Logger;
+@injectable()
+export class Report implements IProvider {
+  name: string = "Report Provider";
+  version: string = "3.0.0";
+  author: string = "Richard Zampieri";
+  repo: string = "https://github.com/expressots/expressots";
 
-  constructor() {
-    this.logger = new Logger();
-  }
+  static stack: string;
 
   /**
    * The Error method is responsible for generating a standardized error object,
@@ -29,25 +29,26 @@ class Report {
    * @throws An object of the custom type AppError, which includes details about the error.
    */
   public error(
-    error: Error | string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    error: Error | string | object | any,
     statusCode?: number,
     service?: string,
   ): AppError {
-    let appError: AppError = {} as AppError;
+    let message = "";
 
-    if (error instanceof Error) {
-      appError = new AppError(error.message, statusCode, service);
+    if (error == null) {
+      // error is null or undefined
+      message = "";
+    } else if (typeof error === "string") {
+      message = error;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "object" && "message" in error) {
+      message = error.message;
     } else {
-      appError = new AppError(error, statusCode, service);
+      message = String(error);
     }
 
-    this.logger.error(
-      appError.message,
-      appError.service || "service-undefined",
-    );
-
-    return appError;
+    return new AppError(message, statusCode, service);
   }
 }
-
-export { Report };

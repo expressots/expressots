@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BindingScopeEnum, ContainerModule, interfaces } from "inversify";
-import { provide } from "inversify-binding-decorators";
+import { BindingScopeEnum, ContainerModule, interfaces } from "../di/inversify";
 import { provideSingleton, provideTransient } from "../decorator";
+import { provide } from "../di/binding-decorator";
 
 /**
  * Key to be used for storing and retrieving binding type metadata.
@@ -13,6 +13,7 @@ export const BINDING_TYPE_METADATA_KEY = "binding-type";
  * The scope decorator is a higher order function that can be used to decorate a class with a binding type.
  * @param binding An instance of interfaces.BindingScope which represents the binding type.
  * @returns A decorator function that can be used to decorate a class with a binding type.
+ * @public API
  */
 const scope = (binding: interfaces.BindingScope) => {
   return function (target: any) {
@@ -43,7 +44,6 @@ type controllerType = Map<symbol, new () => any>;
  * The BaseModule class provides methods for creating InversifyJS container modules.
  * @provide BaseModule
  */
-@provide(BaseModule)
 export class BaseModule {
   /**
    * Create a map of symbols for the provided controllers.
@@ -90,6 +90,7 @@ export class BaseModule {
    * @param controllers - An array of controller classes.
    * @param scope - An optional binding scope to be used for all controllers.
    * @returns A ContainerModule with the controller bindings.
+   * @public API
    */
   public static createContainerModule(
     controllers: Array<any>,

@@ -24,6 +24,8 @@ module.exports = {
     "**/packages/core/src/**/*.spec.ts",
     "scripts",
     "vitest.config.ts",
+    "jest.config.ts",
+    "**/__mocks__/**",
   ],
   rules: {
     "@typescript-eslint/adjacent-overload-signatures": "error",

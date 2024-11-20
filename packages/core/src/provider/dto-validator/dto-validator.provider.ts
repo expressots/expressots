@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { StatusCode } from "../../error/status-code";
-import { packageResolver } from "../../common/package-resolver";
+import { packageResolver } from "./package-resolver";
 import { Logger } from "../logger/logger.provider";
 
 /**
@@ -10,14 +10,16 @@ import { Logger } from "../logger/logger.provider";
  * @param type - The type of the DTO to validate.
  * @returns A RequestHandler function.
  * @throws An exception if the DTO is invalid.
- *
+ * @public API
  */
-function ValidateDTO<T extends object>(type: new () => T): RequestHandler {
+export function ValidateDTO<T extends object>(
+  type: new () => T,
+): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
     const logger: Logger = new Logger();
 
-    const classValidator = packageResolver("class-validator");
-    const classTransformer = packageResolver("class-transformer");
+    const classValidator = await packageResolver("class-validator");
+    const classTransformer = await packageResolver("class-transformer");
 
     if (!classValidator || !classTransformer) {
       return next();
@@ -59,5 +61,3 @@ function ValidateDTO<T extends object>(type: new () => T): RequestHandler {
     }
   };
 }
-
-export { ValidateDTO };
