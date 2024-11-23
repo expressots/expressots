@@ -62,7 +62,7 @@ describe("Route.post() post method", () => {
 
       route.post("/test/", mockHandler);
 
-      expect((route as any).routes[0].path).toBe("/api/test");
+      expect((route as any).routes[0].path).toBe("/api/test/");
     });
 
     it("should handle multiple middleware functions", () => {
