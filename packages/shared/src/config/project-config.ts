@@ -25,6 +25,7 @@ export const enum Pattern {
 export interface ExpressoConfig {
   scaffoldPattern: Pattern;
   sourceRoot: string;
+  entryPoint: string;
   opinionated: boolean;
   scaffoldSchematics?: {
     entity?: string;
