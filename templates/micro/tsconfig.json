@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "declaration": true,
+        "removeComments": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "target": "ES2021",
+        "sourceMap": true,
+        "rootDir": "./src",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noImplicitAny": false,
+        "strictPropertyInitialization": false,
+        "skipLibCheck": true,
+        "types": ["reflect-metadata", "node", "jest"]
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules", "dist", "test/**/*"]
+}
