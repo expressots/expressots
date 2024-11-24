@@ -41,6 +41,13 @@ export interface ICreateMicroAPI {
   get Container(): IIOC;
 
   /**
+   * Get the Express HTTP Server instance
+   * @returns express.Application
+   * @public API
+   */
+  getHttpServer(): express.Application;
+
+  /**
    * Build the Web Server Micro API
    * @returns IWebServerMicroAPI
    * @public API
@@ -72,7 +79,7 @@ export interface IWebServerMicroAPI {
    * @param appInfo - Information about the application
    * @public API
    */
-  listen(port: number | string, appInfo?: IConsoleMessage): void;
+  listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
 }
 
 class AppExpressMicro {
@@ -84,8 +91,6 @@ class AppExpressMicro {
   private globalPrefix: string = "/";
   private middlewareManager: IMiddleware;
   private routeManager: IRoute;
-
-  constructor() {}
 
   /**
    * Handle the exit of the server
@@ -165,7 +170,7 @@ class AppExpressMicro {
    * @returns IMiddleware
    * @public API
    */
-  get Middleware(): IMiddleware {
+  public get Middleware(): IMiddleware {
     return this.middlewareManager;
   }
 
@@ -174,7 +179,7 @@ class AppExpressMicro {
    * @returns IRoute
    * @public API
    */
-  get Route(): IRoute {
+  public get Route(): IRoute {
     return this.routeManager;
   }
 
@@ -183,8 +188,17 @@ class AppExpressMicro {
    * @returns IIOC
    * @public API
    */
-  get Container(): IIOC {
+  public get Container(): IIOC {
     return this.container;
+  }
+
+  /**
+   * Get the Express HTTP Server instance
+   * @returns express.Application
+   * @public API
+   */
+  public getHttpServer(): express.Application {
+    return this.app;
   }
 
   /**
@@ -193,7 +207,7 @@ class AppExpressMicro {
    * @returns ICreateMicroAPI
    * @public API
    */
-  create(config?: MicroAPIConfig): ICreateMicroAPI {
+  public create(config?: MicroAPIConfig): ICreateMicroAPI {
     this.app = express();
     this.routeManager = new Route(this.app);
     this.container = new IOC(config?.containerOptions);
@@ -209,7 +223,7 @@ class AppExpressMicro {
    * @returns IWebServerMicroAPI
    * @public API
    */
-  build(): IWebServerMicroAPI {
+  public build(): IWebServerMicroAPI {
     (this.routeManager as Route).setGlobalRoutePrefix(this.globalPrefix);
     return this as unknown as IWebServerMicroAPI;
   }
@@ -220,7 +234,7 @@ class AppExpressMicro {
    * @param appInfo - Information about the application
    * @public API
    */
-  listen(port: number | string, appInfo?: IConsoleMessage): void {
+  public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
     const logger: Logger = new Logger();
     this.port = typeof port === "string" ? parseInt(port, 10) : port || 3000;
 
@@ -232,15 +246,18 @@ class AppExpressMicro {
       this.app.use(this.Middleware.getErrorHandler() as express.ErrorRequestHandler);
     }
 
-    this.app.listen(this.port, () => {
-      const appInfoNormalized = appInfo ? `${appInfo?.appName} - ${appInfo?.appVersion} ` : "";
-      logger.info(`${appInfoNormalized}[${this.port}:${this.environment}]`, "MicroAPI");
+    return new Promise((resolve) => {
+      this.app.listen(this.port, () => {
+        const appInfoNormalized = appInfo ? `${appInfo?.appName} - ${appInfo?.appVersion} ` : "";
+        logger.info(`${appInfoNormalized}[${this.port}:${this.environment}]`, "MicroAPI");
 
-      (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
-        (signal) => {
-          process.on(signal, this.handleExit.bind(this));
-        },
-      );
+        (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
+          (signal) => {
+            process.on(signal, this.handleExit.bind(this));
+          },
+        );
+        resolve();
+      });
     });
   }
 }
