@@ -1,5 +1,12 @@
 
 
+## [0.3.0](https://github.com/expressots/shared/compare/0.2.0...0.3.0) (2024-11-24)
+
+
+### Features
+
+* add entryPoint property to ExpressoConfig interface ([324ac37](https://github.com/expressots/shared/commit/324ac37a7d407c491881998c6ed3288e04a0ae39))
+
 ## [0.2.0](https://github.com/expressots/shared/compare/0.1.0...0.2.0) (2024-11-16)
 
 
