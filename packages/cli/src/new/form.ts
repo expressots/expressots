@@ -120,8 +120,9 @@ function renameEnvFile(directory: string): void {
 }
 
 enum Template {
-	"non-opinionated" = "Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
+	nonopinionated = "Non-Opinionated :: Start with a clean slate and build your project from scratch.",
 	opinionated = "Opinionated :: Automatically scaffolds resources into a preset project structure. (Recommended)",
+	micro = "Micro :: A minimalistic template for building micro api's.",
 }
 
 const enum PackageManager {
@@ -180,6 +181,7 @@ const projectForm = async (
 						"Recommended",
 					)})`,
 					"Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
+					"Micro :: A minimalistic template for building micro api's.",
 				],
 			},
 			{
@@ -202,8 +204,9 @@ const projectForm = async (
 
 	// Hashmap of templates and their directories
 	const templates: Record<string, unknown> = {
-		"Non-Opinionated": "non_opinionated",
+		NonOpinionated: "non_opinionated",
 		Opinionated: "opinionated",
+		Micro: "micro",
 	};
 
 	if (answer.confirm) {

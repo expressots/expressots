@@ -44,14 +44,27 @@ function getOutDir(): string {
  * @param compiler The compiler to load the configuration from
  * @returns The configuration
  */
-const opinionatedConfig: Array<string> = [
-	"--watch",
-	"-r",
-	"tsconfig-paths/register",
-	"./src/main.ts",
-];
+async function opinionatedConfig(): Promise<Array<string>> {
+	const { entryPoint } = await Compiler.loadConfig();
+	const config = [
+		"--watch",
+		"-r",
+		"tsconfig-paths/register",
+		`./src/${entryPoint}.ts`,
+	];
+	return config;
+}
 
-const nonOpinionatedConfig: Array<string> = ["--watch", "./src/main.ts"];
+/**
+ * Load the configuration from the compiler
+ * @param compiler The compiler to load the configuration from
+ * @returns The configuration
+ */
+async function nonOpinionatedConfig(): Promise<Array<string>> {
+	const { entryPoint } = await Compiler.loadConfig();
+	const config = ["--watch", `./src/${entryPoint}.ts`];
+	return config;
+}
 
 /**
  * Dev command module
@@ -175,7 +188,7 @@ export const runCommand = async ({
 }: {
 	command: string;
 }): Promise<void> => {
-	const { opinionated } = await Compiler.loadConfig();
+	const { opinionated, entryPoint } = await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
@@ -183,7 +196,9 @@ export const runCommand = async ({
 			case "dev":
 				execCmd(
 					"tsx",
-					opinionated ? opinionatedConfig : nonOpinionatedConfig,
+					opinionated
+						? await opinionatedConfig()
+						: await nonOpinionatedConfig(),
 				);
 				break;
 			case "build":
@@ -212,10 +227,10 @@ export const runCommand = async ({
 					config = [
 						"-r",
 						`./${outDir}/register-path.js`,
-						`./${outDir}/src/main.js`,
+						`./${outDir}/src/${entryPoint}.js`,
 					];
 				} else {
-					config = [`./${outDir}/main.js`];
+					config = [`./${outDir}/${entryPoint}.js`];
 				}
 				clearScreen();
 				execCmd("node", config);

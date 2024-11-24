@@ -22,7 +22,7 @@ const commandOptions = (yargs: Argv): Argv => {
 		.option("template", {
 			describe: "The project template to use",
 			type: "string",
-			choices: ["opinionated", "non-opinionated"],
+			choices: ["opinionated", "non-opinionated", "micro"],
 			alias: "t",
 		})
 		.option("package-manager", {
