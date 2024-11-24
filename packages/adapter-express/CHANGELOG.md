@@ -1,25 +1,20 @@
-
-
-## [3.0.0](https://github.com/expressots/adapter-express/compare/3.0.0-beta.1...3.0.0) (2024-11-24)
-
+## [3.0.0-beta.2](https://github.com/expressots/adapter-express/compare/3.0.0-beta.1...3.0.0) (2024-11-24)
 
 ### Features
 
-* add getHttpServer method and update listen method to return a promise ([82895c2](https://github.com/expressots/adapter-express/commit/82895c279c6103c7e96ee01810030d656142d509))
-* add unit tests for various utility functions and application lifecycle methods ([d3d91b0](https://github.com/expressots/adapter-express/commit/d3d91b05205460eac1399c991dd25b06d942d93d))
-* add unit tests IOC container addScoped, addSingleton, addTransient, get ([e3028fa](https://github.com/expressots/adapter-express/commit/e3028fa3bd7e0c57835dbd200f0621d3a9a27a1e))
-* implement Express Micro API adapter with route management and IoC container ([1720378](https://github.com/expressots/adapter-express/commit/1720378011603b1d0b8806e92f6b469067be577a))
-
+- add getHttpServer method and update listen method to return a promise ([82895c2](https://github.com/expressots/adapter-express/commit/82895c279c6103c7e96ee01810030d656142d509))
+- add unit tests for various utility functions and application lifecycle methods ([d3d91b0](https://github.com/expressots/adapter-express/commit/d3d91b05205460eac1399c991dd25b06d942d93d))
+- add unit tests IOC container addScoped, addSingleton, addTransient, get ([e3028fa](https://github.com/expressots/adapter-express/commit/e3028fa3bd7e0c57835dbd200f0621d3a9a27a1e))
+- implement Express Micro API adapter with route management and IoC container ([1720378](https://github.com/expressots/adapter-express/commit/1720378011603b1d0b8806e92f6b469067be577a))
 
 ### Bug Fixes
 
-* exclude dependency injection files from coverage collection ([e8fdd90](https://github.com/expressots/adapter-express/commit/e8fdd908258b83f35d1121c1000b45039f6fd960))
-* update @expressots/core dependency version to use semantic versioning ([2130e4d](https://github.com/expressots/adapter-express/commit/2130e4d850c35ad35855c7def32fb86ddeffca64))
-
+- exclude dependency injection files from coverage collection ([e8fdd90](https://github.com/expressots/adapter-express/commit/e8fdd908258b83f35d1121c1000b45039f6fd960))
+- update @expressots/core dependency version to use semantic versioning ([2130e4d](https://github.com/expressots/adapter-express/commit/2130e4d850c35ad35855c7def32fb86ddeffca64))
 
 ### Code Refactoring
 
-* clean up whitespace and formatting in various test files ([5be0404](https://github.com/expressots/adapter-express/commit/5be0404cec12363d40a1181c7209527369422cf3))
+- clean up whitespace and formatting in various test files ([5be0404](https://github.com/expressots/adapter-express/commit/5be0404cec12363d40a1181c7209527369422cf3))
 
 ## [3.0.0-beta.1](https://github.com/expressots/adapter-express/compare/1.8.2...3.0.0) (2024-11-18)
 
