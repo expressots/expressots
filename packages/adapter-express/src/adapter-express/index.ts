@@ -1,5 +1,6 @@
 export * from "./express-utils";
 export { AppExpress } from "./application-express";
+export * from "./micro-api";
 export {
   IWebServerPublic,
   IWebServer,

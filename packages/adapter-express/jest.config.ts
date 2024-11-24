@@ -5,7 +5,7 @@ const config: JestConfigWithTsJest = {
   roots: ["<rootDir>/src"],
   testRegex: ".*\\.spec\\.ts$",
   testPathIgnorePatterns: ["/node_modules/", "/lib/"],
-  collectCoverageFrom: ["src/**/*.ts", "!**/*.spec.ts", "src/**/index.ts"],
+  collectCoverageFrom: ["src/**/*.ts", "!**/*.spec.ts", "src/**/index.ts", "!src/di/**"],
   moduleNameMapper: {
     "^@src/(.*)$": "<rootDir>/src/$1",
   },
