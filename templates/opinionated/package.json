@@ -17,9 +17,9 @@
     },
     "keywords": [],
     "dependencies": {
-        "@expressots/adapter-express": "3.0.0-beta.1",
+        "@expressots/adapter-express": "3.0.0-beta.2",
         "@expressots/core": "3.0.0-beta.1",
-        "@expressots/shared": "0.2.0",
+        "@expressots/shared": "0.3.0",
         "tsconfig-paths": "4.2.0"
     },
     "devDependencies": {
