@@ -22,7 +22,7 @@
         "@expressots/shared": "0.3.0"
     },
     "devDependencies": {
-        "@expressots/cli": "@expressots/cli@3.0.0-beta.2",
+        "@expressots/cli": "3.0.0-beta.2",
         "@types/express": "^5.0.0",
         "@types/jest": "29.5.12",
         "@types/node": "20.12.7",
