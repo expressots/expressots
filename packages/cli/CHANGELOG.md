@@ -1,3 +1,9 @@
+## [3.0.0-beta.2](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.1...3.0.0) (2024-11-24)
+
+### Features
+
+-   update project templates and improve configuration loading for CLI commands ([3553639](https://github.com/expressots/expressots-cli/commit/3553639f2a507c9423985ca7177246324bebdecd))
+
 ## [3.0.0-beta.1](https://github.com/expressots/expressots-cli/compare/1.12.0...3.0.0) (2024-11-19)
 
 ### Features
