@@ -336,7 +336,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
   public async getHttpServer(): Promise<express.Application> {
     if (!this.app) {
       this.logger.error(
-        "The method can only be called in `app.provider` or in e2e tests with supertest.",
+        "The method can only be called in `app` or in e2e tests with supertest.",
         "adapter-express",
       );
 
