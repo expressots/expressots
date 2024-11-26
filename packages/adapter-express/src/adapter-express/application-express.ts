@@ -126,14 +126,15 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
         // eslint-disable-next-line no-prototype-builtins
       } else if (entry?.hasOwnProperty("path")) {
         const { path, middlewares } = entry as MiddlewareConfig;
+        const pathGlobal = this.globalPrefix + path;
         for (const mid of middlewares) {
           if (path) {
             if (typeof mid === "function") {
-              app.use(path, mid as express.RequestHandler);
+              app.use(pathGlobal, mid as express.RequestHandler);
             } else {
               const middleware = mid as unknown as ExpressoMiddleware;
               middleware.use = middleware.use.bind(middleware);
-              app.use(path, middleware.use);
+              app.use(pathGlobal, middleware.use);
             }
           }
         }
