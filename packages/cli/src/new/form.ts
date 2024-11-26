@@ -9,6 +9,7 @@ import { centerText } from "../utils/center-text";
 import { printError } from "../utils/cli-ui";
 import { changePackageName } from "../utils/change-package-info";
 import { BUNDLE_VERSION } from "../cli";
+import { exit } from "node:process";
 
 async function packageManagerInstall({
 	packageManager,
@@ -146,6 +147,7 @@ const projectForm = async (
 		template: Template;
 		confirm: boolean;
 	};
+	
 	const [packageManager, template, directory] = args;
 
 	if (packageManager && template) {
@@ -180,7 +182,7 @@ const projectForm = async (
 					`Opinionated :: Automatically scaffolds resources into a preset project structure. (${chalk.yellow(
 						"Recommended",
 					)})`,
-					"Non-Opinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
+					"NonOpinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
 					"Micro :: A minimalistic template for building micro api's.",
 				],
 			},
