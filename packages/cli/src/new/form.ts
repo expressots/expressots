@@ -1,15 +1,14 @@
 import chalk from "chalk";
-import { execSync, spawn } from "node:child_process";
 import { Presets, SingleBar } from "cli-progress";
 import degit from "degit";
 import inquirer from "inquirer";
+import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { centerText } from "../utils/center-text";
-import { printError } from "../utils/cli-ui";
-import { changePackageName } from "../utils/change-package-info";
 import { BUNDLE_VERSION } from "../cli";
-import { exit } from "node:process";
+import { centerText } from "../utils/center-text";
+import { changePackageName } from "../utils/change-package-info";
+import { printError } from "../utils/cli-ui";
 
 async function packageManagerInstall({
 	packageManager,
@@ -23,7 +22,7 @@ async function packageManagerInstall({
 	const command: string =
 		process.platform === "win32" ? `${packageManager}.cmd` : packageManager;
 
-	const args = ["install", "--prefer-offline", "--silent"];
+	const args = ["install", "--silent"];
 	if (packageManager === "yarn") {
 		args.push("--ignore-engines");
 		args.splice(args.indexOf("--prefer-offline"), 1);
