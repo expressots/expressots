@@ -147,7 +147,7 @@ const projectForm = async (
 		template: Template;
 		confirm: boolean;
 	};
-	
+
 	const [packageManager, template, directory] = args;
 
 	if (packageManager && template) {
