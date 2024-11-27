@@ -1,6 +1,7 @@
 import express from "express";
 import fs from "fs";
 import process, { exit } from "process";
+import { Server as HTTPServer } from "http";
 
 import {
   AppContainer,
@@ -36,6 +37,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
   private logger: Logger = new Logger();
   private console: Console = new Console();
   private app: express.Application;
+  private serverInstance: HTTPServer | null = null;
   private port: number;
   private environment?: Env.Environment;
   private appContainer: AppContainer;
@@ -200,7 +202,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
     this.app.set("env", this.environment);
 
     this.port = typeof port === "string" ? parseInt(port, 10) : port || 3000;
-    this.app.listen(this.port, () => {
+    this.serverInstance = this.app.listen(this.port, () => {
       this.console.messageServer(this.port, this.environment, appInfo);
 
       (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
@@ -344,5 +346,29 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
       throw new Error("Incorrect usage of `getHttpServer` method");
     }
     return this.app;
+  }
+
+  /**
+   * Close the server instance.
+   * @returns A promise that resolves when the server is closed.
+   * @public API
+   */
+  public close(enableLog: boolean = false): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.serverInstance) {
+        this.serverInstance.close((err?: Error) => {
+          if (err) {
+            if (enableLog)
+              this.logger.error(`Error closing server: ${err.message}`, "adapter-express");
+            reject(err);
+          } else {
+            if (enableLog) this.logger.info("Server closed successfully", "adapter-express");
+            resolve();
+          }
+        });
+      } else {
+        resolve();
+      }
+    });
   }
 }
