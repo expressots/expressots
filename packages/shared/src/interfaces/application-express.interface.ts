@@ -22,6 +22,8 @@ export namespace Server {
       engine: RenderEngine.Engine,
       options?: T,
     ): Promise<void>;
+
+    close(enableLog?: boolean): Promise<void>;
   }
 
   /**
@@ -49,6 +51,14 @@ export namespace Server {
      * @public API
      */
     getHttpServer(): Promise<express.Application>;
+
+    /**
+     * Close the server and stop listening.
+     * @returns A promise that resolves when the server is closed.
+     * @param enableLog - Enable logging when closing the server.
+     * @public API
+     */
+    close(enableLog?: boolean): Promise<void>;
   }
 }
 
