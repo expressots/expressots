@@ -1,9 +1,9 @@
 // Unit tests for: create
 
+import { IWebServer } from "@expressots/shared";
 import { Application } from "express";
-import { IWebServer, IWebServerPublic } from "@expressots/shared";
-import { AppFactory } from "../application-factory";
 import { Logger } from "../../provider/logger/logger.provider";
+import { AppFactory } from "../application-factory";
 
 describe("AppFactory.create() create method", () => {
   type Engine = any; // Import or define actual types if available
@@ -21,6 +21,10 @@ describe("AppFactory.create() create method", () => {
       engine: Engine,
       options?: T,
     ): Promise<void> {
+      return Promise.resolve();
+    }
+
+    close(): Promise<void> {
       return Promise.resolve();
     }
   }
