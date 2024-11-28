@@ -1,96 +1,96 @@
 // Unit tests for: update
 
 import { BaseRepository } from "../base-repo.repository";
-import { IMemoryDBEntity, InMemoryDB } from "../db-in-memory.provider";
+import { IDataProvider, IDataTable, IEntity } from "../db-in-memory.interface";
 
-// Mock class for InMemoryDB
-class MockInMemoryDB {
-  private tables: { [key: string]: IMemoryDBEntity[] } = {};
+// Mock interfaces
+class MockIDataTable<T extends IEntity> implements IDataTable<T> {
+  insert = jest.fn<Promise<T>, [T]>();
+  update = jest.fn<Promise<T>, [T]>();
+  delete = jest.fn<Promise<boolean>, [string]>();
+  find = jest.fn<Promise<T>, [string]>();
+  findAll = jest.fn<Promise<Array<T>>, []>();
+  insertMany = jest.fn<Promise<Array<T>>, [Array<T>]>();
+  query = jest.fn<Promise<Array<T>>, [(item: T) => boolean]>();
+  transaction = jest.fn<Promise<void>, [() => Promise<void>]>();
+}
 
-  getTable = jest.fn((tableName: string) => {
-    if (!this.tables[tableName]) {
-      this.tables[tableName] = [];
-    }
-    return this.tables[tableName];
-  });
-
-  printTable = jest.fn((tableName: string) => {
-    console.log(this.tables[tableName]);
-  });
+class MockIDataProvider implements IDataProvider {
+  name: string;
+  version: string;
+  author: string;
+  repo: string;
+  getTable = jest.fn<IDataTable<any>, [string]>();
 }
 
 describe("BaseRepository.update() update method", () => {
-  let mockInMemoryDB: MockInMemoryDB;
-  let repository: BaseRepository<IMemoryDBEntity>;
+  let mockDataTable: MockIDataTable<IEntity>;
+  let mockDataProvider: MockIDataProvider;
+  let baseRepository: BaseRepository<IEntity>;
 
   beforeEach(() => {
-    mockInMemoryDB = new MockInMemoryDB();
-    repository = new BaseRepository<IMemoryDBEntity>("testTable" as any);
-    (repository as any).inMemoryDB = mockInMemoryDB as any;
+    mockDataTable = new MockIDataTable<IEntity>();
+    mockDataProvider = new MockIDataProvider();
+    mockDataProvider.getTable.mockReturnValue(mockDataTable as any);
+    baseRepository = new BaseRepository<IEntity>(
+      mockDataProvider as any,
+      "TestEntity",
+    );
   });
 
-  describe("Happy Path", () => {
-    it("should update an existing entity successfully", () => {
+  describe("Happy paths", () => {
+    it("should update an existing entity successfully", async () => {
       // Arrange
-      const existingItem = { id: "1", name: "Item 1" };
-      const updatedItem = { id: "1", name: "Updated Item 1" };
-      mockInMemoryDB.getTable("testTable").push(existingItem);
+      const entity: IEntity = { id: "1" };
+      mockDataTable.update.mockResolvedValue(entity as any as never);
 
       // Act
-      const result = repository.update(updatedItem);
+      const result = await baseRepository.update(entity);
 
       // Assert
-      expect(result).toEqual(updatedItem);
-      expect(mockInMemoryDB.getTable("testTable")[0]).toEqual(updatedItem);
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
+      expect(mockDataTable.update).toHaveBeenCalledWith(entity);
+      expect(result).toEqual(entity);
     });
   });
 
-  describe("Edge Cases", () => {
-    let repository: BaseRepository<any>;
-    let mockInMemoryDB: InMemoryDB;
-
-    beforeEach(() => {
-      mockInMemoryDB = {
-        getTable: jest.fn().mockReturnValue([]),
-        printTable: jest.fn(),
-      } as unknown as InMemoryDB;
-
-      repository = new BaseRepository<any>("testTable");
-      (repository as any).inMemoryDB = mockInMemoryDB;
-    });
-
-    it("should handle updating an entity with no changes gracefully", () => {
+  describe("Edge cases", () => {
+    it("should handle update when entity does not exist", async () => {
       // Arrange
-      const existingItem = { id: "3", name: "Item 3" };
-      mockInMemoryDB.getTable("testTable").push(existingItem);
+      const entity: IEntity = { id: "2" };
+      mockDataTable.update.mockResolvedValue(null as any as never);
 
       // Act
-      const result = repository.update(existingItem);
+      const result = await baseRepository.update(entity);
 
       // Assert
-      expect(result).toEqual(existingItem);
-      expect(mockInMemoryDB.getTable("testTable")[0]).toEqual(existingItem);
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
+      expect(mockDataTable.update).toHaveBeenCalledWith(entity);
+      expect(result).toBeNull();
     });
 
-    it("should handle updating an entity with additional properties", () => {
+    it("should handle update when entity is null", async () => {
       // Arrange
-      const existingItem = { id: "4", name: "Item 4" };
-      const updatedItem = {
-        id: "4",
-        name: "Updated Item 4",
-        extra: "Extra Property",
-      };
-      mockInMemoryDB.getTable("testTable").push(existingItem);
+      const entity = null;
+      mockDataTable.update.mockResolvedValue(null as any as never);
 
       // Act
-      const result = repository.update(updatedItem as any);
+      const result = await baseRepository.update(entity as any);
 
       // Assert
-      expect(result).toEqual(updatedItem);
-      expect(mockInMemoryDB.getTable("testTable")[0]).toEqual(updatedItem);
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
+      expect(mockDataTable.update).toHaveBeenCalledWith(entity);
+      expect(result).toBeNull();
+    });
+
+    it("should handle update when update method throws an error", async () => {
+      // Arrange
+      const entity: IEntity = { id: "3" };
+      const error = new Error("Update failed");
+      mockDataTable.update.mockRejectedValue(error as never);
+
+      // Act & Assert
+      await expect(baseRepository.update(entity)).rejects.toThrow(
+        "Update failed",
+      );
+      expect(mockDataTable.update).toHaveBeenCalledWith(entity);
     });
   });
 });

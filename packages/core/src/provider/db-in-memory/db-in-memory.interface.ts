@@ -5,7 +5,7 @@ import { IProvider } from "../provider-manager";
  * This interface is used by the InMemoryDB class to ensure that all entities have an 'id' property.
  */
 export interface IEntity {
-  id: string;
+  id?: string;
 }
 
 /**

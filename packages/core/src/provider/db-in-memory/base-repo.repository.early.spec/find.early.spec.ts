@@ -1,87 +1,81 @@
 // Unit tests for: find
 
 import { BaseRepository } from "../base-repo.repository";
-import { IMemoryDBEntity } from "../db-in-memory.provider";
+import { IDataProvider, IDataTable, IEntity } from "../db-in-memory.interface";
 
-// Mock class for InMemoryDB
-class MockInMemoryDB {
-  private tables: { [key: string]: IMemoryDBEntity[] } = {};
+// Mock interfaces
+class MockIDataTable<T extends IEntity> implements IDataTable<T> {
+  insert = jest.fn<Promise<T>, [T]>();
+  update = jest.fn<Promise<T>, [T]>();
+  delete = jest.fn<Promise<boolean>, [string]>();
+  find = jest.fn<Promise<T>, [string]>();
+  findAll = jest.fn<Promise<Array<T>>, []>();
+  insertMany = jest.fn<Promise<Array<T>>, [Array<T>]>();
+  query = jest.fn<Promise<Array<T>>, [(item: T) => boolean]>();
+  transaction = jest.fn<Promise<void>, [() => Promise<void>]>();
+}
 
-  getTable = jest.fn((tableName: string) => {
-    return this.tables[tableName] || [];
-  });
-
-  printTable = jest.fn(() => {
-    // Mock implementation for printing table
-  });
+class MockIDataProvider implements IDataProvider {
+  name: string;
+  version: string;
+  author: string;
+  repo: string;
+  getTable = jest.fn<IDataTable<any>, [string]>();
 }
 
 describe("BaseRepository.find() find method", () => {
-  let mockInMemoryDB: MockInMemoryDB;
-  let repository: BaseRepository<IMemoryDBEntity>;
+  let mockDataTable: MockIDataTable<IEntity>;
+  let mockDataProvider: MockIDataProvider;
+  let baseRepository: BaseRepository<IEntity>;
 
   beforeEach(() => {
-    mockInMemoryDB = new MockInMemoryDB();
-    repository = new BaseRepository<IMemoryDBEntity>("testTable" as any);
-    (repository as any).inMemoryDB = mockInMemoryDB as any;
+    mockDataTable = new MockIDataTable<IEntity>();
+    mockDataProvider = new MockIDataProvider();
+    mockDataProvider.getTable.mockReturnValue(mockDataTable as any);
+    baseRepository = new BaseRepository<IEntity>(
+      mockDataProvider as any,
+      "TestEntity",
+    );
   });
 
-  describe("Happy Path", () => {
-    it("should return the entity when it exists in the table", () => {
+  describe("Happy paths", () => {
+    it("should return the entity when found", async () => {
       // Arrange
-      const entity = { id: "1", name: "Test Entity" };
-      mockInMemoryDB.getTable.mockReturnValue([entity] as any);
+      const mockEntity = { id: "123", name: "Test Entity" };
+      mockDataTable.find.mockResolvedValue(mockEntity as any as never);
 
       // Act
-      const result = repository.find("1");
+      const result = await baseRepository.find("123");
 
       // Assert
-      expect(result).toEqual(entity);
-      expect(mockInMemoryDB.getTable).toHaveBeenCalledWith("testTable");
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
+      expect(result).toEqual(mockEntity);
+      expect(mockDataTable.find).toHaveBeenCalledWith("123");
     });
   });
 
-  describe("Edge Cases", () => {
-    it("should return null when the entity does not exist", () => {
+  describe("Edge cases", () => {
+    it("should return null when the entity is not found", async () => {
       // Arrange
-      mockInMemoryDB.getTable.mockReturnValue([] as any);
+      mockDataTable.find.mockResolvedValue(null as any as never);
 
       // Act
-      const result = repository.find("non-existent-id");
+      const result = await baseRepository.find("non-existent-id");
 
       // Assert
       expect(result).toBeNull();
-      expect(mockInMemoryDB.getTable).toHaveBeenCalledWith("testTable");
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
+      expect(mockDataTable.find).toHaveBeenCalledWith("non-existent-id");
     });
 
-    it("should handle an empty table gracefully", () => {
+    it("should handle errors thrown by the data table", async () => {
       // Arrange
-      mockInMemoryDB.getTable.mockReturnValue([] as any);
+      const error = new Error("Database error");
+      mockDataTable.find.mockRejectedValue(error as never);
 
-      // Act
-      const result = repository.find("1");
-
-      // Assert
-      expect(result).toBeNull();
-      expect(mockInMemoryDB.getTable).toHaveBeenCalledWith("testTable");
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
-    });
-
-    it("should handle a table with multiple entities and return the correct one", () => {
-      // Arrange
-      const entity1 = { id: "1", name: "Entity One" };
-      const entity2 = { id: "2", name: "Entity Two" };
-      mockInMemoryDB.getTable.mockReturnValue([entity1, entity2] as any);
-
-      // Act
-      const result = repository.find("2");
-
-      // Assert
-      expect(result).toEqual(entity2);
-      expect(mockInMemoryDB.getTable).toHaveBeenCalledWith("testTable");
-      expect(mockInMemoryDB.printTable).toHaveBeenCalledWith("testTable");
+      // Act & Assert
+      await expect(baseRepository.find("123")).rejects.toThrow(
+        "Database error",
+      );
+      expect(mockDataTable.find).toHaveBeenCalledWith("123");
     });
   });
 });

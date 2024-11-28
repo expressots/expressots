@@ -10,6 +10,7 @@ const config: JestConfigWithTsJest = {
     "!**/*.spec.ts",
     "!packages/core/src/**/index.ts",
     "!packages/core/src/di/**/*.ts",
+    "!packages/core/src/middleware/**/*.ts",
     "!packages/core/src/application/application.types.ts",
     "!packages/core/src/provider/dto-validator/package-resolver.ts",
   ],

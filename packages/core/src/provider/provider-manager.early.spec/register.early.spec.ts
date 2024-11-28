@@ -1,10 +1,12 @@
 // Unit tests for: register
 
-import { BindingScopeEnum } from "../../di/inversify";
+import { BindingScopeEnum, interfaces } from "../../di/inversify";
 import { ProviderManager } from "../provider-manager";
 
 // Mock types and interfaces
 type MockServiceIdentifier = string;
+type MockNewable<T> = new (...args: any[]) => T;
+type MockBindingScope = interfaces.BindingScope;
 
 interface MockContainer {
   isBound: jest.Mock;
@@ -19,10 +21,15 @@ describe("ProviderManager.register() register method", () => {
     mockContainer = {
       isBound: jest.fn(),
       bind: jest.fn().mockReturnValue({
+        to: jest.fn().mockReturnValue({
+          inSingletonScope: jest.fn(),
+          inRequestScope: jest.fn(),
+          inTransientScope: jest.fn(),
+        }),
         toSelf: jest.fn().mockReturnValue({
           inSingletonScope: jest.fn(),
-          inTransientScope: jest.fn(),
           inRequestScope: jest.fn(),
+          inTransientScope: jest.fn(),
         }),
       }),
     };
@@ -30,98 +37,107 @@ describe("ProviderManager.register() register method", () => {
     providerManager = new ProviderManager(mockContainer as any);
   });
 
-  describe("Happy Path", () => {
-    it("should register a provider in Singleton scope when not already bound", () => {
-      // Arrange
-      const serviceIdentifier: MockServiceIdentifier = "TestService";
+  describe("Happy paths", () => {
+    it("should register a provider with a constructor and default scope", () => {
+      const mockServiceIdentifier: MockServiceIdentifier = "TestService";
+      const mockConstructor: MockNewable<any> = jest.fn();
+
       mockContainer.isBound.mockReturnValue(false);
 
-      // Act
       providerManager.register(
-        serviceIdentifier as any,
-        BindingScopeEnum.Singleton as any,
+        mockServiceIdentifier as any,
+        mockConstructor as any,
       );
 
-      // Assert
       expect(mockContainer.isBound).toHaveBeenCalledWith(
-        serviceIdentifier as any,
+        mockServiceIdentifier as any,
       );
-      expect(mockContainer.bind).toHaveBeenCalledWith(serviceIdentifier as any);
-      expect(mockContainer.bind().toSelf().inSingletonScope).toHaveBeenCalled();
+      expect(mockContainer.bind).toHaveBeenCalledWith(
+        mockServiceIdentifier as any,
+      );
+      expect(mockContainer.bind().to).toHaveBeenCalledWith(
+        mockConstructor as any,
+      );
     });
 
-    it("should register a provider in Transient scope when not already bound", () => {
-      // Arrange
-      const serviceIdentifier: MockServiceIdentifier = "TestService";
+    it("should register a provider with a constructor and specified scope", () => {
+      const mockServiceIdentifier: MockServiceIdentifier = "TestService";
+      const mockConstructor: MockNewable<any> = jest.fn();
+      const mockScope: MockBindingScope = BindingScopeEnum.Singleton;
+
       mockContainer.isBound.mockReturnValue(false);
 
-      // Act
       providerManager.register(
-        serviceIdentifier as any,
-        BindingScopeEnum.Transient as any,
+        mockServiceIdentifier as any,
+        mockConstructor as any,
+        mockScope as any,
       );
 
-      // Assert
       expect(mockContainer.isBound).toHaveBeenCalledWith(
-        serviceIdentifier as any,
+        mockServiceIdentifier as any,
       );
-      expect(mockContainer.bind).toHaveBeenCalledWith(serviceIdentifier as any);
+      expect(mockContainer.bind).toHaveBeenCalledWith(
+        mockServiceIdentifier as any,
+      );
+      expect(mockContainer.bind().to).toHaveBeenCalledWith(
+        mockConstructor as any,
+      );
+      expect(mockContainer.bind().to().inSingletonScope).toHaveBeenCalled();
+    });
+
+    it("should register a provider to itself with default scope", () => {
+      const mockServiceIdentifier: MockServiceIdentifier = "TestService";
+
+      mockContainer.isBound.mockReturnValue(false);
+
+      providerManager.register(mockServiceIdentifier as any);
+
+      expect(mockContainer.isBound).toHaveBeenCalledWith(
+        mockServiceIdentifier as any,
+      );
+      expect(mockContainer.bind).toHaveBeenCalledWith(
+        mockServiceIdentifier as any,
+      );
+      expect(mockContainer.bind().toSelf).toHaveBeenCalled();
       expect(mockContainer.bind().toSelf().inTransientScope).toHaveBeenCalled();
-    });
-
-    it("should register a provider in Request scope when not already bound", () => {
-      // Arrange
-      const serviceIdentifier: MockServiceIdentifier = "TestService";
-      mockContainer.isBound.mockReturnValue(false);
-
-      // Act
-      providerManager.register(
-        serviceIdentifier as any,
-        BindingScopeEnum.Request as any,
-      );
-
-      // Assert
-      expect(mockContainer.isBound).toHaveBeenCalledWith(
-        serviceIdentifier as any,
-      );
-      expect(mockContainer.bind).toHaveBeenCalledWith(serviceIdentifier as any);
-      expect(mockContainer.bind().toSelf().inRequestScope).toHaveBeenCalled();
     });
   });
 
-  describe("Edge Cases", () => {
+  describe("Edge cases", () => {
     it("should not register a provider if it is already bound", () => {
-      // Arrange
-      const serviceIdentifier: MockServiceIdentifier = "TestService";
+      const mockServiceIdentifier: MockServiceIdentifier = "TestService";
+
       mockContainer.isBound.mockReturnValue(true);
 
-      // Act
-      providerManager.register(
-        serviceIdentifier as any,
-        BindingScopeEnum.Singleton as any,
-      );
+      providerManager.register(mockServiceIdentifier as any);
 
-      // Assert
       expect(mockContainer.isBound).toHaveBeenCalledWith(
-        serviceIdentifier as any,
+        mockServiceIdentifier as any,
       );
       expect(mockContainer.bind).not.toHaveBeenCalled();
     });
 
-    it("should default to Request scope if no scope is provided", () => {
-      // Arrange
-      const serviceIdentifier: MockServiceIdentifier = "TestService";
+    it("should handle undefined scope gracefully", () => {
+      const mockServiceIdentifier: MockServiceIdentifier = "TestService";
+      const mockConstructor: MockNewable<any> = jest.fn();
+
       mockContainer.isBound.mockReturnValue(false);
 
-      // Act
-      providerManager.register(serviceIdentifier as any);
-
-      // Assert
-      expect(mockContainer.isBound).toHaveBeenCalledWith(
-        serviceIdentifier as any,
+      providerManager.register(
+        mockServiceIdentifier as any,
+        mockConstructor as any,
+        undefined as any,
       );
-      expect(mockContainer.bind).toHaveBeenCalledWith(serviceIdentifier as any);
-      expect(mockContainer.bind().toSelf().inRequestScope).toHaveBeenCalled();
+
+      expect(mockContainer.isBound).toHaveBeenCalledWith(
+        mockServiceIdentifier as any,
+      );
+      expect(mockContainer.bind).toHaveBeenCalledWith(
+        mockServiceIdentifier as any,
+      );
+      expect(mockContainer.bind().to).toHaveBeenCalledWith(
+        mockConstructor as any,
+      );
     });
   });
 });
