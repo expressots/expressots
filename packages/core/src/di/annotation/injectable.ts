@@ -7,7 +7,8 @@ import * as METADATA_KEY from "../constants/metadata_keys";
  * @public API
  */
 function injectable() {
-  return function <T extends abstract new (...args: Array<unknown>) => unknown>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function <T extends abstract new (...args: any) => unknown>(
     target: T,
   ): T {
     if (Reflect.hasOwnMetadata(METADATA_KEY.PARAM_TYPES, target)) {
