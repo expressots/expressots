@@ -1,62 +1,92 @@
 // Unit tests for: get
 
 import { ProviderManager } from "../provider-manager";
-import "reflect-metadata";
 
-// Mocking the necessary dependencies
-class MockContainer {
-  public get = jest.fn();
-}
+// Mock implementations
+type MockServiceIdentifier = string;
 
-class MockLogger {
-  public error = jest.fn();
-  public warn = jest.fn();
+interface MockContainer {
+  isBound: jest.Mock<boolean, [MockServiceIdentifier]>;
+  get: jest.Mock<any, [MockServiceIdentifier]>;
 }
 
 describe("ProviderManager.get() get method", () => {
-  let providerManager: ProviderManager;
   let mockContainer: MockContainer;
-  let mockLogger: MockLogger;
+  let providerManager: ProviderManager;
 
   beforeEach(() => {
-    mockContainer = new MockContainer();
-    mockLogger = new MockLogger();
-    providerManager = new ProviderManager(mockContainer as any) as any;
-    (providerManager as any).container = mockContainer as any;
-    (providerManager as any).logger = mockLogger as any;
+    // Initialize the mock container
+    mockContainer = {
+      isBound: jest.fn(),
+      get: jest.fn(),
+    };
+
+    // Create an instance of ProviderManager with the mock container
+    providerManager = new ProviderManager(mockContainer as any);
   });
 
-  describe("Happy Path", () => {
+  describe("Happy paths", () => {
     it("should return the provider when it is registered", () => {
-      // Arrange
-      class MockProvider {}
-      const mockProviderInstance = new MockProvider();
+      // Arrange: Set up the mock to simulate a registered provider
+      const mockServiceIdentifier: MockServiceIdentifier = "TestService";
+      const mockProviderInstance = { name: "TestProvider" };
+      mockContainer.isBound.mockReturnValue(true);
       mockContainer.get.mockReturnValue(mockProviderInstance as any);
 
-      // Act
-      const result = providerManager.get(MockProvider);
+      // Act: Call the get method
+      const result = providerManager.get(mockServiceIdentifier as any);
 
-      // Assert
+      // Assert: Verify the correct provider is returned
       expect(result).toBe(mockProviderInstance);
-      expect(mockContainer.get).toHaveBeenCalledWith(MockProvider);
+      expect(mockContainer.isBound).toHaveBeenCalledWith(mockServiceIdentifier);
+      expect(mockContainer.get).toHaveBeenCalledWith(mockServiceIdentifier);
     });
   });
 
-  describe("Edge Cases", () => {
+  describe("Edge cases", () => {
     it("should throw an error when the provider is not registered", () => {
-      // Arrange
-      class MockProvider {}
-      mockContainer.get.mockReturnValue(undefined as any);
+      // Arrange: Set up the mock to simulate an unregistered provider
+      const mockServiceIdentifier: MockServiceIdentifier =
+        "UnregisteredService";
+      mockContainer.isBound.mockReturnValue(false);
 
-      // Act & Assert
-      expect(() => providerManager.get(MockProvider)).toThrowError(
-        "Provider MockProvider not registered",
-      );
-      expect(mockContainer.get).toHaveBeenCalledWith(MockProvider);
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        "MockProvider not registered",
-        "provider-manager",
-      );
+      // Act & Assert: Call the get method and expect an error
+      expect(() =>
+        providerManager.get(mockServiceIdentifier as any),
+      ).toThrowError(`Provider ${mockServiceIdentifier} not registered`);
+      expect(mockContainer.isBound).toHaveBeenCalledWith(mockServiceIdentifier);
+    });
+
+    it("should handle service identifiers that are functions", () => {
+      // Arrange: Set up the mock to simulate a registered provider with a function identifier
+      const mockServiceIdentifier = function TestService() {};
+      const mockProviderInstance = { name: "TestProvider" };
+      mockContainer.isBound.mockReturnValue(true);
+      mockContainer.get.mockReturnValue(mockProviderInstance as any);
+
+      // Act: Call the get method
+      const result = providerManager.get(mockServiceIdentifier as any);
+
+      // Assert: Verify the correct provider is returned
+      expect(result).toBe(mockProviderInstance);
+      expect(mockContainer.isBound).toHaveBeenCalledWith(mockServiceIdentifier);
+      expect(mockContainer.get).toHaveBeenCalledWith(mockServiceIdentifier);
+    });
+
+    it("should handle service identifiers that are symbols", () => {
+      // Arrange: Set up the mock to simulate a registered provider with a symbol identifier
+      const mockServiceIdentifier = Symbol("TestService");
+      const mockProviderInstance = { name: "TestProvider" };
+      mockContainer.isBound.mockReturnValue(true);
+      mockContainer.get.mockReturnValue(mockProviderInstance as any);
+
+      // Act: Call the get method
+      const result = providerManager.get(mockServiceIdentifier as any);
+
+      // Assert: Verify the correct provider is returned
+      expect(result).toBe(mockProviderInstance);
+      expect(mockContainer.isBound).toHaveBeenCalledWith(mockServiceIdentifier);
+      expect(mockContainer.get).toHaveBeenCalledWith(mockServiceIdentifier);
     });
   });
 });
