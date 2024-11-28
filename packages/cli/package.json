@@ -40,7 +40,6 @@
 		"cp:templates": "node scripts/cp.js ./src/generate/templates ./bin/generate/",
 		"clean": "node scripts/rm.js bin",
 		"prepublish": "npm run build && npm pack",
-		"publish": "npm publish --tag latest",
 		"format": "prettier --write \"./src/**/*.ts\" --cache",
 		"lint": "eslint \"./src/**/*.ts\"",
 		"lint:fix": "eslint \"./src/**/*.ts\" --fix",
