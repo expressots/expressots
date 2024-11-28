@@ -1,3 +1,15 @@
+## [3.0.0-beta.3](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.2...3.0.0) (2024-11-28)
+
+### Bug Fixes
+
+-   remove unnecessary blank line in project form function ([0388598](https://github.com/expressots/expressots-cli/commit/0388598c7330509d824e7c8be3cbb1bf63279976))
+-   update coverage collection pattern in Jest configuration ([4e658cc](https://github.com/expressots/expressots-cli/commit/4e658ccd36f3dfcec0d9089515d57d883207d4c9))
+
+### Code Refactoring
+
+-   clean up VSCode settings fix template option for non-op ([054afe1](https://github.com/expressots/expressots-cli/commit/054afe1efca226b5e85559ee5e5b2e1d34dc3776))
+-   reorganize imports and simplify package manager install arguments ([4a7d259](https://github.com/expressots/expressots-cli/commit/4a7d259ab0da48701782ea88af4ce9f7b2bb4c23))
+
 ## [3.0.0-beta.2](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.1...3.0.0) (2024-11-24)
 
 ### Features
