@@ -1,3 +1,18 @@
+## [3.0.0-beta.3](https://github.com/expressots/adapter-express/compare/3.0.0-beta.2...3.0.0) (2024-11-28)
+
+### Features
+
+- create server instance http and add close method for graceful shutdown ([be16011](https://github.com/expressots/adapter-express/commit/be16011f4686ce513bc254b8db9ca8abe2d79324))
+
+### Bug Fixes
+
+- update error message in getHttpServer method for clarity ([dc4f5a3](https://github.com/expressots/adapter-express/commit/dc4f5a30322e00efa74283445d1d46fabb61ffe1))
+- update middleware path handling to include global prefix ([b7bffc5](https://github.com/expressots/adapter-express/commit/b7bffc5d2217ace1097ee7ef28dc28176de8e256))
+
+### Tests
+
+- add unit tests for serverShutdown and setGlobalRoutePrefix methods ([2c1ad63](https://github.com/expressots/adapter-express/commit/2c1ad633f33374d09c3b8ea2b004cdc94f207da7))
+
 ## [3.0.0-beta.2](https://github.com/expressots/adapter-express/compare/3.0.0-beta.1...3.0.0) (2024-11-24)
 
 ### Features
