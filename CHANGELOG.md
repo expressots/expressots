@@ -1,3 +1,13 @@
+## [3.0.0-beta.3](https://github.com/expressots/expressots/compare/3.0.0-beta.1...3.0.0) (2024-11-28)
+
+### Features
+
+- implement in-memory data provider and repository interfaces ([09561fa](https://github.com/expressots/expressots/commit/09561fa1385e040bc235ba0d699f654f269c0a21))
+
+### Tests
+
+- add unit tests for insert, update, delete, and find methods in InMemoryDataTable ([a96f4a6](https://github.com/expressots/expressots/commit/a96f4a6076ca7aebbac853317006f67de5daf9d2))
+
 ## [3.0.0-beta.1](https://github.com/expressots/expressots/compare/2.16.2...2.17.0) (2024-11-17)
 
 ### Features
