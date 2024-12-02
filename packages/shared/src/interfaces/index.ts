@@ -4,6 +4,7 @@ export { IExpressoMiddleware } from "./middleware.interface";
 export { Environment, IEnvironment, Env } from "./environment.interface";
 export {
   IWebServer,
+  IWebServerBuilder,
   IWebServerConstructor,
   IWebServerPublic,
   Server,
