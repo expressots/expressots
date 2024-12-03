@@ -1,3 +1,12 @@
+
+
+## [3.0.0](https://github.com/expressots/expressots/compare/3.0.0-beta.3...3.0.0) (2024-12-03)
+
+
+### Tests
+
+* update unit tests for AppFactory.create() to include close() ([24446d8](https://github.com/expressots/expressots/commit/24446d857c4507011bd35b8024bc3d4bedc1229c))
+
 ## [3.0.0-beta.3](https://github.com/expressots/expressots/compare/3.0.0-beta.1...3.0.0) (2024-11-28)
 
 ### Features

@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "3.0.0-beta.3",
+  "version": "3.0.0-beta.4",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -71,7 +71,7 @@
     "@codecov/vite-plugin": "^0.0.1-beta.5",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
-    "@expressots/shared": "^3.0.0-beta.4",
+    "@expressots/shared": "3.0.0-beta.4",
     "@release-it/conventional-changelog": "8.0.1",
     "@types/express": "4.17.21",
     "@types/jest": "^29.5.14",
