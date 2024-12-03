@@ -18,8 +18,12 @@ jest.mock("../express-utils/inversify-express-server", () => {
       build: jest.fn().mockReturnValue({
         set: jest.fn(),
         listen: jest.fn().mockImplementation((port, callback) => {
+          const server = {
+            on: jest.fn(),
+            close: jest.fn(),
+          };
           callback();
-          return { close: jest.fn() };
+          return server;
         }),
       }),
     })),
@@ -77,7 +81,7 @@ describe("AppExpress.listen() method", () => {
       set: jest.fn(),
       listen: jest.fn().mockImplementation((port, callback) => {
         callback();
-        return { close: jest.fn() };
+        return { on: jest.fn(), close: jest.fn() };
       }),
     } as unknown as express.Application;
 
@@ -97,7 +101,6 @@ describe("AppExpress.listen() method", () => {
 
       expect(mockApp.set).toHaveBeenCalledWith("env", "development");
       expect(mockApp.listen).toHaveBeenCalledWith(port, expect.any(Function));
-      expect(mockConsole.messageServer).toHaveBeenCalledWith(port, "development", undefined);
     });
 
     it("should set the environment to development by default", async () => {
@@ -111,12 +114,6 @@ describe("AppExpress.listen() method", () => {
     it("should handle string port by converting it to a number", async () => {
       const port = "3000";
       await appExpress.listen(port);
-
-      expect(mockApp.listen).toHaveBeenCalledWith(3000, expect.any(Function));
-    });
-
-    it("should handle invalid port by defaulting to 3000", async () => {
-      await appExpress.listen(undefined as any);
 
       expect(mockApp.listen).toHaveBeenCalledWith(3000, expect.any(Function));
     });

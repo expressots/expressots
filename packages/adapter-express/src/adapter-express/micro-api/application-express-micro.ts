@@ -236,7 +236,7 @@ class AppExpressMicro {
    */
   public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
     const logger: Logger = new Logger();
-    this.port = typeof port === "string" ? parseInt(port, 10) : port || 3000;
+    const normalizedPort = typeof port === "string" ? parseInt(port, 10) : port;
 
     this.configureMiddleware();
 
@@ -246,8 +246,16 @@ class AppExpressMicro {
       this.app.use(this.Middleware.getErrorHandler() as express.ErrorRequestHandler);
     }
 
-    return new Promise((resolve) => {
-      this.app.listen(this.port, () => {
+    return new Promise((resolve, reject) => {
+      const server = this.app.listen(normalizedPort, () => {
+        const address = server.address();
+
+        if (typeof address === "object" && address?.port) {
+          this.port = address.port;
+        } else {
+          this.port = normalizedPort;
+        }
+
         const appInfoNormalized = appInfo ? `${appInfo?.appName} - ${appInfo?.appVersion} ` : "";
         logger.info(`${appInfoNormalized}[${this.port}:${this.environment}]`, "MicroAPI");
 
@@ -257,6 +265,11 @@ class AppExpressMicro {
           },
         );
         resolve();
+      });
+
+      server.on("error", (error) => {
+        logger.error(`Error starting server: ${error.message}`, "MicroAPI");
+        reject(error);
       });
     });
   }

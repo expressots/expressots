@@ -20,6 +20,7 @@ import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine";
+import { AddressInfo } from "net";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -240,20 +241,33 @@ export class AppExpress implements Server.IWebServer {
     this.environment = this.environment || "development";
     this.app.set("env", this.environment);
 
-    this.port = typeof port === "string" ? parseInt(port, 10) : port || 3000;
-    this.serverInstance = this.app.listen(this.port, () => {
-      this.console.messageServer(this.port, this.environment, appInfo);
+    this.port = typeof port === "string" ? parseInt(port, 10) : port;
 
-      (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
-        (signal) => {
-          process.on(signal, this.handleExit.bind(this));
-        },
-      );
+    return new Promise<IWebServerPublic>((resolve, reject) => {
+      this.serverInstance = this.app.listen(this.port, async () => {
+        this.port = (this.serverInstance?.address() as AddressInfo)?.port;
+
+        this.console.messageServer(this.port, this.environment, appInfo);
+
+        (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
+          (signal) => {
+            process.on(signal, this.handleExit.bind(this));
+          },
+        );
+
+        try {
+          await this.postServerInitialization();
+          resolve(this as IWebServerPublic);
+        } catch (error) {
+          this.logger.error(`Error during post-server initialization: ${error}`, "adapter-express");
+          reject(error);
+        }
+      });
+      this.serverInstance?.on("error", (error) => {
+        this.logger.error(`Error starting server: ${error.message}`, "adapter-express");
+        reject(error);
+      });
     });
-
-    await this.postServerInitialization();
-
-    return this as IWebServerPublic;
   }
 
   /**
