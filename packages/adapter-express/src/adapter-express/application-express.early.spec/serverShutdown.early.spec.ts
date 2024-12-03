@@ -13,14 +13,6 @@ jest.mock("../render/engine", () => {
   };
 });
 
-jest.mock("fs");
-jest.mock("process", () => ({
-  ...jest.requireActual("process"),
-  exit: jest.fn((code?: number) => {
-    throw new Error(`Mocked process.exit called with code ${code}`);
-  }),
-}));
-
 class MockLogger {
   error = jest.fn();
 }
@@ -29,33 +21,51 @@ class MockConsole {
   messageServer = jest.fn();
 }
 
-describe("AppExpress.serverShutdown() serverShutdown method", () => {
+describe("AppExpress.serverShutdown() method", () => {
   let appExpress: AppExpress;
+  let processExitSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    appExpress = new AppExpress();
+    appExpress = new AppExpress() as any; // Cast to 'any' to access private methods
     appExpress["logger"] = new MockLogger() as any;
     appExpress["console"] = new MockConsole() as any;
 
+    // Mock serverShutdown method
     jest.spyOn(appExpress as any, "serverShutdown").mockImplementation(() => {
       console.log("Mocked serverShutdown called");
     });
+
+    // Spy on process.exit
+    processExitSpy = jest
+      .spyOn(process, "exit")
+      .mockImplementation((code?: string | number | null | undefined) => {
+        throw new Error(`Mocked process.exit called with code ${code}`);
+      });
+  });
+
+  afterEach(() => {
+    // Restore the original process.exit after each test
+    processExitSpy.mockRestore();
   });
 
   describe("Happy Paths", () => {
-    it("should call serverShutdown and exit the process", () => {
+    it("should call serverShutdown and exit the process", async () => {
       // Act & Assert
-      expect(() => appExpress["handleExit"]()).toThrow("Mocked process.exit called with code 0");
-      expect((appExpress as any).serverShutdown).toHaveBeenCalled();
+      await expect(appExpress["handleExit"]()).rejects.toThrow(
+        "Mocked process.exit called with code 0",
+      );
+      expect(appExpress["serverShutdown"]).toHaveBeenCalled();
       expect(process.exit).toHaveBeenCalledWith(0);
     });
   });
 
   describe("Edge Cases", () => {
-    it("should handle serverShutdown gracefully when no additional logic is present", () => {
+    it("should handle serverShutdown gracefully when no additional logic is present", async () => {
       // Act & Assert
-      expect(() => appExpress["handleExit"]()).toThrow("Mocked process.exit called with code 0");
-      expect((appExpress as any).serverShutdown).toHaveBeenCalled();
+      await expect(appExpress["handleExit"]()).rejects.toThrow(
+        "Mocked process.exit called with code 0",
+      );
+      expect(appExpress["serverShutdown"]).toHaveBeenCalled();
       expect(process.exit).toHaveBeenCalledWith(0);
     });
   });

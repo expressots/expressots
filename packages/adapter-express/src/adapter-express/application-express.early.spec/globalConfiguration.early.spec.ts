@@ -43,7 +43,7 @@ describe("AppExpress.globalConfiguration() globalConfiguration method", () => {
     it("should initialize global configuration without errors", () => {
       // Test to ensure globalConfiguration initializes correctly
       const result = appExpress.callGlobalConfiguration();
-      expect(result).toBeUndefined();
+      return expect(result).resolves.toBeUndefined();
     });
   });
 

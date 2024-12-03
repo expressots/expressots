@@ -2,6 +2,7 @@
 
 import express from "express";
 import { AppExpress } from "../application-express";
+import { Logger } from "@expressots/core";
 
 // Mocking necessary functions and classes
 jest.mock("../render/engine", () => {
@@ -14,47 +15,49 @@ jest.mock("../render/engine", () => {
   };
 });
 
-class MockLogger {
+class MockHTTPServer {
+  close = jest.fn();
+}
+
+class MockLogger extends Logger {
   error = jest.fn();
+  warn = jest.fn();
+  info = jest.fn();
+  debug = jest.fn();
 }
-
-class MockConsole {
-  messageServer = jest.fn();
-}
-
-class MockAppContainer {
-  Container = {};
-}
-
-class MockProviderManager {}
 
 describe("AppExpress.getHttpServer() getHttpServer method", () => {
   let appExpress: AppExpress;
+  let mockLogger: MockLogger;
+  let mockHTTPServer: MockHTTPServer;
 
   beforeEach(() => {
-    appExpress = new AppExpress() as any;
-    appExpress["logger"] = new MockLogger() as any;
-    appExpress["console"] = new MockConsole() as any;
-    appExpress["appContainer"] = new MockAppContainer() as any;
-    appExpress["middlewareManager"] = { getErrorHandler: jest.fn() } as any;
-    appExpress["providerManager"] = new MockProviderManager() as any;
-    appExpress["app"] = express() as any;
+    appExpress = new AppExpress();
+    mockLogger = new MockLogger();
+    mockHTTPServer = new MockHTTPServer();
+
+    (appExpress as any)["logger"] = mockLogger;
+    (appExpress as any)["serverInstance"] = mockHTTPServer;
   });
 
   describe("Happy Paths", () => {
-    it("should return the express application instance when app is initialized", async () => {
+    it("should return the Http server instance when app is initialized", async () => {
       // Test to ensure the method returns the express app instance when initialized
       const appInstance = await appExpress.getHttpServer();
-      expect(appInstance).toBe(appExpress["app"]);
+      expect(appInstance).toBe(mockHTTPServer);
     });
   });
 
   describe("Edge Cases", () => {
-    it("should throw an error if the app is not initialized", async () => {
-      // Test to ensure an error is thrown when the app is not initialized
-      appExpress["app"] = null as any;
+    it("should throw an error if the server instance is not initialized", async () => {
+      (appExpress as any)["serverInstance"] = null;
       await expect(appExpress.getHttpServer()).rejects.toThrow(
-        "Incorrect usage of `getHttpServer` method",
+        "Server instance not initialized yet",
+      );
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Server instance not initialized yet",
+        "adapter-express",
       );
     });
   });
