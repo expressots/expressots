@@ -1,24 +1,26 @@
 import { createMicroAPI } from "@expressots/adapter-express";
-import { Application, Request, Response } from "express";
+import { Server } from "http";
 import request from "supertest";
 
 describe("MicroAPI Root Route", () => {
-    let httpServer: Application;
+    let httpServer: Server;
 
     beforeAll(() => {
         const microAPI = createMicroAPI();
-        microAPI.setGlobalRoutePrefix("/v1");
-
         const app = microAPI.build();
-
-        app.Route.get("/", (req: Request, res: Response) => {
-            res.send("Hello from ExpressoTS!");
-        });
+        app.listen(0);
 
         httpServer = microAPI.getHttpServer();
     });
 
+    afterAll(() => {
+        httpServer.close();
+    });
+
     it("should return Hello from ExpressoTS!", () => {
-        request.agent(httpServer, { http2: true }).get("/v1").expect(200);
+        request(httpServer)
+            .get("/")
+            .expect(200)
+            .expect("Hello from ExpressoTS!");
     });
 });
