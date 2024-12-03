@@ -5,7 +5,7 @@ import { AppModule } from "@useCases/app/app.module";
 export class App extends AppExpress {
     private config: AppContainer = this.configContainer([AppModule]);
 
-    protected globalConfiguration(): void | Promise<void> {
+    async globalConfiguration(): Promise<void> {
         this.setGlobalRoutePrefix("/v1");
 
         this.initEnvironment("development", {
@@ -16,18 +16,18 @@ export class App extends AppExpress {
         });
     }
 
-    protected configureServices(): void {
+    async configureServices(): Promise<void> {
         this.Provider.register(Env);
 
         this.Middleware.addBodyParser();
         this.Middleware.setErrorHandler({ showStackTrace: true });
     }
 
-    protected async postServerInitialization(): Promise<void> {
-        if (this.isDevelopment()) {
+    async postServerInitialization(): Promise<void> {
+        if (await this.isDevelopment()) {
             this.Provider.get(Env).checkFile(".env.development");
         }
     }
 
-    protected serverShutdown(): void {}
+    async serverShutdown(): Promise<void> {}
 }

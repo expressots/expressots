@@ -7,16 +7,14 @@ export class App extends AppExpress {
         CreateModule([AppController]),
     ]);
 
-    protected globalConfiguration(): void | Promise<void> {
-        this.setGlobalRoutePrefix("/v1");
-    }
+    async globalConfiguration(): Promise<void> {}
 
-    protected configureServices(): void {
+    async configureServices(): Promise<void> {
         this.Middleware.addBodyParser();
         this.Middleware.setErrorHandler({ showStackTrace: true });
     }
+    
+    async postServerInitialization(): Promise<void> {}
 
-    protected async postServerInitialization(): Promise<void> {}
-
-    protected serverShutdown(): void {}
+    async serverShutdown(): Promise<void> {}
 }
