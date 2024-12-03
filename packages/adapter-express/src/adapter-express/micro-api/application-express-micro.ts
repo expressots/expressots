@@ -2,10 +2,10 @@ import { IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
 import { config, Env, IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import fs from "fs";
+import { Server } from "http";
 import { MiddlewareConfig } from "../application-express.types";
 import { IIOC, IOC } from "./application-express-micro-container";
 import { IRoute, Route } from "./application-express-micro-route";
-import { Server } from "http";
 
 /**
  * Configuration options for the Express Micro API adapter
