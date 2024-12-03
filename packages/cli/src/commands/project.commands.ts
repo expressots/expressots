@@ -242,5 +242,6 @@ export const runCommand = async ({
 		}
 	} catch (error: Error | any) {
 		printError("Error executing command:", error.message);
+		process.exit(1);
 	}
 };

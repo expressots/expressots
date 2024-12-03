@@ -61,7 +61,7 @@ yargs(hideBin(process.argv))
 				printError(msg, "expressots help");
 			}
 		} else if (err) {
-			printError(err.message, "command-validator");
+			printError(err.stack, "command-validator");
 		} else {
 			printError(
 				"Command invalid. Consider updating the CLI.",
