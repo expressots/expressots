@@ -9,6 +9,7 @@ const jestConfig: JestConfigWithTsJest = {
     testMatch: ["**/*.test.ts", "**/*.spec.ts"],
     coverageDirectory: "./coverage",
     coverageReporters: ["text", "html", "json"],
+    modulePathIgnorePatterns: ["<rootDir>/dist/"],
 };
 
 export default jestConfig;
