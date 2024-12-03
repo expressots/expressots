@@ -1,7 +1,7 @@
 import {
   IWebServer,
+  IWebServerBuilder,
   IWebServerConstructor,
-  IWebServerPublic,
 } from "@expressots/shared";
 import { Logger } from "../provider/logger/logger.provider";
 
@@ -28,14 +28,14 @@ export class AppFactory {
   /**
    * Create an instance of a web server.
    * @param webServerType - Constructor of a class that implements IWebServer.
-   * @returns A promise that resolves to an instance of IWebServer.
+   * @returns A promise that resolves to an instance of IWebServerBuilder.
    */
   public static async create<T extends IWebServer>(
     webServerType: IWebServerConstructor<T>,
-  ): Promise<IWebServerPublic> {
+  ): Promise<IWebServerBuilder> {
     if (isWebServerConstructor<T>(webServerType)) {
       const webServerInstance: T = new webServerType();
-      return webServerInstance as unknown as IWebServerPublic;
+      return webServerInstance;
     } else {
       AppFactory.logger.error("Invalid web server type.", "app-factory:create");
       throw new Error("Invalid web server type.");
