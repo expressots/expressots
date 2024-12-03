@@ -15,6 +15,7 @@ const jestConfig: JestConfigWithTsJest = {
         "^@repositories/(.*)$": "<rootDir>/src/repositories/$1",
         "^@useCases/(.*)$": "<rootDir>/src/useCases/$1",
     },
+    modulePathIgnorePatterns: ["<rootDir>/dist/"],
 };
 
 export default jestConfig;
