@@ -1,22 +1,21 @@
 import express from "express";
 import fs from "fs";
-import process, { exit } from "process";
 import { Server as HTTPServer } from "http";
+import process, { exit } from "process";
 
 import {
   AppContainer,
   Console,
+  ExpressoMiddleware,
   IConsoleMessage,
+  IMiddleware,
   Logger,
   Middleware,
   ProviderManager,
-  ExpressoMiddleware,
-  IMiddleware,
 } from "@expressots/core";
-import { config, RenderEngine, Env, Server } from "@expressots/shared";
+import { config, Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
 import { interfaces } from "../di/di.interfaces";
-import { ApplicationBase } from "./application-express.base";
 import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
@@ -33,7 +32,7 @@ import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine
  * @method setEngine - Configures the application's view engine based on the provided configuration options.
  * @method isDevelopment - Verifies if the current environment is development.
  */
-export class AppExpress extends ApplicationBase implements Server.IWebServer {
+export class AppExpress implements Server.IWebServer {
   private logger: Logger = new Logger();
   private console: Console = new Console();
   private app: express.Application;
@@ -48,20 +47,60 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
   private renderOptions: RenderEngine.RenderOptions = {} as RenderEngine.RenderOptions;
 
   constructor() {
-    super();
     this.globalConfiguration();
   }
 
-  protected globalConfiguration(): void | Promise<void> {}
-  protected configureServices(): void | Promise<void> {}
-  protected postServerInitialization(): void | Promise<void> {}
-  protected serverShutdown(): void | Promise<void> {}
+  /**
+   * Implement this method to set up global configurations for the server.
+   * This method is called before any other server initialization methods.
+   * Use this method to configure global settings that apply to the entire
+   * server application. Supports asynchronous setup with a Promise.
+   *
+   * @abstract
+   * @returns {void | Promise<void>}
+   * @public API
+   */
+  protected async globalConfiguration(): Promise<void> {}
+
+  /**
+   * Implement this method to set up required services or configurations before
+   * the server starts. This is essential for initializing dependencies or settings
+   * necessary for server operation. Supports asynchronous setup with a Promise.
+   *
+   * @abstract
+   * @returns {void | Promise<void>}
+   * @public API
+   */
+  protected async configureServices(): Promise<void> {}
+
+  /**
+   * Implement this method to execute actions or configurations after the server
+   * has started. Use this for operations that need to run once the server is
+   * operational. Supports asynchronous execution with a Promise.
+   *
+   * @abstract
+   * @returns {void | Promise<void>}
+   * @public API
+   */
+  protected async postServerInitialization(): Promise<void> {}
+
+  /**
+   * Implement this method to handle cleanup and final actions when the server
+   * is shutting down. Ideal for closing resources, stopping tasks, or other
+   * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
+   * cleanup with a Promise.
+   *
+   * @abstract
+   * @returns {void | Promise<void>}
+   * @public API
+   */
+  protected async serverShutdown(): Promise<void> {}
 
   /**
    * Handles process exit by calling serverShutdown and then exiting the process.
    */
-  private handleExit(): void {
-    this.serverShutdown();
+  private async handleExit(): Promise<void> {
+    await this.serverShutdown();
     process.exit(0);
   }
 
@@ -194,7 +233,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
    * @param appInfo - Optional message to display the app name and version.
    * @public API
    */
-  public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
+  public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic> {
     await this.init();
     await this.configEngine();
 
@@ -213,6 +252,8 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
     });
 
     await this.postServerInitialization();
+
+    return this as IWebServerPublic;
   }
 
   /**
@@ -221,7 +262,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
    * @param {string} prefix - The prefix to use for all routes.
    * @public API
    */
-  public setGlobalRoutePrefix(prefix: string): void {
+  public async setGlobalRoutePrefix(prefix: string): Promise<void> {
     this.globalPrefix = prefix;
   }
 
@@ -278,7 +319,7 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
    * @returns A boolean value indicating whether the current environment is development or not.
    * @public API
    */
-  protected isDevelopment(): boolean {
+  public async isDevelopment(): Promise<boolean> {
     if (this.app) {
       return this.app.get("env") === "development";
     }
@@ -306,7 +347,10 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
     * ```
    * @public API
    */
-  public initEnvironment(environment: Env.Environment, options?: Env.IEnvironment): void {
+  public async initEnvironment(
+    environment: Env.Environment,
+    options?: Env.IEnvironment,
+  ): Promise<void> {
     this.environment = environment;
 
     if (options === undefined) {
@@ -336,39 +380,12 @@ export class AppExpress extends ApplicationBase implements Server.IWebServer {
    * @returns The underlying HTTP server after initialization.
    * @public API
    */
-  public async getHttpServer(): Promise<express.Application> {
-    if (!this.app) {
-      this.logger.error(
-        "The method can only be called in `app` or in e2e tests with supertest.",
-        "adapter-express",
-      );
-
-      throw new Error("Incorrect usage of `getHttpServer` method");
+  public async getHttpServer(): Promise<HTTPServer> {
+    if (!this.serverInstance) {
+      this.logger.error("Server instance not initialized yet", "adapter-express");
+      throw new Error("Server instance not initialized yet");
     }
-    return this.app;
-  }
 
-  /**
-   * Close the server instance.
-   * @returns A promise that resolves when the server is closed.
-   * @public API
-   */
-  public close(enableLog: boolean = false): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.serverInstance) {
-        this.serverInstance.close((err?: Error) => {
-          if (err) {
-            if (enableLog)
-              this.logger.error(`Error closing server: ${err.message}`, "adapter-express");
-            reject(err);
-          } else {
-            if (enableLog) this.logger.info("Server closed successfully", "adapter-express");
-            resolve();
-          }
-        });
-      } else {
-        resolve();
-      }
-    });
+    return Promise.resolve(this.serverInstance);
   }
 }
