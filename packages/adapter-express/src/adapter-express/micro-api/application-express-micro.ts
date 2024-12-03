@@ -5,6 +5,7 @@ import fs from "fs";
 import { MiddlewareConfig } from "../application-express.types";
 import { IIOC, IOC } from "./application-express-micro-container";
 import { IRoute, Route } from "./application-express-micro-route";
+import { Server } from "http";
 
 /**
  * Configuration options for the Express Micro API adapter
@@ -45,7 +46,7 @@ export interface ICreateMicroAPI {
    * @returns express.Application
    * @public API
    */
-  getHttpServer(): express.Application;
+  getHttpServer(): Server;
 
   /**
    * Build the Web Server Micro API
@@ -85,6 +86,7 @@ export interface IWebServerMicroAPI {
 class AppExpressMicro {
   private logger: Logger = new Logger();
   private app: express.Application;
+  private httpServer: Server;
   private port: number;
   private environment: Env.Environment;
   private container: IIOC;
@@ -197,8 +199,8 @@ class AppExpressMicro {
    * @returns express.Application
    * @public API
    */
-  public getHttpServer(): express.Application {
-    return this.app;
+  public getHttpServer(): Server {
+    return this.httpServer;
   }
 
   /**
@@ -247,8 +249,8 @@ class AppExpressMicro {
     }
 
     return new Promise((resolve, reject) => {
-      const server = this.app.listen(normalizedPort, () => {
-        const address = server.address();
+      this.httpServer = this.app.listen(normalizedPort, () => {
+        const address = this.httpServer.address();
 
         if (typeof address === "object" && address?.port) {
           this.port = address.port;
@@ -267,7 +269,7 @@ class AppExpressMicro {
         resolve();
       });
 
-      server.on("error", (error) => {
+      this.httpServer.on("error", (error) => {
         logger.error(`Error starting server: ${error.message}`, "MicroAPI");
         reject(error);
       });
