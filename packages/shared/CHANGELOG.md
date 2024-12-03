@@ -1,3 +1,12 @@
+
+
+## [3.0.0](https://github.com/expressots/shared/compare/3.0.0-beta.3...3.0.0) (2024-12-03)
+
+
+### Features
+
+* refactor IWebServer interface, add IWebServerBuilder ([9a23fff](https://github.com/expressots/shared/commit/9a23fff1e7de8d3880ed90317ffde1037ef1947b))
+
 ## [3.0.0-beta.3](https://github.com/expressots/shared/compare/0.3.0...0.4.0) (2024-11-28)
 
 ### Features
