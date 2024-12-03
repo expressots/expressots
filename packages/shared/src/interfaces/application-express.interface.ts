@@ -14,7 +14,7 @@ export namespace Server {
    * Interface for the WebServer application implementation.
    */
   export interface IWebServer {
-    initEnvironment(environment: Environment, options?: IEnvironment): void;
+    initEnvironment(environment: Environment, options?: IEnvironment): Promise<void>;
 
     listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic>;
 
