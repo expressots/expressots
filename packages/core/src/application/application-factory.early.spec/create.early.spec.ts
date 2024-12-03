@@ -1,7 +1,7 @@
 // Unit tests for: create
 
-import { IWebServer } from "@expressots/shared";
-import { Application } from "express";
+import { IWebServer, IWebServerPublic } from "@expressots/shared";
+import { Server } from "http";
 import { Logger } from "../../provider/logger/logger.provider";
 import { AppFactory } from "../application-factory";
 
@@ -10,21 +10,22 @@ describe("AppFactory.create() create method", () => {
   type EngineOptions = any;
 
   class MockWebServer implements IWebServer {
-    getHttpServer(): Promise<Application> {
-      return Promise.resolve({} as Application);
+    getHttpServer(): Promise<Server> {
+      return Promise.resolve({} as Server);
     }
-    listen(port: number | string, appInfo?: any): Promise<void> {
+
+    listen(port: number | string, appInfo?: any): Promise<IWebServerPublic> {
+      return Promise.resolve({} as IWebServerPublic);
+    }
+
+    initEnvironment(): Promise<void> {
       return Promise.resolve();
     }
-    initEnvironment(): void {}
+
     setEngine<T extends EngineOptions>(
       engine: Engine,
       options?: T,
     ): Promise<void> {
-      return Promise.resolve();
-    }
-
-    close(): Promise<void> {
       return Promise.resolve();
     }
   }
