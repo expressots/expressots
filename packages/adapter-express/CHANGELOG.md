@@ -1,3 +1,13 @@
+## [3.0.0-beta.4](https://github.com/expressots/adapter-express/compare/3.0.0-beta.3...3.0.0) (2024-12-03)
+
+### Code Refactoring
+
+- app express class with async methods ([5c9ea2b](https://github.com/expressots/adapter-express/commit/5c9ea2b6cac9fa6455d140c0d0ce052712fa8251))
+
+### Tests
+
+- update tests for globalConfiguration, isDevelopment, getHttpServer, serverShutdown ([17b7d92](https://github.com/expressots/adapter-express/commit/17b7d92e87f4ad0d14a386e8351c723e1392a5c3))
+
 ## [3.0.0-beta.3](https://github.com/expressots/adapter-express/compare/3.0.0-beta.2...3.0.0) (2024-11-28)
 
 ### Features
