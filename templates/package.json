@@ -1,6 +1,6 @@
 {
     "name": "@expressots/templates",
-    "version": "3.0.0",
+    "version": "3.0.0-beta.4",
     "description": "Expressots templates",
     "author": "Richard Zampieri",
     "license": "MIT",
