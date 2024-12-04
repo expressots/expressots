@@ -1,3 +1,20 @@
+
+
+## [3.0.0](https://github.com/expressots/adapter-express/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
+
+
+### Code Refactoring
+
+* app express class with async methods ([5c9ea2b](https://github.com/expressots/adapter-express/commit/5c9ea2b6cac9fa6455d140c0d0ce052712fa8251))
+* return http server on getHttp instead of app express ([e6646de](https://github.com/expressots/adapter-express/commit/e6646de4e76e0824f2365695fa936975553796d4))
+* server listen accept 0 to set random port ([7a97cf1](https://github.com/expressots/adapter-express/commit/7a97cf1d769acb0b7cbcba651aea49137310aa76))
+* update getHttpServer method to return http.Server instance ([98985e8](https://github.com/expressots/adapter-express/commit/98985e841d608c2f17a09cb88ef50462c5a3d066))
+
+
+### Tests
+
+* update tests for globalConfiguration, isDevelopment, getHttpServer, serverShutdown ([17b7d92](https://github.com/expressots/adapter-express/commit/17b7d92e87f4ad0d14a386e8351c723e1392a5c3))
+
 ## [3.0.0-beta.4.2](https://github.com/expressots/adapter-express/compare/3.0.0-beta.3...3.0.0) (2024-12-03)
 
 ### Code Refactoring
