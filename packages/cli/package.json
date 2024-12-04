@@ -92,7 +92,7 @@
 	},
 	"release-it": {
 		"git": {
-			"commitMessage": "chore: release v${version}"
+			"commitMessage": "chore: release ${version}"
 		},
 		"github": {
 			"release": true
