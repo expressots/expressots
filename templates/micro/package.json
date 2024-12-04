@@ -17,12 +17,12 @@
     },
     "keywords": [],
     "dependencies": {
-        "@expressots/adapter-express": "3.0.0-beta.4.2",
-        "@expressots/core": "3.0.0-beta.4",
-        "@expressots/shared": "3.0.0-beta.4"
+        "@expressots/adapter-express": "3.0.0",
+        "@expressots/core": "3.0.0",
+        "@expressots/shared": "3.0.0"
     },
     "devDependencies": {
-        "@expressots/cli": "3.0.0-beta.4",
+        "@expressots/cli": "3.0.0",
         "@types/express": "5.0.0",
         "@types/jest": "29.5.14",
         "@types/node": "20.12.7",
