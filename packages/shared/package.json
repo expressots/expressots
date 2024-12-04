@@ -1,6 +1,6 @@
 {
   "name": "@expressots/shared",
-  "version": "3.0.0-beta.4",
+  "version": "3.0.0",
   "description": "Shared library for ExpressoTS modules 🐎",
   "author": "Richard Zampieri <richard.zampieri@expresso-ts.com>",
   "main": "./lib/cjs/index.js",
