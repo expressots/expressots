@@ -242,9 +242,7 @@ const projectForm = async (
 		const repo: string = `expressots/templates/${templates[template]}#${BUNDLE_VERSION}`;
 
 		try {
-			const emitter = degit(
-				`expressots/templates/${templates[template]}`,
-			);
+			const emitter = degit(repo);
 
 			await emitter.clone(answer.name);
 		} catch (err: any) {
