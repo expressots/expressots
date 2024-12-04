@@ -1,3 +1,14 @@
+
+
+## [3.0.0](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
+
+
+### Bug Fixes
+
+* remove publish script from package.json ([d5bf2e5](https://github.com/expressots/expressots-cli/commit/d5bf2e58a06ba39a5a84272ff33b08e976ed2c28))
+* update package version to 3.0.0 and adjust BUNDLE_VERSION in CLI ([23ef462](https://github.com/expressots/expressots-cli/commit/23ef462d6c7b108bab74529befa22d592493b1ad))
+* update package versions and improve error handling in CLI commands ([cb94a4a](https://github.com/expressots/expressots-cli/commit/cb94a4a8f75132380b6ed450a95dd0ad7d56a20a))
+
 ## [3.0.0-beta.4](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.3...3.0.0) (2024-12-03)
 
 ### Bug Fixes
