@@ -85,7 +85,7 @@
     "prettier": "3.3.3",
     "release-it": "17.6.0",
     "ts-jest": "29.2.5",
-    "typescript": "5.5.3"
+    "typescript": "5.8.2"
   },
   "release-it": {
     "git": {
