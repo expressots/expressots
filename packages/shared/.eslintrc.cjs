@@ -26,5 +26,6 @@ module.exports = {
     "@typescript-eslint/no-require-imports": "off",
     "@typescript-eslint/class-literal-property-style": "error",
     "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-unsafe-function-type": "error",
   },
 };
