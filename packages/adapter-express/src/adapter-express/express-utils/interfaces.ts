@@ -31,11 +31,13 @@ export interface ControllerMetadata {
   middleware: Array<Middleware>;
   path: string;
   target: DecoratorTarget;
+  version?: string | number;
 }
 
 export interface ControllerMethodMetadata extends ControllerMetadata {
   key: string;
   method: keyof typeof HTTP_VERBS_ENUM;
+  version?: string | number;
 }
 
 export interface ControllerParameterMetadata {

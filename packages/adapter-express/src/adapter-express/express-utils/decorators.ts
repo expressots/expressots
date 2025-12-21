@@ -33,10 +33,17 @@ export const injectHttpContext = inject(TYPE.HttpContext);
  */
 export function controller(path: string, ...middleware: Array<Middleware>) {
   return (target: NewableFunction): void => {
+    // Check for version metadata on the controller class
+    const controllerVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target) as
+      | string
+      | number
+      | undefined;
+
     const currentMetadata: ControllerMetadata = {
       middleware,
       path,
       target,
+      version: controllerVersion,
     };
 
     const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect) || {};
@@ -96,6 +103,65 @@ export function Http(code: number) {
     }
 
     Reflect.defineMetadata(HTTP_CODE_METADATA.statusCode, httpCodeMetadata, Reflect);
+  };
+}
+
+/**
+ * Version decorator to define the API version for a controller or route method
+ * @param version API version (e.g., "1", "1.0", "v1", or 1)
+ * @returns ClassDecorator | MethodDecorator
+ * @example ```typescript
+ * @Version("1")
+ * @controller("/users")
+ * class UserController {}
+ *
+ * // Or at method level:
+ * @Version("2")
+ * @Get("/")
+ * getUsers() {
+ *   return "v2 users";
+ * }
+ * ```
+ * @public API
+ */
+export function Version(version: string | number) {
+  // Normalize version to string format (e.g., "v1" or "1" -> "v1")
+  const normalizedVersion =
+    typeof version === "number" ? `v${version}` : version.startsWith("v") ? version : `v${version}`;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (target: any, key?: string | symbol, descriptor?: any): void => {
+    if (key !== undefined && descriptor !== undefined) {
+      // Method decorator - store version metadata for the method
+      // This will be read by enhancedHttpMethod/Method when they create metadata
+      Reflect.defineMetadata(METADATA_KEY.version, normalizedVersion, target, key);
+
+      // Also update existing metadata if it exists
+      const metadataList = Reflect.getOwnMetadata(
+        METADATA_KEY.controllerMethod,
+        target.constructor,
+      ) as Array<ControllerMethodMetadata> | undefined;
+
+      if (metadataList) {
+        const methodMetadata = metadataList.find((m) => m.key === key);
+        if (methodMetadata) {
+          methodMetadata.version = normalizedVersion;
+        }
+      }
+    } else {
+      // Class decorator - store version metadata for the controller
+      // This will be read by controller decorator when it creates metadata
+      Reflect.defineMetadata(METADATA_KEY.version, normalizedVersion, target);
+
+      // Also update existing metadata if it exists
+      const controllerMetadata = Reflect.getOwnMetadata(METADATA_KEY.controller, target) as
+        | ControllerMetadata
+        | undefined;
+
+      if (controllerMetadata) {
+        controllerMetadata.version = normalizedVersion;
+      }
+    }
   };
 }
 
@@ -180,12 +246,19 @@ function enhancedHttpMethod(
   ...middleware: Array<Middleware>
 ): HandlerDecorator {
   return (target: DecoratorTarget, key: string): void => {
+    // Check for version metadata on the method
+    const methodVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target, key) as
+      | string
+      | number
+      | undefined;
+
     const metadata: ControllerMethodMetadata = {
       key,
       method,
       middleware,
       path,
       target,
+      version: methodVersion,
     };
     let metadataList: Array<ControllerMethodMetadata> = [];
 
@@ -243,12 +316,19 @@ export function Method(
   ...middleware: Array<Middleware>
 ): HandlerDecorator {
   return (target: DecoratorTarget, key: string): void => {
+    // Check for version metadata on the method
+    const methodVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target, key) as
+      | string
+      | number
+      | undefined;
+
     const metadata: ControllerMethodMetadata = {
       key,
       method,
       middleware,
       path,
       target,
+      version: methodVersion,
     };
 
     let metadataList: Array<ControllerMethodMetadata> = [];
