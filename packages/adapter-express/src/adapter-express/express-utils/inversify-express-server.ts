@@ -182,11 +182,11 @@ export class InversifyExpressServer {
             paramList,
           );
           const routeMiddleware = this.resolveMiddleware(...metadata.middleware);
-          
+
           // Determine version: method-level version overrides controller-level version
           const version = metadata.version || controllerMetadata.version;
           const versionPrefix = version ? `/${version}` : "";
-          
+
           this._router[metadata.method](
             `${versionPrefix}${controllerMetadata.path}${metadata.path}`,
             ...controllerMiddleware,
