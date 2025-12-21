@@ -325,7 +325,7 @@ export class InversifyExpressServer {
     // Pre-check if container-bound at route registration time (performance optimization)
     const isContainerBound = this._container.isBound(MiddlewareClass);
     let containerResolutionFailed = false;
-    
+
     // Cache instance for non-container-bound middleware (singleton per handler)
     // Container-bound middleware relies on container scoping (singleton/request scope)
     let cachedInstance: IExpressoMiddleware | undefined;
