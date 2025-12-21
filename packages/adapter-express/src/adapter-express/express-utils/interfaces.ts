@@ -21,7 +21,51 @@ export interface IExpressoMiddleware {
   use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
 }
 
-export type Middleware = string | symbol | RequestHandler | IExpressoMiddleware;
+/**
+ * Conditional middleware configuration type.
+ * Import from conditional-middleware.ts for the full ConditionalMiddlewareConfig interface.
+ */
+export interface ConditionalMiddlewareConfig {
+  condition: (req: Request) => boolean | Promise<boolean>;
+  middleware: Middleware;
+  skipOnFalse?: boolean;
+}
+
+/**
+ * Composed middleware configuration type.
+ * Import from middleware-composition.ts for the full ComposedMiddlewareConfig interface.
+ */
+export interface ComposedMiddlewareConfig {
+  middleware: Array<Middleware>;
+  type: "combine" | "sequence";
+}
+
+/**
+ * Middleware class constructor type.
+ * Supports classes that extend ExpressoMiddleware or implement IExpressoMiddleware.
+ * Accepts both concrete and abstract class constructors.
+ * Phase 2: Supports class references without 'new' keyword.
+ */
+export type MiddlewareClass =
+  | (new (...args: Array<unknown>) => IExpressoMiddleware)
+  | (abstract new (...args: Array<unknown>) => IExpressoMiddleware);
+
+/**
+ * Union type for all supported middleware types.
+ * Phase 2: Includes class constructors (class references) for cleaner API.
+ * Note: Uses 'any' for class constructors to support typeof class types (e.g., typeof AdminMiddleware).
+ */
+export type Middleware =
+  | string
+  | symbol
+  | RequestHandler
+  | IExpressoMiddleware
+  | ConditionalMiddlewareConfig
+  | MiddlewareClass
+  | { prototype: IExpressoMiddleware }
+  // Phase 2: Accept class constructors (typeof ClassName) - runtime type checking ensures safety
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | any;
 
 export type ControllerHandler = (...params: Array<unknown>) => unknown;
 export type BaseController = Record<string, ControllerHandler>;

@@ -42,6 +42,11 @@ import type {
 } from "./interfaces";
 import type { OutgoingHttpHeaders } from "node:http";
 import { getRenderMetadata } from "./decorators";
+import {
+  isConditionalMiddleware,
+  type ConditionalMiddlewareConfig,
+} from "./conditional-middleware";
+import { isComposedMiddleware, type ComposedMiddlewareConfig } from "./middleware-composition";
 
 export class InversifyExpressServer {
   private _router: Router;
@@ -200,16 +205,84 @@ export class InversifyExpressServer {
     this._app.use(this._routingConfig.rootPath, this._router);
   }
 
+  /**
+   * Checks if a middleware item is a class constructor (not an instance).
+   * Handles classes that extend ExpressoMiddleware (which has abstract use method).
+   * Note: Abstract methods don't exist at runtime, so we check for concrete implementations.
+   */
+  private isMiddlewareClass(
+    middlewareItem: Middleware,
+  ): middlewareItem is new () => IExpressoMiddleware {
+    // Must be a function (class constructor)
+    if (typeof middlewareItem !== "function") {
+      return false;
+    }
+
+    // Must not be a conditional or composed middleware config
+    if (isConditionalMiddleware(middlewareItem) || isComposedMiddleware(middlewareItem)) {
+      return false;
+    }
+
+    // Must have a prototype
+    if (middlewareItem.prototype === undefined) {
+      return false;
+    }
+
+    // Check if it has a 'use' method in its prototype
+    // Classes that extend ExpressoMiddleware must implement the abstract use() method
+    // so it will be in the prototype at runtime
+    const prototype = middlewareItem.prototype;
+
+    // Check for 'use' method directly in prototype (most common case)
+    if ("use" in prototype && typeof (prototype as { use?: unknown }).use === "function") {
+      return true;
+    }
+
+    // Also check prototype chain in case use() is defined in a parent class
+    // This handles cases where the method might be inherited (optimized: only if not found directly)
+    let currentPrototype = Object.getPrototypeOf(prototype);
+    while (currentPrototype && currentPrototype !== Object.prototype) {
+      if (
+        "use" in currentPrototype &&
+        typeof (currentPrototype as { use?: unknown }).use === "function"
+      ) {
+        return true;
+      }
+      currentPrototype = Object.getPrototypeOf(currentPrototype);
+    }
+
+    return false;
+  }
+
   private isExpressoMiddleware(middlewareItem: Middleware): middlewareItem is IExpressoMiddleware {
     return (
       typeof middlewareItem === "object" &&
+      middlewareItem !== null &&
       "use" in middlewareItem &&
-      typeof middlewareItem.use === "function"
+      typeof middlewareItem.use === "function" &&
+      !isConditionalMiddleware(middlewareItem) &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      !this.isMiddlewareClass(middlewareItem as any)
     );
   }
 
   private resolveMiddleware(...middleware: Array<Middleware>): Array<express.RequestHandler> {
     return middleware.map((middlewareItem) => {
+      // Handle composed middleware first (Phase 3: Middleware Composition)
+      if (isComposedMiddleware(middlewareItem)) {
+        return this.createComposedMiddlewareHandler(middlewareItem);
+      }
+
+      // Handle conditional middleware
+      if (isConditionalMiddleware(middlewareItem)) {
+        return this.createConditionalMiddlewareHandler(middlewareItem);
+      }
+
+      // Handle class constructors (Phase 2: Class Reference Support)
+      if (this.isMiddlewareClass(middlewareItem)) {
+        return this.createLazyMiddlewareHandler(middlewareItem);
+      }
+
       if (this.isExpressoMiddleware(middlewareItem)) {
         return (req: Request, res: Response, next: NextFunction): void => {
           middlewareItem.use(req, res, next);
@@ -232,6 +305,251 @@ export class InversifyExpressServer {
       }
 
       return middlewareInstance;
+    });
+  }
+
+  /**
+   * Creates a lazy middleware handler for class constructors.
+   * Supports both container-bound middleware (via @provide()) and direct instantiation.
+   *
+   * Performance: Instances are created per-request to support request-scoped state.
+   * For better performance with stateless middleware, use container-bound middleware
+   * with proper scoping (singleton/request scope) via @provide().
+   *
+   * Note: If container resolution fails (e.g., base class missing @injectable()),
+   * falls back to direct instantiation for backward compatibility.
+   */
+  private createLazyMiddlewareHandler(
+    MiddlewareClass: new () => IExpressoMiddleware,
+  ): express.RequestHandler {
+    // Pre-check if container-bound at route registration time (performance optimization)
+    const isContainerBound = this._container.isBound(MiddlewareClass);
+    let containerResolutionFailed = false;
+
+    return (req: Request, res: Response, next: NextFunction): void | Promise<void> => {
+      try {
+        let instance: IExpressoMiddleware;
+
+        // Try container resolution first if bound and not previously failed
+        if (isContainerBound && !containerResolutionFailed) {
+          try {
+            // Resolve from container (supports DI, scoping, etc.)
+            // Container handles singleton/request scope automatically
+            instance = this._container.get<IExpressoMiddleware>(MiddlewareClass);
+          } catch (containerError) {
+            // Container resolution failed (e.g., base class missing @injectable())
+            // Mark as failed and fall back to direct instantiation
+            containerResolutionFailed = true;
+            try {
+              instance = new MiddlewareClass();
+            } catch (instantiationError) {
+              next(instantiationError);
+              return;
+            }
+          }
+        } else {
+          // Create instance directly (no DI support or container not available)
+          // Per-request instantiation supports request-scoped state
+          try {
+            instance = new MiddlewareClass();
+          } catch (instantiationError) {
+            next(instantiationError);
+            return;
+          }
+        }
+
+        // Execute middleware (supports both sync and async)
+        // The middleware's use() method should call next() itself
+        // We pass the next function directly - when middleware calls next(),
+        // it will continue the Express middleware chain (or the composition chain)
+        try {
+          const result = instance.use(req, res, next);
+
+          // Handle async middleware that returns a Promise
+          // If it returns a Promise, return it so the chain can await it
+          if (result !== undefined && result !== null) {
+            const resultObj = result as unknown as { then?: unknown; catch?: unknown };
+            if (
+              typeof resultObj === "object" &&
+              resultObj !== null &&
+              "then" in resultObj &&
+              typeof resultObj.then === "function"
+            ) {
+              // Return the Promise so the chain can await it
+              // The middleware should have already called next(), but the chain
+              // will wait for the Promise to resolve/reject
+              return (result as unknown as Promise<void>).catch((error) => {
+                // If the Promise rejects and next() wasn't called with error, call it now
+                next(error);
+                throw error; // Re-throw so the chain can handle it
+              });
+            }
+          }
+          // Synchronous middleware - returns void, chain relies on next() being called
+        } catch (useError) {
+          // If use() throws synchronously, pass error to next()
+          next(useError);
+        }
+      } catch (error) {
+        // Catch any other errors
+        next(error);
+      }
+    };
+  }
+
+  /**
+   * Creates a request handler for conditional middleware.
+   * Evaluates the condition and executes the wrapped middleware if condition is true.
+   */
+  private createConditionalMiddlewareHandler(
+    config: ConditionalMiddlewareConfig,
+  ): express.RequestHandler {
+    // Resolve the wrapped middleware once (at route registration time)
+    const wrappedMiddlewareHandlers = this.resolveMiddleware(config.middleware);
+
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        // Evaluate the condition (supports both sync and async)
+        const conditionResult = await config.condition(req);
+
+        // Determine if middleware should execute based on condition and skipOnFalse flag
+        const shouldExecute = config.skipOnFalse !== false ? conditionResult : !conditionResult;
+
+        if (shouldExecute) {
+          // Condition met, execute the wrapped middleware
+          // The wrapped middleware handlers are already Express RequestHandlers,
+          // so we can execute them directly. They will call next() when done,
+          // which will continue to the next middleware in the route.
+          if (wrappedMiddlewareHandlers.length === 0) {
+            // No middleware to execute, just continue
+            next();
+          } else if (wrappedMiddlewareHandlers.length === 1) {
+            // Single middleware, execute it directly
+            wrappedMiddlewareHandlers[0](req, res, next);
+          } else {
+            // Multiple middleware, execute them sequentially
+            await this.executeMiddlewareChain(wrappedMiddlewareHandlers, req, res, next);
+          }
+        } else {
+          // Condition not met, skip middleware and continue to next middleware in route
+          next();
+        }
+      } catch (error) {
+        // If condition evaluation throws, pass error to error handler
+        next(error);
+      }
+    };
+  }
+
+  /**
+   * Creates a request handler for composed middleware (Phase 3: Middleware Composition).
+   * Executes all middleware in the composition sequentially.
+   * Both 'combine' and 'sequence' types behave the same way - they execute middleware
+   * sequentially and propagate errors normally (Express handles errors via next(error)).
+   *
+   * @param config - ComposedMiddlewareConfig containing the middleware array and type
+   * @returns Express RequestHandler
+   */
+  private createComposedMiddlewareHandler(
+    config: ComposedMiddlewareConfig,
+  ): express.RequestHandler {
+    // Resolve all middleware in the composition to Express RequestHandlers
+    const resolvedHandlers = config.middleware.flatMap((mw) => this.resolveMiddleware(mw));
+
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        if (resolvedHandlers.length === 0) {
+          // No middleware to execute, just continue
+          next();
+          return;
+        }
+
+        // Execute all middleware sequentially
+        // Both 'combine' and 'sequence' use the same execution logic
+        // Express's error handling (via next(error)) naturally stops execution
+        await this.executeMiddlewareChain(resolvedHandlers, req, res, next);
+      } catch (error) {
+        // If execution throws an error, pass it to Express error handler
+        next(error);
+      }
+    };
+  }
+
+  /**
+   * Executes a chain of middleware handlers sequentially.
+   * Each middleware calls next() to proceed to the next one.
+   * Handles both synchronous and asynchronous middleware.
+   */
+  private executeMiddlewareChain(
+    handlers: Array<express.RequestHandler>,
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let index = 0;
+
+      const runNext = (err?: unknown): void => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        if (index >= handlers.length) {
+          // All middleware executed successfully, call Express next() to continue to route handler
+          next();
+          resolve();
+          return;
+        }
+
+        const handler = handlers[index++];
+
+        try {
+          // Execute the handler
+          // Express middleware handlers can:
+          // 1. Call next() synchronously
+          // 2. Call next() asynchronously
+          // 3. Return a Promise
+          // 4. Return nothing (void)
+          const result = handler(req, res, (err?: unknown) => {
+            if (err) {
+              reject(err);
+            } else {
+              // Handler called next() successfully, proceed to next middleware
+              runNext();
+            }
+          });
+
+          // If handler returns a Promise, wait for it
+          // Note: Even if handler returns a Promise, it should still call next()
+          // But we handle the Promise in case it doesn't
+          // Check if result exists and is a Promise-like object (thenable)
+          if (result !== undefined && result !== null) {
+            const resultObj = result as unknown as { then?: unknown };
+            if (
+              typeof resultObj === "object" &&
+              resultObj !== null &&
+              "then" in resultObj &&
+              typeof resultObj.then === "function"
+            ) {
+              (result as unknown as Promise<unknown>)
+                .then(() => {
+                  // If Promise resolves and next wasn't called, proceed
+                  if (index <= handlers.length) {
+                    runNext();
+                  }
+                })
+                .catch(reject);
+            }
+          }
+          // If handler doesn't return a Promise and doesn't call next(),
+          // we rely on the handler to call next() itself
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      runNext();
     });
   }
 
