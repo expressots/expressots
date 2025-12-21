@@ -33,6 +33,10 @@ class BindingInWhenOnSyntax<T>
     return this._bindingInSyntax.inTransientScope();
   }
 
+  public inScope(scope: string): interfaces.BindingWhenOnSyntax<T> {
+    return this._bindingInSyntax.inScope(scope);
+  }
+
   public when(
     constraint: (request: interfaces.Request) => boolean,
   ): interfaces.BindingOnSyntax<T> {

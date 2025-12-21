@@ -57,3 +57,40 @@ export const provideSingleton = (identifier: any) => {
 export const provideTransient = (identifier: any) => {
   return fluentProvide(identifier).inTransientScope().done();
 };
+
+/**
+ * Provides a custom scope binding for the given identifier.
+ *
+ * Custom scope binding ensures that instances are shared within a specific custom scope
+ * (e.g., "tenant", "transaction", "workflow"). Instances are cached per scope and
+ * reused when resolved within the same scope context.
+ *
+ * @param identifier - The identifier (e.g., symbol, string, class) for the dependency being registered.
+ * @param scopeName - The name of the custom scope (e.g., "tenant", "transaction").
+ *                    Must not conflict with built-in scope names: "Singleton", "Request", "Transient".
+ * @returns A fluent interface for further configuring the binding.
+ *
+ * @example
+ * ```typescript
+ * // Tenant-scoped service
+ * provideInScope(TenantServiceIdentifier, "tenant")
+ * class TenantConfigService {}
+ *
+ * // Transaction-scoped service
+ * provideInScope(TransactionServiceIdentifier, "transaction")
+ * class TransactionContext {}
+ * ```
+ * @public API
+ */
+export const provideInScope = (identifier: any, scopeName: string) => {
+  if (
+    scopeName === "Singleton" ||
+    scopeName === "Request" ||
+    scopeName === "Transient"
+  ) {
+    throw new Error(
+      `Cannot use built-in scope name "${scopeName}" as custom scope. Use the corresponding decorator instead (e.g., provideSingleton()).`,
+    );
+  }
+  return fluentProvide(identifier).inScope(scopeName).done();
+};

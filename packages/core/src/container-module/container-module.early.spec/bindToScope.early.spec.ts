@@ -16,6 +16,7 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
   let mockInSingletonScope: jest.Mock;
   let mockInTransientScope: jest.Mock;
   let mockInRequestScope: jest.Mock;
+  let mockInScope: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,11 +24,30 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
     mockInSingletonScope = jest.fn();
     mockInTransientScope = jest.fn();
     mockInRequestScope = jest.fn();
+    mockInScope = jest.fn().mockReturnValue({
+      when: jest.fn(),
+      whenTargetNamed: jest.fn(),
+      whenTargetTagged: jest.fn(),
+      whenInjectedInto: jest.fn(),
+      whenParentNamed: jest.fn(),
+      whenParentTagged: jest.fn(),
+      whenAnyAncestorIs: jest.fn(),
+      whenNoAncestorIs: jest.fn(),
+      whenAnyAncestorNamed: jest.fn(),
+      whenAnyAncestorTagged: jest.fn(),
+      whenNoAncestorNamed: jest.fn(),
+      whenNoAncestorTagged: jest.fn(),
+      whenAnyAncestorMatches: jest.fn(),
+      whenNoAncestorMatches: jest.fn(),
+      onActivation: jest.fn(),
+      onDeactivation: jest.fn(),
+    });
 
     mockTo = jest.fn().mockReturnValue({
       inSingletonScope: mockInSingletonScope,
       inTransientScope: mockInTransientScope,
       inRequestScope: mockInRequestScope,
+      inScope: mockInScope,
     });
 
     mockBind = jest.fn().mockImplementation((symbol: symbol) => {
@@ -90,11 +110,27 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
 
   // Edge Case Tests
   describe("Edge Cases", () => {
-    it("should default to request scope when bindingType is unknown", () => {
+    it("should use custom scope when bindingType is a custom scope name", () => {
       // Arrange
-      const symbol = Symbol("TestUnknown");
-      const target = class TestUnknown {};
-      const bindingType = "UnknownScope" as any;
+      const symbol = Symbol("TestCustomScope");
+      const target = class TestCustomScope {};
+      const bindingType = "tenant" as any;
+
+      // Act
+      BaseModule.bindToScope(symbol, target, bindingType, mockBind);
+
+      // Assert
+      expect(mockBind).toHaveBeenCalledWith(symbol);
+      expect(mockTo).toHaveBeenCalledWith(target);
+      expect(mockInScope).toHaveBeenCalledWith("tenant");
+      expect(mockInRequestScope).not.toHaveBeenCalled();
+    });
+
+    it("should default to request scope when bindingType is invalid", () => {
+      // Arrange
+      const symbol = Symbol("TestInvalid");
+      const target = class TestInvalid {};
+      const bindingType = undefined as any;
 
       // Act
       BaseModule.bindToScope(symbol, target, bindingType, mockBind);

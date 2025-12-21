@@ -68,20 +68,31 @@ export class BaseModule {
     bindingType: interfaces.BindingScope,
     bind: interfaces.Bind,
   ) {
+    // Handle built-in scopes
     switch (bindingType) {
       case BindingScopeEnum.Singleton:
         bind(symbol).to(target).inSingletonScope();
-        break;
+        return;
       case BindingScopeEnum.Transient:
         bind(symbol).to(target).inTransientScope();
         provideTransient(target);
-        break;
+        return;
       case BindingScopeEnum.Request:
         bind(symbol).to(target).inRequestScope();
-        break;
-      default:
-        bind(symbol).to(target).inRequestScope();
-        break;
+        return;
+    }
+
+    // Handle custom scopes (any string that's not a built-in scope)
+    if (
+      typeof bindingType === "string" &&
+      bindingType !== BindingScopeEnum.Singleton &&
+      bindingType !== BindingScopeEnum.Request &&
+      bindingType !== BindingScopeEnum.Transient
+    ) {
+      bind(symbol).to(target).inScope(bindingType);
+    } else {
+      // Default to request scope if scope is invalid
+      bind(symbol).to(target).inRequestScope();
     }
   }
 

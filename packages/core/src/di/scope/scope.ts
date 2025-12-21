@@ -1,21 +1,46 @@
 import { BindingScopeEnum } from "../constants/literal_types";
 import type { interfaces } from "../interfaces/interfaces";
 import { isPromise } from "../utils/async";
+import { globalScopeRegistry } from "./scope-registry";
+
+/**
+ * Check if a scope name is a built-in scope.
+ * @param scope - The scope name to check
+ * @returns True if it's a built-in scope, false otherwise
+ */
+const isBuiltInScope = (scope: string): boolean => {
+  return (
+    scope === BindingScopeEnum.Singleton ||
+    scope === BindingScopeEnum.Request ||
+    scope === BindingScopeEnum.Transient
+  );
+};
 
 export const tryGetFromScope = <T>(
   requestScope: interfaces.RequestScope,
   binding: interfaces.Binding<T>,
 ): T | Promise<T> | null => {
+  // Handle Singleton scope
   if (binding.scope === BindingScopeEnum.Singleton && binding.activated) {
     return binding.cache!;
   }
 
+  // Handle Request scope
   if (
     binding.scope === BindingScopeEnum.Request &&
     requestScope.has(binding.id)
   ) {
     return requestScope.get(binding.id) as T | Promise<T>;
   }
+
+  // Handle custom scopes
+  if (!isBuiltInScope(binding.scope)) {
+    const customScopeStore = globalScopeRegistry.getScopeStore(binding.scope);
+    if (customScopeStore.has(binding.id)) {
+      return customScopeStore.get(binding.id) as T | Promise<T>;
+    }
+  }
+
   return null;
 };
 
@@ -24,12 +49,24 @@ export const saveToScope = <T>(
   binding: interfaces.Binding<T>,
   result: T | Promise<T>,
 ): void => {
+  // Handle Singleton scope
   if (binding.scope === BindingScopeEnum.Singleton) {
     _saveToSingletonScope(binding, result);
+    return;
   }
 
+  // Handle Request scope
   if (binding.scope === BindingScopeEnum.Request) {
     _saveToRequestScope(requestScope, binding, result);
+    return;
+  }
+
+  // Handle custom scopes
+  if (!isBuiltInScope(binding.scope)) {
+    const customScopeStore = globalScopeRegistry.getScopeStore(binding.scope);
+    if (!customScopeStore.has(binding.id)) {
+      customScopeStore.set(binding.id, result);
+    }
   }
 };
 

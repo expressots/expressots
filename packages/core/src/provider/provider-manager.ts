@@ -106,24 +106,37 @@ export class ProviderManager {
   /**
    * Apply the scope to the binding.
    * @param binding - The binding to apply the scope to.
-   * @param scope - The scope to apply.
+   * @param scope - The scope to apply (built-in or custom scope name).
    * @private
    */
   private applyScope<T>(
     binding: interfaces.BindingInWhenOnSyntax<T>,
     scope: interfaces.BindingScope,
   ): void {
+    // Handle built-in scopes
     switch (scope) {
       case BindingScopeEnum.Singleton:
         binding.inSingletonScope();
-        break;
+        return;
       case BindingScopeEnum.Request:
         binding.inRequestScope();
-        break;
+        return;
       case BindingScopeEnum.Transient:
-      default:
         binding.inTransientScope();
-        break;
+        return;
+    }
+
+    // Handle custom scopes (any string that's not a built-in scope)
+    if (
+      typeof scope === "string" &&
+      scope !== BindingScopeEnum.Singleton &&
+      scope !== BindingScopeEnum.Request &&
+      scope !== BindingScopeEnum.Transient
+    ) {
+      binding.inScope(scope);
+    } else {
+      // Default to transient if scope is invalid
+      binding.inTransientScope();
     }
   }
 

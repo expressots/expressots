@@ -112,6 +112,10 @@ class ProvideInWhenOnSyntax<T> implements interfaces.ProvideInWhenOnSyntax<T> {
     return this._provideInSyntax.inTransientScope();
   }
 
+  public inScope(scope: string): interfaces.ProvideWhenOnSyntax<T> {
+    return this._provideInSyntax.inScope(scope);
+  }
+
   public done(force?: boolean): any {
     return this._provideInSyntax.done(force);
   }

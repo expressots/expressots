@@ -35,3 +35,4 @@ export {
 } from "./syntax/constraint_helpers";
 export { getServiceIdentifierAsString } from "./utils/serialization";
 export { multiBindToService } from "./utils/binding_utils";
+export { ScopeRegistry, globalScopeRegistry } from "./scope/scope-registry";

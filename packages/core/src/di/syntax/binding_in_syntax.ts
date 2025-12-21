@@ -23,6 +23,21 @@ class BindingInSyntax<T> implements interfaces.BindingInSyntax<T> {
     this._binding.scope = BindingScopeEnum.Transient;
     return new BindingWhenOnSyntax<T>(this._binding);
   }
+
+  public inScope(scope: string): interfaces.BindingWhenOnSyntax<T> {
+    // Validate that custom scope name doesn't conflict with built-in scopes
+    if (
+      scope === BindingScopeEnum.Singleton ||
+      scope === BindingScopeEnum.Request ||
+      scope === BindingScopeEnum.Transient
+    ) {
+      throw new Error(
+        `Cannot use built-in scope name "${scope}" as custom scope. Use the corresponding method instead (e.g., inSingletonScope()).`,
+      );
+    }
+    this._binding.scope = scope;
+    return new BindingWhenOnSyntax<T>(this._binding);
+  }
 }
 
 export { BindingInSyntax };
