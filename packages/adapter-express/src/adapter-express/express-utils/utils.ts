@@ -1,5 +1,5 @@
 import { Logger } from "@expressots/core";
-import { interfaces } from "../../di/di.interfaces";
+import { interfaces } from "@expressots/core";
 import { METADATA_KEY, NO_CONTROLLERS_FOUND, TYPE } from "./constants";
 import type {
   BaseController,

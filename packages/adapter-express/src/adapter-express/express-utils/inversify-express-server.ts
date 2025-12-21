@@ -7,7 +7,7 @@ import express, {
   Response,
   Router,
 } from "express";
-import { interfaces } from "../../di/di.interfaces";
+import { interfaces } from "@expressots/core";
 import { BaseMiddleware } from "./base-middleware";
 import {
   getControllersFromMetadata,

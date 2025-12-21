@@ -15,7 +15,7 @@ import {
 } from "@expressots/core";
 import { config, Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
-import { interfaces } from "../di/di.interfaces";
+import { interfaces } from "@expressots/core";
 import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";

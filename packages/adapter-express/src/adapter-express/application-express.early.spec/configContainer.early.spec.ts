@@ -1,6 +1,6 @@
 // Unit tests for: configContainer
 
-import { interfaces } from "../../di/di.interfaces";
+import { interfaces } from "@expressots/core";
 import { AppExpress } from "../application-express";
 
 jest.mock("@expressots/core", () => ({

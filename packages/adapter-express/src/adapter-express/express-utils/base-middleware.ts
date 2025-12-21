@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { interfaces as inversifyInterfaces } from "../../di/di.interfaces";
+import { interfaces as inversifyInterfaces } from "@expressots/core";
 import type { HttpContext } from "./interfaces";
 import { injectable } from "@expressots/core";
 
