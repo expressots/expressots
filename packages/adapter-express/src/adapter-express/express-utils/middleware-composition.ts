@@ -17,6 +17,12 @@ export interface ComposedMiddlewareConfig {
    * - 'sequence': Middleware execute sequentially, execution stops on error
    */
   type: "combine" | "sequence";
+
+  /**
+   * Symbol to identify composed middleware configuration objects.
+   * Used internally for type checking.
+   */
+  [COMPOSED_MIDDLEWARE_SYMBOL]: true;
 }
 
 /**
@@ -32,6 +38,7 @@ export function isComposedMiddleware(item: unknown): item is ComposedMiddlewareC
   return (
     typeof item === "object" &&
     item !== null &&
+    COMPOSED_MIDDLEWARE_SYMBOL in item &&
     "middleware" in item &&
     "type" in item &&
     Array.isArray((item as ComposedMiddlewareConfig).middleware) &&
@@ -73,6 +80,7 @@ export function combine(...middleware: Array<Middleware>): ComposedMiddlewareCon
   return {
     middleware,
     type: "combine",
+    [COMPOSED_MIDDLEWARE_SYMBOL]: true,
   };
 }
 
@@ -110,5 +118,6 @@ export function sequence(...middleware: Array<Middleware>): ComposedMiddlewareCo
   return {
     middleware,
     type: "sequence",
+    [COMPOSED_MIDDLEWARE_SYMBOL]: true,
   };
 }

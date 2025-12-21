@@ -325,6 +325,10 @@ export class InversifyExpressServer {
     // Pre-check if container-bound at route registration time (performance optimization)
     const isContainerBound = this._container.isBound(MiddlewareClass);
     let containerResolutionFailed = false;
+    
+    // Cache instance for non-container-bound middleware (singleton per handler)
+    // Container-bound middleware relies on container scoping (singleton/request scope)
+    let cachedInstance: IExpressoMiddleware | undefined;
 
     return (req: Request, res: Response, next: NextFunction): void | Promise<void> => {
       try {
@@ -341,7 +345,11 @@ export class InversifyExpressServer {
             // Mark as failed and fall back to direct instantiation
             containerResolutionFailed = true;
             try {
-              instance = new MiddlewareClass();
+              // Create and cache instance if not already cached
+              if (!cachedInstance) {
+                cachedInstance = new MiddlewareClass();
+              }
+              instance = cachedInstance;
             } catch (instantiationError) {
               next(instantiationError);
               return;
@@ -349,13 +357,16 @@ export class InversifyExpressServer {
           }
         } else {
           // Create instance directly (no DI support or container not available)
-          // Per-request instantiation supports request-scoped state
-          try {
-            instance = new MiddlewareClass();
-          } catch (instantiationError) {
-            next(instantiationError);
-            return;
+          // Cache instance for reuse across requests (singleton per handler)
+          if (!cachedInstance) {
+            try {
+              cachedInstance = new MiddlewareClass();
+            } catch (instantiationError) {
+              next(instantiationError);
+              return;
+            }
           }
+          instance = cachedInstance;
         }
 
         // Execute middleware (supports both sync and async)
@@ -381,7 +392,6 @@ export class InversifyExpressServer {
               return (result as unknown as Promise<void>).catch((error) => {
                 // If the Promise rejects and next() wasn't called with error, call it now
                 next(error);
-                throw error; // Re-throw so the chain can handle it
               });
             }
           }
