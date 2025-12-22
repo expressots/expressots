@@ -1,0 +1,38 @@
+import { provide } from "../../di/binding-decorator";
+import { StatusCode } from "../status-code";
+import { BaseExceptionFilter } from "../base-exception-filter";
+import type { ExceptionContext } from "../exception-filter.interface";
+import { Catch } from "../exception-filter-decorators";
+
+/**
+ * Global exception filter that catches all unhandled exceptions
+ * This is a catch-all filter that handles any exception not handled by specific filters
+ */
+@Catch()
+@provide(GlobalExceptionFilter)
+export class GlobalExceptionFilter extends BaseExceptionFilter {
+  catch(exception: Error, context: ExceptionContext): void {
+    this.logError(exception, context);
+
+    // Don't expose internal errors in production
+    const isDevelopment =
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "test";
+
+    const response: Record<string, unknown> = {
+      type: "https://expressots.dev/errors/internal-server-error",
+      title: isDevelopment ? exception.message : "An unexpected error occurred",
+      status: StatusCode.InternalServerError,
+      instance: context.request.path,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Include stack trace in development mode
+    if (isDevelopment && exception.stack) {
+      response.stack = exception.stack;
+    }
+
+    this.sendErrorResponse(context, StatusCode.InternalServerError, response);
+  }
+}
+

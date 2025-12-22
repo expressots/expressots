@@ -12,7 +12,7 @@ import {
 
 import defaultErrorHandler from "../error/error-handler-middleware";
 import { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
-
+import { ExceptionHandlerMiddleware } from "../error/exception-handler-middleware";
 import { Logger } from "../provider/logger/logger.provider";
 import { OptionsJson } from "./interfaces/body-parser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
@@ -390,16 +390,61 @@ export class Middleware implements IMiddleware {
    * @param options - The object containing the configuration options for the error handler middleware.
    * @param errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
    * @param showStackTrace - A boolean value indicating whether to show the stack trace in the response.
+   * @param enableExceptionFilters - Whether to enable automatic exception filter integration.
+   * @param container - Optional container instance for exception filter auto-discovery.
    */
   setErrorHandler(options: ErrorHandlerOptions = {}): void {
-    const { errorHandler: errorHandling, showStackTrace } = options;
+    const {
+      errorHandler: errorHandling,
+      showStackTrace,
+      enableExceptionFilters = false,
+      container,
+    } = options;
 
-    if (!errorHandling) {
+    // Custom error handler takes precedence (backward compatibility)
+    if (errorHandling) {
+      this.errorHandler = errorHandling;
+      if (enableExceptionFilters) {
+        this.logger.warn(
+          "Custom errorHandler provided - exception filters are disabled. Remove errorHandler to use exception filters.",
+          "middleware-service",
+        );
+      }
+      return;
+    }
+
+    // If exception filters are enabled, wrap the error handler with ExceptionHandlerMiddleware
+    if (enableExceptionFilters && container) {
+      try {
+        const exceptionHandler = new ExceptionHandlerMiddleware(container);
+        this.errorHandler = exceptionHandler.handle;
+        this.logger.info(
+          "Exception filters enabled - filters decorated with @Catch() will be automatically discovered",
+          "middleware-service",
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Failed to enable exception filters: ${error}. Falling back to default error handler.`,
+          "middleware-service",
+        );
+        // Fall back to default handler
+        this.errorHandler = (error, req, res, next): void => {
+          defaultErrorHandler(error, res, next, showStackTrace);
+        };
+      }
+    } else {
+      // Default error handler
       this.errorHandler = (error, req, res, next): void => {
         defaultErrorHandler(error, res, next, showStackTrace);
       };
-    } else {
-      this.errorHandler = errorHandling;
+    }
+
+    // Warn if enableExceptionFilters is true but container is not provided
+    if (enableExceptionFilters && !container) {
+      this.logger.warn(
+        "enableExceptionFilters is true but container is not provided. Exception filters will not be enabled.",
+        "middleware-service",
+      );
     }
   }
 

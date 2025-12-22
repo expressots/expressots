@@ -19,11 +19,15 @@ import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
  * The ErrorHandlerOptions interface specifies the configuration options for the error handler middleware.
  * @param errorHandler: An Express error handler function that takes care of processing errors and formulating the response.
  * @param showStackTrace: A boolean value indicating whether to include the stack trace in the error response. The default value is false.
+ * @param enableExceptionFilters: A boolean value indicating whether to enable automatic exception filter integration. When enabled, exception filters decorated with @Catch() will be automatically discovered and used. Requires container to be provided. Default value is false.
+ * @param container: Optional container instance for exception filter auto-discovery. Required when enableExceptionFilters is true.
  * @public API
  */
 export interface ErrorHandlerOptions {
   errorHandler?: ExpressHandler;
   showStackTrace?: boolean;
+  enableExceptionFilters?: boolean;
+  container?: import("../di/inversify").interfaces.Container;
 }
 
 /**
