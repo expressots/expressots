@@ -114,13 +114,17 @@ export class ExceptionFilterRegistry {
 
     // Walk up the prototype chain to find matching filters
     let currentType: ExceptionConstructor | null = null;
-    
+
     // Start with the exception's constructor
     if (isConstructor(exception.constructor)) {
       currentType = exception.constructor as ExceptionConstructor;
     }
 
-    while (currentType && isConstructor(currentType) && !visitedTypes.has(currentType)) {
+    while (
+      currentType &&
+      isConstructor(currentType) &&
+      !visitedTypes.has(currentType)
+    ) {
       visitedTypes.add(currentType);
 
       if (this.filters.has(currentType)) {
@@ -179,4 +183,3 @@ export class ExceptionFilterRegistry {
     this.initialized = false;
   }
 }
-

@@ -1,6 +1,10 @@
 import "reflect-metadata";
 import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants";
-import type { IExceptionFilter, ExceptionFilterMetadata, ErrorConstructor } from "./exception-filter.interface";
+import type {
+  IExceptionFilter,
+  ExceptionFilterMetadata,
+  ErrorConstructor,
+} from "./exception-filter.interface";
 
 /**
  * Decorator to mark a class as an exception filter for specific exception types
@@ -45,15 +49,18 @@ export function Catch(
 ): ClassDecorator {
   return (target: NewableFunction) => {
     // If no exception types provided, catch all (Error base class)
-    const typesToCatch =
-      exceptionTypes.length > 0 ? exceptionTypes : [Error];
+    const typesToCatch = exceptionTypes.length > 0 ? exceptionTypes : [Error];
 
     const metadata: ExceptionFilterMetadata = {
       exceptionTypes: typesToCatch,
       filter: target,
     };
 
-    Reflect.defineMetadata(EXCEPTION_FILTER_METADATA_KEY.exceptionFilter, metadata, target);
+    Reflect.defineMetadata(
+      EXCEPTION_FILTER_METADATA_KEY.exceptionFilter,
+      metadata,
+      target,
+    );
 
     // Register filter in global registry for auto-discovery
     const existingFilters =
@@ -63,7 +70,11 @@ export function Catch(
       ) as Array<ExceptionFilterMetadata>) || [];
 
     const newFilters = [...existingFilters, metadata];
-    Reflect.defineMetadata(EXCEPTION_FILTER_METADATA_KEY.exceptionFilter, newFilters, Reflect);
+    Reflect.defineMetadata(
+      EXCEPTION_FILTER_METADATA_KEY.exceptionFilter,
+      newFilters,
+      Reflect,
+    );
   };
 }
 
@@ -140,4 +151,3 @@ export function UseFilters(
     }
   };
 }
-

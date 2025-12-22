@@ -1,9 +1,19 @@
 export { StatusCode } from "./status-code";
 export { Report } from "./report";
-export { AppError, type AppErrorOptions, type ProblemDetails, type ValidationError } from "./app-error";
+export {
+  AppError,
+  type AppErrorOptions,
+  type ProblemDetails,
+  type ValidationError,
+} from "./app-error";
 export { NotFoundError } from "./not-found.error";
 export { ValidationError as ValidationErrorClass } from "./validation.error";
-export type { IExceptionFilter, ExceptionContext, IHttpContext, ErrorConstructor } from "./exception-filter.interface";
+export type {
+  IExceptionFilter,
+  ExceptionContext,
+  IHttpContext,
+  ErrorConstructor,
+} from "./exception-filter.interface";
 export { BaseExceptionFilter } from "./base-exception-filter";
 export { ExceptionFilterRegistry } from "./exception-filter-registry";
 export { Catch, UseFilters } from "./exception-filter-decorators";

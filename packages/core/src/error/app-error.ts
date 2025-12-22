@@ -119,8 +119,7 @@ class AppError extends Error {
     this.details = options?.details;
     this.instance = options?.instance;
     this.type =
-      options?.type ||
-      `https://expressots.dev/errors/${this.statusCode}`;
+      options?.type || `https://expressots.dev/errors/${this.statusCode}`;
     this.timestamp = new Date();
     this.requestId = options?.requestId;
     this.validationErrors = options?.validationErrors;
@@ -191,7 +190,10 @@ class AppError extends Error {
   /**
    * Creates a Conflict (409) error
    */
-  static conflict(message: string, details?: Record<string, unknown>): AppError {
+  static conflict(
+    message: string,
+    details?: Record<string, unknown>,
+  ): AppError {
     return new AppError(message, StatusCode.Conflict, undefined, {
       type: "https://expressots.dev/errors/conflict",
       details,

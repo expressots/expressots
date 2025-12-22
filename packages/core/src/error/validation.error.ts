@@ -1,4 +1,7 @@
-import { AppError, type ValidationError as ValidationErrorType } from "./app-error";
+import {
+  AppError,
+  type ValidationError as ValidationErrorType,
+} from "./app-error";
 import { StatusCode } from "./status-code";
 
 /**
@@ -15,4 +18,3 @@ export class ValidationError extends AppError {
     this.errors = errors;
   }
 }
-

@@ -27,4 +27,3 @@ export class ValidationErrorFilter extends BaseExceptionFilter {
     this.sendErrorResponse(context, StatusCode.BadRequest, response);
   }
 }
-

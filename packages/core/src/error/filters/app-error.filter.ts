@@ -24,4 +24,3 @@ export class AppErrorFilter extends BaseExceptionFilter {
     this.sendErrorResponse(context, exception.statusCode, problemDetails);
   }
 }
-

@@ -2,9 +2,27 @@ import { Request, Response, NextFunction } from "express";
 import { interfaces } from "../di/inversify";
 import { ExceptionFilterRegistry } from "./exception-filter-registry";
 import { Logger } from "../provider/logger/logger.provider";
-import type { ExceptionContext, IExceptionFilter, IHttpContext } from "./exception-filter.interface";
+import type {
+  ExceptionContext,
+  IExceptionFilter,
+  IHttpContext,
+} from "./exception-filter.interface";
 import { AppError, StatusCode } from "./index";
 import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants";
+
+/**
+ * Type for a constructor function (class)
+ */
+type NewableFunction = new (...args: Array<unknown>) => unknown;
+
+/**
+ * Type for Express handler with ExpressoTS metadata attached
+ */
+interface ExpressoTSHandler {
+  __expressotsController?: NewableFunction;
+  __expressotsMethod?: string;
+  __expressotsControllerName?: string;
+}
 
 /**
  * Enhanced error handler middleware that integrates with exception filters
@@ -88,18 +106,16 @@ export class ExceptionHandlerMiddleware {
         if (route && (route as any).stack) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const stack = (route as any).stack as Array<{ handle?: unknown }>;
-          
+
           // Traverse the stack to find the handler with ExpressoTS metadata
           // The handler is typically the last layer in the stack
           let handler: unknown = null;
           for (let i = stack.length - 1; i >= 0; i--) {
             const layer = stack[i];
             if (layer && layer.handle) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const potentialHandler = layer.handle as any;
+              const potentialHandler = layer.handle as ExpressoTSHandler;
               // Check if this handler has ExpressoTS metadata
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (potentialHandler && (potentialHandler as any).__expressotsController) {
+              if (potentialHandler && potentialHandler.__expressotsController) {
                 handler = potentialHandler;
                 break;
               }
@@ -111,10 +127,9 @@ export class ExceptionHandlerMiddleware {
           }
 
           if (handler) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            controllerConstructor = (handler as any).__expressotsController;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            methodName = (handler as any).__expressotsMethod;
+            const handlerWithMetadata = handler as ExpressoTSHandler;
+            controllerConstructor = handlerWithMetadata.__expressotsController;
+            methodName = handlerWithMetadata.__expressotsMethod;
           }
         }
       }
@@ -140,7 +155,7 @@ export class ExceptionHandlerMiddleware {
       // Could not extract controller info, use path-based fallback
       // Note: context.controller remains undefined as we don't have the constructor
       context.handler = req.path || "unknownHandler";
-      
+
       if (this.logger) {
         this.logger.warn(
           `Could not extract controller/handler info: ${error}. Using path-based fallback.`,
@@ -195,18 +210,16 @@ export class ExceptionHandlerMiddleware {
         if (route && (route as any).stack) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const stack = (route as any).stack as Array<{ handle?: unknown }>;
-          
+
           // Traverse the stack to find the handler with ExpressoTS metadata
           // The handler is typically the last layer in the stack
           let handler: unknown = null;
           for (let i = stack.length - 1; i >= 0; i--) {
             const layer = stack[i];
             if (layer && layer.handle) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const potentialHandler = layer.handle as any;
+              const potentialHandler = layer.handle as ExpressoTSHandler;
               // Check if this handler has ExpressoTS metadata
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (potentialHandler && (potentialHandler as any).__expressotsController) {
+              if (potentialHandler && potentialHandler.__expressotsController) {
                 handler = potentialHandler;
                 break;
               }
@@ -218,10 +231,9 @@ export class ExceptionHandlerMiddleware {
           }
 
           if (handler) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            controllerConstructor = (handler as any).__expressotsController;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            methodName = (handler as any).__expressotsMethod;
+            const handlerWithMetadata = handler as ExpressoTSHandler;
+            controllerConstructor = handlerWithMetadata.__expressotsController;
+            methodName = handlerWithMetadata.__expressotsMethod;
           }
         }
       }
@@ -229,66 +241,79 @@ export class ExceptionHandlerMiddleware {
       if (controllerConstructor) {
         // Get method-level filters (highest priority)
         // Method filters are stored on the controller constructor with the method name as key
-        const methodFilters =
-          Reflect.getMetadata(
-            EXCEPTION_FILTER_METADATA_KEY.methodExceptionFilters,
-            controllerConstructor,
-            methodName,
-          ) as Array<new (...args: Array<unknown>) => IExceptionFilter> | undefined;
+        const methodFilters = Reflect.getMetadata(
+          EXCEPTION_FILTER_METADATA_KEY.methodExceptionFilters,
+          controllerConstructor,
+          methodName,
+        ) as
+          | Array<new (...args: Array<unknown>) => IExceptionFilter>
+          | undefined;
 
         if (methodFilters && methodFilters.length > 0) {
-          methodFilters.forEach((FilterClass: new (...args: Array<unknown>) => IExceptionFilter) => {
-            try {
-              const filterInstance = this.instantiateFilter(FilterClass);
-              if (filterInstance) {
-                filters.push(filterInstance);
+          methodFilters.forEach(
+            (
+              FilterClass: new (...args: Array<unknown>) => IExceptionFilter,
+            ) => {
+              try {
+                const filterInstance = this.instantiateFilter(FilterClass);
+                if (filterInstance) {
+                  filters.push(filterInstance);
+                }
+              } catch (error) {
+                // Could not instantiate filter
+                if (this.logger) {
+                  this.logger.warn(
+                    `Failed to instantiate method-level filter ${FilterClass.name}: ${error}`,
+                    "exception-handler",
+                  );
+                }
               }
-            } catch (error) {
-              // Could not instantiate filter
-              if (this.logger) {
-                this.logger.warn(
-                  `Failed to instantiate method-level filter ${FilterClass.name}: ${error}`,
-                  "exception-handler",
-                );
-              }
-            }
-          });
+            },
+          );
         }
 
         // Get controller-level filters (added after method-level filters)
         // Controller filters are stored directly on the controller constructor
-        const controllerFilters =
-          Reflect.getMetadata(
-            EXCEPTION_FILTER_METADATA_KEY.controllerExceptionFilters,
-            controllerConstructor,
-          ) as Array<new (...args: Array<unknown>) => IExceptionFilter> | undefined;
+        const controllerFilters = Reflect.getMetadata(
+          EXCEPTION_FILTER_METADATA_KEY.controllerExceptionFilters,
+          controllerConstructor,
+        ) as
+          | Array<new (...args: Array<unknown>) => IExceptionFilter>
+          | undefined;
 
         if (controllerFilters && controllerFilters.length > 0) {
-          controllerFilters.forEach((FilterClass: new (...args: Array<unknown>) => IExceptionFilter) => {
-            try {
-              const filterInstance = this.instantiateFilter(FilterClass);
-              if (filterInstance) {
-                // Only add if not already added (avoid duplicates)
-                if (!filters.some((f) => f.constructor === FilterClass)) {
-                  filters.push(filterInstance);
+          controllerFilters.forEach(
+            (
+              FilterClass: new (...args: Array<unknown>) => IExceptionFilter,
+            ) => {
+              try {
+                const filterInstance = this.instantiateFilter(FilterClass);
+                if (filterInstance) {
+                  // Only add if not already added (avoid duplicates)
+                  if (!filters.some((f) => f.constructor === FilterClass)) {
+                    filters.push(filterInstance);
+                  }
+                }
+              } catch (error) {
+                // Could not instantiate filter
+                if (this.logger) {
+                  this.logger.warn(
+                    `Failed to instantiate controller-level filter ${FilterClass.name}: ${error}`,
+                    "exception-handler",
+                  );
                 }
               }
-            } catch (error) {
-              // Could not instantiate filter
-              if (this.logger) {
-                this.logger.warn(
-                  `Failed to instantiate controller-level filter ${FilterClass.name}: ${error}`,
-                  "exception-handler",
-                );
-              }
-            }
-          });
+            },
+          );
         }
       }
     } catch (error) {
       // Could not extract route filters
       if (this.logger) {
-        this.logger.warn(`Failed to extract route filters: ${error}`, "exception-handler");
+        this.logger.warn(
+          `Failed to extract route filters: ${error}`,
+          "exception-handler",
+        );
       }
     }
 
@@ -308,17 +333,25 @@ export class ExceptionHandlerMiddleware {
         // Try to instantiate directly
         const instance = new FilterClass();
         // Try to inject dependencies if possible
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (this.container!.isBound(Logger) && (instance as any).logger === undefined) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (instance as any).logger = this.container!.get(Logger);
+        interface FilterWithLogger {
+          logger?: Logger;
+        }
+        interface FilterWithReport {
+          report?: unknown;
+        }
+        if (
+          this.container!.isBound(Logger) &&
+          (instance as FilterWithLogger).logger === undefined
+        ) {
+          (instance as FilterWithLogger).logger = this.container!.get(Logger);
         }
         // Try to inject Report provider if available
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (this.container!.isBound("Report") && (instance as any).report === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (instance as any).report = this.container!.get("Report");
+          if (
+            this.container!.isBound("Report") &&
+            (instance as FilterWithReport).report === undefined
+          ) {
+            (instance as FilterWithReport).report = this.container!.get("Report");
           }
         } catch {
           // Report not available, skip
@@ -327,7 +360,10 @@ export class ExceptionHandlerMiddleware {
       }
     } catch (error) {
       if (this.logger) {
-        this.logger.warn(`Failed to instantiate filter ${FilterClass.name}: ${error}`, "exception-handler");
+        this.logger.warn(
+          `Failed to instantiate filter ${FilterClass.name}: ${error}`,
+          "exception-handler",
+        );
       }
       return null;
     }
@@ -398,8 +434,9 @@ export class ExceptionHandlerMiddleware {
         responseBody.stack = exception.stack;
       }
 
-      context.response.status(StatusCode.InternalServerError).json(responseBody);
+      context.response
+        .status(StatusCode.InternalServerError)
+        .json(responseBody);
     }
   }
 }
-

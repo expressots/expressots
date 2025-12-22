@@ -1,7 +1,10 @@
 import { inject, injectable } from "../di/inversify";
 import { Logger } from "../provider/logger/logger.provider";
 import { Report } from "./report";
-import type { IExceptionFilter, ExceptionContext } from "./exception-filter.interface";
+import type {
+  IExceptionFilter,
+  ExceptionContext,
+} from "./exception-filter.interface";
 
 /**
  * Base exception filter with common functionality
@@ -41,10 +44,7 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
    * @param exception - The exception
    * @param context - The exception context
    */
-  protected logError(
-    exception: Error,
-    context: ExceptionContext,
-  ): void {
+  protected logError(exception: Error, context: ExceptionContext): void {
     const controllerName = context.controller?.name || "unknown";
     const handlerName = context.handler || "unknown";
     const service = context.controller?.name || "exception-filter";
@@ -59,4 +59,3 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
     }
   }
 }
-

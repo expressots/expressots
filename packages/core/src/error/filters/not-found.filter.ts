@@ -26,4 +26,3 @@ export class NotFoundFilter extends BaseExceptionFilter {
     this.sendErrorResponse(context, StatusCode.NotFound, response);
   }
 }
-

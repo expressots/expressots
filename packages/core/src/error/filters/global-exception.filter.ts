@@ -16,8 +16,7 @@ export class GlobalExceptionFilter extends BaseExceptionFilter {
 
     // Don't expose internal errors in production
     const isDevelopment =
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "test";
+      process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
     const response: Record<string, unknown> = {
       type: "https://expressots.dev/errors/internal-server-error",
@@ -35,4 +34,3 @@ export class GlobalExceptionFilter extends BaseExceptionFilter {
     this.sendErrorResponse(context, StatusCode.InternalServerError, response);
   }
 }
-

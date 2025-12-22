@@ -1,6 +1,10 @@
 import { injectable } from "../di/inversify";
 import { IProvider } from "../provider";
-import { AppError, type AppErrorOptions, type ValidationError } from "./app-error";
+import {
+  AppError,
+  type AppErrorOptions,
+  type ValidationError,
+} from "./app-error";
 import { StatusCode } from "./status-code";
 
 /**
@@ -62,7 +66,10 @@ export class Report implements IProvider {
    * @param message - Error message
    * @param details - Additional error details
    */
-  public badRequest(message: string, details?: Record<string, unknown>): AppError {
+  public badRequest(
+    message: string,
+    details?: Record<string, unknown>,
+  ): AppError {
     return AppError.badRequest(message, details);
   }
 
@@ -104,7 +111,10 @@ export class Report implements IProvider {
    * @param message - Error message
    * @param details - Additional error details
    */
-  public conflict(message: string, details?: Record<string, unknown>): AppError {
+  public conflict(
+    message: string,
+    details?: Record<string, unknown>,
+  ): AppError {
     return AppError.conflict(message, details);
   }
 

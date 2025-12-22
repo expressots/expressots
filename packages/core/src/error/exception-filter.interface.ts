@@ -90,4 +90,3 @@ export interface ExceptionFilterMetadata {
    */
   filter: NewableFunction;
 }
-

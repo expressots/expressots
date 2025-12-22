@@ -7,4 +7,3 @@ export const EXCEPTION_FILTER_METADATA_KEY = {
   controllerExceptionFilters: "expressots:controller-exception-filters",
   methodExceptionFilters: "expressots:method-exception-filters",
 };
-
