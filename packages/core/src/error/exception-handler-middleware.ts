@@ -351,7 +351,8 @@ export class ExceptionHandlerMiddleware {
             this.container!.isBound("Report") &&
             (instance as FilterWithReport).report === undefined
           ) {
-            (instance as FilterWithReport).report = this.container!.get("Report");
+            (instance as FilterWithReport).report =
+              this.container!.get("Report");
           }
         } catch {
           // Report not available, skip
