@@ -91,3 +91,32 @@ export function cleanUpMetadata(): void {
 export function instanceOfIHttpActionResult(value: unknown): value is IHttpActionResult {
   return value != null && typeof (value as IHttpActionResult).executeAsync === "function";
 }
+
+/**
+ * Gets content negotiation metadata from a controller method.
+ * @param target - Controller instance
+ * @param propertyKey - Method name
+ * @returns Content negotiation metadata
+ */
+export function getContentNegotiationMetadata(
+  target: object,
+  propertyKey: string | symbol,
+): {
+  accept?: Array<string>;
+  consumes?: Array<string>;
+  produces?: Array<string>;
+  csvOptions?: import("@expressots/core").CsvFormatOptions;
+  xmlOptions?: import("@expressots/core").XmlFormatOptions;
+  yamlOptions?: import("@expressots/core").YamlFormatOptions;
+  streamResponse?: boolean;
+} {
+  return {
+    accept: Reflect.getMetadata(METADATA_KEY.accept, target, propertyKey),
+    consumes: Reflect.getMetadata(METADATA_KEY.consumes, target, propertyKey),
+    produces: Reflect.getMetadata(METADATA_KEY.produces, target, propertyKey),
+    csvOptions: Reflect.getMetadata(METADATA_KEY.csvOptions, target, propertyKey),
+    xmlOptions: Reflect.getMetadata(METADATA_KEY.xmlOptions, target, propertyKey),
+    yamlOptions: Reflect.getMetadata(METADATA_KEY.yamlOptions, target, propertyKey),
+    streamResponse: Reflect.getMetadata(METADATA_KEY.streamResponse, target, propertyKey),
+  };
+}

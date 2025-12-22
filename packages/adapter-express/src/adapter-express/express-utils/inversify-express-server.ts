@@ -7,7 +7,7 @@ import express, {
   Response,
   Router,
 } from "express";
-import { interfaces } from "@expressots/core";
+import { interfaces, Middleware as MiddlewareClass, ContentNegotiationService } from "@expressots/core";
 import { BaseMiddleware } from "./base-middleware";
 import {
   getControllersFromMetadata,
@@ -16,6 +16,7 @@ import {
   getControllerMethodMetadata,
   getControllerParameterMetadata,
   instanceOfIHttpActionResult,
+  getContentNegotiationMetadata,
 } from "./utils";
 import {
   TYPE,
@@ -57,6 +58,7 @@ export class InversifyExpressServer {
   private _routingConfig: RoutingConfig;
   private _AuthProvider!: new () => AuthProvider;
   private _forceControllers: boolean;
+  private _contentNegotiationService?: ContentNegotiationService;
 
   /**
    * Wrapper for the express server.
@@ -622,6 +624,24 @@ export class InversifyExpressServer {
           value();
         } else if (!res.headersSent) {
           if (value !== undefined) {
+            // Try content negotiation if enabled
+            const cnMetadata = getContentNegotiationMetadata(controller, key);
+            const contentNegotiationService = this.getContentNegotiationService();
+            
+            if (contentNegotiationService?.isEnabled()) {
+              const handled = await contentNegotiationService.handleResponse(
+                req,
+                res,
+                value,
+                cnMetadata.accept || cnMetadata.produces,
+              );
+              
+              if (handled) {
+                return; // Response already sent
+              }
+            }
+            
+            // Fallback to default behavior (backward compatible)
             res.send(value);
           }
         }
@@ -633,6 +653,22 @@ export class InversifyExpressServer {
 
   private _getHttpContext(req: express.Request): HttpContext {
     return Reflect.getMetadata(METADATA_KEY.httpContext, req) as HttpContext;
+  }
+
+  /**
+   * Sets the content negotiation service instance.
+   * @param service - Content negotiation service instance
+   */
+  public setContentNegotiationService(service: ContentNegotiationService): void {
+    this._contentNegotiationService = service;
+  }
+
+  /**
+   * Gets the content negotiation service if available.
+   * @returns Content negotiation service or undefined
+   */
+  private getContentNegotiationService(): ContentNegotiationService | undefined {
+    return this._contentNegotiationService;
   }
 
   private async _createHttpContext(

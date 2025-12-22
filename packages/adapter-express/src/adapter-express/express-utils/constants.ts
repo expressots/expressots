@@ -10,6 +10,13 @@ export const METADATA_KEY = {
   controllerParameter: "inversify-express-utils:controller-parameter",
   httpContext: "inversify-express-utils:httpcontext",
   version: "inversify-express-utils:version",
+  accept: "inversify-express-utils:accept",
+  consumes: "inversify-express-utils:consumes",
+  produces: "inversify-express-utils:produces",
+  csvOptions: "inversify-express-utils:csv-options",
+  xmlOptions: "inversify-express-utils:xml-options",
+  yamlOptions: "inversify-express-utils:yaml-options",
+  streamResponse: "inversify-express-utils:stream-response",
 };
 
 export const HTTP_CODE_METADATA = {

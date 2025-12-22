@@ -1,4 +1,13 @@
 export * from "./decorators";
+export {
+  Accept,
+  Consumes,
+  Produces,
+  CsvOptions,
+  XmlOptions,
+  YamlOptions,
+  StreamResponse,
+} from "./content-negotiation-decorators";
 export { Controller } from "./interfaces";
 export { Patterns, pattern } from "./route-constraints";
 export { when, unless, isConditionalMiddleware } from "./conditional-middleware";

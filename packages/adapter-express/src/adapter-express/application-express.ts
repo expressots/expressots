@@ -213,6 +213,12 @@ export class AppExpress implements Server.IWebServer {
     const expressServer = new InversifyExpressServer(this.appContainer.Container, null, {
       rootPath: this.globalPrefix as string,
     });
+    
+    // Pass ContentNegotiationService to InversifyExpressServer if available
+    const contentNegotiationService = (this.Middleware as Middleware).getContentNegotiationService();
+    if (contentNegotiationService) {
+      expressServer.setContentNegotiationService(contentNegotiationService);
+    }
 
     expressServer.setConfig((app: express.Application) => {
       this.configureMiddleware(app, this.middlewares);
