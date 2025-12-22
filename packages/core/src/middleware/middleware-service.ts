@@ -30,6 +30,7 @@ import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 import { middlewareResolver } from "./middleware-resolver";
 import { ContentNegotiationService } from "./content-negotiation/content-negotiation-service";
 import { ContentNegotiationOptions } from "./interfaces/content-negotiation.interface";
+import type { ValidationConfig } from "../provider/validation/validation.interface";
 
 /**
  * ExpressHandler Type
@@ -729,5 +730,57 @@ export class Middleware implements IMiddleware {
    */
   public getContentNegotiationService(): ContentNegotiationService | undefined {
     return this.contentNegotiationService;
+  }
+
+  // Validation Service - will be set by adapter-express
+  private validationServiceFactory?: () => unknown;
+
+  /**
+   * Configures validation for automatic request parameter validation.
+   * Supports multiple validation libraries (class-validator, Zod, Yup, custom adapters)
+   * with smart field detection and helpful error messages.
+   *
+   * @param options - Configuration options for validation
+   * @example
+   * ```typescript
+   * this.Middleware.addValidation({
+   *   smartDetection: true,
+   *   errorFormat: "helpful",
+   *   adapters: [ClassValidatorAdapter]
+   * });
+   * ```
+   * @public API
+   */
+  public addValidation(options?: ValidationConfig): void {
+    // Store the configuration for the adapter-express to use
+    // The actual ValidationService is created by adapter-express
+    (this as unknown as { _validationConfig: ValidationConfig })._validationConfig = options || {};
+  }
+
+  /**
+   * Gets the validation configuration.
+   * @returns Validation configuration or undefined if not configured
+   * @internal
+   */
+  public getValidationConfig(): ValidationConfig | undefined {
+    return (this as unknown as { _validationConfig?: ValidationConfig })._validationConfig;
+  }
+
+  /**
+   * Sets the validation service factory (called by adapter-express).
+   * @param factory - Factory function that returns the ValidationService
+   * @internal
+   */
+  public setValidationServiceFactory(factory: () => unknown): void {
+    this.validationServiceFactory = factory;
+  }
+
+  /**
+   * Gets the validation service instance.
+   * @returns Validation service or undefined if not configured
+   * @internal
+   */
+  public getValidationService(): unknown {
+    return this.validationServiceFactory?.();
   }
 }

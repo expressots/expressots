@@ -227,4 +227,24 @@ export interface IMiddleware {
   addContentNegotiation(
     options?: import("./interfaces/content-negotiation.interface").ContentNegotiationOptions,
   ): void;
+
+  /**
+   * Configures validation for automatic request parameter validation.
+   * Supports multiple validation libraries (class-validator, Zod, Yup, custom adapters)
+   * with smart field detection and helpful error messages.
+   *
+   * @param options - Configuration options for validation
+   * @example
+   * ```typescript
+   * this.Middleware.addValidation({
+   *   smartDetection: true,
+   *   errorFormat: "helpful",
+   *   adapters: [ClassValidatorAdapter]
+   * });
+   * ```
+   * @public API
+   */
+  addValidation(
+    options?: import("../provider/validation/validation.interface").ValidationConfig,
+  ): void;
 }
