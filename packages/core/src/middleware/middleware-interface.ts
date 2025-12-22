@@ -203,4 +203,24 @@ export interface IMiddleware {
    * @public API
    */
   setupMulter(options?: multer.Options): multer.Multer;
+
+  /**
+   * Configures content negotiation middleware for automatic response format selection
+   * based on Accept headers. Supports multiple formats (JSON, XML, CSV, YAML, etc.)
+   * with quality value negotiation (RFC 7231).
+   *
+   * @param options - Configuration options for content negotiation
+   * @example
+   * ```typescript
+   * this.Middleware.addContentNegotiation({
+   *   defaultFormat: "application/json",
+   *   formatters: [JsonFormatter, XmlFormatter, CsvFormatter],
+   *   strictMode: false
+   * });
+   * ```
+   * @public API
+   */
+  addContentNegotiation(
+    options?: import("./interfaces/content-negotiation.interface").ContentNegotiationOptions,
+  ): void;
 }

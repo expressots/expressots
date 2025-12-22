@@ -28,6 +28,8 @@ import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 import { middlewareResolver } from "./middleware-resolver";
+import { ContentNegotiationService } from "./content-negotiation/content-negotiation-service";
+import { ContentNegotiationOptions } from "./interfaces/content-negotiation.interface";
 
 /**
  * ExpressHandler Type
@@ -131,6 +133,7 @@ export class Middleware implements IMiddleware {
   private middlewarePipeline: Array<MiddlewarePipeline> = [];
   private errorHandler: ExpressHandler | undefined;
   private logger: Logger = new Logger();
+  private contentNegotiationService: ContentNegotiationService | undefined;
 
   /**
    * Retrieves the type of the middleware.
@@ -648,5 +651,38 @@ export class Middleware implements IMiddleware {
    */
   public getErrorHandler(): ExpressHandler {
     return this.errorHandler;
+  }
+
+  /**
+   * Configures content negotiation middleware for automatic response format selection
+   * based on Accept headers. Supports multiple formats (JSON, XML, CSV, YAML, etc.)
+   * with quality value negotiation (RFC 7231).
+   *
+   * @param options - Configuration options for content negotiation
+   * @example
+   * ```typescript
+   * this.Middleware.addContentNegotiation({
+   *   defaultFormat: "application/json",
+   *   formatters: [JsonFormatter, XmlFormatter, CsvFormatter],
+   *   strictMode: false
+   * });
+   * ```
+   * @public API
+   */
+  public addContentNegotiation(options?: ContentNegotiationOptions): void {
+    if (!this.contentNegotiationService) {
+      this.contentNegotiationService = new ContentNegotiationService();
+    }
+
+    this.contentNegotiationService.configure(options || {});
+  }
+
+  /**
+   * Gets the content negotiation service instance.
+   * @returns Content negotiation service or undefined if not configured
+   * @internal
+   */
+  public getContentNegotiationService(): ContentNegotiationService | undefined {
+    return this.contentNegotiationService;
   }
 }

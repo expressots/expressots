@@ -18,3 +18,24 @@ export { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
 export { multer } from "./interfaces/multer.interface";
 export { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 export * as IMorgan from "./interfaces/morgan.interface";
+
+// Content Negotiation exports
+export {
+  ContentNegotiationService,
+  FormatterRegistry,
+  AcceptHeaderParser,
+  JsonFormatter,
+  XmlFormatter,
+  CsvFormatter,
+  YamlFormatter,
+  PlainTextFormatter,
+} from "./content-negotiation";
+export type {
+  IContentFormatter,
+  ContentNegotiationOptions,
+  AcceptHeaderEntry,
+  NegotiationResult,
+  CsvFormatOptions,
+  XmlFormatOptions,
+  YamlFormatOptions,
+} from "./interfaces/content-negotiation.interface";
