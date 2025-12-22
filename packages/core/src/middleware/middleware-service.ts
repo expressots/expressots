@@ -416,12 +416,12 @@ export class Middleware implements IMiddleware {
     // If exception filters are enabled, wrap the error handler with ExceptionHandlerMiddleware
     if (enableExceptionFilters && container) {
       try {
-        const exceptionHandler = new ExceptionHandlerMiddleware(container);
-        this.errorHandler = exceptionHandler.handle;
-        this.logger.info(
-          "Exception filters enabled - filters decorated with @Catch() will be automatically discovered",
-          "middleware-service",
+        const exceptionHandler = new ExceptionHandlerMiddleware(
+          container,
+          undefined,
+          showStackTrace ?? false,
         );
+        this.errorHandler = exceptionHandler.handle;
       } catch (error) {
         this.logger.warn(
           `Failed to enable exception filters: ${error}. Falling back to default error handler.`,

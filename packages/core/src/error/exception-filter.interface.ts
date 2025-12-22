@@ -55,6 +55,11 @@ export interface ExceptionContext {
    * This is adapter-specific and optional to avoid circular dependencies
    */
   httpContext?: IHttpContext;
+
+  /**
+   * Whether to show stack traces in logs and responses
+   */
+  showStackTrace?: boolean;
 }
 
 /**

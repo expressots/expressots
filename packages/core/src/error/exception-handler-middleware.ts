@@ -78,6 +78,7 @@ export class ExceptionHandlerMiddleware {
       next,
       route: req.route?.path,
       method: req.method,
+      showStackTrace: this.showStackTrace,
     };
 
     // Try to get HttpContext from request if available

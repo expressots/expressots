@@ -54,7 +54,8 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
       service,
     );
 
-    if (exception.stack) {
+    // Only log stack trace if showStackTrace is explicitly enabled
+    if (context.showStackTrace === true && exception.stack) {
       this.logger?.error(exception.stack, service);
     }
   }

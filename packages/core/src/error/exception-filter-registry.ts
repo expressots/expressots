@@ -90,10 +90,6 @@ export class ExceptionFilterRegistry {
       });
 
       this.initialized = true;
-      this.logger.info(
-        `Exception filter registry initialized with ${filterMetadata.length} filters`,
-        "exception-filter-registry",
-      );
     } catch (error) {
       this.logger.error(
         `Failed to initialize exception filter registry: ${error}`,
