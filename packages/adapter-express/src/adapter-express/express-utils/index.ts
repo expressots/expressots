@@ -15,3 +15,12 @@ export type { ConditionalMiddlewareConfig, MiddlewareCondition } from "./conditi
 export { combine, sequence, isComposedMiddleware } from "./middleware-composition";
 export type { ComposedMiddlewareConfig } from "./middleware-composition";
 export { Catch, UseFilters } from "./exception-filter-decorators";
+export { getControllerGuards, getMethodGuards } from "./guard-utils";
+export { GuardContextFactory } from "./guard-context-factory";
+export { GuardMiddleware } from "./guard-middleware";
+export { ScopeExtractor } from "./scope-extractor";
+export type { IScopeExtractor } from "./scope-extractor.interface";
+export { PermissionPreloaderMiddleware } from "./permission-preloader.middleware";
+export { TYPE } from "./constants";
+export type { AuthProvider, Principal } from "./interfaces";
+export { setupAuthorizationForExpress } from "./setup-authorization";

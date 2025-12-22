@@ -3,6 +3,12 @@ import { interfaces as inversifyInterfaces } from "@expressots/core";
 import { HTTP_VERBS_ENUM, PARAMETER_TYPE } from "./constants";
 import { HttpResponseMessage } from "./httpResponseMessage";
 
+/**
+ * Type for a constructor function (class)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type NewableFunction = abstract new (...args: any[]) => any;
+
 type Prototype<T> = {
   [P in keyof T]: T[P] extends NewableFunction ? T[P] : T[P] | undefined;
 } & {
@@ -100,7 +106,11 @@ export type ExtractedParameters =
   | [Request, Response, NextFunction]
   | Array<unknown>;
 
-export type HandlerDecorator = (target: DecoratorTarget, key: string, value: unknown) => void;
+export type HandlerDecorator = (
+  target: object,
+  propertyKey: string | symbol,
+  descriptor: PropertyDescriptor,
+) => void;
 
 export type ConfigFunction = (app: Application) => void;
 

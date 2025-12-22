@@ -207,15 +207,48 @@ export class AppExpress implements Server.IWebServer {
               app.use(pathGlobal, mid as express.RequestHandler);
             } else {
               const middleware = mid as unknown as ExpressoMiddleware;
-              middleware.use = middleware.use.bind(middleware);
-              app.use(pathGlobal, middleware.use);
+              // Check if it's a BaseMiddleware instance (has handler method, not use)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              if ((middleware as any).handler && typeof (middleware as any).handler === "function") {
+                // BaseMiddleware instance - wrap handler method
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const baseMiddleware = middleware as any;
+                app.use(pathGlobal, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                  baseMiddleware.handler(req, res, next);
+                });
+              } else if (middleware.use) {
+                middleware.use = middleware.use.bind(middleware);
+                app.use(pathGlobal, middleware.use);
+              } else {
+                this.logger.warn(
+                  `Middleware ${middleware.constructor?.name || "unknown"} does not have a 'use' or 'handler' method`,
+                  "application-express",
+                );
+              }
             }
           }
         }
       } else {
         const middleware = entry as ExpressoMiddleware;
-        middleware.use = middleware.use.bind(middleware);
-        app.use(middleware.use);
+        // Check if it's a BaseMiddleware instance (has handler method, not use)
+        // BaseMiddleware instances are handled specially in inversify-express-server
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((middleware as any).handler && typeof (middleware as any).handler === "function") {
+          // BaseMiddleware instance - wrap handler method
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const baseMiddleware = middleware as any;
+          app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+            baseMiddleware.handler(req, res, next);
+          });
+        } else if (middleware.use) {
+          middleware.use = middleware.use.bind(middleware);
+          app.use(middleware.use);
+        } else {
+          this.logger.warn(
+            `Middleware ${middleware.constructor?.name || "unknown"} does not have a 'use' or 'handler' method`,
+            "application-express",
+          );
+        }
       }
     }
   }

@@ -11,7 +11,9 @@ import {
   interfaces,
   Middleware as MiddlewareClass,
   ContentNegotiationService,
+  GuardExecutor,
 } from "@expressots/core";
+import { GuardContextFactory } from "./guard-context-factory";
 import { BaseMiddleware } from "./base-middleware";
 import {
   getControllersFromMetadata,
@@ -41,6 +43,7 @@ import type {
   HttpContext,
   IExpressoMiddleware,
   Middleware,
+  NewableFunction,
   ParameterMetadata,
   Principal,
   RoutingConfig,
@@ -52,6 +55,8 @@ import {
   type ConditionalMiddlewareConfig,
 } from "./conditional-middleware";
 import { isComposedMiddleware, type ComposedMiddlewareConfig } from "./middleware-composition";
+import { getControllerGuards, getMethodGuards } from "./guard-utils";
+import { GuardMiddleware } from "./guard-middleware";
 
 export class InversifyExpressServer {
   private _router: Router;
@@ -191,7 +196,7 @@ export class InversifyExpressServer {
             (controllerMetadata.target as { name: string }).name,
             metadata.key,
             paramList,
-            controller.constructor, // Pass controller constructor for metadata
+            controller.constructor as NewableFunction, // Pass controller constructor for metadata
             metadata, // Pass method metadata for route-specific filters
           );
           const routeMiddleware = this.resolveMiddleware(...metadata.middleware);
@@ -605,6 +610,34 @@ export class InversifyExpressServer {
     controllerConstructor?: NewableFunction,
     methodMetadata?: ControllerMethodMetadata,
   ): RequestHandler {
+    // Extract guards from controller and method metadata
+    const controllerGuards = controllerConstructor
+      ? getControllerGuards(controllerConstructor)
+      : [];
+    const methodGuards = controllerConstructor
+      ? getMethodGuards(controllerConstructor, key)
+      : [];
+    const allGuards = [...controllerGuards, ...methodGuards];
+
+    // Create guard middleware if guards exist
+    let guardMiddleware: RequestHandler | null = null;
+    if (allGuards.length > 0) {
+      try {
+        // Check if guard system is initialized (use class identifiers, not strings)
+        if (
+          this._container.isBound(GuardExecutor) &&
+          this._container.isBound(GuardContextFactory) &&
+          this._container.isBound(GuardMiddleware)
+        ) {
+          const guardMiddlewareInstance = this._container.get<{ execute: RequestHandler }>(GuardMiddleware);
+          guardMiddleware = guardMiddlewareInstance.execute;
+        }
+      } catch (error) {
+        // Guard system not initialized, continue without guards
+        console.error("[Guard System] Failed to initialize:", error);
+      }
+    }
+
     // Create handler function
     const handler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
@@ -617,71 +650,100 @@ export class InversifyExpressServer {
           (req as any).__expressotsMethod = key;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (req as any).__expressotsControllerName = controllerName;
+
+          // Attach guards to request for guard middleware
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (req as any).__expressotsControllerGuards = controllerGuards;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (req as any).__expressotsMethodGuards = methodGuards;
         }
 
-        const args = this.extractParameters(req, res, next, parameterMetadata);
-        const httpContext = this._getHttpContext(req);
-        httpContext.container.bind<HttpContext>(TYPE.HttpContext).toConstantValue(httpContext);
-
-        // invoke controller's action
-        const controller = httpContext.container.getNamed<BaseController>(
-          TYPE.Controller,
-          controllerName,
-        );
-        const value = await (controller[key] as ControllerHandler)(...args);
-
-        const { template, defaultData } = getRenderMetadata(controller, key);
-
-        if (template) {
-          const data = value || defaultData || {};
-          res.render(template, data as Record<string, unknown>);
-        } else if (value instanceof HttpResponseMessage) {
-          await this.handleHttpResponseMessage(value, res);
-        } else if (instanceOfIHttpActionResult(value)) {
-          const httpResponseMessage = await value.executeAsync();
-          await this.handleHttpResponseMessage(httpResponseMessage, res);
-        } else if (value instanceof Function) {
-          value();
-        } else if (!res.headersSent) {
-          if (value !== undefined) {
-            // Try content negotiation if enabled
-            const cnMetadata = getContentNegotiationMetadata(controller, key);
-            const contentNegotiationService = this.getContentNegotiationService();
-
-            if (contentNegotiationService?.isEnabled()) {
-              const handled = await contentNegotiationService.handleResponse(
-                req,
-                res,
-                value,
-                cnMetadata.accept || cnMetadata.produces,
-              );
-
-              if (handled) {
-                return; // Response already sent
-              }
+        // Execute guard middleware if guards exist
+        if (guardMiddleware && allGuards.length > 0) {
+          return guardMiddleware(req, res, async (err?: unknown) => {
+            if (err) {
+              return next(err);
             }
-
-            // Fallback to default behavior (backward compatible)
-            res.send(value);
-          }
+            // Guards passed, continue to route handler
+            await this.executeRouteHandler(
+              req,
+              res,
+              next,
+              controllerName,
+              key,
+              parameterMetadata,
+            );
+          });
         }
-      } catch (err) {
-        next(err);
+
+        // No guards, execute route handler directly
+        await this.executeRouteHandler(req, res, next, controllerName, key, parameterMetadata);
+      } catch (error) {
+        next(error);
       }
     };
 
-    // Attach metadata to handler function for exception handler middleware
-    // Store controller constructor, method name, and controller name
-    if (controllerConstructor && methodMetadata) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (handler as any).__expressotsController = controllerConstructor;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (handler as any).__expressotsMethod = key;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (handler as any).__expressotsControllerName = controllerName;
-    }
-
     return handler;
+  }
+
+  private async executeRouteHandler(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    controllerName: string,
+    key: string,
+    parameterMetadata: Array<ParameterMetadata>,
+  ): Promise<void> {
+    try {
+      const args = this.extractParameters(req, res, next, parameterMetadata);
+      const httpContext = this._getHttpContext(req);
+      httpContext.container.bind<HttpContext>(TYPE.HttpContext).toConstantValue(httpContext);
+
+      // invoke controller's action
+      const controller = httpContext.container.getNamed<BaseController>(
+        TYPE.Controller,
+        controllerName,
+      );
+      const value = await (controller[key] as ControllerHandler)(...args);
+
+      const { template, defaultData } = getRenderMetadata(controller, key);
+
+      if (template) {
+        const data = value || defaultData || {};
+        res.render(template, data as Record<string, unknown>);
+      } else if (value instanceof HttpResponseMessage) {
+        await this.handleHttpResponseMessage(value, res);
+      } else if (instanceOfIHttpActionResult(value)) {
+        const httpResponseMessage = await value.executeAsync();
+        await this.handleHttpResponseMessage(httpResponseMessage, res);
+      } else if (value instanceof Function) {
+        value();
+      } else if (!res.headersSent) {
+        if (value !== undefined) {
+          // Try content negotiation if enabled
+          const cnMetadata = getContentNegotiationMetadata(controller, key);
+          const contentNegotiationService = this.getContentNegotiationService();
+
+          if (contentNegotiationService?.isEnabled()) {
+            const handled = await contentNegotiationService.handleResponse(
+              req,
+              res,
+              value,
+              cnMetadata.accept || cnMetadata.produces,
+            );
+
+            if (handled) {
+              return; // Response already sent
+            }
+          }
+
+          // Fallback to default behavior (backward compatible)
+          res.send(value);
+        }
+      }
+    } catch (err) {
+      next(err);
+    }
   }
 
   private _getHttpContext(req: express.Request): HttpContext {
@@ -725,7 +787,8 @@ export class InversifyExpressServer {
     res: Response,
     next: NextFunction,
   ): Promise<Principal> {
-    if (this._AuthProvider !== undefined) {
+    // Check if AuthProvider is available (either via constructor or bound via setupAuthorizationForExpress)
+    if (this._AuthProvider !== undefined || this._container.isBound(TYPE.AuthProvider)) {
       const authProvider = this._container.get<AuthProvider>(TYPE.AuthProvider);
       return authProvider.getUser(req, res, next);
     }

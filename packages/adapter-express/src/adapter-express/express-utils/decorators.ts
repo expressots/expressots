@@ -17,6 +17,7 @@ import type {
   DecoratorTarget,
   HandlerDecorator,
   Middleware,
+  NewableFunction,
   ParameterMetadata,
 } from "./interfaces";
 import { packageResolver } from "./resolver-multer";
@@ -42,7 +43,7 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
     const currentMetadata: ControllerMetadata = {
       middleware,
       path,
-      target,
+      target: target as DecoratorTarget,
       version: controllerVersion,
     };
 
@@ -245,7 +246,7 @@ function enhancedHttpMethod(
   path: string,
   ...middleware: Array<Middleware>
 ): HandlerDecorator {
-  return (target: DecoratorTarget, key: string): void => {
+  return (target: object, key: string | symbol): void => {
     // Check for version metadata on the method
     const methodVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target, key) as
       | string
@@ -253,11 +254,11 @@ function enhancedHttpMethod(
       | undefined;
 
     const metadata: ControllerMethodMetadata = {
-      key,
+      key: String(key),
       method,
       middleware,
       path,
-      target,
+      target: target as DecoratorTarget,
       version: methodVersion,
     };
     let metadataList: Array<ControllerMethodMetadata> = [];
@@ -315,7 +316,7 @@ export function Method(
   path: string,
   ...middleware: Array<Middleware>
 ): HandlerDecorator {
-  return (target: DecoratorTarget, key: string): void => {
+  return (target: object, key: string | symbol): void => {
     // Check for version metadata on the method
     const methodVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target, key) as
       | string
@@ -323,11 +324,11 @@ export function Method(
       | undefined;
 
     const metadata: ControllerMethodMetadata = {
-      key,
+      key: String(key),
       method,
       middleware,
       path,
-      target,
+      target: target as DecoratorTarget,
       version: methodVersion,
     };
 
