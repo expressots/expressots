@@ -7,7 +7,11 @@ import express, {
   Response,
   Router,
 } from "express";
-import { interfaces, Middleware as MiddlewareClass, ContentNegotiationService } from "@expressots/core";
+import {
+  interfaces,
+  Middleware as MiddlewareClass,
+  ContentNegotiationService,
+} from "@expressots/core";
 import { BaseMiddleware } from "./base-middleware";
 import {
   getControllersFromMetadata,
@@ -627,7 +631,7 @@ export class InversifyExpressServer {
             // Try content negotiation if enabled
             const cnMetadata = getContentNegotiationMetadata(controller, key);
             const contentNegotiationService = this.getContentNegotiationService();
-            
+
             if (contentNegotiationService?.isEnabled()) {
               const handled = await contentNegotiationService.handleResponse(
                 req,
@@ -635,12 +639,12 @@ export class InversifyExpressServer {
                 value,
                 cnMetadata.accept || cnMetadata.produces,
               );
-              
+
               if (handled) {
                 return; // Response already sent
               }
             }
-            
+
             // Fallback to default behavior (backward compatible)
             res.send(value);
           }

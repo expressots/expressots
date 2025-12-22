@@ -1,10 +1,6 @@
 import "reflect-metadata";
 import { METADATA_KEY } from "./constants";
-import type {
-  CsvFormatOptions,
-  XmlFormatOptions,
-  YamlFormatOptions,
-} from "@expressots/core";
+import type { CsvFormatOptions, XmlFormatOptions, YamlFormatOptions } from "@expressots/core";
 
 /**
  * Accept decorator to specify which content types this route accepts for responses.
@@ -130,4 +126,3 @@ export function StreamResponse(): MethodDecorator {
     Reflect.defineMetadata(METADATA_KEY.streamResponse, true, target, key);
   };
 }
-
