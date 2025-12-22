@@ -1,4 +1,7 @@
-import { IContentFormatter, CsvFormatOptions } from "../../interfaces/content-negotiation.interface";
+import {
+  IContentFormatter,
+  CsvFormatOptions,
+} from "../../interfaces/content-negotiation.interface";
 
 /**
  * CSV formatter for content negotiation.
@@ -112,11 +115,11 @@ export class CsvFormatter implements IContentFormatter {
    */
   private formatRow(values: Array<string>): string {
     const delimiter = this.options.delimiter || ",";
-    
+
     if (this.options.escape) {
       return values.map((value) => this.escapeCsvValue(value)).join(delimiter);
     }
-    
+
     return values.join(delimiter);
   }
 
@@ -125,10 +128,13 @@ export class CsvFormatter implements IContentFormatter {
    */
   private escapeCsvValue(value: string): string {
     // If value contains delimiter, newline, or quote, wrap in quotes and escape quotes
-    if (value.includes(this.options.delimiter || ",") || value.includes("\n") || value.includes('"')) {
+    if (
+      value.includes(this.options.delimiter || ",") ||
+      value.includes("\n") ||
+      value.includes('"')
+    ) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
   }
 }
-

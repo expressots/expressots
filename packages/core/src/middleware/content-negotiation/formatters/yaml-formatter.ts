@@ -1,4 +1,7 @@
-import { IContentFormatter, YamlFormatOptions } from "../../interfaces/content-negotiation.interface";
+import {
+  IContentFormatter,
+  YamlFormatOptions,
+} from "../../interfaces/content-negotiation.interface";
 
 /**
  * YAML formatter for content negotiation.
@@ -36,7 +39,12 @@ export class YamlFormatter implements IContentFormatter {
   }
 
   getSupportedTypes(): Array<string> {
-    return ["application/yaml", "text/yaml", "application/x-yaml", "text/x-yaml"];
+    return [
+      "application/yaml",
+      "text/yaml",
+      "application/x-yaml",
+      "text/x-yaml",
+    ];
   }
 
   getPriority(): number {
@@ -88,8 +96,12 @@ export class YamlFormatter implements IContentFormatter {
       for (const [key, value] of entries) {
         const serialized = this.serialize(value, indent + 1);
         const keyStr = this.needsQuoting(key) ? `"${key}"` : key;
-        
-        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+
+        if (
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
           lines.push(`${currentIndent}${keyStr}:`);
           const valueLines = serialized.split("\n");
           valueLines.forEach((line) => {
@@ -147,4 +159,3 @@ export class YamlFormatter implements IContentFormatter {
       .replace(/\t/g, "\\t");
   }
 }
-

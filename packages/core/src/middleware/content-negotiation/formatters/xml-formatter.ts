@@ -1,4 +1,7 @@
-import { IContentFormatter, XmlFormatOptions } from "../../interfaces/content-negotiation.interface";
+import {
+  IContentFormatter,
+  XmlFormatOptions,
+} from "../../interfaces/content-negotiation.interface";
 
 /**
  * XML formatter for content negotiation.
@@ -55,7 +58,9 @@ export class XmlFormatter implements IContentFormatter {
     }
 
     if (Array.isArray(data)) {
-      const items = data.map((item) => this.serialize(item, this.options.itemElement || "item"));
+      const items = data.map((item) =>
+        this.serialize(item, this.options.itemElement || "item"),
+      );
       return `<${rootElement}>${this.formatXml(items.join(""))}</${rootElement}>`;
     }
 
@@ -138,4 +143,3 @@ export class XmlFormatter implements IContentFormatter {
       .replace(/'/g, "&apos;");
   }
 }
-

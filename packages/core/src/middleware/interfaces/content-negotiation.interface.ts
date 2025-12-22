@@ -151,4 +151,3 @@ export interface NegotiationResult {
   /** Quality value of the match */
   quality: number;
 }
-

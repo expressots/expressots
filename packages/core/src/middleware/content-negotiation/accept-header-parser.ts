@@ -63,7 +63,7 @@ export class AcceptHeaderParser {
     for (let i = 1; i < parts.length; i++) {
       const param = parts[i];
       const [key, value] = param.split("=").map((p) => p.trim());
-      
+
       if (key === "q" && value) {
         const qValue = parseFloat(value);
         if (!isNaN(qValue) && qValue >= 0 && qValue <= 1) {
@@ -119,4 +119,3 @@ export class AcceptHeaderParser {
     return undefined;
   }
 }
-

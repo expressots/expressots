@@ -6,4 +6,3 @@ export { XmlFormatter } from "./xml-formatter";
 export { CsvFormatter } from "./csv-formatter";
 export { YamlFormatter } from "./yaml-formatter";
 export { PlainTextFormatter } from "./plain-text-formatter";
-

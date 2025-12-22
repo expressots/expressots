@@ -38,4 +38,3 @@ export class JsonFormatter implements IContentFormatter {
     return 1.0; // Highest priority for JSON
   }
 }
-

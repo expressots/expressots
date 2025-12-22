@@ -30,7 +30,9 @@ export class PlainTextFormatter implements IContentFormatter {
 
       // For objects, format as key-value pairs
       const entries = Object.entries(data);
-      return entries.map(([key, value]) => `${key}: ${String(value)}`).join("\n");
+      return entries
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join("\n");
     }
 
     return String(data);
@@ -48,4 +50,3 @@ export class PlainTextFormatter implements IContentFormatter {
     return 0.5; // Lower priority, used as fallback
   }
 }
-

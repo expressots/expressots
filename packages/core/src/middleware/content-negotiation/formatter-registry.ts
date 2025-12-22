@@ -6,7 +6,8 @@ import { IContentFormatter } from "../interfaces/content-negotiation.interface";
  */
 export class FormatterRegistry {
   private formatters: Map<string, IContentFormatter> = new Map();
-  private formatterClasses: Map<string, new () => IContentFormatter> = new Map();
+  private formatterClasses: Map<string, new () => IContentFormatter> =
+    new Map();
   private cacheEnabled: boolean = true;
   private container?: interfaces.Container;
 
@@ -141,7 +142,10 @@ export class FormatterRegistry {
    * @returns True if a formatter is registered
    */
   hasFormatter(contentType: string): boolean {
-    return this.formatterClasses.has(contentType) || this.findFormatter(contentType) !== undefined;
+    return (
+      this.formatterClasses.has(contentType) ||
+      this.findFormatter(contentType) !== undefined
+    );
   }
 
   /**
@@ -186,4 +190,3 @@ export class FormatterRegistry {
     return new formatterClass();
   }
 }
-
