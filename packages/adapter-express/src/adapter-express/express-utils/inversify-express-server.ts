@@ -614,9 +614,7 @@ export class InversifyExpressServer {
     const controllerGuards = controllerConstructor
       ? getControllerGuards(controllerConstructor)
       : [];
-    const methodGuards = controllerConstructor
-      ? getMethodGuards(controllerConstructor, key)
-      : [];
+    const methodGuards = controllerConstructor ? getMethodGuards(controllerConstructor, key) : [];
     const allGuards = [...controllerGuards, ...methodGuards];
 
     // Create guard middleware if guards exist
@@ -629,7 +627,9 @@ export class InversifyExpressServer {
           this._container.isBound(GuardContextFactory) &&
           this._container.isBound(GuardMiddleware)
         ) {
-          const guardMiddlewareInstance = this._container.get<{ execute: RequestHandler }>(GuardMiddleware);
+          const guardMiddlewareInstance = this._container.get<{ execute: RequestHandler }>(
+            GuardMiddleware,
+          );
           guardMiddleware = guardMiddlewareInstance.execute;
         }
       } catch (error) {
@@ -665,14 +665,7 @@ export class InversifyExpressServer {
               return next(err);
             }
             // Guards passed, continue to route handler
-            await this.executeRouteHandler(
-              req,
-              res,
-              next,
-              controllerName,
-              key,
-              parameterMetadata,
-            );
+            await this.executeRouteHandler(req, res, next, controllerName, key, parameterMetadata);
           });
         }
 

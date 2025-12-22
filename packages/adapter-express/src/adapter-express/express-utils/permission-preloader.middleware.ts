@@ -39,4 +39,3 @@ export class PermissionPreloaderMiddleware extends BaseMiddleware {
     }
   }
 }
-

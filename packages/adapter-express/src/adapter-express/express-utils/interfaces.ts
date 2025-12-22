@@ -7,7 +7,7 @@ import { HttpResponseMessage } from "./httpResponseMessage";
  * Type for a constructor function (class)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type NewableFunction = abstract new (...args: any[]) => any;
+export type NewableFunction = abstract new (...args: Array<any>) => any;
 
 type Prototype<T> = {
   [P in keyof T]: T[P] extends NewableFunction ? T[P] : T[P] | undefined;

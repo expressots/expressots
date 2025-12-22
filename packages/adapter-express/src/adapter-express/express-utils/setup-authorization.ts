@@ -80,4 +80,3 @@ export function setupAuthorizationForExpress(
     middleware.addMiddleware(middlewareInstance as any);
   }
 }
-

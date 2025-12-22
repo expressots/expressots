@@ -208,14 +208,17 @@ export class AppExpress implements Server.IWebServer {
             } else {
               const middleware = mid as unknown as ExpressoMiddleware;
               // Check if it's a BaseMiddleware instance (has handler method, not use)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if ((middleware as any).handler && typeof (middleware as any).handler === "function") {
+              const middlewareRecord = middleware as unknown as Record<string, unknown>;
+              if (middlewareRecord.handler && typeof middlewareRecord.handler === "function") {
                 // BaseMiddleware instance - wrap handler method
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const baseMiddleware = middleware as any;
-                app.use(pathGlobal, (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                  baseMiddleware.handler(req, res, next);
-                });
+                app.use(
+                  pathGlobal,
+                  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                    baseMiddleware.handler(req, res, next);
+                  },
+                );
               } else if (middleware.use) {
                 middleware.use = middleware.use.bind(middleware);
                 app.use(pathGlobal, middleware.use);

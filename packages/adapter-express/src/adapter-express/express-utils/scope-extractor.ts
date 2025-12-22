@@ -62,4 +62,3 @@ export class ScopeExtractor implements IScopeExtractor {
     return `req-${Date.now()}-${Math.random().toString(36).substring(7)}`;
   }
 }
-

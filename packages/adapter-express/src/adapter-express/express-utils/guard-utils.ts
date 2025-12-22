@@ -6,14 +6,11 @@ import type { NewableFunction } from "./interfaces";
 /**
  * Extract guards from controller metadata
  */
-export function getControllerGuards(
-  constructor: NewableFunction,
-): Array<GuardClass | IGuard> {
+export function getControllerGuards(constructor: NewableFunction): Array<GuardClass | IGuard> {
   return (
-    (Reflect.getMetadata(
-      GUARD_METADATA_KEY.controllerGuards,
-      constructor,
-    ) as Array<GuardClass | IGuard>) || []
+    (Reflect.getMetadata(GUARD_METADATA_KEY.controllerGuards, constructor) as Array<
+      GuardClass | IGuard
+    >) || []
   );
 }
 
@@ -25,11 +22,8 @@ export function getMethodGuards(
   methodName: string | symbol,
 ): Array<GuardClass | IGuard> {
   return (
-    (Reflect.getMetadata(
-      GUARD_METADATA_KEY.methodGuards,
-      constructor,
-      methodName,
-    ) as Array<GuardClass | IGuard>) || []
+    (Reflect.getMetadata(GUARD_METADATA_KEY.methodGuards, constructor, methodName) as Array<
+      GuardClass | IGuard
+    >) || []
   );
 }
-

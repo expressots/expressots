@@ -1,11 +1,7 @@
 import "reflect-metadata";
 import { Request, Response } from "express";
 import { inject, injectable, Container, interfaces } from "@expressots/core";
-import type {
-  GuardContext,
-  RouteMetadata,
-  Principal,
-} from "@expressots/core";
+import type { GuardContext, RouteMetadata, Principal } from "@expressots/core";
 import type { HttpContext } from "./interfaces";
 import type { IScopeExtractor } from "./scope-extractor.interface";
 import { METADATA_KEY } from "./constants";
@@ -77,4 +73,3 @@ export class GuardContextFactory {
     return context;
   }
 }
-

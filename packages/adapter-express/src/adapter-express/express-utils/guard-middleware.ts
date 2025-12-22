@@ -51,15 +51,12 @@ export class GuardMiddleware {
    */
   private extractGuards(req: Request): Array<GuardClass | IGuard> {
     // Extract from request metadata (set during route registration)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const controllerGuards = ((req as any).__expressotsControllerGuards as Array<
-      GuardClass | IGuard
-    >) || [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const methodGuards = ((req as any).__expressotsMethodGuards as Array<
-      GuardClass | IGuard
-    >) || [];
+    const reqWithGuards = req as Request & {
+      __expressotsControllerGuards?: Array<GuardClass | IGuard>;
+      __expressotsMethodGuards?: Array<GuardClass | IGuard>;
+    };
+    const controllerGuards = reqWithGuards.__expressotsControllerGuards || [];
+    const methodGuards = reqWithGuards.__expressotsMethodGuards || [];
     return [...controllerGuards, ...methodGuards];
   }
 }
-

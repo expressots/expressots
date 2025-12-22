@@ -11,4 +11,3 @@ export interface IScopeExtractor {
    */
   extract(req: Request): Promise<GuardScope>;
 }
-
