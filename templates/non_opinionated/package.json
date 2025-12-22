@@ -19,7 +19,7 @@
     "dependencies": {
         "@expressots/adapter-express": "latest",
         "@expressots/core": "latest",
-        "dotenv": "16.4.5",
+        "dotenv": "16.6.1",
         "express": "4.19.2",
         "inversify": "6.0.2",
         "reflect-metadata": "0.2.2"
