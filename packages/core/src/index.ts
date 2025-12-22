@@ -6,3 +6,4 @@ export * from "./error";
 export * from "./middleware";
 export * from "./provider";
 export * from "./di/inversify";
+export * from "./authorization";
