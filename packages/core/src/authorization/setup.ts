@@ -73,7 +73,9 @@ export function setupAuthorization(
       container
         .bind<IPermissionService>("IPermissionService")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .to(PermissionService as any) as unknown as { inScope: (s: string) => void }
+        .to(PermissionService as any) as unknown as {
+        inScope: (s: string) => void;
+      }
     ).inScope("tenant");
   }
 
