@@ -191,6 +191,8 @@ export class InversifyExpressServer {
             (controllerMetadata.target as { name: string }).name,
             metadata.key,
             paramList,
+            controller.constructor, // Pass controller constructor for metadata
+            metadata, // Pass method metadata for route-specific filters
           );
           const routeMiddleware = this.resolveMiddleware(...metadata.middleware);
 
@@ -600,9 +602,23 @@ export class InversifyExpressServer {
     controllerName: string,
     key: string,
     parameterMetadata: Array<ParameterMetadata>,
+    controllerConstructor?: NewableFunction,
+    methodMetadata?: ControllerMethodMetadata,
   ): RequestHandler {
-    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Create handler function
+    const handler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
+        // Attach controller and method metadata to request for exception handler middleware
+        // This provides a reliable fallback if route stack extraction fails
+        if (controllerConstructor) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (req as any).__expressotsController = controllerConstructor;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (req as any).__expressotsMethod = key;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (req as any).__expressotsControllerName = controllerName;
+        }
+
         const args = this.extractParameters(req, res, next, parameterMetadata);
         const httpContext = this._getHttpContext(req);
         httpContext.container.bind<HttpContext>(TYPE.HttpContext).toConstantValue(httpContext);
@@ -653,6 +669,19 @@ export class InversifyExpressServer {
         next(err);
       }
     };
+
+    // Attach metadata to handler function for exception handler middleware
+    // Store controller constructor, method name, and controller name
+    if (controllerConstructor && methodMetadata) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (handler as any).__expressotsController = controllerConstructor;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (handler as any).__expressotsMethod = key;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (handler as any).__expressotsControllerName = controllerName;
+    }
+
+    return handler;
   }
 
   private _getHttpContext(req: express.Request): HttpContext {

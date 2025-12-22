@@ -130,9 +130,42 @@ export class AppExpress implements Server.IWebServer {
     this.appContainer.create(appModules);
 
     this.providerManager = new ProviderManager(this.appContainer.Container);
-    this.middlewareManager = new Middleware();
+    const baseMiddleware = new Middleware();
+    
+    // Create a wrapper that automatically injects container for exception filters
+    this.middlewareManager = this.createMiddlewareWrapper(baseMiddleware);
 
     return this.appContainer;
+  }
+
+  /**
+   * Creates a middleware wrapper that automatically injects container when exception filters are enabled
+   * This allows users to simply set enableExceptionFilters: true without manually passing the container
+   */
+  private createMiddlewareWrapper(baseMiddleware: Middleware): IMiddleware {
+    const container = this.appContainer?.Container;
+    
+    // Create a proxy that intercepts setErrorHandler calls
+    return new Proxy(baseMiddleware, {
+      get(target: Middleware, prop: string | symbol): unknown {
+        if (prop === "setErrorHandler") {
+          return function(options?: import("@expressots/core").ErrorHandlerOptions): void {
+            // Automatically inject container if enableExceptionFilters is true and container is available
+            const enhancedOptions: import("@expressots/core").ErrorHandlerOptions = {
+              ...options,
+              container: options?.enableExceptionFilters && container 
+                ? container 
+                : options?.container,
+            };
+            target.setErrorHandler(enhancedOptions);
+          };
+        }
+        // Forward all other property access to the base middleware
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const value = (target as any)[prop];
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    }) as IMiddleware;
   }
 
   /**

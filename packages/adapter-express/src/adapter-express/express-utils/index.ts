@@ -14,3 +14,4 @@ export { when, unless, isConditionalMiddleware } from "./conditional-middleware"
 export type { ConditionalMiddlewareConfig, MiddlewareCondition } from "./conditional-middleware";
 export { combine, sequence, isComposedMiddleware } from "./middleware-composition";
 export type { ComposedMiddlewareConfig } from "./middleware-composition";
+export { Catch, UseFilters } from "./exception-filter-decorators";

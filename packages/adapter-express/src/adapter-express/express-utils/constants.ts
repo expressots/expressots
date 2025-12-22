@@ -4,6 +4,9 @@ export const TYPE = {
   HttpContext: Symbol.for("HttpContext"),
 };
 
+// Import exception filter metadata keys from core to maintain compatibility
+import { EXCEPTION_FILTER_METADATA_KEY } from "@expressots/core";
+
 export const METADATA_KEY = {
   controller: "inversify-express-utils:controller",
   controllerMethod: "inversify-express-utils:controller-method",
@@ -17,6 +20,10 @@ export const METADATA_KEY = {
   xmlOptions: "inversify-express-utils:xml-options",
   yamlOptions: "inversify-express-utils:yaml-options",
   streamResponse: "inversify-express-utils:stream-response",
+  // Re-export exception filter metadata keys from core for backward compatibility
+  exceptionFilter: EXCEPTION_FILTER_METADATA_KEY.exceptionFilter,
+  controllerExceptionFilters: EXCEPTION_FILTER_METADATA_KEY.controllerExceptionFilters,
+  methodExceptionFilters: EXCEPTION_FILTER_METADATA_KEY.methodExceptionFilters,
 };
 
 export const HTTP_CODE_METADATA = {
