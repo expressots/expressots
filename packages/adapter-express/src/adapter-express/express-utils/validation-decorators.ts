@@ -86,7 +86,10 @@ function createValidatedParamDecorator(
 
       // Store basic parameter metadata using existing pattern
       const controller = target.constructor;
-      let metadataList: Record<string, Array<{ index: number; injectRoot: boolean; parameterName?: string; type: PARAMETER_TYPE }>> = {};
+      let metadataList: Record<
+        string,
+        Array<{ index: number; injectRoot: boolean; parameterName?: string; type: PARAMETER_TYPE }>
+      > = {};
 
       if (!Reflect.hasOwnMetadata(METADATA_KEY.controllerParameter, controller)) {
         Reflect.defineMetadata(METADATA_KEY.controllerParameter, metadataList, controller);
@@ -119,7 +122,11 @@ function createValidatedParamDecorator(
 
         // Get existing validation metadata for this method
         let validationList: Array<ValidationSchemaMetadata> =
-          Reflect.getOwnMetadata(METADATA_KEY.validationSchema, controller, propertyKey as string) || [];
+          Reflect.getOwnMetadata(
+            METADATA_KEY.validationSchema,
+            controller,
+            propertyKey as string,
+          ) || [];
 
         // Add new validation metadata
         validationList = [...validationList, validationMetadata];
@@ -265,7 +272,8 @@ export function Validate<T = unknown>(
 
     // Get existing validation metadata for this method
     let validationList: Array<ValidationSchemaMetadata> =
-      Reflect.getOwnMetadata(METADATA_KEY.validationSchema, controller, propertyKey as string) || [];
+      Reflect.getOwnMetadata(METADATA_KEY.validationSchema, controller, propertyKey as string) ||
+      [];
 
     // Add new validation metadata
     validationList = [...validationList, validationMetadata];
@@ -278,4 +286,3 @@ export function Validate<T = unknown>(
     );
   };
 }
-

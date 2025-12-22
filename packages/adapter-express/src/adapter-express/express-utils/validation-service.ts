@@ -205,11 +205,7 @@ export class ValidationService {
     const inferredMetadata: Array<ValidationSchemaMetadata> = [];
 
     for (let i = 0; i < args.length; i++) {
-      const typeInfo = getParameterType(
-        controllerConstructor.prototype,
-        methodName,
-        i,
-      );
+      const typeInfo = getParameterType(controllerConstructor.prototype, methodName, i);
 
       if (!typeInfo || !typeInfo.type) continue;
 
@@ -223,10 +219,7 @@ export class ValidationService {
           schema: typeInfo.type as NewableFunction | object,
           inferred: true, // Mark as auto-inferred
         });
-      } else if (
-        schemaType === "class" &&
-        hasClassValidatorDecorators(typeInfo.type)
-      ) {
+      } else if (schemaType === "class" && hasClassValidatorDecorators(typeInfo.type)) {
         // Double-check for class-validator decorators
         inferredMetadata.push({
           index: i,
@@ -257,7 +250,12 @@ export class ValidationService {
     });
 
     // If validation passed and smart detection is enabled, also run smart detection
-    if (result.success && this.smartDetector.isEnabled() && typeof result.data === "object" && result.data !== null) {
+    if (
+      result.success &&
+      this.smartDetector.isEnabled() &&
+      typeof result.data === "object" &&
+      result.data !== null
+    ) {
       const smartErrors = this.smartDetector.validateObject(result.data as Record<string, unknown>);
       if (smartErrors.length > 0) {
         return {
@@ -291,9 +289,7 @@ export class ValidationService {
   /**
    * Validate request data using smart field detection
    */
-  private async validateWithSmartDetection(
-    req: Request,
-  ): Promise<Array<ValidationFieldError>> {
+  private async validateWithSmartDetection(req: Request): Promise<Array<ValidationFieldError>> {
     const errors: Array<ValidationFieldError> = [];
 
     // Validate body if present
@@ -321,4 +317,3 @@ export class ValidationService {
     res.status(400).json(formattedErrors);
   }
 }
-
