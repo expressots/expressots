@@ -131,7 +131,7 @@ export class AppExpress implements Server.IWebServer {
 
     this.providerManager = new ProviderManager(this.appContainer.Container);
     const baseMiddleware = new Middleware();
-    
+
     // Create a wrapper that automatically injects container for exception filters
     this.middlewareManager = this.createMiddlewareWrapper(baseMiddleware);
 
@@ -144,18 +144,17 @@ export class AppExpress implements Server.IWebServer {
    */
   private createMiddlewareWrapper(baseMiddleware: Middleware): IMiddleware {
     const container = this.appContainer?.Container;
-    
+
     // Create a proxy that intercepts setErrorHandler calls
     return new Proxy(baseMiddleware, {
       get(target: Middleware, prop: string | symbol): unknown {
         if (prop === "setErrorHandler") {
-          return function(options?: import("@expressots/core").ErrorHandlerOptions): void {
+          return function (options?: import("@expressots/core").ErrorHandlerOptions): void {
             // Automatically inject container if enableExceptionFilters is true and container is available
             const enhancedOptions: import("@expressots/core").ErrorHandlerOptions = {
               ...options,
-              container: options?.enableExceptionFilters && container 
-                ? container 
-                : options?.container,
+              container:
+                options?.enableExceptionFilters && container ? container : options?.container,
             };
             target.setErrorHandler(enhancedOptions);
           };
