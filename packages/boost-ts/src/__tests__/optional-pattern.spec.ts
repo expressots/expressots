@@ -1,6 +1,5 @@
-import { Some, None, Optional } from "../src/optional-pattern";
-import { match } from "../src/match-pattern";
-import { describe, test, expect } from "vitest";
+import { Some, None, Optional } from "../optional-pattern";
+import { match } from "../match-pattern";
 
 describe("testing optional pattern function", () => {
     const v1: Optional<number> = Some(1);

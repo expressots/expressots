@@ -1,5 +1,4 @@
-import { match } from "../src/match-pattern";
-import { describe, test, expect } from "vitest";
+import { match } from "../match-pattern";
 
 describe("testing match pattern function", () => {
     const matchValidates = {
