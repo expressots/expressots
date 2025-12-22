@@ -7,7 +7,10 @@
  */
 
 import { provideSingleton } from "../../decorator/scope-binding";
-import { SmartFieldPattern, ValidationFieldError } from "./validation.interface";
+import {
+  SmartFieldPattern,
+  ValidationFieldError,
+} from "./validation.interface";
 
 /**
  * Smart Field Detector
@@ -198,7 +201,14 @@ export class SmartFieldDetector {
     // Date pattern
     this.patterns.push({
       name: "date",
-      patterns: [/At$/i, /Date$/i, /^created/i, /^updated/i, /^deleted/i, /time$/i],
+      patterns: [
+        /At$/i,
+        /Date$/i,
+        /^created/i,
+        /^updated/i,
+        /^deleted/i,
+        /time$/i,
+      ],
       validate: (value) => this.validateDate(value),
       example: "2024-01-15T10:30:00Z",
       hint: "Use ISO 8601 format (YYYY-MM-DD or full ISO string)",
@@ -266,7 +276,12 @@ export class SmartFieldDetector {
     }
 
     if (type === Boolean && typeof value !== "boolean") {
-      if (value !== "true" && value !== "false" && value !== "1" && value !== "0") {
+      if (
+        value !== "true" &&
+        value !== "false" &&
+        value !== "1" &&
+        value !== "0"
+      ) {
         return {
           path: fieldName,
           message: "Must be a boolean value",
@@ -425,7 +440,8 @@ export class SmartFieldDetector {
     }
 
     // Check UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(value)) {
       return {
         path: "",
@@ -621,4 +637,3 @@ export class SmartFieldDetector {
     return sum % 10 === 0;
   }
 }
-

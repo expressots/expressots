@@ -754,7 +754,9 @@ export class Middleware implements IMiddleware {
   public addValidation(options?: ValidationConfig): void {
     // Store the configuration for the adapter-express to use
     // The actual ValidationService is created by adapter-express
-    (this as unknown as { _validationConfig: ValidationConfig })._validationConfig = options || {};
+    (
+      this as unknown as { _validationConfig: ValidationConfig }
+    )._validationConfig = options || {};
   }
 
   /**
@@ -763,7 +765,8 @@ export class Middleware implements IMiddleware {
    * @internal
    */
   public getValidationConfig(): ValidationConfig | undefined {
-    return (this as unknown as { _validationConfig?: ValidationConfig })._validationConfig;
+    return (this as unknown as { _validationConfig?: ValidationConfig })
+      ._validationConfig;
   }
 
   /**

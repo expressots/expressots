@@ -38,7 +38,9 @@ import {
  * ```
  */
 @provide(ClassValidatorAdapter)
-export class ClassValidatorAdapter implements IValidationAdapter<NewableFunction> {
+export class ClassValidatorAdapter
+  implements IValidationAdapter<NewableFunction>
+{
   readonly name = "class-validator";
   readonly priority = 100; // Highest priority - check first
 
@@ -360,4 +362,3 @@ interface MetadataStorage {
 
 // Type alias for class constructor
 type NewableFunction = new (...args: Array<unknown>) => unknown;
-

@@ -92,7 +92,9 @@ export class HelpfulErrorFormatter {
   /**
    * Format errors in the "helpful" format with examples and hints
    */
-  private formatHelpful(errors: Array<ValidationFieldError>): FormattedErrorResponse {
+  private formatHelpful(
+    errors: Array<ValidationFieldError>,
+  ): FormattedErrorResponse {
     return {
       type: "validation-error",
       title: "Validation Failed",
@@ -116,7 +118,9 @@ export class HelpfulErrorFormatter {
   /**
    * Format errors in a simple format (just field and message)
    */
-  private formatSimple(errors: Array<ValidationFieldError>): FormattedErrorResponse {
+  private formatSimple(
+    errors: Array<ValidationFieldError>,
+  ): FormattedErrorResponse {
     return {
       status: 400,
       message: "Validation failed",
@@ -130,7 +134,9 @@ export class HelpfulErrorFormatter {
   /**
    * Format errors according to RFC 7807 (Problem Details for HTTP APIs)
    */
-  private formatRfc7807(errors: Array<ValidationFieldError>): FormattedErrorResponse {
+  private formatRfc7807(
+    errors: Array<ValidationFieldError>,
+  ): FormattedErrorResponse {
     return {
       type: "https://expressots.com/errors/validation",
       title: "Validation Failed",
@@ -147,7 +153,9 @@ export class HelpfulErrorFormatter {
   /**
    * Format errors as a flat object (field -> message)
    */
-  private formatFlat(errors: Array<ValidationFieldError>): FormattedErrorResponse {
+  private formatFlat(
+    errors: Array<ValidationFieldError>,
+  ): FormattedErrorResponse {
     const errorMap: Record<string, string> = {};
     errors.forEach((error) => {
       if (!errorMap[error.path]) {
@@ -244,7 +252,9 @@ export class HelpfulErrorFormatter {
    * @param errors - Validation errors
    * @returns Errors grouped by field
    */
-  groupByField(errors: Array<ValidationFieldError>): Record<string, Array<ValidationFieldError>> {
+  groupByField(
+    errors: Array<ValidationFieldError>,
+  ): Record<string, Array<ValidationFieldError>> {
     return errors.reduce(
       (acc, error) => {
         if (!acc[error.path]) {
@@ -262,7 +272,9 @@ export class HelpfulErrorFormatter {
    * @param errors - Validation errors
    * @returns First error per field
    */
-  getFirstErrorPerField(errors: Array<ValidationFieldError>): Array<ValidationFieldError> {
+  getFirstErrorPerField(
+    errors: Array<ValidationFieldError>,
+  ): Array<ValidationFieldError> {
     const seen = new Set<string>();
     return errors.filter((error) => {
       if (seen.has(error.path)) {
@@ -273,4 +285,3 @@ export class HelpfulErrorFormatter {
     });
   }
 }
-

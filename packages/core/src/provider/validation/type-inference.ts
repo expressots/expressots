@@ -50,7 +50,11 @@ export function getParameterType(
   methodName: string | symbol,
   parameterIndex: number,
 ): InferredTypeInfo | undefined {
-  const paramTypes = Reflect.getMetadata("design:paramtypes", target, methodName);
+  const paramTypes = Reflect.getMetadata(
+    "design:paramtypes",
+    target,
+    methodName,
+  );
 
   if (!paramTypes || parameterIndex >= paramTypes.length) {
     return undefined;
@@ -77,7 +81,11 @@ export function getAllParameterTypes(
   target: object,
   methodName: string | symbol,
 ): Array<InferredTypeInfo> {
-  const paramTypes = Reflect.getMetadata("design:paramtypes", target, methodName);
+  const paramTypes = Reflect.getMetadata(
+    "design:paramtypes",
+    target,
+    methodName,
+  );
 
   if (!paramTypes) {
     return [];
@@ -142,7 +150,9 @@ export function getClassProperties(
     }
 
     // Also check the class prototype for decorated properties
-    const prototypePropertyNames = Object.getOwnPropertyNames(classConstructor.prototype);
+    const prototypePropertyNames = Object.getOwnPropertyNames(
+      classConstructor.prototype,
+    );
     for (const name of prototypePropertyNames) {
       if (name === "constructor") continue;
 
@@ -173,7 +183,9 @@ export function getClassProperties(
  * @param classConstructor - The class constructor to check
  * @returns true if the class has validation decorators
  */
-export function hasClassValidatorDecorators(classConstructor: unknown): boolean {
+export function hasClassValidatorDecorators(
+  classConstructor: unknown,
+): boolean {
   if (typeof classConstructor !== "function") {
     return false;
   }
@@ -238,7 +250,9 @@ export function isZodSchema(value: unknown): boolean {
  * @param value - The value to check
  * @returns true if the value is a class constructor
  */
-export function isClassConstructor(value: unknown): value is new (...args: Array<unknown>) => unknown {
+export function isClassConstructor(
+  value: unknown,
+): value is new (...args: Array<unknown>) => unknown {
   return (
     typeof value === "function" &&
     value.prototype !== undefined &&
@@ -267,4 +281,3 @@ export function detectSchemaType(
 
   return "unknown";
 }
-

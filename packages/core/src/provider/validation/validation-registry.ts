@@ -147,7 +147,10 @@ export class ValidationRegistry {
 
       // Call error handler if validation failed
       if (!result.success && result.errors && this.config.onValidationError) {
-        this.config.onValidationError(result.errors, mergedOptions.context || {});
+        this.config.onValidationError(
+          result.errors,
+          mergedOptions.context || {},
+        );
       }
 
       return result as ValidationResult<T>;
@@ -257,4 +260,3 @@ export class ValidationRegistry {
     );
   }
 }
-

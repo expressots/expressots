@@ -19,7 +19,9 @@ class MockValidationAdapter implements IValidationAdapter {
   readonly priority = 50;
 
   canHandle(schema: unknown): boolean {
-    return typeof schema === "object" && schema !== null && "mockSchema" in schema;
+    return (
+      typeof schema === "object" && schema !== null && "mockSchema" in schema
+    );
   }
 
   async validate(data: unknown): Promise<ValidationResult> {
@@ -129,7 +131,10 @@ describe("ValidationRegistry", () => {
       const adapter = new MockValidationAdapter();
       registry.register(adapter);
 
-      const result = await registry.validate({ valid: true }, { mockSchema: true });
+      const result = await registry.validate(
+        { valid: true },
+        { mockSchema: true },
+      );
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual({ valid: true });
@@ -139,7 +144,10 @@ describe("ValidationRegistry", () => {
       const adapter = new MockValidationAdapter();
       registry.register(adapter);
 
-      const result = await registry.validate({ invalid: true }, { mockSchema: true });
+      const result = await registry.validate(
+        { invalid: true },
+        { mockSchema: true },
+      );
 
       expect(result.success).toBe(false);
       expect(result.errors).toHaveLength(1);
@@ -221,8 +229,12 @@ describe("SmartFieldDetector", () => {
     });
 
     it("should detect email in field name variations", () => {
-      expect(detector.validate("userEmail", "invalid").length).toBeGreaterThan(0);
-      expect(detector.validate("email_address", "invalid").length).toBeGreaterThan(0);
+      expect(detector.validate("userEmail", "invalid").length).toBeGreaterThan(
+        0,
+      );
+      expect(
+        detector.validate("email_address", "invalid").length,
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -270,7 +282,10 @@ describe("SmartFieldDetector", () => {
     });
 
     it("should pass valid UUID", () => {
-      const errors = detector.validate("userId", "550e8400-e29b-41d4-a716-446655440000");
+      const errors = detector.validate(
+        "userId",
+        "550e8400-e29b-41d4-a716-446655440000",
+      );
       expect(errors).toHaveLength(0);
     });
 
@@ -454,4 +469,3 @@ describe("HelpfulErrorFormatter", () => {
     });
   });
 });
-

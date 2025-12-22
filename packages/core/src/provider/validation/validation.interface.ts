@@ -202,4 +202,3 @@ export interface ValidationMetadata {
   /** Force specific adapter by name */
   adapter?: string;
 }
-
