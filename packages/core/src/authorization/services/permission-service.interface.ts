@@ -16,6 +16,9 @@ export interface IPermissionService {
    * @param permission - Permission to check
    * @param tenantId - Optional tenant ID
    */
-  hasPermission(userId: string, permission: string, tenantId?: string): Promise<boolean>;
+  hasPermission(
+    userId: string,
+    permission: string,
+    tenantId?: string,
+  ): Promise<boolean>;
 }
-

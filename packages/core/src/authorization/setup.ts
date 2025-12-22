@@ -46,12 +46,18 @@ export function setupAuthorization(
 
   // Register core services
   if (!container.isBound("IGuardCache")) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    container.bind<IGuardCache>("IGuardCache").to(GuardCache as any).inSingletonScope();
+    container
+      .bind<IGuardCache>("IGuardCache")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .to(GuardCache as any)
+      .inSingletonScope();
   }
   if (!container.isBound("ISecurityContext")) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    container.bind<ISecurityContext>("ISecurityContext").to(SecurityContext as any).inRequestScope();
+    container
+      .bind<ISecurityContext>("ISecurityContext")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .to(SecurityContext as any)
+      .inRequestScope();
   }
   if (!container.isBound(GuardRegistry)) {
     container.bind(GuardRegistry).toSelf().inSingletonScope();
@@ -63,17 +69,26 @@ export function setupAuthorization(
   // Register optional services (can be overridden by user)
   if (!container.isBound("IPermissionService")) {
     // Bind with custom scope - inScope() returns BindingWhenOnSyntax which is chainable
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (container.bind<IPermissionService>("IPermissionService").to(PermissionService as any) as any).inScope("tenant");
+    (
+      container
+        .bind<IPermissionService>("IPermissionService")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .to(PermissionService as any) as unknown as { inScope: (s: string) => void }
+    ).inScope("tenant");
   }
 
   if (!container.isBound("IPermissionHierarchy")) {
-    container.bind("IPermissionHierarchy").to(PermissionHierarchy).inSingletonScope();
+    container
+      .bind("IPermissionHierarchy")
+      .to(PermissionHierarchy)
+      .inSingletonScope();
   }
 
   // Configure permission hierarchy if provided
   if (finalConfig.permissionHierarchy) {
-    const hierarchy = container.get<PermissionHierarchy>("IPermissionHierarchy");
+    const hierarchy = container.get<PermissionHierarchy>(
+      "IPermissionHierarchy",
+    );
     hierarchy.configure(finalConfig.permissionHierarchy);
   }
 
@@ -81,4 +96,3 @@ export function setupAuthorization(
   const registry = container.get<GuardRegistry>(GuardRegistry);
   registry.initialize();
 }
-

@@ -7,4 +7,3 @@ export const GUARD_METADATA_KEY = {
   controllerGuards: "expressots:controller-guards",
   methodGuards: "expressots:method-guards",
 };
-

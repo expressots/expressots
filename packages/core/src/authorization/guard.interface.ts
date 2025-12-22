@@ -112,7 +112,10 @@ export interface GuardContext {
    * @param identifier - Service identifier
    * @param scopeName - Optional scope name (e.g., "tenant")
    */
-  getScoped<T>(identifier: interfaces.ServiceIdentifier<T>, scopeName?: string): T;
+  getScoped<T>(
+    identifier: interfaces.ServiceIdentifier<T>,
+    scopeName?: string,
+  ): T;
 
   /**
    * Get tenant ID from scope
@@ -206,4 +209,3 @@ export interface GuardMetadata {
    */
   guard: NewableFunction;
 }
-

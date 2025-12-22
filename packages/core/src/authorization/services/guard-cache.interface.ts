@@ -31,4 +31,3 @@ export interface IGuardCache {
    */
   clear(): void;
 }
-

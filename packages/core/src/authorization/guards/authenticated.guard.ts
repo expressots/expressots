@@ -39,4 +39,3 @@ export class AuthenticatedGuard implements IGuard {
  * Factory function for convenience
  */
 export const RequireAuth = (): AuthenticatedGuard => new AuthenticatedGuard();
-

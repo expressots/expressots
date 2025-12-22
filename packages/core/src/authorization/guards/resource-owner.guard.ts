@@ -31,7 +31,9 @@ export class ResourceOwnerGuard implements IGuard {
 
     if (!resourceId) {
       return GuardResult.deny(
-        AppError.badRequest(`Resource ID parameter '${this.resourceIdParam}' is required`),
+        AppError.badRequest(
+          `Resource ID parameter '${this.resourceIdParam}' is required`,
+        ),
       );
     }
 
@@ -49,6 +51,6 @@ export class ResourceOwnerGuard implements IGuard {
  * Factory function for convenience
  * @param paramName - Route parameter name containing resource ID (default: "id")
  */
-export const RequireResourceOwner = (paramName: string = "id"): ResourceOwnerGuard =>
-  new ResourceOwnerGuard(paramName);
-
+export const RequireResourceOwner = (
+  paramName: string = "id",
+): ResourceOwnerGuard => new ResourceOwnerGuard(paramName);

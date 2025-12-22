@@ -29,7 +29,9 @@ export type ExtendedBindingsCallback = (
 /**
  * Union type for bindings callbacks - supports both simple and extended signatures.
  */
-export type BindingsCallback = SimpleBindingsCallback | ExtendedBindingsCallback;
+export type BindingsCallback =
+  | SimpleBindingsCallback
+  | ExtendedBindingsCallback;
 
 /**
  * Combines multiple ContainerModules into a single ContainerModule.
@@ -50,7 +52,9 @@ export type BindingsCallback = SimpleBindingsCallback | ExtendedBindingsCallback
  * ```
  * @public API
  */
-export function combineModules(...modules: Array<ContainerModule>): ContainerModule {
+export function combineModules(
+  ...modules: Array<ContainerModule>
+): ContainerModule {
   return new ContainerModule(
     (
       bind: interfaces.Bind,

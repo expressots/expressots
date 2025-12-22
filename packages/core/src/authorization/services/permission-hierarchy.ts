@@ -47,4 +47,3 @@ export class PermissionHierarchy implements IPermissionHierarchy {
     this.hierarchy = { ...this.hierarchy, ...hierarchy };
   }
 }
-

@@ -47,4 +47,3 @@ export class GuardCache implements IGuardCache {
     this.cache.clear();
   }
 }
-

@@ -12,15 +12,16 @@ import type { IPermissionService } from "./permission-service.interface";
 export class PermissionService implements IPermissionService {
   private cache = new Map<string, Array<string>>(); // User ID -> Permissions
 
-  constructor(
-    @inject(Logger) private logger?: Logger,
-  ) {}
+  constructor(@inject(Logger) private logger?: Logger) {}
 
   /**
    * Get all permissions for a user
    * Results are cached per tenant scope
    */
-  async getPermissions(userId: string, tenantId?: string): Promise<Array<string>> {
+  async getPermissions(
+    userId: string,
+    tenantId?: string,
+  ): Promise<Array<string>> {
     const cacheKey = `${tenantId || "default"}:${userId}`;
 
     if (this.cache.has(cacheKey)) {
@@ -52,4 +53,3 @@ export class PermissionService implements IPermissionService {
     return permissions.includes(permission);
   }
 }
-

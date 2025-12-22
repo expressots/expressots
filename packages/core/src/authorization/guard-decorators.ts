@@ -22,7 +22,10 @@ import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface";
  * }
  * ```
  */
-export function Guard(options?: { priority?: number; cacheable?: boolean }): ClassDecorator {
+export function Guard(options?: {
+  priority?: number;
+  cacheable?: boolean;
+}): ClassDecorator {
   return (target: NewableFunction) => {
     const metadata: GuardMetadata = {
       priority: options?.priority ?? 100,
@@ -34,7 +37,10 @@ export function Guard(options?: { priority?: number; cacheable?: boolean }): Cla
 
     // Register in global registry for auto-discovery
     const existingGuards =
-      (Reflect.getMetadata(GUARD_METADATA_KEY.guard, Reflect) as Array<GuardMetadata>) || [];
+      (Reflect.getMetadata(
+        GUARD_METADATA_KEY.guard,
+        Reflect,
+      ) as Array<GuardMetadata>) || [];
 
     const newGuards = [...existingGuards, metadata];
     Reflect.defineMetadata(GUARD_METADATA_KEY.guard, newGuards, Reflect);
@@ -75,7 +81,9 @@ export function Guard(options?: { priority?: number; cacheable?: boolean }): Cla
  * }
  * ```
  */
-export function UseGuards(...guards: Array<IGuard | GuardClass>): ClassDecorator & MethodDecorator {
+export function UseGuards(
+  ...guards: Array<IGuard | GuardClass>
+): ClassDecorator & MethodDecorator {
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     target: any,
@@ -100,13 +108,17 @@ export function UseGuards(...guards: Array<IGuard | GuardClass>): ClassDecorator
     } else {
       // Controller-level guards
       const existingGuards =
-        (Reflect.getMetadata(GUARD_METADATA_KEY.controllerGuards, target) as Array<
-          IGuard | GuardClass
-        >) || [];
+        (Reflect.getMetadata(
+          GUARD_METADATA_KEY.controllerGuards,
+          target,
+        ) as Array<IGuard | GuardClass>) || [];
 
       const newGuards = [...existingGuards, ...guards];
-      Reflect.defineMetadata(GUARD_METADATA_KEY.controllerGuards, newGuards, target);
+      Reflect.defineMetadata(
+        GUARD_METADATA_KEY.controllerGuards,
+        newGuards,
+        target,
+      );
     }
   };
 }
-

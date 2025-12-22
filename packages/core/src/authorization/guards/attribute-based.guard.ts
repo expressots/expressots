@@ -63,7 +63,10 @@ export class AttributeBasedGuard implements IGuard {
   }
 
   async canActivate(context: GuardContext): Promise<GuardResult> {
-    const userDetails = context.principal.details as { id?: string; department?: string } | null | undefined;
+    const userDetails = context.principal.details as
+      | { id?: string; department?: string }
+      | null
+      | undefined;
     // Get resource ID from route params or query params
     const resourceId = context.route.params.id || context.route.query.id || "";
     const attributes: AttributeSet = {
@@ -127,4 +130,3 @@ export class AttributeBasedGuard implements IGuard {
 export const RequirePolicy = (
   policy: (attributes: AttributeSet) => boolean | Promise<boolean>,
 ): AttributeBasedGuard => new AttributeBasedGuard(policy);
-

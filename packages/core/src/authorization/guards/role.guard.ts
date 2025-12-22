@@ -45,15 +45,18 @@ export class RoleGuard implements IGuard {
     return GuardResult.allow();
   }
 
-      cacheKey(context: GuardContext): string {
-        const details = context.principal.details as { id?: string } | null | undefined;
-        return `role:${this.roles.join(",")}:${details?.id || "anonymous"}`;
-      }
+  cacheKey(context: GuardContext): string {
+    const details = context.principal.details as
+      | { id?: string }
+      | null
+      | undefined;
+    return `role:${this.roles.join(",")}:${details?.id || "anonymous"}`;
+  }
 }
 
 /**
  * Factory function for convenience
  * @param roles - Roles to require
  */
-export const RequireRole = (...roles: Array<string>): RoleGuard => new RoleGuard(roles);
-
+export const RequireRole = (...roles: Array<string>): RoleGuard =>
+  new RoleGuard(roles);

@@ -49,4 +49,3 @@ export interface AuthorizationConfig {
    */
   defaultGuardPriority?: number;
 }
-

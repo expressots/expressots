@@ -22,4 +22,3 @@ export interface IPermissionHierarchy {
    */
   configure(hierarchy: Record<string, Array<string>>): void;
 }
-

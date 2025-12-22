@@ -16,7 +16,8 @@ export class SecurityContext implements ISecurityContext {
   private loaded = false;
 
   constructor(
-    @inject("IPermissionService") private permissionService?: IPermissionService,
+    @inject("IPermissionService")
+    private permissionService?: IPermissionService,
     @inject(Logger) private logger?: Logger,
   ) {}
 
@@ -63,4 +64,3 @@ export class SecurityContext implements ISecurityContext {
     return Array.from(this.permissions);
   }
 }
-

@@ -30,7 +30,10 @@ export class GuardRegistry {
     try {
       // Get all guards registered via @Guard decorator
       const guardMetadata =
-        (Reflect.getMetadata(GUARD_METADATA_KEY.guard, Reflect) as Array<GuardMetadata>) || [];
+        (Reflect.getMetadata(
+          GUARD_METADATA_KEY.guard,
+          Reflect,
+        ) as Array<GuardMetadata>) || [];
 
       guardMetadata.forEach(({ guard, priority, cacheable }) => {
         try {
@@ -119,7 +122,9 @@ export class GuardRegistry {
    * Inject common dependencies into guard instance
    * @private
    */
-  private injectDependencies(instance: IGuard & { logger?: Logger; report?: unknown }): void {
+  private injectDependencies(
+    instance: IGuard & { logger?: Logger; report?: unknown },
+  ): void {
     // Inject common dependencies if available
     if (this.container.isBound(Logger)) {
       instance.logger = this.container.get(Logger);
@@ -129,4 +134,3 @@ export class GuardRegistry {
     }
   }
 }
-

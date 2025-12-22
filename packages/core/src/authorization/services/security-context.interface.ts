@@ -26,4 +26,3 @@ export interface ISecurityContext {
    */
   getPermissions(): Promise<Array<string>>;
 }
-

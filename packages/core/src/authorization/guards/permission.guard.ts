@@ -36,7 +36,9 @@ export class PermissionGuard implements IGuard {
   async canActivate(context: GuardContext): Promise<GuardResult> {
     // Try to use SecurityContext if available (request-scoped caching)
     if (this.securityContext) {
-      const hasPermission = await this.securityContext.hasPermission(this.permission);
+      const hasPermission = await this.securityContext.hasPermission(
+        this.permission,
+      );
       if (!hasPermission) {
         return GuardResult.deny(
           AppError.forbidden(`Missing permission: ${this.permission}`),
@@ -64,10 +66,13 @@ export class PermissionGuard implements IGuard {
     );
   }
 
-      cacheKey(context: GuardContext): string {
-        const details = context.principal.details as { id?: string } | null | undefined;
-        return `permission:${this.permission}:${details?.id || "anonymous"}`;
-      }
+  cacheKey(context: GuardContext): string {
+    const details = context.principal.details as
+      | { id?: string }
+      | null
+      | undefined;
+    return `permission:${this.permission}:${details?.id || "anonymous"}`;
+  }
 }
 
 /**
@@ -76,4 +81,3 @@ export class PermissionGuard implements IGuard {
  */
 export const RequirePermission = (permission: string): PermissionGuard =>
   new PermissionGuard(permission);
-

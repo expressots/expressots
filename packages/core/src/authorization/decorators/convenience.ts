@@ -40,7 +40,9 @@ export function RequireAuthentication(): MethodDecorator & ClassDecorator {
  * }
  * ```
  */
-export function RequireRoles(...roles: Array<string>): MethodDecorator & ClassDecorator {
+export function RequireRoles(
+  ...roles: Array<string>
+): MethodDecorator & ClassDecorator {
   return UseGuards(RequireRole(...roles));
 }
 
@@ -83,4 +85,3 @@ export function RequirePermissions(
 export function RequireOwnership(paramName: string = "id"): MethodDecorator {
   return UseGuards(RequireResourceOwner(paramName));
 }
-

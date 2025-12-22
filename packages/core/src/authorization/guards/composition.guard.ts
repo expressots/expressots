@@ -67,4 +67,3 @@ export function combineGuards(...guards: Array<IGuard | GuardClass>): IGuard {
 export function sequenceGuards(...guards: Array<IGuard | GuardClass>): IGuard {
   return combineGuards(...guards);
 }
-
