@@ -24,3 +24,22 @@ export { PermissionPreloaderMiddleware } from "./permission-preloader.middleware
 export { TYPE } from "./constants";
 export type { AuthProvider, Principal } from "./interfaces";
 export { setupAuthorizationForExpress } from "./setup-authorization";
+
+// Validation decorators
+export {
+  validatedBody,
+  validatedQuery,
+  validatedParam,
+  validatedHeaders,
+  Validate,
+  getValidationMetadata,
+  hasValidationMetadata,
+} from "./validation-decorators";
+export type {
+  ValidationSchemaMetadata,
+  SchemaType,
+  ValidatedDecoratorOptions,
+} from "./validation-decorators";
+
+// Validation service
+export { ValidationService } from "./validation-service";

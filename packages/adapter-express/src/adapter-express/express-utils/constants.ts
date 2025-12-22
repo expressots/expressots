@@ -20,6 +20,9 @@ export const METADATA_KEY = {
   xmlOptions: "inversify-express-utils:xml-options",
   yamlOptions: "inversify-express-utils:yaml-options",
   streamResponse: "inversify-express-utils:stream-response",
+  // Validation metadata
+  validationSchema: "inversify-express-utils:validation-schema",
+  validationOptions: "inversify-express-utils:validation-options",
   // Re-export exception filter metadata keys from core for backward compatibility
   exceptionFilter: EXCEPTION_FILTER_METADATA_KEY.exceptionFilter,
   controllerExceptionFilters: EXCEPTION_FILTER_METADATA_KEY.controllerExceptionFilters,

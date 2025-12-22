@@ -290,6 +290,30 @@ export class AppExpress implements Server.IWebServer {
       expressServer.setContentNegotiationService(contentNegotiationService);
     }
 
+    // Pass ValidationService to InversifyExpressServer if validation is configured
+    const validationConfig = (this.Middleware as Middleware).getValidationConfig?.();
+    if (validationConfig) {
+      const { ValidationService } = await import("./express-utils/validation-service");
+      const { ClassValidatorAdapter } = await import("@expressots/core");
+
+      const validationService = new ValidationService();
+      validationService.enable(validationConfig);
+
+      // Register ClassValidatorAdapter by default
+      const classValidatorAdapter = new ClassValidatorAdapter();
+      validationService.getRegistry().register(classValidatorAdapter);
+
+      // Register any additional adapters from config
+      if (validationConfig.adapters) {
+        for (const AdapterClass of validationConfig.adapters) {
+          const adapter = new AdapterClass();
+          validationService.getRegistry().register(adapter);
+        }
+      }
+
+      expressServer.setValidationService(validationService);
+    }
+
     expressServer.setConfig((app: express.Application) => {
       this.configureMiddleware(app, this.middlewares);
     });

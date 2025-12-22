@@ -58,6 +58,9 @@ import { isComposedMiddleware, type ComposedMiddlewareConfig } from "./middlewar
 import { getControllerGuards, getMethodGuards } from "./guard-utils";
 import { GuardMiddleware } from "./guard-middleware";
 
+import { ValidationService } from "./validation-service";
+import { getValidationMetadata } from "./validation-decorators";
+
 export class InversifyExpressServer {
   private _router: Router;
   private _container: interfaces.Container;
@@ -68,6 +71,7 @@ export class InversifyExpressServer {
   private _AuthProvider!: new () => AuthProvider;
   private _forceControllers: boolean;
   private _contentNegotiationService?: ContentNegotiationService;
+  private _validationService?: ValidationService;
 
   /**
    * Wrapper for the express server.
@@ -665,12 +669,28 @@ export class InversifyExpressServer {
               return next(err);
             }
             // Guards passed, continue to route handler
-            await this.executeRouteHandler(req, res, next, controllerName, key, parameterMetadata);
+            await this.executeRouteHandler(
+              req,
+              res,
+              next,
+              controllerName,
+              key,
+              parameterMetadata,
+              controllerConstructor,
+            );
           });
         }
 
         // No guards, execute route handler directly
-        await this.executeRouteHandler(req, res, next, controllerName, key, parameterMetadata);
+        await this.executeRouteHandler(
+          req,
+          res,
+          next,
+          controllerName,
+          key,
+          parameterMetadata,
+          controllerConstructor,
+        );
       } catch (error) {
         next(error);
       }
@@ -686,11 +706,31 @@ export class InversifyExpressServer {
     controllerName: string,
     key: string,
     parameterMetadata: Array<ParameterMetadata>,
+    controllerConstructor?: NewableFunction,
   ): Promise<void> {
     try {
-      const args = this.extractParameters(req, res, next, parameterMetadata);
+      let args = this.extractParameters(req, res, next, parameterMetadata);
       const httpContext = this._getHttpContext(req);
       httpContext.container.bind<HttpContext>(TYPE.HttpContext).toConstantValue(httpContext);
+
+      // Validate parameters if validation service is enabled
+      const validationService = this.getValidationService();
+      if (validationService?.isEnabled() && controllerConstructor) {
+        const validatedArgs = await validationService.validateParameters(
+          req,
+          res,
+          controllerConstructor,
+          key,
+          args as Array<unknown>,
+        );
+
+        if (validatedArgs === null) {
+          // Validation failed, response already sent
+          return;
+        }
+
+        args = validatedArgs as ExtractedParameters;
+      }
 
       // invoke controller's action
       const controller = httpContext.container.getNamed<BaseController>(
@@ -757,6 +797,22 @@ export class InversifyExpressServer {
    */
   private getContentNegotiationService(): ContentNegotiationService | undefined {
     return this._contentNegotiationService;
+  }
+
+  /**
+   * Sets the validation service instance.
+   * @param service - Validation service instance
+   */
+  public setValidationService(service: ValidationService): void {
+    this._validationService = service;
+  }
+
+  /**
+   * Gets the validation service if available.
+   * @returns Validation service or undefined
+   */
+  private getValidationService(): ValidationService | undefined {
+    return this._validationService;
   }
 
   private async _createHttpContext(
