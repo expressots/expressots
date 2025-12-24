@@ -40,42 +40,95 @@ function getOutDir(): string {
 }
 
 /**
- * Load the configuration from the compiler
- * @param compiler The compiler to load the configuration from
- * @returns The configuration
+ * Build the tsx arguments for running TypeScript files.
+ * Used by nodemon to execute the TypeScript entry point.
+ *
+ * @param opinionated - Whether to use opinionated configuration (tsconfig-paths)
+ * @returns The tsx arguments array
  */
-async function opinionatedConfig(): Promise<Array<string>> {
+async function buildTsxArgs(opinionated: boolean): Promise<Array<string>> {
 	const { entryPoint } = await Compiler.loadConfig();
-	const config = [
-		"--watch",
-		"-r",
-		"tsconfig-paths/register",
-		`./src/${entryPoint}.ts`,
-	];
-	return config;
+
+	if (opinionated) {
+		return ["-r", "tsconfig-paths/register", `./src/${entryPoint}.ts`];
+	}
+
+	return [`./src/${entryPoint}.ts`];
 }
 
 /**
- * Load the configuration from the compiler
- * @param compiler The compiler to load the configuration from
- * @returns The configuration
+ * Build the nodemon arguments for development mode.
+ * Uses nodemon for file watching and tsx for TypeScript execution.
+ * This combination ensures proper signal handling for graceful shutdown.
+ *
+ * Options:
+ * - --quiet: Suppress nodemon verbose output, show only ExpressoTS logs (default)
+ * - --signal SIGTERM: Ensure proper signal forwarding for graceful shutdown
+ * - --delay 500ms: Debounce file changes to avoid rapid restarts
+ *
+ * @param opinionated - Whether to use opinionated configuration
+ * @param verbose - Whether to show verbose nodemon output (for debugging)
+ * @returns The nodemon arguments array
  */
-async function nonOpinionatedConfig(): Promise<Array<string>> {
-	const { entryPoint } = await Compiler.loadConfig();
-	const config = ["--watch", `./src/${entryPoint}.ts`];
-	return config;
+async function buildDevArgs(
+	opinionated: boolean,
+	verbose: boolean = false,
+): Promise<Array<string>> {
+	const tsxArgs = await buildTsxArgs(opinionated);
+
+	const args: Array<string> = [];
+
+	// Suppress nodemon output unless verbose mode is enabled
+	if (!verbose) {
+		args.push("--quiet");
+	}
+
+	// Core nodemon configuration
+	args.push(
+		"--signal",
+		"SIGTERM", // Use SIGTERM for graceful shutdown
+		"--delay",
+		"500ms", // Debounce rapid file changes
+		"--watch",
+		"src",
+		"--ext",
+		"ts,json",
+		"--ignore",
+		"src/**/*.spec.ts",
+		"--ignore",
+		"src/**/*.test.ts",
+		"--exec",
+		`tsx ${tsxArgs.join(" ")}`,
+	);
+
+	return args;
+}
+
+/**
+ * Dev command options interface
+ */
+interface DevCommandOptions {
+	verbose?: boolean;
 }
 
 /**
  * Dev command module
- * @type {CommandModule<object, object>}
+ * @type {CommandModule<object, DevCommandOptions>}
  * @returns The command module
  */
-export const devCommand: CommandModule<object, object> = {
+export const devCommand: CommandModule<object, DevCommandOptions> = {
 	command: "dev",
 	describe: "Start development server.",
-	handler: async () => {
-		await runCommand({ command: "dev" });
+	builder: {
+		verbose: {
+			alias: "v",
+			type: "boolean",
+			default: false,
+			description: "Show verbose nodemon output for debugging",
+		},
+	},
+	handler: async (argv) => {
+		await runCommand({ command: "dev", verbose: argv.verbose });
 	},
 };
 
@@ -180,26 +233,28 @@ const clearScreen = () => {
 };
 
 /**
+ * Run command options
+ */
+interface RunCommandOptions {
+	command: string;
+	verbose?: boolean;
+}
+
+/**
  * Helper function to run a command
- * @param command The command to run
+ * @param options The command options
  */
 export const runCommand = async ({
 	command,
-}: {
-	command: string;
-}): Promise<void> => {
+	verbose = false,
+}: RunCommandOptions): Promise<void> => {
 	const { opinionated, entryPoint } = await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
 		switch (command) {
 			case "dev":
-				execCmd(
-					"tsx",
-					opinionated
-						? await opinionatedConfig()
-						: await nonOpinionatedConfig(),
-				);
+				await execCmd("nodemon", await buildDevArgs(opinionated, verbose));
 				break;
 			case "build":
 				if (!outDir) {
@@ -233,7 +288,7 @@ export const runCommand = async ({
 					config = [`./${outDir}/${entryPoint}.js`];
 				}
 				clearScreen();
-				execCmd("node", config);
+				await execCmd("node", config);
 				break;
 			}
 			default:
