@@ -12,7 +12,9 @@
  * class Application extends ApplicationBase {
  *   protected configureServices() { //... }
  *   protected postServerInitialization() { //... }
- *   protected serverShutdown() { //... }
+ *   protected serverShutdown(signal) {
+ *     console.log(`Shutting down due to ${signal}`);
+ *   }
  * }
  *
  * @export
@@ -59,9 +61,17 @@ export abstract class ApplicationBase {
    * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
    * cleanup with a Promise.
    *
+   * The signal parameter indicates what triggered the shutdown:
+   * - SIGTERM: Graceful termination (e.g., Kubernetes pod shutdown)
+   * - SIGINT: User interrupt (e.g., Ctrl+C)
+   * - SIGHUP: Terminal hangup
+   * - SIGQUIT: Quit with core dump
+   * - SIGBREAK: Windows break signal
+   *
    * @abstract
+   * @param signal - The signal that triggered the shutdown (optional for backward compatibility)
    * @returns {void | Promise<void>}
    * @public API
    */
-  protected abstract serverShutdown(): void | Promise<void>;
+  protected abstract serverShutdown(signal?: NodeJS.Signals): void | Promise<void>;
 }

@@ -9,6 +9,7 @@ import {
   ExpressoMiddleware,
   IConsoleMessage,
   IMiddleware,
+  LifecycleRegistry,
   Logger,
   Middleware,
   ProviderManager,
@@ -46,6 +47,8 @@ export class AppExpress implements Server.IWebServer {
   private middlewares: Array<ExpressHandler | MiddlewareConfig | ExpressoMiddleware> = [];
   private providerManager: ProviderManager;
   private renderOptions: RenderEngine.RenderOptions = {} as RenderEngine.RenderOptions;
+  private lifecycleRegistry: LifecycleRegistry;
+  private isShuttingDown: boolean = false;
 
   constructor() {
     this.globalConfiguration();
@@ -91,18 +94,55 @@ export class AppExpress implements Server.IWebServer {
    * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
    * cleanup with a Promise.
    *
+   * The signal parameter indicates what triggered the shutdown:
+   * - SIGTERM: Graceful termination (e.g., Kubernetes pod shutdown)
+   * - SIGINT: User interrupt (e.g., Ctrl+C)
+   * - SIGHUP: Terminal hangup
+   * - SIGQUIT: Quit with core dump
+   * - SIGBREAK: Windows break signal
+   *
    * @abstract
+   * @param signal - The signal that triggered the shutdown (optional for backward compatibility)
    * @returns {void | Promise<void>}
    * @public API
    */
-  protected async serverShutdown(): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async serverShutdown(signal?: NodeJS.Signals): Promise<void> {}
 
   /**
-   * Handles process exit by calling serverShutdown and then exiting the process.
+   * Performs graceful shutdown of the application.
+   *
+   * Shutdown sequence:
+   * 1. Execute lifecycle shutdown hooks on all IShutdown providers
+   * 2. Call user's serverShutdown hook
+   * 3. Close the HTTP server to stop accepting new connections
+   *
+   * @param signal - The signal that triggered the shutdown
+   * @returns Promise that resolves when shutdown is complete
+   * @internal
    */
-  private async handleExit(): Promise<void> {
-    await this.serverShutdown();
-    process.exit(0);
+  private async handleExit(signal?: NodeJS.Signals): Promise<void> {
+    // 1. Execute lifecycle shutdown hooks on all IShutdown providers
+    if (this.lifecycleRegistry) {
+      await this.lifecycleRegistry.executeShutdown(signal);
+    }
+
+    // 2. Call user's serverShutdown hook
+    await this.serverShutdown(signal);
+
+    // 3. Gracefully close the HTTP server
+    if (this.serverInstance) {
+      await new Promise<void>((resolve, reject) => {
+        this.serverInstance!.close((err) => {
+          if (err) {
+            this.logger.error(`Error closing server: ${err.message}`, "adapter-express");
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    }
   }
 
   /**
@@ -134,6 +174,10 @@ export class AppExpress implements Server.IWebServer {
 
     // Create a wrapper that automatically injects container for exception filters
     this.middlewareManager = this.createMiddlewareWrapper(baseMiddleware);
+
+    // Initialize lifecycle registry and discover providers implementing IBootstrap/IShutdown
+    this.lifecycleRegistry = new LifecycleRegistry(this.appContainer.Container);
+    this.lifecycleRegistry.discover();
 
     return this.appContainer;
   }
@@ -349,14 +393,53 @@ export class AppExpress implements Server.IWebServer {
 
         this.console.messageServer(this.port, this.environment, appInfo);
 
-        (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
-          (signal) => {
-            process.on(signal, this.handleExit.bind(this));
-          },
-        );
+        // Setup signal handlers for graceful shutdown
+        // Supported signals:
+        // - SIGTERM: Standard termination (Kubernetes, Docker, process managers)
+        // - SIGINT: User interrupt (Ctrl+C)
+        // - SIGHUP: Terminal hangup
+        // - SIGQUIT: Quit with core dump request
+        // - SIGBREAK: Windows break signal (Ctrl+Break)
+        const shutdownSignals: Array<NodeJS.Signals> = [
+          "SIGTERM",
+          "SIGINT",
+          "SIGHUP",
+          "SIGQUIT",
+          "SIGBREAK",
+        ];
+
+        for (const signal of shutdownSignals) {
+          process.on(signal, () => {
+            // Prevent multiple shutdown attempts
+            if (this.isShuttingDown) {
+              return;
+            }
+            this.isShuttingDown = true;
+
+            console.log(`\n📡 Signal ${signal} received, initiating graceful shutdown...`);
+
+            // Execute shutdown hooks and exit
+            this.handleExit(signal)
+              .then(() => {
+                console.log("✅ Graceful shutdown completed");
+                process.exit(0);
+              })
+              .catch((error) => {
+                this.logger.error(`Shutdown error: ${error.message}`, "adapter-express");
+                process.exit(1);
+              });
+          });
+        }
 
         try {
+          // Call user's postServerInitialization hook
           await this.postServerInitialization();
+
+          // Execute bootstrap lifecycle hooks on all IBootstrap providers
+          if (this.lifecycleRegistry) {
+            await this.lifecycleRegistry.executeBootstrap();
+          }
+
           resolve(this as IWebServerPublic);
         } catch (error) {
           this.logger.error(`Error during post-server initialization: ${error}`, "adapter-express");
