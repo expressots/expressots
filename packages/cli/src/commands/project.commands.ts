@@ -254,7 +254,10 @@ export const runCommand = async ({
 	try {
 		switch (command) {
 			case "dev":
-				await execCmd("nodemon", await buildDevArgs(opinionated, verbose));
+				await execCmd(
+					"nodemon",
+					await buildDevArgs(opinionated, verbose),
+				);
 				break;
 			case "build":
 				if (!outDir) {
