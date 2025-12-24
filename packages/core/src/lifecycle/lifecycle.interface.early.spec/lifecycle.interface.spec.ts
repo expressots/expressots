@@ -2,7 +2,12 @@
  * Tests for Lifecycle Interfaces and Type Guards
  */
 
-import { IBootstrap, IShutdown, isBootstrap, isShutdown } from "../lifecycle.interface";
+import {
+  IBootstrap,
+  IShutdown,
+  isBootstrap,
+  isShutdown,
+} from "../lifecycle.interface";
 
 describe("Lifecycle Interfaces", () => {
   describe("isBootstrap", () => {
@@ -127,4 +132,3 @@ describe("Lifecycle Interfaces", () => {
     });
   });
 });
-

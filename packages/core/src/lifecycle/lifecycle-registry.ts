@@ -9,7 +9,12 @@
 
 import { interfaces } from "../di/inversify";
 import { METADATA_KEY } from "../di/binding-decorator/constants";
-import { IBootstrap, IShutdown, isBootstrap, isShutdown } from "./lifecycle.interface";
+import {
+  IBootstrap,
+  IShutdown,
+  isBootstrap,
+  isShutdown,
+} from "./lifecycle.interface";
 import { Logger } from "../provider/logger/logger.provider";
 
 /**
@@ -220,4 +225,3 @@ export class LifecycleRegistry {
     this.discovered = false;
   }
 }
-

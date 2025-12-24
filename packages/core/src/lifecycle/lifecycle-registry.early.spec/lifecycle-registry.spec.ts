@@ -81,11 +81,13 @@ class TestRegularService {
 
 // Helper to register provider metadata
 function registerProviderMetadata(target: Function): void {
-  const currentMetadata = Reflect.getMetadata(METADATA_KEY.provide, Reflect) || [];
+  const currentMetadata =
+    Reflect.getMetadata(METADATA_KEY.provide, Reflect) || [];
   const newMetadata = [
     {
       implementationType: target,
-      constraint: (bind: Function, bindTarget: Function) => bind(target).to(bindTarget),
+      constraint: (bind: Function, bindTarget: Function) =>
+        bind(target).to(bindTarget),
     },
     ...currentMetadata,
   ];
@@ -196,7 +198,9 @@ describe("LifecycleRegistry", () => {
       container.bind(TestFailingBootstrap).toSelf().inSingletonScope();
 
       registry.discover();
-      await expect(registry.executeBootstrap()).rejects.toThrow("Bootstrap failed");
+      await expect(registry.executeBootstrap()).rejects.toThrow(
+        "Bootstrap failed",
+      );
       expect(callTracker).toContain("TestFailingBootstrap.bootstrap");
     });
   });
@@ -207,21 +211,21 @@ describe("LifecycleRegistry", () => {
       container.bind(TestShutdownService).toSelf().inSingletonScope();
 
       registry.discover();
-      
+
       // Verify discovery worked
       expect(registry.getShutdownCount()).toBe(1);
-      
+
       // Verify container can get the instance
       const instance = container.get(TestShutdownService);
       expect(instance).toBeInstanceOf(TestShutdownService);
-      
+
       // Verify instance has shutdown method
       expect(typeof instance.shutdown).toBe("function");
-      
+
       // Call directly to verify it works
       instance.shutdown();
       expect(callTracker).toContain("TestShutdownService.shutdown");
-      
+
       // Clear tracker and test via registry
       callTracker.length = 0;
       await registry.executeShutdown();
@@ -235,10 +239,10 @@ describe("LifecycleRegistry", () => {
 
       registry.discover();
       expect(registry.getShutdownCount()).toBe(1);
-      
+
       // Pre-instantiate to ensure the singleton is created
       container.get(TestShutdownService);
-      
+
       await registry.executeShutdown("SIGTERM");
 
       expect(signalReceived).toBe("SIGTERM");
@@ -249,10 +253,10 @@ describe("LifecycleRegistry", () => {
       container.bind(TestAsyncShutdown).toSelf().inSingletonScope();
 
       registry.discover();
-      
+
       // Pre-instantiate to ensure the singleton is created
       container.get(TestAsyncShutdown);
-      
+
       await registry.executeShutdown();
 
       expect(callTracker).toContain("TestAsyncShutdown.shutdown");
@@ -265,11 +269,11 @@ describe("LifecycleRegistry", () => {
       container.bind(TestShutdownService).toSelf().inSingletonScope();
 
       registry.discover();
-      
+
       // Pre-instantiate to ensure the singletons are created
       container.get(TestFailingShutdown);
       container.get(TestShutdownService);
-      
+
       // Should not throw, just log error
       await registry.executeShutdown();
 

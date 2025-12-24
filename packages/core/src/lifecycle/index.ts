@@ -6,6 +6,10 @@
  * @module lifecycle
  */
 
-export { IBootstrap, IShutdown, isBootstrap, isShutdown } from "./lifecycle.interface";
+export {
+  IBootstrap,
+  IShutdown,
+  isBootstrap,
+  isShutdown,
+} from "./lifecycle.interface";
 export { LifecycleRegistry } from "./lifecycle-registry";
-

@@ -107,4 +107,3 @@ export function isShutdown(obj: unknown): obj is IShutdown {
     typeof (obj as IShutdown).shutdown === "function"
   );
 }
-
