@@ -86,12 +86,8 @@ export class LifecycleRegistry {
 
     this.discovered = true;
 
-    if (this.bootstrapProviders.size > 0 || this.shutdownProviders.size > 0) {
-      this.logger.info(
-        `Lifecycle: ${this.bootstrapProviders.size} bootstrap, ${this.shutdownProviders.size} shutdown providers`,
-        "lifecycle-registry",
-      );
-    }
+    // Note: Lifecycle discovery log is suppressed as this info is shown in the startup banner
+    // The banner displays "Lifecycle Hooks: ✅" when bootstrap/shutdown providers are detected
   }
 
   /**
