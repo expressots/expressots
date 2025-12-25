@@ -9,6 +9,12 @@ import type {
 } from "./exception-filter.interface";
 import { AppError, StatusCode } from "./index";
 import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants";
+import {
+  getErrorHints,
+  formatSuggestions,
+  getDefaultSuggestionsConfig,
+  type SuggestionsConfig,
+} from "../provider/logger/logger.suggestions";
 
 /**
  * Type for a constructor function (class)
@@ -419,6 +425,42 @@ export class ExceptionHandlerMiddleware {
   private defaultHandler(exception: Error, context: ExceptionContext): void {
     if (context.response.headersSent) {
       return;
+    }
+
+    // Show error suggestions if enabled
+    // Get config from logger if available, otherwise use default
+    let suggestionsConfig = getDefaultSuggestionsConfig();
+    if (this.logger) {
+      try {
+        const loggerConfig = (this.logger as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }).getConfig?.();
+        if (loggerConfig?.suggestions) {
+          suggestionsConfig = {
+            ...suggestionsConfig,
+            ...loggerConfig.suggestions,
+          };
+        }
+      } catch {
+        // If getConfig fails, use default config
+      }
+    }
+
+    if (suggestionsConfig.enabled && this.logger) {
+      const hints = getErrorHints(
+        exception,
+        {
+          path: context.request.path,
+          method: context.method,
+          statusCode: exception instanceof AppError
+            ? exception.statusCode
+            : StatusCode.InternalServerError,
+        },
+        suggestionsConfig,
+      );
+
+      if (hints.length > 0) {
+        const suggestionsText = formatSuggestions(hints);
+        this.logger.info(suggestionsText, "exception-handler");
+      }
     }
 
     if (exception instanceof AppError) {

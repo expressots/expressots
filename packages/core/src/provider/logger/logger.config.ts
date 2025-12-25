@@ -3,6 +3,7 @@ import { ILogTransport } from "./transports/transport.interface";
 import { RedactionConfig } from "./logger.redaction";
 import { GroupingConfig } from "./logger.grouping";
 import { FlowConfig } from "./logger.flow";
+import { SuggestionsConfig } from "./logger.suggestions";
 
 /**
  * Filter configuration for log filtering.
@@ -40,6 +41,8 @@ export interface LoggerConfig {
   grouping?: Partial<GroupingConfig>;
   /** Flow tracking configuration for request visualization */
   flow?: Partial<FlowConfig>;
+  /** Error suggestions configuration */
+  suggestions?: Partial<SuggestionsConfig>;
 }
 
 /**

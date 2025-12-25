@@ -5,6 +5,12 @@ import type {
   IExceptionFilter,
   ExceptionContext,
 } from "./exception-filter.interface";
+import {
+  getErrorHints,
+  formatSuggestions,
+  getDefaultSuggestionsConfig,
+  type SuggestionsConfig,
+} from "../provider/logger/logger.suggestions";
 
 /**
  * Base exception filter with common functionality
@@ -57,6 +63,42 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
     // Only log stack trace if showStackTrace is explicitly enabled
     if (context.showStackTrace === true && exception.stack) {
       this.logger?.error(exception.stack, service);
+    }
+
+    // Show error suggestions if enabled
+    // Get config from logger if available, otherwise use default
+    let suggestionsConfig = getDefaultSuggestionsConfig();
+    if (this.logger) {
+      try {
+        const loggerConfig = (this.logger as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }).getConfig?.();
+        if (loggerConfig?.suggestions) {
+          suggestionsConfig = {
+            ...suggestionsConfig,
+            ...loggerConfig.suggestions,
+          };
+        }
+      } catch {
+        // If getConfig fails, use default config
+      }
+    }
+
+    if (suggestionsConfig.enabled) {
+      const hints = getErrorHints(
+        exception,
+        {
+          path: context.request.path,
+          method: context.method,
+          statusCode: exception instanceof Error && "statusCode" in exception
+            ? (exception as { statusCode: number }).statusCode
+            : undefined,
+        },
+        suggestionsConfig,
+      );
+
+      if (hints.length > 0) {
+        const suggestionsText = formatSuggestions(hints);
+        this.logger?.info(suggestionsText, service);
+      }
     }
   }
 }
