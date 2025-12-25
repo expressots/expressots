@@ -12,7 +12,13 @@
  */
 
 import { Request, Response, NextFunction } from "express";
-import { Logger, ContextManager, LogContext } from "@expressots/core";
+import {
+  Logger,
+  ContextManager,
+  LogContext,
+  getFlowTracker,
+  removeFlowTracker,
+} from "@expressots/core";
 
 /**
  * Verbosity levels for request logging.
@@ -111,6 +117,15 @@ export function createRequestLoggingMiddleware(
       },
     };
 
+    // Initialize flow tracker (if flow tracking is enabled)
+    const flowConfig = logger.getConfig()?.flow;
+    const flowTracker = getFlowTracker(
+      httpContext.requestId,
+      httpContext.method,
+      httpContext.path,
+      flowConfig,
+    );
+
     // Log request start based on verbosity
     logRequestStart(logger, httpContext, finalConfig);
 
@@ -118,23 +133,72 @@ export function createRequestLoggingMiddleware(
     const startTime = Date.now();
     const startMemory = process.memoryUsage().heapUsed;
 
+    // Store error on request for later retrieval
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (req as any).__expressotsFlowError = undefined;
+
     // Override res.end to capture response
     const originalEnd = res.end;
+    let endCalled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     res.end = function (this: Response, ...args: Array<any>): Response {
+      // Prevent multiple calls
+      if (endCalled) {
+        return originalEnd.apply(this, args as Parameters<typeof originalEnd>);
+      }
+      endCalled = true;
+
       const duration = Date.now() - startTime;
       const memoryDelta = process.memoryUsage().heapUsed - startMemory;
 
-      // Log response
-      logRequestEnd(logger, httpContext, res, duration, memoryDelta, finalConfig);
+      // Get error from request if available (set by controllers, guards, or error handlers)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const error = (req as any).__expressotsFlowError as Error | undefined;
+
+      // Finalize flow and get flow data (pass error if available)
+      const flow = flowTracker.finalize(res.statusCode, error);
+
+      // Log response with flow data
+      logRequestEnd(logger, httpContext, res, duration, memoryDelta, finalConfig, flow);
+
+      // Cleanup flow tracker
+      removeFlowTracker(httpContext.requestId);
 
       // Call original end
       return originalEnd.apply(this, args as Parameters<typeof originalEnd>);
     };
 
+    // Wrap next to capture errors passed to next()
+    const wrappedNext = (err?: unknown): void => {
+      if (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (req as any).__expressotsFlowError = err instanceof Error ? err : new Error(String(err));
+      }
+      next(err);
+    };
+
+    // Also hook into res.status() to capture error status codes
+    // This helps capture errors that Express error handlers set
+    const originalStatus = res.status.bind(res);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (res as any).status = function (this: Response, code: number): Response {
+      // If status is >= 400 and no error is stored yet, try to get it from Express error handling
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (code >= 400 && !(req as any).__expressotsFlowError) {
+        // Check if there's an error in the response locals (Express error handlers sometimes put it there)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorFromLocals = (res as any).locals?.error;
+        if (errorFromLocals) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (req as any).__expressotsFlowError = errorFromLocals instanceof Error ? errorFromLocals : new Error(String(errorFromLocals));
+        }
+      }
+      return originalStatus(code);
+    };
+
     // Run the rest of the middleware chain with context
     ContextManager.runWithContext(logContext, () => {
-      next();
+      wrappedNext();
     });
   };
 }
@@ -198,6 +262,7 @@ function logRequestEnd(
   duration: number,
   memoryDelta: number,
   config: RequestLoggingConfig,
+  flow?: import("@expressots/core").RequestFlow,
 ): void {
   const { verbosity, slowRequestThreshold } = config;
   const statusCode = res.statusCode;
@@ -225,21 +290,22 @@ function logRequestEnd(
   const statusEmoji = isError ? "✗" : "✓";
   const message = `← ${context.method} ${context.path} ${statusCode} ${statusEmoji} ${duration}ms`;
 
-  // Log with appropriate level
+  // Log with appropriate level and include flow data if available
   if (isError && statusCode >= 500) {
-    logger.error(message, "request", logData);
+    logger.error(message, "request", { ...logData, flow });
   } else if (isError) {
-    logger.warn(message, "request", logData);
+    logger.warn(message, "request", { ...logData, flow });
   } else if (isSlowRequest) {
     logger.warn(`[SLOW] ${message}`, "request", {
       ...logData,
       slowRequestThreshold: `${slowRequestThreshold}ms`,
+      flow,
     });
   } else if (verbosity !== "minimal") {
-    logger.info(message, "request", logData);
+    logger.info(message, "request", { ...logData, flow });
   } else {
     // debug only takes 2 args: message and data
-    logger.debug(`[request] ${message}`, logData);
+    logger.debug(`[request] ${message}`, { ...logData, flow });
   }
 }
 

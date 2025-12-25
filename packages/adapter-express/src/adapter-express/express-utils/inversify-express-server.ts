@@ -12,6 +12,8 @@ import {
   Middleware as MiddlewareClass,
   ContentNegotiationService,
   GuardExecutor,
+  ContextManager,
+  findFlowTracker,
 } from "@expressots/core";
 import { GuardContextFactory } from "./guard-context-factory";
 import { BaseMiddleware } from "./base-middleware";
@@ -24,6 +26,7 @@ import {
   instanceOfIHttpActionResult,
   getContentNegotiationMetadata,
 } from "./utils";
+import { getValidationMetadata } from "./validation-decorators";
 import {
   TYPE,
   METADATA_KEY,
@@ -59,7 +62,6 @@ import { getControllerGuards, getMethodGuards } from "./guard-utils";
 import { GuardMiddleware } from "./guard-middleware";
 
 import { ValidationService } from "./validation-service";
-import { getValidationMetadata } from "./validation-decorators";
 
 export class InversifyExpressServer {
   private _router: Router;
@@ -708,6 +710,12 @@ export class InversifyExpressServer {
     parameterMetadata: Array<ParameterMetadata>,
     controllerConstructor?: NewableFunction,
   ): Promise<void> {
+    // Get request ID for flow tracking
+    const requestContext = ContextManager.getCurrentContext();
+    const requestId = requestContext?.requestId;
+    const flowTracker = requestId ? findFlowTracker(requestId) : undefined;
+    const controllerStepName = `${controllerName}.${key}`;
+
     try {
       let args = this.extractParameters(req, res, next, parameterMetadata);
       const httpContext = this._getHttpContext(req);
@@ -716,20 +724,69 @@ export class InversifyExpressServer {
       // Validate parameters if validation service is enabled
       const validationService = this.getValidationService();
       if (validationService?.isEnabled() && controllerConstructor) {
-        const validatedArgs = await validationService.validateParameters(
-          req,
-          res,
-          controllerConstructor,
-          key,
-          args as Array<unknown>,
-        );
+        // Check if there are actually validation metadata (has @validatedBody, @validatedQuery, etc.)
+        const validationMetadata = getValidationMetadata(controllerConstructor, key);
+        const hasValidatedParams = validationMetadata.length > 0;
 
-        if (validatedArgs === null) {
-          // Validation failed, response already sent
-          return;
+        if (hasValidatedParams) {
+          // Start validation step only if there are validated parameters
+          if (flowTracker?.isEnabled()) {
+            flowTracker.startStep("validation", `Validation: ${controllerName}.${key}`);
+          }
+
+          const validatedArgs = await validationService.validateParameters(
+            req,
+            res,
+            controllerConstructor,
+            key,
+            args as Array<unknown>,
+          );
+
+          if (validatedArgs === null) {
+            // Validation failed, response already sent
+            // Create a validation error to store on request
+            const validationError = new Error("Validation failed");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (req as any).__expressotsFlowError = validationError;
+            
+            if (flowTracker?.isEnabled()) {
+              flowTracker.failStep(validationError);
+            }
+            return;
+          }
+
+          // End validation step
+          if (flowTracker?.isEnabled()) {
+            flowTracker.endStep("success");
+          }
+
+          args = validatedArgs as ExtractedParameters;
+        } else {
+          // No validation metadata, but validation service might still run smart detection
+          // Only track if smart detection actually finds something to validate
+          const validatedArgs = await validationService.validateParameters(
+            req,
+            res,
+            controllerConstructor,
+            key,
+            args as Array<unknown>,
+          );
+
+          if (validatedArgs === null) {
+            // Smart detection found validation errors
+            return;
+          }
+
+          args = validatedArgs as ExtractedParameters;
         }
+      }
 
-        args = validatedArgs as ExtractedParameters;
+      // Start controller step
+      if (flowTracker?.isEnabled()) {
+        flowTracker.startStep("controller", controllerStepName, {
+          controller: controllerName,
+          method: key,
+        });
       }
 
       // invoke controller's action
@@ -738,6 +795,11 @@ export class InversifyExpressServer {
         controllerName,
       );
       const value = await (controller[key] as ControllerHandler)(...args);
+
+      // End controller step
+      if (flowTracker?.isEnabled()) {
+        flowTracker.endStep("success");
+      }
 
       const { template, defaultData } = getRenderMetadata(controller, key);
 
@@ -775,6 +837,20 @@ export class InversifyExpressServer {
         }
       }
     } catch (err) {
+      // Store error on request for flow tracking
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (req as any).__expressotsFlowError = err instanceof Error ? err : new Error(String(err));
+
+      // End controller step with failure if not already ended
+      if (flowTracker?.isEnabled()) {
+        const currentFlow = flowTracker.getFlow();
+        const lastStep = currentFlow.steps[currentFlow.steps.length - 1];
+        if (lastStep && lastStep.name === controllerStepName && lastStep.status === "success") {
+          // Step was already ended, don't end again
+        } else {
+          flowTracker.failStep(err instanceof Error ? err : undefined);
+        }
+      }
       next(err);
     }
   }
