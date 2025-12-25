@@ -5,6 +5,7 @@ import { GroupingConfig } from "./logger.grouping";
 import { FlowConfig } from "./logger.flow";
 import { SuggestionsConfig } from "./logger.suggestions";
 import { HealthConfig } from "./logger.health";
+import { QueryConfig } from "./logger.query";
 
 /**
  * Filter configuration for log filtering.
@@ -46,6 +47,8 @@ export interface LoggerConfig {
   suggestions?: Partial<SuggestionsConfig>;
   /** Health monitoring configuration */
   health?: Partial<HealthConfig>;
+  /** Log query and export configuration */
+  query?: Partial<QueryConfig>;
 }
 
 /**

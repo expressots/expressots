@@ -19,7 +19,7 @@ class LogBuffer {
     }
   }
 
-  query(options: LogQueryOptions): Array<LogEntry> {
+  query(options: HttpLogQueryOptions): Array<LogEntry> {
     let results = [...this.buffer];
 
     // Filter by level
@@ -97,10 +97,11 @@ class LogBuffer {
 }
 
 /**
- * Log query options.
+ * Log query options for HTTP server.
  * @public API
+ * @deprecated Use LogQueryOptions from logger.query instead
  */
-export interface LogQueryOptions {
+export interface HttpLogQueryOptions {
   /** Filter by log level */
   level?: LogLevel;
   /** Filter by context */
@@ -178,7 +179,7 @@ export class HttpLogServer {
    * @param options - Query options
    * @returns Array of log entries
    */
-  queryLogs(options: LogQueryOptions): Array<LogEntry> {
+  queryLogs(options: HttpLogQueryOptions): Array<LogEntry> {
     return this.buffer.query(options);
   }
 

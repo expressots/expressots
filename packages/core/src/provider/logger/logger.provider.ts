@@ -29,6 +29,13 @@ import {
   HealthStatus,
   collectHealthStatus,
 } from "./logger.health";
+import {
+  LogQueryManager,
+  LogQueryOptions,
+  LogQuery,
+  exportToMarkdown,
+  QueryStats,
+} from "./logger.query";
 
 /**
  * Enhanced Logger provider with structured logging, multiple levels, and pluggable transports.
@@ -50,6 +57,7 @@ class Logger implements IProvider {
   private autoDetectContext: boolean = true;
   private groupingManager: LogGroupingManager | null = null;
   private healthMonitor: HealthMonitor | null = null;
+  private queryManager: LogQueryManager | null = null;
 
   name: string = "Logger Provider";
   version: string = "4.1.0";
@@ -71,6 +79,8 @@ class Logger implements IProvider {
     this.transports = this.config.transports;
     // Initialize grouping manager with default config
     this.groupingManager = new LogGroupingManager(this.config.grouping);
+    // Initialize query manager with default config
+    this.queryManager = new LogQueryManager(this.config.query);
   }
 
   /**
@@ -121,6 +131,15 @@ class Logger implements IProvider {
       // Start monitoring if enabled
       if (config.health.enabled !== false) {
         this.healthMonitor.start();
+      }
+    }
+
+    // Initialize or update query manager if query config is provided
+    if (config.query !== undefined) {
+      if (this.queryManager) {
+        this.queryManager.configure(config.query);
+      } else {
+        this.queryManager = new LogQueryManager(config.query);
       }
     }
   }
@@ -477,6 +496,11 @@ class Logger implements IProvider {
       pid: this.pid,
     });
 
+    // Add entry to query buffer BEFORE grouping (so all entries are captured)
+    if (this.queryManager) {
+      this.queryManager.addEntry(entry);
+    }
+
     // Process through grouping manager if enabled
     if (this.groupingManager) {
       const processed = this.groupingManager.processEntry(entry);
@@ -544,6 +568,9 @@ class Logger implements IProvider {
    * @param entry - Log entry
    */
   private sendEntry(entry: LogEntry): void {
+    // Note: Entry is already added to query buffer before grouping
+    // This method only sends to transports
+
     for (const transport of this.transports) {
       if (transport.enabled) {
         try {
@@ -704,6 +731,95 @@ class Logger implements IProvider {
     }
     // If health monitor not initialized, collect status directly
     return await collectHealthStatus();
+  }
+
+  /**
+   * Query logs from the in-memory buffer.
+   * @param options - Query options
+   * @returns Array of matching log entries
+   * @public API
+   */
+  queryLogs(options: LogQueryOptions = {}): Array<LogEntry> {
+    if (!this.queryManager) {
+      return [];
+    }
+    return this.queryManager.query(options);
+  }
+
+  /**
+   * Create a chainable query builder for logs.
+   * @returns LogQuery instance
+   * @public API
+   */
+  query(): LogQuery {
+    if (!this.queryManager) {
+      // Return empty query if query manager not enabled
+      return new LogQuery([]);
+    }
+    return this.queryManager.createQuery();
+  }
+
+  /**
+   * Get all logs from the buffer.
+   * @returns Array of all log entries
+   * @public API
+   */
+  getAllLogs(): Array<LogEntry> {
+    if (!this.queryManager) {
+      return [];
+    }
+    return this.queryManager.getAll();
+  }
+
+  /**
+   * Get statistics about logs in the buffer.
+   * @returns Log statistics
+   * @public API
+   */
+  getLogStats(): QueryStats {
+    if (!this.queryManager) {
+      return {
+        total: 0,
+        byLevel: {},
+        byContext: {},
+        oldest: null,
+        newest: null,
+      };
+    }
+    return this.queryManager.getStats();
+  }
+
+  /**
+   * Clear all logs from the query buffer.
+   * @public API
+   */
+  clearLogs(): void {
+    if (this.queryManager) {
+      this.queryManager.clear();
+    }
+  }
+
+  /**
+   * Export logs to markdown format.
+   * @param options - Export options
+   * @returns Markdown string
+   * @public API
+   */
+  exportLogsToMarkdown(options: {
+    query?: LogQueryOptions;
+    title?: string;
+    includeStats?: boolean;
+    groupBy?: "level" | "context" | "none";
+  } = {}): string {
+    const entries = options.query
+      ? this.queryLogs(options.query)
+      : this.getAllLogs();
+
+    return exportToMarkdown(entries, {
+      title: options.title,
+      includeStats: options.includeStats,
+      groupBy: options.groupBy,
+    });
   }
 
   /**

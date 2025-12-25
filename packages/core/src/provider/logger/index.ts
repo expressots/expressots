@@ -13,4 +13,5 @@ export * from "./logger.grouping";
 export * from "./logger.flow";
 export * from "./logger.suggestions";
 export * from "./logger.health";
+export * from "./logger.query";
 export * from "./decorators";

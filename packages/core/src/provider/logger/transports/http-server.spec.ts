@@ -1,6 +1,6 @@
 // Unit tests for: http-server.ts (Phase 10: Advanced Transports)
 
-import { HttpLogServer, LogQueryOptions, LogStats } from "./http-server";
+import { HttpLogServer, HttpLogQueryOptions, LogStats } from "./http-server";
 import { LogEntry } from "../utils/log-entry";
 import { LogLevel } from "../utils/log-levels";
 import { createLogEntry } from "../utils/log-entry";
@@ -74,7 +74,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
     });
 
     it("should filter by log level", () => {
-      const options: LogQueryOptions = { level: LogLevel.INFO };
+      const options: HttpLogQueryOptions = { level: LogLevel.INFO };
       const results = server.queryLogs(options);
 
       expect(results.length).toBe(1);
@@ -83,7 +83,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
     });
 
     it("should filter by context", () => {
-      const options: LogQueryOptions = { context: "ServiceA" };
+      const options: HttpLogQueryOptions = { context: "ServiceA" };
       const results = server.queryLogs(options);
 
       expect(results.length).toBe(3);
@@ -106,7 +106,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
       newEntry.timestamp = new Date(now);
       server.addLog(newEntry);
 
-      const options: LogQueryOptions = {
+      const options: HttpLogQueryOptions = {
         startTime: oneHourAgo,
         endTime: oneHourLater,
       };
@@ -122,7 +122,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
     });
 
     it("should filter by search term in message", () => {
-      const options: LogQueryOptions = { search: "Error" };
+      const options: HttpLogQueryOptions = { search: "Error" };
       const results = server.queryLogs(options);
 
       expect(results.length).toBe(1);
@@ -135,7 +135,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
       });
       server.addLog(entry);
 
-      const options: LogQueryOptions = { search: "12345" };
+      const options: HttpLogQueryOptions = { search: "12345" };
       const results = server.queryLogs(options);
 
       expect(results.length).toBeGreaterThan(0);
@@ -146,7 +146,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
     });
 
     it("should combine multiple filters", () => {
-      const options: LogQueryOptions = {
+      const options: HttpLogQueryOptions = {
         level: LogLevel.INFO,
         context: "ServiceA",
       };
@@ -163,7 +163,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
         server.addLog(createLogEntry(LogLevel.INFO, `Message ${i}`));
       }
 
-      const options: LogQueryOptions = { limit: 5 };
+      const options: HttpLogQueryOptions = { limit: 5 };
       const results = server.queryLogs(options);
 
       expect(results.length).toBe(5);
@@ -281,7 +281,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
 
   describe("HttpLogServer - Edge Cases", () => {
     it("should handle empty query results", () => {
-      const options: LogQueryOptions = { level: LogLevel.FATAL };
+      const options: HttpLogQueryOptions = { level: LogLevel.FATAL };
       const results = server.queryLogs(options);
 
       expect(results.length).toBe(0);
@@ -290,7 +290,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
     it("should handle search with no matches", () => {
       server.addLog(createLogEntry(LogLevel.INFO, "Test message"));
 
-      const options: LogQueryOptions = { search: "nonexistent" };
+      const options: HttpLogQueryOptions = { search: "nonexistent" };
       const results = server.queryLogs(options);
 
       expect(results.length).toBe(0);
@@ -299,7 +299,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
     it("should handle case-insensitive search", () => {
       server.addLog(createLogEntry(LogLevel.INFO, "Test Message"));
 
-      const options: LogQueryOptions = { search: "test" };
+      const options: HttpLogQueryOptions = { search: "test" };
       const results = server.queryLogs(options);
 
       expect(results.length).toBeGreaterThan(0);
@@ -310,7 +310,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
         createLogEntry(LogLevel.INFO, "Message with @#$% special chars"),
       );
 
-      const options: LogQueryOptions = { search: "@#$%" };
+      const options: HttpLogQueryOptions = { search: "@#$%" };
       const results = server.queryLogs(options);
 
       expect(results.length).toBeGreaterThan(0);
@@ -345,7 +345,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
       newEntry.timestamp = new Date(now);
       server.addLog(newEntry);
 
-      const options: LogQueryOptions = { startTime: oneHourAgo };
+      const options: HttpLogQueryOptions = { startTime: oneHourAgo };
       const results = server.queryLogs(options);
 
       expect(results.length).toBeGreaterThan(0);
@@ -366,7 +366,7 @@ describe("HttpLogServer - Phase 10 Tests", () => {
       futureEntry.timestamp = new Date(oneHourLater + 1000);
       server.addLog(futureEntry);
 
-      const options: LogQueryOptions = { endTime: oneHourLater };
+      const options: HttpLogQueryOptions = { endTime: oneHourLater };
       const results = server.queryLogs(options);
 
       results.forEach((entry) => {
