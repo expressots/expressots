@@ -64,9 +64,13 @@ import { GuardMiddleware } from "./guard-middleware";
 import { ValidationService } from "./validation-service";
 
 // Lazy-load route registry to avoid circular dependencies
-let routeRegistryModule: { getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void } } | null = null;
+let routeRegistryModule: {
+  getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void };
+} | null = null;
 
-function getRouteRegistryModule(): { getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void } } | null {
+function getRouteRegistryModule(): {
+  getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void };
+} | null {
   if (!routeRegistryModule) {
     try {
       // Try to load the suggestions module from @expressots/core
