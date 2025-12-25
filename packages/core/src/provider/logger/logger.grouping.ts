@@ -239,7 +239,9 @@ export class LogGroupingManager {
         const flushedGroup = { ...existingGroup };
         this.groups.delete(groupKey);
         this.createNewGroup(groupKey, entry);
-        return flushedGroup.count >= this.config.minOccurrences ? flushedGroup : entry;
+        return flushedGroup.count >= this.config.minOccurrences
+          ? flushedGroup
+          : entry;
       }
     }
 
@@ -282,19 +284,28 @@ export class LogGroupingManager {
 
     for (const group of this.groups.values()) {
       const groupNormalized = normalizeMessage(group.representative.message);
-      const similarity = calculateSimilarity(normalizedMessage, groupNormalized);
+      const similarity = calculateSimilarity(
+        normalizedMessage,
+        groupNormalized,
+      );
 
       // Also check context similarity if enabled
       if (this.config.considerContext) {
         const contextMatch =
           entry.context === group.representative.context ? 1.0 : 0.0;
-        const combinedSimilarity = (similarity * 0.8 + contextMatch * 0.2);
-        if (combinedSimilarity >= this.config.similarityThreshold && combinedSimilarity > bestSimilarity) {
+        const combinedSimilarity = similarity * 0.8 + contextMatch * 0.2;
+        if (
+          combinedSimilarity >= this.config.similarityThreshold &&
+          combinedSimilarity > bestSimilarity
+        ) {
           bestSimilarity = combinedSimilarity;
           bestMatch = group;
         }
       } else {
-        if (similarity >= this.config.similarityThreshold && similarity > bestSimilarity) {
+        if (
+          similarity >= this.config.similarityThreshold &&
+          similarity > bestSimilarity
+        ) {
           bestSimilarity = similarity;
           bestMatch = group;
         }
@@ -387,7 +398,12 @@ export class LogGroupingManager {
    */
   getStats(): {
     totalGroups: number;
-    groups: Array<{ key: string; count: number; firstOccurrence: Date; lastOccurrence: Date }>;
+    groups: Array<{
+      key: string;
+      count: number;
+      firstOccurrence: Date;
+      lastOccurrence: Date;
+    }>;
   } {
     return {
       totalGroups: this.groups.size,
@@ -400,4 +416,3 @@ export class LogGroupingManager {
     };
   }
 }
-

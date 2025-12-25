@@ -10,7 +10,11 @@ import { createLogEntry, LogTrace, LogEntry } from "./utils/log-entry";
 import { LoggerConfig, getDefaultLoggerConfig } from "./logger.config";
 import { ILogTransport } from "./transports/transport.interface";
 import { ConsoleTransport } from "./transports/console.transport";
-import { formatDev, formatGroupedDev, formatGroupedProd } from "./logger.formatter";
+import {
+  formatDev,
+  formatGroupedDev,
+  formatGroupedProd,
+} from "./logger.formatter";
 import { ContextManager, LogContext } from "./logger.context";
 import {
   Timer,
@@ -19,10 +23,7 @@ import {
   measurePerformance,
   measurePerformanceSync,
 } from "./logger.performance";
-import {
-  LogGroupingManager,
-  GroupedLogEntry,
-} from "./logger.grouping";
+import { LogGroupingManager, GroupedLogEntry } from "./logger.grouping";
 
 /**
  * Enhanced Logger provider with structured logging, multiple levels, and pluggable transports.
@@ -448,7 +449,9 @@ class Logger implements IProvider {
    * @param entry - Log entry or grouped entry
    * @returns True if grouped entry
    */
-  private isGroupedLogEntry(entry: LogEntry | GroupedLogEntry): entry is GroupedLogEntry {
+  private isGroupedLogEntry(
+    entry: LogEntry | GroupedLogEntry,
+  ): entry is GroupedLogEntry {
     return (
       typeof entry === "object" &&
       entry !== null &&
@@ -465,9 +468,11 @@ class Logger implements IProvider {
    * @param groupedEntry - Grouped log entry
    */
   private sendGroupedEntry(groupedEntry: GroupedLogEntry): void {
-    const isStructured = this.config.structured ?? process.env.NODE_ENV === "production";
+    const isStructured =
+      this.config.structured ?? process.env.NODE_ENV === "production";
     const formatOptions = {
-      redact: this.config.redaction?.enabled ?? process.env.NODE_ENV === "production",
+      redact:
+        this.config.redaction?.enabled ?? process.env.NODE_ENV === "production",
     };
 
     const formatted = isStructured
@@ -477,7 +482,9 @@ class Logger implements IProvider {
     // Write formatted grouped entry directly to stdout/stderr
     // This bypasses normal transport formatting since grouped entries are already formatted
     const stream =
-      groupedEntry.representative.level >= LogLevel.ERROR ? process.stderr : process.stdout;
+      groupedEntry.representative.level >= LogLevel.ERROR
+        ? process.stderr
+        : process.stdout;
     stream.write(formatted);
   }
 

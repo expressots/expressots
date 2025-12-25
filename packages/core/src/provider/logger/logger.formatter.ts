@@ -346,7 +346,10 @@ function applyRedaction(entry: LogEntry, options?: FormatOptions): LogEntry {
  * @returns Formatted string
  * @public API
  */
-export function formatGroupedDev(groupedEntry: GroupedLogEntry, options?: FormatOptions): string {
+export function formatGroupedDev(
+  groupedEntry: GroupedLogEntry,
+  options?: FormatOptions,
+): string {
   const entry = groupedEntry.representative;
   const processedEntry = applyRedaction(entry, options);
 
@@ -359,7 +362,10 @@ export function formatGroupedDev(groupedEntry: GroupedLogEntry, options?: Format
     : "";
 
   // Format time range
-  const timeRange = formatTimeRange(groupedEntry.firstOccurrence, groupedEntry.lastOccurrence);
+  const timeRange = formatTimeRange(
+    groupedEntry.firstOccurrence,
+    groupedEntry.lastOccurrence,
+  );
 
   // Format grouped message
   const groupedMessage = colorText(
@@ -409,7 +415,10 @@ export function formatGroupedDev(groupedEntry: GroupedLogEntry, options?: Format
  * @returns JSON string
  * @public API
  */
-export function formatGroupedProd(groupedEntry: GroupedLogEntry, options?: FormatOptions): string {
+export function formatGroupedProd(
+  groupedEntry: GroupedLogEntry,
+  options?: FormatOptions,
+): string {
   const entry = groupedEntry.representative;
   const processedEntry = applyRedaction(entry, options);
 
@@ -421,7 +430,10 @@ export function formatGroupedProd(groupedEntry: GroupedLogEntry, options?: Forma
     count: groupedEntry.count,
     firstOccurrence: groupedEntry.firstOccurrence.toISOString(),
     lastOccurrence: groupedEntry.lastOccurrence.toISOString(),
-    timeRange: formatTimeRange(groupedEntry.firstOccurrence, groupedEntry.lastOccurrence),
+    timeRange: formatTimeRange(
+      groupedEntry.firstOccurrence,
+      groupedEntry.lastOccurrence,
+    ),
   };
 
   if (processedEntry.context) {
