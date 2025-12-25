@@ -514,12 +514,15 @@ function formatFlow(flow: RequestFlow, indent: number): string {
   const indentStr = " ".repeat(indent);
   const boxWidth = 55;
   const title = "Request Flow Visualization";
-  
+
   let output = `\n${indentStr}${colorText("╔" + "═".repeat(boxWidth) + "╗", "blue")}\n`;
-  
+
   // Title - center aligned
   const titlePlainLength = title.length;
-  const titlePadding = Math.max(0, Math.floor((boxWidth - titlePlainLength) / 2));
+  const titlePadding = Math.max(
+    0,
+    Math.floor((boxWidth - titlePlainLength) / 2),
+  );
   const titleRightPadding = boxWidth - titlePlainLength - titlePadding;
   output += `${indentStr}${colorText("║", "blue")}${" ".repeat(titlePadding)}${colorText(title, "blue")}${" ".repeat(titleRightPadding)}${colorText("║", "blue")}\n`;
   output += `${indentStr}${colorText("╠" + "═".repeat(boxWidth) + "╣", "blue")}\n`;
@@ -529,7 +532,7 @@ function formatFlow(flow: RequestFlow, indent: number): string {
   const methodPathPlainLength = methodPath.length;
   const methodPathPadding = boxWidth - methodPathPlainLength - 1;
   output += `${indentStr}${colorText("║", "blue")} ${colorText(methodPath, "white")}${" ".repeat(methodPathPadding)}${colorText("║", "blue")}\n`;
-  
+
   const requestIdText = `Request ID: `;
   const requestIdValue = flow.requestId;
   const requestIdPlainLength = requestIdText.length + requestIdValue.length;
@@ -541,7 +544,10 @@ function formatFlow(flow: RequestFlow, indent: number): string {
   if (flow.steps.length === 0) {
     const noStepsMsg = "No steps tracked";
     const noStepsPlainLength = noStepsMsg.length;
-    const noStepsPadding = Math.max(0, Math.floor((boxWidth - noStepsPlainLength) / 2));
+    const noStepsPadding = Math.max(
+      0,
+      Math.floor((boxWidth - noStepsPlainLength) / 2),
+    );
     const noStepsRightPadding = boxWidth - noStepsPlainLength - noStepsPadding;
     output += `${indentStr}${colorText("║", "blue")}${" ".repeat(noStepsPadding)}${colorText(noStepsMsg, "yellow")}${" ".repeat(noStepsRightPadding)}${colorText("║", "blue")}\n`;
   } else {
@@ -550,7 +556,9 @@ function formatFlow(flow: RequestFlow, indent: number): string {
       const isLast = index === flow.steps.length - 1;
       const stepOutput = formatFlowStep(step, 0, isLast);
       // Split into lines and wrap each line in box borders
-      const stepLines = stepOutput.split("\n").filter((line) => line.trim().length > 0);
+      const stepLines = stepOutput
+        .split("\n")
+        .filter((line) => line.trim().length > 0);
       stepLines.forEach((line) => {
         // Remove ANSI codes for length calculation, but keep them in the output
         // eslint-disable-next-line no-control-regex
@@ -563,7 +571,7 @@ function formatFlow(flow: RequestFlow, indent: number): string {
 
   // Summary
   output += `${indentStr}${colorText("╠" + "═".repeat(boxWidth) + "╣", "blue")}\n`;
-  
+
   // Total Duration - left aligned
   const durationValue = `${flow.totalDuration.toFixed(2)}ms`;
   const durationText = "Total Duration: ";
@@ -572,7 +580,12 @@ function formatFlow(flow: RequestFlow, indent: number): string {
   output += `${indentStr}${colorText("║", "blue")} ${durationText}${colorText(durationValue, "yellow")}${" ".repeat(durationPadding)}${colorText("║", "blue")}\n`;
 
   if (flow.statusCode !== undefined) {
-    const statusColor = flow.statusCode >= 400 ? "red" : flow.statusCode >= 300 ? "yellow" : "green";
+    const statusColor =
+      flow.statusCode >= 400
+        ? "red"
+        : flow.statusCode >= 300
+          ? "yellow"
+          : "green";
     const statusCodeStr = String(flow.statusCode);
     const statusText = "Status Code: ";
     const statusPlainLength = statusText.length + statusCodeStr.length;
@@ -593,9 +606,10 @@ function formatFlow(flow: RequestFlow, indent: number): string {
 
   if (flow.error) {
     const maxErrorLength = boxWidth - 8; // "Error: " = 7 chars + 1 space
-    const errorMsg = flow.error.message.length > maxErrorLength 
-      ? flow.error.message.substring(0, maxErrorLength - 3) + "..." 
-      : flow.error.message;
+    const errorMsg =
+      flow.error.message.length > maxErrorLength
+        ? flow.error.message.substring(0, maxErrorLength - 3) + "..."
+        : flow.error.message;
     const errorText = "Error: ";
     const errorPlainLength = errorText.length + errorMsg.length;
     const errorPadding = boxWidth - errorPlainLength - 1;
@@ -614,7 +628,11 @@ function formatFlow(flow: RequestFlow, indent: number): string {
  * @param isLast - Whether this is the last sibling
  * @returns Formatted step string
  */
-function formatFlowStep(step: FlowStep, indent: number, isLast: boolean): string {
+function formatFlowStep(
+  step: FlowStep,
+  indent: number,
+  isLast: boolean,
+): string {
   const indentStr = " ".repeat(indent);
   const stepIcon = getStepIcon(step.type);
   const statusIcon = getStatusIcon(step.status);
@@ -645,7 +663,9 @@ function formatFlowStep(step: FlowStep, indent: number, isLast: boolean): string
 
     if (filteredMetadata.length > 0) {
       filteredMetadata.forEach(([key, value], index) => {
-        const isLastMeta = index === filteredMetadata.length - 1 && (!step.children || step.children.length === 0);
+        const isLastMeta =
+          index === filteredMetadata.length - 1 &&
+          (!step.children || step.children.length === 0);
         const metaConnector = isLastMeta ? "└─" : "├─";
         const metaPrefix = isLast ? "  " : "│";
         let valueStr: string;

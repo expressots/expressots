@@ -406,7 +406,7 @@ class Logger implements IProvider {
     // Extract flow from data if present (for backward compatibility)
     let flowData = options?.flow;
     let dataWithoutFlow = options?.data;
-    
+
     if (
       !flowData &&
       typeof options?.data === "object" &&

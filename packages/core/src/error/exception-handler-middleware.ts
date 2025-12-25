@@ -75,7 +75,8 @@ export class ExceptionHandlerMiddleware {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(req as any).__expressotsFlowError) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (req as any).__expressotsFlowError = error instanceof Error ? error : new Error(String(error));
+      (req as any).__expressotsFlowError =
+        error instanceof Error ? error : new Error(String(error));
     }
 
     // Build exception context
