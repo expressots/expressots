@@ -60,6 +60,7 @@ export class AppExpress implements Server.IWebServer {
   private isShuttingDown: boolean = false;
   private bannerGenerator: BannerGenerator | null = null;
   private bannerConfig: BannerConfig | undefined;
+  private shutdownHandlers: Map<NodeJS.Signals, () => void> = new Map();
 
   // Log buffering for banner-first display
   // IMPORTANT: All these properties must be declared BEFORE initBuffering!
@@ -534,6 +535,21 @@ export class AppExpress implements Server.IWebServer {
    * @public API
    */
   public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic> {
+    // Close existing server instance if it exists
+    if (this.serverInstance) {
+      this.logger.warn(
+        "Closing existing server instance before starting new one",
+        "adapter-express",
+      );
+      await this.closeExistingServer();
+    }
+
+    // Remove old signal handlers to prevent duplicates
+    this.removeShutdownHandlers();
+
+    // Reset shutdown flag
+    this.isShuttingDown = false;
+
     // Resolve banner configuration with environment-specific overrides
     const resolvedBannerConfig = resolveBannerConfig(
       this.bannerConfig,
@@ -587,7 +603,7 @@ export class AppExpress implements Server.IWebServer {
         ];
 
         for (const signal of shutdownSignals) {
-          process.on(signal, () => {
+          const handler = (): void => {
             // Prevent multiple shutdown attempts
             if (this.isShuttingDown) {
               return;
@@ -606,7 +622,11 @@ export class AppExpress implements Server.IWebServer {
                 this.logger.error(`Shutdown error: ${error.message}`, "adapter-express");
                 process.exit(1);
               });
-          });
+          };
+
+          // Store handler for later removal
+          this.shutdownHandlers.set(signal, handler);
+          process.on(signal, handler);
         }
 
         try {
@@ -624,11 +644,65 @@ export class AppExpress implements Server.IWebServer {
           reject(error);
         }
       });
-      this.serverInstance?.on("error", (error) => {
-        this.logger.error(`Error starting server: ${error.message}`, "adapter-express");
-        reject(error);
+      this.serverInstance?.on("error", (error: NodeJS.ErrnoException) => {
+        // Handle EADDRINUSE error with helpful suggestions
+        if (error.code === "EADDRINUSE") {
+          const port = this.port;
+          const errorMessage = `Port ${port} is already in use`;
+          const suggestions = [
+            `Try a different port: Set PORT environment variable to another value`,
+            `Find and stop the process using port ${port}`,
+            process.platform === "win32"
+              ? `On Windows: netstat -ano | findstr :${port}`
+              : `On Linux/Mac: lsof -ti:${port} | xargs kill`,
+          ];
+
+          this.logger.error(errorMessage, "adapter-express");
+          this.logger.info("💡 Suggestions:", "adapter-express");
+          suggestions.forEach((suggestion) => {
+            this.logger.info(`   • ${suggestion}`, "adapter-express");
+          });
+
+          reject(new Error(`${errorMessage}. ${suggestions[0]}`));
+        } else {
+          this.logger.error(`Error starting server: ${error.message}`, "adapter-express");
+          reject(error);
+        }
       });
     });
+  }
+
+  /**
+   * Close existing server instance if it exists.
+   * @private
+   */
+  private async closeExistingServer(): Promise<void> {
+    if (this.serverInstance) {
+      return new Promise<void>((resolve) => {
+        this.serverInstance!.close(() => {
+          this.serverInstance = null;
+          resolve();
+        });
+        // Force close after timeout
+        setTimeout(() => {
+          if (this.serverInstance) {
+            this.serverInstance = null;
+            resolve();
+          }
+        }, 1000);
+      });
+    }
+  }
+
+  /**
+   * Remove existing shutdown signal handlers to prevent duplicates.
+   * @private
+   */
+  private removeShutdownHandlers(): void {
+    this.shutdownHandlers.forEach((handler, signal) => {
+      process.removeListener(signal, handler);
+    });
+    this.shutdownHandlers.clear();
   }
 
   /**
