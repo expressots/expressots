@@ -130,9 +130,7 @@ export class AppExpress implements Server.IWebServer {
       (...args: Array<unknown>): void => {
         const message =
           args
-            .map((a) =>
-              typeof a === "object" && a !== null ? JSON.stringify(a) : String(a),
-            )
+            .map((a) => (typeof a === "object" && a !== null ? JSON.stringify(a) : String(a)))
             .join(" ") + "\n";
         AppExpress.logBuffer.push(message);
       };
