@@ -250,14 +250,20 @@ export function suggestRoutes(
     const routeNormalized = normalizePathForComparison(routePath);
 
     // Calculate similarity
-    const similarity = calculateSimilarity(requestedNormalized, routeNormalized);
+    const similarity = calculateSimilarity(
+      requestedNormalized,
+      routeNormalized,
+    );
 
     // Check if similarity meets threshold
     if (similarity >= config.minSimilarityThreshold) {
       let reason: string | undefined;
 
       // Determine reason for suggestion
-      if (routeNormalized === requestedNormalized && route.method !== requestedMethod) {
+      if (
+        routeNormalized === requestedNormalized &&
+        route.method !== requestedMethod
+      ) {
         reason = `Route exists but method is ${route.method} (you used ${requestedMethod})`;
       } else if (similarity >= 0.8) {
         reason = "Very similar route";
@@ -325,9 +331,12 @@ export function getErrorHints(
     ? { ...getDefaultSuggestionsConfig(), ...config }
     : getDefaultSuggestionsConfig();
   const hints: Array<ErrorSuggestion> = [];
-  
+
   // If error hints are disabled, skip hint generation (but still allow route suggestions)
-  if (!suggestionsConfig.showErrorHints && !suggestionsConfig.showRouteSuggestions) {
+  if (
+    !suggestionsConfig.showErrorHints &&
+    !suggestionsConfig.showRouteSuggestions
+  ) {
     return hints;
   }
 
@@ -368,8 +377,8 @@ export function getErrorHints(
       errorMessage.includes("eaddrinuse") ||
       errorMessage.includes("address already in use"))
   ) {
-    const portMatch = errorMessage.match(/port\s+(\d+)/i) ||
-      errorMessage.match(/:(\d+)/);
+    const portMatch =
+      errorMessage.match(/port\s+(\d+)/i) || errorMessage.match(/:(\d+)/);
     const port = portMatch ? portMatch[1] : "unknown";
 
     hints.push({
@@ -393,8 +402,8 @@ export function getErrorHints(
       errorMessage.includes("module not found") ||
       stack.includes("cannot find module"))
   ) {
-    const moduleMatch = errorMessage.match(/['"]([^'"]+)['"]/) ||
-      stack.match(/['"]([^'"]+)['"]/);
+    const moduleMatch =
+      errorMessage.match(/['"]([^'"]+)['"]/) || stack.match(/['"]([^'"]+)['"]/);
     const moduleName = moduleMatch ? moduleMatch[1] : "unknown";
 
     hints.push({
@@ -550,9 +559,7 @@ export function getErrorHints(
  * @returns Formatted string
  * @public API
  */
-export function formatSuggestions(
-  suggestions: Array<ErrorSuggestion>,
-): string {
+export function formatSuggestions(suggestions: Array<ErrorSuggestion>): string {
   if (suggestions.length === 0) {
     return "";
   }
@@ -589,4 +596,3 @@ export function formatSuggestions(
 
   return output;
 }
-

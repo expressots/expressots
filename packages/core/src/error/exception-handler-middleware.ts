@@ -432,7 +432,11 @@ export class ExceptionHandlerMiddleware {
     let suggestionsConfig = getDefaultSuggestionsConfig();
     if (this.logger) {
       try {
-        const loggerConfig = (this.logger as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }).getConfig?.();
+        const loggerConfig = (
+          this.logger as {
+            getConfig?: () => { suggestions?: Partial<SuggestionsConfig> };
+          }
+        ).getConfig?.();
         if (loggerConfig?.suggestions) {
           suggestionsConfig = {
             ...suggestionsConfig,
@@ -450,9 +454,10 @@ export class ExceptionHandlerMiddleware {
         {
           path: context.request.path,
           method: context.method,
-          statusCode: exception instanceof AppError
-            ? exception.statusCode
-            : StatusCode.InternalServerError,
+          statusCode:
+            exception instanceof AppError
+              ? exception.statusCode
+              : StatusCode.InternalServerError,
         },
         suggestionsConfig,
       );

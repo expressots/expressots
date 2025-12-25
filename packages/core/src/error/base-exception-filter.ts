@@ -70,7 +70,11 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
     let suggestionsConfig = getDefaultSuggestionsConfig();
     if (this.logger) {
       try {
-        const loggerConfig = (this.logger as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }).getConfig?.();
+        const loggerConfig = (
+          this.logger as {
+            getConfig?: () => { suggestions?: Partial<SuggestionsConfig> };
+          }
+        ).getConfig?.();
         if (loggerConfig?.suggestions) {
           suggestionsConfig = {
             ...suggestionsConfig,
@@ -88,9 +92,10 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
         {
           path: context.request.path,
           method: context.method,
-          statusCode: exception instanceof Error && "statusCode" in exception
-            ? (exception as { statusCode: number }).statusCode
-            : undefined,
+          statusCode:
+            exception instanceof Error && "statusCode" in exception
+              ? (exception as { statusCode: number }).statusCode
+              : undefined,
         },
         suggestionsConfig,
       );
