@@ -63,6 +63,31 @@ import { GuardMiddleware } from "./guard-middleware";
 
 import { ValidationService } from "./validation-service";
 
+// Lazy-load route registry to avoid circular dependencies
+let routeRegistryModule: { getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void } } | null = null;
+
+function getRouteRegistryModule(): { getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void } } | null {
+  if (!routeRegistryModule) {
+    try {
+      // Try to load the suggestions module from @expressots/core
+      // The getRouteRegistry function is exported from @expressots/core via logger index
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const coreModule = require("@expressots/core");
+      if (coreModule && typeof coreModule.getRouteRegistry === "function") {
+        routeRegistryModule = { getRouteRegistry: coreModule.getRouteRegistry };
+      } else {
+        // Fallback: try direct path (may not work in all build configurations)
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        routeRegistryModule = require("@expressots/core/provider/logger/logger.suggestions");
+      }
+    } catch {
+      // Module not available, return null (non-critical - suggestions are optional)
+      routeRegistryModule = null;
+    }
+  }
+  return routeRegistryModule;
+}
+
 export class InversifyExpressServer {
   private _router: Router;
   private _container: interfaces.Container;
@@ -210,9 +235,23 @@ export class InversifyExpressServer {
           // Determine version: method-level version overrides controller-level version
           const version = metadata.version || controllerMetadata.version;
           const versionPrefix = version ? `/${version}` : "";
+          const routePath = `${versionPrefix}${controllerMetadata.path}${metadata.path}`;
+          const fullPath = `${this._routingConfig.rootPath}${routePath}`;
+
+          // Register route for suggestions system (synchronous approach)
+          try {
+            const module = getRouteRegistryModule();
+            if (module && module.getRouteRegistry) {
+              const registry = module.getRouteRegistry();
+              registry.register(metadata.method, routePath, fullPath);
+            }
+          } catch {
+            // Route registry not available, skip registration (non-critical)
+            // This allows the app to work even if suggestions module isn't available
+          }
 
           this._router[metadata.method](
-            `${versionPrefix}${controllerMetadata.path}${metadata.path}`,
+            routePath,
             ...controllerMiddleware,
             ...routeMiddleware,
             handler,
