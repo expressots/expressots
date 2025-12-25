@@ -88,8 +88,7 @@ export class LogQuery {
    */
   timeRange(start?: number | Date, end?: number | Date): LogQuery {
     if (start !== undefined) {
-      const startTime =
-        start instanceof Date ? start.getTime() : start;
+      const startTime = start instanceof Date ? start.getTime() : start;
       this.results = this.results.filter(
         (entry) => entry.timestamp.getTime() >= startTime,
       );
@@ -199,9 +198,7 @@ export class LogQuery {
       byLevel: levels,
       byContext: contexts,
       oldest:
-        this.results.length > 0
-          ? this.results[0].timestamp.getTime()
-          : null,
+        this.results.length > 0 ? this.results[0].timestamp.getTime() : null,
       newest:
         this.results.length > 0
           ? this.results[this.results.length - 1].timestamp.getTime()
@@ -653,4 +650,3 @@ export function exportToMarkdown(
 
   return markdown;
 }
-

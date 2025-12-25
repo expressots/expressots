@@ -805,12 +805,14 @@ class Logger implements IProvider {
    * @returns Markdown string
    * @public API
    */
-  exportLogsToMarkdown(options: {
-    query?: LogQueryOptions;
-    title?: string;
-    includeStats?: boolean;
-    groupBy?: "level" | "context" | "none";
-  } = {}): string {
+  exportLogsToMarkdown(
+    options: {
+      query?: LogQueryOptions;
+      title?: string;
+      includeStats?: boolean;
+      groupBy?: "level" | "context" | "none";
+    } = {},
+  ): string {
     const entries = options.query
       ? this.queryLogs(options.query)
       : this.getAllLogs();
