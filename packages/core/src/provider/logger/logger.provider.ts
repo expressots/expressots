@@ -24,6 +24,11 @@ import {
   measurePerformanceSync,
 } from "./logger.performance";
 import { LogGroupingManager, GroupedLogEntry } from "./logger.grouping";
+import {
+  HealthMonitor,
+  HealthStatus,
+  collectHealthStatus,
+} from "./logger.health";
 
 /**
  * Enhanced Logger provider with structured logging, multiple levels, and pluggable transports.
@@ -44,6 +49,7 @@ class Logger implements IProvider {
   private contextObject: Partial<LogContext> | undefined;
   private autoDetectContext: boolean = true;
   private groupingManager: LogGroupingManager | null = null;
+  private healthMonitor: HealthMonitor | null = null;
 
   name: string = "Logger Provider";
   version: string = "4.1.0";
@@ -102,6 +108,20 @@ class Logger implements IProvider {
     if (config.transports !== undefined) {
       this.transports = config.transports;
       this.config.transports = config.transports;
+    }
+
+    // Initialize or update health monitor if health config is provided
+    if (config.health !== undefined) {
+      if (this.healthMonitor) {
+        // Stop existing monitor
+        this.healthMonitor.stop();
+      }
+      // Create new monitor with updated config
+      this.healthMonitor = new HealthMonitor(this, config.health);
+      // Start monitoring if enabled
+      if (config.health.enabled !== false) {
+        this.healthMonitor.start();
+      }
     }
   }
 
@@ -657,6 +677,12 @@ class Logger implements IProvider {
    * @public API
    */
   async close(): Promise<void> {
+    // Stop health monitoring
+    if (this.healthMonitor) {
+      this.healthMonitor.stop();
+      this.healthMonitor = null;
+    }
+
     const closePromises = this.transports.map((transport) => {
       if (transport.enabled && transport.close) {
         return transport.close();
@@ -665,6 +691,39 @@ class Logger implements IProvider {
     });
 
     await Promise.all(closePromises);
+  }
+
+  /**
+   * Get current health status.
+   * @returns Current health status
+   * @public API
+   */
+  async getHealth(): Promise<HealthStatus> {
+    if (this.healthMonitor) {
+      return await this.healthMonitor.getCurrentHealth();
+    }
+    // If health monitor not initialized, collect status directly
+    return await collectHealthStatus();
+  }
+
+  /**
+   * Start health monitoring (if configured).
+   * @public API
+   */
+  startHealthMonitoring(): void {
+    if (this.healthMonitor) {
+      this.healthMonitor.start();
+    }
+  }
+
+  /**
+   * Stop health monitoring.
+   * @public API
+   */
+  stopHealthMonitoring(): void {
+    if (this.healthMonitor) {
+      this.healthMonitor.stop();
+    }
   }
 
   /**

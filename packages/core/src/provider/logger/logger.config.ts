@@ -4,6 +4,7 @@ import { RedactionConfig } from "./logger.redaction";
 import { GroupingConfig } from "./logger.grouping";
 import { FlowConfig } from "./logger.flow";
 import { SuggestionsConfig } from "./logger.suggestions";
+import { HealthConfig } from "./logger.health";
 
 /**
  * Filter configuration for log filtering.
@@ -43,6 +44,8 @@ export interface LoggerConfig {
   flow?: Partial<FlowConfig>;
   /** Error suggestions configuration */
   suggestions?: Partial<SuggestionsConfig>;
+  /** Health monitoring configuration */
+  health?: Partial<HealthConfig>;
 }
 
 /**

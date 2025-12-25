@@ -113,6 +113,7 @@ export class BannerGenerator {
       showFeatures: config?.showFeatures ?? true,
       showConfig: config?.showConfig ?? true,
       showPerformance: config?.showPerformance ?? true,
+      showHealth: config?.showHealth ?? true,
       showResources: config?.showResources ?? true,
       ...config,
     };
@@ -325,6 +326,31 @@ export class BannerGenerator {
         colorText(`⏱️  Startup Time: ${startupTime.toFixed(2)}ms`, "yellow") +
           colorText(`   Memory: ${memoryFormatted}`, "yellow") +
           "\n",
+      );
+      writeStdout("\n");
+    }
+
+    // System health status
+    if (this.config.showHealth) {
+      const memory = process.memoryUsage();
+      const memoryUsagePercent = Math.round(
+        (memory.heapUsed / memory.heapTotal) * 100,
+      );
+      const memoryColor =
+        memoryUsagePercent >= 80 ? "red" : memoryUsagePercent >= 60 ? "yellow" : "green";
+
+      writeStdout(colorText("💚 System Health", "yellow") + "\n");
+      writeStdout(
+        `   ├─ Memory: ${colorText(`${memoryFormatted} (${memoryUsagePercent}%)`, memoryColor as Color)}\n`,
+      );
+      writeStdout(
+        `   ├─ Heap Total: ${colorText(formatMemory(memory.heapTotal), "blue")}\n`,
+      );
+      writeStdout(
+        `   ├─ External: ${colorText(formatMemory(memory.external), "blue")}\n`,
+      );
+      writeStdout(
+        `   └─ RSS: ${colorText(formatMemory(memory.rss), "blue")}\n`,
       );
       writeStdout("\n");
     }

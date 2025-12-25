@@ -70,6 +70,8 @@ export interface BannerConfig {
   showConfig?: boolean;
   /** Show performance metrics */
   showPerformance?: boolean;
+  /** Show system health status */
+  showHealth?: boolean;
   /** Show resources/links */
   showResources?: boolean;
   /** Custom ASCII art file path */
@@ -104,6 +106,7 @@ export function getDefaultBannerConfig(
     showFeatures: isDev,
     showConfig: isDev,
     showPerformance: true,
+    showHealth: true,
     showResources: isDev,
     showInEnvironments: ["development", "production", "staging", "test"],
     suppressLogsUntilBanner: true,
