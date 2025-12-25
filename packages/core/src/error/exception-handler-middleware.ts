@@ -71,6 +71,13 @@ export class ExceptionHandlerMiddleware {
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
+    // Store error on request for flow tracking (if not already stored)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(req as any).__expressotsFlowError) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (req as any).__expressotsFlowError = error instanceof Error ? error : new Error(String(error));
+    }
+
     // Build exception context
     const context: ExceptionContext = {
       request: req,

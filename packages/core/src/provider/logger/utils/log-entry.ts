@@ -1,4 +1,5 @@
 import { LogLevel } from "./log-levels";
+import { RequestFlow } from "../logger.flow";
 
 /**
  * Trace information for request context.
@@ -57,6 +58,8 @@ export interface LogEntry {
   trace?: LogTrace;
   /** Performance metrics */
   performance?: PerformanceData;
+  /** Request flow visualization data */
+  flow?: RequestFlow;
   /** Process ID */
   pid?: number;
   /** Additional metadata */
@@ -80,6 +83,7 @@ export function createLogEntry(
     error?: Error | unknown;
     trace?: LogTrace;
     performance?: PerformanceData;
+    flow?: RequestFlow;
     pid?: number;
     metadata?: Record<string, unknown>;
   },
@@ -93,6 +97,7 @@ export function createLogEntry(
     error: options?.error,
     trace: options?.trace,
     performance: options?.performance,
+    flow: options?.flow,
     pid: options?.pid ?? process.pid,
     metadata: options?.metadata,
   };

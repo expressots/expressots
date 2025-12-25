@@ -3,6 +3,7 @@ import { LogLevel, logLevelToString } from "./utils/log-levels";
 import { Color, colorCodes } from "../../console/color-codes";
 import { Redactor, getGlobalRedactor } from "./logger.redaction";
 import { GroupedLogEntry } from "./logger.grouping";
+import { RequestFlow, FlowStep, FlowStepType } from "./logger.flow";
 
 /**
  * Options for log formatting.
@@ -62,6 +63,11 @@ export function formatDev(entry: LogEntry, options?: FormatOptions): string {
     output += formatPerformance(processedEntry.performance, 2);
   }
 
+  // Add flow visualization if present
+  if (processedEntry.flow) {
+    output += formatFlow(processedEntry.flow, 2);
+  }
+
   return output;
 }
 
@@ -108,6 +114,10 @@ export function formatProd(entry: LogEntry, options?: FormatOptions): string {
 
   if (processedEntry.metadata) {
     jsonEntry.metadata = processedEntry.metadata;
+  }
+
+  if (processedEntry.flow) {
+    jsonEntry.flow = processedEntry.flow;
   }
 
   return JSON.stringify(jsonEntry);
@@ -492,4 +502,272 @@ function formatTimeRange(start: Date, end: Date): string {
     return `${(diffMs / 1000).toFixed(1)}s`;
   }
   return `${(diffMs / 60000).toFixed(1)}m`;
+}
+
+/**
+ * Format request flow visualization for development (ASCII tree).
+ * @param flow - Request flow data
+ * @param indent - Indentation level
+ * @returns Formatted ASCII visualization string
+ */
+function formatFlow(flow: RequestFlow, indent: number): string {
+  const indentStr = " ".repeat(indent);
+  const boxWidth = 55;
+  const title = "Request Flow Visualization";
+  
+  let output = `\n${indentStr}${colorText("╔" + "═".repeat(boxWidth) + "╗", "blue")}\n`;
+  
+  // Title - center aligned
+  const titlePlainLength = title.length;
+  const titlePadding = Math.max(0, Math.floor((boxWidth - titlePlainLength) / 2));
+  const titleRightPadding = boxWidth - titlePlainLength - titlePadding;
+  output += `${indentStr}${colorText("║", "blue")}${" ".repeat(titlePadding)}${colorText(title, "blue")}${" ".repeat(titleRightPadding)}${colorText("║", "blue")}\n`;
+  output += `${indentStr}${colorText("╠" + "═".repeat(boxWidth) + "╣", "blue")}\n`;
+
+  // Request info - left aligned
+  const methodPath = `${flow.method} ${flow.path}`;
+  const methodPathPlainLength = methodPath.length;
+  const methodPathPadding = boxWidth - methodPathPlainLength - 1;
+  output += `${indentStr}${colorText("║", "blue")} ${colorText(methodPath, "white")}${" ".repeat(methodPathPadding)}${colorText("║", "blue")}\n`;
+  
+  const requestIdText = `Request ID: `;
+  const requestIdValue = flow.requestId;
+  const requestIdPlainLength = requestIdText.length + requestIdValue.length;
+  const requestIdPadding = boxWidth - requestIdPlainLength - 1;
+  output += `${indentStr}${colorText("║", "blue")} ${requestIdText}${colorText(requestIdValue, "yellow")}${" ".repeat(requestIdPadding)}${colorText("║", "blue")}\n`;
+  output += `${indentStr}${colorText("╠" + "═".repeat(boxWidth) + "╣", "blue")}\n`;
+
+  // Flow steps - render inside box
+  if (flow.steps.length === 0) {
+    const noStepsMsg = "No steps tracked";
+    const noStepsPlainLength = noStepsMsg.length;
+    const noStepsPadding = Math.max(0, Math.floor((boxWidth - noStepsPlainLength) / 2));
+    const noStepsRightPadding = boxWidth - noStepsPlainLength - noStepsPadding;
+    output += `${indentStr}${colorText("║", "blue")}${" ".repeat(noStepsPadding)}${colorText(noStepsMsg, "yellow")}${" ".repeat(noStepsRightPadding)}${colorText("║", "blue")}\n`;
+  } else {
+    // Render steps as tree structure inside box
+    flow.steps.forEach((step, index) => {
+      const isLast = index === flow.steps.length - 1;
+      const stepOutput = formatFlowStep(step, 0, isLast);
+      // Split into lines and wrap each line in box borders
+      const stepLines = stepOutput.split("\n").filter((line) => line.trim().length > 0);
+      stepLines.forEach((line) => {
+        // Remove ANSI codes for length calculation, but keep them in the output
+        // eslint-disable-next-line no-control-regex
+        const plainLine = line.replace(/\x1b\[[0-9;]*m/g, "");
+        const padding = Math.max(0, boxWidth - plainLine.length - 1);
+        output += `${indentStr}${colorText("║", "blue")} ${line}${" ".repeat(padding)}${colorText("║", "blue")}\n`;
+      });
+    });
+  }
+
+  // Summary
+  output += `${indentStr}${colorText("╠" + "═".repeat(boxWidth) + "╣", "blue")}\n`;
+  
+  // Total Duration - left aligned
+  const durationValue = `${flow.totalDuration.toFixed(2)}ms`;
+  const durationText = "Total Duration: ";
+  const durationPlainLength = durationText.length + durationValue.length;
+  const durationPadding = boxWidth - durationPlainLength - 1;
+  output += `${indentStr}${colorText("║", "blue")} ${durationText}${colorText(durationValue, "yellow")}${" ".repeat(durationPadding)}${colorText("║", "blue")}\n`;
+
+  if (flow.statusCode !== undefined) {
+    const statusColor = flow.statusCode >= 400 ? "red" : flow.statusCode >= 300 ? "yellow" : "green";
+    const statusCodeStr = String(flow.statusCode);
+    const statusText = "Status Code: ";
+    const statusPlainLength = statusText.length + statusCodeStr.length;
+    const statusPadding = boxWidth - statusPlainLength - 1;
+    output += `${indentStr}${colorText("║", "blue")} ${statusText}${colorText(statusCodeStr, statusColor)}${" ".repeat(statusPadding)}${colorText("║", "blue")}\n`;
+  }
+
+  if (flow.memoryDelta !== 0) {
+    const memoryMB = (flow.memoryDelta / 1024 / 1024).toFixed(2);
+    const memoryMBNum = parseFloat(memoryMB);
+    const memoryColor = flow.memoryDelta > 0 ? "yellow" : "green";
+    const memoryValue = `${memoryMBNum > 0 ? "+" : ""}${memoryMB}MB`;
+    const memoryText = "Memory Delta: ";
+    const memoryPlainLength = memoryText.length + memoryValue.length;
+    const memoryPadding = boxWidth - memoryPlainLength - 1;
+    output += `${indentStr}${colorText("║", "blue")} ${memoryText}${colorText(memoryValue, memoryColor)}${" ".repeat(memoryPadding)}${colorText("║", "blue")}\n`;
+  }
+
+  if (flow.error) {
+    const maxErrorLength = boxWidth - 8; // "Error: " = 7 chars + 1 space
+    const errorMsg = flow.error.message.length > maxErrorLength 
+      ? flow.error.message.substring(0, maxErrorLength - 3) + "..." 
+      : flow.error.message;
+    const errorText = "Error: ";
+    const errorPlainLength = errorText.length + errorMsg.length;
+    const errorPadding = boxWidth - errorPlainLength - 1;
+    output += `${indentStr}${colorText("║", "blue")} ${errorText}${colorText(errorMsg, "red")}${" ".repeat(errorPadding)}${colorText("║", "blue")}\n`;
+  }
+
+  output += `${indentStr}${colorText("╚" + "═".repeat(boxWidth) + "╝", "blue")}\n`;
+
+  return output;
+}
+
+/**
+ * Format a single flow step with tree visualization.
+ * @param step - Flow step to format
+ * @param indent - Indentation level
+ * @param isLast - Whether this is the last sibling
+ * @returns Formatted step string
+ */
+function formatFlowStep(step: FlowStep, indent: number, isLast: boolean): string {
+  const indentStr = " ".repeat(indent);
+  const stepIcon = getStepIcon(step.type);
+  const statusIcon = getStatusIcon(step.status);
+  const stepColor = getStepColor(step.type);
+  const statusColor = getStatusColor(step.status);
+
+  // Main step line
+  const connector = isLast ? "└─" : "├─";
+  const stepName = colorText(step.name, stepColor);
+  const duration = colorText(`${step.duration.toFixed(2)}ms`, "yellow");
+  const status = colorText(statusIcon, statusColor);
+
+  let output = `${indentStr}${connector} ${status} ${stepIcon} ${stepName} ${duration}\n`;
+
+  // Filter and add metadata if present (exclude error stack traces and verbose data)
+  if (step.metadata && Object.keys(step.metadata).length > 0) {
+    const filteredMetadata = Object.entries(step.metadata).filter(([key]) => {
+      // Skip error objects (they contain stack traces)
+      if (key === "error") {
+        return false;
+      }
+      // Skip stack traces
+      if (key === "stack") {
+        return false;
+      }
+      return true;
+    });
+
+    if (filteredMetadata.length > 0) {
+      filteredMetadata.forEach(([key, value], index) => {
+        const isLastMeta = index === filteredMetadata.length - 1 && (!step.children || step.children.length === 0);
+        const metaConnector = isLastMeta ? "└─" : "├─";
+        const metaPrefix = isLast ? "  " : "│";
+        let valueStr: string;
+        if (typeof value === "object" && value !== null) {
+          // For arrays, show content if it's guardNames or similar
+          if (Array.isArray(value)) {
+            if (key === "guardNames") {
+              valueStr = value.join(", ");
+            } else {
+              valueStr = `[${value.length} items]`;
+            }
+          } else {
+            // For objects, show key count or skip if too complex
+            const obj = value as Record<string, unknown>;
+            if (Object.keys(obj).length > 3) {
+              valueStr = `{${Object.keys(obj).length} keys}`;
+            } else {
+              // Show simple object as key:value pairs
+              valueStr = Object.entries(obj)
+                .map(([k, v]) => `${k}:${String(v).substring(0, 10)}`)
+                .join(", ");
+            }
+          }
+        } else {
+          valueStr = String(value);
+        }
+        // Truncate long values
+        if (valueStr.length > 45) {
+          valueStr = valueStr.substring(0, 42) + "...";
+        }
+        output += `${indentStr}${metaPrefix} ${metaConnector} ${key}: ${colorText(valueStr, "none")}\n`;
+      });
+    }
+  }
+
+  // Add nested children (only if trackNested is enabled)
+  if (step.children && step.children.length > 0) {
+    step.children.forEach((child, index) => {
+      const isLastChild = index === step.children!.length - 1;
+      output += formatFlowStep(child, indent + 2, isLastChild);
+    });
+  }
+
+  return output;
+}
+
+/**
+ * Get icon for step type.
+ */
+function getStepIcon(type: FlowStepType): string {
+  switch (type) {
+    case "middleware":
+      return "⚙";
+    case "guard":
+      return "🛡";
+    case "validation":
+      return "✓";
+    case "controller":
+      return "🎮";
+    case "use-case":
+      return "💼";
+    case "exception-filter":
+      return "⚠";
+    case "response":
+      return "📤";
+    default:
+      return "•";
+  }
+}
+
+/**
+ * Get icon for step status.
+ */
+function getStatusIcon(status: "success" | "failure" | "skipped"): string {
+  switch (status) {
+    case "success":
+      return "✓";
+    case "failure":
+      return "✗";
+    case "skipped":
+      return "⊘";
+    default:
+      return "•";
+  }
+}
+
+/**
+ * Get color for step type.
+ */
+function getStepColor(type: FlowStepType): Color {
+  switch (type) {
+    case "middleware":
+      return "blue";
+    case "guard":
+      return "yellow";
+    case "validation":
+      return "green";
+    case "controller":
+      return "blue";
+    case "use-case":
+      return "blue";
+    case "exception-filter":
+      return "red";
+    case "response":
+      return "green";
+    default:
+      return "none";
+  }
+}
+
+/**
+ * Get color for step status.
+ */
+function getStatusColor(status: "success" | "failure" | "skipped"): Color {
+  switch (status) {
+    case "success":
+      return "green";
+    case "failure":
+      return "red";
+    case "skipped":
+      return "yellow";
+    default:
+      return "none";
+  }
 }

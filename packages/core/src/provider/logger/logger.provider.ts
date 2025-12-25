@@ -106,6 +106,15 @@ class Logger implements IProvider {
   }
 
   /**
+   * Get the current logger configuration.
+   * @returns Current logger configuration
+   * @public API
+   */
+  getConfig(): LoggerConfig {
+    return this.config;
+  }
+
+  /**
    * Log a trace message (ultra-detailed diagnostic).
    * @param message - The message to log
    * @param data - Optional structured data
@@ -343,6 +352,7 @@ class Logger implements IProvider {
         memoryDelta?: number;
         cpuUsage?: number;
       };
+      flow?: import("./logger.flow").RequestFlow;
     },
   ): void {
     const configuredLevel = parseLogLevel(this.config.level);
@@ -393,12 +403,32 @@ class Logger implements IProvider {
       }
     }
 
+    // Extract flow from data if present (for backward compatibility)
+    let flowData = options?.flow;
+    let dataWithoutFlow = options?.data;
+    
+    if (
+      !flowData &&
+      typeof options?.data === "object" &&
+      options.data !== null &&
+      !Array.isArray(options.data) &&
+      "flow" in options.data
+    ) {
+      // Extract flow from data object
+      const dataObj = options.data as Record<string, unknown>;
+      flowData = dataObj.flow as typeof flowData;
+      // Remove flow from data object
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { flow: _, ...rest } = dataObj;
+      dataWithoutFlow = Object.keys(rest).length > 0 ? rest : undefined;
+    }
+
     // Merge all data sources
     const mergedData =
-      options?.data || Object.keys(mergedContextObject).length > 0
+      dataWithoutFlow || Object.keys(mergedContextObject).length > 0
         ? {
-            ...(typeof options?.data === "object" && options.data !== null
-              ? options.data
+            ...(typeof dataWithoutFlow === "object" && dataWithoutFlow !== null
+              ? dataWithoutFlow
               : {}),
             // Include request context metadata if present
             ...(mergedContextObject.requestId
@@ -419,10 +449,11 @@ class Logger implements IProvider {
     const entry = createLogEntry(level, message, {
       context: finalContext,
       data:
-        Object.keys(mergedData || {}).length > 0 ? mergedData : options?.data,
+        Object.keys(mergedData || {}).length > 0 ? mergedData : dataWithoutFlow,
       error: options?.error,
       trace: options?.trace,
       performance: options?.performance,
+      flow: flowData,
       pid: this.pid,
     });
 

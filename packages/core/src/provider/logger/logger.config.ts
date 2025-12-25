@@ -2,6 +2,7 @@ import { LogLevel, LogLevelString } from "./utils/log-levels";
 import { ILogTransport } from "./transports/transport.interface";
 import { RedactionConfig } from "./logger.redaction";
 import { GroupingConfig } from "./logger.grouping";
+import { FlowConfig } from "./logger.flow";
 
 /**
  * Filter configuration for log filtering.
@@ -37,6 +38,8 @@ export interface LoggerConfig {
   redaction?: Partial<RedactionConfig>;
   /** Log grouping configuration for noise reduction */
   grouping?: Partial<GroupingConfig>;
+  /** Flow tracking configuration for request visualization */
+  flow?: Partial<FlowConfig>;
 }
 
 /**
