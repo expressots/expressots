@@ -232,7 +232,7 @@ export class HealthMonitor {
       // Calculate CPU usage over the interval
       const now = Date.now();
       const timeDelta = now - this.lastCpuCheck;
-      
+
       // Need at least 100ms interval for accurate CPU measurement
       if (timeDelta >= 100 && this.lastCpuUsage) {
         const currentCpuUsage = process.cpuUsage();
@@ -373,4 +373,3 @@ export class HealthMonitor {
     return await collectHealthStatus(this.config.serviceChecks);
   }
 }
-

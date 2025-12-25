@@ -337,7 +337,11 @@ export class BannerGenerator {
         (memory.heapUsed / memory.heapTotal) * 100,
       );
       const memoryColor =
-        memoryUsagePercent >= 80 ? "red" : memoryUsagePercent >= 60 ? "yellow" : "green";
+        memoryUsagePercent >= 80
+          ? "red"
+          : memoryUsagePercent >= 60
+            ? "yellow"
+            : "green";
 
       writeStdout(colorText("💚 System Health", "yellow") + "\n");
       writeStdout(
