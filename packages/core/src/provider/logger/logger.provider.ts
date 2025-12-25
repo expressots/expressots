@@ -6,11 +6,11 @@ import {
   parseLogLevel,
   shouldLog,
 } from "./utils/log-levels";
-import { createLogEntry, LogTrace } from "./utils/log-entry";
+import { createLogEntry, LogTrace, LogEntry } from "./utils/log-entry";
 import { LoggerConfig, getDefaultLoggerConfig } from "./logger.config";
 import { ILogTransport } from "./transports/transport.interface";
 import { ConsoleTransport } from "./transports/console.transport";
-import { formatDev } from "./logger.formatter";
+import { formatDev, formatGroupedDev, formatGroupedProd } from "./logger.formatter";
 import { ContextManager, LogContext } from "./logger.context";
 import {
   Timer,
@@ -19,6 +19,10 @@ import {
   measurePerformance,
   measurePerformanceSync,
 } from "./logger.performance";
+import {
+  LogGroupingManager,
+  GroupedLogEntry,
+} from "./logger.grouping";
 
 /**
  * Enhanced Logger provider with structured logging, multiple levels, and pluggable transports.
@@ -38,6 +42,7 @@ class Logger implements IProvider {
   private currentContext: string | undefined;
   private contextObject: Partial<LogContext> | undefined;
   private autoDetectContext: boolean = true;
+  private groupingManager: LogGroupingManager | null = null;
 
   name: string = "Logger Provider";
   version: string = "4.1.0";
@@ -57,6 +62,8 @@ class Logger implements IProvider {
       ];
     }
     this.transports = this.config.transports;
+    // Initialize grouping manager with default config
+    this.groupingManager = new LogGroupingManager(this.config.grouping);
   }
 
   /**
@@ -418,7 +425,67 @@ class Logger implements IProvider {
       pid: this.pid,
     });
 
+    // Process through grouping manager if enabled
+    if (this.groupingManager) {
+      const processed = this.groupingManager.processEntry(entry);
+
+      // If it's a grouped entry, format and send it
+      if (this.isGroupedLogEntry(processed)) {
+        this.sendGroupedEntry(processed);
+        return; // Don't send individual entry
+      }
+
+      // If it's not grouped yet (count < minOccurrences), send as normal
+      // The grouping manager will track it and group it later
+    }
+
     // Send to all enabled transports
+    this.sendEntry(entry);
+  }
+
+  /**
+   * Check if a log entry is a grouped entry.
+   * @param entry - Log entry or grouped entry
+   * @returns True if grouped entry
+   */
+  private isGroupedLogEntry(entry: LogEntry | GroupedLogEntry): entry is GroupedLogEntry {
+    return (
+      typeof entry === "object" &&
+      entry !== null &&
+      "count" in entry &&
+      "representative" in entry &&
+      "firstOccurrence" in entry &&
+      "lastOccurrence" in entry
+    );
+  }
+
+  /**
+   * Send a grouped log entry to transports.
+   * Formats grouped entries and writes them directly to stdout/stderr.
+   * @param groupedEntry - Grouped log entry
+   */
+  private sendGroupedEntry(groupedEntry: GroupedLogEntry): void {
+    const isStructured = this.config.structured ?? process.env.NODE_ENV === "production";
+    const formatOptions = {
+      redact: this.config.redaction?.enabled ?? process.env.NODE_ENV === "production",
+    };
+
+    const formatted = isStructured
+      ? formatGroupedProd(groupedEntry, formatOptions)
+      : formatGroupedDev(groupedEntry, formatOptions);
+
+    // Write formatted grouped entry directly to stdout/stderr
+    // This bypasses normal transport formatting since grouped entries are already formatted
+    const stream =
+      groupedEntry.representative.level >= LogLevel.ERROR ? process.stderr : process.stdout;
+    stream.write(formatted);
+  }
+
+  /**
+   * Send a regular log entry to transports.
+   * @param entry - Log entry
+   */
+  private sendEntry(entry: LogEntry): void {
     for (const transport of this.transports) {
       if (transport.enabled) {
         try {

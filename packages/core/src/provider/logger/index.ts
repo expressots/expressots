@@ -9,4 +9,5 @@ export * from "./logger.metrics-collector";
 export * from "./logger.context";
 export * from "./logger.redaction";
 export * from "./logger.performance";
+export * from "./logger.grouping";
 export * from "./decorators";

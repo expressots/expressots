@@ -2,6 +2,7 @@ import { LogEntry } from "./utils/log-entry";
 import { LogLevel, logLevelToString } from "./utils/log-levels";
 import { Color, colorCodes } from "../../console/color-codes";
 import { Redactor, getGlobalRedactor } from "./logger.redaction";
+import { GroupedLogEntry } from "./logger.grouping";
 
 /**
  * Options for log formatting.
@@ -336,4 +337,147 @@ function applyRedaction(entry: LogEntry, options?: FormatOptions): LogEntry {
   }
 
   return processedEntry;
+}
+
+/**
+ * Format a grouped log entry for development output.
+ * @param groupedEntry - Grouped log entry
+ * @param options - Formatting options
+ * @returns Formatted string
+ * @public API
+ */
+export function formatGroupedDev(groupedEntry: GroupedLogEntry, options?: FormatOptions): string {
+  const entry = groupedEntry.representative;
+  const processedEntry = applyRedaction(entry, options);
+
+  const timestamp = formatTimestamp(processedEntry.timestamp);
+  const level = logLevelToString(processedEntry.level);
+  const levelColor = getLevelColor(processedEntry.level);
+  const coloredLevel = colorText(level.padEnd(5, " "), levelColor);
+  const coloredContext = processedEntry.context
+    ? colorText(`[${processedEntry.context}]`, "green")
+    : "";
+
+  // Format time range
+  const timeRange = formatTimeRange(groupedEntry.firstOccurrence, groupedEntry.lastOccurrence);
+
+  // Format grouped message
+  const groupedMessage = colorText(
+    `[GROUPED ×${groupedEntry.count}] ${processedEntry.message}`,
+    levelColor,
+  );
+  const timeRangeText = colorText(`(${timeRange})`, "yellow");
+
+  let output = `${colorText("[ExpressoTS]", "green")} ${timestamp}`;
+
+  if (processedEntry.pid) {
+    output += ` ${colorText(`[PID:${processedEntry.pid}]`, "green")}`;
+  }
+
+  output += ` ${coloredLevel} ${coloredContext} ${groupedMessage} ${timeRangeText}\n`;
+
+  // Show first occurrence details
+  output += `  ├─ First: ${formatTimestamp(groupedEntry.firstOccurrence)}\n`;
+  output += `  ├─ Last: ${formatTimestamp(groupedEntry.lastOccurrence)}\n`;
+  output += `  └─ Count: ${colorText(`${groupedEntry.count} occurrences`, "yellow")}\n`;
+
+  // Optionally show sample entries (first, middle, last)
+  if (groupedEntry.entries.length > 1) {
+    const sampleIndices = [
+      0,
+      Math.floor(groupedEntry.entries.length / 2),
+      groupedEntry.entries.length - 1,
+    ].filter((idx, i, arr) => arr.indexOf(idx) === i); // Unique indices
+
+    if (sampleIndices.length > 1) {
+      output += `  └─ Sample entries:\n`;
+      for (const idx of sampleIndices) {
+        const sample = groupedEntry.entries[idx];
+        const sampleTime = formatTimestamp(sample.timestamp);
+        output += `     ${idx === 0 ? "├" : idx === sampleIndices[sampleIndices.length - 1] ? "└" : "├"}─ [${sampleTime}] ${sample.message}\n`;
+      }
+    }
+  }
+
+  return output;
+}
+
+/**
+ * Format a grouped log entry for production (JSON).
+ * @param groupedEntry - Grouped log entry
+ * @param options - Formatting options
+ * @returns JSON string
+ * @public API
+ */
+export function formatGroupedProd(groupedEntry: GroupedLogEntry, options?: FormatOptions): string {
+  const entry = groupedEntry.representative;
+  const processedEntry = applyRedaction(entry, options);
+
+  const jsonEntry: Record<string, unknown> = {
+    timestamp: processedEntry.timestamp.toISOString(),
+    level: logLevelToString(processedEntry.level),
+    message: processedEntry.message,
+    grouped: true,
+    count: groupedEntry.count,
+    firstOccurrence: groupedEntry.firstOccurrence.toISOString(),
+    lastOccurrence: groupedEntry.lastOccurrence.toISOString(),
+    timeRange: formatTimeRange(groupedEntry.firstOccurrence, groupedEntry.lastOccurrence),
+  };
+
+  if (processedEntry.context) {
+    jsonEntry.context = processedEntry.context;
+  }
+
+  if (processedEntry.pid) {
+    jsonEntry.pid = processedEntry.pid;
+  }
+
+  if (processedEntry.data) {
+    jsonEntry.data = processedEntry.data;
+  }
+
+  if (processedEntry.error) {
+    jsonEntry.error = formatErrorForJson(processedEntry.error);
+  }
+
+  if (processedEntry.trace) {
+    jsonEntry.trace = processedEntry.trace;
+  }
+
+  if (processedEntry.performance) {
+    jsonEntry.performance = processedEntry.performance;
+  }
+
+  // Include sample entries
+  if (groupedEntry.entries.length > 0) {
+    const sampleIndices = [
+      0,
+      Math.floor(groupedEntry.entries.length / 2),
+      groupedEntry.entries.length - 1,
+    ].filter((idx, i, arr) => arr.indexOf(idx) === i);
+
+    jsonEntry.sampleEntries = sampleIndices.map((idx) => ({
+      timestamp: groupedEntry.entries[idx].timestamp.toISOString(),
+      message: groupedEntry.entries[idx].message,
+    }));
+  }
+
+  return JSON.stringify(jsonEntry);
+}
+
+/**
+ * Format time range between two dates.
+ * @param start - Start date
+ * @param end - End date
+ * @returns Formatted time range string
+ */
+function formatTimeRange(start: Date, end: Date): string {
+  const diffMs = end.getTime() - start.getTime();
+  if (diffMs < 1000) {
+    return `${diffMs}ms`;
+  }
+  if (diffMs < 60000) {
+    return `${(diffMs / 1000).toFixed(1)}s`;
+  }
+  return `${(diffMs / 60000).toFixed(1)}m`;
 }
