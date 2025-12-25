@@ -512,7 +512,7 @@ function formatTimeRange(start: Date, end: Date): string {
  */
 function formatFlow(flow: RequestFlow, indent: number): string {
   const indentStr = " ".repeat(indent);
-  const boxWidth = 55;
+  const boxWidth = 65; // Increased to accommodate longer controller/method names
   const title = "Request Flow Visualization";
 
   let output = `\n${indentStr}${colorText("╔" + "═".repeat(boxWidth) + "╗", "blue")}\n`;
@@ -563,8 +563,22 @@ function formatFlow(flow: RequestFlow, indent: number): string {
         // Remove ANSI codes for length calculation, but keep them in the output
         // eslint-disable-next-line no-control-regex
         const plainLine = line.replace(/\x1b\[[0-9;]*m/g, "");
-        const padding = Math.max(0, boxWidth - plainLine.length - 1);
-        output += `${indentStr}${colorText("║", "blue")} ${line}${" ".repeat(padding)}${colorText("║", "blue")}\n`;
+        const maxLineLength = boxWidth - 1; // Account for space after border
+
+        // Truncate if too long
+        let displayPlainLine = plainLine;
+        let displayLine = line;
+
+        if (plainLine.length > maxLineLength) {
+          // Simple truncation - preserve colors by truncating plain text version
+          displayPlainLine = plainLine.substring(0, maxLineLength - 3) + "...";
+          // For display, we'll use the plain text truncated version
+          // (colors will be lost on truncated part, but box will be correct)
+          displayLine = displayPlainLine;
+        }
+
+        const padding = Math.max(0, boxWidth - displayPlainLine.length - 1);
+        output += `${indentStr}${colorText("║", "blue")} ${displayLine}${" ".repeat(padding)}${colorText("║", "blue")}\n`;
       });
     });
   }
