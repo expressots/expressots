@@ -13,6 +13,10 @@ import {
   Logger,
   Middleware,
   ProviderManager,
+  BannerGenerator,
+  MetricsCollector,
+  BannerConfig,
+  resolveBannerConfig,
 } from "@expressots/core";
 import { config, Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
@@ -22,6 +26,11 @@ import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware
 import { InversifyExpressServer } from "./express-utils/inversify-express-server";
 import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine";
 import { AddressInfo } from "net";
+import {
+  getControllersFromMetadata,
+  getControllersFromContainer,
+  getControllerMethodMetadata,
+} from "./express-utils/utils";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -49,8 +58,156 @@ export class AppExpress implements Server.IWebServer {
   private renderOptions: RenderEngine.RenderOptions = {} as RenderEngine.RenderOptions;
   private lifecycleRegistry: LifecycleRegistry;
   private isShuttingDown: boolean = false;
+  private bannerGenerator: BannerGenerator | null = null;
+  private bannerConfig: BannerConfig | undefined;
+
+  // Log buffering for banner-first display
+  // IMPORTANT: All these properties must be declared BEFORE initBuffering!
+  private static originalStdoutWrite: typeof process.stdout.write | null = null;
+  private static originalStderrWrite: typeof process.stderr.write | null = null;
+  private static logBuffer: Array<string> = [];
+  private static isBuffering: boolean = false;
+  private static bufferingInitialized: boolean = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static originalGlobalConsole: any = null;
+
+  // Initialize buffering when AppExpress class is loaded (before any instances are created)
+  // This MUST be declared AFTER all the static properties it uses!
+  private static initBuffering = ((): boolean => {
+    AppExpress.startLogBuffering();
+    return true;
+  })();
+
+  /**
+   * Start buffering all console output.
+   * This captures both console.log and direct process.stdout.write calls.
+   * @private
+   */
+  private static startLogBuffering(): void {
+    if (AppExpress.isBuffering) return;
+
+    // Store original streams
+    AppExpress.originalStdoutWrite = process.stdout.write.bind(process.stdout);
+    AppExpress.originalStderrWrite = process.stderr.write.bind(process.stderr);
+
+    // Create wrapper functions that use fs.writeSync directly (always works)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const fsModule = require("fs");
+    const createOriginalConsoleMethod =
+      (useStderr: boolean = false) =>
+      (...args: Array<unknown>): void => {
+        const message =
+          args
+            .map((a) => {
+              if (typeof a === "object" && a !== null) {
+                try {
+                  return JSON.stringify(a, null, 2);
+                } catch {
+                  return String(a);
+                }
+              }
+              return String(a);
+            })
+            .join(" ") + "\n";
+        // Use fs.writeSync directly - this always works
+        fsModule.writeSync(useStderr ? 2 : 1, message);
+      };
+
+    AppExpress.originalGlobalConsole = {
+      log: createOriginalConsoleMethod(false),
+      info: createOriginalConsoleMethod(false),
+      warn: createOriginalConsoleMethod(true),
+      error: createOriginalConsoleMethod(true),
+      debug: createOriginalConsoleMethod(false),
+    };
+
+    AppExpress.logBuffer = [];
+    AppExpress.isBuffering = true;
+
+    // Create buffering functions for console methods
+    const bufferConsoleMethod =
+      () =>
+      (...args: Array<unknown>): void => {
+        const message =
+          args
+            .map((a) =>
+              typeof a === "object" && a !== null ? JSON.stringify(a) : String(a),
+            )
+            .join(" ") + "\n";
+        AppExpress.logBuffer.push(message);
+      };
+
+    // Override console methods directly (not replacing the console object)
+    // This ensures even cached references to console.log will use the buffered version
+    console.log = bufferConsoleMethod();
+    console.info = bufferConsoleMethod();
+    console.warn = bufferConsoleMethod();
+    console.error = bufferConsoleMethod();
+    console.debug = bufferConsoleMethod();
+
+    // Also override process.stdout.write for direct writes (like our Logger)
+    const bufferWrite = (chunk: string | Uint8Array): boolean => {
+      const str = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString();
+      AppExpress.logBuffer.push(str);
+      return true;
+    };
+
+    // Use direct assignment for overriding
+    (process.stdout as unknown as { write: typeof bufferWrite }).write = bufferWrite;
+    (process.stderr as unknown as { write: typeof bufferWrite }).write = bufferWrite;
+  }
+
+  /**
+   * Stop buffering but keep the buffered logs for later flushing.
+   * This restores normal console/stdout output.
+   * @private
+   */
+  private static stopBuffering(): void {
+    if (!AppExpress.isBuffering) return;
+
+    // Restore original console methods using our wrapper functions
+    if (AppExpress.originalGlobalConsole) {
+      console.log = AppExpress.originalGlobalConsole.log;
+      console.info = AppExpress.originalGlobalConsole.info;
+      console.warn = AppExpress.originalGlobalConsole.warn;
+      console.error = AppExpress.originalGlobalConsole.error;
+      console.debug = AppExpress.originalGlobalConsole.debug;
+    }
+
+    // Restore original stdout/stderr by direct assignment
+    // (Object.defineProperty may not work correctly for stream.write)
+    if (AppExpress.originalStdoutWrite) {
+      (process.stdout as unknown as { write: typeof process.stdout.write }).write =
+        AppExpress.originalStdoutWrite;
+    }
+    if (AppExpress.originalStderrWrite) {
+      (process.stderr as unknown as { write: typeof process.stderr.write }).write =
+        AppExpress.originalStderrWrite;
+    }
+
+    AppExpress.isBuffering = false;
+  }
+
+  /**
+   * Flush all buffered logs to stdout.
+   * Should be called after stopBuffering() and after displaying the banner.
+   * @private
+   */
+  private static flushBufferedLogs(): void {
+    const logs = AppExpress.logBuffer;
+    AppExpress.logBuffer = [];
+
+    for (const log of logs) {
+      if (AppExpress.originalStdoutWrite) {
+        AppExpress.originalStdoutWrite.call(process.stdout, log);
+      } else {
+        process.stdout.write(log);
+      }
+    }
+  }
 
   constructor() {
+    // Buffering is already started via static initialization (initBuffering)
     this.globalConfiguration();
   }
 
@@ -379,19 +536,42 @@ export class AppExpress implements Server.IWebServer {
    * @public API
    */
   public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic> {
-    await this.init();
-    await this.configEngine();
+    // Resolve banner configuration with environment-specific overrides
+    const resolvedBannerConfig = resolveBannerConfig(
+      this.bannerConfig,
+      this.environment || "development",
+    );
+
+    // Initialize banner generator with resolved config
+    this.bannerGenerator = new BannerGenerator(resolvedBannerConfig);
 
     this.environment = this.environment || "development";
-    this.app.set("env", this.environment);
-
     this.port = typeof port === "string" ? parseInt(port, 10) : port;
+
+    try {
+      await this.init();
+      await this.configEngine();
+
+      this.app.set("env", this.environment);
+
+      // Stop buffering and restore normal output (but don't flush yet)
+      AppExpress.stopBuffering();
+
+      // Display startup banner FIRST (now goes directly to stdout)
+      this.displayStartupBanner(appInfo);
+
+      // Flush all buffered logs that were captured during initialization
+      AppExpress.flushBufferedLogs();
+    } catch (error) {
+      // Ensure buffering is stopped and logs are flushed even on error
+      AppExpress.stopBuffering();
+      AppExpress.flushBufferedLogs();
+      throw error;
+    }
 
     return new Promise<IWebServerPublic>((resolve, reject) => {
       this.serverInstance = this.app.listen(this.port, async () => {
         this.port = (this.serverInstance?.address() as AddressInfo)?.port;
-
-        this.console.messageServer(this.port, this.environment, appInfo);
 
         // Setup signal handlers for graceful shutdown
         // Supported signals:
@@ -496,6 +676,40 @@ export class AppExpress implements Server.IWebServer {
    * @param {EngineOptions} [options] - The configuration options for the view engine
    * @public API
    */
+  /**
+   * Configure the startup banner display.
+   * Can be called in configureServices() or globalConfiguration().
+   *
+   * @param config - Banner configuration options
+   * @example
+   * ```typescript
+   * export class App extends AppExpress {
+   *   configureServices(): void {
+   *     this.setBanner({
+   *       style: "full",
+   *       showMetrics: true,
+   *       showFeatures: true,
+   *       showConfig: true,
+   *       showPerformance: true,
+   *       showResources: true,
+   *       // Environment-specific overrides
+   *       environment: {
+   *         production: {
+   *           style: "compact",
+   *           showConfig: false,
+   *           showResources: false,
+   *         },
+   *       },
+   *     });
+   *   }
+   * }
+   * ```
+   * @public API
+   */
+  public setBanner(config: BannerConfig): void {
+    this.bannerConfig = config;
+  }
+
   public async setEngine<T extends RenderEngine.EngineOptions>(
     engine: RenderEngine.Engine,
     options?: T,
@@ -584,5 +798,57 @@ export class AppExpress implements Server.IWebServer {
     }
 
     return Promise.resolve(this.serverInstance);
+  }
+
+  /**
+   * Display startup banner with application metrics.
+   * @param appInfo - Application info
+   * @private
+   */
+  private displayStartupBanner(appInfo?: IConsoleMessage): void {
+    if (!this.bannerGenerator) {
+      // Fallback to old console message if banner generator not initialized
+      this.console.messageServer(this.port, this.environment || "development", appInfo);
+      return;
+    }
+
+    try {
+      // Collect metrics
+      const { metrics, features } = MetricsCollector.collect(this.appContainer.Container, {
+        getControllersFromMetadata: () => getControllersFromMetadata(),
+        getControllersFromContainer: () =>
+          getControllersFromContainer(this.appContainer.Container, false),
+        getControllerMethodMetadata: (constructor: NewableFunction) =>
+          getControllerMethodMetadata(constructor),
+        getMiddlewareCount: () => (this.Middleware as Middleware).getMiddlewarePipeline().length,
+        hasContentNegotiation: () =>
+          !!(this.Middleware as Middleware).getContentNegotiationService(),
+        hasSmartValidation: () => !!(this.Middleware as Middleware).getValidationConfig(),
+        hasAuthorization: () => this.appContainer.Container.isBound("IGuardCache"),
+        hasExceptionFilters: () => !!(this.Middleware as Middleware).getErrorHandler(),
+      });
+
+      // Display banner
+      this.bannerGenerator.display(
+        this.port,
+        this.environment || "development",
+        appInfo,
+        metrics,
+        features,
+        {
+          "Global Prefix": this.globalPrefix || "/",
+          "Node Version": process.version,
+          Platform: process.platform,
+        },
+      );
+    } catch (error) {
+      // Fallback to old console message on error
+      this.logger.warn(
+        "Failed to display startup banner, using fallback",
+        "adapter-express",
+        error,
+      );
+      this.console.messageServer(this.port, this.environment || "development", appInfo);
+    }
   }
 }

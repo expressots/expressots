@@ -10,3 +10,4 @@ export {
   RenderEngine,
 } from "@expressots/shared";
 export * from "./render";
+export * from "./middleware";
