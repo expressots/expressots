@@ -40,7 +40,7 @@ export class GuardMiddleware {
       return g.constructor.name;
     });
     const guardStepName = `Guards: ${guardNames.join(", ")}`;
-    
+
     if (flowTracker?.isEnabled()) {
       flowTracker.startStep("guard", guardStepName, {
         guardCount: guards.length,
@@ -73,7 +73,8 @@ export class GuardMiddleware {
     } catch (error) {
       // Store error on request for flow tracking
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (req as any).__expressotsFlowError = error instanceof Error ? error : new Error(String(error));
+      (req as any).__expressotsFlowError =
+        error instanceof Error ? error : new Error(String(error));
 
       // End guard step with failure if not already ended
       if (flowTracker?.isEnabled()) {

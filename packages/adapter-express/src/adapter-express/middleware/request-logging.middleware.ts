@@ -190,7 +190,8 @@ export function createRequestLoggingMiddleware(
         const errorFromLocals = (res as any).locals?.error;
         if (errorFromLocals) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (req as any).__expressotsFlowError = errorFromLocals instanceof Error ? errorFromLocals : new Error(String(errorFromLocals));
+          (req as any).__expressotsFlowError =
+            errorFromLocals instanceof Error ? errorFromLocals : new Error(String(errorFromLocals));
         }
       }
       return originalStatus(code);
