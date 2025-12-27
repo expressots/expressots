@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2021",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["packages/core/src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/*.spec.ts",
+    "scripts/**/*",
+    "**/*early.spec/**",
+    "**/*.test.ts"
+  ]
+}
+

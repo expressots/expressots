@@ -14,8 +14,54 @@ import {
 export { IProvider };
 
 /**
- * ProviderManager Class - A class for managing dependency injection providers.
- * Enhanced with introspection, health checks, and metrics collection.
+ * Provider manager for dependency injection providers.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept provider-management
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Manage dependency injection providers with introspection, health checks, and metrics.
+ *
+ * @example
+ * ```typescript
+ * const manager = new ProviderManager(container);
+ *
+ * // Register a provider
+ * manager.register(MyProvider, BindingScopeEnum.Singleton);
+ *
+ * // Discover all providers
+ * manager.discover();
+ *
+ * // Get provider
+ * const provider = manager.get(MyProvider);
+ * ```
+ *
+ * **Features:**
+ * - Provider registration with scopes
+ * - Auto-discovery of providers
+ * - Health checks and metrics collection
+ * - Provider introspection
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * ProviderManager:
+ * - Wraps InversifyJS container
+ * - Delegates to ProviderRegistry for discovery
+ * - Provides high-level API for provider management
+ *
+ * **Design Decisions**
+ * - Thin wrapper around container and registry
+ * - Backward compatible with existing code
+ * - Enhanced with introspection capabilities
+ *
+ * @see {@link ProviderRegistry} for provider discovery
+ * @see {@link IProvider} for provider interface
+ *
  * @public API
  */
 export class ProviderManager {

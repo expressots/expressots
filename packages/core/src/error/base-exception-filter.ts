@@ -13,8 +13,53 @@ import {
 } from "../provider/logger/logger.suggestions";
 
 /**
- * Base exception filter with common functionality
- * Provides logging and response helpers for derived filters
+ * Base exception filter with common functionality.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept exception-filter-base
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Extend this class to create custom exception filters.
+ *
+ * @example
+ * ```typescript
+ * @Catch(MyCustomError)
+ * export class MyCustomErrorFilter extends BaseExceptionFilter {
+ *   catch(exception: MyCustomError, context: ExceptionContext): void {
+ *     this.logError(exception, context);
+ *     this.sendErrorResponse(context, 400, { message: exception.message });
+ *   }
+ * }
+ * ```
+ *
+ * **Provided Helpers:**
+ * - `logError()` - Logs error with context
+ * - `sendErrorResponse()` - Sends HTTP error response
+ * - Injected `logger` and `report` services
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * BaseExceptionFilter provides:
+ * - Logger injection for error logging
+ * - Report injection for error reporting
+ * - Helper methods for common operations
+ * - Error suggestions integration
+ *
+ * **Design Decisions**
+ * - Abstract class (must implement `catch()`)
+ * - Dependency injection for logger/report
+ * - Helper methods reduce boilerplate
+ * - Integrates with logger suggestions system
+ *
+ * @see {@link Catch} for registering filters
+ * @see {@link IExceptionFilter} for interface definition
+ *
+ * @public API
  */
 @injectable()
 export abstract class BaseExceptionFilter implements IExceptionFilter {

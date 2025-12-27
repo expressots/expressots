@@ -20,8 +20,13 @@ import { Logger } from "../provider/logger/logger.provider";
 /**
  * Registry for discovering and executing lifecycle hooks on providers.
  *
- * Automatically discovers providers implementing `IBootstrap` and `IShutdown`
- * interfaces via the `@provide()` decorator metadata.
+ * @layer public
+ * @audience application-developers
+ * @concept lifecycle-registry
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Automatically discovers and executes lifecycle hooks on providers.
  *
  * @example
  * ```typescript
@@ -30,6 +35,54 @@ import { Logger } from "../provider/logger/logger.provider";
  * await registry.executeBootstrap();
  * // ... later on shutdown
  * await registry.executeShutdown('SIGTERM');
+ * ```
+ *
+ * **Auto-Discovery**
+ * The registry automatically discovers providers implementing `IBootstrap` and `IShutdown`
+ * interfaces via the `@provide()` decorator metadata. No manual registration required.
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * LifecycleRegistry:
+ * - Scans `@provide()` metadata for lifecycle interfaces
+ * - Stores providers in Sets for O(1) lookup
+ * - Executes hooks in parallel for performance
+ * - Handles errors gracefully (especially during shutdown)
+ *
+ * **Discovery Process**
+ * 1. Scan Reflect metadata for `@provide()` decorators
+ * 2. Check if provider implements `IBootstrap` or `IShutdown`
+ * 3. Store in appropriate Set
+ * 4. Execute hooks when requested
+ *
+ * **Design Decisions**
+ * - Auto-discovery reduces boilerplate
+ * - Parallel execution for performance
+ * - Error tolerance during shutdown
+ * - Singleton scope requirement enforced
+ *
+ * @see {@link IBootstrap} for bootstrap hooks
+ * @see {@link IShutdown} for shutdown hooks
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Usage**
+ *
+ * Manual discovery and execution:
+ * ```typescript
+ * const registry = new LifecycleRegistry(container);
+ * registry.discover();
+ *
+ * // Check counts
+ * console.log(`Bootstrap providers: ${registry.getBootstrapCount()}`);
+ * console.log(`Shutdown providers: ${registry.getShutdownCount()}`);
+ *
+ * // Execute bootstrap
+ * await registry.executeBootstrap();
  * ```
  *
  * @public API
@@ -53,8 +106,28 @@ export class LifecycleRegistry {
   /**
    * Discovers all providers implementing lifecycle interfaces.
    *
+   * @layer public
+   * @audience application-developers
+   * @concept lifecycle-discovery
+   * @difficulty beginner
+   *
    * Scans all `@provide()` decorated classes and checks if they implement
    * `IBootstrap` or `IShutdown` interfaces.
+   *
+   * **Discovery Process**
+   * - Scans Reflect metadata for `@provide()` decorators
+   * - Checks prototype for `bootstrap()` or `shutdown()` methods
+   * - Stores providers in Sets for execution
+   * - Idempotent (safe to call multiple times)
+   *
+   * @layer internal
+   * @audience framework-developers
+   *
+   * **Internal Behavior**
+   * - Uses `METADATA_KEY.provide` to find all providers
+   * - Checks `target.prototype.bootstrap` and `target.prototype.shutdown`
+   * - Stores in Sets for O(1) lookup
+   * - Sets `discovered` flag to prevent re-discovery
    *
    * @public API
    */
@@ -93,10 +166,33 @@ export class LifecycleRegistry {
   /**
    * Executes all bootstrap lifecycle hooks.
    *
+   * @layer public
+   * @audience application-developers
+   * @concept lifecycle-bootstrap-execution
+   * @difficulty beginner
+   *
    * Called after the server is fully ready and listening.
    * All bootstrap hooks are executed in parallel for performance.
    *
+   * **Execution Behavior**
+   * - Executes all `IBootstrap.bootstrap()` methods in parallel
+   * - Waits for all hooks to complete before resolving
+   * - Throws error if any hook fails (fail-fast)
+   * - Gets instances from DI container
+   *
+   * @layer internal
+   * @audience framework-developers
+   *
+   * **Internal Behavior**
+   * - Gets provider instances from container
+   * - Validates with `isBootstrap()` type guard
+   * - Handles both sync and async hooks
+   * - Collects promises and waits with `Promise.all()`
+   * - Errors are logged and re-thrown
+   *
    * @returns Promise that resolves when all bootstrap hooks complete
+   * @throws Error if any bootstrap hook fails
+   *
    * @public API
    */
   public async executeBootstrap(): Promise<void> {
@@ -141,12 +237,38 @@ export class LifecycleRegistry {
   /**
    * Executes all shutdown lifecycle hooks.
    *
+   * @layer public
+   * @audience application-developers
+   * @concept lifecycle-shutdown-execution
+   * @difficulty beginner
+   *
    * Called when the application is shutting down.
    * All shutdown hooks are executed in parallel.
    * Errors are logged but don't prevent other hooks from executing.
    *
-   * @param signal - The signal that triggered the shutdown
+   * **Execution Behavior**
+   * - Executes all `IShutdown.shutdown()` methods in parallel
+   * - Passes shutdown signal to each hook
+   * - Errors are logged but don't stop execution (error-tolerant)
+   * - Waits for all hooks to complete
+   *
+   * @layer internal
+   * @audience framework-developers
+   *
+   * **Internal Behavior**
+   * - Gets provider instances from container
+   * - Validates with `isShutdown()` type guard
+   * - Handles both sync and async hooks
+   * - Errors are caught and logged, but not re-thrown
+   * - Uses `Promise.all()` to wait for completion
+   *
+   * **Design Decision: Error Tolerance**
+   * Unlike bootstrap hooks, shutdown hooks don't fail-fast. This ensures
+   * all cleanup operations have a chance to run, even if one fails.
+   *
+   * @param signal - The signal that triggered the shutdown (SIGTERM, SIGINT, etc.)
    * @returns Promise that resolves when all shutdown hooks complete
+   *
    * @public API
    */
   public async executeShutdown(signal?: NodeJS.Signals): Promise<void> {

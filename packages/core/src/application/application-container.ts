@@ -10,16 +10,81 @@ import { buildProviderModule } from "../di/binding-decorator";
 import { Logger } from "../provider";
 
 /**
- * The AppContainer class provides a container for managing dependency injection.
- * It allows the creation of a container with custom options, including default binding scope
- * and the ability to skip base class checks. The container can be loaded with multiple
- * ContainerModule instances, facilitating modular and organized code.
+ * Dependency injection container wrapper for ExpressoTS applications.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept dependency-injection
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * AppContainer wraps InversifyJS container with ExpressoTS-specific defaults.
+ * Typically used internally by the framework, but available for advanced use cases.
  *
  * @example
  * ```typescript
+ * // Basic usage
  * const container = new AppContainer();
  * container.create([new MyModule()]);
+ *
+ * // With custom options
+ * const container = new AppContainer({
+ *   defaultScope: BindingScopeEnum.Singleton
+ * });
+ * container.create([new MyModule()]);
  * ```
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * AppContainer wraps InversifyJS Container with:
+ * - Default request scope (one instance per HTTP request)
+ * - Auto-binding of injectable classes
+ * - Integration with ExpressoTS provider system
+ * - Built-in provider module loading
+ *
+ * **Design Decisions**
+ * - Request scope by default (stateless, scalable)
+ * - Auto-bind injectable for convenience
+ * - Wraps InversifyJS for type safety
+ * - Provides debugging utilities (viewContainerBindings)
+ *
+ * **Default Behavior**
+ * - `defaultScope`: `BindingScopeEnum.Request` (one per request)
+ * - `autoBindInjectable`: `true` (automatic binding)
+ * - Loads `buildProviderModule()` automatically
+ *
+ * @see {@link ContainerModule} for creating modules
+ * @see {@link buildProviderModule} for provider registration
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Usage**
+ *
+ * Custom scope configuration:
+ * ```typescript
+ * const container = new AppContainer({
+ *   defaultScope: BindingScopeEnum.Singleton,  // One instance for app lifetime
+ *   skipBaseClassChecks: true
+ * });
+ * container.create([new MyModule()]);
+ * ```
+ *
+ * Debugging container bindings:
+ * ```typescript
+ * container.create([new MyModule()]);
+ * container.viewContainerBindings();  // Prints table of all bindings
+ * ```
+ *
+ * Accessing underlying InversifyJS container:
+ * ```typescript
+ * const inversifyContainer = container.Container;
+ * // Use InversifyJS APIs directly if needed
+ * ```
+ *
  * @public API
  */
 export class AppContainer {
@@ -29,10 +94,37 @@ export class AppContainer {
 
   /**
    * Constructs the AppContainer instance.
-   * @param options - The options for creating the container with default request scope.
-   * @option options.defaultScope - The default scope for bindings in the container.
-   * @option options.skipBaseClassChecks - Allows skipping of base class checks when working with derived classes.
-   * @option options.autoBindInjectable - Allows auto-binding of injectable classes.
+   *
+   * @layer public
+   * @audience application-developers
+   *
+   * @param options - Optional container configuration options.
+   *
+   * @default
+   * ```typescript
+   * {
+   *   defaultScope: BindingScopeEnum.Request,
+   *   autoBindInjectable: true
+   * }
+   * ```
+   *
+   * **Common Options:**
+   * - `defaultScope`: Binding scope (Request, Singleton, Transient)
+   * - `skipBaseClassChecks`: Skip base class validation
+   * - `autoBindInjectable`: Auto-bind classes with @injectable()
+   *
+   * @example
+   * ```typescript
+   * // Default (request scope)
+   * const container = new AppContainer();
+   *
+   * // Singleton scope
+   * const container = new AppContainer({
+   *   defaultScope: BindingScopeEnum.Singleton
+   * });
+   * ```
+   *
+   * @public API
    */
   constructor(options?: interfaces.ContainerOptions) {
     this.options = {
@@ -42,9 +134,38 @@ export class AppContainer {
   }
 
   /**
-   * Creates and configures a new dependency injection container.
-   * @param modules - An array of ContainerModule instances to load into the container.
-   * @returns The configured dependency injection container.
+   * Creates and configures the dependency injection container.
+   *
+   * @layer public
+   * @audience application-developers
+   *
+   * @param modules - Array of ContainerModule instances to load.
+   *
+   * **What Happens:**
+   * 1. Creates InversifyJS container with configured options
+   * 2. Binds container to itself (for injection)
+   * 3. Loads built-in provider module
+  4. Loads your custom modules
+   *
+   * @example
+   * ```typescript
+   * const container = new AppContainer();
+   * container.create([
+   *   new AppModule(),
+   *   new UserModule(),
+   *   new ProductModule()
+   * ]);
+   * ```
+   *
+   * @layer internal
+   * @audience framework-developers
+   *
+   * **Implementation Details**
+   * - Always loads `buildProviderModule()` first
+   * - Then loads provided modules in order
+   * - Container is ready for resolution after this call
+   *
+   * @public API
    */
   public create(modules: Array<ContainerModule>): void {
     const containerOptions: interfaces.ContainerOptions = {
@@ -60,8 +181,28 @@ export class AppContainer {
   }
 
   /**
-   * Retrieves the binding dictionary of the container.
-   * @returns(void) Print table of the binding dictionary of the container.
+   * Displays all container bindings in a formatted table.
+   *
+   * @layer public
+   * @audience application-developers
+   * @concept debugging
+   *
+   * **Useful for:**
+   * - Debugging dependency injection issues
+   * - Understanding what's registered in the container
+   * - Verifying binding scopes
+   *
+   * @example
+   * ```typescript
+   * container.create([new MyModule()]);
+   * container.viewContainerBindings();
+   * // Prints table showing:
+   * // - Service Identifier
+   * // - Scope (Request, Singleton, Transient)
+   * // - Type (ConstantValue, Constructor, etc.)
+   * // - Cache status
+   * ```
+   *
    * @public API
    */
   public viewContainerBindings(): void {
@@ -86,8 +227,24 @@ export class AppContainer {
   }
 
   /**
-   * Retrieves the container options.
-   * @returns The container options.
+   * Retrieves the container configuration options.
+   *
+   * @layer public
+   * @audience application-developers
+   *
+   * @returns The container options, or undefined if container not created yet.
+   *
+   * @example
+   * ```typescript
+   * const container = new AppContainer({
+   *   defaultScope: BindingScopeEnum.Singleton
+   * });
+   * container.create([new MyModule()]);
+   *
+   * const options = container.getContainerOptions();
+   * console.log(options.defaultScope);  // BindingScopeEnum.Singleton
+   * ```
+   *
    * @public API
    */
   public getContainerOptions(): interfaces.ContainerOptions {
@@ -102,8 +259,27 @@ export class AppContainer {
   }
 
   /**
-   * Retrieves the container instance.
-   * @returns The container instance.
+   * Retrieves the underlying InversifyJS container instance.
+   *
+   * @layer public
+   * @audience power-users
+   *
+   * **Use Cases:**
+   * - Accessing InversifyJS-specific APIs
+   * - Advanced container manipulation
+   * - Integration with InversifyJS plugins
+   *
+   * @returns The InversifyJS Container instance.
+   *
+   * @example
+   * ```typescript
+   * const container = new AppContainer();
+   * container.create([new MyModule()]);
+   *
+   * const inversifyContainer = container.Container;
+   * // Use InversifyJS APIs directly
+   * ```
+   *
    * @public API
    */
   public get Container(): Container {

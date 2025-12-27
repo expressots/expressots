@@ -20,11 +20,16 @@ export const defaultAuthorizationConfig: AuthorizationConfig = {
 };
 
 /**
- * Setup authorization system with optional configuration
- * Registers all required services and initializes guard registry
+ * Setup authorization system with optional configuration.
  *
- * @param container - DI container
- * @param config - Optional configuration
+ * @layer public
+ * @audience application-developers
+ * @concept authorization-setup
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Registers all required services and initializes guard registry.
+ * Call this in your app's `configureServices()` method.
  *
  * @example
  * ```typescript
@@ -37,6 +42,59 @@ export const defaultAuthorizationConfig: AuthorizationConfig = {
  *   }
  * }
  * ```
+ *
+ * @param container - DI container from your app
+ * @param config - Optional authorization configuration
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * This function:
+ * 1. Registers core services (GuardCache, SecurityContext, GuardRegistry, GuardExecutor)
+ * 2. Registers optional services (PermissionService, PermissionHierarchy)
+ * 3. Configures permission hierarchy if provided
+ * 4. Initializes guard registry (auto-discovers guards)
+ *
+ * **Service Registration:**
+ * - `IGuardCache`: Singleton scope (shared cache)
+ * - `ISecurityContext`: Request scope (per-request context)
+ * - `GuardRegistry`: Singleton scope (shared registry)
+ * - `GuardExecutor`: Singleton scope (shared executor)
+ * - `IPermissionService`: Tenant scope (per-tenant permissions)
+ * - `IPermissionHierarchy`: Singleton scope (shared hierarchy)
+ *
+ * @see {@link AuthorizationConfig} for configuration options
+ * @see {@link GuardRegistry} for guard discovery
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Configuration**
+ *
+ * With permission hierarchy:
+ * ```typescript
+ * setupAuthorization(this.container, {
+ *   permissionHierarchy: {
+ *     "super-admin": ["admin", "moderator", "user"],
+ *     "admin": ["moderator", "user"],
+ *     "moderator": ["user"]
+ *   }
+ * });
+ * ```
+ *
+ * With custom scope extractors:
+ * ```typescript
+ * setupAuthorization(this.container, {
+ *   scopeExtractors: {
+ *     tenant: (req) => req.headers["x-tenant-id"],
+ *     session: (req) => req.session?.id
+ *   }
+ * });
+ * ```
+ *
+ * @public API
  */
 export function setupAuthorization(
   container: interfaces.Container,

@@ -1,3 +1,31 @@
+/**
+ * InversifyJS Dependency Injection Library
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept dependency-injection
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * ExpressoTS uses InversifyJS for dependency injection. Most InversifyJS APIs are available here.
+ *
+ * @example
+ * ```typescript
+ * import { Container, injectable, inject } from "@expressots/core";
+ *
+ * @injectable()
+ * export class MyService {
+ *   constructor(@inject("IDependency") private dep: IDependency) {}
+ * }
+ * ```
+ *
+ * @note
+ * This module re-exports InversifyJS APIs. For full InversifyJS documentation,
+ * see: https://github.com/inversify/InversifyJS
+ *
+ * @public API
+ */
+
 import * as keys from "./constants/metadata_keys";
 export const METADATA_KEY = keys;
 export { Container } from "./container/container";

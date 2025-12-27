@@ -8,11 +8,47 @@ import {
 import { StatusCode } from "./status-code";
 
 /**
- * Report class is a utility class to manage and log errors within the application.
- * It is responsible for creating a standardized error object, logging it,
- * and then throwing the error for further handling.
+ * Error reporting utility with helper methods for common error scenarios.
  *
- * Enhanced with helper methods for common error scenarios.
+ * @layer public
+ * @audience application-developers
+ * @concept error-reporting
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Use Report to create standardized application errors.
+ *
+ * @example
+ * ```typescript
+ * @inject(Report) private report: Report;
+ *
+ * // Create error
+ * throw this.report.error("Something went wrong", 500, "MyService");
+ *
+ * // Use helper methods
+ * throw this.report.badRequest("Invalid input");
+ * throw this.report.notFound("User", "123");
+ * ```
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * Report provides:
+ * - Standardized error creation
+ * - Helper methods for common HTTP errors
+ * - AppError factory
+ * - Service identification
+ *
+ * **Design Decisions**
+ * - Injectable service (can be injected anywhere)
+ * - Helper methods for common scenarios
+ * - Wraps AppError creation
+ *
+ * @see {@link AppError} for error class
+ *
+ * @public API
  */
 @injectable()
 export class Report implements IProvider {

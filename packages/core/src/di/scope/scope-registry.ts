@@ -1,6 +1,14 @@
 /**
- * ScopeRegistry manages custom scope stores for dependency injection.
- * Each custom scope maintains its own Map of binding IDs to instances.
+ * Registry for managing custom scope stores in dependency injection.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept scope-management
+ * @difficulty advanced
+ *
+ * @summary Quick Start
+ * Manages custom scope stores for multi-tenant or transaction-scoped services.
+ * Typically used internally by the framework.
  *
  * @example
  * ```typescript
@@ -8,6 +16,24 @@
  * const tenantScope = registry.getScopeStore("tenant");
  * tenantScope.set(bindingId, instance);
  * ```
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * ScopeRegistry maintains separate stores for each custom scope:
+ * - Each scope has its own Map of binding IDs to instances
+ * - Instances are cached per scope value
+ * - Used by InversifyJS container for custom scope resolution
+ *
+ * **Use Cases**
+ * - Multi-tenant applications (tenant scope)
+ * - Transaction management (transaction scope)
+ * - Workflow orchestration (workflow scope)
+ *
+ * @see {@link provideInScope} for registering services with custom scopes
+ *
  * @public API
  */
 export class ScopeRegistry {
@@ -15,8 +41,21 @@ export class ScopeRegistry {
 
   /**
    * Get or create a scope store for the given scope name.
+   *
+   * @layer public
+   * @audience application-developers
+   *
    * @param scopeName - The name of the custom scope (e.g., "tenant", "transaction")
    * @returns The scope store Map for the given scope name
+   *
+   * @example
+   * ```typescript
+   * const registry = new ScopeRegistry();
+   * const tenantScope = registry.getScopeStore("tenant");
+   * // Use tenantScope to store/retrieve instances
+   * ```
+   *
+   * @public API
    */
   public getScopeStore(scopeName: string): Map<number, unknown> {
     if (!this.stores.has(scopeName)) {

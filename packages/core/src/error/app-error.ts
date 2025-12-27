@@ -38,15 +38,70 @@ export interface AppErrorOptions {
 }
 
 /**
- * The AppError class extends the built-in Error class in JavaScript,
- * providing additional properties to manage custom application errors.
- * It captures detailed information about the error, including a status code
- * and an optional service identifier, which can be useful for error handling
- * and logging within the application.
+ * Application error class with RFC 7807 Problem Details support.
  *
- * Enhanced with RFC 7807 Problem Details support and additional metadata.
+ * @layer public
+ * @audience application-developers
+ * @concept error-handling
+ * @difficulty beginner
  *
- * @extends {Error}
+ * @summary Quick Start
+ * Create application errors with HTTP status codes and rich metadata.
+ *
+ * @example
+ * ```typescript
+ * // Simple error
+ * throw new AppError("User not found", 404);
+ *
+ * // With helper methods
+ * throw AppError.notFound("User", "123");
+ * throw AppError.badRequest("Invalid input", { field: "email" });
+ * ```
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * AppError extends Error with:
+ * - HTTP status code mapping
+ * - RFC 7807 Problem Details format
+ * - Rich metadata (errorCode, details, validationErrors)
+ * - Request correlation (requestId)
+ * - Timestamp tracking
+ *
+ * **Design Decisions**
+ * - Extends native Error for stack traces
+ * - RFC 7807 compliance for API consistency
+ * - Helper methods for common HTTP errors
+ * - Validation error support
+ *
+ * @see {@link StatusCode} for HTTP status codes
+ * @see {@link Report} for error reporting utility
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Usage**
+ *
+ * With validation errors:
+ * ```typescript
+ * throw AppError.validationFailed([
+ *   { property: "email", messages: ["Invalid email format"] },
+ *   { property: "age", messages: ["Must be 18 or older"] }
+ * ]);
+ * ```
+ *
+ * With custom metadata:
+ * ```typescript
+ * throw new AppError("Custom error", 400, "MyService", {
+ *   errorCode: "CUSTOM_ERROR",
+ *   details: { userId: 123 },
+ *   requestId: "req-123"
+ * });
+ * ```
+ *
+ * @public API
  */
 class AppError extends Error {
   /**

@@ -7,10 +7,15 @@ import type {
 } from "./exception-filter.interface";
 
 /**
- * Decorator to mark a class as an exception filter for specific exception types
- * @param exceptionTypes - Exception types this filter handles. If empty, handles all exceptions.
- * @returns ClassDecorator
- * @public API
+ * Decorator to mark a class as an exception filter for specific exception types.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept exception-filter
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Create exception filters to handle specific error types.
  *
  * @example
  * ```typescript
@@ -22,9 +27,33 @@ import type {
  * }
  * ```
  *
- * @example
+ * @param exceptionTypes - Exception types this filter handles. If empty, handles all exceptions.
+ * @returns ClassDecorator
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Stores filter metadata in Reflect
+ * - Registers in global registry for auto-discovery
+ * - ExceptionFilterRegistry discovers filters during initialization
+ * - Supports inheritance matching (parent filters handle child exceptions)
+ *
+ * **Exception Matching**
+ * - Exact type match (highest priority)
+ * - Parent type match (inheritance)
+ * - Global catch-all (Error base class)
+ *
+ * @see {@link ExceptionFilterRegistry} for auto-discovery mechanism
+ * @see {@link UseFilters} for applying filters to routes
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Usage**
+ *
+ * Catch multiple exception types:
  * ```typescript
- * // Catch multiple exception types
  * @Catch(ValidationError, TypeError)
  * export class ValidationErrorFilter extends BaseExceptionFilter {
  *   catch(exception: Error, context: ExceptionContext): void {
@@ -33,16 +62,17 @@ import type {
  * }
  * ```
  *
- * @example
+ * Global catch-all filter:
  * ```typescript
- * // Catch all exceptions (global filter)
- * @Catch()
+ * @Catch()  // No types = catch all
  * export class GlobalExceptionFilter extends BaseExceptionFilter {
  *   catch(exception: Error, context: ExceptionContext): void {
  *     // Handle all unhandled exceptions
  *   }
  * }
  * ```
+ *
+ * @public API
  */
 export function Catch(
   ...exceptionTypes: Array<ErrorConstructor>
@@ -79,10 +109,15 @@ export function Catch(
 }
 
 /**
- * Decorator to apply exception filters at controller or method level
- * @param filters - Exception filter classes to apply
- * @returns ClassDecorator & MethodDecorator
- * @public API
+ * Decorator to apply exception filters at controller or method level.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept exception-filter-application
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Apply exception filters to protect routes with custom error handling.
  *
  * @example
  * ```typescript
@@ -109,6 +144,23 @@ export function Catch(
  *   }
  * }
  * ```
+ *
+ * @param filters - Exception filter classes to apply
+ * @returns ClassDecorator & MethodDecorator
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Stores filter metadata on controller/method
+ * - Method-level filters override controller-level filters
+ * - Filters are resolved and executed by ExceptionHandlerMiddleware
+ * - Execution order: method filters → controller filters → global filters
+ *
+ * @see {@link Catch} for creating exception filters
+ * @see {@link ExceptionHandlerMiddleware} for execution logic
+ *
+ * @public API
  */
 export function UseFilters(
   ...filters: Array<new (...args: Array<unknown>) => IExceptionFilter>

@@ -62,7 +62,9 @@
     "coverage": "jest --coverage",
     "format": "prettier --write \"packages/**/*.ts\" --cache",
     "lint": "eslint \"packages/**/*.ts\"",
-    "lint:fix": "eslint \"packages/**/*.ts\" --fix"
+    "lint:fix": "eslint \"packages/**/*.ts\" --fix",
+    "docs:generate": "node scripts/generate-docs.js",
+    "docs:clean": "node scripts/rm.js docs"
   },
   "dependencies": {
     "reflect-metadata": "0.2.2"
@@ -85,6 +87,7 @@
     "prettier": "3.3.3",
     "release-it": "17.6.0",
     "ts-jest": "29.2.5",
+    "typedoc": "^0.28.15",
     "typescript": "5.5.3"
   },
   "release-it": {

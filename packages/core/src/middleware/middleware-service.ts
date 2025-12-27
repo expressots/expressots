@@ -72,8 +72,42 @@ interface IExpressoMiddleware {
 
 /**
  * Abstract class for creating custom Expresso middleware.
- * Custom middleware classes should extend this class and implement the use method.
  *
+ * @layer public
+ * @audience application-developers
+ * @concept custom-middleware
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Create custom middleware classes by extending this abstract class.
+ *
+ * @example
+ * ```typescript
+ * class AuthMiddleware extends ExpressoMiddleware {
+ *   use(req: Request, res: Response, next: NextFunction): void {
+ *     const token = req.headers.authorization;
+ *     if (!token) {
+ *       return res.status(401).json({ error: "Unauthorized" });
+ *     }
+ *     next();
+ *   }
+ * }
+ *
+ * // Use in application
+ * services.Middleware.addMiddleware(new AuthMiddleware());
+ * ```
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Provides `name` getter (returns constructor name)
+ * - Abstract `use()` method must be implemented
+ * - Compatible with Express middleware signature
+ *
+ * @see {@link IMiddleware.addMiddleware} for adding middleware
+ *
+ * @public API
  */
 export abstract class ExpressoMiddleware implements IExpressoMiddleware {
   get name(): string {
@@ -249,11 +283,88 @@ const CATEGORY_ICONS: Record<MiddlewareCategory, string> = {
 };
 
 /**
- * Singleton class that implements the IConfigure interface.
- * Manages the middleware configuration for the application,
- * including adding Body Parser and retrieving all configured middlewares.
+ * Middleware service for managing Express middleware pipeline.
  *
- * @see IConfigure
+ * @layer public
+ * @audience application-developers
+ * @concept middleware-management
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Configure and manage middleware for your ExpressoTS application.
+ *
+ * @example
+ * ```typescript
+ * @provide(App)
+ * export class App extends AppFactory {
+ *   configureServices(services: IService): void {
+ *     // Add built-in middleware
+ *     services.Middleware.addCors();
+ *     services.Middleware.addBodyParser();
+ *     services.Middleware.addHelmet();
+ *
+ *     // Add custom middleware
+ *     services.Middleware.addMiddleware((req, res, next) => {
+ *       // Custom logic
+ *       next();
+ *     });
+ *   }
+ * }
+ * ```
+ *
+ * **Features:**
+ * - Built-in middleware helpers (CORS, Helmet, Body Parser, etc.)
+ * - Custom middleware support
+ * - Middleware presets for common configurations
+ * - Conditional middleware execution
+ * - Content negotiation
+ * - Request validation
+ * - Performance profiling
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * Middleware service:
+ * - Maintains ordered pipeline array
+ * - Uses Map for O(1) middleware lookup
+ * - Caches sorted pipeline for performance
+ * - Supports conditional middleware execution
+ * - Integrates with middleware resolver for auto-discovery
+ *
+ * **Design Decisions**
+ * - Singleton pattern (one instance per app)
+ * - Ordered pipeline (insertion order preserved)
+ * - Cached sorting (invalidated on changes)
+ * - Built-in middleware auto-discovery
+ *
+ * @see {@link IMiddleware} for interface definition
+ * @see {@link middlewareResolver} for middleware resolution
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Usage**
+ *
+ * Conditional middleware:
+ * ```typescript
+ * services.Middleware.addConditional({
+ *   middleware: rateLimiter,
+ *   condition: (req) => !req.headers["x-internal-service"],
+ *   name: "conditional-rate-limit"
+ * });
+ * ```
+ *
+ * Middleware presets:
+ * ```typescript
+ * services.Middleware.usePreset("api", {
+ *   overrides: {
+ *     Cors: { origin: "https://myapp.com" }
+ *   }
+ * });
+ * ```
+ *
  * @public API
  */
 export class Middleware implements IMiddleware {

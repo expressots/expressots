@@ -60,11 +60,13 @@ interface TimingEntry {
 /**
  * Middleware Profiler - Track execution time and performance of middleware.
  *
- * Provides detailed metrics including:
- * - Average, min, max execution times
- * - Percentile calculations (p50, p95, p99)
- * - Error tracking
- * - Pipeline-level statistics
+ * @layer public
+ * @audience application-developers
+ * @concept middleware-profiling
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Profile middleware performance to identify bottlenecks.
  *
  * @example
  * ```typescript
@@ -78,6 +80,33 @@ interface TimingEntry {
  * const stats = profiler.getStats();
  * console.log(stats.metrics);
  * ```
+ *
+ * **Metrics Provided:**
+ * - Average, min, max execution times
+ * - Percentile calculations (p50, p95, p99)
+ * - Error tracking
+ * - Pipeline-level statistics
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * MiddlewareProfiler:
+ * - Wraps middleware handlers with timing logic
+ * - Stores timing samples (configurable max)
+ * - Calculates percentiles on-demand
+ * - Tracks errors separately
+ * - Can be enabled/disabled dynamically
+ *
+ * **Design Decisions**
+ * - Configurable max samples (memory management)
+ * - Percentile calculation (not stored, calculated)
+ * - Error tracking separate from timing
+ * - Non-blocking (doesn't affect middleware execution)
+ *
+ * @see {@link MiddlewareMetrics} for metric structure
+ * @see {@link ProfilerStats} for aggregated stats
  *
  * @public API
  */

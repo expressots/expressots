@@ -9,7 +9,14 @@
 
 /**
  * Base provider interface with metadata.
- * Implement this to provide descriptive information about your provider.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept provider-base
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Implement this interface to provide descriptive information about your provider.
  *
  * @example
  * ```typescript
@@ -18,8 +25,30 @@
  *   readonly name = "Database Provider";
  *   readonly version = "1.0.0";
  *   readonly description = "PostgreSQL connection manager";
+ *   readonly author = "ExpressoTS Team";
+ *   readonly repo = "https://github.com/expressots/expressots";
  * }
  * ```
+ *
+ * **Metadata Fields:**
+ * - `name`: Display name for the provider
+ * - `version`: Semantic version (optional)
+ * - `description`: Brief description (optional)
+ * - `author`: Author name or organization (optional)
+ * - `repo`: Repository URL (optional)
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Metadata is used by ProviderRegistry for introspection
+ * - Displayed in application banner and Studio
+ * - Used for health checks and metrics collection
+ *
+ * @see {@link ProviderRegistry} for provider discovery
+ * @see {@link IHealthCheck} for health check capability
+ * @see {@link IMetrics} for metrics capability
+ *
  * @public API
  */
 export interface IProvider {
@@ -61,8 +90,15 @@ export interface HealthCheckResult {
 }
 
 /**
- * Implement for providers that can report their health status.
- * Automatically discovered and included in health checks.
+ * Health check interface for providers.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept provider-health-check
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Implement this interface to enable health checks for your provider.
  *
  * @example
  * ```typescript
@@ -79,6 +115,27 @@ export interface HealthCheckResult {
  *   }
  * }
  * ```
+ *
+ * **Health Status:**
+ * - `healthy`: Provider is operating normally
+ * - `degraded`: Provider is functioning but with reduced performance
+ * - `unhealthy`: Provider is not functioning correctly
+ *
+ * **Auto-Discovery:**
+ * Providers implementing `IHealthCheck` are automatically discovered
+ * and included in health check endpoints and dashboards.
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Detected by ProviderRegistry during discovery
+ * - Health checks executed in parallel for performance
+ * - Results aggregated in HealthDashboard
+ *
+ * @see {@link ProviderRegistry.getHealthDashboard} for aggregated health checks
+ * @see {@link HealthCheckResult} for result structure
+ *
  * @public API
  */
 export interface IHealthCheck {
@@ -111,8 +168,15 @@ export function isHealthCheck(obj: unknown): obj is IHealthCheck {
 export type ProviderMetrics = Record<string, number | string | boolean>;
 
 /**
- * Implement for providers that expose metrics.
- * Automatically collected and displayed in banner/Studio.
+ * Metrics interface for providers.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept provider-metrics
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Implement this interface to expose metrics from your provider.
  *
  * @example
  * ```typescript
@@ -127,6 +191,27 @@ export type ProviderMetrics = Record<string, number | string | boolean>;
  *   }
  * }
  * ```
+ *
+ * **Metrics Format:**
+ * - Key-value pairs of metric data
+ * - Values can be numbers, strings, or booleans
+ * - Automatically collected and displayed in banner/Studio
+ *
+ * **Auto-Discovery:**
+ * Providers implementing `IMetrics` are automatically discovered
+ * and metrics are collected for dashboards.
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Detected by ProviderRegistry during discovery
+ * - Metrics collected on-demand
+ * - Aggregated in MetricsDashboard
+ *
+ * @see {@link ProviderRegistry.getMetricsDashboard} for aggregated metrics
+ * @see {@link ProviderMetrics} for metrics type
+ *
  * @public API
  */
 export interface IMetrics {

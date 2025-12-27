@@ -113,17 +113,46 @@ function resolveModule<T = unknown>(packageName: string): T | null {
 
 /**
  * Resolve a middleware by name and configure it with the provided options.
- * Uses caching for optimal performance on repeated calls.
  *
- * @param middlewareName - The name of the middleware (e.g., "cors", "helmet")
- * @param options - Configuration options to pass to the middleware factory
- * @returns The configured middleware handler or null if not available
+ * @layer public
+ * @audience application-developers
+ * @concept middleware-resolution
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Resolve and configure middleware packages automatically.
  *
  * @example
  * ```typescript
  * const corsMiddleware = middlewareResolver("cors", { origin: true });
  * const helmetMiddleware = middlewareResolver("helmet");
+ *
+ * if (corsMiddleware) {
+ *   app.use(corsMiddleware);
+ * }
  * ```
+ *
+ * **Features:**
+ * - Auto-discovers installed middleware packages
+ * - Caches resolved modules for performance
+ * - Returns null if middleware not installed
+ * - Supports all registered middleware types
+ *
+ * @param middlewareName - The name of the middleware (e.g., "cors", "helmet")
+ * @param options - Configuration options to pass to the middleware factory
+ * @returns The configured middleware handler or null if not available
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Checks package installation status (cached)
+ * - Resolves module using require.resolve (cached)
+ * - Calls middleware factory with options
+ * - Returns null on failure (logs error)
+ *
+ * @see {@link MIDDLEWARE_REGISTRY} for registered middleware
+ * @see {@link isMiddlewareAvailable} for availability check
  *
  * @public API
  */

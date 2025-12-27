@@ -12,7 +12,9 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node", "reflect-metadata", "jest"],
+    "downlevelIteration": true,
+    "target": "ES2020",
+    "types": ["node", "reflect-metadata", "jest"]
   },
   "include": ["packages/core/src/**/*.ts"],
   "files": ["./packages/core/src/index.ts"],

@@ -26,13 +26,55 @@ import { ProviderOptions } from "../decorator/scope-binding";
 
 /**
  * Registry for auto-discovering and managing providers.
- * Enables health checks, metrics collection, and introspection.
  *
- * Features:
+ * @layer public
+ * @audience application-developers
+ * @concept provider-registry
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Auto-discovers providers and enables health checks, metrics collection, and introspection.
+ *
+ * @example
+ * ```typescript
+ * const registry = new ProviderRegistry(container);
+ * registry.discover();
+ *
+ * // Get all providers
+ * const providers = registry.getAll();
+ *
+ * // Get health dashboard
+ * const health = await registry.getHealthDashboard();
+ *
+ * // Get metrics dashboard
+ * const metrics = registry.getMetricsDashboard();
+ * ```
+ *
+ * **Features:**
  * - Auto-discovery from metadata
  * - Parallel health checks for better performance
  * - Cached queries for filtered results
  * - Provider source tracking (builtin, user, external)
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * ProviderRegistry:
+ * - Scans Reflect metadata for `@provide()` decorators
+ * - Detects provider capabilities (bootstrap, shutdown, health, metrics, config)
+ * - Caches filtered queries for performance
+ * - Tracks provider source (builtin, user, external)
+ *
+ * **Design Decisions**
+ * - Auto-discovery reduces boilerplate
+ * - Parallel health checks for performance
+ * - Cached queries reduce repeated filtering
+ * - Source tracking for introspection
+ *
+ * @see {@link ProviderManager} for provider management
+ * @see {@link IProvider} for provider interface
  *
  * @public API
  */

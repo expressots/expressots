@@ -1,3 +1,24 @@
+/**
+ * HTTP Status Code Enumerations
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept http-status-codes
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Use StatusCode enum for HTTP status codes in errors and responses.
+ *
+ * @example
+ * ```typescript
+ * import { StatusCode } from "@expressots/core";
+ *
+ * throw new AppError("Not found", StatusCode.NotFound);
+ * ```
+ *
+ * @public API
+ */
+
 type HttpStatusErrorCode =
   | InformationResponse
   | SuccessfulResponse

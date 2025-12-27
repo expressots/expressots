@@ -1,0 +1,40 @@
+graph TD
+    A[loadAndValidateEnvironment] --> B{envFileConfig provided?}
+    B -->|No| C[Skip - return early]
+    B -->|Yes| D{CI Mode detected?}
+    D -->|Yes| E[Support .env.vault if DOTENV_KEY present]
+    E --> F[Validate process.env only]
+    F --> G[Return result]
+    D -->|No| H{skipFileLoading?}
+    H -->|Yes| F
+    H -->|No| I{autoCreateTemplate?}
+    I -->|Yes| J[Create templates for all mapped envs]
+    I -->|No| K[Load optional files silently]
+    J --> L[Determine current env file]
+    K --> L
+    L --> M{File exists?}
+    M -->|No| N{autoCreate?}
+    N -->|Yes| O[Create template]
+    N -->|No| P{validateFile?}
+    P -->|Yes| Q[Throw EnvFileNotFoundError]
+    P -->|No| R[Warning: file not found]
+    M -->|Yes| S[Load file]
+    O --> S
+    S --> T{validateValues?}
+    T -->|Yes| U[Check all variables non-empty]
+    T -->|No| V{required array provided?}
+    V -->|Yes| U
+    V -->|No| W[Skip value validation]
+    U --> X{All valid?}
+    X -->|No| Y[Throw EnvValidationError]
+    X -->|Yes| G
+    Q --> G
+    R --> G
+    W --> G
+    
+    style A fill:#e1f5ff
+    style G fill:#d4edda
+    style Q fill:#f8d7da
+    style Y fill:#f8d7da
+    style C fill:#d1ecf1
+

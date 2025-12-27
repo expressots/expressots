@@ -1,0 +1,26 @@
+graph TD
+    A[bootstrap AppClass, options] --> B[Detect Environment]
+    B --> C{envFileConfig provided?}
+    C -->|No| D[Skip .env loading]
+    C -->|Yes| E[Load & Validate Environment]
+    E --> F{CI Mode?}
+    F -->|Yes| G[Validate process.env only]
+    F -->|No| H[Load .env files]
+    H --> I{Auto-create enabled?}
+    I -->|Yes| J[Create template files]
+    I -->|No| K[Validate existing files]
+    D --> L[Determine Port]
+    G --> L
+    J --> L
+    K --> L
+    L --> M[Read package.json]
+    M --> N[Create App Instance via AppFactory]
+    N --> O[Set environment on app]
+    O --> P[Start Server with graceful shutdown]
+    P --> Q[Return IWebServerPublic]
+    
+    style A fill:#e1f5ff
+    style Q fill:#d4edda
+    style E fill:#fff3cd
+    style N fill:#fff3cd
+

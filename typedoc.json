@@ -1,0 +1,71 @@
+{
+  "name": "ExpressoTS Core API",
+  "entryPoints": [
+    "packages/core/src"
+  ],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "readme": "README.md",
+  "tsconfig": "tsconfig.cjs.json",
+  "skipErrorChecking": true,
+  "exclude": [
+    "**/node_modules/**",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/early.spec/**",
+    "**/__tests__/**"
+  ],
+  "excludePrivate": false,
+  "excludeProtected": false,
+  "excludeInternal": false,
+  "includeVersion": true,
+  "gitRevision": "main",
+  "theme": "default",
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Application",
+    "Authorization",
+    "Console",
+    "Container Module",
+    "Decorator",
+    "Error",
+    "Lifecycle",
+    "Middleware",
+    "Provider",
+    "*"
+  ],
+  "sort": [
+    "source-order"
+  ],
+  "kindSortOrder": [
+    "Project",
+    "Module",
+    "Namespace",
+    "Enum",
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Function",
+    "Variable"
+  ],
+  "blockTags": [
+    "@layer",
+    "@audience",
+    "@concept",
+    "@difficulty",
+    "@troubleshooting",
+    "@performance",
+    "@option",
+    "@file",
+    "@description",
+    "@summary",
+    "@smart-defaults"
+  ],
+  "validation": {
+    "notExported": false,
+    "invalidLink": false,
+    "notDocumented": false
+  },
+  "plugin": [],
+  "logLevel": "Warn"
+}

@@ -35,11 +35,14 @@ export type BindingsCallback =
 
 /**
  * Combines multiple ContainerModules into a single ContainerModule.
- * This simplifies module composition without requiring users to know
- * the full ContainerModuleCallBack signature.
  *
- * @param modules - ContainerModules to combine
- * @returns A single ContainerModule that loads all provided modules
+ * @layer public
+ * @audience application-developers
+ * @concept module-composition
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Combine multiple modules into a single module for easier management.
  *
  * @example
  * ```typescript
@@ -50,6 +53,26 @@ export type BindingsCallback =
  *
  * export const AppModule = combineModules(controllerModule, customModule);
  * ```
+ *
+ * @param modules - ContainerModules to combine
+ * @returns A single ContainerModule that loads all provided modules
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * Creates a new ContainerModule that loads all provided modules in order.
+ * Each module's registry is called sequentially.
+ *
+ * **Use Cases**
+ * - Combining feature modules
+ * - Separating concerns (controllers, services, etc.)
+ * - Reusable module composition
+ *
+ * @see {@link CreateModule} for creating modules from controllers
+ * @see {@link createModule} for creating modules from callbacks
+ *
  * @public API
  */
 export function combineModules(
@@ -82,11 +105,14 @@ export function combineModules(
 
 /**
  * Creates a ContainerModule from a simple bindings callback.
- * This provides a cleaner API than using `new ContainerModule()` directly,
- * as users only need to provide the `bind` parameter.
  *
- * @param callback - A callback that receives the `bind` function
- * @returns A ContainerModule
+ * @layer public
+ * @audience application-developers
+ * @concept module-creation
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Create a module from a simple bindings callback. Cleaner than `new ContainerModule()`.
  *
  * @example
  * ```typescript
@@ -95,6 +121,27 @@ export function combineModules(
  *   bind<ICache>("ICache").to(RedisCache);
  * });
  * ```
+ *
+ * @param callback - A callback that receives the `bind` function (and optionally unbind, isBound, rebind)
+ * @returns A ContainerModule
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * Wraps a simple callback in a ContainerModule. Supports both:
+ * - Simple callback: `(bind) => void`
+ * - Extended callback: `(bind, unbind, isBound, rebind) => void`
+ *
+ * **Benefits**
+ * - Simpler API than `new ContainerModule()`
+ * - Only requires `bind` parameter (most common use case)
+ * - Supports extended signature for advanced cases
+ *
+ * @see {@link CreateModule} for creating modules from controllers
+ * @see {@link combineModules} for combining multiple modules
+ *
  * @public API
  */
 export function createModule(callback: BindingsCallback): ContainerModule {
@@ -111,9 +158,37 @@ export function createModule(callback: BindingsCallback): ContainerModule {
 }
 
 /**
- * The scope decorator is a higher order function that can be used to decorate a class with a binding type.
- * @param binding An instance of interfaces.BindingScope which represents the binding type.
- * @returns A decorator function that can be used to decorate a class with a binding type.
+ * Decorator to set binding scope for a class.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept scope-decorator
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Set the binding scope for a class using a decorator.
+ *
+ * @example
+ * ```typescript
+ * @scope(BindingScopeEnum.Singleton)
+ * export class CacheService { }
+ * ```
+ *
+ * @param binding - Binding scope (Singleton, Transient, Request, or custom string)
+ * @returns A class decorator
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Stores binding type in metadata
+ * - Applies appropriate `@provide()` decorator based on scope
+ * - Singleton → `@provideSingleton()`
+ * - Transient → `@provideTransient()`
+ * - Request/Other → `@provide()`
+ *
+ * @see {@link BindingScopeEnum} for built-in scopes
+ *
  * @public API
  */
 const scope = (binding: interfaces.BindingScope) => {
@@ -142,8 +217,40 @@ const scope = (binding: interfaces.BindingScope) => {
 type controllerType = Map<symbol, new () => any>;
 
 /**
- * The BaseModule class provides methods for creating InversifyJS container modules.
- * @provide BaseModule
+ * Base class for creating InversifyJS container modules.
+ *
+ * @layer public
+ * @audience application-developers
+ * @concept module-base
+ * @difficulty intermediate
+ *
+ * @summary Quick Start
+ * Provides static methods for creating container modules from controllers.
+ * Typically used via `CreateModule()` convenience function.
+ *
+ * @example
+ * ```typescript
+ * const module = CreateModule([UserController, AuthController]);
+ * ```
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Architecture**
+ *
+ * BaseModule provides:
+ * - `createContainerModule()` - Creates modules from controllers
+ * - `bindToScope()` - Helper for binding with specific scope
+ * - `createSymbols()` - Creates symbols for controllers
+ *
+ * **Design Decisions**
+ * - Uses symbols for controller identification
+ * - Supports metadata-based scope detection
+ * - Flexible parameter handling (scope or bindings callback)
+ *
+ * @see {@link CreateModule} for the convenience function
+ *
+ * @public API
  */
 export class BaseModule {
   /**
@@ -199,10 +306,14 @@ export class BaseModule {
 
   /**
    * Create an InversifyJS ContainerModule for the provided controllers.
-   * @param controllers - An array of controller classes.
-   * @param scopeOrBindings - An optional binding scope or custom bindings callback.
-   * @param customBindings - An optional callback for additional custom bindings.
-   * @returns A ContainerModule with the controller bindings.
+   *
+   * @layer public
+   * @audience application-developers
+   * @concept module-creation
+   * @difficulty beginner
+   *
+   * @summary Quick Start
+   * Create a container module from controllers. Supports optional scope and custom bindings.
    *
    * @example
    * ```typescript
@@ -222,6 +333,30 @@ export class BaseModule {
    *   bind<ILogger>("ILogger").to(ConsoleLogger);
    * });
    * ```
+   *
+   * @param controllers - An array of controller classes.
+   * @param scopeOrBindings - An optional binding scope or custom bindings callback.
+   * @param customBindings - An optional callback for additional custom bindings (only used if scopeOrBindings is a scope).
+   * @returns A ContainerModule with the controller bindings.
+   *
+   * @layer internal
+   * @audience framework-developers
+   *
+   * **Internal Behavior**
+   *
+   * 1. Creates symbols for each controller
+   * 2. Determines scope (from parameter or metadata)
+   * 3. Binds controllers with appropriate scope
+   * 4. Executes custom bindings callback if provided
+   *
+   * **Parameter Resolution**
+   * - If `scopeOrBindings` is a function → treated as bindings callback
+   * - If `scopeOrBindings` is a scope → uses that scope, `customBindings` as callback
+   * - If `scopeOrBindings` is undefined → uses metadata-based scope
+   *
+   * @see {@link scope} decorator for setting scope via metadata
+   * @see {@link combineModules} for combining multiple modules
+   *
    * @public API
    */
   public static createContainerModule(

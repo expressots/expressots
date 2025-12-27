@@ -1,0 +1,52 @@
+flowchart TD
+    Start([Error Thrown]) --> Handler[ExceptionHandlerMiddleware.handle]
+    
+    Handler --> BuildContext[Build ExceptionContext]
+    BuildContext --> ExtractController[Extract Controller/Handler]
+    ExtractController --> ExtractRoute[Extract Route Info]
+    ExtractRoute --> BuildHttpContext[Build HTTP Context]
+    
+    BuildHttpContext --> GetRouteFilters[Get Route Filters]
+    GetRouteFilters --> MethodFilters{Method-level<br/>Filters?}
+    MethodFilters -->|Yes| AddMethodFilters[Add Method Filters]
+    MethodFilters -->|No| ControllerFilters{Controller-level<br/>Filters?}
+    AddMethodFilters --> ControllerFilters
+    ControllerFilters -->|Yes| AddControllerFilters[Add Controller Filters]
+    ControllerFilters -->|No| GetExceptionFilters
+    AddControllerFilters --> GetExceptionFilters[Get Exception-Type Filters]
+    
+    GetExceptionFilters --> Registry[ExceptionFilterRegistry.getFilters]
+    Registry --> WalkChain[Walk Exception<br/>Prototype Chain]
+    WalkChain --> ExactMatch{Exact Type<br/>Match?}
+    ExactMatch -->|Yes| AddExactFilters[Add Exact Filters]
+    ExactMatch -->|No| ParentMatch{Parent Type<br/>Match?}
+    AddExactFilters --> CheckGlobal
+    ParentMatch -->|Yes| AddParentFilters[Add Parent Filters]
+    ParentMatch -->|No| CheckGlobal{Global<br/>Catch-All?}
+    AddParentFilters --> CheckGlobal
+    CheckGlobal -->|Yes| AddGlobalFilters[Add Global Filters]
+    CheckGlobal -->|No| CombineFilters
+    AddGlobalFilters --> CombineFilters[Combine All Filters]
+    
+    CombineFilters --> ExecuteFilters[Execute Filters Sequentially]
+    ExecuteFilters --> CheckHeaders{Headers<br/>Sent?}
+    CheckHeaders -->|Yes| Stop[Stop Execution]
+    CheckHeaders -->|No| ExecuteFilter[Execute Filter]
+    ExecuteFilter --> FilterAsync{Filter<br/>Async?}
+    FilterAsync -->|Yes| AwaitFilter[Await Filter]
+    FilterAsync -->|No| NextFilter{More<br/>Filters?}
+    AwaitFilter --> NextFilter
+    NextFilter -->|Yes| ExecuteFilter
+    NextFilter -->|No| CheckResponse{Response<br/>Sent?}
+    
+    CheckResponse -->|Yes| End([End])
+    CheckResponse -->|No| DefaultHandler[Default Error Handler]
+    DefaultHandler --> End
+    
+    style Start fill:#e1f5ff
+    style End fill:#e1f5ff
+    style Handler fill:#fff4e1
+    style Registry fill:#fff4e1
+    style ExecuteFilters fill:#ffe1f5
+    style DefaultHandler fill:#ffe1f5
+

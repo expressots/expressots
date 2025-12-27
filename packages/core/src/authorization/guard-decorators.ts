@@ -3,12 +3,15 @@ import { GUARD_METADATA_KEY } from "./guard-constants";
 import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface";
 
 /**
- * Decorator to mark a class as a guard (for auto-discovery)
- * Similar to @Catch() for exception filters
+ * Decorator to mark a class as a guard (for auto-discovery).
  *
- * @param options - Guard options (priority, cacheable)
- * @returns ClassDecorator
- * @public API
+ * @layer public
+ * @audience application-developers
+ * @concept guard-decorator
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Mark your guard class with `@Guard()` to enable auto-discovery.
  *
  * @example
  * ```typescript
@@ -21,6 +24,30 @@ import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface";
  *   }
  * }
  * ```
+ *
+ * @param options - Guard options
+ * @param options.priority - Execution priority (lower = earlier). Default: 100
+ * @param options.cacheable - Whether result can be cached. Default: false
+ * @returns ClassDecorator
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Registers guard metadata for auto-discovery
+ * - Stores metadata in global registry via Reflect
+ * - GuardRegistry discovers guards during initialization
+ *
+ * **Priority System**
+ * - Lower priority = earlier execution
+ * - Authentication guards typically use priority 1-10
+ * - Authorization guards typically use priority 50-100
+ * - Resource guards typically use priority 100+
+ *
+ * @see {@link GuardRegistry} for auto-discovery mechanism
+ * @see {@link UseGuards} for applying guards to routes
+ *
+ * @public API
  */
 export function Guard(options?: {
   priority?: number;
@@ -48,12 +75,15 @@ export function Guard(options?: {
 }
 
 /**
- * Apply guards at controller or method level
- * Similar to @UseFilters() for exception filters
+ * Apply guards at controller or method level.
  *
- * @param guards - Guard classes or instances to apply
- * @returns ClassDecorator & MethodDecorator
- * @public API
+ * @layer public
+ * @audience application-developers
+ * @concept guard-application
+ * @difficulty beginner
+ *
+ * @summary Quick Start
+ * Apply guards to protect routes. Can be used at controller or method level.
  *
  * @example
  * ```typescript
@@ -80,6 +110,43 @@ export function Guard(options?: {
  *   }
  * }
  * ```
+ *
+ * @param guards - Guard classes or instances to apply
+ * @returns ClassDecorator & MethodDecorator
+ *
+ * @layer internal
+ * @audience framework-developers
+ *
+ * **Internal Behavior**
+ * - Stores guard metadata on controller/method
+ * - Method-level guards override controller-level guards
+ * - Guards are resolved and executed by GuardExecutor
+ * - Execution order follows guard priority
+ *
+ * **Guard Resolution**
+ * - GuardRegistry resolves guard instances
+ * - Supports both guard classes and instances
+ * - Factory functions (RequireAuth, RequireRole) create instances dynamically
+ *
+ * @see {@link Guard} for creating guards
+ * @see {@link GuardExecutor} for execution logic
+ *
+ * @layer advanced
+ * @audience power-users
+ *
+ * **Advanced Usage**
+ *
+ * Combining multiple guards:
+ * ```typescript
+ * @UseGuards(AuthenticatedGuard, RequireRole("admin"), RequirePermission("users:read"))
+ * ```
+ *
+ * Conditional guards:
+ * ```typescript
+ * @UseGuards(ConditionalGuard(() => process.env.NODE_ENV === "production"))
+ * ```
+ *
+ * @public API
  */
 export function UseGuards(
   ...guards: Array<IGuard | GuardClass>
