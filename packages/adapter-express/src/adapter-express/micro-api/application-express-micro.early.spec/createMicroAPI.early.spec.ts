@@ -102,17 +102,6 @@ describe("createMicroAPI() createMicroAPI method", () => {
       expect((appExpressMicro as any).globalPrefix).toBe(prefix);
     });
 
-    it("should initialize environment with default .env file", () => {
-      // Arrange
-      const appExpressMicro = createMicroAPI(mockConfig as any);
-      jest.spyOn(fs, "existsSync").mockReturnValue(true);
-
-      // Act
-      appExpressMicro.initEnvironment("development" as Env.Environment);
-
-      // Assert
-      expect(config).toBeDefined();
-    });
   });
 });
 

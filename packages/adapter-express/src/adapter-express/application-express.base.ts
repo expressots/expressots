@@ -23,15 +23,18 @@
 export abstract class ApplicationBase {
   /**
    * Implement this method to set up global configurations for the server.
-   * This method is called before any other server initialization methods.
-   * Use this method to configure global settings that apply to the entire
-   * server application. Supports asynchronous setup with a Promise.
+   * This method is called synchronously in the constructor before any other
+   * server initialization methods. Use this method to configure global settings
+   * that apply to the entire server application.
+   *
+   * Note: This method is synchronous and called during object construction.
+   * For asynchronous initialization, use `configureServices()` instead.
    *
    * @abstract
-   * @returns {void | Promise<void>}
+   * @returns {void}
    * @public API
    */
-  protected abstract globalConfiguration(): void | Promise<void>;
+  protected abstract globalConfiguration(): void;
 
   /**
    * Implement this method to set up required services or configurations before

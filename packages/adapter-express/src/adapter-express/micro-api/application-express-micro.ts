@@ -1,7 +1,6 @@
 import { IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
-import { config, Env, IConsoleMessage } from "@expressots/shared";
+import { Env, IConsoleMessage } from "@expressots/shared";
 import express from "express";
-import fs from "fs";
 import { Server } from "http";
 import { MiddlewareConfig } from "../application-express.types";
 import { IIOC, IOC } from "./application-express-micro-container";
@@ -19,14 +18,6 @@ export type MicroAPIConfig = {
  * Interface for the Create Method of Express Micro API adapter
  */
 export interface ICreateMicroAPI {
-  /**
-   * Initialize the environment for the application
-   * @param environment - The environment to initialize
-   * @param options - Options for the environment initialization
-   * @public API
-   */
-  initEnvironment(environment: Env.Environment, options?: Env.IEnvironment): void;
-
   /**
    * Set the global route prefix
    * @param prefix - The global route prefix
@@ -136,36 +127,6 @@ class AppExpressMicro {
     this.globalPrefix = prefix;
   }
 
-  /**
-   * Initialize the environment for the application
-   * @param environment - The environment to initialize
-   * @param options - Options for the environment initialization
-   * @public API
-   */
-  public initEnvironment(environment: Env.Environment, options?: Env.IEnvironment): void {
-    this.environment = environment;
-
-    if (options === undefined) {
-      config({ path: ".env" });
-    } else {
-      if (!options.env[environment]) {
-        this.logger.error(
-          `Environment configuration for [${environment}] does not exist.`,
-          "adapter-express",
-        );
-        process.exit(1);
-      } else {
-        const envFileName = options.env[environment];
-
-        if (!fs.existsSync(envFileName)) {
-          this.logger.error(`Environment file [${envFileName}] does not exist.`, "adapter-express");
-          process.exit(1);
-        } else {
-          config({ path: envFileName });
-        }
-      }
-    }
-  }
 
   /**
    * Get the Middleware instance

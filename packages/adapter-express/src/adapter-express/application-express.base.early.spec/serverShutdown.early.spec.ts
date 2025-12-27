@@ -3,7 +3,7 @@
 import { ApplicationBase } from "../application-express.base";
 
 export class ConcreteApplication extends ApplicationBase {
-  protected globalConfiguration(): void | Promise<void> {}
+  protected globalConfiguration(): void {}
   protected configureServices(): void | Promise<void> {}
   protected postServerInitialization(): void | Promise<void> {}
 

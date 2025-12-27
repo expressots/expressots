@@ -1,7 +1,9 @@
 import express from "express";
-import fs from "fs";
 import { Server as HTTPServer } from "http";
-import process, { exit } from "process";
+
+// Note: We use the global `process` object directly instead of importing it
+// because signal handlers (SIGTERM, SIGINT, etc.) don't work correctly when
+// process is imported as an ES module in CommonJS compiled code.
 
 import {
   AppContainer,
@@ -17,8 +19,9 @@ import {
   MetricsCollector,
   BannerConfig,
   resolveBannerConfig,
+  BannerData,
 } from "@expressots/core";
-import { config, Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
+import { Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
 import { interfaces } from "@expressots/core";
 import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
@@ -30,6 +33,7 @@ import {
   getControllersFromMetadata,
   getControllersFromContainer,
   getControllerMethodMetadata,
+  getControllerMetadata,
 } from "./express-utils/utils";
 
 /**
@@ -211,44 +215,58 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Helper function to handle both sync and async method calls.
+   * If the result is a Promise, awaits it; otherwise returns immediately.
+   * @private
+   */
+  private async handleSyncOrAsync(result: void | Promise<void>): Promise<void> {
+    if (result instanceof Promise) {
+      return await result;
+    }
+  }
+
+  /**
    * Implement this method to set up global configurations for the server.
-   * This method is called before any other server initialization methods.
-   * Use this method to configure global settings that apply to the entire
-   * server application. Supports asynchronous setup with a Promise.
+   * This method is called synchronously in the constructor before any other
+   * server initialization methods. Use this method to configure global settings
+   * that apply to the entire server application.
+   *
+   * Note: This method is synchronous and called during object construction.
+   * For asynchronous initialization, use `configureServices()` instead.
    *
    * @abstract
-   * @returns {void | Promise<void>}
+   * @returns {void}
    * @public API
    */
-  protected async globalConfiguration(): Promise<void> {}
+  protected globalConfiguration(): void {}
 
   /**
    * Implement this method to set up required services or configurations before
    * the server starts. This is essential for initializing dependencies or settings
-   * necessary for server operation. Supports asynchronous setup with a Promise.
+   * necessary for server operation. Supports both synchronous and asynchronous setup.
    *
    * @abstract
    * @returns {void | Promise<void>}
    * @public API
    */
-  protected async configureServices(): Promise<void> {}
+  protected configureServices(): void | Promise<void> {}
 
   /**
    * Implement this method to execute actions or configurations after the server
    * has started. Use this for operations that need to run once the server is
-   * operational. Supports asynchronous execution with a Promise.
+   * operational. Supports both synchronous and asynchronous execution.
    *
    * @abstract
    * @returns {void | Promise<void>}
    * @public API
    */
-  protected async postServerInitialization(): Promise<void> {}
+  protected postServerInitialization(): void | Promise<void> {}
 
   /**
    * Implement this method to handle cleanup and final actions when the server
    * is shutting down. Ideal for closing resources, stopping tasks, or other
-   * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
-   * cleanup with a Promise.
+   * cleanup procedures to ensure a graceful server shutdown. Supports both
+   * synchronous and asynchronous cleanup.
    *
    * The signal parameter indicates what triggered the shutdown:
    * - SIGTERM: Graceful termination (e.g., Kubernetes pod shutdown)
@@ -263,7 +281,7 @@ export class AppExpress implements Server.IWebServer {
    * @public API
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async serverShutdown(signal?: NodeJS.Signals): Promise<void> {}
+  protected serverShutdown(signal?: NodeJS.Signals): void | Promise<void> {}
 
   /**
    * Performs graceful shutdown of the application.
@@ -284,7 +302,7 @@ export class AppExpress implements Server.IWebServer {
     }
 
     // 2. Call user's serverShutdown hook
-    await this.serverShutdown(signal);
+    await this.handleSyncOrAsync(this.serverShutdown(signal));
 
     // 3. Gracefully close the HTTP server
     if (this.serverInstance) {
@@ -465,10 +483,10 @@ export class AppExpress implements Server.IWebServer {
   private async init(): Promise<AppExpress> {
     if (!this.appContainer) {
       this.logger.error("No container provided for application configuration", "adapter-express");
-      exit(1);
+      process.exit(1);
     }
 
-    await this.configureServices();
+    await this.handleSyncOrAsync(this.configureServices());
 
     const sortedMiddlewarePipeline = (this.Middleware as Middleware).getMiddlewarePipeline();
     const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
@@ -571,9 +589,6 @@ export class AppExpress implements Server.IWebServer {
       // Stop buffering and restore normal output (but don't flush yet)
       AppExpress.stopBuffering();
 
-      // Display startup banner FIRST (now goes directly to stdout)
-      this.displayStartupBanner(appInfo);
-
       // Flush all buffered logs that were captured during initialization
       AppExpress.flushBufferedLogs();
     } catch (error) {
@@ -585,7 +600,11 @@ export class AppExpress implements Server.IWebServer {
 
     return new Promise<IWebServerPublic>((resolve, reject) => {
       this.serverInstance = this.app.listen(this.port, async () => {
-        this.port = (this.serverInstance?.address() as AddressInfo)?.port;
+        // Update port with actual assigned port (important for port 0 auto-assign)
+        this.port = (this.serverInstance?.address() as AddressInfo)?.port || this.port;
+
+        // Display startup banner AFTER server starts (so we have the correct port)
+        this.displayStartupBanner(appInfo);
 
         // Setup signal handlers for graceful shutdown
         // Supported signals:
@@ -603,6 +622,11 @@ export class AppExpress implements Server.IWebServer {
         ];
 
         for (const signal of shutdownSignals) {
+          // Skip if handler already registered (prevents duplicates)
+          if (this.shutdownHandlers.has(signal)) {
+            continue;
+          }
+
           const handler = (): void => {
             // Prevent multiple shutdown attempts
             if (this.isShuttingDown) {
@@ -610,6 +634,7 @@ export class AppExpress implements Server.IWebServer {
             }
             this.isShuttingDown = true;
 
+            // Use console.log for shutdown messages - synchronous and guaranteed to write before exit
             console.log(`\n📡 Signal ${signal} received, initiating graceful shutdown...`);
 
             // Execute shutdown hooks and exit
@@ -619,19 +644,19 @@ export class AppExpress implements Server.IWebServer {
                 process.exit(0);
               })
               .catch((error) => {
-                this.logger.error(`Shutdown error: ${error.message}`, "adapter-express");
+                console.error(`❌ Error during shutdown: ${error.message}`);
                 process.exit(1);
               });
           };
 
-          // Store handler for later removal
+          // Store handler for later removal and register it
           this.shutdownHandlers.set(signal, handler);
           process.on(signal, handler);
         }
 
         try {
           // Call user's postServerInitialization hook
-          await this.postServerInitialization();
+          await this.handleSyncOrAsync(this.postServerInitialization());
 
           // Execute bootstrap lifecycle hooks on all IBootstrap providers
           if (this.lifecycleRegistry) {
@@ -803,59 +828,23 @@ export class AppExpress implements Server.IWebServer {
    * @public API
    */
   public async isDevelopment(): Promise<boolean> {
+    // Check Express app environment first (most reliable)
     if (this.app) {
       return this.app.get("env") === "development";
     }
 
-    this.appContainer.Container.get<Logger>(Logger).error(
-      "isDevelopment() method must be called on `PostServerInitialization`",
-      "application",
-    );
-    return false;
-  }
-
-  /**
-   * Load environment variables from the specified file based on the environment configuration.
-   * @param environment - The environment to load configuration for.
-   * @param options - The options to use for loading the environment configuration.
-   * @option env - The environment configuration options.
-   * @example
-   * ```typescript
-   * {
-            env: {
-                development: ".env.development",
-                production: ".env.production"
-            }
-        }
-    * ```
-   * @public API
-   */
-  public async initEnvironment(
-    environment: Env.Environment,
-    options?: Env.IEnvironment,
-  ): Promise<void> {
-    this.environment = environment;
-
-    if (options === undefined) {
-      config({ path: ".env" });
-    } else {
-      if (!options.env[environment]) {
-        this.logger.error(
-          `Environment configuration for [${environment}] does not exist.`,
-          "adapter-express",
-        );
-        process.exit(1);
-      } else {
-        const envFileName = options.env[environment];
-
-        if (!fs.existsSync(envFileName)) {
-          this.logger.error(`Environment file [${envFileName}] does not exist.`, "adapter-express");
-          process.exit(1);
-        } else {
-          config({ path: envFileName });
-        }
-      }
+    // Fallback to this.environment (set by bootstrap())
+    if (this.environment) {
+      return this.environment === "development";
     }
+
+    // Fallback to process.env.NODE_ENV
+    if (process.env.NODE_ENV) {
+      return process.env.NODE_ENV === "development";
+    }
+
+    // Default to false if nothing is set
+    return false;
   }
 
   /**
@@ -873,6 +862,49 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Detect API versions from @Version() decorators on controllers.
+   * @returns Array of unique API versions (e.g., ["v1", "v2"])
+   * @private
+   */
+  private detectApiVersions(): Array<string> {
+    try {
+      const controllers = getControllersFromMetadata();
+      const versions = new Set<string>();
+
+      controllers.forEach((controllerTarget) => {
+        // Cast DecoratorTarget to NewableFunction for metadata access
+        const controllerConstructor = controllerTarget as unknown as NewableFunction;
+
+        // Check controller-level version
+        const controllerMetadata = getControllerMetadata(controllerConstructor);
+        if (controllerMetadata?.version) {
+          const version = String(controllerMetadata.version);
+          // Normalize version format (ensure "v" prefix)
+          const normalizedVersion = version.startsWith("v") ? version : `v${version}`;
+          versions.add(normalizedVersion);
+        }
+
+        // Check method-level versions
+        const methodMetadata = getControllerMethodMetadata(controllerConstructor);
+        if (methodMetadata) {
+          methodMetadata.forEach((method) => {
+            if (method.version) {
+              const version = String(method.version);
+              const normalizedVersion = version.startsWith("v") ? version : `v${version}`;
+              versions.add(normalizedVersion);
+            }
+          });
+        }
+      });
+
+      return Array.from(versions).sort();
+    } catch (error) {
+      // If metadata not available, return empty array
+      return [];
+    }
+  }
+
+  /**
    * Display startup banner with application metrics.
    * @param appInfo - Application info
    * @private
@@ -885,6 +917,26 @@ export class AppExpress implements Server.IWebServer {
     }
 
     try {
+      // Detect API versions from controllers (if not already provided)
+      // Use type assertion since apiVersions might not be in the type definition yet
+      type AppInfoWithVersions = IConsoleMessage & { apiVersions?: Array<string> };
+      let finalAppInfo: AppInfoWithVersions | undefined = appInfo as AppInfoWithVersions;
+
+      if (!finalAppInfo?.apiVersions || finalAppInfo.apiVersions.length === 0) {
+        const apiVersions = this.detectApiVersions();
+        if (apiVersions.length > 0) {
+          finalAppInfo = {
+            ...appInfo,
+            appName: appInfo?.appName || "App",
+            appVersion: appInfo?.appVersion || "not provided",
+            apiVersions,
+          };
+        }
+      }
+
+      // Detect API versions from controllers
+      const detectedApiVersions = finalAppInfo?.apiVersions || [];
+
       // Collect metrics
       const { metrics, features } = MetricsCollector.collect(this.appContainer.Container, {
         getControllersFromMetadata: () => getControllersFromMetadata(),
@@ -898,13 +950,39 @@ export class AppExpress implements Server.IWebServer {
         hasSmartValidation: () => !!(this.Middleware as Middleware).getValidationConfig(),
         hasAuthorization: () => this.appContainer.Container.isBound("IGuardCache"),
         hasExceptionFilters: () => !!(this.Middleware as Middleware).getErrorHandler(),
+        hasApiVersioning: () => detectedApiVersions.length > 0,
+        hasGlobalRoutePrefix: () => !!this.globalPrefix && this.globalPrefix !== "/",
+        hasErrorHandler: () => !!(this.Middleware as Middleware).getErrorHandler(),
+        hasRequestLogging: () => {
+          // Check if any request logging middleware is in the pipeline
+          const pipeline = (this.Middleware as Middleware).getPipelineInfo();
+          return pipeline.entries.some(
+            (e) => e.category === "logging" || e.name.toLowerCase().includes("logging"),
+          );
+        },
       });
+
+      // Discover providers for introspection
+      this.Provider.discover();
+
+      // Get middleware and provider views for banner
+      const middlewareView = (this.Middleware as Middleware).getFormattedView();
+      const providerView = this.Provider.getFormattedView();
+
+      // Prepare banner data with extended info
+      const bannerData: BannerData = {
+        appInfo: finalAppInfo,
+        metrics,
+        features,
+        middlewareView,
+        providerView,
+      };
 
       // Display banner
       this.bannerGenerator.display(
         this.port,
         this.environment || "development",
-        appInfo,
+        finalAppInfo,
         metrics,
         features,
         {
@@ -912,6 +990,7 @@ export class AppExpress implements Server.IWebServer {
           "Node Version": process.version,
           Platform: process.platform,
         },
+        bannerData,
       );
     } catch (error) {
       // Fallback to old console message on error

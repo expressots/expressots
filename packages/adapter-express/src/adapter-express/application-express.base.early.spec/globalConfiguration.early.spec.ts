@@ -10,7 +10,7 @@ class ConcreteApplication extends ApplicationBase {
     this.config = {};
   }
 
-  protected async globalConfiguration(): Promise<void> {
+  protected globalConfiguration(): void {
     this.config = { setting: "value" };
   }
 
@@ -18,8 +18,8 @@ class ConcreteApplication extends ApplicationBase {
   protected async postServerInitialization(): Promise<void> {}
   protected async serverShutdown(): Promise<void> {}
 
-  public async callGlobalConfiguration(): Promise<void> {
-    await this.globalConfiguration();
+  public callGlobalConfiguration(): void {
+    this.globalConfiguration();
   }
 
   public getConfig(): any {
@@ -35,39 +35,44 @@ describe("ApplicationBase.globalConfiguration() globalConfiguration method", () 
   });
 
   describe("Happy Path", () => {
-    it("should set the global configuration correctly", async () => {
+    it("should set the global configuration correctly", () => {
       // Access indirectly via public method
-      await app.callGlobalConfiguration();
+      app.callGlobalConfiguration();
       expect(app.getConfig()).toEqual({ setting: "value" });
+    });
+
+    it("should be called automatically during construction", () => {
+      // Since globalConfiguration is called in constructor, config should already be set
+      const newApp = new (class extends ConcreteApplication {
+        protected globalConfiguration(): void {
+          this["config"] = { autoSet: true };
+        }
+      })();
+      expect(newApp.getConfig()).toEqual({ autoSet: true });
     });
   });
 
   describe("Edge Cases", () => {
-    it("should handle asynchronous operations correctly", async () => {
-      const asyncConfigApp = new (class extends ConcreteApplication {
-        protected async globalConfiguration(): Promise<void> {
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              this["config"] = { asyncSetting: "asyncValue" }; // Access private attribute indirectly
-              resolve();
-            }, 100);
-          });
-        }
-      })();
-
-      await asyncConfigApp.callGlobalConfiguration();
-      expect(asyncConfigApp.getConfig()).toEqual({ asyncSetting: "asyncValue" });
-    });
-
-    it("should handle empty configuration gracefully", async () => {
+    it("should handle empty configuration gracefully", () => {
       const emptyConfigApp = new (class extends ConcreteApplication {
-        protected async globalConfiguration(): Promise<void> {
+        protected globalConfiguration(): void {
           this["config"] = {}; // Access private attribute indirectly
         }
       })();
 
-      await emptyConfigApp.callGlobalConfiguration();
+      emptyConfigApp.callGlobalConfiguration();
       expect(emptyConfigApp.getConfig()).toEqual({});
+    });
+
+    it("should handle synchronous operations correctly", () => {
+      const syncConfigApp = new (class extends ConcreteApplication {
+        protected globalConfiguration(): void {
+          this["config"] = { syncSetting: "syncValue" };
+        }
+      })();
+
+      syncConfigApp.callGlobalConfiguration();
+      expect(syncConfigApp.getConfig()).toEqual({ syncSetting: "syncValue" });
     });
   });
 });

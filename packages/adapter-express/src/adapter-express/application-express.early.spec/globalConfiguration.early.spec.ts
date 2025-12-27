@@ -3,7 +3,7 @@
 import { AppExpress } from "../application-express";
 
 class AppExpressTestable extends AppExpress {
-  public callGlobalConfiguration(): void | Promise<void> {
+  public callGlobalConfiguration(): void {
     return this.globalConfiguration();
   }
 }
@@ -42,8 +42,12 @@ describe("AppExpress.globalConfiguration() globalConfiguration method", () => {
   describe("Happy Path", () => {
     it("should initialize global configuration without errors", () => {
       // Test to ensure globalConfiguration initializes correctly
-      const result = appExpress.callGlobalConfiguration();
-      return expect(result).resolves.toBeUndefined();
+      expect(() => appExpress.callGlobalConfiguration()).not.toThrow();
+    });
+
+    it("should be called automatically during construction", () => {
+      // Since globalConfiguration is called in constructor, it should execute without errors
+      expect(() => new AppExpressTestable()).not.toThrow();
     });
   });
 
