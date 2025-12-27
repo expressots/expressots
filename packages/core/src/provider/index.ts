@@ -13,6 +13,7 @@ export {
   ConfigurationResult,
   ProviderCapabilities,
   ProviderInfo,
+  ProviderSource,
   HealthDashboard,
   MetricsDashboard,
   isHealthCheck,

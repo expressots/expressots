@@ -18,13 +18,21 @@ import {
   MetricsDashboard,
   ProviderMetrics,
   IProvider,
+  ProviderSource,
   isHealthCheck,
   isMetrics,
 } from "./provider.interface";
+import { ProviderOptions } from "../decorator/scope-binding";
 
 /**
  * Registry for auto-discovering and managing providers.
  * Enables health checks, metrics collection, and introspection.
+ *
+ * Features:
+ * - Auto-discovery from metadata
+ * - Parallel health checks for better performance
+ * - Cached queries for filtered results
+ * - Provider source tracking (builtin, user, external)
  *
  * @public API
  */
@@ -36,8 +44,26 @@ export class ProviderRegistry {
   > = new Map();
   private discovered: boolean = false;
 
+  // Caches for filtered queries (invalidated on discover)
+  private cacheByScope: Map<string, Array<ProviderInfo>> = new Map();
+  private cacheByCapability: Map<
+    keyof ProviderCapabilities,
+    Array<ProviderInfo>
+  > = new Map();
+  private cacheBySource: Map<ProviderSource, Array<ProviderInfo>> = new Map();
+
   constructor(container: interfaces.Container) {
     this.container = container;
+  }
+
+  /**
+   * Invalidate all caches. Called when providers are discovered or modified.
+   * @private
+   */
+  private invalidateCaches(): void {
+    this.cacheByScope.clear();
+    this.cacheByCapability.clear();
+    this.cacheBySource.clear();
   }
 
   /**
@@ -48,6 +74,9 @@ export class ProviderRegistry {
     if (this.discovered) {
       return;
     }
+
+    // Invalidate caches before discovery
+    this.invalidateCaches();
 
     const provideMetadata =
       Reflect.getMetadata(METADATA_KEY.provide, Reflect) || [];
@@ -62,14 +91,20 @@ export class ProviderRegistry {
       const capabilities = this.detectCapabilities(target);
       const providerInstance = this.tryGetInstance(target);
       const providerMeta = this.getProviderMetadata(target, providerInstance);
+      const decoratorMeta = this.getDecoratorMetadata(target);
 
       const info: ProviderInfo = {
-        name: providerMeta.name || target.name,
+        name: decoratorMeta.name || providerMeta.name || target.name,
         target,
         scope: this.detectScope(target),
         capabilities,
-        version: providerMeta.version,
-        description: providerMeta.description,
+        version: decoratorMeta.version || providerMeta.version,
+        description: decoratorMeta.description || providerMeta.description,
+        source: this.detectSource(target),
+        author: decoratorMeta.author || providerMeta.author,
+        repo: decoratorMeta.repo || providerMeta.repo,
+        dependencies: decoratorMeta.dependencies,
+        priority: decoratorMeta.priority ?? 0,
       };
 
       this.providers.set(target, info);
@@ -80,6 +115,7 @@ export class ProviderRegistry {
 
   /**
    * Detect provider capabilities from prototype.
+   * @private
    */
   private detectCapabilities(
     target: new (...args: Array<unknown>) => unknown,
@@ -96,28 +132,26 @@ export class ProviderRegistry {
   }
 
   /**
-   * Detect the scope of a provider.
+   * Detect the scope of a provider from metadata.
+   * Uses metadata stored by decorators instead of accessing container internals.
+   * @private
    */
   private detectScope(
     target: new (...args: Array<unknown>) => unknown,
   ): "Singleton" | "Request" | "Transient" | string {
-    try {
-      if (this.container.isBound(target)) {
-        // Try to get binding scope from container internals
-        const bindings = (
-          this.container as unknown as {
-            _bindingDictionary: { _map: Map<unknown, Array<unknown>> };
-          }
-        )._bindingDictionary?._map?.get(target);
-        if (bindings && Array.isArray(bindings) && bindings.length > 0) {
-          const binding = bindings[0] as { scope?: string };
-          if (binding.scope) {
-            return binding.scope as "Singleton" | "Request" | "Transient";
-          }
-        }
-      }
-    } catch {
-      // Ignore errors in scope detection
+    // First, try to get scope from our decorator metadata
+    const scopeFromMeta = Reflect.getMetadata(METADATA_KEY.scope, target);
+    if (scopeFromMeta) {
+      return scopeFromMeta;
+    }
+
+    // Fallback: try to get from decorator options metadata
+    const providerMeta: ProviderOptions | undefined = Reflect.getMetadata(
+      METADATA_KEY.providerMeta,
+      target,
+    );
+    if (providerMeta?.scope) {
+      return providerMeta.scope;
     }
 
     // Default to Request scope
@@ -125,7 +159,48 @@ export class ProviderRegistry {
   }
 
   /**
+   * Detect the source of a provider from metadata.
+   * @private
+   */
+  private detectSource(
+    target: new (...args: Array<unknown>) => unknown,
+  ): ProviderSource {
+    // Get source from our decorator metadata
+    const sourceFromMeta = Reflect.getMetadata(METADATA_KEY.source, target);
+    if (sourceFromMeta) {
+      return sourceFromMeta as ProviderSource;
+    }
+
+    // Fallback: try to get from decorator options metadata
+    const providerMeta: ProviderOptions | undefined = Reflect.getMetadata(
+      METADATA_KEY.providerMeta,
+      target,
+    );
+    if (providerMeta?.source) {
+      return providerMeta.source;
+    }
+
+    // Default to user source
+    return "user";
+  }
+
+  /**
+   * Get decorator metadata (from @Provider decorator).
+   * @private
+   */
+  private getDecoratorMetadata(
+    target: new (...args: Array<unknown>) => unknown,
+  ): Partial<ProviderOptions> {
+    const providerMeta: ProviderOptions | undefined = Reflect.getMetadata(
+      METADATA_KEY.providerMeta,
+      target,
+    );
+    return providerMeta || {};
+  }
+
+  /**
    * Try to get an instance of a singleton provider.
+   * @private
    */
   private tryGetInstance(
     target: new (...args: Array<unknown>) => unknown,
@@ -141,12 +216,13 @@ export class ProviderRegistry {
   }
 
   /**
-   * Get provider metadata (name, version, description) if available.
+   * Get provider metadata (name, version, description) from instance if it implements IProvider.
+   * @private
    */
   private getProviderMetadata(
     target: new (...args: Array<unknown>) => unknown,
     instance: unknown | null,
-  ): { name?: string; version?: string; description?: string } {
+  ): Partial<IProvider> & { name?: string } {
     // Try to get from instance if it implements IProvider
     if (instance && typeof instance === "object") {
       const provider = instance as Partial<IProvider>;
@@ -155,6 +231,8 @@ export class ProviderRegistry {
           name: provider.name,
           version: provider.version,
           description: provider.description,
+          author: provider.author,
+          repo: provider.repo,
         };
       }
     }
@@ -174,25 +252,83 @@ export class ProviderRegistry {
   }
 
   /**
-   * Get providers by scope.
+   * Get providers by scope (cached).
+   * @param scope - The binding scope to filter by
    */
   public getByScope(scope: string): Array<ProviderInfo> {
-    return this.getAll().filter((p) => p.scope === scope);
+    // Check cache first
+    if (this.cacheByScope.has(scope)) {
+      return this.cacheByScope.get(scope)!;
+    }
+
+    // Compute and cache
+    const result = this.getAll().filter((p) => p.scope === scope);
+    this.cacheByScope.set(scope, result);
+    return result;
   }
 
   /**
-   * Get providers with a specific capability.
+   * Get providers by source (cached).
+   * @param source - The provider source to filter by
+   */
+  public getBySource(source: ProviderSource): Array<ProviderInfo> {
+    // Check cache first
+    if (this.cacheBySource.has(source)) {
+      return this.cacheBySource.get(source)!;
+    }
+
+    // Compute and cache
+    const result = this.getAll().filter((p) => p.source === source);
+    this.cacheBySource.set(source, result);
+    return result;
+  }
+
+  /**
+   * Get all built-in providers.
+   */
+  public getBuiltinProviders(): Array<ProviderInfo> {
+    return this.getBySource("builtin");
+  }
+
+  /**
+   * Get all user-defined providers.
+   */
+  public getUserProviders(): Array<ProviderInfo> {
+    return this.getBySource("user");
+  }
+
+  /**
+   * Get all external providers (plugins).
+   */
+  public getExternalProviders(): Array<ProviderInfo> {
+    return this.getBySource("external");
+  }
+
+  /**
+   * Get providers with a specific capability (cached).
+   * @param capability - The capability to filter by
    */
   public getWithCapability(
     capability: keyof ProviderCapabilities,
   ): Array<ProviderInfo> {
-    return this.getAll().filter((p) => p.capabilities[capability]);
+    // Check cache first
+    if (this.cacheByCapability.has(capability)) {
+      return this.cacheByCapability.get(capability)!;
+    }
+
+    // Compute and cache
+    const result = this.getAll().filter((p) => p.capabilities[capability]);
+    this.cacheByCapability.set(capability, result);
+    return result;
   }
 
   /**
    * Get total provider count.
    */
   public getCount(): number {
+    if (!this.discovered) {
+      this.discover();
+    }
     return this.providers.size;
   }
 
@@ -209,43 +345,56 @@ export class ProviderRegistry {
    * Get providers that have health checks.
    */
   public getHealthCheckProviders(): Array<ProviderInfo> {
-    return this.getAll().filter((p) => p.capabilities.hasHealthCheck);
+    return this.getWithCapability("hasHealthCheck");
   }
 
   /**
    * Get providers that expose metrics.
    */
   public getMetricsProviders(): Array<ProviderInfo> {
-    return this.getAll().filter((p) => p.capabilities.hasMetrics);
+    return this.getWithCapability("hasMetrics");
   }
 
   /**
-   * Run health checks on all IHealthCheck providers.
+   * Run health checks on all IHealthCheck providers in parallel.
    * @returns Health dashboard with all results
    */
   public async checkHealth(): Promise<HealthDashboard> {
     const healthProviders = this.getHealthCheckProviders();
-    const results: Array<{ name: string; result: HealthCheckResult }> = [];
 
-    for (const providerInfo of healthProviders) {
-      try {
-        const instance = this.container.get(providerInfo.target);
-        if (isHealthCheck(instance)) {
-          const result = await Promise.resolve(instance.healthCheck());
-          result.checkedAt = Date.now();
-          results.push({ name: providerInfo.name, result });
+    // Run all health checks in parallel for better performance
+    const healthCheckPromises = healthProviders.map(
+      async (
+        providerInfo,
+      ): Promise<{ name: string; result: HealthCheckResult } | null> => {
+        try {
+          const instance = this.container.get(providerInfo.target);
+          if (isHealthCheck(instance)) {
+            const result = await Promise.resolve(instance.healthCheck());
+            result.checkedAt = Date.now();
+            return { name: providerInfo.name, result };
+          }
+        } catch (error) {
+          return {
+            name: providerInfo.name,
+            result: {
+              status: "unhealthy",
+              message: `Health check failed: ${error instanceof Error ? error.message : String(error)}`,
+              checkedAt: Date.now(),
+            },
+          };
         }
-      } catch (error) {
-        results.push({
-          name: providerInfo.name,
-          result: {
-            status: "unhealthy",
-            message: `Health check failed: ${error instanceof Error ? error.message : String(error)}`,
-            checkedAt: Date.now(),
-          },
-        });
-      }
-    }
+        return null;
+      },
+    );
+
+    // Wait for all health checks to complete
+    const settledResults = await Promise.all(healthCheckPromises);
+
+    // Filter out null results
+    const results = settledResults.filter(
+      (r): r is { name: string; result: HealthCheckResult } => r !== null,
+    );
 
     // Determine overall status (worst of all)
     let overall: "healthy" | "degraded" | "unhealthy" = "healthy";
@@ -299,17 +448,24 @@ export class ProviderRegistry {
     entries: Array<{
       name: string;
       scope: string;
+      source: ProviderSource;
       hasLifecycle: boolean;
       hasHealthCheck: boolean;
       hasMetrics: boolean;
     }>;
     total: number;
     remaining: number;
+    bySource: {
+      builtin: number;
+      user: number;
+      external: number;
+    };
   } {
     const all = this.getAll();
     const entries = all.slice(0, maxDisplay).map((p) => ({
       name: p.name,
       scope: p.scope,
+      source: p.source,
       hasLifecycle: p.capabilities.hasBootstrap || p.capabilities.hasShutdown,
       hasHealthCheck: p.capabilities.hasHealthCheck,
       hasMetrics: p.capabilities.hasMetrics,
@@ -319,6 +475,11 @@ export class ProviderRegistry {
       entries,
       total: all.length,
       remaining: Math.max(0, all.length - maxDisplay),
+      bySource: {
+        builtin: this.getBuiltinProviders().length,
+        user: this.getUserProviders().length,
+        external: this.getExternalProviders().length,
+      },
     };
   }
 }

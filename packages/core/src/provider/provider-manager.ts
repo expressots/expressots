@@ -4,6 +4,7 @@ import { ProviderRegistry } from "./provider-registry";
 import {
   IProvider,
   ProviderInfo,
+  ProviderSource,
   HealthDashboard,
   MetricsDashboard,
   ProviderCapabilities,
@@ -265,22 +266,69 @@ export class ProviderManager {
     return this.registry.getLifecycleProviders();
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SOURCE-BASED METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get providers by source type.
+   * @param source - The provider source to filter by
+   * @returns Array of providers with the specified source
+   * @public API
+   */
+  public getBySource(source: ProviderSource): Array<ProviderInfo> {
+    return this.registry.getBySource(source);
+  }
+
+  /**
+   * Get all built-in providers (core framework providers).
+   * @returns Array of built-in providers
+   * @public API
+   */
+  public getBuiltinProviders(): Array<ProviderInfo> {
+    return this.registry.getBuiltinProviders();
+  }
+
+  /**
+   * Get all user-defined providers (application providers).
+   * @returns Array of user providers
+   * @public API
+   */
+  public getUserProviders(): Array<ProviderInfo> {
+    return this.registry.getUserProviders();
+  }
+
+  /**
+   * Get all external providers (third-party plugins).
+   * @returns Array of external providers
+   * @public API
+   */
+  public getExternalProviders(): Array<ProviderInfo> {
+    return this.registry.getExternalProviders();
+  }
+
   /**
    * Get a formatted view for banner display.
    * @param maxDisplay - Maximum number of providers to show
-   * @returns Formatted provider view
+   * @returns Formatted provider view with source breakdown
    * @public API
    */
   public getFormattedView(maxDisplay: number = 5): {
     entries: Array<{
       name: string;
       scope: string;
+      source: ProviderSource;
       hasLifecycle: boolean;
       hasHealthCheck: boolean;
       hasMetrics: boolean;
     }>;
     total: number;
     remaining: number;
+    bySource: {
+      builtin: number;
+      user: number;
+      external: number;
+    };
   } {
     return this.registry.getFormattedView(maxDisplay);
   }

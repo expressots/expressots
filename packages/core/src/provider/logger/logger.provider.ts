@@ -1,4 +1,4 @@
-import { injectable } from "../../di/inversify";
+import { provideSingleton } from "../../decorator/scope-binding";
 import { IProvider } from "../provider-manager";
 import {
   LogLevel,
@@ -47,7 +47,7 @@ import {
  * - Pluggable transports (console, file, HTTP)
  * @public API
  */
-@injectable()
+@provideSingleton(Logger, "builtin")
 class Logger implements IProvider {
   private pid: number;
   private config: LoggerConfig;

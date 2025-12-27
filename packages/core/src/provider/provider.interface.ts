@@ -232,6 +232,15 @@ export interface ProviderCapabilities {
 }
 
 /**
+ * Provider source types indicating where the provider originated from.
+ * - builtin: Core framework providers (Logger, InMemoryDB, etc.)
+ * - user: User-defined providers in application code
+ * - external: Third-party package providers (plugins)
+ * @public API
+ */
+export type ProviderSource = "builtin" | "user" | "external";
+
+/**
  * Provider information with metadata and capabilities.
  * @public API
  */
@@ -253,6 +262,26 @@ export interface ProviderInfo {
 
   /** Provider description (if IProvider) */
   description?: string;
+
+  /**
+   * Provider source indicating where it originated from.
+   * - builtin: Core framework providers
+   * - user: User-defined providers in application code
+   * - external: Third-party package providers (plugins)
+   */
+  source: ProviderSource;
+
+  /** Author name or organization (optional) */
+  author?: string;
+
+  /** Repository URL (optional) */
+  repo?: string;
+
+  /** Dependencies on other providers (for load ordering) */
+  dependencies?: Array<string>;
+
+  /** Load priority (higher = later, default: 0) */
+  priority?: number;
 }
 
 /**

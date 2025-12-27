@@ -1,4 +1,4 @@
-import { injectable } from "../../di/inversify";
+import { provideSingleton } from "../../decorator/scope-binding";
 import { IDataProvider, IEntity, IDataTable } from "./db-in-memory.interface";
 import {
   EntityAlreadyExistsError,
@@ -9,7 +9,7 @@ import {
  * In-memory data provider implementation.
  * @public API
  */
-@injectable()
+@provideSingleton(InMemoryDataProvider, "builtin")
 export class InMemoryDataProvider implements IDataProvider {
   name: string = "In Memory DB Provider";
   version: string = "3.0.0";
