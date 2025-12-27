@@ -86,7 +86,10 @@ export const provide = (identifier: any) => {
  * ```
  * @public API
  */
-export const provideSingleton = (identifier: any, source: ProviderSource = "user") => {
+export const provideSingleton = (
+  identifier: any,
+  source: ProviderSource = "user",
+) => {
   const decorator = fluentProvide(identifier).inSingletonScope().done();
   return function (target: any) {
     storeProviderMetadata(target, "Singleton", source);
@@ -110,7 +113,10 @@ export const provideSingleton = (identifier: any, source: ProviderSource = "user
  * ```
  * @public API
  */
-export const provideTransient = (identifier: any, source: ProviderSource = "user") => {
+export const provideTransient = (
+  identifier: any,
+  source: ProviderSource = "user",
+) => {
   const decorator = fluentProvide(identifier).inTransientScope().done();
   return function (target: any) {
     storeProviderMetadata(target, "Transient", source);
@@ -143,7 +149,11 @@ export const provideTransient = (identifier: any, source: ProviderSource = "user
  * ```
  * @public API
  */
-export const provideInScope = (identifier: any, scopeName: string, source: ProviderSource = "user") => {
+export const provideInScope = (
+  identifier: any,
+  scopeName: string,
+  source: ProviderSource = "user",
+) => {
   if (
     scopeName === "Singleton" ||
     scopeName === "Request" ||
@@ -199,7 +209,9 @@ export function Provider(options: ProviderOptions = {}) {
   const scope = options.scope || "Request";
   const source = options.source || "external";
 
-  return function <T extends { new (...args: Array<unknown>): object }>(target: T): T {
+  return function <T extends { new (...args: Array<unknown>): object }>(
+    target: T,
+  ): T {
     // Store all metadata
     storeProviderMetadata(target, scope, source, options);
 
