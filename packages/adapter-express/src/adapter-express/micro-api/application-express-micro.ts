@@ -127,7 +127,6 @@ class AppExpressMicro {
     this.globalPrefix = prefix;
   }
 
-
   /**
    * Get the Middleware instance
    * @returns IMiddleware

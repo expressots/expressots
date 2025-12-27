@@ -101,7 +101,6 @@ describe("createMicroAPI() createMicroAPI method", () => {
       // Assert
       expect((appExpressMicro as any).globalPrefix).toBe(prefix);
     });
-
   });
 });
 
