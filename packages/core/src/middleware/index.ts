@@ -1,3 +1,4 @@
+// Core middleware service and types
 export {
   Middleware,
   ExpressHandler,
@@ -6,8 +7,50 @@ export {
   MiddlewareCategory,
   MiddlewareEntry,
   MiddlewarePipelineInfo,
+  ConditionalMiddlewareConfig,
 } from "./middleware-service";
-export { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
+
+// Middleware interface
+export {
+  ErrorHandlerOptions,
+  IMiddleware,
+  HealthCheckOptions,
+} from "./middleware-interface";
+
+// Middleware resolver utilities
+export {
+  middlewareResolver,
+  isMiddlewareAvailable,
+  getAvailableMiddleware,
+  getRegisteredMiddleware,
+  clearMiddlewareCache,
+  getPackageName,
+  MIDDLEWARE_REGISTRY,
+  RegisteredMiddlewareName,
+} from "./middleware-resolver";
+
+// Middleware profiler
+export {
+  MiddlewareProfiler,
+  MiddlewareMetrics,
+  ProfilerStats,
+} from "./middleware-profiler";
+
+// Middleware presets
+export {
+  MiddlewarePresetName,
+  MiddlewarePreset,
+  PresetMiddlewareConfig,
+  ApplyPresetOptions,
+  MIDDLEWARE_PRESETS,
+  getPreset,
+  getPresetNames,
+  getPresetsByTag,
+  createPreset,
+  mergePresets,
+} from "./middleware-presets";
+
+// Interface exports
 export { OptionsJson } from "./interfaces/body-parser.interface";
 export { CorsOptions } from "./interfaces/cors.interface";
 export { CompressionOptions } from "./interfaces/compression.interface";

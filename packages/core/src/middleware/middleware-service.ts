@@ -27,10 +27,25 @@ import { multer } from "./interfaces/multer.interface";
 import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
-import { middlewareResolver } from "./middleware-resolver";
+import {
+  middlewareResolver,
+  isMiddlewareAvailable,
+} from "./middleware-resolver";
 import { ContentNegotiationService } from "./content-negotiation/content-negotiation-service";
 import { ContentNegotiationOptions } from "./interfaces/content-negotiation.interface";
 import type { ValidationConfig } from "../provider/validation/validation.interface";
+import {
+  MiddlewareProfiler,
+  MiddlewareMetrics,
+  ProfilerStats,
+} from "./middleware-profiler";
+import {
+  MiddlewarePresetName,
+  MiddlewarePreset,
+  ApplyPresetOptions,
+  MIDDLEWARE_PRESETS,
+  getPreset,
+} from "./middleware-presets";
 
 /**
  * ExpressHandler Type
@@ -52,7 +67,6 @@ export type ExpressHandler =
  * Expresso middleware interface.
  */
 interface IExpressoMiddleware {
-  //readonly name: string;
   use(req: Request, res: Response, next: NextFunction): Promise<void> | void;
 }
 
@@ -133,11 +147,13 @@ export interface MiddlewareEntry {
  * MiddlewarePipeline Interface
  *
  * The MiddlewarePipeline interface represents the metadata and actual middleware to be executed in a middleware pipeline.
- * - timestamp: The date and time at which the middleware was added to the pipeline.
+ * - order: The insertion order of the middleware (for stable sorting).
  * - middleware: Can be either an ExpressHandler function or a MiddlewareConfig object defining a more complex middleware setup.
  */
 interface MiddlewarePipeline {
-  timestamp: Date;
+  /** Insertion order for stable sorting */
+  order: number;
+  /** The middleware handler or config */
   middleware: ExpressHandler | MiddlewareConfig | IExpressoMiddleware;
   /** Middleware name for lookup */
   name?: string;
@@ -145,6 +161,8 @@ interface MiddlewarePipeline {
   category?: MiddlewareCategory;
   /** Whether this is built-in */
   isBuiltIn?: boolean;
+  /** Condition function for conditional middleware */
+  condition?: (req: Request) => boolean;
 }
 
 /**
@@ -202,6 +220,35 @@ const MIDDLEWARE_CATEGORIES: Record<string, MiddlewareCategory> = {
 };
 
 /**
+ * Conditional middleware configuration.
+ * @public API
+ */
+export interface ConditionalMiddlewareConfig {
+  /** The middleware handler */
+  middleware: ExpressHandler;
+  /** Condition function - middleware runs only if this returns true */
+  condition: (req: Request) => boolean;
+  /** Optional name for the middleware */
+  name?: string;
+  /** Optional category */
+  category?: MiddlewareCategory;
+}
+
+/**
+ * Category icons for visual pipeline display.
+ */
+const CATEGORY_ICONS: Record<MiddlewareCategory, string> = {
+  parser: "📦",
+  security: "🔒",
+  logging: "📝",
+  validation: "✅",
+  error: "⚠️",
+  session: "🔑",
+  static: "📁",
+  other: "⚙️",
+};
+
+/**
  * Singleton class that implements the IConfigure interface.
  * Manages the middleware configuration for the application,
  * including adding Body Parser and retrieving all configured middlewares.
@@ -210,10 +257,32 @@ const MIDDLEWARE_CATEGORIES: Record<string, MiddlewareCategory> = {
  * @public API
  */
 export class Middleware implements IMiddleware {
+  // O(1) lookup map for middleware by name
+  private middlewareMap = new Map<string, MiddlewarePipeline>();
+  // Ordered pipeline array
   private middlewarePipeline: Array<MiddlewarePipeline> = [];
+  // Insertion order counter for stable sorting
+  private insertionOrder = 0;
+  // Cached sorted pipeline
+  private sortedPipelineCache: Array<MiddlewarePipeline> | null = null;
+  // Error handler
   private errorHandler: ExpressHandler | undefined;
-  private logger: Logger = new Logger();
+  // Singleton logger
+  private logger: Logger;
+  // Content negotiation service
   private contentNegotiationService: ContentNegotiationService | undefined;
+  // Profiler instance
+  private profiler: MiddlewareProfiler | null = null;
+  // Profiling enabled flag
+  private profilingEnabled = false;
+
+  constructor() {
+    this.logger = new Logger();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRIVATE HELPER METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * Retrieves the type of the middleware.
@@ -222,32 +291,159 @@ export class Middleware implements IMiddleware {
    * @returns The type of the middleware.
    */
   private getMiddlewareType(middleware: MiddlewareOptions): MiddlewareType {
-    // eslint-disable-next-line no-prototype-builtins
-    if (middleware?.hasOwnProperty("path")) {
+    if (middleware && typeof middleware === "object" && "path" in middleware) {
       return MiddlewareType.Config;
-    } else if (middleware instanceof Function) {
-      return MiddlewareType.ExpressHandler;
-    } else {
-      return MiddlewareType.IExpressoMiddleware;
     }
+    if (typeof middleware === "function") {
+      return MiddlewareType.ExpressHandler;
+    }
+    return MiddlewareType.IExpressoMiddleware;
   }
 
   /**
    * Checks if a middleware with the given name exists in the middleware collection.
+   * Uses O(1) Map lookup instead of O(n) array scan.
    *
    * @param middlewareName - The name of the middleware to be checked.
    * @returns A boolean value indicating whether the middleware exists or not.
    */
   private middlewareExists(middlewareName: string): boolean {
-    return this.middlewarePipeline.some((m) => {
-      if (m.middleware instanceof Function) {
-        return m.middleware.name === middlewareName;
-      } else if (m.middleware instanceof Object) {
-        return (m.middleware as MiddlewareConfig).path === middlewareName;
-      }
-      return false;
-    });
+    return this.middlewareMap.has(middlewareName);
   }
+
+  /**
+   * Invalidate the sorted pipeline cache.
+   */
+  private invalidateCache(): void {
+    this.sortedPipelineCache = null;
+  }
+
+  /**
+   * Generic method to add built-in middleware with consistent pattern.
+   *
+   * @param name - Middleware name for lookup
+   * @param category - Middleware category
+   * @param middlewareFactory - Factory function that creates the middleware
+   * @returns True if middleware was added, false if skipped
+   */
+  private addBuiltInMiddleware(
+    name: string,
+    category: MiddlewareCategory,
+    middlewareFactory: () => ExpressHandler | null,
+  ): boolean {
+    if (this.middlewareExists(name)) {
+      this.logger.warn(`[${name}] already exists. Skipping...`, "middleware-service");
+      return false;
+    }
+
+    const middleware = middlewareFactory();
+    if (!middleware) {
+      return false;
+    }
+
+    const entry: MiddlewarePipeline = {
+      order: this.insertionOrder++,
+      middleware,
+      name,
+      category,
+      isBuiltIn: true,
+    };
+
+    this.middlewarePipeline.push(entry);
+    this.middlewareMap.set(name, entry);
+    this.invalidateCache();
+
+    return true;
+  }
+
+  /**
+   * Get middleware name from a pipeline entry.
+   */
+  private getMiddlewareName(m: MiddlewarePipeline): string {
+    if (m.name) {
+      return m.name;
+    }
+
+    const middlewareType = this.getMiddlewareType(m.middleware);
+
+    if (middlewareType === MiddlewareType.Config) {
+      const config = m.middleware as MiddlewareConfig;
+      return config.path || "ConfigMiddleware";
+    } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
+      return (m.middleware as IExpressoMiddleware).constructor.name;
+    } else {
+      return (m.middleware as ExpressHandler)?.name || "Anonymous";
+    }
+  }
+
+  /**
+   * Get the category of a middleware.
+   */
+  private getMiddlewareCategory(
+    name: string,
+    // Parameter reserved for future use (built-in middleware differentiation)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _isBuiltIn?: boolean,
+  ): MiddlewareCategory {
+    // Check known categories
+    if (MIDDLEWARE_CATEGORIES[name]) {
+      return MIDDLEWARE_CATEGORIES[name];
+    }
+
+    // Try to infer from name
+    const lowerName = name.toLowerCase();
+    if (
+      lowerName.includes("parser") ||
+      lowerName.includes("body") ||
+      lowerName.includes("json")
+    ) {
+      return "parser";
+    }
+    if (
+      lowerName.includes("cors") ||
+      lowerName.includes("helmet") ||
+      lowerName.includes("auth") ||
+      lowerName.includes("security")
+    ) {
+      return "security";
+    }
+    if (
+      lowerName.includes("log") ||
+      lowerName.includes("morgan") ||
+      lowerName.includes("request")
+    ) {
+      return "logging";
+    }
+    if (lowerName.includes("valid")) {
+      return "validation";
+    }
+    if (lowerName.includes("error") || lowerName.includes("handler")) {
+      return "error";
+    }
+    if (lowerName.includes("session") || lowerName.includes("cookie")) {
+      return "session";
+    }
+    if (lowerName.includes("static") || lowerName.includes("favicon")) {
+      return "static";
+    }
+
+    return "other";
+  }
+
+  /**
+   * Get the path for a middleware.
+   */
+  private getMiddlewarePath(m: MiddlewarePipeline): string {
+    const middlewareType = this.getMiddlewareType(m.middleware);
+    if (middlewareType === MiddlewareType.Config) {
+      return (m.middleware as MiddlewareConfig).path || "Global";
+    }
+    return "Global";
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BUILT-IN MIDDLEWARE METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * Adds a URL Encoded Parser middleware to the middleware collection.
@@ -256,31 +452,20 @@ export class Middleware implements IMiddleware {
    * @param options - Optional configuration options for the URL Encoded Parser.
    */
   addUrlEncodedParser(options?: OptionsUrlencoded): void {
-    const middlewareExist = this.middlewareExists("urlencodedParser");
-
-    if (middlewareExist) {
-      this.logger.warn(
-        `[urlencodedParser] already exists. Skipping...`,
-        "configure-service",
-      );
-    } else {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware: urlencoded(options),
-      });
-    }
+    this.addBuiltInMiddleware("urlencodedParser", "parser", () =>
+      urlencoded(options),
+    );
   }
 
+  /**
+   * Adds a Rate Limit middleware to the middleware collection.
+   *
+   * @param options - Optional configuration options for the rate limiter.
+   */
   public addRateLimiter(options?: RateLimitOptions): void {
-    const middleware = middlewareResolver("rateLimit", options);
-    const middlewareExist = this.middlewareExists("rateLimit");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("rateLimit", "security", () =>
+      middlewareResolver("rateLimit", options),
+    );
   }
 
   /**
@@ -289,141 +474,94 @@ export class Middleware implements IMiddleware {
    * @param options - Optional configuration options for the JSON body parser.
    */
   public addBodyParser(options?: OptionsJson): void {
-    const middlewareExist = this.middlewareExists("jsonParser");
-
-    if (middlewareExist) {
-      this.logger.warn(
-        `[jsonParser] already exists. Skipping...`,
-        "configure-service",
-      );
-    } else {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware: json(options),
-      });
-    }
+    this.addBuiltInMiddleware("jsonParser", "parser", () => json(options));
   }
 
   /**
    * Adds Cross-Origin Resource Sharing (CORS) middleware to enable or control cross-origin requests.
    *
-   * @param options - Optional configuration options for CORS. Defines the behavior of CORS requests like allowed origins, methods, headers, etc.
+   * @param options - Optional configuration options for CORS.
    */
   addCors(options?: CorsOptions): void {
-    const middleware = middlewareResolver("cors", options);
-    const middlewareExist = this.middlewareExists("cors");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("cors", "security", () =>
+      middlewareResolver("cors", options),
+    );
   }
 
   /**
-   * Adds Compression middleware to reduce the size of the response body and improve the speed of the client-server communication.
+   * Adds Compression middleware to reduce the size of the response body.
    *
-   * @param options - Optional configuration options for Compression. Allows fine-tuning the compression behavior, such as setting the compression level, threshold, and filter functions to determine which requests should be compressed.
+   * @param options - Optional configuration options for Compression.
    */
   addCompression(options?: CompressionOptions): void {
-    const middleware = middlewareResolver("compression", options);
-    const middlewareExist = this.middlewareExists("compression");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("compression", "other", () =>
+      middlewareResolver("compression", options),
+    );
   }
 
   /**
    * Adds Morgan middleware to log HTTP requests.
    *
    * @param format - The log format. Can be a string or a function.
-   * @param options - Optional configuration options for Morgan. Defines the behavior of the logger like the output stream, buffer duration, etc.
+   * @param options - Optional configuration options for Morgan.
    */
   addMorgan(
     format: string | FormatFn,
     options?: OptionsMorgan | undefined,
   ): void {
-    const middleware = middlewareResolver("morgan", format, options);
-    const middlewareExist = this.middlewareExists("morgan");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("morgan", "logging", () =>
+      middlewareResolver("morgan", format, options),
+    );
   }
 
   /**
-   * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
+   * Adds Cookie Parser middleware to parse the cookie header.
    *
-   * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
+   * @param secret - A string or array used for signing cookies.
    * @param options - Optional configuration options for Cookie Parser.
    */
   addCookieParser(
     secret?: string | Array<string> | undefined,
     options?: CookieParserOptions | undefined,
   ): void {
-    const middleware = middlewareResolver("cookieParser", secret, options);
-    const middlewareExist = this.middlewareExists("cookieParser");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("cookieParser", "session", () =>
+      middlewareResolver("cookieParser", secret, options),
+    );
   }
 
   /**
    * Adds Cookie Session middleware to enable cookie-based sessions.
    *
-   * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
+   * @param options - Configuration options for Cookie Session.
    */
   addCookieSession(options: CookieSessionOptions): void {
-    const middleware = middlewareResolver("cookieSession", options);
-
-    const middlewareExist = this.middlewareExists("cookieSession");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("cookieSession", "session", () =>
+      middlewareResolver("cookieSession", options),
+    );
   }
 
   /**
-   * Adds a middleware to serve the favicon to the middleware collection.
-   * The favicon is the icon that is displayed in the browser tab for the application.
+   * Adds a middleware to serve the favicon.
    *
    * @param path - The path to the favicon file.
-   * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
+   * @param options - Optional configuration options for serving the favicon.
    */
   addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void {
-    const middleware = middlewareResolver("serveFavicon", path, options);
-
-    const middlewareExist = this.middlewareExists("serveFavicon");
-
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
+    this.addBuiltInMiddleware("serveFavicon", "static", () =>
+      middlewareResolver("serveFavicon", path, options),
+    );
   }
 
+  /**
+   * Sets up Multer middleware for handling multipart/form-data.
+   *
+   * @param options - Optional configuration options for Multer.
+   * @returns The Multer middleware instance.
+   */
   public setupMulter(options?: multer.Options): multer.Multer {
     const multerMiddleware = middlewareResolver("multer", options);
 
-    const middlewareExist = this.middlewareExists("multer");
-
-    if (multerMiddleware && !middlewareExist) {
+    if (multerMiddleware) {
       return multerMiddleware as unknown as multer.Multer;
     }
 
@@ -431,47 +569,404 @@ export class Middleware implements IMiddleware {
   }
 
   /**
-   * Adds a middleware to enhance security by setting various HTTP headers.
+   * Adds Helmet middleware to enhance security by setting various HTTP headers.
    *
    * @param options - Optional configuration options for Helmet.
-   *
    */
   addHelmet(options?: OptionsHelmet): void {
-    const middleware = middlewareResolver("helmet", options);
-    const middlewareExist = this.middlewareExists("helmet");
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
+    this.addBuiltInMiddleware("helmet", "security", () =>
+      middlewareResolver("helmet", options),
+    );
+  }
+
+  /**
+   * Add express-session middleware.
+   *
+   * @param options - Configuration options for Session.
+   */
+  addSession(options: SessionOptions): void {
+    this.addBuiltInMiddleware("session", "session", () =>
+      middlewareResolver("session", options),
+    );
+  }
+
+  /**
+   * Adds a middleware to serve static files from the specified root directory.
+   *
+   * @param root - The root directory from which the static assets are to be served.
+   * @param options - Optional configuration options for serving static files.
+   */
+  serveStatic(root: string, options?: ServeStaticOptions): void {
+    this.addBuiltInMiddleware("serveStatic", "static", () =>
+      expressStatic(root, options),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CUSTOM MIDDLEWARE METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Helper method to add middleware configuration objects.
+   */
+  private addConfigMiddleware(middleware: MiddlewareConfig): void {
+    const config = middleware as MiddlewareConfig;
+
+    if (config.middlewares.length === 0) {
+      this.logger.warn(
+        `No middlewares in the route [${config.path}]. Skipping...`,
+        "middleware-service",
+      );
+      return;
+    }
+
+    const configKey = config.path || `config_${this.insertionOrder}`;
+
+    if (this.middlewareExists(configKey)) {
+      this.logger.warn(
+        `[${config.path}] route already exists. Skipping...`,
+        "middleware-service",
+      );
+      return;
+    }
+
+    const entry: MiddlewarePipeline = {
+      order: this.insertionOrder++,
+      middleware: config,
+      name: configKey,
+      category: "other",
+      isBuiltIn: false,
+    };
+
+    this.middlewarePipeline.push(entry);
+    this.middlewareMap.set(configKey, entry);
+    this.invalidateCache();
+  }
+
+  /**
+   * Helper method to add express request handler functions.
+   */
+  private addExpressHandlerMiddleware(middleware: ExpressHandler): void {
+    const middlewareName = middleware?.name || `anonymous_${this.insertionOrder}`;
+
+    if (this.middlewareExists(middlewareName) && middleware?.name) {
+      this.logger.warn(
+        `[${middlewareName}] already exists. Skipping...`,
+        "middleware-service",
+      );
+      return;
+    }
+
+    const entry: MiddlewarePipeline = {
+      order: this.insertionOrder++,
+      middleware,
+      name: middlewareName,
+      category: this.getMiddlewareCategory(middlewareName),
+      isBuiltIn: false,
+    };
+
+    this.middlewarePipeline.push(entry);
+    this.middlewareMap.set(middlewareName, entry);
+    this.invalidateCache();
+  }
+
+  /**
+   * Helper method to add custom Expresso middleware.
+   */
+  private addIExpressoMiddleware(middleware: IExpressoMiddleware): void {
+    const middlewareName = middleware.constructor.name;
+
+    if (this.middlewareExists(middlewareName)) {
+      this.logger.warn(
+        `[${middlewareName}] already exists. Skipping...`,
+        "middleware-service",
+      );
+      return;
+    }
+
+    const entry: MiddlewarePipeline = {
+      order: this.insertionOrder++,
+      middleware,
+      name: middlewareName,
+      category: this.getMiddlewareCategory(middlewareName),
+      isBuiltIn: false,
+    };
+
+    this.middlewarePipeline.push(entry);
+    this.middlewareMap.set(middlewareName, entry);
+    this.invalidateCache();
+  }
+
+  /**
+   * Adds a middleware to the middleware collection.
+   *
+   * @param options - The Express request handler function, middleware configuration object,
+   * or a custom Expresso middleware.
+   *
+   * @example Express Handler
+   * ```typescript
+   * const middleware = (req, res, next) => {
+   *   // Your middleware logic here
+   *   next();
+   * }
+   * ```
+   *
+   * @example Middleware Configuration Object
+   * ```typescript
+   * const middleware = {
+   *   path: "/",
+   *   middlewares: [] // Array of Express Handlers
+   * }
+   * ```
+   *
+   * @example Expresso Middleware
+   * ```typescript
+   * class CustomMiddleware implements IExpressoMiddleware {
+   *   use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
+   *     // Your middleware logic here
+   *     next();
+   *   }
+   * }
+   * ```
+   */
+  addMiddleware(options: MiddlewareOptions): void {
+    switch (this.getMiddlewareType(options)) {
+      case MiddlewareType.Config:
+        this.addConfigMiddleware(options as MiddlewareConfig);
+        break;
+      case MiddlewareType.ExpressHandler:
+        this.addExpressHandlerMiddleware(options as ExpressHandler);
+        break;
+      case MiddlewareType.IExpressoMiddleware:
+        this.addIExpressoMiddleware(options as IExpressoMiddleware);
+        break;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONDITIONAL MIDDLEWARE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add middleware that only executes when a condition is met.
+   *
+   * @param config - Conditional middleware configuration
+   *
+   * @example
+   * ```typescript
+   * // Only apply rate limiting for non-internal requests
+   * middleware.addConditional({
+   *   middleware: rateLimiter,
+   *   condition: (req) => !req.headers["x-internal-service"],
+   *   name: "conditional-rate-limit"
+   * });
+   *
+   * // Only apply auth for non-public routes
+   * middleware.addConditional({
+   *   middleware: authMiddleware,
+   *   condition: (req) => !req.path.startsWith("/public"),
+   *   name: "conditional-auth"
+   * });
+   * ```
+   *
+   * @public API
+   */
+  addConditional(config: ConditionalMiddlewareConfig): void {
+    const name = config.name || `conditional_${this.insertionOrder}`;
+
+    if (this.middlewareExists(name)) {
+      this.logger.warn(`[${name}] already exists. Skipping...`, "middleware-service");
+      return;
+    }
+
+    // Wrap the middleware with the condition check
+    const wrappedMiddleware: RequestHandler = (req, res, next) => {
+      if (config.condition(req)) {
+        return (config.middleware as RequestHandler)(req, res, next);
+      }
+      next();
+    };
+
+    const entry: MiddlewarePipeline = {
+      order: this.insertionOrder++,
+      middleware: wrappedMiddleware,
+      name,
+      category: config.category || "other",
+      isBuiltIn: false,
+      condition: config.condition,
+    };
+
+    this.middlewarePipeline.push(entry);
+    this.middlewareMap.set(name, entry);
+    this.invalidateCache();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRESETS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Apply a middleware preset bundle.
+   *
+   * @param preset - The preset name or custom preset object
+   * @param options - Options for applying the preset
+   *
+   * @example
+   * ```typescript
+   * // Apply the API preset
+   * middleware.usePreset("api");
+   *
+   * // Apply with overrides
+   * middleware.usePreset("api", {
+   *   overrides: {
+   *     Cors: { origin: "https://myapp.com" },
+   *     RateLimiter: { max: 200 }
+   *   }
+   * });
+   *
+   * // Skip specific middleware
+   * middleware.usePreset("production", {
+   *   skip: ["Morgan", "Compression"]
+   * });
+   * ```
+   *
+   * @public API
+   */
+  usePreset(
+    preset: MiddlewarePresetName | MiddlewarePreset,
+    options?: ApplyPresetOptions,
+  ): void {
+    const presetConfig =
+      typeof preset === "string" ? getPreset(preset) : preset;
+
+    if (!presetConfig) {
+      this.logger.error(`Unknown preset: ${preset}`, "middleware-service");
+      return;
+    }
+
+    this.logger.info(
+      `Applying preset: ${presetConfig.name} (${presetConfig.description})`,
+      "middleware-service",
+    );
+
+    for (const mwConfig of presetConfig.middleware) {
+      // Skip if in skip list
+      if (options?.skip?.includes(mwConfig.name)) {
+        continue;
+      }
+
+      // Skip if only installed and not available
+      if (options?.onlyInstalled && !this.isMiddlewareMethodAvailable(mwConfig.name)) {
+        if (!mwConfig.optional) {
+          this.logger.warn(
+            `Middleware [${mwConfig.name}] not available, skipping...`,
+            "middleware-service",
+          );
+        }
+        continue;
+      }
+
+      // Get options with overrides
+      const mwOptions = options?.overrides?.[mwConfig.name] ?? mwConfig.options;
+
+      // Call the appropriate add method
+      this.applyMiddlewareByName(mwConfig.name, mwOptions);
     }
   }
 
   /**
-   * Add a middleware to enable express-session.
-   *
-   * @param options - Optional configuration options for Session.
-   *
+   * Check if a middleware add method is available.
    */
-  addSession(options: SessionOptions): void {
-    const middleware = middlewareResolver("session", options);
-    const middlewareExist = this.middlewareExists("session");
-    if (middleware && !middlewareExist) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
+  private isMiddlewareMethodAvailable(name: string): boolean {
+    const methodMap: Record<string, () => boolean> = {
+      Cors: () => isMiddlewareAvailable("cors"),
+      Helmet: () => isMiddlewareAvailable("helmet"),
+      Compression: () => isMiddlewareAvailable("compression"),
+      Morgan: () => isMiddlewareAvailable("morgan"),
+      CookieParser: () => isMiddlewareAvailable("cookieParser"),
+      CookieSession: () => isMiddlewareAvailable("cookieSession"),
+      Session: () => isMiddlewareAvailable("session"),
+      RateLimiter: () => isMiddlewareAvailable("rateLimit"),
+      ServeFavicon: () => isMiddlewareAvailable("serveFavicon"),
+      // Built-in Express middleware always available
+      BodyParser: () => true,
+      UrlEncodedParser: () => true,
+    };
+
+    return methodMap[name]?.() ?? false;
+  }
+
+  /**
+   * Apply middleware by name using the appropriate add method.
+   */
+  private applyMiddlewareByName(name: string, options?: unknown): void {
+    switch (name) {
+      case "Cors":
+        this.addCors(options as CorsOptions);
+        break;
+      case "Helmet":
+        this.addHelmet(options as OptionsHelmet);
+        break;
+      case "BodyParser":
+        this.addBodyParser(options as OptionsJson);
+        break;
+      case "UrlEncodedParser":
+        this.addUrlEncodedParser(options as OptionsUrlencoded);
+        break;
+      case "Compression":
+        this.addCompression(options as CompressionOptions);
+        break;
+      case "Morgan":
+        // Morgan requires format as first argument
+        if (typeof options === "string") {
+          this.addMorgan(options);
+        } else {
+          this.addMorgan("combined");
+        }
+        break;
+      case "CookieParser":
+        this.addCookieParser(undefined, options as CookieParserOptions);
+        break;
+      case "CookieSession":
+        this.addCookieSession(options as CookieSessionOptions);
+        break;
+      case "Session":
+        this.addSession(options as SessionOptions);
+        break;
+      case "RateLimiter":
+        this.addRateLimiter(options as RateLimitOptions);
+        break;
+      case "ServeFavicon":
+        if (typeof options === "string") {
+          this.addServeFavicon(options);
+        }
+        break;
+      default:
+        this.logger.warn(
+          `Unknown middleware in preset: ${name}`,
+          "middleware-service",
+        );
     }
   }
+
+  /**
+   * Get all available presets.
+   *
+   * @returns Record of preset names to preset configurations
+   * @public API
+   */
+  getAvailablePresets(): Record<MiddlewarePresetName, MiddlewarePreset> {
+    return MIDDLEWARE_PRESETS;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ERROR HANDLER
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * Configures the error handling middleware for the application.
    *
    * @param options - The object containing the configuration options for the error handler middleware.
-   * @param errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
-   * @param showStackTrace - A boolean value indicating whether to show the stack trace in the response.
-   * @param enableExceptionFilters - Whether to enable automatic exception filter integration.
-   * @param container - Optional container instance for exception filter auto-discovery.
    */
   setErrorHandler(options: ErrorHandlerOptions = {}): void {
     const {
@@ -529,247 +1024,6 @@ export class Middleware implements IMiddleware {
   }
 
   /**
-   * Adds a middleware to serve static files from the specified root directory.
-   * Allows the application to serve files like images, CSS, JavaScript, etc.
-   *
-   * @param root - The root directory from which the static assets are to be served.
-   * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
-   */
-  serveStatic(root: string, options?: ServeStaticOptions): void {
-    const middlewareExist = this.middlewareExists("serveStatic");
-
-    if (middlewareExist) {
-      this.logger.warn(
-        `[serveStatic] already exists. Skipping...`,
-        "configure-service",
-      );
-    } else {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware: expressStatic(root, options),
-      });
-    }
-  }
-
-  /**
-   * Helper method to add middleware configuration objects to the middleware collection.
-   * @param middleware - The middleware configuration object to be added to the middleware collection.
-   * @returns void
-   */
-  private addConfigMiddleware(middleware: MiddlewareConfig): void {
-    // eslint-disable-next-line no-case-declarations
-    const config = middleware as MiddlewareConfig;
-    let routeExists: boolean = false;
-
-    if (config.middlewares.length === 0) {
-      this.logger.warn(
-        `No middlewares in the route [${config.path}]. Skipping...`,
-        "configure-service",
-      );
-      return;
-    }
-
-    if (this.middlewarePipeline.length === 0) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware: config,
-      });
-    } else {
-      this.middlewarePipeline.forEach((m) => {
-        if ((m.middleware as MiddlewareConfig).path === config.path) {
-          this.logger.warn(
-            `[${config.path}] route already exists. Skipping...`,
-            "configure-service",
-          );
-
-          routeExists = true;
-        }
-      });
-
-      if (!routeExists) {
-        this.middlewarePipeline.push({
-          timestamp: new Date(),
-          middleware: config,
-        });
-      }
-    }
-  }
-
-  /**
-   * Helper method to add express request handler functions to the middleware collection.
-   * @param middleware - The express request handler function to be added to the middleware collection.
-   * @returns void
-   */
-  private addExpressHandlerMiddleware(middleware: ExpressHandler): void {
-    let middlewareExists: boolean = false;
-
-    if (this.middlewarePipeline.length === 0) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-
-      return;
-    }
-
-    this.middlewarePipeline.forEach((m) => {
-      const mType = this.getMiddlewareType(m.middleware);
-
-      if (mType === MiddlewareType.ExpressHandler) {
-        if ((m.middleware as ExpressHandler)?.name === middleware?.name) {
-          this.logger.warn(
-            `[${middleware?.name}] already exists. Skipping...`,
-            "configure-service",
-          );
-
-          middlewareExists = true;
-          return;
-        }
-      }
-    });
-
-    if (!middlewareExists) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
-  }
-
-  /**
-   * Helper method to add custom Expresso middleware to the middleware collection.
-   * @param middleware - The custom Expresso middleware to be added to the middleware collection.
-   * @returns void
-   */
-  private addIExpressoMiddleware(middleware: IExpressoMiddleware): void {
-    let middlewareExists: boolean = false;
-
-    if (this.middlewarePipeline.length === 0) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-
-      return;
-    }
-
-    this.middlewarePipeline.forEach((m) => {
-      const mType = this.getMiddlewareType(m.middleware);
-
-      if (mType === MiddlewareType.IExpressoMiddleware) {
-        if (
-          (m.middleware as IExpressoMiddleware).constructor.name ===
-          middleware.constructor.name
-        ) {
-          this.logger.warn(
-            `[${middleware.constructor.name}] already exists. Skipping...`,
-            "configure-service",
-          );
-
-          middlewareExists = true;
-          return;
-        }
-      }
-    });
-
-    if (!middlewareExists) {
-      this.middlewarePipeline.push({
-        timestamp: new Date(),
-        middleware,
-      });
-    }
-  }
-
-  /**
-   * Adds a middleware to the middleware collection.
-   *
-   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
-   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
-   *
-   * @example Express Handler
-   *  const middleware = (req, res, next) => {
-   *    // Your middleware logic here
-   *    next();
-   *  }
-   *
-   * @example Middleware Configuration Object
-   *  const middleware = {
-   *    path: "/",
-   *    middlewares: [] // Array of Express Handlers
-   *  }
-   *
-   * @example Expresso Middleware
-   *  class CustomMiddleware implements IExpressoMiddleware {
-   *    use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
-   *    // Your middleware logic here
-   *      next();
-   *    }
-   *  }
-   */
-  addMiddleware(options: MiddlewareOptions): void {
-    switch (this.getMiddlewareType(options)) {
-      case MiddlewareType.Config:
-        this.addConfigMiddleware(options as MiddlewareConfig);
-        break;
-      case MiddlewareType.ExpressHandler:
-        this.addExpressHandlerMiddleware(options as ExpressHandler);
-        break;
-      case MiddlewareType.IExpressoMiddleware:
-        this.addIExpressoMiddleware(options as IExpressoMiddleware);
-        break;
-    }
-  }
-
-  /**
-   * Retrieves middleware pipeline in the order they were added.
-   *
-   * @returns An array of Express request handlers representing the middlewares.
-   */
-  public getMiddlewarePipeline(): Array<MiddlewarePipeline> {
-    return this.middlewarePipeline.sort((a, b) => {
-      return a.timestamp.getTime() - b.timestamp.getTime();
-    });
-  }
-
-  /**
-   * View middleware pipeline formatted.
-   * @returns void
-   */
-  public viewMiddlewarePipeline(): void {
-    const sortedMiddlewarePipeline = this.getMiddlewarePipeline();
-
-    const formattedPipeline = sortedMiddlewarePipeline.map((m) => {
-      const middlewareType = this.getMiddlewareType(m.middleware);
-
-      if (middlewareType === MiddlewareType.Config) {
-        const middlewareNames = (
-          m.middleware as MiddlewareConfig
-        ).middlewares.map((mw) => (mw as ExpressHandler)?.name || "Anonymous");
-
-        return {
-          timestamp: m.timestamp.toISOString(),
-          path: (m.middleware as MiddlewareConfig).path,
-          middleware: `[${middlewareNames.join(", ")}]`,
-        };
-      } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
-        return {
-          timestamp: m.timestamp.toISOString(),
-          path: (m.middleware as MiddlewareConfig).path ?? "Global",
-          middleware: (m.middleware as IExpressoMiddleware).constructor.name,
-        };
-      } else {
-        return {
-          timestamp: m.timestamp.toISOString(),
-          path: "Global",
-          middleware: (m.middleware as ExpressHandler)?.name,
-        };
-      }
-    });
-
-    console.table(formattedPipeline);
-  }
-
-  /**
    * Gets the configured error handler middleware.
    *
    * @returns The error handler middleware.
@@ -778,20 +1032,14 @@ export class Middleware implements IMiddleware {
     return this.errorHandler;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONTENT NEGOTIATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
   /**
-   * Configures content negotiation middleware for automatic response format selection
-   * based on Accept headers. Supports multiple formats (JSON, XML, CSV, YAML, etc.)
-   * with quality value negotiation (RFC 7231).
+   * Configures content negotiation middleware for automatic response format selection.
    *
    * @param options - Configuration options for content negotiation
-   * @example
-   * ```typescript
-   * this.Middleware.addContentNegotiation({
-   *   defaultFormat: "application/json",
-   *   formatters: [JsonFormatter, XmlFormatter, CsvFormatter],
-   *   strictMode: false
-   * });
-   * ```
    * @public API
    */
   public addContentNegotiation(options?: ContentNegotiationOptions): void {
@@ -811,28 +1059,20 @@ export class Middleware implements IMiddleware {
     return this.contentNegotiationService;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
   // Validation Service - will be set by adapter-express
   private validationServiceFactory?: () => unknown;
 
   /**
    * Configures validation for automatic request parameter validation.
-   * Supports multiple validation libraries (class-validator, Zod, Yup, custom adapters)
-   * with smart field detection and helpful error messages.
    *
    * @param options - Configuration options for validation
-   * @example
-   * ```typescript
-   * this.Middleware.addValidation({
-   *   smartDetection: true,
-   *   errorFormat: "helpful",
-   *   adapters: [ClassValidatorAdapter]
-   * });
-   * ```
    * @public API
    */
   public addValidation(options?: ValidationConfig): void {
-    // Store the configuration for the adapter-express to use
-    // The actual ValidationService is created by adapter-express
     (
       this as unknown as { _validationConfig: ValidationConfig }
     )._validationConfig = options || {};
@@ -840,7 +1080,6 @@ export class Middleware implements IMiddleware {
 
   /**
    * Gets the validation configuration.
-   * @returns Validation configuration or undefined if not configured
    * @internal
    */
   public getValidationConfig(): ValidationConfig | undefined {
@@ -850,7 +1089,6 @@ export class Middleware implements IMiddleware {
 
   /**
    * Sets the validation service factory (called by adapter-express).
-   * @param factory - Factory function that returns the ValidationService
    * @internal
    */
   public setValidationServiceFactory(factory: () => unknown): void {
@@ -859,7 +1097,6 @@ export class Middleware implements IMiddleware {
 
   /**
    * Gets the validation service instance.
-   * @returns Validation service or undefined if not configured
    * @internal
    */
   public getValidationService(): unknown {
@@ -867,103 +1104,272 @@ export class Middleware implements IMiddleware {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // INTROSPECTION METHODS
+  // PROFILING
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Get the display name of a middleware.
-   * @param m - The middleware pipeline entry
-   * @returns The middleware name
-   * @private
+   * Enable middleware profiling to track execution times.
+   *
+   * @param options - Profiler options
+   * @returns The profiler instance
+   *
+   * @example
+   * ```typescript
+   * const profiler = middleware.enableProfiling();
+   *
+   * // Later, get metrics
+   * const stats = profiler.getStats();
+   * console.log(stats.metrics);
+   * ```
+   *
+   * @public API
    */
-  private getMiddlewareName(m: MiddlewarePipeline): string {
-    if (m.name) {
-      return m.name;
+  enableProfiling(options?: { maxSamples?: number }): MiddlewareProfiler {
+    if (!this.profiler) {
+      this.profiler = new MiddlewareProfiler(options);
+    }
+    this.profilingEnabled = true;
+    return this.profiler;
+  }
+
+  /**
+   * Disable middleware profiling.
+   * @public API
+   */
+  disableProfiling(): void {
+    this.profilingEnabled = false;
+    if (this.profiler) {
+      this.profiler.setEnabled(false);
+    }
+  }
+
+  /**
+   * Get the profiler instance.
+   * @returns The profiler or null if not enabled
+   * @public API
+   */
+  getProfiler(): MiddlewareProfiler | null {
+    return this.profiler;
+  }
+
+  /**
+   * Get profiling metrics for all middleware.
+   *
+   * @returns Array of middleware metrics or empty array if profiling is disabled
+   * @public API
+   */
+  getProfilingMetrics(): Array<MiddlewareMetrics> {
+    return this.profiler?.getAllMetrics() ?? [];
+  }
+
+  /**
+   * Get profiling statistics.
+   *
+   * @returns Profiler statistics or null if profiling is disabled
+   * @public API
+   */
+  getProfilingStats(): ProfilerStats | null {
+    return this.profiler?.getStats() ?? null;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEALTH CHECK
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add a health check endpoint that reports middleware status.
+   *
+   * @param options - Health check options
+   *
+   * @example
+   * ```typescript
+   * middleware.addHealthCheck({
+   *   path: "/health/middleware",
+   *   includeMetrics: true
+   * });
+   * ```
+   *
+   * @public API
+   */
+  addHealthCheck(options?: {
+    path?: string;
+    includeMetrics?: boolean;
+    detailed?: boolean;
+  }): void {
+    const path = options?.path ?? "/health/middleware";
+
+    const healthHandler: RequestHandler = (req, res) => {
+      const info = this.getPipelineInfo();
+      const response: Record<string, unknown> = {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        middleware: {
+          total: info.total,
+          byCategory: info.byCategory,
+        },
+      };
+
+      if (options?.detailed) {
+        response.middleware = {
+          ...response.middleware as object,
+          entries: info.entries.map((e) => ({
+            name: e.name,
+            type: e.type,
+            category: e.category,
+            path: e.path,
+          })),
+        };
+      }
+
+      if (options?.includeMetrics && this.profiler) {
+        response.metrics = this.profiler.getStats();
+      }
+
+      res.json(response);
+    };
+
+    this.addMiddleware({ path, middlewares: [healthHandler] });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PIPELINE RETRIEVAL
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Retrieves middleware pipeline in the order they were added.
+   * Uses cached sorting for performance.
+   *
+   * @returns An array of middleware pipeline entries.
+   */
+  public getMiddlewarePipeline(): Array<MiddlewarePipeline> {
+    if (this.sortedPipelineCache) {
+      return this.sortedPipelineCache;
     }
 
-    const middlewareType = this.getMiddlewareType(m.middleware);
+    this.sortedPipelineCache = [...this.middlewarePipeline].sort(
+      (a, b) => a.order - b.order,
+    );
 
-    if (middlewareType === MiddlewareType.Config) {
-      const config = m.middleware as MiddlewareConfig;
-      return config.path || "ConfigMiddleware";
-    } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
-      return (m.middleware as IExpressoMiddleware).constructor.name;
+    return this.sortedPipelineCache;
+  }
+
+  /**
+   * View middleware pipeline formatted as a table.
+   */
+  public viewMiddlewarePipeline(): void {
+    const sortedMiddlewarePipeline = this.getMiddlewarePipeline();
+
+    const formattedPipeline = sortedMiddlewarePipeline.map((m) => {
+      const middlewareType = this.getMiddlewareType(m.middleware);
+
+      if (middlewareType === MiddlewareType.Config) {
+        const middlewareNames = (
+          m.middleware as MiddlewareConfig
+        ).middlewares.map((mw) => (mw as ExpressHandler)?.name || "Anonymous");
+
+        return {
+          order: m.order,
+          path: (m.middleware as MiddlewareConfig).path,
+          middleware: `[${middlewareNames.join(", ")}]`,
+        };
+      } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
+        return {
+          order: m.order,
+          path: (m.middleware as MiddlewareConfig).path ?? "Global",
+          middleware: (m.middleware as IExpressoMiddleware).constructor.name,
+        };
+      } else {
+        return {
+          order: m.order,
+          path: "Global",
+          middleware: (m.middleware as ExpressHandler)?.name,
+        };
+      }
+    });
+
+    console.table(formattedPipeline);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VISUAL PIPELINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get a visual ASCII representation of the middleware pipeline.
+   *
+   * @returns ASCII art diagram of the pipeline
+   *
+   * @example
+   * ```typescript
+   * console.log(middleware.visualizePipeline());
+   * // ╔══════════════════════════════════════════════════════════════╗
+   * // ║                  MIDDLEWARE PIPELINE                        ║
+   * // ╠══════════════════════════════════════════════════════════════╣
+   * // ║ 📦 jsonParser                              [parser]         ║
+   * // ║     ↓                                                       ║
+   * // ║ 🔒 cors                                    [security]       ║
+   * // ║     ↓                                                       ║
+   * // ║ 🔒 helmet                                  [security]       ║
+   * // ╚══════════════════════════════════════════════════════════════╝
+   * ```
+   *
+   * @public API
+   */
+  visualizePipeline(): string {
+    const pipeline = this.getMiddlewarePipeline();
+    const width = 64;
+
+    const lines: Array<string> = [
+      "╔" + "═".repeat(width) + "╗",
+      "║" + "MIDDLEWARE PIPELINE".padStart((width + 19) / 2).padEnd(width) + "║",
+      "╠" + "═".repeat(width) + "╣",
+    ];
+
+    if (pipeline.length === 0) {
+      lines.push("║" + "(empty)".padStart((width + 7) / 2).padEnd(width) + "║");
     } else {
-      return (m.middleware as ExpressHandler)?.name || "Anonymous";
+      for (let i = 0; i < pipeline.length; i++) {
+        const m = pipeline[i];
+        const name = this.getMiddlewareName(m);
+        const category = m.category ?? this.getMiddlewareCategory(name);
+        const icon = CATEGORY_ICONS[category];
+        const categoryLabel = `[${category}]`;
+
+        const content = `${icon} ${name}`;
+        const contentWithCategory =
+          content.padEnd(width - categoryLabel.length - 2) + categoryLabel;
+        lines.push("║ " + contentWithCategory.padEnd(width - 1) + "║");
+
+        if (i < pipeline.length - 1) {
+          lines.push("║" + "    ↓".padEnd(width) + "║");
+        }
+      }
     }
+
+    lines.push("╚" + "═".repeat(width) + "╝");
+
+    return lines.join("\n");
   }
 
   /**
-   * Get the category of a middleware.
-   * @param name - The middleware name
-   * @param isBuiltIn - Whether it's built-in
-   * @returns The middleware category
-   * @private
+   * Get a compact summary of the middleware pipeline.
+   *
+   * @returns Single-line summary
+   * @public API
    */
-  private getMiddlewareCategory(
-    name: string,
-    // Parameter reserved for future use (built-in middleware differentiation)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _isBuiltIn?: boolean,
-  ): MiddlewareCategory {
-    // Check known categories
-    if (MIDDLEWARE_CATEGORIES[name]) {
-      return MIDDLEWARE_CATEGORIES[name];
-    }
+  getPipelineSummary(): string {
+    const info = this.getPipelineInfo();
+    const categories = Object.entries(info.byCategory)
+      .filter(([, count]) => count > 0)
+      .map(([cat, count]) => `${CATEGORY_ICONS[cat as MiddlewareCategory]}${count}`)
+      .join(" ");
 
-    // Try to infer from name
-    const lowerName = name.toLowerCase();
-    if (
-      lowerName.includes("parser") ||
-      lowerName.includes("body") ||
-      lowerName.includes("json")
-    ) {
-      return "parser";
-    }
-    if (
-      lowerName.includes("cors") ||
-      lowerName.includes("helmet") ||
-      lowerName.includes("auth") ||
-      lowerName.includes("security")
-    ) {
-      return "security";
-    }
-    if (
-      lowerName.includes("log") ||
-      lowerName.includes("morgan") ||
-      lowerName.includes("request")
-    ) {
-      return "logging";
-    }
-    if (lowerName.includes("valid")) {
-      return "validation";
-    }
-    if (lowerName.includes("error") || lowerName.includes("handler")) {
-      return "error";
-    }
-    if (lowerName.includes("session") || lowerName.includes("cookie")) {
-      return "session";
-    }
-    if (lowerName.includes("static") || lowerName.includes("favicon")) {
-      return "static";
-    }
-
-    return "other";
+    return `Middleware: ${info.total} total | ${categories}`;
   }
 
-  /**
-   * Get the path for a middleware.
-   * @param m - The middleware pipeline entry
-   * @returns The path or "Global"
-   * @private
-   */
-  private getMiddlewarePath(m: MiddlewarePipeline): string {
-    const middlewareType = this.getMiddlewareType(m.middleware);
-    if (middlewareType === MiddlewareType.Config) {
-      return (m.middleware as MiddlewareConfig).path || "Global";
-    }
-    return "Global";
-  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTROSPECTION METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * Get structured pipeline info for banner display and introspection.
@@ -1056,5 +1462,47 @@ export class Middleware implements IMiddleware {
    */
   public getByName(name: string): MiddlewareEntry | undefined {
     return this.getPipelineInfo().entries.find((e) => e.name === name);
+  }
+
+  /**
+   * Remove a middleware from the pipeline by name.
+   *
+   * @param name - The middleware name to remove
+   * @returns True if removed, false if not found
+   * @public API
+   */
+  public remove(name: string): boolean {
+    if (!this.middlewareMap.has(name)) {
+      return false;
+    }
+
+    this.middlewareMap.delete(name);
+    const index = this.middlewarePipeline.findIndex((m) => m.name === name);
+    if (index >= 0) {
+      this.middlewarePipeline.splice(index, 1);
+    }
+    this.invalidateCache();
+
+    return true;
+  }
+
+  /**
+   * Clear all middleware from the pipeline.
+   * @public API
+   */
+  public clear(): void {
+    this.middlewarePipeline = [];
+    this.middlewareMap.clear();
+    this.insertionOrder = 0;
+    this.invalidateCache();
+  }
+
+  /**
+   * Get the total number of middleware in the pipeline.
+   * @returns Number of middleware
+   * @public API
+   */
+  public count(): number {
+    return this.middlewarePipeline.length;
   }
 }

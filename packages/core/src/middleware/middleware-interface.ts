@@ -1,4 +1,11 @@
-import { ExpressHandler, MiddlewareOptions } from "./middleware-service";
+import {
+  ExpressHandler,
+  MiddlewareOptions,
+  MiddlewareCategory,
+  MiddlewareEntry,
+  MiddlewarePipelineInfo,
+  ConditionalMiddlewareConfig,
+} from "./middleware-service";
 import { OptionsJson } from "./interfaces/body-parser.interface";
 import { CompressionOptions } from "./interfaces/compression.interface";
 import { CookieParserOptions } from "./interfaces/cookie-parser.interface";
@@ -12,6 +19,16 @@ import { multer } from "./interfaces/multer.interface";
 import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
 import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
+import {
+  MiddlewarePresetName,
+  MiddlewarePreset,
+  ApplyPresetOptions,
+} from "./middleware-presets";
+import {
+  MiddlewareProfiler,
+  MiddlewareMetrics,
+  ProfilerStats,
+} from "./middleware-profiler";
 
 /**
  * ErrorHandlerOptions Interface
@@ -31,11 +48,28 @@ export interface ErrorHandlerOptions {
 }
 
 /**
+ * Health check endpoint options.
+ * @public API
+ */
+export interface HealthCheckOptions {
+  /** Path for the health check endpoint (default: "/health/middleware") */
+  path?: string;
+  /** Include profiling metrics in the response */
+  includeMetrics?: boolean;
+  /** Include detailed middleware information */
+  detailed?: boolean;
+}
+
+/**
  * Interface for configuring and managing middlewares in the application.
  * Provides methods to be added automatically in the application without the need to import packages.
  * @public API
  */
 export interface IMiddleware {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BUILT-IN MIDDLEWARE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   /**
    * Adds a URL Encoded Parser middleware to the middleware collection.
    * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
@@ -127,70 +161,6 @@ export interface IMiddleware {
   addSession(options: SessionOptions): void;
 
   /**
-   * Configures the error handling middleware for the application.
-   *
-   * @param options - The object containing the configuration options for the error handler middleware.
-   * @option errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
-   * @option showStackTrace - A boolean value indicating whether to show the stack trace in the response.
-   * @public API
-   */
-  setErrorHandler(options?: ErrorHandlerOptions): void;
-
-  /**
-   * Adds a middleware to serve static files from the specified root directory.
-   * Allows the application to serve files like images, CSS, JavaScript, etc.
-   *
-   * @param root - The root directory from which the static assets are to be served.
-   * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
-   * @public API
-   */
-  serveStatic(root: string, options?: ServeStaticOptions): void;
-
-  /**
-   * Adds a middleware to the middleware collection.
-   *
-   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
-   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
-   *
-   * @example Express Handler
-   *  const middleware = (req, res, next) => {
-   *  // Your middleware logic here
-   *  next();
-   * }
-   *
-   * @example Middleware Configuration Object
-   * const middleware = {
-   *  path: "/",
-   *  middlewares: [] // Array of Express Handlers
-   * }
-   *
-   * @example Expresso Middleware
-   * class CustomMiddleware implements IExpressoMiddleware {
-   *  use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
-   *   // Your middleware logic here
-   *   next();
-   *  }
-   * }
-   * @public API
-   */
-  addMiddleware(options: MiddlewareOptions): void;
-
-  /**
-   * View middleware pipeline formatted.
-   * @returns void
-   * @public API
-   */
-  viewMiddlewarePipeline(): void;
-
-  /**
-   * Gets the configured error handler middleware.
-   *
-   * @returns The error handler middleware.
-   * @public API
-   */
-  getErrorHandler(): ExpressHandler;
-
-  /**
    * Adds Helmet middleware to enhance security by setting various HTTP headers.
    *
    * @param options - Optional configuration options for Helmet.
@@ -207,6 +177,142 @@ export interface IMiddleware {
    * @public API
    */
   setupMulter(options?: multer.Options): multer.Multer;
+
+  /**
+   * Adds a middleware to serve static files from the specified root directory.
+   * Allows the application to serve files like images, CSS, JavaScript, etc.
+   *
+   * @param root - The root directory from which the static assets are to be served.
+   * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
+   * @public API
+   */
+  serveStatic(root: string, options?: ServeStaticOptions): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ERROR HANDLER
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configures the error handling middleware for the application.
+   *
+   * @param options - The object containing the configuration options for the error handler middleware.
+   * @option errorHandler - The Express error handler function that takes care of processing errors and formulating the response.
+   * @option showStackTrace - A boolean value indicating whether to show the stack trace in the response.
+   * @public API
+   */
+  setErrorHandler(options?: ErrorHandlerOptions): void;
+
+  /**
+   * Gets the configured error handler middleware.
+   *
+   * @returns The error handler middleware.
+   * @public API
+   */
+  getErrorHandler(): ExpressHandler;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CUSTOM MIDDLEWARE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Adds a middleware to the middleware collection.
+   *
+   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
+   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
+   *
+   * @example Express Handler
+   * ```typescript
+   * const middleware = (req, res, next) => {
+   *   // Your middleware logic here
+   *   next();
+   * }
+   * ```
+   *
+   * @example Middleware Configuration Object
+   * ```typescript
+   * const middleware = {
+   *   path: "/",
+   *   middlewares: [] // Array of Express Handlers
+   * }
+   * ```
+   *
+   * @example Expresso Middleware
+   * ```typescript
+   * class CustomMiddleware implements IExpressoMiddleware {
+   *   use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
+   *     // Your middleware logic here
+   *     next();
+   *   }
+   * }
+   * ```
+   * @public API
+   */
+  addMiddleware(options: MiddlewareOptions): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONDITIONAL MIDDLEWARE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add middleware that only executes when a condition is met.
+   *
+   * @param config - Conditional middleware configuration
+   *
+   * @example
+   * ```typescript
+   * // Only apply rate limiting for non-internal requests
+   * middleware.addConditional({
+   *   middleware: rateLimiter,
+   *   condition: (req) => !req.headers["x-internal-service"],
+   *   name: "conditional-rate-limit"
+   * });
+   * ```
+   *
+   * @public API
+   */
+  addConditional(config: ConditionalMiddlewareConfig): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRESETS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Apply a middleware preset bundle.
+   *
+   * @param preset - The preset name or custom preset object
+   * @param options - Options for applying the preset
+   *
+   * @example
+   * ```typescript
+   * // Apply the API preset
+   * middleware.usePreset("api");
+   *
+   * // Apply with overrides
+   * middleware.usePreset("api", {
+   *   overrides: {
+   *     Cors: { origin: "https://myapp.com" }
+   *   }
+   * });
+   * ```
+   *
+   * @public API
+   */
+  usePreset(
+    preset: MiddlewarePresetName | MiddlewarePreset,
+    options?: ApplyPresetOptions,
+  ): void;
+
+  /**
+   * Get all available presets.
+   *
+   * @returns Record of preset names to preset configurations
+   * @public API
+   */
+  getAvailablePresets(): Record<MiddlewarePresetName, MiddlewarePreset>;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONTENT NEGOTIATION
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * Configures content negotiation middleware for automatic response format selection
@@ -228,6 +334,10 @@ export interface IMiddleware {
     options?: import("./interfaces/content-negotiation.interface").ContentNegotiationOptions,
   ): void;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
   /**
    * Configures validation for automatic request parameter validation.
    * Supports multiple validation libraries (class-validator, Zod, Yup, custom adapters)
@@ -247,4 +357,167 @@ export interface IMiddleware {
   addValidation(
     options?: import("../provider/validation/validation.interface").ValidationConfig,
   ): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFILING
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Enable middleware profiling to track execution times.
+   *
+   * @param options - Profiler options
+   * @returns The profiler instance
+   *
+   * @example
+   * ```typescript
+   * const profiler = middleware.enableProfiling();
+   * // Later, get metrics
+   * const stats = profiler.getStats();
+   * ```
+   *
+   * @public API
+   */
+  enableProfiling(options?: { maxSamples?: number }): MiddlewareProfiler;
+
+  /**
+   * Disable middleware profiling.
+   * @public API
+   */
+  disableProfiling(): void;
+
+  /**
+   * Get the profiler instance.
+   * @returns The profiler or null if not enabled
+   * @public API
+   */
+  getProfiler(): MiddlewareProfiler | null;
+
+  /**
+   * Get profiling metrics for all middleware.
+   *
+   * @returns Array of middleware metrics or empty array if profiling is disabled
+   * @public API
+   */
+  getProfilingMetrics(): Array<MiddlewareMetrics>;
+
+  /**
+   * Get profiling statistics.
+   *
+   * @returns Profiler statistics or null if profiling is disabled
+   * @public API
+   */
+  getProfilingStats(): ProfilerStats | null;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEALTH CHECK
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add a health check endpoint that reports middleware status.
+   *
+   * @param options - Health check options
+   *
+   * @example
+   * ```typescript
+   * middleware.addHealthCheck({
+   *   path: "/health/middleware",
+   *   includeMetrics: true
+   * });
+   * ```
+   *
+   * @public API
+   */
+  addHealthCheck(options?: HealthCheckOptions): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PIPELINE INSPECTION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * View middleware pipeline formatted.
+   * @returns void
+   * @public API
+   */
+  viewMiddlewarePipeline(): void;
+
+  /**
+   * Get a visual ASCII representation of the middleware pipeline.
+   *
+   * @returns ASCII art diagram of the pipeline
+   * @public API
+   */
+  visualizePipeline(): string;
+
+  /**
+   * Get a compact summary of the middleware pipeline.
+   *
+   * @returns Single-line summary
+   * @public API
+   */
+  getPipelineSummary(): string;
+
+  /**
+   * Get structured pipeline info for banner display and introspection.
+   *
+   * @returns Middleware pipeline information
+   * @public API
+   */
+  getPipelineInfo(): MiddlewarePipelineInfo;
+
+  /**
+   * Get a formatted view for banner display.
+   *
+   * @param maxDisplay - Maximum number of middleware to show
+   * @returns Formatted middleware view
+   * @public API
+   */
+  getFormattedView(maxDisplay?: number): {
+    entries: Array<{
+      name: string;
+      category: MiddlewareCategory;
+      type: "built-in" | "custom";
+    }>;
+    total: number;
+    remaining: number;
+  };
+
+  /**
+   * Get middleware count by category.
+   *
+   * @returns Record of category to count
+   * @public API
+   */
+  getCountByCategory(): Record<MiddlewareCategory, number>;
+
+  /**
+   * Get middleware by name.
+   *
+   * @param name - The middleware name
+   * @returns The middleware entry or undefined
+   * @public API
+   */
+  getByName(name: string): MiddlewareEntry | undefined;
+
+  /**
+   * Remove a middleware from the pipeline by name.
+   *
+   * @param name - The middleware name to remove
+   * @returns True if removed, false if not found
+   * @public API
+   */
+  remove(name: string): boolean;
+
+  /**
+   * Clear all middleware from the pipeline.
+   * @public API
+   */
+  clear(): void;
+
+  /**
+   * Get the total number of middleware in the pipeline.
+   *
+   * @returns Number of middleware
+   * @public API
+   */
+  count(): number;
 }
