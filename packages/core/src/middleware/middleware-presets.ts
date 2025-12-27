@@ -88,7 +88,11 @@ const SECURE_HELMET_OPTIONS: OptionsHelmet = {
   crossOriginResourcePolicy: { policy: "same-origin" },
   xDnsPrefetchControl: { allow: false },
   xFrameOptions: { action: "deny" },
-  strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  strictTransportSecurity: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
   xDownloadOptions: "noopen",
   xContentTypeOptions: "nosniff",
   xPermittedCrossDomainPolicies: { permittedPolicies: "none" },
@@ -120,169 +124,174 @@ const PRODUCTION_RATE_LIMIT_OPTIONS: RateLimitOptions = {
  * Built-in middleware presets.
  * @public API
  */
-export const MIDDLEWARE_PRESETS: Record<MiddlewarePresetName, MiddlewarePreset> =
-  {
-    /**
-     * API Preset - Optimized for REST APIs
-     * Includes: CORS, Helmet, JSON parser, URL-encoded parser, Compression, Rate limiting
-     */
-    api: {
-      name: "api",
-      description:
-        "Optimized configuration for REST APIs with security and performance",
-      tags: ["rest", "backend", "security"],
-      middleware: [
-        { name: "Cors", options: API_CORS_OPTIONS },
-        { name: "Helmet", options: {} },
-        { name: "BodyParser", options: { limit: "10mb" } as OptionsJson },
-        {
-          name: "UrlEncodedParser",
-          options: { extended: true } as OptionsUrlencoded,
-        },
-        { name: "Compression", options: { level: 6 } as CompressionOptions },
-        { name: "RateLimiter", options: DEFAULT_RATE_LIMIT_OPTIONS },
-      ],
-    },
+export const MIDDLEWARE_PRESETS: Record<
+  MiddlewarePresetName,
+  MiddlewarePreset
+> = {
+  /**
+   * API Preset - Optimized for REST APIs
+   * Includes: CORS, Helmet, JSON parser, URL-encoded parser, Compression, Rate limiting
+   */
+  api: {
+    name: "api",
+    description:
+      "Optimized configuration for REST APIs with security and performance",
+    tags: ["rest", "backend", "security"],
+    middleware: [
+      { name: "Cors", options: API_CORS_OPTIONS },
+      { name: "Helmet", options: {} },
+      { name: "BodyParser", options: { limit: "10mb" } as OptionsJson },
+      {
+        name: "UrlEncodedParser",
+        options: { extended: true } as OptionsUrlencoded,
+      },
+      { name: "Compression", options: { level: 6 } as CompressionOptions },
+      { name: "RateLimiter", options: DEFAULT_RATE_LIMIT_OPTIONS },
+    ],
+  },
 
-    /**
-     * Web Preset - For traditional web applications
-     * Includes: Session, Cookie parser, Static files, CORS, Helmet
-     */
-    web: {
-      name: "web",
-      description: "Configuration for traditional web applications with sessions",
-      tags: ["web", "frontend", "session"],
-      middleware: [
-        { name: "Cors", options: { origin: true } as CorsOptions },
-        { name: "Helmet", options: {} },
-        { name: "BodyParser", options: { limit: "5mb" } as OptionsJson },
-        {
-          name: "UrlEncodedParser",
-          options: { extended: true } as OptionsUrlencoded,
-        },
-        { name: "CookieParser", options: undefined, optional: true },
-        { name: "Compression", options: {} },
-      ],
-    },
+  /**
+   * Web Preset - For traditional web applications
+   * Includes: Session, Cookie parser, Static files, CORS, Helmet
+   */
+  web: {
+    name: "web",
+    description: "Configuration for traditional web applications with sessions",
+    tags: ["web", "frontend", "session"],
+    middleware: [
+      { name: "Cors", options: { origin: true } as CorsOptions },
+      { name: "Helmet", options: {} },
+      { name: "BodyParser", options: { limit: "5mb" } as OptionsJson },
+      {
+        name: "UrlEncodedParser",
+        options: { extended: true } as OptionsUrlencoded,
+      },
+      { name: "CookieParser", options: undefined, optional: true },
+      { name: "Compression", options: {} },
+    ],
+  },
 
-    /**
-     * Microservice Preset - Lightweight for service-to-service communication
-     * Minimal middleware for maximum performance
-     */
-    microservice: {
-      name: "microservice",
-      description: "Lightweight configuration for microservices",
-      tags: ["microservice", "performance", "minimal"],
-      middleware: [
-        { name: "BodyParser", options: { limit: "1mb" } as OptionsJson },
-        { name: "Compression", options: { level: 6 } as CompressionOptions },
-      ],
-    },
+  /**
+   * Microservice Preset - Lightweight for service-to-service communication
+   * Minimal middleware for maximum performance
+   */
+  microservice: {
+    name: "microservice",
+    description: "Lightweight configuration for microservices",
+    tags: ["microservice", "performance", "minimal"],
+    middleware: [
+      { name: "BodyParser", options: { limit: "1mb" } as OptionsJson },
+      { name: "Compression", options: { level: 6 } as CompressionOptions },
+    ],
+  },
 
-    /**
-     * GraphQL Preset - Optimized for GraphQL APIs
-     */
-    graphql: {
-      name: "graphql",
-      description: "Optimized for GraphQL API servers",
-      tags: ["graphql", "api"],
-      middleware: [
-        {
-          name: "Cors",
-          options: {
-            origin: true,
-            methods: ["GET", "POST", "OPTIONS"],
-          } as CorsOptions,
-        },
-        { name: "BodyParser", options: { limit: "50mb" } as OptionsJson },
-        { name: "Compression", options: {} },
-      ],
-    },
+  /**
+   * GraphQL Preset - Optimized for GraphQL APIs
+   */
+  graphql: {
+    name: "graphql",
+    description: "Optimized for GraphQL API servers",
+    tags: ["graphql", "api"],
+    middleware: [
+      {
+        name: "Cors",
+        options: {
+          origin: true,
+          methods: ["GET", "POST", "OPTIONS"],
+        } as CorsOptions,
+      },
+      { name: "BodyParser", options: { limit: "50mb" } as OptionsJson },
+      { name: "Compression", options: {} },
+    ],
+  },
 
-    /**
-     * Minimal Preset - Absolute minimum for simple apps
-     */
-    minimal: {
-      name: "minimal",
-      description: "Minimal configuration with just body parsing",
-      tags: ["minimal", "simple"],
-      middleware: [
-        { name: "BodyParser", options: {} },
-        { name: "UrlEncodedParser", options: { extended: false } as OptionsUrlencoded },
-      ],
-    },
+  /**
+   * Minimal Preset - Absolute minimum for simple apps
+   */
+  minimal: {
+    name: "minimal",
+    description: "Minimal configuration with just body parsing",
+    tags: ["minimal", "simple"],
+    middleware: [
+      { name: "BodyParser", options: {} },
+      {
+        name: "UrlEncodedParser",
+        options: { extended: false } as OptionsUrlencoded,
+      },
+    ],
+  },
 
-    /**
-     * Secure Preset - Maximum security configuration
-     */
-    secure: {
-      name: "secure",
-      description: "Maximum security configuration for sensitive applications",
-      tags: ["security", "production", "hardened"],
-      middleware: [
-        { name: "Helmet", options: SECURE_HELMET_OPTIONS },
-        {
-          name: "Cors",
-          options: {
-            origin: false, // Must be explicitly configured
-            credentials: true,
-          } as CorsOptions,
-        },
-        { name: "RateLimiter", options: PRODUCTION_RATE_LIMIT_OPTIONS },
-        { name: "BodyParser", options: { limit: "1mb" } as OptionsJson },
-        {
-          name: "UrlEncodedParser",
-          options: { extended: false, limit: "1mb" } as OptionsUrlencoded,
-        },
-      ],
-    },
+  /**
+   * Secure Preset - Maximum security configuration
+   */
+  secure: {
+    name: "secure",
+    description: "Maximum security configuration for sensitive applications",
+    tags: ["security", "production", "hardened"],
+    middleware: [
+      { name: "Helmet", options: SECURE_HELMET_OPTIONS },
+      {
+        name: "Cors",
+        options: {
+          origin: false, // Must be explicitly configured
+          credentials: true,
+        } as CorsOptions,
+      },
+      { name: "RateLimiter", options: PRODUCTION_RATE_LIMIT_OPTIONS },
+      { name: "BodyParser", options: { limit: "1mb" } as OptionsJson },
+      {
+        name: "UrlEncodedParser",
+        options: { extended: false, limit: "1mb" } as OptionsUrlencoded,
+      },
+    ],
+  },
 
-    /**
-     * Development Preset - Verbose logging and relaxed security
-     */
-    development: {
-      name: "development",
-      description: "Development-friendly with logging and relaxed security",
-      tags: ["development", "debug", "logging"],
-      middleware: [
-        { name: "Cors", options: { origin: true } as CorsOptions },
-        { name: "BodyParser", options: { limit: "50mb" } as OptionsJson },
-        {
-          name: "UrlEncodedParser",
-          options: { extended: true } as OptionsUrlencoded,
-        },
-        {
-          name: "Morgan",
-          options: "dev" as unknown as OptionsMorgan,
-          optional: true,
-        },
-        { name: "Compression", options: {}, optional: true },
-      ],
-    },
+  /**
+   * Development Preset - Verbose logging and relaxed security
+   */
+  development: {
+    name: "development",
+    description: "Development-friendly with logging and relaxed security",
+    tags: ["development", "debug", "logging"],
+    middleware: [
+      { name: "Cors", options: { origin: true } as CorsOptions },
+      { name: "BodyParser", options: { limit: "50mb" } as OptionsJson },
+      {
+        name: "UrlEncodedParser",
+        options: { extended: true } as OptionsUrlencoded,
+      },
+      {
+        name: "Morgan",
+        options: "dev" as unknown as OptionsMorgan,
+        optional: true,
+      },
+      { name: "Compression", options: {}, optional: true },
+    ],
+  },
 
-    /**
-     * Production Preset - Optimized for production deployment
-     */
-    production: {
-      name: "production",
-      description: "Production-optimized with security and performance",
-      tags: ["production", "performance", "security"],
-      middleware: [
-        { name: "Helmet", options: {} },
-        { name: "Cors", options: API_CORS_OPTIONS },
-        { name: "RateLimiter", options: PRODUCTION_RATE_LIMIT_OPTIONS },
-        {
-          name: "Compression",
-          options: { level: 6, threshold: 1024 } as CompressionOptions,
-        },
-        { name: "BodyParser", options: { limit: "10mb" } as OptionsJson },
-        {
-          name: "UrlEncodedParser",
-          options: { extended: true } as OptionsUrlencoded,
-        },
-      ],
-    },
-  };
+  /**
+   * Production Preset - Optimized for production deployment
+   */
+  production: {
+    name: "production",
+    description: "Production-optimized with security and performance",
+    tags: ["production", "performance", "security"],
+    middleware: [
+      { name: "Helmet", options: {} },
+      { name: "Cors", options: API_CORS_OPTIONS },
+      { name: "RateLimiter", options: PRODUCTION_RATE_LIMIT_OPTIONS },
+      {
+        name: "Compression",
+        options: { level: 6, threshold: 1024 } as CompressionOptions,
+      },
+      { name: "BodyParser", options: { limit: "10mb" } as OptionsJson },
+      {
+        name: "UrlEncodedParser",
+        options: { extended: true } as OptionsUrlencoded,
+      },
+    ],
+  },
+};
 
 /**
  * Get a preset by name.
@@ -370,4 +379,3 @@ export function mergePresets(
     tags: [...(base.tags ?? []), ...(override.tags ?? [])],
   } as MiddlewarePreset;
 }
-

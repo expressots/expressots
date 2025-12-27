@@ -332,7 +332,10 @@ export class Middleware implements IMiddleware {
     middlewareFactory: () => ExpressHandler | null,
   ): boolean {
     if (this.middlewareExists(name)) {
-      this.logger.warn(`[${name}] already exists. Skipping...`, "middleware-service");
+      this.logger.warn(
+        `[${name}] already exists. Skipping...`,
+        "middleware-service",
+      );
       return false;
     }
 
@@ -647,7 +650,8 @@ export class Middleware implements IMiddleware {
    * Helper method to add express request handler functions.
    */
   private addExpressHandlerMiddleware(middleware: ExpressHandler): void {
-    const middlewareName = middleware?.name || `anonymous_${this.insertionOrder}`;
+    const middlewareName =
+      middleware?.name || `anonymous_${this.insertionOrder}`;
 
     if (this.middlewareExists(middlewareName) && middleware?.name) {
       this.logger.warn(
@@ -775,7 +779,10 @@ export class Middleware implements IMiddleware {
     const name = config.name || `conditional_${this.insertionOrder}`;
 
     if (this.middlewareExists(name)) {
-      this.logger.warn(`[${name}] already exists. Skipping...`, "middleware-service");
+      this.logger.warn(
+        `[${name}] already exists. Skipping...`,
+        "middleware-service",
+      );
       return;
     }
 
@@ -856,7 +863,10 @@ export class Middleware implements IMiddleware {
       }
 
       // Skip if only installed and not available
-      if (options?.onlyInstalled && !this.isMiddlewareMethodAvailable(mwConfig.name)) {
+      if (
+        options?.onlyInstalled &&
+        !this.isMiddlewareMethodAvailable(mwConfig.name)
+      ) {
         if (!mwConfig.optional) {
           this.logger.warn(
             `Middleware [${mwConfig.name}] not available, skipping...`,
@@ -1211,7 +1221,7 @@ export class Middleware implements IMiddleware {
 
       if (options?.detailed) {
         response.middleware = {
-          ...response.middleware as object,
+          ...(response.middleware as object),
           entries: info.entries.map((e) => ({
             name: e.name,
             type: e.type,
@@ -1321,7 +1331,9 @@ export class Middleware implements IMiddleware {
 
     const lines: Array<string> = [
       "╔" + "═".repeat(width) + "╗",
-      "║" + "MIDDLEWARE PIPELINE".padStart((width + 19) / 2).padEnd(width) + "║",
+      "║" +
+        "MIDDLEWARE PIPELINE".padStart((width + 19) / 2).padEnd(width) +
+        "║",
       "╠" + "═".repeat(width) + "╣",
     ];
 
@@ -1361,7 +1373,10 @@ export class Middleware implements IMiddleware {
     const info = this.getPipelineInfo();
     const categories = Object.entries(info.byCategory)
       .filter(([, count]) => count > 0)
-      .map(([cat, count]) => `${CATEGORY_ICONS[cat as MiddlewareCategory]}${count}`)
+      .map(
+        ([cat, count]) =>
+          `${CATEGORY_ICONS[cat as MiddlewareCategory]}${count}`,
+      )
       .join(" ");
 
     return `Middleware: ${info.total} total | ${categories}`;
