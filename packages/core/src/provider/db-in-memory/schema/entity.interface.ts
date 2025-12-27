@@ -61,4 +61,3 @@ export interface ISoftDeleteEntity extends ITimestampedEntity {
   /** Timestamp when the record was soft deleted (null if not deleted) */
   deletedAt?: Date | null;
 }
-

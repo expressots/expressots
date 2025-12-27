@@ -3,7 +3,11 @@
  * @module db-in-memory/schema
  */
 
-export { IEntity, ITimestampedEntity, ISoftDeleteEntity } from "./entity.interface";
+export {
+  IEntity,
+  ITimestampedEntity,
+  ISoftDeleteEntity,
+} from "./entity.interface";
 
 export {
   Entity,
@@ -26,4 +30,3 @@ export {
   SchemaRegistry,
   DB_METADATA_KEYS,
 } from "./decorators";
-

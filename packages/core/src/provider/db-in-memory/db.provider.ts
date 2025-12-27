@@ -18,7 +18,11 @@ import {
 } from "../provider.interface";
 import { IBootstrap, IShutdown } from "../../lifecycle/lifecycle.interface";
 import { IEntity } from "./schema/entity.interface";
-import { InMemoryDatabase, InMemoryDatabaseOptions, InMemoryAdapter } from "./adapter";
+import {
+  InMemoryDatabase,
+  InMemoryDatabaseOptions,
+  InMemoryAdapter,
+} from "./adapter";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IN-MEMORY DATABASE PROVIDER
@@ -157,8 +161,10 @@ export class InMemoryDBProvider
     // Check if we need to reinitialize the database
     // (structural changes require a new database instance)
     const structuralChange =
-      config.timestamps !== undefined && config.timestamps !== previousConfig.timestamps ||
-      config.softDelete !== undefined && config.softDelete !== previousConfig.softDelete ||
+      (config.timestamps !== undefined &&
+        config.timestamps !== previousConfig.timestamps) ||
+      (config.softDelete !== undefined &&
+        config.softDelete !== previousConfig.softDelete) ||
       config.persist !== undefined;
 
     if (structuralChange) {
@@ -175,13 +181,17 @@ export class InMemoryDBProvider
         } catch {
           // If restore fails, start fresh (schema might have changed)
           if (this.config.logging) {
-            console.log("[InMemoryDB] Could not restore data after config change, starting fresh");
+            console.log(
+              "[InMemoryDB] Could not restore data after config change, starting fresh",
+            );
           }
         }
       }
 
       if (this.config.logging) {
-        console.log("[InMemoryDB] Database reinitialized with new configuration");
+        console.log(
+          "[InMemoryDB] Database reinitialized with new configuration",
+        );
       }
     }
 
@@ -216,7 +226,9 @@ export class InMemoryDBProvider
     }
 
     if (this.config.logging) {
-      console.log(`[InMemoryDB] Provider initialized at ${this.startTime.toISOString()}`);
+      console.log(
+        `[InMemoryDB] Provider initialized at ${this.startTime.toISOString()}`,
+      );
     }
   }
 
@@ -249,9 +261,7 @@ export class InMemoryDBProvider
       details: {
         tables: stats.tableCount,
         records: stats.totalRecords,
-        uptime: this.startTime
-          ? Date.now() - this.startTime.getTime()
-          : 0,
+        uptime: this.startTime ? Date.now() - this.startTime.getTime() : 0,
       },
     };
   }
@@ -349,9 +359,7 @@ export class InMemoryDBProvider
    * });
    * ```
    */
-  async transaction<R>(
-    fn: (db: InMemoryDatabase) => Promise<R>,
-  ): Promise<R> {
+  async transaction<R>(fn: (db: InMemoryDatabase) => Promise<R>): Promise<R> {
     return this.database.transaction(fn);
   }
 
@@ -448,15 +456,21 @@ export abstract class BaseRepository<T extends IEntity> {
 
   // Delegate all methods to the adapter
 
-  async findUnique(args: Parameters<InMemoryAdapter<T>["findUnique"]>[0]): Promise<T | null> {
+  async findUnique(
+    args: Parameters<InMemoryAdapter<T>["findUnique"]>[0],
+  ): Promise<T | null> {
     return this.adapter.findUnique(args);
   }
 
-  async findFirst(args?: Parameters<InMemoryAdapter<T>["findFirst"]>[0]): Promise<T | null> {
+  async findFirst(
+    args?: Parameters<InMemoryAdapter<T>["findFirst"]>[0],
+  ): Promise<T | null> {
     return this.adapter.findFirst(args);
   }
 
-  async findMany(args?: Parameters<InMemoryAdapter<T>["findMany"]>[0]): Promise<Array<T>> {
+  async findMany(
+    args?: Parameters<InMemoryAdapter<T>["findMany"]>[0],
+  ): Promise<Array<T>> {
     return this.adapter.findMany(args);
   }
 
@@ -464,7 +478,9 @@ export abstract class BaseRepository<T extends IEntity> {
     return this.adapter.create(args);
   }
 
-  async createMany(args: Parameters<InMemoryAdapter<T>["createMany"]>[0]): Promise<{ count: number }> {
+  async createMany(
+    args: Parameters<InMemoryAdapter<T>["createMany"]>[0],
+  ): Promise<{ count: number }> {
     return this.adapter.createMany(args);
   }
 
@@ -472,7 +488,9 @@ export abstract class BaseRepository<T extends IEntity> {
     return this.adapter.update(args);
   }
 
-  async updateMany(args: Parameters<InMemoryAdapter<T>["updateMany"]>[0]): Promise<{ count: number }> {
+  async updateMany(
+    args: Parameters<InMemoryAdapter<T>["updateMany"]>[0],
+  ): Promise<{ count: number }> {
     return this.adapter.updateMany(args);
   }
 
@@ -484,15 +502,21 @@ export abstract class BaseRepository<T extends IEntity> {
     return this.adapter.delete(args);
   }
 
-  async deleteMany(args?: Parameters<InMemoryAdapter<T>["deleteMany"]>[0]): Promise<{ count: number }> {
+  async deleteMany(
+    args?: Parameters<InMemoryAdapter<T>["deleteMany"]>[0],
+  ): Promise<{ count: number }> {
     return this.adapter.deleteMany(args);
   }
 
-  async count(args?: Parameters<InMemoryAdapter<T>["count"]>[0]): Promise<number> {
+  async count(
+    args?: Parameters<InMemoryAdapter<T>["count"]>[0],
+  ): Promise<number> {
     return this.adapter.count(args);
   }
 
-  async aggregate(args: Parameters<InMemoryAdapter<T>["aggregate"]>[0]): Promise<ReturnType<InMemoryAdapter<T>["aggregate"]>> {
+  async aggregate(
+    args: Parameters<InMemoryAdapter<T>["aggregate"]>[0],
+  ): Promise<ReturnType<InMemoryAdapter<T>["aggregate"]>> {
     return this.adapter.aggregate(args);
   }
 
@@ -500,4 +524,3 @@ export abstract class BaseRepository<T extends IEntity> {
     return this.adapter.transaction(fn as (tx: unknown) => Promise<R>);
   }
 }
-

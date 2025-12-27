@@ -8,10 +8,7 @@
 
 import { randomUUID } from "node:crypto";
 import { IEntity } from "../schema/entity.interface";
-import {
-  AutoGenerateStrategy,
-  SchemaRegistry,
-} from "../schema/decorators";
+import { AutoGenerateStrategy, SchemaRegistry } from "../schema/decorators";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INDEX MANAGER
@@ -391,9 +388,10 @@ export class MemoryStore<T extends IEntity> {
     ) as Record<string, AutoGenerateStrategy>;
 
     // Get default values
-    this.defaultValues = SchemaRegistry.getDefaults(
-      this.entityClass,
-    ) as Record<string, unknown>;
+    this.defaultValues = SchemaRegistry.getDefaults(this.entityClass) as Record<
+      string,
+      unknown
+    >;
 
     // Get entity metadata for timestamps/softDelete settings
     const entityMeta = SchemaRegistry.getMetadata(this.entityClass);
@@ -832,4 +830,3 @@ export class MemoryStore<T extends IEntity> {
     return this.toJSON().length * 2;
   }
 }
-

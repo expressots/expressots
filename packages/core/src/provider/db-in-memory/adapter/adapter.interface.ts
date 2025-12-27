@@ -156,7 +156,9 @@ export interface IDataAdapter<T extends IEntity> {
    * @param args - Group by arguments
    * @returns Array of grouped results
    */
-  groupBy(args: GroupByArgs<T>): Promise<Array<Partial<T> & AggregateResult<T>>>;
+  groupBy(
+    args: GroupByArgs<T>,
+  ): Promise<Array<Partial<T> & AggregateResult<T>>>;
 
   /**
    * Execute operations within a transaction.
@@ -265,4 +267,3 @@ export interface IReactiveDataAdapter<T extends IEntity>
     callback: (event: ChangeEvent<T>) => void,
   ): ISubscription;
 }
-

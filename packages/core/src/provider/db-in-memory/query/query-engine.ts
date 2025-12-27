@@ -316,10 +316,7 @@ export class QueryEngine<T extends IEntity> {
     );
   }
 
-  private matchesBooleanFilter(
-    value: boolean,
-    filter: BooleanFilter,
-  ): boolean {
+  private matchesBooleanFilter(value: boolean, filter: BooleanFilter): boolean {
     if (value === null || value === undefined) {
       return false;
     }
@@ -345,7 +342,16 @@ export class QueryEngine<T extends IEntity> {
 
   private isDateFilter(filter: Record<string, unknown>): boolean {
     const keys = Object.keys(filter);
-    const dateFilterKeys = ["equals", "not", "in", "notIn", "lt", "lte", "gt", "gte"];
+    const dateFilterKeys = [
+      "equals",
+      "not",
+      "in",
+      "notIn",
+      "lt",
+      "lte",
+      "gt",
+      "gte",
+    ];
     return keys.some(
       (key) =>
         dateFilterKeys.includes(key) &&
@@ -438,11 +444,7 @@ export class QueryEngine<T extends IEntity> {
     });
   }
 
-  private compareForSort(
-    a: unknown,
-    b: unknown,
-    direction: SortOrder,
-  ): number {
+  private compareForSort(a: unknown, b: unknown, direction: SortOrder): number {
     const multiplier = direction === "desc" ? -1 : 1;
 
     if (a === null || a === undefined) return 1 * multiplier;
@@ -474,7 +476,11 @@ export class QueryEngine<T extends IEntity> {
    * @param take - Number of entities to take
    * @returns Paginated entities
    */
-  executePagination(entities: Array<T>, skip?: number, take?: number): Array<T> {
+  executePagination(
+    entities: Array<T>,
+    skip?: number,
+    take?: number,
+  ): Array<T> {
     let result = entities;
 
     if (skip !== undefined && skip > 0) {
@@ -531,7 +537,10 @@ export class QueryEngine<T extends IEntity> {
    * @param select - Fields to select
    * @returns Projected entities
    */
-  executeSelect(entities: Array<T>, select?: SelectInput<T>): Array<Partial<T>> {
+  executeSelect(
+    entities: Array<T>,
+    select?: SelectInput<T>,
+  ): Array<Partial<T>> {
     if (!select) return entities;
 
     const selectedFields = Object.entries(select)
@@ -580,7 +589,9 @@ export class QueryEngine<T extends IEntity> {
             ).length;
           }
         }
-        result._count = countResult as Partial<Record<keyof T | "_all", number>>;
+        result._count = countResult as Partial<
+          Record<keyof T | "_all", number>
+        >;
       }
     }
 
@@ -677,4 +688,3 @@ export class QueryEngine<T extends IEntity> {
     return entities;
   }
 }
-

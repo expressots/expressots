@@ -80,9 +80,7 @@ export interface EntityMetadata {
  * ```
  * @public API
  */
-export function Entity(
-  options: EntityOptions | string = {},
-): ClassDecorator {
+export function Entity(options: EntityOptions | string = {}): ClassDecorator {
   return function (target: object) {
     const opts: EntityOptions =
       typeof options === "string" ? { name: options } : options;
@@ -98,7 +96,10 @@ export function Entity(
     Reflect.defineMetadata(DB_METADATA_KEYS.entity, metadata, target);
 
     // Register with schema registry
-    SchemaRegistry.register(target as new (...args: Array<unknown>) => unknown, metadata);
+    SchemaRegistry.register(
+      target as new (...args: Array<unknown>) => unknown,
+      metadata,
+    );
   };
 }
 
@@ -148,7 +149,9 @@ export type AutoGenerateStrategy = "uuid" | "cuid" | "increment" | "ulid";
  * ```
  * @public API
  */
-export function AutoGenerate(strategy: AutoGenerateStrategy): PropertyDecorator {
+export function AutoGenerate(
+  strategy: AutoGenerateStrategy,
+): PropertyDecorator {
   return function (target: object, propertyKey: string | symbol) {
     const existing =
       Reflect.getMetadata(DB_METADATA_KEYS.autoGenerate, target.constructor) ||
@@ -197,7 +200,11 @@ export function Index(options: IndexOptions = {}): PropertyDecorator {
       name: options.name || `idx_${String(propertyKey)}`,
       composite: options.composite,
     });
-    Reflect.defineMetadata(DB_METADATA_KEYS.index, existing, target.constructor);
+    Reflect.defineMetadata(
+      DB_METADATA_KEYS.index,
+      existing,
+      target.constructor,
+    );
   };
 }
 
@@ -441,7 +448,10 @@ export class SchemaRegistry {
     EntityMetadata
   >();
 
-  private static entityByName = new Map<string, new (...args: Array<unknown>) => unknown>();
+  private static entityByName = new Map<
+    string,
+    new (...args: Array<unknown>) => unknown
+  >();
 
   /**
    * Register an entity with the schema registry.
@@ -473,7 +483,9 @@ export class SchemaRegistry {
    * @returns Entity class or undefined
    * @public API
    */
-  static getByName(name: string): (new (...args: Array<unknown>) => unknown) | undefined {
+  static getByName(
+    name: string,
+  ): (new (...args: Array<unknown>) => unknown) | undefined {
     return this.entityByName.get(name);
   }
 
@@ -494,7 +506,11 @@ export class SchemaRegistry {
    */
   static getIndexes(
     target: new (...args: Array<unknown>) => unknown,
-  ): Array<{ field: string | symbol; name: string; composite?: Array<string> }> {
+  ): Array<{
+    field: string | symbol;
+    name: string;
+    composite?: Array<string>;
+  }> {
     return Reflect.getMetadata(DB_METADATA_KEYS.index, target) || [];
   }
 
@@ -555,4 +571,3 @@ export class SchemaRegistry {
     this.entityByName.clear();
   }
 }
-

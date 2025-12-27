@@ -352,11 +352,8 @@ export class InMemoryAdapter<T extends IEntity>
     }
 
     const entities = this.queryEngine.executeWhere(args.where);
-    return this.queryEngine.executePagination(
-      entities,
-      args.skip,
-      args.take,
-    ).length;
+    return this.queryEngine.executePagination(entities, args.skip, args.take)
+      .length;
   }
 
   async aggregate(args: AggregateArgs<T>): Promise<AggregateResult<T>> {
@@ -368,7 +365,11 @@ export class InMemoryAdapter<T extends IEntity>
   ): Promise<Array<Partial<T> & AggregateResult<T>>> {
     let entities = this.queryEngine.executeWhere(args.where);
     entities = this.queryEngine.executeOrderBy(entities, args.orderBy);
-    entities = this.queryEngine.executePagination(entities, args.skip, args.take);
+    entities = this.queryEngine.executePagination(
+      entities,
+      args.skip,
+      args.take,
+    );
 
     // Group by specified fields
     const groups = new Map<string, Array<T>>();
@@ -411,7 +412,9 @@ export class InMemoryAdapter<T extends IEntity>
         if (args._count === true) {
           groupAggregates._count = groupEntities.length;
         } else {
-          groupAggregates._count = { _all: groupEntities.length } as Partial<Record<keyof T | "_all", number>>;
+          groupAggregates._count = { _all: groupEntities.length } as Partial<
+            Record<keyof T | "_all", number>
+          >;
         }
       }
 
@@ -484,7 +487,11 @@ export class InMemoryAdapter<T extends IEntity>
       const relation = relations.find((r) => String(r.field) === field);
       if (!relation) continue;
 
-      const relatedData = await this.resolveRelation(entity, relation, includeConfig);
+      const relatedData = await this.resolveRelation(
+        entity,
+        relation,
+        includeConfig,
+      );
       (result as Record<string, unknown>)[field] = relatedData;
     }
 
@@ -511,7 +518,9 @@ export class InMemoryAdapter<T extends IEntity>
       case "hasMany": {
         const foreignKeyValue = entity.id;
         return relatedAdapter.findMany({
-          where: { [relation.foreignKey]: foreignKeyValue } as WhereInput<IEntity>,
+          where: {
+            [relation.foreignKey]: foreignKeyValue,
+          } as WhereInput<IEntity>,
           ...(typeof includeConfig === "object" ? includeConfig : {}),
         });
       }
@@ -519,7 +528,9 @@ export class InMemoryAdapter<T extends IEntity>
       case "hasOne": {
         const foreignKeyValue = entity.id;
         return relatedAdapter.findFirst({
-          where: { [relation.foreignKey]: foreignKeyValue } as WhereInput<IEntity>,
+          where: {
+            [relation.foreignKey]: foreignKeyValue,
+          } as WhereInput<IEntity>,
         });
       }
 
@@ -747,12 +758,12 @@ export class InMemoryDatabase {
    * @param fn - Transaction function
    * @returns Result of the transaction function
    */
-  async transaction<R>(
-    fn: (db: InMemoryDatabase) => Promise<R>,
-  ): Promise<R> {
+  async transaction<R>(fn: (db: InMemoryDatabase) => Promise<R>): Promise<R> {
     // Begin transaction on all tables
     for (const adapter of this.tables.values()) {
-      (adapter as unknown as { store: { beginTransaction: () => void } }).store.beginTransaction();
+      (
+        adapter as unknown as { store: { beginTransaction: () => void } }
+      ).store.beginTransaction();
     }
 
     try {
@@ -760,7 +771,9 @@ export class InMemoryDatabase {
 
       // Commit all
       for (const adapter of this.tables.values()) {
-        (adapter as unknown as { store: { commitTransaction: () => void } }).store.commitTransaction();
+        (
+          adapter as unknown as { store: { commitTransaction: () => void } }
+        ).store.commitTransaction();
       }
 
       return result;
@@ -768,7 +781,9 @@ export class InMemoryDatabase {
       // Rollback all
       for (const adapter of this.tables.values()) {
         try {
-          (adapter as unknown as { store: { rollbackTransaction: () => void } }).store.rollbackTransaction();
+          (
+            adapter as unknown as { store: { rollbackTransaction: () => void } }
+          ).store.rollbackTransaction();
         } catch {
           // Ignore rollback errors
         }
@@ -899,4 +914,3 @@ export class InMemoryDatabase {
     return fs.readFileSync(path, "utf-8");
   }
 }
-
