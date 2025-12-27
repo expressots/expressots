@@ -12,7 +12,7 @@ interface ITenantService {
 }
 
 // Tenant-scoped service
-provideInScope(ITenantService, "tenant")
+provideInScope(ITenantService, "tenant");
 export class TenantService implements ITenantService {
   constructor(private tenantId: string) {
     this.tenantId = tenantId;
@@ -40,4 +40,3 @@ if (require.main === module) {
 }
 
 export { runExample, TenantService };
-

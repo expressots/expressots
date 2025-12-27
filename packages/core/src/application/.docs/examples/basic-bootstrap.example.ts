@@ -5,8 +5,8 @@
  * @test-coverage 95%
  */
 
-import { bootstrap } from '../../bootstrap';
-import { AppExpress } from '@expressots/adapter-express';
+import { bootstrap } from "../../bootstrap";
+import { AppExpress } from "@expressots/adapter-express";
 
 // Example application class - users can copy-paste this pattern
 class BasicApp extends AppExpress {
@@ -19,19 +19,19 @@ class BasicApp extends AppExpress {
  * Self-documenting example with assertions
  */
 async function runExample() {
-  console.log('📘 Example: Basic Bootstrap');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("📘 Example: Basic Bootstrap");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   // ✅ Simplest usage - zero config
   const app = await bootstrap(BasicApp);
-  
+
   // Assertions demonstrate expected behavior
-  console.assert(app.port === 3000, 'Port should default to 3000');
-  console.assert(app.listening === true, 'App should be listening');
-  
+  console.assert(app.port === 3000, "Port should default to 3000");
+  console.assert(app.listening === true, "App should be listening");
+
   console.log(`✅ App started successfully on port ${app.port}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   // Cleanup
   await app.close();
 }
@@ -42,4 +42,3 @@ if (require.main === module) {
 }
 
 export { runExample, BasicApp };
-

@@ -26,9 +26,7 @@ export function runExample() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   const module = CreateModule([UserController], (bind) => {
-    bind<ILogger>("ILogger")
-      .to(ConsoleLogger)
-      .inSingletonScope();
+    bind<ILogger>("ILogger").to(ConsoleLogger).inSingletonScope();
   });
 
   console.log("✅ Module created with custom bindings");
@@ -42,4 +40,3 @@ if (require.main === module) {
 }
 
 export { runExample, UserController, ILogger, ConsoleLogger };
-

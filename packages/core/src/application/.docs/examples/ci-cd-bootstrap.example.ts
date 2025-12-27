@@ -4,8 +4,8 @@
  * @runnable true
  */
 
-import { bootstrap } from '../../bootstrap';
-import { AppExpress } from '@expressots/adapter-express';
+import { bootstrap } from "../../bootstrap";
+import { AppExpress } from "@expressots/adapter-express";
 
 class ContainerizedApp extends AppExpress {
   protected configureServices(): void {
@@ -21,32 +21,32 @@ class ContainerizedApp extends AppExpress {
  * - CI/CD: Platform secrets
  */
 async function runExample() {
-  console.log('📘 Example: CI/CD Bootstrap');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("📘 Example: CI/CD Bootstrap");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   // Pattern 1: Explicit skip (recommended for clarity)
   const app1 = await bootstrap(ContainerizedApp, {
     envFileConfig: {
-      skipFileLoading: true,  // Use process.env only
-      required: ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET']
-    }
+      skipFileLoading: true, // Use process.env only
+      required: ["DATABASE_URL", "REDIS_URL", "JWT_SECRET"],
+    },
   });
-  
+
   console.log(`✅ Containerized app started on port ${app1.port}`);
-  console.log('   Using environment variables from process.env');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("   Using environment variables from process.env");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   await app1.close();
-  
+
   // Pattern 2: CI mode (auto-detected, but can be explicit)
   // The framework auto-detects CI environments, but you can be explicit:
   const app2 = await bootstrap(ContainerizedApp, {
     envFileConfig: {
-      ciMode: true,  // Explicit CI mode
-      required: ['DATABASE_URL']
-    }
+      ciMode: true, // Explicit CI mode
+      required: ["DATABASE_URL"],
+    },
   });
-  
+
   console.log(`✅ CI/CD app started on port ${app2.port}`);
   await app2.close();
 }
@@ -56,4 +56,3 @@ if (require.main === module) {
 }
 
 export { runExample, ContainerizedApp };
-

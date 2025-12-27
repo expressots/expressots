@@ -29,4 +29,3 @@ if (require.main === module) {
 }
 
 export { runExample, UserController, AuthController };
-

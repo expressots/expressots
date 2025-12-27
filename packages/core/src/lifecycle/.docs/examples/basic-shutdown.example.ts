@@ -20,7 +20,7 @@ export class DatabaseService implements IShutdown {
   async shutdown(signal?: NodeJS.Signals): Promise<void> {
     console.log(`DatabaseService: Shutting down (signal: ${signal})...`);
     // Simulate closing connections
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     this.connections = 0;
     console.log("DatabaseService: Shut down!");
   }
@@ -33,8 +33,8 @@ export class CacheService implements IShutdown {
 
   async shutdown(signal?: NodeJS.Signals): Promise<void> {
     console.log(`CacheService: Shutting down (signal: ${signal})...`);
-    
-    if (signal === 'SIGTERM') {
+
+    if (signal === "SIGTERM") {
       // Graceful shutdown - flush cache
       console.log("CacheService: Flushing cache...");
       await this.flushCache();
@@ -42,19 +42,19 @@ export class CacheService implements IShutdown {
       // Immediate shutdown - just close
       console.log("CacheService: Immediate shutdown");
     }
-    
+
     await this.disconnect();
     console.log("CacheService: Shut down!");
   }
 
   private async flushCache(): Promise<void> {
     // Simulate flushing cache to disk
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     this.cache.clear();
   }
 
   private async disconnect(): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 }
 
@@ -65,19 +65,19 @@ export class FileService implements IShutdown {
 
   async shutdown(signal?: NodeJS.Signals): Promise<void> {
     console.log(`FileService: Shutting down (signal: ${signal})...`);
-    
+
     // Close all file handles
     await Promise.all(
-      this.fileHandles.map(handle => this.closeHandle(handle.id))
+      this.fileHandles.map((handle) => this.closeHandle(handle.id)),
     );
-    
+
     this.fileHandles = [];
     console.log("FileService: All handles closed!");
   }
 
   private async closeHandle(id: number): Promise<void> {
     // Simulate closing file handle
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 
   openFile(name: string): number {
@@ -103,8 +103,8 @@ export class ExternalService implements IShutdown {
 
   private async cleanup(): Promise<void> {
     // Simulate cleanup
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // Simulate potential failure
     if (Math.random() > 0.5) {
       throw new Error("Cleanup failed");
@@ -117,23 +117,23 @@ export class ExternalService implements IShutdown {
 export class NetworkService implements IShutdown {
   async shutdown(signal?: NodeJS.Signals): Promise<void> {
     console.log(`NetworkService: Shutting down (signal: ${signal})...`);
-    
+
     // Shutdown with timeout
     await Promise.race([
       this.disconnect(),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), 1000)
-      )
-    ]).catch(error => {
+        setTimeout(() => reject(new Error("Timeout")), 1000),
+      ),
+    ]).catch((error) => {
       console.error("NetworkService: Shutdown timeout:", error);
     });
-    
+
     console.log("NetworkService: Shut down!");
   }
 
   private async disconnect(): Promise<void> {
     // Simulate slow disconnection
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 }
 
@@ -153,6 +153,5 @@ export {
   CacheService,
   FileService,
   ExternalService,
-  NetworkService
+  NetworkService,
 };
-

@@ -4,8 +4,8 @@
  * @runnable true
  */
 
-import { AppFactory } from '../../application-factory';
-import { AppExpress } from '@expressots/adapter-express';
+import { AppFactory } from "../../application-factory";
+import { AppExpress } from "@expressots/adapter-express";
 
 class ExampleApp extends AppExpress {
   protected configureServices(): void {
@@ -15,20 +15,20 @@ class ExampleApp extends AppExpress {
 
 /**
  * Example: Direct AppFactory usage
- * 
+ *
  * Note: Typically you should use bootstrap() instead.
  * This example shows direct usage for advanced scenarios.
  */
 async function runExample() {
-  console.log('📘 Example: AppFactory Direct Usage');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("📘 Example: AppFactory Direct Usage");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   // Create app instance
   const app = await AppFactory.create(ExampleApp);
-  
-  console.log('✅ App instance created successfully');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+
+  console.log("✅ App instance created successfully");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   // Note: You would typically call app.listen() here
   // but for this example we'll just demonstrate creation
 }
@@ -38,4 +38,3 @@ if (require.main === module) {
 }
 
 export { runExample, ExampleApp };
-

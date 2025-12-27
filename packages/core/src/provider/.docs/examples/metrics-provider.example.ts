@@ -14,7 +14,7 @@ import {
   IProvider,
   IMetrics,
   ProviderMetrics,
-  provideSingleton
+  provideSingleton,
 } from "../index";
 
 // Example 1: Connection pool provider with metrics
@@ -24,12 +24,12 @@ export class ConnectionPoolProvider implements IProvider, IMetrics {
   private pool = {
     activeConnections: 5,
     idleConnections: 10,
-    totalConnections: 15
+    totalConnections: 15,
   };
   private stats = {
     totalQueries: 1000,
     failedQueries: 5,
-    averageQueryTime: 25
+    averageQueryTime: 25,
   };
 
   getMetrics(): ProviderMetrics {
@@ -39,10 +39,12 @@ export class ConnectionPoolProvider implements IProvider, IMetrics {
       "pool.total": this.pool.totalConnections,
       "queries.total": this.stats.totalQueries,
       "queries.failed": this.stats.failedQueries,
-      "queries.success.rate": 
-        ((this.stats.totalQueries - this.stats.failedQueries) / 
-         this.stats.totalQueries * 100).toFixed(2),
-      "avg.query.time": this.stats.averageQueryTime
+      "queries.success.rate": (
+        ((this.stats.totalQueries - this.stats.failedQueries) /
+          this.stats.totalQueries) *
+        100
+      ).toFixed(2),
+      "avg.query.time": this.stats.averageQueryTime,
     };
   }
 }
@@ -54,18 +56,18 @@ export class CacheProvider implements IProvider, IMetrics {
   private stats = {
     hits: 950,
     misses: 50,
-    size: 1000
+    size: 1000,
   };
 
   getMetrics(): ProviderMetrics {
     const hitRate = this.stats.hits / (this.stats.hits + this.stats.misses);
-    
+
     return {
       "cache.hits": this.stats.hits,
       "cache.misses": this.stats.misses,
       "cache.size": this.stats.size,
       "cache.hit.rate": (hitRate * 100).toFixed(2),
-      "cache.miss.rate": ((1 - hitRate) * 100).toFixed(2)
+      "cache.miss.rate": ((1 - hitRate) * 100).toFixed(2),
     };
   }
 }
@@ -78,7 +80,7 @@ export class QueueProvider implements IProvider, IMetrics {
     pending: 10,
     processing: 5,
     completed: 1000,
-    failed: 2
+    failed: 2,
   };
 
   getMetrics(): ProviderMetrics {
@@ -87,14 +89,15 @@ export class QueueProvider implements IProvider, IMetrics {
       "queue.processing": this.queue.processing,
       "queue.completed": this.queue.completed,
       "queue.failed": this.queue.failed,
-      "queue.total": 
-        this.queue.pending + 
-        this.queue.processing + 
-        this.queue.completed + 
+      "queue.total":
+        this.queue.pending +
+        this.queue.processing +
+        this.queue.completed +
         this.queue.failed,
-      "queue.success.rate": 
-        (this.queue.completed / 
-         (this.queue.completed + this.queue.failed) * 100).toFixed(2)
+      "queue.success.rate": (
+        (this.queue.completed / (this.queue.completed + this.queue.failed)) *
+        100
+      ).toFixed(2),
     };
   }
 }
@@ -108,9 +111,4 @@ if (require.main === module) {
   console.log("3. QueueProvider - Queue metrics");
 }
 
-export {
-  ConnectionPoolProvider,
-  CacheProvider,
-  QueueProvider
-};
-
+export { ConnectionPoolProvider, CacheProvider, QueueProvider };

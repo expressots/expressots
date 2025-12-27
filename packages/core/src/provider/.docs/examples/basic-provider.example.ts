@@ -45,9 +45,4 @@ if (require.main === module) {
   console.log("3. ConfigProvider - Partial metadata");
 }
 
-export {
-  DatabaseProvider,
-  SimpleProvider,
-  ConfigProvider
-};
-
+export { DatabaseProvider, SimpleProvider, ConfigProvider };

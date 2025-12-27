@@ -14,7 +14,11 @@ import { ExpressoMiddleware } from "../index";
 import { Request, Response, NextFunction } from "express";
 
 // Example 1: Simple Express handler
-export function simpleMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function simpleMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   console.log(`Request to ${req.path}`);
   req.timestamp = new Date();
   next();
@@ -61,7 +65,7 @@ export class RequestIdMiddleware extends ExpressoMiddleware {
 export class AsyncMiddleware extends ExpressoMiddleware {
   async use(req: Request, res: Response, next: NextFunction): Promise<void> {
     // Simulate async operation
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     req.asyncData = "loaded";
     next();
@@ -83,6 +87,5 @@ export {
   LoggingMiddleware,
   AuthMiddleware,
   RequestIdMiddleware,
-  AsyncMiddleware
+  AsyncMiddleware,
 };
-

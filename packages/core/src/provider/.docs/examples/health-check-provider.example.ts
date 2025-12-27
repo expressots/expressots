@@ -14,7 +14,7 @@ import {
   IProvider,
   IHealthCheck,
   HealthCheckResult,
-  provideSingleton
+  provideSingleton,
 } from "../index";
 
 // Example 1: Database provider with health check
@@ -26,24 +26,24 @@ export class DatabaseProvider implements IProvider, IHealthCheck {
 
   async healthCheck(): Promise<HealthCheckResult> {
     const start = Date.now();
-    
+
     try {
       // Simulate database ping
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       return {
         status: this.connected ? "healthy" : "unhealthy",
         latency: Date.now() - start,
         details: {
           connections: this.connectionCount,
-          connected: this.connected
-        }
+          connected: this.connected,
+        },
       };
     } catch (error) {
       return {
         status: "unhealthy",
         latency: Date.now() - start,
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -57,11 +57,11 @@ export class CacheProvider implements IProvider, IHealthCheck {
 
   async healthCheck(): Promise<HealthCheckResult> {
     const start = Date.now();
-    
+
     // Simulate cache ping
-    await new Promise(resolve => setTimeout(resolve, this.responseTime));
+    await new Promise((resolve) => setTimeout(resolve, this.responseTime));
     const latency = Date.now() - start;
-    
+
     // Degraded if response time is high
     let status: "healthy" | "degraded" | "unhealthy" = "healthy";
     if (latency > 200) {
@@ -69,15 +69,15 @@ export class CacheProvider implements IProvider, IHealthCheck {
     } else if (latency > 500) {
       status = "unhealthy";
     }
-    
+
     return {
       status,
       latency,
       message: latency > 200 ? "High response time detected" : undefined,
       details: {
         responseTime: latency,
-        threshold: 200
-      }
+        threshold: 200,
+      },
     };
   }
 }
@@ -90,32 +90,32 @@ export class ExternalServiceProvider implements IProvider, IHealthCheck {
 
   async healthCheck(): Promise<HealthCheckResult> {
     const start = Date.now();
-    
+
     try {
       // Simulate external service check
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       if (!this.isAvailable) {
         return {
           status: "unhealthy",
           latency: Date.now() - start,
-          message: "External service unavailable"
+          message: "External service unavailable",
         };
       }
-      
+
       return {
         status: "healthy",
         latency: Date.now() - start,
         details: {
           service: "external-api",
-          version: "1.0.0"
-        }
+          version: "1.0.0",
+        },
       };
     } catch (error) {
       return {
         status: "unhealthy",
         latency: Date.now() - start,
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -130,9 +130,4 @@ if (require.main === module) {
   console.log("3. ExternalServiceProvider - External service check");
 }
 
-export {
-  DatabaseProvider,
-  CacheProvider,
-  ExternalServiceProvider
-};
-
+export { DatabaseProvider, CacheProvider, ExternalServiceProvider };

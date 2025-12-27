@@ -47,7 +47,7 @@ function example3() {
     throw new AppError("Invalid input", StatusCode.BadRequest, "UserService", {
       errorCode: "INVALID_INPUT",
       details: { field: "email", value: "invalid-email" },
-      requestId: "req-123"
+      requestId: "req-123",
     });
   } catch (error) {
     if (error instanceof AppError) {
@@ -67,7 +67,7 @@ function example4() {
   try {
     throw AppError.validationFailed([
       { property: "email", messages: ["Invalid email format"] },
-      { property: "age", messages: ["Must be 18 or older"], value: 15 }
+      { property: "age", messages: ["Must be 18 or older"], value: 15 },
     ]);
   } catch (error) {
     if (error instanceof AppError) {
@@ -87,4 +87,3 @@ if (require.main === module) {
 }
 
 export { example1, example2, example3, example4 };
-

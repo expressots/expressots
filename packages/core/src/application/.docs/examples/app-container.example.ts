@@ -4,17 +4,17 @@
  * @runnable true
  */
 
-import { AppContainer } from '../../application-container';
-import { ContainerModule, BindingScopeEnum } from 'inversify';
+import { AppContainer } from "../../application-container";
+import { ContainerModule, BindingScopeEnum } from "inversify";
 
 // Example module
 class ExampleModule extends ContainerModule {
   constructor() {
     super((bind) => {
       // Example binding
-      bind('ExampleService').toConstantValue({
-        name: 'Example Service',
-        version: '1.0.0'
+      bind("ExampleService").toConstantValue({
+        name: "Example Service",
+        version: "1.0.0",
       });
     });
   }
@@ -24,40 +24,40 @@ class ExampleModule extends ContainerModule {
  * Example: Basic container setup
  */
 async function runExample() {
-  console.log('📘 Example: AppContainer Basic Usage');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("📘 Example: AppContainer Basic Usage");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   // Create container with default options
   const container = new AppContainer();
-  
+
   // Create and load modules
   container.create([new ExampleModule()]);
-  
-  console.log('✅ Container created and modules loaded');
-  
+
+  console.log("✅ Container created and modules loaded");
+
   // View bindings (for demonstration)
-  console.log('\n📊 Container Bindings:');
+  console.log("\n📊 Container Bindings:");
   container.viewContainerBindings();
-  
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }
 
 /**
  * Example: Container with custom scope
  */
 async function runSingletonExample() {
-  console.log('\n📘 Example: AppContainer with Singleton Scope');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
+  console.log("\n📘 Example: AppContainer with Singleton Scope");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   const container = new AppContainer({
-    defaultScope: BindingScopeEnum.Singleton
+    defaultScope: BindingScopeEnum.Singleton,
   });
-  
+
   container.create([new ExampleModule()]);
-  
+
   const options = container.getContainerOptions();
   console.log(`✅ Container created with scope: ${options.defaultScope}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }
 
 if (require.main === module) {
@@ -67,4 +67,3 @@ if (require.main === module) {
 }
 
 export { runExample, runSingletonExample, ExampleModule };
-

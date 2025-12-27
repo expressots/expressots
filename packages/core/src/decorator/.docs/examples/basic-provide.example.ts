@@ -4,7 +4,11 @@
  * @runnable true
  */
 
-import { provide, provideSingleton, provideTransient } from "../../scope-binding";
+import {
+  provide,
+  provideSingleton,
+  provideTransient,
+} from "../../scope-binding";
 
 // Service interfaces
 interface IUserService {
@@ -20,7 +24,7 @@ interface IPrototype {
 }
 
 // Request-scoped service
-provide(IUserService)
+provide(IUserService);
 export class UserService implements IUserService {
   getUsers(): string[] {
     return ["user1", "user2"];
@@ -28,7 +32,7 @@ export class UserService implements IUserService {
 }
 
 // Singleton-scoped service
-provideSingleton(ICache)
+provideSingleton(ICache);
 export class CacheService implements ICache {
   private cache = new Map<string, string>();
 
@@ -38,7 +42,7 @@ export class CacheService implements ICache {
 }
 
 // Transient-scoped service
-provideTransient(IPrototype)
+provideTransient(IPrototype);
 export class PrototypeService implements IPrototype {
   id = Math.random();
 }
@@ -61,4 +65,3 @@ if (require.main === module) {
 }
 
 export { runExample, UserService, CacheService, PrototypeService };
-

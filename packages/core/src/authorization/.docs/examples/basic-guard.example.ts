@@ -4,7 +4,12 @@
  * @runnable true
  */
 
-import { Guard, IGuard, GuardContext, GuardResult } from "../../guard.interface";
+import {
+  Guard,
+  IGuard,
+  GuardContext,
+  GuardResult,
+} from "../../guard.interface";
 
 /**
  * Simple guard that always allows access
@@ -32,4 +37,3 @@ if (require.main === module) {
 }
 
 export { runExample, BasicGuard };
-

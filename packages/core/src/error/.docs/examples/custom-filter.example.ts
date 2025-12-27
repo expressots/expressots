@@ -15,7 +15,7 @@ import {
   BaseExceptionFilter,
   ExceptionContext,
   AppError,
-  StatusCode
+  StatusCode,
 } from "../index";
 
 // Example 1: Basic custom filter
@@ -36,7 +36,7 @@ export class DatabaseError extends AppError {
   constructor(message: string, query?: string) {
     super(message, StatusCode.InternalServerError, "DatabaseService", {
       errorCode: "DATABASE_ERROR",
-      details: { query }
+      details: { query },
     });
   }
 }
@@ -52,7 +52,7 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
       error: "Database operation failed",
       message: exception.message,
       retryable: true,
-      details: exception.details
+      details: exception.details,
     });
   }
 }
@@ -65,12 +65,16 @@ export class AsyncErrorFilter extends BaseExceptionFilter {
     await this.sendToErrorTracking(exception);
 
     this.logError(exception, context);
-    this.sendErrorResponse(context, exception.statusCode, exception.toProblemDetails());
+    this.sendErrorResponse(
+      context,
+      exception.statusCode,
+      exception.toProblemDetails(),
+    );
   }
 
   private async sendToErrorTracking(error: AppError): Promise<void> {
     // Simulate async operation
-    return new Promise(resolve => setTimeout(resolve, 10));
+    return new Promise((resolve) => setTimeout(resolve, 10));
   }
 }
 
@@ -79,12 +83,17 @@ export class AsyncErrorFilter extends BaseExceptionFilter {
 export class ErrorTransformerFilter extends BaseExceptionFilter {
   catch(exception: Error, context: ExceptionContext): void {
     // Transform to AppError if needed
-    const appError = exception instanceof AppError
-      ? exception
-      : new AppError(exception.message, StatusCode.InternalServerError);
+    const appError =
+      exception instanceof AppError
+        ? exception
+        : new AppError(exception.message, StatusCode.InternalServerError);
 
     this.logError(appError, context);
-    this.sendErrorResponse(context, appError.statusCode, appError.toProblemDetails());
+    this.sendErrorResponse(
+      context,
+      appError.statusCode,
+      appError.toProblemDetails(),
+    );
   }
 }
 
@@ -101,7 +110,11 @@ export class CorrelationErrorFilter extends BaseExceptionFilter {
     }
 
     this.logError(exception, context);
-    this.sendErrorResponse(context, exception.statusCode, exception.toProblemDetails());
+    this.sendErrorResponse(
+      context,
+      exception.statusCode,
+      exception.toProblemDetails(),
+    );
   }
 }
 
@@ -126,6 +139,5 @@ export {
   DatabaseErrorFilter,
   AsyncErrorFilter,
   ErrorTransformerFilter,
-  CorrelationErrorFilter
+  CorrelationErrorFilter,
 };
-

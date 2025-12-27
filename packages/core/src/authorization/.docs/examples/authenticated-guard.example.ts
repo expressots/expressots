@@ -4,7 +4,12 @@
  * @runnable true
  */
 
-import { Guard, IGuard, GuardContext, GuardResult } from "../../guard.interface";
+import {
+  Guard,
+  IGuard,
+  GuardContext,
+  GuardResult,
+} from "../../guard.interface";
 import { AppError } from "../../../error/app-error";
 
 /**
@@ -14,13 +19,11 @@ import { AppError } from "../../../error/app-error";
 export class AuthenticatedGuard implements IGuard {
   async canActivate(context: GuardContext): Promise<GuardResult> {
     const isAuthenticated = await context.principal.isAuthenticated();
-    
+
     if (!isAuthenticated) {
-      return GuardResult.deny(
-        AppError.unauthorized("Authentication required")
-      );
+      return GuardResult.deny(AppError.unauthorized("Authentication required"));
     }
-    
+
     return GuardResult.allow();
   }
 }
@@ -41,4 +44,3 @@ if (require.main === module) {
 }
 
 export { runExample, AuthenticatedGuard };
-
