@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Server as HTTPServer } from "http";
 import { IConsoleMessage } from "./console.interface";
-import { Environment, IEnvironment } from "./environment.interface";
 import { RenderEngine } from "./render/render.types";
 
 /**
@@ -14,8 +13,6 @@ export namespace Server {
    * Interface for the WebServer application implementation.
    */
   export interface IWebServer {
-    initEnvironment(environment: Environment, options?: IEnvironment): Promise<void>;
-
     listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic>;
 
     setEngine<T extends RenderEngine.EngineOptions>(

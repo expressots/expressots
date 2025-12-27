@@ -5,4 +5,5 @@
 export interface IConsoleMessage {
   appName: string;
   appVersion: string;
+  apiVersions?: Array<string>; // Optional array of API versions detected from @Version() decorators
 }
