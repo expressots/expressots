@@ -97,6 +97,39 @@ type MiddlewareConfig = {
 };
 
 /**
+ * Middleware category for banner display and organization.
+ * @public API
+ */
+export type MiddlewareCategory =
+  | "parser"
+  | "security"
+  | "logging"
+  | "validation"
+  | "error"
+  | "session"
+  | "static"
+  | "other";
+
+/**
+ * Enhanced middleware entry with metadata for introspection.
+ * @public API
+ */
+export interface MiddlewareEntry {
+  /** Display name of the middleware */
+  name: string;
+  /** Whether this is a built-in or custom middleware */
+  type: "built-in" | "custom";
+  /** Category for organization */
+  category: MiddlewareCategory;
+  /** Order in the pipeline (0-based) */
+  order: number;
+  /** Route path (or "Global" for global middleware) */
+  path: string;
+  /** The actual middleware */
+  middleware: ExpressHandler | MiddlewareConfig | IExpressoMiddleware;
+}
+
+/**
  * MiddlewarePipeline Interface
  *
  * The MiddlewarePipeline interface represents the metadata and actual middleware to be executed in a middleware pipeline.
@@ -106,6 +139,25 @@ type MiddlewareConfig = {
 interface MiddlewarePipeline {
   timestamp: Date;
   middleware: ExpressHandler | MiddlewareConfig | IExpressoMiddleware;
+  /** Middleware name for lookup */
+  name?: string;
+  /** Middleware category */
+  category?: MiddlewareCategory;
+  /** Whether this is built-in */
+  isBuiltIn?: boolean;
+}
+
+/**
+ * Middleware pipeline info for banner display.
+ * @public API
+ */
+export interface MiddlewarePipelineInfo {
+  /** Total middleware count */
+  total: number;
+  /** Middleware entries */
+  entries: Array<MiddlewareEntry>;
+  /** Middleware count by category */
+  byCategory: Record<MiddlewareCategory, number>;
 }
 
 /**
@@ -121,6 +173,33 @@ enum MiddlewareType {
   ExpressHandler,
   IExpressoMiddleware,
 }
+
+/**
+ * Mapping of known middleware names to categories.
+ */
+const MIDDLEWARE_CATEGORIES: Record<string, MiddlewareCategory> = {
+  // Parsers
+  jsonParser: "parser",
+  urlencodedParser: "parser",
+  bodyParser: "parser",
+  cookieParser: "parser",
+  // Security
+  cors: "security",
+  helmet: "security",
+  rateLimit: "security",
+  // Session
+  session: "session",
+  cookieSession: "session",
+  // Logging
+  morgan: "logging",
+  RequestLoggingMiddleware: "logging",
+  // Static
+  serveStatic: "static",
+  serveFavicon: "static",
+  // Compression/Other
+  compression: "other",
+  multer: "other",
+};
 
 /**
  * Singleton class that implements the IConfigure interface.
@@ -785,5 +864,197 @@ export class Middleware implements IMiddleware {
    */
   public getValidationService(): unknown {
     return this.validationServiceFactory?.();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTROSPECTION METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get the display name of a middleware.
+   * @param m - The middleware pipeline entry
+   * @returns The middleware name
+   * @private
+   */
+  private getMiddlewareName(m: MiddlewarePipeline): string {
+    if (m.name) {
+      return m.name;
+    }
+
+    const middlewareType = this.getMiddlewareType(m.middleware);
+
+    if (middlewareType === MiddlewareType.Config) {
+      const config = m.middleware as MiddlewareConfig;
+      return config.path || "ConfigMiddleware";
+    } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
+      return (m.middleware as IExpressoMiddleware).constructor.name;
+    } else {
+      return (m.middleware as ExpressHandler)?.name || "Anonymous";
+    }
+  }
+
+  /**
+   * Get the category of a middleware.
+   * @param name - The middleware name
+   * @param isBuiltIn - Whether it's built-in
+   * @returns The middleware category
+   * @private
+   */
+  private getMiddlewareCategory(
+    name: string,
+    // Parameter reserved for future use (built-in middleware differentiation)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _isBuiltIn?: boolean,
+  ): MiddlewareCategory {
+    // Check known categories
+    if (MIDDLEWARE_CATEGORIES[name]) {
+      return MIDDLEWARE_CATEGORIES[name];
+    }
+
+    // Try to infer from name
+    const lowerName = name.toLowerCase();
+    if (
+      lowerName.includes("parser") ||
+      lowerName.includes("body") ||
+      lowerName.includes("json")
+    ) {
+      return "parser";
+    }
+    if (
+      lowerName.includes("cors") ||
+      lowerName.includes("helmet") ||
+      lowerName.includes("auth") ||
+      lowerName.includes("security")
+    ) {
+      return "security";
+    }
+    if (
+      lowerName.includes("log") ||
+      lowerName.includes("morgan") ||
+      lowerName.includes("request")
+    ) {
+      return "logging";
+    }
+    if (lowerName.includes("valid")) {
+      return "validation";
+    }
+    if (lowerName.includes("error") || lowerName.includes("handler")) {
+      return "error";
+    }
+    if (lowerName.includes("session") || lowerName.includes("cookie")) {
+      return "session";
+    }
+    if (lowerName.includes("static") || lowerName.includes("favicon")) {
+      return "static";
+    }
+
+    return "other";
+  }
+
+  /**
+   * Get the path for a middleware.
+   * @param m - The middleware pipeline entry
+   * @returns The path or "Global"
+   * @private
+   */
+  private getMiddlewarePath(m: MiddlewarePipeline): string {
+    const middlewareType = this.getMiddlewareType(m.middleware);
+    if (middlewareType === MiddlewareType.Config) {
+      return (m.middleware as MiddlewareConfig).path || "Global";
+    }
+    return "Global";
+  }
+
+  /**
+   * Get structured pipeline info for banner display and introspection.
+   * @returns Middleware pipeline information
+   * @public API
+   */
+  public getPipelineInfo(): MiddlewarePipelineInfo {
+    const sorted = this.getMiddlewarePipeline();
+    const entries: Array<MiddlewareEntry> = [];
+    const byCategory: Record<MiddlewareCategory, number> = {
+      parser: 0,
+      security: 0,
+      logging: 0,
+      validation: 0,
+      error: 0,
+      session: 0,
+      static: 0,
+      other: 0,
+    };
+
+    sorted.forEach((m, index) => {
+      const name = this.getMiddlewareName(m);
+      const category =
+        m.category || this.getMiddlewareCategory(name, m.isBuiltIn);
+      const path = this.getMiddlewarePath(m);
+      const isBuiltIn = m.isBuiltIn ?? !name.includes("Middleware");
+
+      entries.push({
+        name,
+        type: isBuiltIn ? "built-in" : "custom",
+        category,
+        order: index,
+        path,
+        middleware: m.middleware,
+      });
+
+      byCategory[category]++;
+    });
+
+    return {
+      total: entries.length,
+      entries,
+      byCategory,
+    };
+  }
+
+  /**
+   * Get a formatted view for banner display.
+   * @param maxDisplay - Maximum number of middleware to show
+   * @returns Formatted middleware view
+   * @public API
+   */
+  public getFormattedView(maxDisplay: number = 6): {
+    entries: Array<{
+      name: string;
+      category: MiddlewareCategory;
+      type: "built-in" | "custom";
+    }>;
+    total: number;
+    remaining: number;
+  } {
+    const info = this.getPipelineInfo();
+    const entries = info.entries.slice(0, maxDisplay).map((e) => ({
+      name: e.name,
+      category: e.category,
+      type: e.type,
+    }));
+
+    return {
+      entries,
+      total: info.total,
+      remaining: Math.max(0, info.total - maxDisplay),
+    };
+  }
+
+  /**
+   * Get middleware count by category.
+   * @returns Record of category to count
+   * @public API
+   */
+  public getCountByCategory(): Record<MiddlewareCategory, number> {
+    return this.getPipelineInfo().byCategory;
+  }
+
+  /**
+   * Get middleware by name.
+   * @param name - The middleware name
+   * @returns The middleware entry or undefined
+   * @public API
+   */
+  public getByName(name: string): MiddlewareEntry | undefined {
+    return this.getPipelineInfo().entries.find((e) => e.name === name);
   }
 }

@@ -6,6 +6,50 @@ import {
   BannerConfig,
   formatMemory,
 } from "./logger.metrics";
+import { MiddlewareCategory } from "../../middleware/middleware-service";
+
+// eslint-disable-next-line no-control-regex
+const ANSI_STRIP_REGEX = /\x1b\[[0-9;]*m/g;
+
+/**
+ * Middleware view entry for banner display.
+ */
+export interface MiddlewareView {
+  entries: Array<{
+    name: string;
+    category: MiddlewareCategory;
+    type: "built-in" | "custom";
+  }>;
+  total: number;
+  remaining: number;
+}
+
+/**
+ * Provider view entry for banner display.
+ */
+export interface ProviderView {
+  entries: Array<{
+    name: string;
+    scope: string;
+    hasLifecycle: boolean;
+    hasHealthCheck: boolean;
+    hasMetrics: boolean;
+  }>;
+  total: number;
+  remaining: number;
+}
+
+/**
+ * Extended banner data including middleware and provider info.
+ */
+export interface BannerData {
+  appInfo?: IConsoleMessage & { apiVersions?: Array<string> };
+  metrics?: ApplicationMetrics;
+  features?: FeaturesStatus;
+  config?: Record<string, unknown>;
+  middlewareView?: MiddlewareView;
+  providerView?: ProviderView;
+}
 
 // Helper to write to stdout - uses process.stdout directly to allow runtime interception
 const writeStdout = (text: string): void => {
@@ -115,6 +159,10 @@ export class BannerGenerator {
       showPerformance: config?.showPerformance ?? true,
       showHealth: config?.showHealth ?? true,
       showResources: config?.showResources ?? true,
+      showMiddlewarePipeline: config?.showMiddlewarePipeline ?? true,
+      showProviderRegistry: config?.showProviderRegistry ?? true,
+      maxMiddlewareDisplay: config?.maxMiddlewareDisplay ?? 6,
+      maxProviderDisplay: config?.maxProviderDisplay ?? 5,
       ...config,
     };
   }
@@ -127,6 +175,7 @@ export class BannerGenerator {
    * @param metrics - Application metrics
    * @param features - Features status
    * @param config - Runtime configuration
+   * @param bannerData - Extended banner data (middleware/provider views)
    */
   display(
     port: number,
@@ -135,6 +184,7 @@ export class BannerGenerator {
     metrics?: ApplicationMetrics,
     features?: FeaturesStatus,
     config?: Record<string, unknown>,
+    bannerData?: BannerData,
   ): void {
     if (this.config.style === "none") {
       return;
@@ -158,6 +208,7 @@ export class BannerGenerator {
           config,
           startupTime,
           memoryFormatted,
+          bannerData,
         );
         break;
       case "compact":
@@ -191,6 +242,7 @@ export class BannerGenerator {
     config: Record<string, unknown> | undefined,
     startupTime: number,
     memoryFormatted: string,
+    bannerData?: BannerData,
   ): void {
     // Logo with TS in white
     writeStdout(getExpressoTSLogo());
@@ -230,131 +282,280 @@ export class BannerGenerator {
         colorText(`${" ".repeat(platformPadding)}${platformText}`, "blue") +
         "\n",
     );
+
+    // Display API versions if available
+    const appInfoWithVersions = appInfo as IConsoleMessage & {
+      apiVersions?: Array<string>;
+    };
+    if (
+      appInfoWithVersions?.apiVersions &&
+      appInfoWithVersions.apiVersions.length > 0
+    ) {
+      const apiVersionsText = `   API Versions: ${appInfoWithVersions.apiVersions.join(", ")}`;
+      writeStdout(colorText(`${leftPrefix}${apiVersionsText}`, "blue") + "\n");
+    }
+
     writeStdout("\n");
 
-    // Server status
-    writeStdout(colorText("⚡ Server Status", "yellow") + "\n");
-    writeStdout(`   ├─ Environment: ${this.colorEnvironment(environment)}\n`);
-    writeStdout(`   ├─ Port: ${colorText(String(port), "blue")}\n`);
-    writeStdout(`   ├─ PID: ${colorText(String(process.pid), "blue")}\n`);
-    writeStdout(
-      `   ├─ URL: ${colorText(`http://localhost:${port}`, "blue")}\n`,
-    );
-    writeStdout(
-      `   └─ Started: ${colorText(new Date().toLocaleString(), "white")}\n`,
-    );
-    writeStdout("\n");
+    // Two-column layout: Server Status (left) | Application Health (right)
+    const colWidth = 40;
+    const separator = "   ";
 
-    // Application metrics
+    // Server Status (left column)
+    const serverLines: Array<string> = [
+      colorText("⚡ Server Status", "yellow"),
+      `   ├─ Env: ${this.colorEnvironment(environment)}`,
+      `   ├─ Port: ${colorText(String(port), "blue")}`,
+      `   ├─ PID: ${colorText(String(process.pid), "blue")}`,
+      `   └─ URL: ${colorText(`http://localhost:${port}`, "blue")}`,
+    ];
+
+    // Application Health (right column)
+    const healthLines: Array<string> = [
+      colorText("🎯 Application Health", "yellow"),
+    ];
+
     if (this.config.showMetrics && metrics) {
-      writeStdout(colorText("🎯 Application Health", "yellow") + "\n");
-      writeStdout(
-        `   ├─ Controllers: ${colorText(String(metrics.controllers), "green")} loaded\n`,
+      healthLines.push(
+        `   ├─ Controllers: ${colorText(String(metrics.controllers), "green")} loaded`,
       );
-      writeStdout(
-        `   ├─ Providers: ${colorText(String(metrics.providers), "green")} registered\n`,
+      healthLines.push(
+        `   ├─ Providers: ${colorText(String(metrics.providers), "green")} registered`,
       );
-      writeStdout(
-        `   ├─ Middleware: ${colorText(String(metrics.middleware), "green")} active\n`,
+      healthLines.push(
+        `   ├─ Middleware: ${colorText(String(metrics.middleware), "green")} active`,
       );
-      if (metrics.guards > 0) {
+      if (metrics.guards > 0 || metrics.filters > 0) {
+        if (metrics.guards > 0) {
+          healthLines.push(
+            `   ├─ Guards: ${colorText(String(metrics.guards), "green")} active`,
+          );
+        }
+        if (metrics.filters > 0) {
+          healthLines.push(
+            `   ├─ Filters: ${colorText(String(metrics.filters), "green")} active`,
+          );
+        }
+      }
+      healthLines.push(
+        `   └─ Routes: ${colorText(String(metrics.routes), "green")} registered`,
+      );
+    }
+
+    // Render two columns side by side
+    const maxRows = Math.max(serverLines.length, healthLines.length);
+    for (let i = 0; i < maxRows; i++) {
+      const left = serverLines[i] || "";
+      const right = healthLines[i] || "";
+      // Calculate visible length (strip ANSI codes for padding)
+      const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
+      const padding = colWidth - leftVisible.length;
+      writeStdout(
+        left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
+      );
+    }
+    writeStdout("\n");
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Middleware Pipeline | Provider Registry (Two-column layout)
+    // ══════════════════════════════════════════════════════════════════════
+    const middlewareView = bannerData?.middlewareView;
+    const providerView = bannerData?.providerView;
+    const showMw = this.config.showMiddlewarePipeline !== false;
+    const showPrv = this.config.showProviderRegistry !== false;
+
+    if ((showMw && middlewareView) || (showPrv && providerView)) {
+      const mwLines: Array<string> = [];
+      const prvLines: Array<string> = [];
+
+      // Middleware Pipeline (left column)
+      if (showMw && middlewareView && middlewareView.total > 0) {
+        mwLines.push(colorText("🔌 Middleware Pipeline", "yellow"));
+        middlewareView.entries.forEach((mw, i, arr) => {
+          const isLast = i === arr.length - 1 && middlewareView.remaining === 0;
+          const connector = isLast ? "└─" : "├─";
+          const typeIcon = mw.type === "built-in" ? "📦" : "🔧";
+          const categoryColor = this.getCategoryColor(mw.category);
+          mwLines.push(
+            `   ${connector} ${typeIcon} ${colorText(mw.name, categoryColor)} (${mw.category})`,
+          );
+        });
+        if (middlewareView.remaining > 0) {
+          mwLines.push(
+            `   └─ ${colorText(`... +${middlewareView.remaining} more`, "white")}`,
+          );
+        }
+      }
+
+      // Provider Registry (right column)
+      if (showPrv && providerView && providerView.total > 0) {
+        prvLines.push(colorText("📚 Provider Registry", "yellow"));
+        providerView.entries.forEach((prv, i, arr) => {
+          const isLast = i === arr.length - 1 && providerView.remaining === 0;
+          const connector = isLast ? "└─" : "├─";
+          const icons: Array<string> = [];
+          if (prv.hasLifecycle) icons.push("🔄");
+          if (prv.hasHealthCheck) icons.push("💚");
+          if (prv.hasMetrics) icons.push("📊");
+          const iconStr = icons.length > 0 ? ` ${icons.join("")}` : "";
+          const scopeColor = this.getScopeColor(prv.scope);
+          prvLines.push(
+            `   ${connector} ${colorText(prv.name, "blue")} [${colorText(prv.scope, scopeColor)}]${iconStr}`,
+          );
+        });
+        if (providerView.remaining > 0) {
+          prvLines.push(
+            `   └─ ${colorText(`... +${providerView.remaining} more`, "white")}`,
+          );
+        }
+      }
+
+      // Render two columns
+      const pipelineMaxRows = Math.max(mwLines.length, prvLines.length);
+      for (let i = 0; i < pipelineMaxRows; i++) {
+        const left = mwLines[i] || "";
+        const right = prvLines[i] || "";
+        const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
+        const padding = colWidth - leftVisible.length;
         writeStdout(
-          `   ├─ Guards: ${colorText(String(metrics.guards), "green")} active\n`,
+          left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
         );
       }
-      if (metrics.filters > 0) {
+      writeStdout("\n");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Features | Configuration (Two-column layout)
+    // ══════════════════════════════════════════════════════════════════════
+    if (
+      (this.config.showFeatures && features) ||
+      (this.config.showConfig && config)
+    ) {
+      const featLines: Array<string> = [];
+      const cfgLines: Array<string> = [];
+
+      // Features (left column)
+      if (this.config.showFeatures && features) {
+        featLines.push(colorText("📦 Features Enabled", "yellow"));
+        const featureList = [
+          { name: "Global Route Prefix", enabled: features.globalRoutePrefix },
+          { name: "API Versioning", enabled: features.apiVersioning },
+          { name: "Content Negotiation", enabled: features.contentNegotiation },
+          { name: "Smart Validation", enabled: features.smartValidation },
+          { name: "Authorization (Guards)", enabled: features.authorization },
+          { name: "Exception Filters", enabled: features.exceptionFilters },
+          { name: "Error Handler", enabled: features.errorHandler },
+          { name: "Graceful Shutdown", enabled: features.gracefulShutdown },
+          { name: "Lifecycle Hooks", enabled: features.lifecycleHooks },
+          { name: "Request Logging", enabled: features.requestLogging },
+          { name: "Custom Scopes", enabled: features.customScopes },
+        ];
+        featureList.forEach((feat, i) => {
+          const isLast = i === featureList.length - 1;
+          const connector = isLast ? "└─" : "├─";
+          const status = feat.enabled
+            ? colorText("✅", "green")
+            : colorText("❌", "red");
+          featLines.push(`   ${connector} ${status} ${feat.name}`);
+        });
+      }
+
+      // Configuration (right column)
+      if (this.config.showConfig && config) {
+        cfgLines.push(colorText("⚙️  Configuration", "yellow"));
+        const entries = Object.entries(config);
+        entries.forEach(([key, value], i) => {
+          const isLast = i === entries.length - 1;
+          const connector = isLast ? "└─" : "├─";
+          cfgLines.push(
+            `   ${connector} ${key}: ${colorText(String(value), "blue")}`,
+          );
+        });
+      }
+
+      // Render two columns
+      const fcMaxRows = Math.max(featLines.length, cfgLines.length);
+      for (let i = 0; i < fcMaxRows; i++) {
+        const left = featLines[i] || "";
+        const right = cfgLines[i] || "";
+        const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
+        const padding = colWidth - leftVisible.length;
         writeStdout(
-          `   ├─ Filters: ${colorText(String(metrics.filters), "green")} active\n`,
+          left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
         );
       }
-      writeStdout(
-        `   └─ Routes: ${colorText(String(metrics.routes), "green")} registered\n`,
-      );
       writeStdout("\n");
     }
 
-    // Features status
-    if (this.config.showFeatures && features) {
-      writeStdout(colorText("📦 Features Enabled", "yellow") + "\n");
-      this.displayFeature("Content Negotiation", features.contentNegotiation);
-      this.displayFeature("Smart Validation", features.smartValidation);
-      this.displayFeature(
-        "Authorization (RBAC, ABAC, Ownership)",
-        features.authorization,
-      );
-      this.displayFeature(
-        "Exception Filters (RFC 7807)",
-        features.exceptionFilters,
-      );
-      this.displayFeature("Graceful Shutdown", features.gracefulShutdown);
-      this.displayFeature("Lifecycle Hooks", features.lifecycleHooks);
-      this.displayFeature("Custom Scopes", features.customScopes);
-      writeStdout("\n");
-    }
+    // ══════════════════════════════════════════════════════════════════════
+    // Resources | System Health (Two-column layout)
+    // ══════════════════════════════════════════════════════════════════════
+    if (this.config.showResources || this.config.showHealth) {
+      const resLines: Array<string> = [];
+      const healthLines: Array<string> = [];
 
-    // Configuration
-    if (this.config.showConfig && config) {
-      writeStdout(colorText("⚙️  Configuration", "yellow") + "\n");
-      Object.entries(config).forEach(([key, value], index, entries) => {
-        const isLast = index === entries.length - 1;
-        const connector = isLast ? "└─" : "├─";
-        writeStdout(
-          `   ${connector} ${key}: ${colorText(String(value), "blue")}\n`,
+      // Resources (left column)
+      if (this.config.showResources) {
+        resLines.push(colorText("🔗 Resources", "yellow"));
+        resLines.push(
+          `   ├─ Docs: ${colorText("https://expresso-ts.com", "blue")}`,
         );
-      });
+        resLines.push(
+          `   ├─ GitHub: ${colorText("github.com/expressots", "blue")}`,
+        );
+        resLines.push(
+          `   └─ Discord: ${colorText("discord.gg/PyPJfGK", "blue")}`,
+        );
+      }
+
+      // System Health (right column)
+      if (this.config.showHealth) {
+        const memory = process.memoryUsage();
+        const memoryUsagePercent = Math.round(
+          (memory.heapUsed / memory.heapTotal) * 100,
+        );
+        const memoryColor: Color =
+          memoryUsagePercent >= 80
+            ? "red"
+            : memoryUsagePercent >= 60
+              ? "yellow"
+              : "green";
+
+        healthLines.push(colorText("💚 System Health", "yellow"));
+        healthLines.push(
+          `   ├─ Memory: ${colorText(`${memoryFormatted} (${memoryUsagePercent}%)`, memoryColor)}`,
+        );
+        healthLines.push(
+          `   ├─ Heap: ${colorText(formatMemory(memory.heapTotal), "blue")}`,
+        );
+        healthLines.push(
+          `   └─ RSS: ${colorText(formatMemory(memory.rss), "blue")}`,
+        );
+      }
+
+      // Render two columns
+      const rhMaxRows = Math.max(resLines.length, healthLines.length);
+      for (let i = 0; i < rhMaxRows; i++) {
+        const left = resLines[i] || "";
+        const right = healthLines[i] || "";
+        const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
+        const padding = colWidth - leftVisible.length;
+        writeStdout(
+          left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
+        );
+      }
       writeStdout("\n");
     }
 
-    // Resources
-    if (this.config.showResources) {
-      writeStdout(colorText("🔗 Resources", "yellow") + "\n");
-      writeStdout(
-        `   ├─ Documentation: ${colorText("https://expresso-ts.com", "blue")}\n`,
-      );
-      writeStdout(
-        `   ├─ GitHub: ${colorText("https://github.com/expressots/expressots", "blue")}\n`,
-      );
-      writeStdout(
-        `   └─ Discord: ${colorText("https://discord.gg/PyPJfGK", "blue")}\n`,
-      );
-      writeStdout("\n");
-    }
-
-    // Performance metrics
+    // ══════════════════════════════════════════════════════════════════════
+    // Performance (Single line at the bottom)
+    // ══════════════════════════════════════════════════════════════════════
     if (this.config.showPerformance) {
       writeStdout(
-        colorText(`⏱️  Startup Time: ${startupTime.toFixed(2)}ms`, "yellow") +
-          colorText(`   Memory: ${memoryFormatted}`, "yellow") +
+        colorText(`⏱️  Startup: ${startupTime.toFixed(0)}ms`, "yellow") +
+          colorText(` | Memory: ${memoryFormatted}`, "yellow") +
+          colorText(` | PID: ${process.pid}`, "yellow") +
           "\n",
-      );
-      writeStdout("\n");
-    }
-
-    // System health status
-    if (this.config.showHealth) {
-      const memory = process.memoryUsage();
-      const memoryUsagePercent = Math.round(
-        (memory.heapUsed / memory.heapTotal) * 100,
-      );
-      const memoryColor =
-        memoryUsagePercent >= 80
-          ? "red"
-          : memoryUsagePercent >= 60
-            ? "yellow"
-            : "green";
-
-      writeStdout(colorText("💚 System Health", "yellow") + "\n");
-      writeStdout(
-        `   ├─ Memory: ${colorText(`${memoryFormatted} (${memoryUsagePercent}%)`, memoryColor as Color)}\n`,
-      );
-      writeStdout(
-        `   ├─ Heap Total: ${colorText(formatMemory(memory.heapTotal), "blue")}\n`,
-      );
-      writeStdout(
-        `   ├─ External: ${colorText(formatMemory(memory.external), "blue")}\n`,
-      );
-      writeStdout(
-        `   └─ RSS: ${colorText(formatMemory(memory.rss), "blue")}\n`,
       );
       writeStdout("\n");
     }
@@ -428,16 +629,6 @@ export class BannerGenerator {
   }
 
   /**
-   * Display a feature status.
-   */
-  private displayFeature(name: string, enabled: boolean): void {
-    const status = enabled ? colorText("✅", "green") : colorText("❌", "red");
-    const isLast = name === "Custom Scopes";
-    const connector = isLast ? "└─" : "├─";
-    writeStdout(`   ${connector} ${status} ${name}\n`);
-  }
-
-  /**
    * Color environment based on type.
    */
   private colorEnvironment(environment: string): string {
@@ -449,5 +640,46 @@ export class BannerGenerator {
       return colorText(environment, "green");
     }
     return colorText(environment, "red");
+  }
+
+  /**
+   * Get color for middleware category.
+   */
+  private getCategoryColor(category: MiddlewareCategory): Color {
+    switch (category) {
+      case "parser":
+        return "cyan";
+      case "security":
+        return "red";
+      case "logging":
+        return "yellow";
+      case "validation":
+        return "magenta";
+      case "error":
+        return "red";
+      case "session":
+        return "cyan";
+      case "static":
+        return "white";
+      case "other":
+      default:
+        return "white";
+    }
+  }
+
+  /**
+   * Get color for provider scope.
+   */
+  private getScopeColor(scope: string): Color {
+    switch (scope.toLowerCase()) {
+      case "singleton":
+        return "green";
+      case "request":
+        return "yellow";
+      case "transient":
+        return "cyan";
+      default:
+        return "magenta"; // Custom scope
+    }
   }
 }

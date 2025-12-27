@@ -3,6 +3,9 @@ export {
   ExpressHandler,
   ExpressoMiddleware,
   MiddlewareOptions,
+  MiddlewareCategory,
+  MiddlewareEntry,
+  MiddlewarePipelineInfo,
 } from "./middleware-service";
 export { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
 export { OptionsJson } from "./interfaces/body-parser.interface";

@@ -1,27 +1,48 @@
 import { BindingScopeEnum, interfaces } from "../di/inversify";
 import { Logger } from "./logger/logger.provider";
+import { ProviderRegistry } from "./provider-registry";
+import {
+  IProvider,
+  ProviderInfo,
+  HealthDashboard,
+  MetricsDashboard,
+  ProviderCapabilities,
+} from "./provider.interface";
 
-/**
- * Provider Interface - Represents a provider object with name, version, author, and repository information.
- * @public API
- */
-export interface IProvider {
-  name: string;
-  version: string;
-  author: string;
-  repo: string;
-}
+// Re-export IProvider for backward compatibility
+export { IProvider };
 
 /**
  * ProviderManager Class - A class for managing dependency injection providers.
+ * Enhanced with introspection, health checks, and metrics collection.
  * @public API
  */
 export class ProviderManager {
   private container: interfaces.Container;
   private logger: Logger = new Logger();
+  private registry: ProviderRegistry;
 
   constructor(container: interfaces.Container) {
     this.container = container;
+    this.registry = new ProviderRegistry(container);
+  }
+
+  /**
+   * Discover all providers in the container.
+   * Call this after the container is fully initialized.
+   * @public API
+   */
+  public discover(): void {
+    this.registry.discover();
+  }
+
+  /**
+   * Get the provider registry instance.
+   * @returns The provider registry
+   * @public API
+   */
+  public getRegistry(): ProviderRegistry {
+    return this.registry;
   }
 
   /**
@@ -157,5 +178,110 @@ export class ProviderManager {
     } else {
       return serviceIdentifier as string;
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTROSPECTION METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get all registered providers with metadata.
+   * @returns Array of provider information
+   * @public API
+   */
+  public getAll(): Array<ProviderInfo> {
+    return this.registry.getAll();
+  }
+
+  /**
+   * Get providers by scope.
+   * @param scope - The scope to filter by
+   * @returns Array of providers with the specified scope
+   * @public API
+   */
+  public getByScope(scope: string): Array<ProviderInfo> {
+    return this.registry.getByScope(scope);
+  }
+
+  /**
+   * Get providers with a specific capability.
+   * @param capability - The capability to filter by
+   * @returns Array of providers with the capability
+   * @public API
+   */
+  public getWithCapability(
+    capability: keyof ProviderCapabilities,
+  ): Array<ProviderInfo> {
+    return this.registry.getWithCapability(capability);
+  }
+
+  /**
+   * Get total provider count.
+   * @returns Number of registered providers
+   * @public API
+   */
+  public getCount(): number {
+    return this.registry.getCount();
+  }
+
+  /**
+   * Check if a provider is registered.
+   * @param serviceIdentifier - The service identifier to check
+   * @returns true if registered
+   * @public API
+   */
+  public has<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>): boolean {
+    return this.container.isBound(serviceIdentifier);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEALTH & METRICS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run health checks on all IHealthCheck providers.
+   * @returns Health dashboard with all results
+   * @public API
+   */
+  public async checkHealth(): Promise<HealthDashboard> {
+    return this.registry.checkHealth();
+  }
+
+  /**
+   * Collect metrics from all IMetrics providers.
+   * @returns Metrics dashboard with all metrics
+   * @public API
+   */
+  public collectMetrics(): MetricsDashboard {
+    return this.registry.collectMetrics();
+  }
+
+  /**
+   * Get providers that have lifecycle hooks (bootstrap/shutdown).
+   * @returns Array of providers with lifecycle hooks
+   * @public API
+   */
+  public getLifecycleProviders(): Array<ProviderInfo> {
+    return this.registry.getLifecycleProviders();
+  }
+
+  /**
+   * Get a formatted view for banner display.
+   * @param maxDisplay - Maximum number of providers to show
+   * @returns Formatted provider view
+   * @public API
+   */
+  public getFormattedView(maxDisplay: number = 5): {
+    entries: Array<{
+      name: string;
+      scope: string;
+      hasLifecycle: boolean;
+      hasHealthCheck: boolean;
+      hasMetrics: boolean;
+    }>;
+    total: number;
+    remaining: number;
+  } {
+    return this.registry.getFormattedView(maxDisplay);
   }
 }

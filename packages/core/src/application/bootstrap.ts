@@ -1,0 +1,872 @@
+import { config, parse } from "@expressots/shared";
+import { AppFactory } from "./application-factory";
+import { IWebServer, IWebServerPublic } from "@expressots/shared";
+import { IConsoleMessage } from "@expressots/shared";
+import { Logger } from "../provider/logger/logger.provider";
+import fs from "fs";
+import path from "path";
+
+/**
+ * Common environment names used in ExpressoTS applications.
+ * @public API
+ */
+export type EnvironmentName =
+  | "development"
+  | "production"
+  | "staging"
+  | "test"
+  | "local"
+  | (string & NonNullable<unknown>); // Allow custom environment names
+
+/**
+ * Mapping of environment names to their corresponding .env file names.
+ *
+ * @example
+ * ```typescript
+ * {
+ *   development: ".env.dev",
+ *   production: ".env.prod",
+ *   staging: ".env.staging"
+ * }
+ * ```
+ *
+ * @public API
+ */
+export interface EnvironmentFileMap {
+  /** Environment name → .env file name mapping */
+  [environmentName: string]: string;
+}
+
+/**
+ * Configuration for environment file loading, validation, and auto-creation.
+ *
+ * @public API
+ */
+export interface EnvironmentFileConfig {
+  /**
+   * Custom mapping of environment names to .env file names.
+   *
+   * **Runtime behavior:** Only the file for the CURRENT environment (from `currentEnvironment`)
+   * will be loaded at runtime. The mapping allows you to use custom file names.
+   *
+   * **Template creation:** If `autoCreateTemplate: true` and `files` mapping is provided,
+   * templates will be created for ALL mapped environments, not just the current one.
+   * This helps set up your project with all necessary .env files upfront.
+   *
+   * @example
+   * ```typescript
+   * // Runtime: When currentEnvironment="development", loads ".env.dev"
+   * // Template creation: If autoCreateTemplate: true, creates BOTH .env.dev AND .env.prod
+   * files: {
+   *   development: ".env.dev",
+   *   production: ".env.prod",
+   *   staging: ".env.staging"
+   * }
+   * ```
+   *
+   * **Default behavior:** If not provided, uses convention: `.env.{currentEnvironment}`
+   * - `currentEnvironment="development"` → loads `.env.development`
+   * - `currentEnvironment="production"` → loads `.env.production`
+   */
+  files?: EnvironmentFileMap;
+
+  /**
+   * Validate that the required .env file exists (default: true locally, false in CI).
+   *
+   * - `true`: Throws error if file is missing
+   * - `false`: Silently skips missing files
+   */
+  validateFile?: boolean;
+
+  /**
+   * Validate that all variables in the .env file have non-empty values.
+   *
+   * - Default: `true` in production/CI, `false` in development
+   * - When `true`, throws error if any variable has empty value
+   */
+  validateValues?: boolean;
+
+  /**
+   * Auto-create template .env file if missing (default: `false` - opt-in behavior).
+   *
+   * **Only creates ONE file** - the file for the current environment.
+   *
+   * **Important:** File creation only happens if `envFileConfig` is provided.
+   * Set to `true` to enable auto-creation of template files.
+   *
+   * Creates a template with:
+   * - `PORT=3000`
+   * - `NODE_ENV={currentEnvironment}` (e.g., "development", "production")
+   * - Required variables (from `required` array) as empty placeholders
+   *
+   * @example
+   * ```typescript
+   * // Opt-in to .env file loading and auto-creation
+   * envFileConfig: {
+   *   autoCreateTemplate: true  // Explicitly enable
+   * }
+   * ```
+   */
+  autoCreateTemplate?: boolean;
+
+  /**
+   * Required environment variable names that must exist and have non-empty values.
+   *
+   * These are **always validated**, even if `validateValues` is `false`.
+   * When auto-creating templates, these variables are added as empty placeholders.
+   *
+   * @example
+   * ```typescript
+   * required: ["DATABASE_URL", "API_KEY", "JWT_SECRET"]
+   * ```
+   *
+   * Creates template with:
+   * ```
+   * PORT=3000
+   * NODE_ENV=development
+   * DATABASE_URL=
+   * API_KEY=
+   * JWT_SECRET=
+   * ```
+   */
+  required?: ReadonlyArray<string>;
+
+  /**
+   * Force CI/CD mode (auto-detected if not set).
+   *
+   * When `true`:
+   * - Skips .env file loading
+   * - Validates variables from `process.env` only
+   * - Never creates template files
+   */
+  ciMode?: boolean;
+
+  /**
+   * Skip .env file loading entirely (useful for CI/CD).
+   *
+   * When `true`:
+   * - Only uses `process.env` variables
+   * - Ignores all .env files
+   * - Still validates required variables from `process.env`
+   */
+  skipFileLoading?: boolean;
+}
+
+/**
+ * Bootstrap options for application startup.
+ *
+ * @public API
+ *
+ * @example
+ * ```typescript
+ * // Minimal usage - uses defaults
+ * bootstrap(App);
+ *
+ * // Custom environment and file mapping
+ * bootstrap(App, {
+ *   currentEnvironment: "development",
+ *   envFileConfig: {
+ *     files: {
+ *       development: ".env.dev",
+ *       production: ".env.prod"
+ *     },
+ *     required: ["DATABASE_URL", "API_KEY"]
+ *   }
+ * });
+ *
+ * // Custom port and app info
+ * bootstrap(App, {
+ *   port: 8080,
+ *   appName: "My API",
+ *   appVersion: "1.0.0",
+ *   currentEnvironment: "production"
+ * });
+ * ```
+ */
+export interface BootstrapOptions {
+  /**
+   * Port to listen on.
+   *
+   * - Use `0` for auto-assign any available port
+   * - Defaults to `process.env.PORT` or `3000`
+   */
+  port?: number;
+
+  /**
+   * Override application name (defaults to `package.json` name).
+   *
+   * Used in startup banner and logs.
+   */
+  appName?: string;
+
+  /**
+   * Override application version (defaults to `package.json` version).
+   *
+   * Used in startup banner and logs.
+   */
+  appVersion?: string;
+
+  /**
+   * Current environment name (defaults to `process.env.NODE_ENV` or `"development"`).
+   *
+   * **This determines which .env file to load:**
+   * - If `envFileConfig.files` is provided, uses the mapping
+   * - Otherwise, uses convention: `.env.{currentEnvironment}`
+   *
+   * **Only ONE file is loaded** - the file corresponding to this environment.
+   *
+   * @example
+   * ```typescript
+   * // Loads .env.development (or .env.dev if mapped)
+   * currentEnvironment: "development"
+   *
+   * // Loads .env.production (or .env.prod if mapped)
+   * currentEnvironment: "production"
+   * ```
+   */
+  currentEnvironment?: EnvironmentName;
+
+  /**
+   * Environment file loading and validation configuration.
+   *
+   * **Important:** This is an opt-in feature. If not provided, .env file loading is skipped.
+   * Templates can configure this to enable .env file support for their projects.
+   *
+   * Controls how .env files are loaded, validated, and auto-created.
+   *
+   * @example
+   * ```typescript
+   * // Opt-in to .env file loading
+   * envFileConfig: {
+   *   // Custom file names per environment
+   *   files: {
+   *     development: ".env.dev",
+   *     production: ".env.prod"
+   *   },
+   *   // Required variables (always validated)
+   *   required: ["DATABASE_URL", "API_KEY"],
+   *   // Auto-create missing files (explicit opt-in)
+   *   autoCreateTemplate: true
+   * }
+   * ```
+   */
+  envFileConfig?: EnvironmentFileConfig;
+}
+
+/**
+ * Result of environment loading and validation.
+ * @private
+ */
+interface EnvironmentResult {
+  loaded: Array<string>;
+  validated: boolean;
+  createdTemplate?: string;
+  createdTemplates?: Array<string>; // Multiple templates created
+  warnings: Array<string>;
+}
+
+/**
+ * Detect if running in CI/CD environment.
+ * @returns True if running in CI/CD
+ * @private
+ */
+function isCIEnvironment(): boolean {
+  return !!(
+    (
+      process.env.CI || // Generic CI flag
+      process.env.GITHUB_ACTIONS || // GitHub Actions
+      process.env.GITLAB_CI || // GitLab CI
+      process.env.JENKINS_URL || // Jenkins
+      process.env.CIRCLECI || // CircleCI
+      process.env.TRAVIS || // Travis CI
+      process.env.BUILDKITE || // Buildkite
+      process.env.AZURE_HTTP_USER_AGENT || // Azure DevOps
+      process.env.BAMBOO_BUILDKEY || // Bamboo
+      process.env.TEAMCITY_VERSION
+    ) // TeamCity
+  );
+}
+
+/**
+ * Detect CI/CD platform name.
+ * @returns Platform name or "CI Platform"
+ * @private
+ */
+function detectCIPlatform(): string {
+  if (process.env.GITHUB_ACTIONS) return "GitHub Actions";
+  if (process.env.GITLAB_CI) return "GitLab CI";
+  if (process.env.JENKINS_URL) return "Jenkins";
+  if (process.env.CIRCLECI) return "CircleCI";
+  if (process.env.TRAVIS) return "Travis CI";
+  if (process.env.BUILDKITE) return "Buildkite";
+  if (process.env.AZURE_HTTP_USER_AGENT) return "Azure DevOps";
+  if (process.env.BAMBOO_BUILDKEY) return "Bamboo";
+  if (process.env.TEAMCITY_VERSION) return "TeamCity";
+  return "CI Platform";
+}
+
+/**
+ * Get platform-specific setup hints.
+ * @param platform - CI platform name
+ * @param missing - Missing variable names
+ * @returns Setup hint string
+ * @private
+ */
+function getPlatformHint(platform: string, missing: Array<string>): string {
+  const missingVars = missing.join(", ");
+
+  const hints: Record<string, string> = {
+    "GitHub Actions": `
+🔧 GitHub Actions Setup:
+   - Go to: Settings → Secrets and variables → Actions
+   - Add repository secrets for: ${missingVars}
+   - Use: \${{ secrets.VARIABLE_NAME }} in workflow files`,
+    "GitLab CI": `
+🔧 GitLab CI Setup:
+   - Go to: Settings → CI/CD → Variables
+   - Add CI/CD variables for: ${missingVars}
+   - Use: $VARIABLE_NAME in .gitlab-ci.yml`,
+    Jenkins: `
+🔧 Jenkins Setup:
+   - Configure: Manage Jenkins → Credentials
+   - Add credentials for: ${missingVars}
+   - Use: env.VARIABLE_NAME in pipeline`,
+  };
+
+  return (
+    hints[platform] ||
+    `Configure secrets in your CI/CD platform for: ${missingVars}`
+  );
+}
+
+/**
+ * Custom error for missing environment file.
+ * @private
+ */
+class EnvFileNotFoundError extends Error {
+  constructor(fileName: string, environment: string) {
+    const template = getEnvTemplate(environment);
+    super(
+      `
+❌ Missing required environment file: ${fileName}
+
+💡 Create ${fileName} with:
+${template}
+
+📖 Docs: https://expresso-ts.com/docs/env
+🔍 Check existing files: ls -la .env*
+    `.trim(),
+    );
+    this.name = "EnvFileNotFoundError";
+  }
+}
+
+/**
+ * Custom error for CI/CD environment validation.
+ * @private
+ */
+class CIEnvValidationError extends Error {
+  constructor(missing: Array<string>, environment: string) {
+    const ciPlatform = detectCIPlatform();
+    const platformHint = getPlatformHint(ciPlatform, missing);
+
+    super(
+      `
+❌ CI/CD Environment Validation Failed
+
+Missing required environment variables in ${environment}:
+${missing.map((key) => `   • ${key}`).join("\n")}
+
+${platformHint}
+
+💡 Action Required:
+   1. Add missing variables to your CI/CD platform secrets
+   2. Ensure variables are available in ${environment} environment
+   3. Check variable names match exactly (case-sensitive)
+
+📖 Docs: https://expresso-ts.com/docs/ci-cd
+    `.trim(),
+    );
+    this.name = "CIEnvValidationError";
+  }
+}
+
+/**
+ * Custom error for environment variable validation.
+ * @private
+ */
+class EnvValidationError extends Error {
+  constructor(missing: Array<string>, fileName: string) {
+    super(
+      `
+❌ Environment validation failed
+
+Missing values in ${fileName}:
+${missing.map((key) => `   • ${key} (required but empty)`).join("\n")}
+
+💡 Add values to ${fileName}:
+${missing.map((key) => `   ${key}=your-value-here`).join("\n")}
+
+📖 Docs: https://expresso-ts.com/docs/env
+    `.trim(),
+    );
+    this.name = "EnvValidationError";
+  }
+}
+
+/**
+ * Get environment template content.
+ * @param environment - Environment name
+ * @returns Template string
+ * @private
+ */
+function getEnvTemplate(environment: string): string {
+  return `PORT=3000
+NODE_ENV=${environment}
+# Add your environment variables here`;
+}
+
+/**
+ * Create environment file template.
+ * @param fileName - File name to create
+ * @param environment - Environment name (e.g., "development", "production")
+ * @param required - Required variable names
+ * @private
+ */
+async function createEnvTemplate(
+  fileName: string,
+  environment: string,
+  required?: ReadonlyArray<string>,
+): Promise<void> {
+  const commonVars = [
+    "PORT=3000",
+    `NODE_ENV=${environment}`,
+    "# Add your environment variables below",
+  ];
+
+  const requiredVars = required?.map((key) => `${key}=`) || [];
+  const template = [...commonVars, ...requiredVars].join("\n");
+
+  await fs.promises.writeFile(fileName, template, "utf-8");
+}
+
+/**
+ * Validate environment variables from process.env.
+ * @param required - Required variable names
+ * @returns Validation result
+ * @private
+ */
+function validateEnvVariablesFromProcessEnv(required: ReadonlyArray<string>): {
+  valid: boolean;
+  missing: Array<string>;
+} {
+  const missing: Array<string> = [];
+
+  for (const key of required) {
+    const value = process.env[key];
+    if (!value || value.trim() === "") {
+      missing.push(key);
+    }
+  }
+
+  return {
+    valid: missing.length === 0,
+    missing,
+  };
+}
+
+/**
+ * Validate environment variables from file.
+ * @param fileName - Environment file name
+ * @param required - Required variable names (if empty, validates all in file)
+ * @returns Validation result
+ * @private
+ */
+function validateEnvVariablesFromFile(
+  fileName: string,
+  required?: ReadonlyArray<string>,
+): { valid: boolean; missing: Array<string> } {
+  const missing: Array<string> = [];
+
+  if (!fs.existsSync(fileName)) {
+    return { valid: false, missing: required ? [...required] : [] };
+  }
+
+  try {
+    const fileContent = fs.readFileSync(fileName, "utf-8");
+    const parsed = parse(fileContent);
+
+    if (required && required.length > 0) {
+      // Validate only required variables
+      for (const key of required) {
+        const value = process.env[key];
+        if (!value || value.trim() === "") {
+          missing.push(key);
+        }
+      }
+    } else {
+      // Validate all variables in file
+      for (const key of Object.keys(parsed)) {
+        const value = process.env[key];
+        if (!value || value.trim() === "") {
+          missing.push(key);
+        }
+      }
+    }
+  } catch (error) {
+    // File exists but couldn't be parsed
+    throw new Error(`Failed to parse ${fileName}: ${error}`);
+  }
+
+  return {
+    valid: missing.length === 0,
+    missing,
+  };
+}
+
+/**
+ * Load and validate environment files with smart defaults.
+ *
+ * **Important:** This function only runs if `envFileConfig` is explicitly provided.
+ * If `envFileConfig` is `undefined`, .env file loading is skipped entirely.
+ *
+ * @param currentEnvironment - Current environment name (e.g., "development", "production")
+ * @param envFileConfig - Environment file configuration from BootstrapOptions.envFileConfig
+ * @returns Environment loading result
+ * @private
+ */
+async function loadAndValidateEnvironment(
+  currentEnvironment: string,
+  envFileConfig?: EnvironmentFileConfig,
+): Promise<EnvironmentResult> {
+  const result: EnvironmentResult = {
+    loaded: [],
+    validated: false,
+    warnings: [],
+  };
+
+  // 🎯 OPT-OUT: If envFileConfig is not provided, skip .env file loading entirely
+  // Templates can opt-in by providing envFileConfig in their bootstrap calls
+  if (!envFileConfig) {
+    result.validated = true;
+    process.env._EXPRESSOTS_ENV_LOADED = "true";
+    return result;
+  }
+
+  const isCI = envFileConfig.ciMode ?? isCIEnvironment();
+  const skipFileLoading = envFileConfig.skipFileLoading ?? false;
+
+  // 🎯 CI/CD: Skip file loading, use process.env directly
+  if (isCI || skipFileLoading) {
+    if (isCI) {
+      console.log(
+        `🔧 CI environment detected - using platform-injected variables`,
+      );
+    }
+
+    // Support .env.vault in CI/CD
+    if (process.env.DOTENV_KEY) {
+      try {
+        config({ path: ".env.vault" });
+        result.loaded.push(".env.vault (encrypted)");
+      } catch (error) {
+        result.warnings.push(`Warning: Could not load .env.vault: ${error}`);
+      }
+    }
+
+    // Validate required variables from process.env
+    const validateValues = envFileConfig.validateValues ?? true; // Always validate in CI
+    const required = (envFileConfig.required || []) as Array<string>;
+
+    if (validateValues || required.length > 0) {
+      const validationResult = validateEnvVariablesFromProcessEnv(required);
+      if (!validationResult.valid) {
+        throw new CIEnvValidationError(
+          validationResult.missing,
+          currentEnvironment,
+        );
+      }
+    }
+
+    result.validated = true;
+    process.env._EXPRESSOTS_ENV_LOADED = "true";
+    return result;
+  }
+
+  // 🎯 Local Development: Load from files
+  const validateFile = envFileConfig.validateFile ?? true;
+  const validateValues =
+    envFileConfig.validateValues ?? currentEnvironment === "production";
+  // Only auto-create if explicitly enabled (default: false - opt-in behavior)
+  const autoCreate = envFileConfig.autoCreateTemplate ?? false;
+
+  // 🎯 STEP 1: Create templates for all mapped environments (if autoCreate is enabled)
+  // If files mapping is provided, create templates for ALL mapped environments
+  // This helps users set up their project with all necessary .env files
+  if (autoCreate && envFileConfig.files) {
+    const createdTemplates: Array<string> = [];
+    for (const [envName, fileName] of Object.entries(envFileConfig.files)) {
+      if (!fs.existsSync(fileName)) {
+        await createEnvTemplate(fileName, envName, envFileConfig.required);
+        createdTemplates.push(fileName);
+        // Load the newly created file
+        config({ path: fileName });
+        result.loaded.push(fileName);
+      }
+    }
+    if (createdTemplates.length > 0) {
+      result.createdTemplates = createdTemplates;
+      result.createdTemplate = createdTemplates[0]; // For backward compatibility
+    }
+  }
+
+  // 🎯 STEP 2: Determine and load the file for the current environment
+  // Only ONE file is loaded at runtime - the file for the current environment
+  const envFileName =
+    envFileConfig.files?.[currentEnvironment] ?? `.env.${currentEnvironment}`;
+
+  // Load optional files silently
+  const optionalFiles = [".env", ".env.local", `${envFileName}.local`];
+  for (const file of optionalFiles) {
+    try {
+      config({ path: file });
+      result.loaded.push(file);
+    } catch {
+      // Silently skip optional files
+    }
+  }
+
+  // 🎯 STEP 3: Handle the required file for current environment
+  const requiredFileExists = fs.existsSync(envFileName);
+
+  if (!requiredFileExists) {
+    if (autoCreate) {
+      // Auto-create template file with correct environment value
+      // This handles the case where files mapping wasn't provided but autoCreate is true
+      await createEnvTemplate(
+        envFileName,
+        currentEnvironment,
+        envFileConfig.required,
+      );
+      if (!result.createdTemplates) {
+        result.createdTemplates = [];
+      }
+      result.createdTemplates.push(envFileName);
+      result.createdTemplate = envFileName;
+      // Reload the newly created file
+      config({ path: envFileName });
+      result.loaded.push(envFileName);
+    } else if (validateFile) {
+      // Throw helpful error - but only if autoCreate is false
+      // Provide helpful message about all missing files if files mapping exists
+      const missingFiles = envFileConfig.files
+        ? Object.entries(envFileConfig.files)
+            .filter(([, fileName]) => !fs.existsSync(fileName))
+            .map(([envName, fileName]) => `${fileName} (for ${envName})`)
+        : [envFileName];
+
+      if (missingFiles.length > 1) {
+        throw new Error(
+          `❌ Missing required environment files:\n${missingFiles.map((f) => `   • ${f}`).join("\n")}\n\n💡 Create these files or set autoCreateTemplate: true to auto-generate them.\n📖 Docs: https://expresso-ts.com/docs/env`,
+        );
+      } else {
+        throw new EnvFileNotFoundError(envFileName, currentEnvironment);
+      }
+    } else {
+      result.warnings.push(`⚠️  ${envFileName} not found (optional)`);
+    }
+  } else {
+    // Load the file
+    config({ path: envFileName });
+    result.loaded.push(envFileName);
+  }
+
+  // Validate variables have values
+  if (
+    validateValues ||
+    (envFileConfig.required && envFileConfig.required.length > 0)
+  ) {
+    const validationResult = validateEnvVariablesFromFile(
+      envFileName,
+      envFileConfig.required,
+    );
+    if (!validationResult.valid) {
+      throw new EnvValidationError(validationResult.missing, envFileName);
+    }
+  }
+
+  result.validated = true;
+  process.env._EXPRESSOTS_ENV_LOADED = "true";
+
+  return result;
+}
+
+/**
+ * Determine port with priority: options.port > process.env.PORT > 3000
+ * @param options - Bootstrap options
+ * @returns Port number
+ * @private
+ */
+function determinePort(options?: BootstrapOptions): number {
+  // Priority: options.port > process.env.PORT > 3000
+  if (options?.port !== undefined) {
+    return options.port;
+  }
+
+  const envPort = process.env.PORT;
+  if (envPort) {
+    const port = parseInt(envPort, 10);
+    if (isNaN(port)) {
+      throw new Error(`Invalid PORT in .env: "${envPort}". Must be a number.`);
+    }
+    return port;
+  }
+
+  return 3000; // Default
+}
+
+/**
+ * Read package.json to get app name and version.
+ * @returns Package.json data
+ * @private
+ */
+async function readPackageJson(): Promise<{ name?: string; version?: string }> {
+  try {
+    const packagePath = path.resolve(process.cwd(), "package.json");
+    const packageContent = await fs.promises.readFile(packagePath, "utf-8");
+    const pkg = JSON.parse(packageContent);
+    return {
+      name: pkg.name,
+      version: pkg.version,
+    };
+  } catch (error) {
+    // Package.json not found or invalid - return undefined
+    return {};
+  }
+}
+
+/**
+ * Bootstrap the ExpressoTS application with zero configuration.
+ *
+ * This function handles:
+ * - Smart environment loading (auto-detects CI/CD, validates files)
+ * - Early .env file loading (makes PORT available immediately)
+ * - Automatic port detection (with Express.js port 0 support)
+ * - Package.json reading (for app name/version)
+ * - API version detection (from @Version() decorators)
+ * - Graceful shutdown setup
+ * - Auto-create template files in development
+ * - CI/CD environment validation with helpful errors
+ *
+ * @param AppClass - Application class extending AppExpress
+ * @param options - Optional bootstrap configuration
+ * @returns Promise resolving to IWebServer instance
+ *
+ * @example
+ * ```typescript
+ * // Simplest usage - zero config (no .env file loading)
+ * await bootstrap(App);
+ *
+ * // With overrides (still no .env file loading)
+ * await bootstrap(App, {
+ *   port: 4000,
+ *   appName: "My API",
+ *   appVersion: "2.0.0"
+ * });
+ *
+ * // Opt-in to .env file loading and auto-creation
+ * await bootstrap(App, {
+ *   currentEnvironment: "development",
+ *   envFileConfig: {
+ *     files: {
+ *       development: ".env.dev",
+ *       production: ".env.prod"
+ *     },
+ *     required: ["DATABASE_URL", "API_KEY"],
+ *     autoCreateTemplate: true,  // Explicitly enable file creation
+ *     validateValues: true
+ *   }
+ * });
+ *
+ * // Auto-assign port (useful for testing)
+ * await bootstrap(App, { port: 0 });
+ * ```
+ *
+ * @public API
+ */
+export async function bootstrap(
+  AppClass: new () => IWebServer,
+  options?: BootstrapOptions,
+): Promise<IWebServerPublic> {
+  const logger = new Logger();
+
+  try {
+    // STEP 1: Detect current environment
+    const currentEnvironment =
+      options?.currentEnvironment ?? process.env.NODE_ENV ?? "development";
+
+    // STEP 2: Smart Environment Loading & Validation
+    // Only ONE file is loaded - the file for the current environment
+    const envResult = await loadAndValidateEnvironment(
+      currentEnvironment,
+      options?.envFileConfig,
+    );
+
+    // Show helpful feedback
+    if (envResult.createdTemplates && envResult.createdTemplates.length > 0) {
+      if (envResult.createdTemplates.length === 1) {
+        console.log(
+          `✨ Created ${envResult.createdTemplates[0]} template file`,
+        );
+      } else {
+        console.log(
+          `✨ Created ${envResult.createdTemplates.length} template files:`,
+        );
+        envResult.createdTemplates.forEach((file) =>
+          console.log(`   • ${file}`),
+        );
+      }
+    } else if (envResult.createdTemplate) {
+      console.log(`✨ Created ${envResult.createdTemplate} template file`);
+    }
+    if (envResult.warnings.length > 0) {
+      envResult.warnings.forEach((w) => console.warn(w));
+    }
+
+    // STEP 3: Determine port with priority (PORT now available from .env)
+    const port = determinePort(options);
+
+    // STEP 4: Read package.json for app info
+    const pkg = await readPackageJson();
+
+    // STEP 5: Create app instance
+    // App's globalConfiguration() will run in constructor
+    // initEnvironment() can skip if .env already loaded
+    const app = await AppFactory.create(AppClass);
+
+    // Set environment on app instance (for this.environment access)
+    (app as unknown as { environment: string }).environment =
+      currentEnvironment;
+
+    // STEP 6: Prepare app info
+    // Note: API versions will be auto-detected in displayStartupBanner()
+    // where controllers are already registered and accessible
+    const appInfo: IConsoleMessage = {
+      appName: options?.appName ?? pkg.name ?? "ExpressoTS App",
+      appVersion: options?.appVersion ?? pkg.version ?? "1.0.0",
+    };
+
+    // STEP 8: Listen (supports port 0 for auto-assign)
+    // Banner will be displayed inside listen() callback with correct port
+    // Graceful shutdown handlers are already set up in AppExpress.listen()
+    const webServer = await app.listen(port, appInfo);
+
+    return webServer;
+  } catch (error) {
+    logger.error(
+      `Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`,
+      "bootstrap",
+    );
+    throw error;
+  }
+}

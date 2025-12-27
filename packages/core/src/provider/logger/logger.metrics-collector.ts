@@ -32,6 +32,10 @@ export class MetricsCollector {
       hasSmartValidation: () => boolean;
       hasAuthorization: () => boolean;
       hasExceptionFilters: () => boolean;
+      hasApiVersioning?: () => boolean;
+      hasGlobalRoutePrefix?: () => boolean;
+      hasErrorHandler?: () => boolean;
+      hasRequestLogging?: () => boolean;
     },
   ): {
     metrics: ApplicationMetrics;
@@ -126,6 +130,10 @@ export class MetricsCollector {
       hasExceptionFilters: options.hasExceptionFilters(),
       hasLifecycleHooks: bootstrapCount > 0 || shutdownCount > 0,
       hasCustomScopes: false, // TODO: Detect custom scopes
+      hasApiVersioning: options.hasApiVersioning?.() ?? false,
+      hasGlobalRoutePrefix: options.hasGlobalRoutePrefix?.() ?? false,
+      hasErrorHandler: options.hasErrorHandler?.() ?? false,
+      hasRequestLogging: options.hasRequestLogging?.() ?? false,
     });
 
     return { metrics, features };

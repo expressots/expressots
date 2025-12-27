@@ -40,6 +40,14 @@ export interface FeaturesStatus {
   lifecycleHooks: boolean;
   /** Custom Scopes enabled */
   customScopes: boolean;
+  /** API Versioning enabled */
+  apiVersioning: boolean;
+  /** Global Route Prefix configured */
+  globalRoutePrefix: boolean;
+  /** Error Handler configured */
+  errorHandler: boolean;
+  /** Request Logging enabled */
+  requestLogging: boolean;
 }
 
 /**
@@ -74,6 +82,14 @@ export interface BannerConfig {
   showHealth?: boolean;
   /** Show resources/links */
   showResources?: boolean;
+  /** Show middleware pipeline section */
+  showMiddlewarePipeline?: boolean;
+  /** Show provider registry section */
+  showProviderRegistry?: boolean;
+  /** Maximum middleware entries to display */
+  maxMiddlewareDisplay?: number;
+  /** Maximum provider entries to display */
+  maxProviderDisplay?: number;
   /** Custom ASCII art file path */
   customArt?: string;
   /** Environment-specific configuration */
@@ -106,8 +122,12 @@ export function getDefaultBannerConfig(
     showFeatures: isDev,
     showConfig: isDev,
     showPerformance: true,
-    showHealth: true,
+    showHealth: isDev,
     showResources: isDev,
+    showMiddlewarePipeline: isDev,
+    showProviderRegistry: isDev,
+    maxMiddlewareDisplay: 6,
+    maxProviderDisplay: 5,
     showInEnvironments: ["development", "production", "staging", "test"],
     suppressLogsUntilBanner: true,
   };
@@ -156,6 +176,10 @@ export function detectFeaturesStatus(options?: {
   hasGracefulShutdown?: boolean;
   hasLifecycleHooks?: boolean;
   hasCustomScopes?: boolean;
+  hasApiVersioning?: boolean;
+  hasGlobalRoutePrefix?: boolean;
+  hasErrorHandler?: boolean;
+  hasRequestLogging?: boolean;
 }): FeaturesStatus {
   return {
     contentNegotiation: options?.hasContentNegotiation ?? false,
@@ -165,6 +189,10 @@ export function detectFeaturesStatus(options?: {
     gracefulShutdown: options?.hasGracefulShutdown ?? true, // Always enabled
     lifecycleHooks: options?.hasLifecycleHooks ?? false,
     customScopes: options?.hasCustomScopes ?? false,
+    apiVersioning: options?.hasApiVersioning ?? false,
+    globalRoutePrefix: options?.hasGlobalRoutePrefix ?? false,
+    errorHandler: options?.hasErrorHandler ?? false,
+    requestLogging: options?.hasRequestLogging ?? false,
   };
 }
 
