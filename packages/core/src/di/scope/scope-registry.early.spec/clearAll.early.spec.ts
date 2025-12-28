@@ -31,4 +31,3 @@ describe("ScopeRegistry.clearAll() clearAll method", () => {
 });
 
 // End of unit tests for: ScopeRegistry.clearAll
-

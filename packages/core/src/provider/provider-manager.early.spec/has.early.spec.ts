@@ -45,4 +45,3 @@ describe("ProviderManager.has() has method", () => {
 });
 
 // End of unit tests for: ProviderManager.has
-

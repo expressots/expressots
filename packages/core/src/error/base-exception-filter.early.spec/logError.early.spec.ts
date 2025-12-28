@@ -115,7 +115,10 @@ describe("BaseExceptionFilter.logError() logError method", () => {
 
       // Assert
       expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      expect(mockLogger.error).not.toHaveBeenCalledWith(exception.stack, expect.any(String));
+      expect(mockLogger.error).not.toHaveBeenCalledWith(
+        exception.stack,
+        expect.any(String),
+      );
     });
 
     it("should handle exception without stack trace", () => {
@@ -134,4 +137,3 @@ describe("BaseExceptionFilter.logError() logError method", () => {
 });
 
 // End of unit tests for: BaseExceptionFilter.logError
-

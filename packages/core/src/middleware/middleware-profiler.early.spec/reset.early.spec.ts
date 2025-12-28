@@ -68,4 +68,3 @@ describe("MiddlewareProfiler.reset() reset method", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler.reset
-

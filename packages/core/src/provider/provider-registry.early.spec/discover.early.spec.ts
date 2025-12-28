@@ -51,7 +51,8 @@ describe("ProviderRegistry.discover() discover method", () => {
 
       // Act
       registry.discover();
-      const firstCallCount = (Reflect.getMetadata as jest.Mock).mock.calls.length;
+      const firstCallCount = (Reflect.getMetadata as jest.Mock).mock.calls
+        .length;
       registry.discover();
 
       // Assert - Should not call getMetadata again
@@ -110,4 +111,3 @@ describe("ProviderRegistry.discover() discover method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.discover
-

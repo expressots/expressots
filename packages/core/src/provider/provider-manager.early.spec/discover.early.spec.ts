@@ -29,4 +29,3 @@ describe("ProviderManager.discover() discover method", () => {
 });
 
 // End of unit tests for: ProviderManager.discover
-

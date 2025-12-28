@@ -20,7 +20,9 @@ describe("ValidationError() ValidationError constructor", () => {
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toBe("Validation failed");
       expect(error.statusCode).toBe(StatusCode.UnprocessableEntity);
-      expect(error.type).toBe("https://expressots.dev/errors/validation-failed");
+      expect(error.type).toBe(
+        "https://expressots.dev/errors/validation-failed",
+      );
       expect(error.errors).toEqual(errors);
       expect(error.validationErrors).toEqual(errors);
     });
@@ -61,4 +63,3 @@ describe("ValidationError() ValidationError constructor", () => {
 });
 
 // End of unit tests for: ValidationError constructor
-

@@ -56,4 +56,3 @@ describe("MiddlewareProfiler.setEnabled() setEnabled method", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler.setEnabled
-

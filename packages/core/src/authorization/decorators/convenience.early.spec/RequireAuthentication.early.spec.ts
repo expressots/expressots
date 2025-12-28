@@ -58,4 +58,3 @@ describe("RequireAuthentication() RequireAuthentication decorator", () => {
 });
 
 // End of unit tests for: RequireAuthentication
-

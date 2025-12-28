@@ -59,7 +59,8 @@ describe("Middleware.addSession() addSession method", () => {
       // Add the session middleware once
       middleware.addSession(mockSessionOptions as any);
       const initialLength = middleware.getMiddlewarePipeline().length;
-      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls.length;
+      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls
+        .length;
 
       // Try to add the same session middleware again
       middleware.addSession(mockSessionOptions as any);

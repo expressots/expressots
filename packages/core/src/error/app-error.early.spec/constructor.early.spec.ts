@@ -59,9 +59,7 @@ describe("AppError() AppError constructor", () => {
         details: { field: "email" },
         instance: "/api/users/123",
         type: "https://example.com/errors/test",
-        validationErrors: [
-          { property: "email", messages: ["Invalid email"] },
-        ],
+        validationErrors: [{ property: "email", messages: ["Invalid email"] }],
         requestId: "req-123",
       };
 
@@ -146,4 +144,3 @@ describe("AppError() AppError constructor", () => {
 });
 
 // End of unit tests for: AppError constructor
-

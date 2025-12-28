@@ -49,4 +49,3 @@ describe("ScopeRegistry.getScopeNames() getScopeNames method", () => {
 });
 
 // End of unit tests for: ScopeRegistry.getScopeNames
-

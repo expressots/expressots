@@ -28,4 +28,3 @@ describe("GuardResult.allow() allow static method", () => {
 });
 
 // End of unit tests for: GuardResult.allow
-

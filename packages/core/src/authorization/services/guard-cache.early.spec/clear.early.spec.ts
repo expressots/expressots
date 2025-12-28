@@ -32,4 +32,3 @@ describe("GuardCache.clear() clear method", () => {
 });
 
 // End of unit tests for: clear
-

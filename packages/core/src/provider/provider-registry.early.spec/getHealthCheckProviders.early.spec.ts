@@ -31,4 +31,3 @@ describe("ProviderRegistry.getHealthCheckProviders() getHealthCheckProviders met
 });
 
 // End of unit tests for: ProviderRegistry.getHealthCheckProviders
-

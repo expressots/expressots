@@ -31,4 +31,3 @@ describe("ProviderRegistry.getMetricsProviders() getMetricsProviders method", ()
 });
 
 // End of unit tests for: ProviderRegistry.getMetricsProviders
-

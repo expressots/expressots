@@ -143,7 +143,15 @@ describe("combineModules() combineModules function", () => {
     it("should pass all ContainerModule parameters to each module", () => {
       // Arrange
       const module1 = new ContainerModule(
-        (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
+        (
+          bind,
+          unbind,
+          isBound,
+          rebind,
+          unbindAsync,
+          onActivation,
+          onDeactivation,
+        ) => {
           expect(bind).toBe(mockBind);
           expect(unbind).toBe(mockUnbind);
           expect(isBound).toBe(mockIsBound);
@@ -172,4 +180,3 @@ describe("combineModules() combineModules function", () => {
 });
 
 // End of unit tests for: combineModules
-

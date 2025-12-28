@@ -30,4 +30,3 @@ describe("ProviderManager.getWithCapability() getWithCapability method", () => {
 });
 
 // End of unit tests for: ProviderManager.getWithCapability
-

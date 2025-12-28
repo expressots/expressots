@@ -39,4 +39,3 @@ describe("AppError.unauthorized() unauthorized static method", () => {
 });
 
 // End of unit tests for: AppError.unauthorized
-

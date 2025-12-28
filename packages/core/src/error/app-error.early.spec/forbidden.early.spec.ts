@@ -39,4 +39,3 @@ describe("AppError.forbidden() forbidden static method", () => {
 });
 
 // End of unit tests for: AppError.forbidden
-

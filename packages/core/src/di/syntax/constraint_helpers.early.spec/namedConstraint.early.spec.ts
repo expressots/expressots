@@ -30,4 +30,3 @@ describe("namedConstraint() namedConstraint function", () => {
 });
 
 // End of unit tests for: namedConstraint
-

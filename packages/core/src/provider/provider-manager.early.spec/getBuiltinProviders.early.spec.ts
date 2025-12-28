@@ -29,4 +29,3 @@ describe("ProviderManager.getBuiltinProviders() getBuiltinProviders method", () 
 });
 
 // End of unit tests for: ProviderManager.getBuiltinProviders
-

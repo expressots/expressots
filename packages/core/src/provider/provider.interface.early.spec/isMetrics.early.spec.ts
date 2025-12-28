@@ -64,4 +64,3 @@ describe("isMetrics() isMetrics function", () => {
 });
 
 // End of unit tests for: isMetrics
-

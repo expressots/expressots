@@ -32,4 +32,3 @@ describe("SecurityContext.addPermission() addPermission method", () => {
 });
 
 // End of unit tests for: addPermission
-

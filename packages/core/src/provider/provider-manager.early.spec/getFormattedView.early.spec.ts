@@ -60,4 +60,3 @@ describe("ProviderManager.getFormattedView() getFormattedView method", () => {
 });
 
 // End of unit tests for: ProviderManager.getFormattedView
-

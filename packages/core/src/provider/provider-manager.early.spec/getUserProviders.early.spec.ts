@@ -29,4 +29,3 @@ describe("ProviderManager.getUserProviders() getUserProviders method", () => {
 });
 
 // End of unit tests for: ProviderManager.getUserProviders
-

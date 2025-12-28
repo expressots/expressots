@@ -94,4 +94,3 @@ describe("typeConstraint() typeConstraint function", () => {
 });
 
 // End of unit tests for: typeConstraint
-

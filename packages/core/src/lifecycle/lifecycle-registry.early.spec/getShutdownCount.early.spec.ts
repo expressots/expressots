@@ -129,4 +129,3 @@ describe("LifecycleRegistry.getShutdownCount() getShutdownCount method", () => {
 });
 
 // End of unit tests for: LifecycleRegistry.getShutdownCount
-

@@ -60,7 +60,8 @@ describe("Middleware.addCors() addCors method", () => {
       // Add CORS middleware for the first time
       middleware.addCors(mockCorsOptions as any);
       const initialLength = middleware.getMiddlewarePipeline().length;
-      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls.length;
+      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls
+        .length;
 
       // Attempt to add CORS middleware again
       middleware.addCors(mockCorsOptions as any);

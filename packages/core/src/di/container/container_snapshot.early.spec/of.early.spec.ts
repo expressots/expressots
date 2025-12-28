@@ -9,8 +9,12 @@ describe("ContainerSnapshot.of() of static method", () => {
       // Arrange
       const bindings = {} as interfaces.Lookup<interfaces.Binding<unknown>>;
       const middleware = null;
-      const activations = {} as interfaces.Lookup<interfaces.BindingActivation<unknown>>;
-      const deactivations = {} as interfaces.Lookup<interfaces.BindingDeactivation<unknown>>;
+      const activations = {} as interfaces.Lookup<
+        interfaces.BindingActivation<unknown>
+      >;
+      const deactivations = {} as interfaces.Lookup<
+        interfaces.BindingDeactivation<unknown>
+      >;
       const moduleActivationStore = {} as interfaces.ModuleActivationStore;
 
       // Act
@@ -34,4 +38,3 @@ describe("ContainerSnapshot.of() of static method", () => {
 });
 
 // End of unit tests for: ContainerSnapshot.of
-

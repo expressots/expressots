@@ -42,4 +42,3 @@ describe("getServiceIdentifierAsString() getServiceIdentifierAsString function",
 });
 
 // End of unit tests for: getServiceIdentifierAsString
-

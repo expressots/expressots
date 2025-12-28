@@ -37,4 +37,3 @@ describe("GuardRegistry.isInitialized() isInitialized method", () => {
 });
 
 // End of unit tests for: isInitialized
-

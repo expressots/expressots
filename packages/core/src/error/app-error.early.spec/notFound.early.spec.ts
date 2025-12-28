@@ -50,4 +50,3 @@ describe("AppError.notFound() notFound static method", () => {
 });
 
 // End of unit tests for: AppError.notFound
-

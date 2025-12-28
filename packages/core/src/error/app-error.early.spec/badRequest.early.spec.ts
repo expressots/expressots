@@ -52,4 +52,3 @@ describe("AppError.badRequest() badRequest static method", () => {
 });
 
 // End of unit tests for: AppError.badRequest
-

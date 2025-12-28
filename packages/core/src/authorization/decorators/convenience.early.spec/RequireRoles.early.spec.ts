@@ -59,4 +59,3 @@ describe("RequireRoles() RequireRoles decorator", () => {
 });
 
 // End of unit tests for: RequireRoles
-

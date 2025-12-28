@@ -47,4 +47,3 @@ describe("ProviderRegistry.getByScope() getByScope method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.getByScope
-

@@ -5,7 +5,11 @@ import { Container } from "../../di/inversify";
 import { ExceptionFilterRegistry } from "../exception-filter-registry";
 import { Logger } from "../../provider/logger/logger.provider";
 import { EXCEPTION_FILTER_METADATA_KEY } from "../exception-filter-constants";
-import { IExceptionFilter, ExceptionContext, ErrorConstructor } from "../exception-filter.interface";
+import {
+  IExceptionFilter,
+  ExceptionContext,
+  ErrorConstructor,
+} from "../exception-filter.interface";
 import { Catch } from "../exception-filter-decorators";
 
 class TestError extends Error {}
@@ -109,11 +113,12 @@ describe("ExceptionFilterRegistry.initialize() initialize method", () => {
     it("should handle filter instantiation failure gracefully", () => {
       // Arrange
       // Create a filter that will fail to instantiate
-      const metadata = Reflect.getMetadata(
-        EXCEPTION_FILTER_METADATA_KEY.exceptionFilter,
-        Reflect,
-      ) || [];
-      
+      const metadata =
+        Reflect.getMetadata(
+          EXCEPTION_FILTER_METADATA_KEY.exceptionFilter,
+          Reflect,
+        ) || [];
+
       // Add invalid filter metadata
       metadata.push({
         exceptionTypes: [TestError],
@@ -137,4 +142,3 @@ describe("ExceptionFilterRegistry.initialize() initialize method", () => {
 });
 
 // End of unit tests for: ExceptionFilterRegistry.initialize
-

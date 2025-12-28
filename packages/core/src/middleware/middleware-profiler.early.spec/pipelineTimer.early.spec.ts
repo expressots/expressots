@@ -33,7 +33,10 @@ describe("MiddlewareProfiler.pipelineTimer() pipelineTimer method", () => {
 
       // Assert
       expect(mockNext).toHaveBeenCalled();
-      expect(mockResponse.on).toHaveBeenCalledWith("finish", expect.any(Function));
+      expect(mockResponse.on).toHaveBeenCalledWith(
+        "finish",
+        expect.any(Function),
+      );
 
       setTimeout(() => {
         const stats = profiler.getStats();
@@ -75,4 +78,3 @@ describe("MiddlewareProfiler.pipelineTimer() pipelineTimer method", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler.pipelineTimer
-

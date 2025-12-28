@@ -29,4 +29,3 @@ describe("getSymbolDescription() getSymbolDescription function", () => {
 });
 
 // End of unit tests for: getSymbolDescription
-

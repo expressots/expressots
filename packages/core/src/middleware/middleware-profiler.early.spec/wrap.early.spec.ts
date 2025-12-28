@@ -134,4 +134,3 @@ describe("MiddlewareProfiler.wrap() wrap method", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler.wrap
-

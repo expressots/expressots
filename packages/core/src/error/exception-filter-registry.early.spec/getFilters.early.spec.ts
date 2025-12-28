@@ -4,7 +4,10 @@ import "reflect-metadata";
 import { Container } from "../../di/inversify";
 import { ExceptionFilterRegistry } from "../exception-filter-registry";
 import { Logger } from "../../provider/logger/logger.provider";
-import { IExceptionFilter, ExceptionContext } from "../exception-filter.interface";
+import {
+  IExceptionFilter,
+  ExceptionContext,
+} from "../exception-filter.interface";
 
 class TestError extends Error {}
 class ChildError extends TestError {}
@@ -125,4 +128,3 @@ describe("ExceptionFilterRegistry.getFilters() getFilters method", () => {
 });
 
 // End of unit tests for: ExceptionFilterRegistry.getFilters
-

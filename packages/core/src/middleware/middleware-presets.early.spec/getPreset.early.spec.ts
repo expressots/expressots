@@ -1,6 +1,10 @@
 // Unit tests for: getPreset
 
-import { getPreset, MIDDLEWARE_PRESETS, MiddlewarePresetName } from "../middleware-presets";
+import {
+  getPreset,
+  MIDDLEWARE_PRESETS,
+  MiddlewarePresetName,
+} from "../middleware-presets";
 
 describe("getPreset() getPreset function", () => {
   describe("Happy Path", () => {
@@ -56,4 +60,3 @@ describe("getPreset() getPreset function", () => {
 });
 
 // End of unit tests for: getPreset
-

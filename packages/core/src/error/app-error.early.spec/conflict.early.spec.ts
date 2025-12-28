@@ -52,4 +52,3 @@ describe("AppError.conflict() conflict static method", () => {
 });
 
 // End of unit tests for: AppError.conflict
-

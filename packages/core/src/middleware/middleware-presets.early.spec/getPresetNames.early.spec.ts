@@ -43,4 +43,3 @@ describe("getPresetNames() getPresetNames function", () => {
 });
 
 // End of unit tests for: getPresetNames
-

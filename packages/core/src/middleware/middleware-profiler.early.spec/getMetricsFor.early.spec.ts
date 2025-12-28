@@ -62,10 +62,18 @@ describe("MiddlewareProfiler.getMetricsFor() getMetricsFor method", () => {
       // Assert
       expect(metrics).not.toBeNull();
       expect(metrics?.totalCalls).toBe(10);
-      expect(metrics?.p50ExecutionMs).toBeGreaterThanOrEqual(metrics?.minExecutionMs || 0);
-      expect(metrics?.p50ExecutionMs).toBeLessThanOrEqual(metrics?.maxExecutionMs || Infinity);
-      expect(metrics?.p95ExecutionMs).toBeGreaterThanOrEqual(metrics?.p50ExecutionMs || 0);
-      expect(metrics?.p99ExecutionMs).toBeGreaterThanOrEqual(metrics?.p95ExecutionMs || 0);
+      expect(metrics?.p50ExecutionMs).toBeGreaterThanOrEqual(
+        metrics?.minExecutionMs || 0,
+      );
+      expect(metrics?.p50ExecutionMs).toBeLessThanOrEqual(
+        metrics?.maxExecutionMs || Infinity,
+      );
+      expect(metrics?.p95ExecutionMs).toBeGreaterThanOrEqual(
+        metrics?.p50ExecutionMs || 0,
+      );
+      expect(metrics?.p99ExecutionMs).toBeGreaterThanOrEqual(
+        metrics?.p95ExecutionMs || 0,
+      );
     });
   });
 
@@ -84,4 +92,3 @@ describe("MiddlewareProfiler.getMetricsFor() getMetricsFor method", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler.getMetricsFor
-

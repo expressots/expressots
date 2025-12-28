@@ -34,4 +34,3 @@ describe("ProviderManager.getRegistry() getRegistry method", () => {
 });
 
 // End of unit tests for: ProviderManager.getRegistry
-

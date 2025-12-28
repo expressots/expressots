@@ -7,7 +7,9 @@ import { ProviderSource } from "../../provider/provider.interface";
 
 jest.mock("../../di/binding-decorator", () => {
   const originalDecorator = jest.fn((target) => target);
-  const inScopeMock = jest.fn(() => ({ done: jest.fn(() => originalDecorator) }));
+  const inScopeMock = jest.fn(() => ({
+    done: jest.fn(() => originalDecorator),
+  }));
   const fluentProvideMock = jest.fn(() => ({
     inScope: inScopeMock,
     done: jest.fn(() => originalDecorator),
@@ -149,4 +151,3 @@ describe("provideInScope() provideInScope method", () => {
 });
 
 // End of unit tests for: provideInScope
-

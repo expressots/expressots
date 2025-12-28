@@ -29,4 +29,3 @@ describe("ProviderManager.getByScope() getByScope method", () => {
 });
 
 // End of unit tests for: ProviderManager.getByScope
-

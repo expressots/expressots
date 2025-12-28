@@ -46,4 +46,3 @@ describe("bgColorCodes bgColorCodes constant", () => {
 });
 
 // End of unit tests for: bgColorCodes
-

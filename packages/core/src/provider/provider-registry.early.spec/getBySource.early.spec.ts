@@ -47,4 +47,3 @@ describe("ProviderRegistry.getBySource() getBySource method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.getBySource
-

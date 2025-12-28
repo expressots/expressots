@@ -192,9 +192,7 @@ describe("GuardExecutor.execute() execute method", () => {
     it("should return deny on guard error", async () => {
       // Arrange
       const guard = new MockGuard();
-      guard.canActivate = jest
-        .fn()
-        .mockRejectedValue(new Error("Guard error"));
+      guard.canActivate = jest.fn().mockRejectedValue(new Error("Guard error"));
 
       // Act
       const result = await executor.execute([guard], mockContext);
@@ -219,4 +217,3 @@ describe("GuardExecutor.execute() execute method", () => {
 });
 
 // End of unit tests for: execute
-

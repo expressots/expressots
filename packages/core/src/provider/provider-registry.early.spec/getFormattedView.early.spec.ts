@@ -40,19 +40,22 @@ describe("ProviderRegistry.getFormattedView() getFormattedView method", () => {
 
     it("should limit entries to maxDisplay", () => {
       // Arrange
-      const providers: Array<ProviderInfo> = Array.from({ length: 10 }, (_, i) => ({
-        name: `Provider${i}`,
-        scope: "Singleton",
-        source: "user" as ProviderSource,
-        capabilities: {
-          hasBootstrap: false,
-          hasShutdown: false,
-          hasHealthCheck: false,
-          hasMetrics: false,
-          hasConfigurable: false,
-        },
-        target: class {},
-      }));
+      const providers: Array<ProviderInfo> = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          name: `Provider${i}`,
+          scope: "Singleton",
+          source: "user" as ProviderSource,
+          capabilities: {
+            hasBootstrap: false,
+            hasShutdown: false,
+            hasHealthCheck: false,
+            hasMetrics: false,
+            hasConfigurable: false,
+          },
+          target: class {},
+        }),
+      );
       jest.spyOn(registry, "getAll").mockReturnValue(providers);
       jest.spyOn(registry, "getBuiltinProviders").mockReturnValue([]);
       jest.spyOn(registry, "getUserProviders").mockReturnValue(providers);
@@ -101,4 +104,3 @@ describe("ProviderRegistry.getFormattedView() getFormattedView method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.getFormattedView
-

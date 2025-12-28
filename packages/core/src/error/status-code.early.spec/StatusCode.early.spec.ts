@@ -47,4 +47,3 @@ describe("StatusCode StatusCode enum", () => {
 });
 
 // End of unit tests for: StatusCode enum
-

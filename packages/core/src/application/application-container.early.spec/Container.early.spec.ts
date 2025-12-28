@@ -50,4 +50,3 @@ describe("AppContainer.Container Container getter", () => {
 });
 
 // End of unit tests for: Container getter
-

@@ -3,7 +3,10 @@
 import "reflect-metadata";
 import { UseFilters } from "../exception-filter-decorators";
 import { EXCEPTION_FILTER_METADATA_KEY } from "../exception-filter-constants";
-import { IExceptionFilter, ExceptionContext } from "../exception-filter.interface";
+import {
+  IExceptionFilter,
+  ExceptionContext,
+} from "../exception-filter.interface";
 
 class Filter1 implements IExceptionFilter {
   catch(exception: Error, context: ExceptionContext): void {
@@ -128,4 +131,3 @@ describe("UseFilters() UseFilters decorator", () => {
 });
 
 // End of unit tests for: UseFilters decorator
-

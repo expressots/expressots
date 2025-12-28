@@ -69,4 +69,3 @@ describe("isPromiseOrContainsPromise() isPromiseOrContainsPromise function", () 
 });
 
 // End of unit tests for: isPromiseOrContainsPromise
-

@@ -42,4 +42,3 @@ describe("ScopeRegistry.removeScope() removeScope method", () => {
 });
 
 // End of unit tests for: ScopeRegistry.removeScope
-

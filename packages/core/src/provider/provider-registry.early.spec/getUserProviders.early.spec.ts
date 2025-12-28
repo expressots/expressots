@@ -39,4 +39,3 @@ describe("ProviderRegistry.getUserProviders() getUserProviders method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.getUserProviders
-

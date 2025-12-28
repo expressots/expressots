@@ -81,4 +81,3 @@ describe("MiddlewareProfiler.getStats() getStats method", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler.getStats
-

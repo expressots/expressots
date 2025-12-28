@@ -64,4 +64,3 @@ describe("isConfigurable() isConfigurable function", () => {
 });
 
 // End of unit tests for: isConfigurable
-

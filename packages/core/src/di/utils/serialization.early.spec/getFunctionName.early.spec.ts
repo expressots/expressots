@@ -47,4 +47,3 @@ describe("getFunctionName() getFunctionName function", () => {
 });
 
 // End of unit tests for: getFunctionName
-

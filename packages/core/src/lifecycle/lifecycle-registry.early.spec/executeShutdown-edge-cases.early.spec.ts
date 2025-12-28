@@ -111,4 +111,3 @@ describe("LifecycleRegistry.executeShutdown() executeShutdown method edge cases"
 });
 
 // End of unit tests for: LifecycleRegistry.executeShutdown edge cases
-

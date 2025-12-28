@@ -13,7 +13,10 @@ describe("tryAndThrowErrorIfStackOverflow() tryAndThrowErrorIfStackOverflow func
       const fn = () => "success";
 
       // Act
-      const result = tryAndThrowErrorIfStackOverflow(fn, () => new Error("Custom"));
+      const result = tryAndThrowErrorIfStackOverflow(
+        fn,
+        () => new Error("Custom"),
+      );
 
       // Assert
       expect(result).toBe("success");
@@ -49,4 +52,3 @@ describe("tryAndThrowErrorIfStackOverflow() tryAndThrowErrorIfStackOverflow func
 });
 
 // End of unit tests for: tryAndThrowErrorIfStackOverflow
-

@@ -53,4 +53,3 @@ describe("ProviderRegistry.getWithCapability() getWithCapability method", () => 
 });
 
 // End of unit tests for: ProviderRegistry.getWithCapability
-

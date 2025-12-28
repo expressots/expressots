@@ -71,7 +71,9 @@ describe("SecurityContext.preload() preload method", () => {
       const contextWithoutService = new SecurityContext(undefined, undefined);
 
       // Act & Assert
-      await expect(contextWithoutService.preload("user123")).resolves.not.toThrow();
+      await expect(
+        contextWithoutService.preload("user123"),
+      ).resolves.not.toThrow();
     });
 
     it("should handle permission service error", async () => {
@@ -89,4 +91,3 @@ describe("SecurityContext.preload() preload method", () => {
 });
 
 // End of unit tests for: preload
-

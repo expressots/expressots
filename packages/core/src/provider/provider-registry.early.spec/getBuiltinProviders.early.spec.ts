@@ -39,4 +39,3 @@ describe("ProviderRegistry.getBuiltinProviders() getBuiltinProviders method", ()
 });
 
 // End of unit tests for: ProviderRegistry.getBuiltinProviders
-

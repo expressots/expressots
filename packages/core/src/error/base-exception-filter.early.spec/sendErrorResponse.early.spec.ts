@@ -100,4 +100,3 @@ describe("BaseExceptionFilter.sendErrorResponse() sendErrorResponse method", () 
 });
 
 // End of unit tests for: BaseExceptionFilter.sendErrorResponse
-

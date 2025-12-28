@@ -19,7 +19,9 @@ describe("AppError.validationFailed() validationFailed static method", () => {
       expect(error).toBeInstanceOf(AppError);
       expect(error.message).toBe("Validation failed");
       expect(error.statusCode).toBe(StatusCode.UnprocessableEntity);
-      expect(error.type).toBe("https://expressots.dev/errors/validation-failed");
+      expect(error.type).toBe(
+        "https://expressots.dev/errors/validation-failed",
+      );
       expect(error.validationErrors).toEqual(errors);
     });
 
@@ -57,4 +59,3 @@ describe("AppError.validationFailed() validationFailed static method", () => {
 });
 
 // End of unit tests for: AppError.validationFailed
-

@@ -29,4 +29,3 @@ describe("ProviderManager.getCount() getCount method", () => {
 });
 
 // End of unit tests for: ProviderManager.getCount
-

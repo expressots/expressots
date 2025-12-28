@@ -50,9 +50,14 @@ describe("AppError.toProblemDetails() toProblemDetails method", () => {
       const validationErrors = [
         { property: "email", messages: ["Invalid email"] },
       ];
-      const error = new AppError("Validation failed", StatusCode.UnprocessableEntity, undefined, {
-        validationErrors,
-      });
+      const error = new AppError(
+        "Validation failed",
+        StatusCode.UnprocessableEntity,
+        undefined,
+        {
+          validationErrors,
+        },
+      );
 
       // Act
       const problem = error.toProblemDetails();
@@ -92,4 +97,3 @@ describe("AppError.toProblemDetails() toProblemDetails method", () => {
 });
 
 // End of unit tests for: AppError.toProblemDetails
-

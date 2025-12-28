@@ -24,4 +24,3 @@ describe("ColorStyle ColorStyle enum", () => {
 });
 
 // End of unit tests for: ColorStyle enum
-

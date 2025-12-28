@@ -30,4 +30,3 @@ describe("ProviderManager.getBySource() getBySource method", () => {
 });
 
 // End of unit tests for: ProviderManager.getBySource
-

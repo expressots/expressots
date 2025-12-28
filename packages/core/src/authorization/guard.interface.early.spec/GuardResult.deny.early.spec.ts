@@ -54,4 +54,3 @@ describe("GuardResult.deny() deny static method", () => {
 });
 
 // End of unit tests for: GuardResult.deny
-

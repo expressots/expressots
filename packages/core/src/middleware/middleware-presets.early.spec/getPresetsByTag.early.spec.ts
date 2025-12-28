@@ -63,7 +63,9 @@ describe("getPresetsByTag() getPresetsByTag function", () => {
     it("should handle presets without tags", () => {
       // Act - Get all presets and check if any have no tags
       const allPresets = Object.values(MIDDLEWARE_PRESETS);
-      const presetsWithoutTags = allPresets.filter((p) => !p.tags || p.tags.length === 0);
+      const presetsWithoutTags = allPresets.filter(
+        (p) => !p.tags || p.tags.length === 0,
+      );
 
       // Assert - Should handle gracefully
       expect(Array.isArray(presetsWithoutTags)).toBe(true);
@@ -72,4 +74,3 @@ describe("getPresetsByTag() getPresetsByTag function", () => {
 });
 
 // End of unit tests for: getPresetsByTag
-

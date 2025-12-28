@@ -7,9 +7,15 @@ import { ProviderSource } from "../../provider/provider.interface";
 
 jest.mock("../../di/binding-decorator", () => {
   const originalDecorator = jest.fn((target) => target);
-  const inSingletonScopeMock = jest.fn(() => ({ done: jest.fn(() => originalDecorator) }));
-  const inTransientScopeMock = jest.fn(() => ({ done: jest.fn(() => originalDecorator) }));
-  const inScopeMock = jest.fn(() => ({ done: jest.fn(() => originalDecorator) }));
+  const inSingletonScopeMock = jest.fn(() => ({
+    done: jest.fn(() => originalDecorator),
+  }));
+  const inTransientScopeMock = jest.fn(() => ({
+    done: jest.fn(() => originalDecorator),
+  }));
+  const inScopeMock = jest.fn(() => ({
+    done: jest.fn(() => originalDecorator),
+  }));
   const doneMock = jest.fn(() => originalDecorator);
   const fluentProvideMock = jest.fn(() => ({
     inSingletonScope: inSingletonScopeMock,
@@ -105,7 +111,10 @@ describe("Provider() Provider decorator", () => {
       class DecoratedClass {}
 
       // Assert
-      const { fluentProvide, __doneMock: doneMock } = require("../../di/binding-decorator");
+      const {
+        fluentProvide,
+        __doneMock: doneMock,
+      } = require("../../di/binding-decorator");
 
       expect(fluentProvide).toHaveBeenCalledWith(DecoratedClass);
       expect(doneMock).toHaveBeenCalled();
@@ -154,7 +163,10 @@ describe("Provider() Provider decorator", () => {
       class DecoratedClass {}
 
       // Assert
-      const metadata = Reflect.getMetadata(METADATA_KEY.providerMeta, DecoratedClass);
+      const metadata = Reflect.getMetadata(
+        METADATA_KEY.providerMeta,
+        DecoratedClass,
+      );
       expect(metadata).toEqual(options);
     });
 
@@ -208,7 +220,10 @@ describe("Provider() Provider decorator", () => {
       class DecoratedClass {}
 
       // Assert
-      const metadata = Reflect.getMetadata(METADATA_KEY.providerMeta, DecoratedClass);
+      const metadata = Reflect.getMetadata(
+        METADATA_KEY.providerMeta,
+        DecoratedClass,
+      );
       expect(metadata).toEqual(options);
       const scope = Reflect.getMetadata(METADATA_KEY.scope, DecoratedClass);
       expect(scope).toBe("Request"); // Default scope
@@ -217,4 +232,3 @@ describe("Provider() Provider decorator", () => {
 });
 
 // End of unit tests for: Provider decorator
-

@@ -46,4 +46,3 @@ describe("ScopeRegistry.clearScope() clearScope method", () => {
 });
 
 // End of unit tests for: ScopeRegistry.clearScope
-

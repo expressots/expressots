@@ -29,4 +29,3 @@ describe("ProviderManager.getExternalProviders() getExternalProviders method", (
 });
 
 // End of unit tests for: ProviderManager.getExternalProviders
-

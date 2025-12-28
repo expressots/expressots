@@ -82,4 +82,3 @@ describe("isPromise() isPromise function", () => {
 });
 
 // End of unit tests for: isPromise
-

@@ -3,7 +3,10 @@
 import "reflect-metadata";
 import { Catch } from "../exception-filter-decorators";
 import { EXCEPTION_FILTER_METADATA_KEY } from "../exception-filter-constants";
-import { IExceptionFilter, ExceptionContext } from "../exception-filter.interface";
+import {
+  IExceptionFilter,
+  ExceptionContext,
+} from "../exception-filter.interface";
 
 class TestError extends Error {}
 class AnotherError extends Error {}
@@ -130,4 +133,3 @@ describe("Catch() Catch decorator", () => {
 });
 
 // End of unit tests for: Catch decorator
-

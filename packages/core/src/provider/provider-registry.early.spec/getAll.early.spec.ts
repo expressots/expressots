@@ -39,4 +39,3 @@ describe("ProviderRegistry.getAll() getAll method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.getAll
-

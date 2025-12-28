@@ -70,4 +70,3 @@ describe("getFactoryDetails() getFactoryDetails function", () => {
 });
 
 // End of unit tests for: getFactoryDetails
-

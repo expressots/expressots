@@ -7,7 +7,9 @@ import { ProviderSource } from "../../provider/provider.interface";
 
 jest.mock("../../di/binding-decorator", () => {
   const originalDecorator = jest.fn((target) => target);
-  const inSingletonScopeMock = jest.fn(() => ({ done: jest.fn(() => originalDecorator) }));
+  const inSingletonScopeMock = jest.fn(() => ({
+    done: jest.fn(() => originalDecorator),
+  }));
   const fluentProvideMock = jest.fn(() => ({
     inSingletonScope: inSingletonScopeMock,
     done: jest.fn(() => originalDecorator),
@@ -127,4 +129,3 @@ describe("provideSingleton() provideSingleton method", () => {
 });
 
 // End of unit tests for: provideSingleton
-

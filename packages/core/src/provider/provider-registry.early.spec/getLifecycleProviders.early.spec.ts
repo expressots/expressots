@@ -65,4 +65,3 @@ describe("ProviderRegistry.getLifecycleProviders() getLifecycleProviders method"
 });
 
 // End of unit tests for: ProviderRegistry.getLifecycleProviders
-

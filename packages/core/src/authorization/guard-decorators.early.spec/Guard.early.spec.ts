@@ -94,12 +94,8 @@ describe("Guard() Guard decorator", () => {
       // Assert
       expect(globalGuards).toBeDefined();
       expect(globalGuards.length).toBeGreaterThanOrEqual(2);
-      expect(
-        globalGuards.some((g) => g.guard === TestGuard1),
-      ).toBe(true);
-      expect(
-        globalGuards.some((g) => g.guard === TestGuard2),
-      ).toBe(true);
+      expect(globalGuards.some((g) => g.guard === TestGuard1)).toBe(true);
+      expect(globalGuards.some((g) => g.guard === TestGuard2)).toBe(true);
     });
   });
 
@@ -124,4 +120,3 @@ describe("Guard() Guard decorator", () => {
 });
 
 // End of unit tests for: Guard decorator
-

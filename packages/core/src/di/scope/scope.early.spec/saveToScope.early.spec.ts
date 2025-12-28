@@ -91,4 +91,3 @@ describe("saveToScope() saveToScope function", () => {
 });
 
 // End of unit tests for: saveToScope
-

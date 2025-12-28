@@ -121,4 +121,3 @@ describe("LifecycleRegistry.discover() discover method edge cases", () => {
 });
 
 // End of unit tests for: LifecycleRegistry.discover edge cases
-

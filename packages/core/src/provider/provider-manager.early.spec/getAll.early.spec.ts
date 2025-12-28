@@ -29,4 +29,3 @@ describe("ProviderManager.getAll() getAll method", () => {
 });
 
 // End of unit tests for: ProviderManager.getAll
-

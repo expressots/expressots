@@ -32,4 +32,3 @@ describe("ScopeRegistry.hasScope() hasScope method", () => {
 });
 
 // End of unit tests for: ScopeRegistry.hasScope
-

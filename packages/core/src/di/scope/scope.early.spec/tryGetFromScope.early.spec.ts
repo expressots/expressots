@@ -87,4 +87,3 @@ describe("tryGetFromScope() tryGetFromScope function", () => {
 });
 
 // End of unit tests for: tryGetFromScope
-

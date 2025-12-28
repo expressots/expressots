@@ -39,4 +39,3 @@ describe("ProviderRegistry.getCount() getCount method", () => {
 });
 
 // End of unit tests for: ProviderRegistry.getCount
-

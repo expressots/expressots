@@ -54,4 +54,3 @@ describe("MiddlewareProfiler() MiddlewareProfiler constructor", () => {
 });
 
 // End of unit tests for: MiddlewareProfiler constructor
-

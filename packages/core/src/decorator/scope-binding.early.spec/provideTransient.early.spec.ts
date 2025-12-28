@@ -7,7 +7,9 @@ import { ProviderSource } from "../../provider/provider.interface";
 
 jest.mock("../../di/binding-decorator", () => {
   const originalDecorator = jest.fn((target) => target);
-  const inTransientScopeMock = jest.fn(() => ({ done: jest.fn(() => originalDecorator) }));
+  const inTransientScopeMock = jest.fn(() => ({
+    done: jest.fn(() => originalDecorator),
+  }));
   const fluentProvideMock = jest.fn(() => ({
     inTransientScope: inTransientScopeMock,
     done: jest.fn(() => originalDecorator),
@@ -112,4 +114,3 @@ describe("provideTransient() provideTransient method", () => {
 });
 
 // End of unit tests for: provideTransient
-

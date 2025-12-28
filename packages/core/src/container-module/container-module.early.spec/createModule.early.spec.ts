@@ -2,7 +2,11 @@
 
 import "reflect-metadata";
 import { ContainerModule, interfaces } from "../../di/inversify";
-import { createModule, SimpleBindingsCallback, ExtendedBindingsCallback } from "../container-module";
+import {
+  createModule,
+  SimpleBindingsCallback,
+  ExtendedBindingsCallback,
+} from "../container-module";
 
 describe("createModule() createModule function", () => {
   let mockBind: jest.Mock;
@@ -61,7 +65,12 @@ describe("createModule() createModule function", () => {
         toConstantValue: mockToConstantValue,
       });
 
-      const callback: ExtendedBindingsCallback = (bind, unbind, isBound, rebind) => {
+      const callback: ExtendedBindingsCallback = (
+        bind,
+        unbind,
+        isBound,
+        rebind,
+      ) => {
         bind("Service1").toConstantValue("value1");
         expect(unbind).toBe(mockUnbind);
         expect(isBound).toBe(mockIsBound);
@@ -103,7 +112,12 @@ describe("createModule() createModule function", () => {
         mockOnDeactivation,
       );
       // Simple callback receives all 4 parameters but only uses bind
-      expect(callback).toHaveBeenCalledWith(mockBind, mockUnbind, mockIsBound, mockRebind);
+      expect(callback).toHaveBeenCalledWith(
+        mockBind,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+      );
     });
 
     it("should pass all parameters to extended callback", () => {
@@ -123,7 +137,12 @@ describe("createModule() createModule function", () => {
         mockOnActivation,
         mockOnDeactivation,
       );
-      expect(callback).toHaveBeenCalledWith(mockBind, mockUnbind, mockIsBound, mockRebind);
+      expect(callback).toHaveBeenCalledWith(
+        mockBind,
+        mockUnbind,
+        mockIsBound,
+        mockRebind,
+      );
     });
   });
 
@@ -184,4 +203,3 @@ describe("createModule() createModule function", () => {
 });
 
 // End of unit tests for: createModule
-

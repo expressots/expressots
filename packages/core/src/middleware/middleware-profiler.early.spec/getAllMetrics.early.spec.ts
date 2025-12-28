@@ -62,10 +62,11 @@ describe("MiddlewareProfiler.getAllMetrics() getAllMetrics method", () => {
       expect(metrics.length).toBe(2);
       expect(metrics[0].name).toBe("slow");
       expect(metrics[1].name).toBe("fast");
-      expect(metrics[0].avgExecutionMs).toBeGreaterThan(metrics[1].avgExecutionMs);
+      expect(metrics[0].avgExecutionMs).toBeGreaterThan(
+        metrics[1].avgExecutionMs,
+      );
     });
   });
 });
 
 // End of unit tests for: MiddlewareProfiler.getAllMetrics
-

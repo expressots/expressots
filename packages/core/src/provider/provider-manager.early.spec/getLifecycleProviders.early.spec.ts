@@ -29,4 +29,3 @@ describe("ProviderManager.getLifecycleProviders() getLifecycleProviders method",
 });
 
 // End of unit tests for: ProviderManager.getLifecycleProviders
-

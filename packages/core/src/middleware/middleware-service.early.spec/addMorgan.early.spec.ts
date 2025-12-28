@@ -64,7 +64,8 @@ describe("Middleware.addMorgan() addMorgan method", () => {
       // Add Morgan once
       middleware.addMorgan(format, options as any);
       const initialLength = middleware.getMiddlewarePipeline().length;
-      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls.length;
+      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls
+        .length;
 
       // Act - Try to add again
       middleware.addMorgan(format, options as any);

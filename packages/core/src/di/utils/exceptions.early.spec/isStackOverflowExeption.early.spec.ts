@@ -67,4 +67,3 @@ describe("isStackOverflowExeption() isStackOverflowExeption function", () => {
 });
 
 // End of unit tests for: isStackOverflowExeption
-

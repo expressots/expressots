@@ -21,10 +21,7 @@ class MockGuardClass implements IGuard {
 describe("UseGuards() UseGuards decorator", () => {
   beforeEach(() => {
     // Clear metadata before each test
-    Reflect.deleteMetadata(
-      GUARD_METADATA_KEY.controllerGuards,
-      TestController,
-    );
+    Reflect.deleteMetadata(GUARD_METADATA_KEY.controllerGuards, TestController);
     Reflect.deleteMetadata(
       GUARD_METADATA_KEY.methodGuards,
       TestController.prototype,
@@ -88,7 +85,7 @@ describe("UseGuards() UseGuards decorator", () => {
       // Act
       const decorator1 = UseGuards(MockGuardClass);
       const decorator2 = UseGuards(guard1, guard2);
-      
+
       @decorator1
       @decorator2
       class GuardedController {}
@@ -168,4 +165,3 @@ describe("UseGuards() UseGuards decorator", () => {
 });
 
 // End of unit tests for: UseGuards decorator
-

@@ -35,10 +35,7 @@ class MockWebServer implements IWebServer {
     return Promise.resolve({} as Server);
   }
 
-  listen(
-    port: number | string,
-    appInfo?: any,
-  ): Promise<IWebServerPublic> {
+  listen(port: number | string, appInfo?: any): Promise<IWebServerPublic> {
     this.listenPort = port;
     return Promise.resolve(this.mockServer);
   }
@@ -69,9 +66,11 @@ describe("bootstrap() bootstrap function", () => {
     (mockFs.readFileSync as jest.Mock) = jest.fn();
     (mockFs.promises as any) = {
       writeFile: jest.fn().mockResolvedValue(undefined),
-      readFile: jest.fn().mockResolvedValue(
-        JSON.stringify({ name: "test-app", version: "1.0.0" }),
-      ),
+      readFile: jest
+        .fn()
+        .mockResolvedValue(
+          JSON.stringify({ name: "test-app", version: "1.0.0" }),
+        ),
     };
 
     // Mock path
@@ -389,4 +388,3 @@ describe("bootstrap() bootstrap function", () => {
 });
 
 // End of unit tests for: bootstrap
-

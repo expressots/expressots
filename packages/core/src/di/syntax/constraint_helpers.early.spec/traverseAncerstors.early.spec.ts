@@ -61,4 +61,3 @@ describe("traverseAncerstors() traverseAncerstors function", () => {
 });
 
 // End of unit tests for: traverseAncerstors
-

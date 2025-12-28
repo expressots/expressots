@@ -128,4 +128,3 @@ describe("BaseModule.createSymbols() createSymbols method (indirect)", () => {
 });
 
 // End of unit tests for: createSymbols
-

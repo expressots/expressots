@@ -39,4 +39,3 @@ describe("ProviderRegistry.getExternalProviders() getExternalProviders method", 
 });
 
 // End of unit tests for: ProviderRegistry.getExternalProviders
-

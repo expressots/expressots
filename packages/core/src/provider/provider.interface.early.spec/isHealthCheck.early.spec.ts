@@ -79,4 +79,3 @@ describe("isHealthCheck() isHealthCheck function", () => {
 });
 
 // End of unit tests for: isHealthCheck
-

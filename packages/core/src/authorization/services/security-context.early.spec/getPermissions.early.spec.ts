@@ -36,4 +36,3 @@ describe("SecurityContext.getPermissions() getPermissions method", () => {
 });
 
 // End of unit tests for: getPermissions
-

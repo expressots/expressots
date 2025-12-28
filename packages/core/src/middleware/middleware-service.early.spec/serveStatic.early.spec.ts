@@ -57,7 +57,8 @@ describe("Middleware.serveStatic() serveStatic method", () => {
 
       middleware.serveStatic(root, options as any);
       const initialLength = middleware.getMiddlewarePipeline().length;
-      const initialCallCount = (expressStatic as unknown as jest.Mock).mock.calls.length;
+      const initialCallCount = (expressStatic as unknown as jest.Mock).mock
+        .calls.length;
       middleware.serveStatic(root, options as any);
 
       // expressStatic not called again (early return when duplicate detected)

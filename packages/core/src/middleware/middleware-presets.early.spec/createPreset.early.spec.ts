@@ -9,9 +9,7 @@ describe("createPreset() createPreset function", () => {
       const config = {
         name: "custom" as any, // Custom name not in MiddlewarePresetName union
         description: "Custom preset",
-        middleware: [
-          { name: "BodyParser", options: {} },
-        ],
+        middleware: [{ name: "BodyParser", options: {} }],
       };
 
       // Act
@@ -60,9 +58,7 @@ describe("createPreset() createPreset function", () => {
       const config = {
         name: "custom",
         description: "Custom preset",
-        middleware: [
-          { name: "Cors", options: {}, optional: true },
-        ],
+        middleware: [{ name: "Cors", options: {}, optional: true }],
       };
 
       // Act
@@ -92,4 +88,3 @@ describe("createPreset() createPreset function", () => {
 });
 
 // End of unit tests for: createPreset
-

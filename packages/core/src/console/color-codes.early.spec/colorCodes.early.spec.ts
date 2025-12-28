@@ -38,4 +38,3 @@ describe("colorCodes colorCodes constant", () => {
 });
 
 // End of unit tests for: colorCodes
-

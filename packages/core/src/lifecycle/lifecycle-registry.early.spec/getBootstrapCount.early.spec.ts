@@ -129,4 +129,3 @@ describe("LifecycleRegistry.getBootstrapCount() getBootstrapCount method", () =>
 });
 
 // End of unit tests for: LifecycleRegistry.getBootstrapCount
-

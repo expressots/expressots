@@ -34,4 +34,3 @@ describe("GuardCache.clearScope() clearScope method", () => {
 });
 
 // End of unit tests for: clearScope
-

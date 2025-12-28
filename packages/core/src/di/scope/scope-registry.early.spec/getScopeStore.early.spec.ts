@@ -39,4 +39,3 @@ describe("ScopeRegistry.getScopeStore() getScopeStore method", () => {
 });
 
 // End of unit tests for: ScopeRegistry.getScopeStore
-
