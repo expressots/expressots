@@ -14,6 +14,7 @@ import {
   GuardExecutor,
   ContextManager,
   findFlowTracker,
+  NotFoundError,
 } from "@expressots/core";
 import { GuardContextFactory } from "./guard-context-factory";
 import { BaseMiddleware } from "./base-middleware";
@@ -857,7 +858,33 @@ export class InversifyExpressServer {
       } else if (value instanceof Function) {
         value();
       } else if (!res.headersSent) {
-        if (value !== undefined) {
+        // Smart response handling: Auto-404 for GET requests returning null/undefined
+        // This is a common pattern where null means "resource not found"
+        if (value === null || value === undefined) {
+          const method = req.method.toUpperCase();
+
+          // For GET requests, null/undefined typically means "not found"
+          // For DELETE requests, undefined means "successfully deleted" (204 No Content is already set)
+          if (method === "GET") {
+            // Extract resource info from path for helpful error message
+            const pathParts = req.path.split("/").filter(Boolean);
+            const resource = pathParts[pathParts.length - 2] || "Resource";
+            const id = req.params?.id || pathParts[pathParts.length - 1];
+
+            throw new NotFoundError(resource, id);
+          }
+
+          // For other methods (DELETE, PUT, PATCH), undefined is valid (204 No Content)
+          // The HttpStatusCodeMiddleware already sets appropriate status codes
+          if (method !== "DELETE" && method !== "PUT" && method !== "PATCH") {
+            // For POST or other methods with null/undefined, send empty response
+            res.end();
+          }
+          // For DELETE/PUT/PATCH, the middleware already set 204, just end the response
+          else {
+            res.end();
+          }
+        } else {
           // Try content negotiation if enabled
           const cnMetadata = getContentNegotiationMetadata(controller, key);
           const contentNegotiationService = this.getContentNegotiationService();
