@@ -139,7 +139,10 @@ export class AppFactory {
       const webServerInstance: T = new webServerType();
       return webServerInstance;
     } else {
-      AppFactory.getLogger().error("Invalid web server type.", "app-factory:create");
+      AppFactory.getLogger().error(
+        "Invalid web server type.",
+        "app-factory:create",
+      );
       throw new Error("Invalid web server type.");
     }
   }
