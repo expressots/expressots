@@ -86,7 +86,19 @@ export function isWebServerConstructor<T extends IWebServer>(
  * @public API
  */
 export class AppFactory {
-  private static logger: Logger = new Logger();
+  private static logger?: Logger;
+
+  /**
+   * Gets or creates the logger instance (lazy initialization).
+   * @returns Logger instance
+   * @private
+   */
+  private static getLogger(): Logger {
+    if (!AppFactory.logger) {
+      AppFactory.logger = new Logger();
+    }
+    return AppFactory.logger;
+  }
 
   /**
    * Create an instance of a web server.
@@ -110,6 +122,7 @@ export class AppFactory {
    * - Validates constructor using type guard
    * - Instantiates the class (triggers constructor)
    * - Returns builder interface for chaining
+   * - Logger is lazily initialized only when errors occur
    *
    * **Error Handling**
    * - Throws error if input is not a valid constructor
@@ -126,7 +139,7 @@ export class AppFactory {
       const webServerInstance: T = new webServerType();
       return webServerInstance;
     } else {
-      AppFactory.logger.error("Invalid web server type.", "app-factory:create");
+      AppFactory.getLogger().error("Invalid web server type.", "app-factory:create");
       throw new Error("Invalid web server type.");
     }
   }

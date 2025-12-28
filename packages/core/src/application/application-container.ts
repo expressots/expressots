@@ -90,7 +90,7 @@ import { Logger } from "../provider";
 export class AppContainer {
   private container!: Container;
   private options: interfaces.ContainerOptions;
-  private logger: Logger;
+  private logger?: Logger;
 
   /**
    * Constructs the AppContainer instance.
@@ -131,6 +131,18 @@ export class AppContainer {
       defaultScope: BindingScopeEnum.Request,
       ...options,
     };
+  }
+
+  /**
+   * Gets or creates the logger instance (lazy initialization).
+   * @returns Logger instance
+   * @private
+   */
+  private getLogger(): Logger {
+    if (!this.logger) {
+      this.logger = new Logger();
+    }
+    return this.logger;
   }
 
   /**
@@ -248,10 +260,8 @@ export class AppContainer {
    * @public API
    */
   public getContainerOptions(): interfaces.ContainerOptions {
-    this.logger = new Logger();
-
     if (!this.container) {
-      this.logger.error("Container not created yet.", "app-container");
+      this.getLogger().error("Container not created yet.", "app-container");
       return;
     }
 
