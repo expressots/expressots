@@ -51,12 +51,13 @@ describe("Middleware.addHelmet() addHelmet method", () => {
       const mockOptions: MockOptionsHelmet = { contentSecurityPolicy: false };
       (middlewareResolver as jest.Mock).mockReturnValue(() => {});
       middleware.addHelmet(mockOptions as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
 
-      // Act
+      // Act - Try to add again
       middleware.addHelmet(mockOptions as any);
 
-      // Assert
-      expect(middleware.getMiddlewarePipeline().length).toBe(2);
+      // Assert - Should not add duplicate
+      expect(middleware.getMiddlewarePipeline().length).toBe(initialLength);
     });
   });
 

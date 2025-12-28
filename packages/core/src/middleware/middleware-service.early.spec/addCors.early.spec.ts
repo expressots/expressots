@@ -59,11 +59,15 @@ describe("Middleware.addCors() addCors method", () => {
 
       // Add CORS middleware for the first time
       middleware.addCors(mockCorsOptions as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
+      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls.length;
+
       // Attempt to add CORS middleware again
       middleware.addCors(mockCorsOptions as any);
 
-      expect(middlewareResolver).toHaveBeenCalledTimes(3);
-      expect(middleware.getMiddlewarePipeline()).toHaveLength(2);
+      // Assert - Resolver NOT called again (early return when duplicate detected)
+      expect(middlewareResolver).toHaveBeenCalledTimes(initialCallCount);
+      expect(middleware.getMiddlewarePipeline()).toHaveLength(initialLength);
     });
 
     it("should handle undefined options gracefully", () => {

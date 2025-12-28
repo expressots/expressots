@@ -36,6 +36,8 @@ describe("Middleware.serveStatic() serveStatic method", () => {
   beforeEach(() => {
     middleware = new Middleware();
     jest.clearAllMocks();
+    // Mock expressStatic to return a function (middleware handler)
+    (expressStatic as unknown as jest.Mock).mockReturnValue(jest.fn());
   });
 
   describe("Happy Path", () => {
@@ -54,10 +56,13 @@ describe("Middleware.serveStatic() serveStatic method", () => {
       const options: MockServeStaticOptions = {} as any;
 
       middleware.serveStatic(root, options as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
+      const initialCallCount = (expressStatic as unknown as jest.Mock).mock.calls.length;
       middleware.serveStatic(root, options as any);
 
-      expect(expressStatic).toHaveBeenCalledTimes(2);
-      expect(middleware.getMiddlewarePipeline().length).toBe(2);
+      // expressStatic not called again (early return when duplicate detected)
+      expect(expressStatic).toHaveBeenCalledTimes(initialCallCount);
+      expect(middleware.getMiddlewarePipeline().length).toBe(initialLength);
     });
   });
 

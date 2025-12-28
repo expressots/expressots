@@ -61,17 +61,16 @@ describe("Middleware.addServeFavicon() addServeFavicon method", () => {
       const path: MockBuffer = { data: "favicon.ico" } as any;
       const options: ServeFaviconOptions = { maxAge: 3600 };
       (middlewareResolver as jest.Mock).mockReturnValue(jest.fn());
-      middleware["middlewarePipeline"].push({
-        timestamp: new Date(),
-        middleware: jest.fn(),
-      });
 
-      // Act
+      // Add serveFavicon first time
+      middleware.addServeFavicon(path as any, options);
+      const initialLength = middleware["middlewarePipeline"].length;
+
+      // Act - Try to add again
       middleware.addServeFavicon(path as any, options);
 
-      // Assert
-      //expect(middlewareResolver).not.toHaveBeenCalled();
-      expect(middleware["middlewarePipeline"].length).toBe(2);
+      // Assert - Should not add duplicate
+      expect(middleware["middlewarePipeline"].length).toBe(initialLength);
     });
 
     it("should handle undefined options gracefully", () => {

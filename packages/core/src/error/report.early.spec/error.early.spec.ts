@@ -68,7 +68,7 @@ describe("Report.error() error method", () => {
       // Assert
       expect(result).toBeInstanceOf(AppError);
       expect(result.message).toBe(mockError.message);
-      expect(result.statusCode).toBeUndefined();
+      expect(result.statusCode).toBe(500); // AppError defaults to InternalServerError (500)
       expect(result.service).toBeUndefined();
     });
 
@@ -82,7 +82,7 @@ describe("Report.error() error method", () => {
       // Assert
       expect(result).toBeInstanceOf(AppError);
       expect(result.message).toBe(errorMessage);
-      expect(result.statusCode).toBeUndefined();
+      expect(result.statusCode).toBe(500); // AppError defaults to InternalServerError (500)
       expect(result.service).toBeUndefined();
     });
 
@@ -96,7 +96,7 @@ describe("Report.error() error method", () => {
       // Assert
       expect(result).toBeInstanceOf(AppError);
       expect(result.message).toBe("");
-      expect(result.statusCode).toBeUndefined();
+      expect(result.statusCode).toBe(500); // AppError defaults to InternalServerError (500)
       expect(result.service).toBeUndefined();
     });
   });

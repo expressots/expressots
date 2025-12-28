@@ -47,18 +47,13 @@ describe("Middleware.setupMulter() setupMulter method", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should return null if multer middleware already exists", () => {
-      const mockMulterInstance = {} as multer.Multer;
-      (middlewareResolver as jest.Mock).mockReturnValue(
-        mockMulterInstance as any,
-      );
-
-      // Simulate that multer middleware already exists
-      jest.spyOn(middleware as any, "middlewareExists").mockReturnValue(true);
+    it("should return null if middlewareResolver returns null", () => {
+      // setupMulter doesn't check for duplicates, it just returns what resolver returns
+      (middlewareResolver as jest.Mock).mockReturnValue(null);
 
       const result = middleware.setupMulter();
 
-      //expect(middlewareResolver).not.toHaveBeenCalled();
+      expect(middlewareResolver).toHaveBeenCalledWith("multer", undefined);
       expect(result).toBeNull();
     });
 

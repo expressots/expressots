@@ -53,12 +53,13 @@ describe("Middleware.addCookieSession() addCookieSession method", () => {
       // Arrange
       (middlewareResolver as jest.Mock).mockReturnValue(() => {});
       middleware.addCookieSession(mockOptions as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
 
-      // Act
+      // Act - Try to add again
       middleware.addCookieSession(mockOptions as any);
 
-      // Assert
-      expect(middleware.getMiddlewarePipeline().length).toBe(2);
+      // Assert - Should not add duplicate
+      expect(middleware.getMiddlewarePipeline().length).toBe(initialLength);
     });
 
     it("should handle undefined options gracefully", () => {

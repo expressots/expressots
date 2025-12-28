@@ -58,11 +58,15 @@ describe("Middleware.addSession() addSession method", () => {
 
       // Add the session middleware once
       middleware.addSession(mockSessionOptions as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
+      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls.length;
+
       // Try to add the same session middleware again
       middleware.addSession(mockSessionOptions as any);
 
-      expect(middlewareResolver).toHaveBeenCalledTimes(2);
-      expect(middleware.getMiddlewarePipeline().length).toBe(2);
+      // Assert - Resolver NOT called again (early return when duplicate detected)
+      expect(middlewareResolver).toHaveBeenCalledTimes(initialCallCount);
+      expect(middleware.getMiddlewarePipeline().length).toBe(initialLength);
     });
 
     it("should handle undefined session options gracefully", () => {

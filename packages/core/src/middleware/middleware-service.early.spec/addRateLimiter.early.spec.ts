@@ -45,11 +45,13 @@ describe("Middleware.addRateLimiter() addRateLimiter method", () => {
 
       // Add the middleware once
       middleware.addRateLimiter({ windowMs: 60000, max: 100 } as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
+
       // Try to add it again
       middleware.addRateLimiter({ windowMs: 60000, max: 100 } as any);
 
       const pipeline = middleware.getMiddlewarePipeline();
-      expect(pipeline).toHaveLength(2); // Should still be 1, not 2
+      expect(pipeline).toHaveLength(initialLength); // Should not add duplicate
     });
 
     it("should handle undefined options gracefully", () => {

@@ -66,8 +66,9 @@ describe("Logger.error() error method", () => {
     it("should handle undefined module gracefully", () => {
       // Arrange
       const message = "This is an error message";
-      const module = undefined || "";
-      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR [${module}] ${message}\n`;
+      const module = undefined;
+      // When module is undefined/empty, the formatter omits the [module] part
+      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR  ${message}\n`;
 
       jest
         .spyOn(global.Date.prototype, "toLocaleString")

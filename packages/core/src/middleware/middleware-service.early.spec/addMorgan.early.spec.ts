@@ -63,13 +63,15 @@ describe("Middleware.addMorgan() addMorgan method", () => {
 
       // Add Morgan once
       middleware.addMorgan(format, options as any);
+      const initialLength = middleware.getMiddlewarePipeline().length;
+      const initialCallCount = (middlewareResolver as jest.Mock).mock.calls.length;
 
-      // Act
+      // Act - Try to add again
       middleware.addMorgan(format, options as any);
 
-      // Assert
-      expect(middlewareResolver).toHaveBeenCalledTimes(3);
-      expect(middleware.getMiddlewarePipeline().length).toBe(2);
+      // Assert - Resolver NOT called again (early return when duplicate detected)
+      expect(middlewareResolver).toHaveBeenCalledTimes(initialCallCount);
+      expect(middleware.getMiddlewarePipeline().length).toBe(initialLength);
     });
 
     it("should handle undefined options gracefully", () => {

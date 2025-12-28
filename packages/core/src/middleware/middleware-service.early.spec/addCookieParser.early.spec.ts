@@ -67,18 +67,15 @@ describe("Middleware.addCookieParser() addCookieParser method", () => {
       const mockMiddleware = jest.fn();
       (middlewareResolver as jest.Mock).mockReturnValue(mockMiddleware);
 
-      // Simulate existing middleware
-      middleware["middlewarePipeline"].push({
-        timestamp: new Date(),
-        middleware: mockMiddleware,
-      });
+      // Add cookie parser first time
+      middleware.addCookieParser(secret, options);
+      const initialLength = middleware["middlewarePipeline"].length;
 
-      // Act
+      // Act - Try to add again
       middleware.addCookieParser(secret, options);
 
-      // Assert
-      //expect(middlewareResolver).not.toHaveBeenCalled();
-      expect(middleware["middlewarePipeline"]).toHaveLength(2);
+      // Assert - Should not add duplicate
+      expect(middleware["middlewarePipeline"]).toHaveLength(initialLength);
     });
 
     it("should handle undefined secret and options gracefully", () => {
