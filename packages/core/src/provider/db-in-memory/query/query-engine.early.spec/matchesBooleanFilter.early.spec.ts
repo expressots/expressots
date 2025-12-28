@@ -20,7 +20,9 @@ describe("QueryEngine.matchesBooleanFilter() matchesBooleanFilter method", () =>
   describe("Boolean Filter Operations", () => {
     it("should match equals filter", () => {
       // Act
-      const result = (engine as any).matchesBooleanFilter(true, { equals: true });
+      const result = (engine as any).matchesBooleanFilter(true, {
+        equals: true,
+      });
 
       // Assert
       expect(result).toBe(true);
@@ -28,7 +30,9 @@ describe("QueryEngine.matchesBooleanFilter() matchesBooleanFilter method", () =>
 
     it("should not match equals filter when different", () => {
       // Act
-      const result = (engine as any).matchesBooleanFilter(true, { equals: false });
+      const result = (engine as any).matchesBooleanFilter(true, {
+        equals: false,
+      });
 
       // Assert
       expect(result).toBe(false);
@@ -52,7 +56,9 @@ describe("QueryEngine.matchesBooleanFilter() matchesBooleanFilter method", () =>
 
     it("should handle null/undefined values", () => {
       // Act
-      const result1 = (engine as any).matchesBooleanFilter(null, { equals: true });
+      const result1 = (engine as any).matchesBooleanFilter(null, {
+        equals: true,
+      });
       const result2 = (engine as any).matchesBooleanFilter(undefined, {
         equals: true,
       });
@@ -73,4 +79,3 @@ describe("QueryEngine.matchesBooleanFilter() matchesBooleanFilter method", () =>
     });
   });
 });
-

@@ -1,7 +1,13 @@
 // Unit tests for: ContextManager class
 
 import "reflect-metadata";
-import { ContextManager, LogContext, HttpContext, LogContext as LogContextDecorator, LogMethod } from "../logger.context";
+import {
+  ContextManager,
+  LogContext,
+  HttpContext,
+  LogContext as LogContextDecorator,
+  LogMethod,
+} from "../logger.context";
 
 describe("ContextManager", () => {
   beforeEach(() => {
@@ -141,11 +147,14 @@ describe("ContextManager", () => {
       let capturedContext: LogContext | undefined;
 
       // Act
-      const result = await ContextManager.runWithContextAsync(context, async () => {
-        await Promise.resolve();
-        capturedContext = ContextManager.getCurrentContext();
-        return "async-result";
-      });
+      const result = await ContextManager.runWithContextAsync(
+        context,
+        async () => {
+          await Promise.resolve();
+          capturedContext = ContextManager.getCurrentContext();
+          return "async-result";
+        },
+      );
 
       // Assert
       expect(result).toBe("async-result");
@@ -416,7 +425,9 @@ describe("ContextManager", () => {
       const httpContext = ContextManager.createHttpContext(req);
 
       // Assert
-      expect(httpContext.headers?.["x-forwarded-for"]).toBe("192.168.1.1, 10.0.0.1");
+      expect(httpContext.headers?.["x-forwarded-for"]).toBe(
+        "192.168.1.1, 10.0.0.1",
+      );
     });
 
     it("should use url when path is not available", () => {
@@ -676,4 +687,3 @@ describe("ContextManager", () => {
     });
   });
 });
-

@@ -70,4 +70,3 @@ describe("RoleGuard.cacheKey() cacheKey method", () => {
 });
 
 // End of unit tests for: RoleGuard.cacheKey
-

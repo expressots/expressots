@@ -29,7 +29,10 @@ describe("ProviderRegistry.getProviderMetadata()", () => {
     };
 
     // Act
-    const result = (registry as any).getProviderMetadata(TestProvider, instance);
+    const result = (registry as any).getProviderMetadata(
+      TestProvider,
+      instance,
+    );
 
     // Assert
     expect(result).toEqual({
@@ -58,7 +61,10 @@ describe("ProviderRegistry.getProviderMetadata()", () => {
     class TestProvider {}
 
     // Act
-    const result = (registry as any).getProviderMetadata(TestProvider, "string");
+    const result = (registry as any).getProviderMetadata(
+      TestProvider,
+      "string",
+    );
 
     // Assert
     // The method returns { name: target.name } as fallback when instance is not an object
@@ -71,11 +77,13 @@ describe("ProviderRegistry.getProviderMetadata()", () => {
     const instance = { version: "1.0.0" };
 
     // Act
-    const result = (registry as any).getProviderMetadata(TestProvider, instance);
+    const result = (registry as any).getProviderMetadata(
+      TestProvider,
+      instance,
+    );
 
     // Assert
     // The method returns { name: target.name } as fallback when instance has no name
     expect(result).toEqual({ name: "TestProvider" });
   });
 });
-

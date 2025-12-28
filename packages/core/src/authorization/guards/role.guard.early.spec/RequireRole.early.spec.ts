@@ -23,4 +23,3 @@ describe("RequireRole() RequireRole factory function", () => {
 });
 
 // End of unit tests for: RequireRole factory function
-

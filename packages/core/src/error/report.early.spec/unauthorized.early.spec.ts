@@ -37,4 +37,3 @@ describe("Report.unauthorized() unauthorized method", () => {
 });
 
 // End of unit tests for: Report.unauthorized
-

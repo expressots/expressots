@@ -70,4 +70,3 @@ describe("AuthenticatedGuard.canActivate() canActivate method", () => {
 });
 
 // End of unit tests for: AuthenticatedGuard.canActivate
-

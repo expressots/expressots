@@ -72,7 +72,9 @@ describe("Logger query methods", () => {
 
       // Assert
       expect(results.length).toBeGreaterThan(0);
-      expect(results.every((entry) => entry.level === LogLevel.INFO)).toBe(true);
+      expect(results.every((entry) => entry.level === LogLevel.INFO)).toBe(
+        true,
+      );
       expect(results.every((entry) => entry.context === "Context1")).toBe(true);
     });
   });
@@ -207,4 +209,3 @@ describe("Logger query methods", () => {
     });
   });
 });
-

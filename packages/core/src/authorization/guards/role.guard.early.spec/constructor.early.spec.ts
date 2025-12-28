@@ -22,20 +22,25 @@ describe("RoleGuard() RoleGuard constructor", () => {
       const roles: Array<string> = [];
 
       // Act & Assert
-      expect(() => new RoleGuard(roles)).toThrow("RoleGuard requires at least one role");
+      expect(() => new RoleGuard(roles)).toThrow(
+        "RoleGuard requires at least one role",
+      );
     });
 
     it("should throw error when roles is null", () => {
       // Act & Assert
-      expect(() => new RoleGuard(null as any)).toThrow("RoleGuard requires at least one role");
+      expect(() => new RoleGuard(null as any)).toThrow(
+        "RoleGuard requires at least one role",
+      );
     });
 
     it("should throw error when roles is undefined", () => {
       // Act & Assert
-      expect(() => new RoleGuard(undefined as any)).toThrow("RoleGuard requires at least one role");
+      expect(() => new RoleGuard(undefined as any)).toThrow(
+        "RoleGuard requires at least one role",
+      );
     });
   });
 });
 
 // End of unit tests for: RoleGuard constructor
-

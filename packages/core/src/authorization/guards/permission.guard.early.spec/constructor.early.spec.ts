@@ -19,20 +19,25 @@ describe("PermissionGuard() PermissionGuard constructor", () => {
   describe("Edge Cases", () => {
     it("should throw error when permission is empty string", () => {
       // Act & Assert
-      expect(() => new PermissionGuard("")).toThrow("PermissionGuard requires a permission string");
+      expect(() => new PermissionGuard("")).toThrow(
+        "PermissionGuard requires a permission string",
+      );
     });
 
     it("should throw error when permission is null", () => {
       // Act & Assert
-      expect(() => new PermissionGuard(null as any)).toThrow("PermissionGuard requires a permission string");
+      expect(() => new PermissionGuard(null as any)).toThrow(
+        "PermissionGuard requires a permission string",
+      );
     });
 
     it("should throw error when permission is undefined", () => {
       // Act & Assert
-      expect(() => new PermissionGuard(undefined as any)).toThrow("PermissionGuard requires a permission string");
+      expect(() => new PermissionGuard(undefined as any)).toThrow(
+        "PermissionGuard requires a permission string",
+      );
     });
   });
 });
 
 // End of unit tests for: PermissionGuard constructor
-

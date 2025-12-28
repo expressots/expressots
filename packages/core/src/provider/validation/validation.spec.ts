@@ -521,7 +521,9 @@ describe("SmartFieldDetector", () => {
 
     it("should pass valid credit card number", () => {
       // Valid test card number (Luhn algorithm)
-      expect(detector.validate("creditCardNumber", "4111111111111111")).toHaveLength(0);
+      expect(
+        detector.validate("creditCardNumber", "4111111111111111"),
+      ).toHaveLength(0);
     });
 
     it("should handle null/undefined/empty", () => {
@@ -548,7 +550,9 @@ describe("SmartFieldDetector", () => {
     });
 
     it("should accept card with spaces/dashes", () => {
-      expect(detector.validate("creditCardNumber", "4111-1111-1111-1111")).toHaveLength(0);
+      expect(
+        detector.validate("creditCardNumber", "4111-1111-1111-1111"),
+      ).toHaveLength(0);
     });
   });
 
@@ -565,7 +569,12 @@ describe("SmartFieldDetector", () => {
     });
 
     it("should pass valid IPv6", () => {
-      expect(detector.validate("ipAddress", "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toHaveLength(0);
+      expect(
+        detector.validate(
+          "ipAddress",
+          "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        ),
+      ).toHaveLength(0);
     });
 
     it("should handle null/undefined/empty", () => {
@@ -832,7 +841,9 @@ describe("HelpfulErrorFormatter", () => {
       ];
 
       const result = formatter.format(errors, "helpful");
-      expect(result.detail).toBe("3 validation errors in fields: email, name, age");
+      expect(result.detail).toBe(
+        "3 validation errors in fields: email, name, age",
+      );
     });
 
     it("should handle errors in more than 3 fields", () => {
@@ -1186,10 +1197,14 @@ describe("Type Inference", () => {
     it("should detect class-validator when metadata keys match", () => {
       // Create a class with validation metadata that matches the pattern
       const MockClass = class {};
-      Reflect.defineMetadata("class-validator:validation", {}, MockClass.prototype);
-      
+      Reflect.defineMetadata(
+        "class-validator:validation",
+        {},
+        MockClass.prototype,
+      );
+
       const result = detectSchemaType(MockClass);
-      
+
       // Should return class-validator if metadata keys match, otherwise class
       expect(["class-validator", "class"]).toContain(result);
     });
@@ -1200,12 +1215,21 @@ describe("Type Inference", () => {
       class TestController {
         testMethod(param: string): void {}
       }
-      
+
       // Set up metadata manually
-      Reflect.defineMetadata("design:paramtypes", [String], TestController.prototype, "testMethod");
-      
-      const result = getParameterType(TestController.prototype, "testMethod", 0);
-      
+      Reflect.defineMetadata(
+        "design:paramtypes",
+        [String],
+        TestController.prototype,
+        "testMethod",
+      );
+
+      const result = getParameterType(
+        TestController.prototype,
+        "testMethod",
+        0,
+      );
+
       if (result) {
         expect(result.type).toBe(String);
         expect(result.index).toBe(0);
@@ -1219,12 +1243,20 @@ describe("Type Inference", () => {
       class TestController {
         testMethod(param1: string, param2: number): void {}
       }
-      
+
       // Set up metadata manually
-      Reflect.defineMetadata("design:paramtypes", [String, Number], TestController.prototype, "testMethod");
-      
-      const result = getAllParameterTypes(TestController.prototype, "testMethod");
-      
+      Reflect.defineMetadata(
+        "design:paramtypes",
+        [String, Number],
+        TestController.prototype,
+        "testMethod",
+      );
+
+      const result = getAllParameterTypes(
+        TestController.prototype,
+        "testMethod",
+      );
+
       if (result.length > 0) {
         expect(result).toHaveLength(2);
         expect(result[0].type).toBe(String);
@@ -1238,12 +1270,17 @@ describe("Type Inference", () => {
       class TestClassWithMetadata {
         prop1: string = "";
       }
-      
+
       // Set up metadata for property
-      Reflect.defineMetadata("design:type", String, TestClassWithMetadata.prototype, "prop1");
-      
+      Reflect.defineMetadata(
+        "design:type",
+        String,
+        TestClassWithMetadata.prototype,
+        "prop1",
+      );
+
       const result = getClassProperties(TestClassWithMetadata);
-      
+
       // Result may be undefined or a Map depending on metadata availability
       expect(result === undefined || result instanceof Map).toBe(true);
     });
@@ -1252,12 +1289,17 @@ describe("Type Inference", () => {
       class TestClass {
         prop1: string = "";
       }
-      
+
       // Set up metadata on prototype
-      Reflect.defineMetadata("design:type", String, TestClass.prototype, "prop1");
-      
+      Reflect.defineMetadata(
+        "design:type",
+        String,
+        TestClass.prototype,
+        "prop1",
+      );
+
       const result = getClassProperties(TestClass);
-      
+
       expect(result === undefined || result instanceof Map).toBe(true);
     });
 
@@ -1265,12 +1307,17 @@ describe("Type Inference", () => {
       class TestClass {
         prop1: string = "";
       }
-      
+
       // Set up metadata
-      Reflect.defineMetadata("design:type", String, TestClass.prototype, "prop1");
-      
+      Reflect.defineMetadata(
+        "design:type",
+        String,
+        TestClass.prototype,
+        "prop1",
+      );
+
       const result = getClassProperties(TestClass);
-      
+
       // Should not duplicate properties
       expect(result === undefined || result instanceof Map).toBe(true);
     });
@@ -1279,24 +1326,28 @@ describe("Type Inference", () => {
   describe("hasClassValidatorDecorators with metadata storage", () => {
     it("should check metadata keys when class-validator not available", () => {
       class TestClass {}
-      
+
       // Set up metadata that matches the pattern
-      Reflect.defineMetadata("class-validator:validation", {}, TestClass.prototype);
-      
+      Reflect.defineMetadata(
+        "class-validator:validation",
+        {},
+        TestClass.prototype,
+      );
+
       const result = hasClassValidatorDecorators(TestClass);
-      
+
       // Should check metadata keys as fallback
       expect(typeof result).toBe("boolean");
     });
 
     it("should handle metadata keys that don't match pattern", () => {
       class TestClass {}
-      
+
       // Set up metadata that doesn't match
       Reflect.defineMetadata("other:metadata", {}, TestClass.prototype);
-      
+
       const result = hasClassValidatorDecorators(TestClass);
-      
+
       expect(result).toBe(false);
     });
   });
@@ -1308,19 +1359,19 @@ describe("Type Inference", () => {
           typeName: "ZodString",
         },
       };
-      
+
       // Should return true from _def check, never reaching require
       const result = isZodSchema(mockSchema);
-      
+
       expect(result).toBe(true);
     });
 
     it("should handle require error gracefully", () => {
       // Object without _def.typeName will try require
       const mockObject = { _def: {} };
-      
+
       const result = isZodSchema(mockObject);
-      
+
       // Should return false (either from _def check or require error)
       expect(result).toBe(false);
     });

@@ -82,10 +82,11 @@ describe("RoleGuard.canActivate() canActivate method", () => {
       expect(result.allowed).toBe(false);
       expect(result.error).toBeInstanceOf(AppError);
       expect(result.error?.statusCode).toBe(StatusCode.Forbidden);
-      expect(result.error?.message).toContain("Requires one of: admin, moderator");
+      expect(result.error?.message).toContain(
+        "Requires one of: admin, moderator",
+      );
     });
   });
 });
 
 // End of unit tests for: RoleGuard.canActivate
-

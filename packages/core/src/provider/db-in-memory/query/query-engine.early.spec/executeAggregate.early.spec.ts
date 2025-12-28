@@ -138,7 +138,12 @@ describe("QueryEngine.executeAggregate() executeAggregate method", () => {
 
     it("should return null for avg when no numeric values", async () => {
       // Arrange
-      await store.insert({ id: "1", name: "Test1", age: 20, score: null as any });
+      await store.insert({
+        id: "1",
+        name: "Test1",
+        age: 20,
+        score: null as any,
+      });
 
       // Act
       const result = engine.executeAggregate({ _avg: { score: true } });
@@ -149,7 +154,12 @@ describe("QueryEngine.executeAggregate() executeAggregate method", () => {
 
     it("should return null for sum when no numeric values", async () => {
       // Arrange
-      await store.insert({ id: "1", name: "Test1", age: 20, score: null as any });
+      await store.insert({
+        id: "1",
+        name: "Test1",
+        age: 20,
+        score: null as any,
+      });
 
       // Act
       const result = engine.executeAggregate({ _sum: { score: true } });
@@ -159,4 +169,3 @@ describe("QueryEngine.executeAggregate() executeAggregate method", () => {
     });
   });
 });
-

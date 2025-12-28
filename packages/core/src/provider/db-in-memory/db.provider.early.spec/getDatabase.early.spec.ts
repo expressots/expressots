@@ -31,4 +31,3 @@ describe("InMemoryDBProvider.getDatabase() getDatabase method", () => {
     });
   });
 });
-

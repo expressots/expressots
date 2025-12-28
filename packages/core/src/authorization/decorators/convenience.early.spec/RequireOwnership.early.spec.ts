@@ -32,4 +32,3 @@ describe("RequireOwnership() RequireOwnership decorator", () => {
 });
 
 // End of unit tests for: RequireOwnership decorator
-

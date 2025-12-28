@@ -22,8 +22,18 @@ describe("QueryEngine.executeOrderBy() executeOrderBy method", () => {
   describe("Happy Path", () => {
     it("should return entities unchanged when orderBy is undefined", async () => {
       // Arrange
-      await store.insert({ id: "1", name: "B", age: 20, createdAt: new Date() });
-      await store.insert({ id: "2", name: "A", age: 30, createdAt: new Date() });
+      await store.insert({
+        id: "1",
+        name: "B",
+        age: 20,
+        createdAt: new Date(),
+      });
+      await store.insert({
+        id: "2",
+        name: "A",
+        age: 30,
+        createdAt: new Date(),
+      });
       const entities = store.findAll();
 
       // Act
@@ -143,4 +153,3 @@ describe("QueryEngine.executeOrderBy() executeOrderBy method", () => {
     });
   });
 });
-

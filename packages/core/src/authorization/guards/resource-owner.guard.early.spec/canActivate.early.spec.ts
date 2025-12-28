@@ -97,10 +97,11 @@ describe("ResourceOwnerGuard.canActivate() canActivate method", () => {
       expect(result.allowed).toBe(false);
       expect(result.error).toBeInstanceOf(AppError);
       expect(result.error?.statusCode).toBe(StatusCode.BadRequest);
-      expect(result.error?.message).toContain("Resource ID parameter 'id' is required");
+      expect(result.error?.message).toContain(
+        "Resource ID parameter 'id' is required",
+      );
     });
   });
 });
 
 // End of unit tests for: ResourceOwnerGuard.canActivate
-

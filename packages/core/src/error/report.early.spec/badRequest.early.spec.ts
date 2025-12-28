@@ -42,4 +42,3 @@ describe("Report.badRequest() badRequest method", () => {
 });
 
 // End of unit tests for: Report.badRequest
-

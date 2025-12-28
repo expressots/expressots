@@ -58,7 +58,11 @@ describe("ProviderRegistry.detectSource()", () => {
     const providerMeta: ProviderOptions = {
       source: "external",
     };
-    Reflect.defineMetadata(METADATA_KEY.providerMeta, providerMeta, TestProvider);
+    Reflect.defineMetadata(
+      METADATA_KEY.providerMeta,
+      providerMeta,
+      TestProvider,
+    );
     (Reflect.getMetadata as jest.Mock).mockImplementation((key, target) => {
       if (key === METADATA_KEY.provide && target === Reflect) {
         return [{ implementationType: TestProvider }];
@@ -99,4 +103,3 @@ describe("ProviderRegistry.detectSource()", () => {
     expect(provider?.source).toBe("user");
   });
 });
-

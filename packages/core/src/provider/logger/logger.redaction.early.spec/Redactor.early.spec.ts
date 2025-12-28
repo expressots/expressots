@@ -216,7 +216,9 @@ describe("Redactor", () => {
     it("should respect max depth", () => {
       // Arrange
       const redactor = new Redactor({ maxDepth: 2 });
-      const data: any = { level1: { level2: { level3: { password: "secret" } } } };
+      const data: any = {
+        level1: { level2: { level3: { password: "secret" } } },
+      };
 
       // Act
       const result = redactor.redact(data);
@@ -477,4 +479,3 @@ describe("Redactor", () => {
     });
   });
 });
-

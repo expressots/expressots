@@ -46,7 +46,11 @@ describe("ExceptionHandlerMiddleware() ExceptionHandlerMiddleware constructor", 
       container.bind(Logger).toConstantValue({} as Logger);
 
       // Act
-      const middleware = new ExceptionHandlerMiddleware(container, undefined, true);
+      const middleware = new ExceptionHandlerMiddleware(
+        container,
+        undefined,
+        true,
+      );
 
       // Assert
       expect(middleware).toBeInstanceOf(ExceptionHandlerMiddleware);
@@ -100,4 +104,3 @@ describe("ExceptionHandlerMiddleware() ExceptionHandlerMiddleware constructor", 
 });
 
 // End of unit tests for: ExceptionHandlerMiddleware constructor
-

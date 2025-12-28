@@ -62,4 +62,3 @@ describe("PermissionHierarchy.configure() configure method", () => {
 });
 
 // End of unit tests for: PermissionHierarchy.configure
-

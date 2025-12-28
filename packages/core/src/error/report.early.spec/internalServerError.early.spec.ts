@@ -19,7 +19,9 @@ describe("Report.internalServerError() internalServerError method", () => {
       expect(result).toBeInstanceOf(AppError);
       expect(result.message).toBe("Internal Server Error");
       expect(result.statusCode).toBe(StatusCode.InternalServerError);
-      expect(result.type).toBe("https://expressots.dev/errors/internal-server-error");
+      expect(result.type).toBe(
+        "https://expressots.dev/errors/internal-server-error",
+      );
     });
 
     it("should create an InternalServerError with custom message", () => {
@@ -33,7 +35,9 @@ describe("Report.internalServerError() internalServerError method", () => {
       expect(result).toBeInstanceOf(AppError);
       expect(result.message).toBe(message);
       expect(result.statusCode).toBe(StatusCode.InternalServerError);
-      expect(result.type).toBe("https://expressots.dev/errors/internal-server-error");
+      expect(result.type).toBe(
+        "https://expressots.dev/errors/internal-server-error",
+      );
     });
 
     it("should create an InternalServerError with message and service", () => {
@@ -49,10 +53,11 @@ describe("Report.internalServerError() internalServerError method", () => {
       expect(result.message).toBe(message);
       expect(result.statusCode).toBe(StatusCode.InternalServerError);
       expect(result.service).toBe(service);
-      expect(result.type).toBe("https://expressots.dev/errors/internal-server-error");
+      expect(result.type).toBe(
+        "https://expressots.dev/errors/internal-server-error",
+      );
     });
   });
 });
 
 // End of unit tests for: Report.internalServerError
-

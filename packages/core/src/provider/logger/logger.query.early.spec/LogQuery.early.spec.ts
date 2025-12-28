@@ -57,7 +57,9 @@ describe("LogQuery", () => {
 
       // Assert
       expect(results.length).toBe(2);
-      expect(results.every((e) => [LogLevel.INFO, LogLevel.WARN].includes(e.level))).toBe(true);
+      expect(
+        results.every((e) => [LogLevel.INFO, LogLevel.WARN].includes(e.level)),
+      ).toBe(true);
     });
   });
 
@@ -108,9 +110,9 @@ describe("LogQuery", () => {
 
       // Assert
       expect(results.length).toBe(3);
-      expect(
-        results.every((e) => e.timestamp.getTime() >= startTime),
-      ).toBe(true);
+      expect(results.every((e) => e.timestamp.getTime() >= startTime)).toBe(
+        true,
+      );
     });
 
     it("should filter by start time (Date)", () => {
@@ -129,13 +131,13 @@ describe("LogQuery", () => {
       const endTime = new Date("2024-01-01T00:00:01Z").getTime();
 
       // Act
-      const results = new LogQuery(entries).timeRange(undefined, endTime).execute();
+      const results = new LogQuery(entries)
+        .timeRange(undefined, endTime)
+        .execute();
 
       // Assert
       expect(results.length).toBe(2);
-      expect(
-        results.every((e) => e.timestamp.getTime() <= endTime),
-      ).toBe(true);
+      expect(results.every((e) => e.timestamp.getTime() <= endTime)).toBe(true);
     });
 
     it("should filter by both start and end time", () => {
@@ -201,7 +203,9 @@ describe("LogQuery", () => {
 
     it("should filter by regex pattern (string)", () => {
       // Act
-      const results = new LogQuery(entries).messageRegex("Error|Warn").execute();
+      const results = new LogQuery(entries)
+        .messageRegex("Error|Warn")
+        .execute();
 
       // Assert
       expect(results.length).toBe(2);
@@ -327,7 +331,9 @@ describe("LogQuery", () => {
 
       // Assert
       expect(stats.oldest).toBe(entries[0].timestamp.getTime());
-      expect(stats.newest).toBe(entries[entries.length - 1].timestamp.getTime());
+      expect(stats.newest).toBe(
+        entries[entries.length - 1].timestamp.getTime(),
+      );
     });
   });
 
@@ -347,4 +353,3 @@ describe("LogQuery", () => {
     });
   });
 });
-

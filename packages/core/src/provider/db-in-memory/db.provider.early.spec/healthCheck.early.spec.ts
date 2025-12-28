@@ -66,4 +66,3 @@ describe("InMemoryDBProvider.healthCheck() healthCheck method", () => {
     });
   });
 });
-

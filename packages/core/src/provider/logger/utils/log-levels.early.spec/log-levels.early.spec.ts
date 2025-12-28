@@ -146,4 +146,3 @@ describe("LogLevel", () => {
     });
   });
 });
-

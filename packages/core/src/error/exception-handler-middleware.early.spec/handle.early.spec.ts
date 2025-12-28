@@ -6,7 +6,10 @@ import { ExceptionFilterRegistry } from "../exception-filter-registry";
 import { Logger } from "../../provider/logger/logger.provider";
 import { AppError, StatusCode } from "../index";
 import { Request, Response, NextFunction } from "express";
-import type { IExceptionFilter, ExceptionContext } from "../exception-filter.interface";
+import type {
+  IExceptionFilter,
+  ExceptionContext,
+} from "../exception-filter.interface";
 import { BaseExceptionFilter } from "../base-exception-filter";
 import { EXCEPTION_FILTER_METADATA_KEY } from "../exception-filter-constants";
 
@@ -63,7 +66,9 @@ describe("ExceptionHandlerMiddleware.handle() handle method", () => {
 
       // Assert
       expect((mockRequest as any).__expressotsFlowError).toBe(error);
-      expect(mockResponse.status).toHaveBeenCalledWith(StatusCode.InternalServerError);
+      expect(mockResponse.status).toHaveBeenCalledWith(
+        StatusCode.InternalServerError,
+      );
       expect(mockResponse.json).toHaveBeenCalled();
     });
 
@@ -359,7 +364,10 @@ describe("ExceptionHandlerMiddleware.handle() handle method", () => {
       const error = new Error("Test error");
 
       class AsyncFilter extends BaseExceptionFilter {
-        async catch(exception: Error, context: ExceptionContext): Promise<void> {
+        async catch(
+          exception: Error,
+          context: ExceptionContext,
+        ): Promise<void> {
           await new Promise((resolve) => setTimeout(resolve, 10));
           context.response.status(200).json({ async: true });
         }
@@ -531,7 +539,9 @@ describe("ExceptionHandlerMiddleware.handle() handle method", () => {
       );
 
       // Assert
-      expect(mockResponse.status).toHaveBeenCalledWith(StatusCode.InternalServerError);
+      expect(mockResponse.status).toHaveBeenCalledWith(
+        StatusCode.InternalServerError,
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           code: StatusCode.InternalServerError,
@@ -543,4 +553,3 @@ describe("ExceptionHandlerMiddleware.handle() handle method", () => {
 });
 
 // End of unit tests for: ExceptionHandlerMiddleware.handle
-

@@ -172,7 +172,10 @@ describe("ClassValidatorAdapter", () => {
       }
 
       // Act
-      const result = await adapter.validate({ email: "test@example.com" }, TestDTO);
+      const result = await adapter.validate(
+        { email: "test@example.com" },
+        TestDTO,
+      );
 
       // Assert
       expect(result.success).toBe(true);
@@ -235,7 +238,10 @@ describe("ClassValidatorAdapter", () => {
       mockClassValidator.validate.mockResolvedValue(validationErrors);
 
       // Act
-      const result = await adapter.validate({ email: "invalid-email" }, TestDTO);
+      const result = await adapter.validate(
+        { email: "invalid-email" },
+        TestDTO,
+      );
 
       // Assert
       expect(result.success).toBe(false);
@@ -403,7 +409,10 @@ describe("ClassValidatorAdapter", () => {
       });
 
       // Act
-      const result = await adapter.validate({ email: "test@example.com" }, TestDTO);
+      const result = await adapter.validate(
+        { email: "test@example.com" },
+        TestDTO,
+      );
 
       // Assert
       expect(result.success).toBe(false);
@@ -424,7 +433,10 @@ describe("ClassValidatorAdapter", () => {
       });
 
       // Act
-      const result = await adapter.validate({ email: "test@example.com" }, TestDTO);
+      const result = await adapter.validate(
+        { email: "test@example.com" },
+        TestDTO,
+      );
 
       // Assert
       expect(result.success).toBe(false);
@@ -487,7 +499,10 @@ describe("ClassValidatorAdapter", () => {
       mockClassTransformer.plainToInstance.mockReturnValue(instance);
 
       // Act
-      const result = await adapter.transform({ email: "test@example.com" }, TestDTO);
+      const result = await adapter.transform(
+        { email: "test@example.com" },
+        TestDTO,
+      );
 
       // Assert
       expect(result).toBe(instance);
@@ -504,7 +519,11 @@ describe("ClassValidatorAdapter", () => {
   describe("getHelpfulInfo()", () => {
     it("should provide helpful info for isEmail errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("email", "isEmail", "invalid");
+      const info = (adapter as any).getHelpfulInfo(
+        "email",
+        "isEmail",
+        "invalid",
+      );
 
       // Assert
       expect(info.expected).toBe("valid email address");
@@ -523,7 +542,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isNotEmpty email fields", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("userEmail", "isNotEmpty", "");
+      const info = (adapter as any).getHelpfulInfo(
+        "userEmail",
+        "isNotEmpty",
+        "",
+      );
 
       // Assert
       expect(info.example).toBe("user@example.com");
@@ -531,7 +554,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for minLength errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("password", "minLength", "abc");
+      const info = (adapter as any).getHelpfulInfo(
+        "password",
+        "minLength",
+        "abc",
+      );
 
       // Assert
       expect(info.expected).toBe("string with minimum length");
@@ -553,7 +580,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isInt errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("age", "isInt", "not-a-number");
+      const info = (adapter as any).getHelpfulInfo(
+        "age",
+        "isInt",
+        "not-a-number",
+      );
 
       // Assert
       expect(info.expected).toBe("number");
@@ -563,7 +594,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isNumber errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("price", "isNumber", "invalid");
+      const info = (adapter as any).getHelpfulInfo(
+        "price",
+        "isNumber",
+        "invalid",
+      );
 
       // Assert
       expect(info.expected).toBe("number");
@@ -572,7 +607,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isBoolean errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("isActive", "isBoolean", "yes");
+      const info = (adapter as any).getHelpfulInfo(
+        "isActive",
+        "isBoolean",
+        "yes",
+      );
 
       // Assert
       expect(info.expected).toBe("boolean");
@@ -587,12 +626,18 @@ describe("ClassValidatorAdapter", () => {
       // Assert
       expect(info.expected).toBe("valid UUID");
       expect(info.example).toBe("550e8400-e29b-41d4-a716-446655440000");
-      expect(info.hint).toBe("UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
+      expect(info.hint).toBe(
+        "UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      );
     });
 
     it("should provide helpful info for isUrl errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("website", "isUrl", "invalid");
+      const info = (adapter as any).getHelpfulInfo(
+        "website",
+        "isUrl",
+        "invalid",
+      );
 
       // Assert
       expect(info.expected).toBe("valid URL");
@@ -602,7 +647,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isURL errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("website", "isURL", "invalid");
+      const info = (adapter as any).getHelpfulInfo(
+        "website",
+        "isURL",
+        "invalid",
+      );
 
       // Assert
       expect(info.expected).toBe("valid URL");
@@ -610,7 +659,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isPhoneNumber errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("phone", "isPhoneNumber", "123");
+      const info = (adapter as any).getHelpfulInfo(
+        "phone",
+        "isPhoneNumber",
+        "123",
+      );
 
       // Assert
       expect(info.expected).toBe("valid phone number");
@@ -620,7 +673,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isDate errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("birthDate", "isDate", "invalid");
+      const info = (adapter as any).getHelpfulInfo(
+        "birthDate",
+        "isDate",
+        "invalid",
+      );
 
       // Assert
       expect(info.expected).toBe("valid date");
@@ -630,7 +687,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isDateString errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("createdAt", "isDateString", "invalid");
+      const info = (adapter as any).getHelpfulInfo(
+        "createdAt",
+        "isDateString",
+        "invalid",
+      );
 
       // Assert
       expect(info.expected).toBe("valid date");
@@ -639,7 +700,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should provide helpful info for isArray errors", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("items", "isArray", "not-array");
+      const info = (adapter as any).getHelpfulInfo(
+        "items",
+        "isArray",
+        "not-array",
+      );
 
       // Assert
       expect(info.expected).toBe("array");
@@ -649,7 +714,11 @@ describe("ClassValidatorAdapter", () => {
 
     it("should return empty object for unknown error codes", () => {
       // Act
-      const info = (adapter as any).getHelpfulInfo("field", "unknownCode", "value");
+      const info = (adapter as any).getHelpfulInfo(
+        "field",
+        "unknownCode",
+        "value",
+      );
 
       // Assert
       expect(info).toEqual({});
@@ -705,7 +774,7 @@ describe("ClassValidatorAdapter", () => {
     it("should return null when getMetadataStorage is not available", () => {
       // Arrange
       const mockCvWithoutGetMetadataStorage = {};
-      
+
       // Act - test the logic
       const result = (() => {
         try {
@@ -864,4 +933,3 @@ describe("ClassValidatorAdapter", () => {
     });
   });
 });
-

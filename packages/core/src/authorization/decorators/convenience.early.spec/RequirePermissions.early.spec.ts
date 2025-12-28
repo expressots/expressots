@@ -47,4 +47,3 @@ describe("RequirePermissions() RequirePermissions decorator", () => {
 });
 
 // End of unit tests for: RequirePermissions decorator
-

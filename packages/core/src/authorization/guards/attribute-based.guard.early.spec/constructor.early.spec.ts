@@ -41,4 +41,3 @@ describe("AttributeBasedGuard() AttributeBasedGuard constructor", () => {
 });
 
 // End of unit tests for: AttributeBasedGuard constructor
-

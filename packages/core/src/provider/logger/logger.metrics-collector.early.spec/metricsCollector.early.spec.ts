@@ -88,12 +88,10 @@ describe("MetricsCollector", () => {
       mockOptions.getControllersFromContainer = jest
         .fn()
         .mockReturnValue([new TestController()]);
-      mockOptions.getControllerMethodMetadata = jest
-        .fn()
-        .mockReturnValue([
-          { method: "GET", path: "/test1" },
-          { method: "POST", path: "/test2" },
-        ]);
+      mockOptions.getControllerMethodMetadata = jest.fn().mockReturnValue([
+        { method: "GET", path: "/test1" },
+        { method: "POST", path: "/test2" },
+      ]);
 
       // Act
       const result = MetricsCollector.collect(mockContainer, mockOptions);
@@ -107,9 +105,11 @@ describe("MetricsCollector", () => {
       mockOptions.getControllersFromMetadata = jest
         .fn()
         .mockReturnValue([{}, {}]);
-      mockOptions.getControllersFromContainer = jest.fn().mockImplementation(() => {
-        throw new Error("Container error");
-      });
+      mockOptions.getControllersFromContainer = jest
+        .fn()
+        .mockImplementation(() => {
+          throw new Error("Container error");
+        });
 
       // Act
       const result = MetricsCollector.collect(mockContainer, mockOptions);
@@ -125,10 +125,7 @@ describe("MetricsCollector", () => {
       class Provider2 {}
       Reflect.defineMetadata(
         METADATA_KEY.provide,
-        [
-          { implementationType: Provider1 },
-          { implementationType: Provider2 },
-        ],
+        [{ implementationType: Provider1 }, { implementationType: Provider2 }],
         Reflect,
       );
 
@@ -452,4 +449,3 @@ describe("MetricsCollector", () => {
     });
   });
 });
-

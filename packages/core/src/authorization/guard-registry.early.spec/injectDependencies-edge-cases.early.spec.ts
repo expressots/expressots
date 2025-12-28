@@ -25,7 +25,10 @@ describe("GuardRegistry.injectDependencies() injectDependencies edge cases", () 
     it("should handle when Logger is not bound in container", () => {
       // Arrange
       const unboundContainer = new Container();
-      const registryWithoutLogger = new GuardRegistry(unboundContainer, mockLogger);
+      const registryWithoutLogger = new GuardRegistry(
+        unboundContainer,
+        mockLogger,
+      );
       const guardInstance: IGuard = {
         canActivate: jest.fn().mockResolvedValue(GuardResult.allow()),
       } as unknown as IGuard;
@@ -79,4 +82,3 @@ describe("GuardRegistry.injectDependencies() injectDependencies edge cases", () 
 });
 
 // End of unit tests for: GuardRegistry.injectDependencies edge cases
-

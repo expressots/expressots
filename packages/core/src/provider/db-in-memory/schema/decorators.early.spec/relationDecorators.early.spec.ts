@@ -31,10 +31,8 @@ describe("Relation decorators", () => {
       const user = new User();
 
       // Assert
-      const relations = Reflect.getMetadata(
-        "expressots:db:relation",
-        User,
-      ) || [];
+      const relations =
+        Reflect.getMetadata("expressots:db:relation", User) || [];
       expect(relations).toHaveLength(1);
       expect(relations[0]).toMatchObject({
         type: "hasMany",
@@ -60,10 +58,8 @@ describe("Relation decorators", () => {
       const user = new User();
 
       // Assert
-      const relations = Reflect.getMetadata(
-        "expressots:db:relation",
-        User,
-      ) || [];
+      const relations =
+        Reflect.getMetadata("expressots:db:relation", User) || [];
       expect(relations).toHaveLength(1);
       expect(relations[0]).toMatchObject({
         type: "hasOne",
@@ -91,10 +87,8 @@ describe("Relation decorators", () => {
       const post = new Post();
 
       // Assert
-      const relations = Reflect.getMetadata(
-        "expressots:db:relation",
-        Post,
-      ) || [];
+      const relations =
+        Reflect.getMetadata("expressots:db:relation", Post) || [];
       expect(relations).toHaveLength(1);
       expect(relations[0]).toMatchObject({
         type: "belongsTo",
@@ -120,10 +114,8 @@ describe("Relation decorators", () => {
       const post = new Post();
 
       // Assert
-      const relations = Reflect.getMetadata(
-        "expressots:db:relation",
-        Post,
-      ) || [];
+      const relations =
+        Reflect.getMetadata("expressots:db:relation", Post) || [];
       expect(relations).toHaveLength(1);
       expect(relations[0]).toMatchObject({
         type: "manyToMany",
@@ -156,14 +148,11 @@ describe("Relation decorators", () => {
       const user = new User();
 
       // Assert
-      const relations = Reflect.getMetadata(
-        "expressots:db:relation",
-        User,
-      ) || [];
+      const relations =
+        Reflect.getMetadata("expressots:db:relation", User) || [];
       expect(relations).toHaveLength(2);
       expect(relations.find((r) => r.type === "hasMany")).toBeDefined();
       expect(relations.find((r) => r.type === "hasOne")).toBeDefined();
     });
   });
 });
-

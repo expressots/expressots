@@ -57,4 +57,3 @@ describe("InMemoryDBProvider.getStats() getStats method", () => {
     });
   });
 });
-

@@ -55,4 +55,3 @@ describe("Report.validationFailed() validationFailed method", () => {
 });
 
 // End of unit tests for: Report.validationFailed
-

@@ -167,4 +167,3 @@ describe("ProviderRegistry.collectMetrics()", () => {
     expect(dashboard.providers).toEqual({});
   });
 });
-

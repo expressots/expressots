@@ -171,4 +171,3 @@ describe("AttributeBasedGuard.canActivate() canActivate method", () => {
 });
 
 // End of unit tests for: AttributeBasedGuard.canActivate
-

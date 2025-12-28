@@ -271,7 +271,9 @@ describe("HttpTransport", () => {
 
     it("should put entries back in buffer on failure", async () => {
       // Arrange
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
       transport = new HttpTransport({
         endpoint: mockEndpoint,
         batchSize: 2,
@@ -638,4 +640,3 @@ describe("HttpTransport", () => {
     }, 10000); // Increase test timeout
   });
 });
-

@@ -29,7 +29,9 @@ describe("InMemoryDBProvider.snapshot() and restore() methods", () => {
     it("should create snapshot with data", async () => {
       // Arrange
       const table = provider.table<TestEntity>("test");
-      await table.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await table.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
 
       // Act
       const snapshot = provider.snapshot();
@@ -54,7 +56,9 @@ describe("InMemoryDBProvider.snapshot() and restore() methods", () => {
     it("should restore data from snapshot", async () => {
       // Arrange
       const table = provider.table<TestEntity>("test");
-      await table.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await table.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
       const snapshot = provider.snapshot();
       provider.clear();
 
@@ -71,8 +75,12 @@ describe("InMemoryDBProvider.snapshot() and restore() methods", () => {
       // Arrange
       const usersTable = provider.table<TestEntity>("users");
       const postsTable = provider.table<TestEntity>("posts");
-      await usersTable.create({ data: { id: "1", name: "User", email: "user@test.com" } });
-      await postsTable.create({ data: { id: "1", name: "Post", email: "post@test.com" } });
+      await usersTable.create({
+        data: { id: "1", name: "User", email: "user@test.com" },
+      });
+      await postsTable.create({
+        data: { id: "1", name: "Post", email: "post@test.com" },
+      });
       const snapshot = provider.snapshot();
       provider.clear();
 
@@ -87,4 +95,3 @@ describe("InMemoryDBProvider.snapshot() and restore() methods", () => {
     });
   });
 });
-

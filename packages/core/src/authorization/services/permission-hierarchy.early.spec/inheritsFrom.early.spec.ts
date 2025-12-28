@@ -61,4 +61,3 @@ describe("PermissionHierarchy.inheritsFrom() inheritsFrom method", () => {
 });
 
 // End of unit tests for: PermissionHierarchy.inheritsFrom
-

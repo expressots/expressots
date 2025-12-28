@@ -465,7 +465,7 @@ class Logger implements IProvider {
     // Merge all data sources
     // Preserve arrays as arrays, don't convert to objects
     let finalData: unknown = dataWithoutFlow;
-    
+
     if (Array.isArray(dataWithoutFlow)) {
       // Keep arrays as arrays
       finalData = dataWithoutFlow;

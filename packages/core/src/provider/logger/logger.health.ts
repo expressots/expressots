@@ -166,9 +166,7 @@ export async function collectHealthStatus(
     );
     if (unhealthyServices.length > 0) {
       status = "unhealthy";
-    } else if (
-      Object.values(services).some((s) => s.status === "degraded")
-    ) {
+    } else if (Object.values(services).some((s) => s.status === "degraded")) {
       status = status === "unhealthy" ? "unhealthy" : "degraded";
     }
   }

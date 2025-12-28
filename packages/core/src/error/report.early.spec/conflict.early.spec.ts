@@ -42,4 +42,3 @@ describe("Report.conflict() conflict method", () => {
 });
 
 // End of unit tests for: Report.conflict
-

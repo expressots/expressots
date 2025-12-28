@@ -1,6 +1,9 @@
 // Unit tests for: RequireResourceOwner factory function
 
-import { RequireResourceOwner, ResourceOwnerGuard } from "../resource-owner.guard";
+import {
+  RequireResourceOwner,
+  ResourceOwnerGuard,
+} from "../resource-owner.guard";
 
 describe("RequireResourceOwner() RequireResourceOwner factory function", () => {
   describe("Happy Path", () => {
@@ -26,4 +29,3 @@ describe("RequireResourceOwner() RequireResourceOwner factory function", () => {
 });
 
 // End of unit tests for: RequireResourceOwner factory function
-

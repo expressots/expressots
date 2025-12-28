@@ -30,9 +30,9 @@ describe("Logger.child()", () => {
     expect((childLogger as any).currentContext).toBe("ChildContext");
   });
 
-    it("should inherit config from parent", () => {
-      // Arrange
-      logger.configure({ level: "WARN" });
+  it("should inherit config from parent", () => {
+    // Arrange
+    logger.configure({ level: "WARN" });
 
     // Act
     const childLogger = logger.child("ChildContext");
@@ -43,7 +43,10 @@ describe("Logger.child()", () => {
 
   it("should inherit context object from parent", () => {
     // Arrange
-    const parentLogger = logger.withContext({ className: "ParentClass", methodName: "parentMethod" });
+    const parentLogger = logger.withContext({
+      className: "ParentClass",
+      methodName: "parentMethod",
+    });
 
     // Act
     const childLogger = parentLogger.child("ChildContext");
@@ -82,4 +85,3 @@ describe("Logger.child()", () => {
     );
   });
 });
-

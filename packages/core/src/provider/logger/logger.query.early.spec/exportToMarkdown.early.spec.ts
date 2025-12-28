@@ -181,4 +181,3 @@ describe("exportToMarkdown", () => {
     expect(markdown).not.toContain("###");
   });
 });
-

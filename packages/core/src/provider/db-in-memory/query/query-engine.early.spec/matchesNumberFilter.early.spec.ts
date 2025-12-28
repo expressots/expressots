@@ -204,4 +204,3 @@ describe("QueryEngine.matchesNumberFilter() matchesNumberFilter method", () => {
     });
   });
 });
-

@@ -59,4 +59,3 @@ describe("PermissionService.getPermissions() getPermissions method", () => {
 });
 
 // End of unit tests for: PermissionService.getPermissions
-

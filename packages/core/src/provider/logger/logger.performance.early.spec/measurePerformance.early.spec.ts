@@ -193,4 +193,3 @@ describe("measurePerformanceSync", () => {
     process.cpuUsage = originalCpuUsage;
   });
 });
-

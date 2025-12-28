@@ -1,6 +1,10 @@
 // Unit tests for: getErrorHints function
 
-import { getErrorHints, formatSuggestions, getRouteRegistry } from "../logger.suggestions";
+import {
+  getErrorHints,
+  formatSuggestions,
+  getRouteRegistry,
+} from "../logger.suggestions";
 
 describe("getErrorHints", () => {
   beforeEach(() => {
@@ -209,7 +213,9 @@ describe("getErrorHints", () => {
 
       // Assert
       expect(hints.length).toBeGreaterThan(0);
-      const hint = hints.find((h) => h.type === "hint" && h.title.includes("Route Not Found"));
+      const hint = hints.find(
+        (h) => h.type === "hint" && h.title.includes("Route Not Found"),
+      );
       expect(hint).toBeDefined();
     });
   });
@@ -331,4 +337,3 @@ describe("formatSuggestions", () => {
     expect(result).toContain("Hint 2");
   });
 });
-

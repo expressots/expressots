@@ -18,7 +18,9 @@ describe("InMemoryDatabase persistence", () => {
       const posts = db.table<TestEntity>("posts");
 
       await users.create({ data: { name: "John", email: "john@example.com" } });
-      await posts.create({ data: { name: "Post1", email: "post1@example.com" } });
+      await posts.create({
+        data: { name: "Post1", email: "post1@example.com" },
+      });
 
       // Act
       const snapshot = db.snapshot();
@@ -36,7 +38,7 @@ describe("InMemoryDatabase persistence", () => {
       const fs = require("fs");
       const path = require("path");
       const tempFile = path.join(__dirname, "test-snapshot.json");
-      
+
       // Clean up if exists
       if (fs.existsSync(tempFile)) {
         fs.unlinkSync(tempFile);
@@ -70,14 +72,15 @@ describe("InMemoryDatabase persistence", () => {
       const consoleErrorSpy = jest
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      
+
       // Use a path that will fail - try to write to a non-existent directory
       // On Windows, use a path with invalid characters or non-existent drive
       // On Unix, use /dev/null/ which should fail
-      const invalidPath = process.platform === "win32"
-        ? "CON:\\snapshot.json" // CON is a reserved device name on Windows
-        : "/dev/null/invalid/snapshot.json"; // /dev/null is a device, can't create subdirectories
-      
+      const invalidPath =
+        process.platform === "win32"
+          ? "CON:\\snapshot.json" // CON is a reserved device name on Windows
+          : "/dev/null/invalid/snapshot.json"; // /dev/null is a device, can't create subdirectories
+
       const db = new InMemoryDatabase({
         persist: {
           storage: "file",
@@ -93,9 +96,9 @@ describe("InMemoryDatabase persistence", () => {
       // Assert
       // Check if console.error was called with the error message
       const wasCalled = consoleErrorSpy.mock.calls.some(
-        (call) => call[0] === "Failed to write snapshot to file:"
+        (call) => call[0] === "Failed to write snapshot to file:",
       );
-      
+
       // If the error wasn't caught, the path might have been handled differently
       // Try an alternative: check if any error was logged
       if (!wasCalled) {
@@ -104,7 +107,7 @@ describe("InMemoryDatabase persistence", () => {
         expect(() => db.snapshot()).not.toThrow();
       } else {
         const errorCall = consoleErrorSpy.mock.calls.find(
-          (call) => call[0] === "Failed to write snapshot to file:"
+          (call) => call[0] === "Failed to write snapshot to file:",
         );
         expect(errorCall).toBeDefined();
         if (errorCall && errorCall.length > 1) {
@@ -122,7 +125,9 @@ describe("InMemoryDatabase persistence", () => {
       // Arrange
       const db1 = new InMemoryDatabase();
       const users1 = db1.table<TestEntity>("users");
-      await users1.create({ data: { name: "John", email: "john@example.com" } });
+      await users1.create({
+        data: { name: "John", email: "john@example.com" },
+      });
       const snapshot = db1.snapshot();
 
       const db2 = new InMemoryDatabase();
@@ -142,8 +147,12 @@ describe("InMemoryDatabase persistence", () => {
       const db1 = new InMemoryDatabase();
       const users1 = db1.table<TestEntity>("users");
       const posts1 = db1.table<TestEntity>("posts");
-      await users1.create({ data: { name: "John", email: "john@example.com" } });
-      await posts1.create({ data: { name: "Post1", email: "post1@example.com" } });
+      await users1.create({
+        data: { name: "John", email: "john@example.com" },
+      });
+      await posts1.create({
+        data: { name: "Post1", email: "post1@example.com" },
+      });
       const snapshot = db1.snapshot();
 
       const db2 = new InMemoryDatabase();
@@ -167,7 +176,7 @@ describe("InMemoryDatabase persistence", () => {
       const fs = require("fs");
       const path = require("path");
       const tempFile = path.join(__dirname, "test-load.json");
-      
+
       // Create test file with correct format (array of [id, entity] tuples)
       const entityId = "test-id-123";
       const entity = {
@@ -340,4 +349,3 @@ describe("InMemoryDatabase persistence", () => {
     });
   });
 });
-

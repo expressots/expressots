@@ -266,7 +266,9 @@ describe("HealthMonitor", () => {
 
     it("should handle service check failures", async () => {
       // Arrange
-      const serviceCheck = jest.fn().mockRejectedValue(new Error("Check failed"));
+      const serviceCheck = jest
+        .fn()
+        .mockRejectedValue(new Error("Check failed"));
       const monitor = new HealthMonitor(logger, {
         enabled: true,
         interval: 1000,
@@ -507,4 +509,3 @@ describe("collectHealthStatus", () => {
     expect(health.services).toBeDefined();
   });
 });
-

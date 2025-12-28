@@ -139,4 +139,3 @@ describe("Logger flush() and close()", () => {
     });
   });
 });
-

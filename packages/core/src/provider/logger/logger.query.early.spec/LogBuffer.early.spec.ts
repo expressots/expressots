@@ -325,4 +325,3 @@ describe("LogBuffer", () => {
     });
   });
 });
-

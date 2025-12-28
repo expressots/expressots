@@ -52,4 +52,3 @@ describe("InMemoryDBProvider.clear() clear method", () => {
     });
   });
 });
-

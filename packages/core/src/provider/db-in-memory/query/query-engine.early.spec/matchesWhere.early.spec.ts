@@ -22,7 +22,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
   describe("Logical Operators", () => {
     it("should match AND conditions", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -35,7 +40,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should not match AND when one condition fails", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -48,7 +58,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should match OR conditions", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -61,7 +76,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should not match OR when all conditions fail", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -74,7 +94,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should match NOT conditions", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -87,7 +112,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should not match NOT when condition matches", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -100,7 +130,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should handle single AND clause (not array)", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -113,7 +148,12 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
 
     it("should handle single NOT clause (not array)", () => {
       // Arrange
-      const entity: TestEntity = { id: "1", name: "Test", age: 25, active: true };
+      const entity: TestEntity = {
+        id: "1",
+        name: "Test",
+        age: 25,
+        active: true,
+      };
 
       // Act
       const result = (engine as any).matchesWhere(entity, {
@@ -125,4 +165,3 @@ describe("QueryEngine.matchesWhere() matchesWhere method", () => {
     });
   });
 });
-

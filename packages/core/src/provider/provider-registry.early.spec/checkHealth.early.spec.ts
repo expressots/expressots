@@ -326,4 +326,3 @@ describe("ProviderRegistry.checkHealth()", () => {
     expect(dashboard.overall).toBe("degraded");
   });
 });
-

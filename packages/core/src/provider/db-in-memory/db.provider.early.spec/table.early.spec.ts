@@ -60,4 +60,3 @@ describe("InMemoryDBProvider.table() table method", () => {
     });
   });
 });
-

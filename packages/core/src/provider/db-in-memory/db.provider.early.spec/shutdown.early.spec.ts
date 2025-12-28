@@ -68,4 +68,3 @@ describe("InMemoryDBProvider.shutdown() shutdown method", () => {
     });
   });
 });
-

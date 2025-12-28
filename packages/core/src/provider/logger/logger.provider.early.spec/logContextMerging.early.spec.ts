@@ -39,7 +39,10 @@ describe("Logger log() - context merging", () => {
 
   it("should merge context object into data", () => {
     // Arrange
-    const contextLogger = logger.withContext({ tenantId: "tenant-789", correlationId: "corr-111" });
+    const contextLogger = logger.withContext({
+      tenantId: "tenant-789",
+      correlationId: "corr-111",
+    });
 
     // Act
     contextLogger.info("Test message");
@@ -92,22 +95,24 @@ describe("Logger log() - context merging", () => {
   it("should merge all context sources", () => {
     // Arrange
     const contextLogger = logger.withContext({ tenantId: "tenant-1" });
-    contextLogger.runWithContext({ requestId: "req-1", userId: "user-1" }, () => {
-      // Act
-      contextLogger.info("Test message", "ExplicitContext");
+    contextLogger.runWithContext(
+      { requestId: "req-1", userId: "user-1" },
+      () => {
+        // Act
+        contextLogger.info("Test message", "ExplicitContext");
 
-      // Assert
-      expect(mockTransport.log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          context: "ExplicitContext",
-          data: expect.objectContaining({
-            requestId: "req-1",
-            userId: "user-1",
-            tenantId: "tenant-1",
+        // Assert
+        expect(mockTransport.log).toHaveBeenCalledWith(
+          expect.objectContaining({
+            context: "ExplicitContext",
+            data: expect.objectContaining({
+              requestId: "req-1",
+              userId: "user-1",
+              tenantId: "tenant-1",
+            }),
           }),
-        }),
-      );
-    });
+        );
+      },
+    );
   });
 });
-

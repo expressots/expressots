@@ -1,7 +1,12 @@
 // Unit tests for: MemoryStore CRUD operations
 
 import "reflect-metadata";
-import { MemoryStore, EntityNotFoundError, EntityAlreadyExistsError, UniqueConstraintError } from "../memory-store";
+import {
+  MemoryStore,
+  EntityNotFoundError,
+  EntityAlreadyExistsError,
+  UniqueConstraintError,
+} from "../memory-store";
 import { IEntity } from "../../schema/entity.interface";
 
 interface TestEntity extends IEntity {
@@ -70,7 +75,7 @@ describe("MemoryStore CRUD operations", () => {
       // Manually create index and mark email as unique (simulating schema metadata)
       (storeWithUnique as any).indexManager.createIndex("email");
       (storeWithUnique as any).indexManager.markUnique("email");
-      
+
       storeWithUnique.insert({ name: "John", email: "john@example.com" });
       const entities = [
         { name: "Duplicate", email: "john@example.com" }, // Duplicate email
@@ -115,10 +120,9 @@ describe("MemoryStore CRUD operations", () => {
       store.insert({ name: "Bob", email: "bob@example.com" });
 
       // Act
-      const count = store.updateMany(
-        (e) => e.name.startsWith("J"),
-        { email: "updated@example.com" },
-      );
+      const count = store.updateMany((e) => e.name.startsWith("J"), {
+        email: "updated@example.com",
+      });
 
       // Assert
       expect(count).toBe(2);
@@ -136,10 +140,9 @@ describe("MemoryStore CRUD operations", () => {
       store.insert({ name: "John", email: "john@example.com" });
 
       // Act
-      const count = store.updateMany(
-        (e) => e.name === "NonExistent",
-        { email: "updated@example.com" },
-      );
+      const count = store.updateMany((e) => e.name === "NonExistent", {
+        email: "updated@example.com",
+      });
 
       // Assert
       expect(count).toBe(0);
@@ -244,7 +247,7 @@ describe("MemoryStore CRUD operations", () => {
         softDelete: true,
       });
       (storeWithSoftDelete as any).indexManager.createIndex("email");
-      
+
       const entity1 = storeWithSoftDelete.insert({
         name: "John",
         email: "john@example.com",
@@ -256,7 +259,10 @@ describe("MemoryStore CRUD operations", () => {
       (entity2 as any).deletedAt = new Date();
 
       // Act
-      const results = storeWithSoftDelete.findByIndex("email", "jane@example.com");
+      const results = storeWithSoftDelete.findByIndex(
+        "email",
+        "jane@example.com",
+      );
 
       // Assert
       expect(results).toHaveLength(0);
@@ -297,4 +303,3 @@ describe("MemoryStore CRUD operations", () => {
     });
   });
 });
-

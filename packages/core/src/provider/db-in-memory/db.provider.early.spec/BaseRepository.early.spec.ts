@@ -50,7 +50,9 @@ describe("BaseRepository", () => {
   describe("Delegation Methods", () => {
     it("should delegate findUnique to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
 
       // Act
       const result = await repository.findUnique({ where: { id: "1" } });
@@ -62,7 +64,9 @@ describe("BaseRepository", () => {
 
     it("should delegate findFirst to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
 
       // Act
       const result = await repository.findFirst({ where: { name: "Test" } });
@@ -74,8 +78,12 @@ describe("BaseRepository", () => {
 
     it("should delegate findMany to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
-      await repository.create({ data: { id: "2", name: "Test2", email: "test2@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
+      await repository.create({
+        data: { id: "2", name: "Test2", email: "test2@test.com" },
+      });
 
       // Act
       const results = await repository.findMany();
@@ -110,7 +118,9 @@ describe("BaseRepository", () => {
 
     it("should delegate update to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
 
       // Act
       const result = await repository.update({
@@ -124,8 +134,12 @@ describe("BaseRepository", () => {
 
     it("should delegate updateMany to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
-      await repository.create({ data: { id: "2", name: "Test", email: "test2@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
+      await repository.create({
+        data: { id: "2", name: "Test", email: "test2@test.com" },
+      });
 
       // Act
       const result = await repository.updateMany({
@@ -151,7 +165,9 @@ describe("BaseRepository", () => {
 
     it("should delegate delete to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
 
       // Act
       const result = await repository.delete({ where: { id: "1" } });
@@ -162,8 +178,12 @@ describe("BaseRepository", () => {
 
     it("should delegate deleteMany to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
-      await repository.create({ data: { id: "2", name: "Test2", email: "test2@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
+      await repository.create({
+        data: { id: "2", name: "Test2", email: "test2@test.com" },
+      });
 
       // Act
       const result = await repository.deleteMany({ where: { name: "Test" } });
@@ -174,8 +194,12 @@ describe("BaseRepository", () => {
 
     it("should delegate count to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
-      await repository.create({ data: { id: "2", name: "Test2", email: "test2@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
+      await repository.create({
+        data: { id: "2", name: "Test2", email: "test2@test.com" },
+      });
 
       // Act
       const result = await repository.count();
@@ -186,7 +210,9 @@ describe("BaseRepository", () => {
 
     it("should delegate aggregate to adapter", async () => {
       // Arrange
-      await repository.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+      await repository.create({
+        data: { id: "1", name: "Test", email: "test@test.com" },
+      });
 
       // Act
       const result = await repository.aggregate({
@@ -200,7 +226,9 @@ describe("BaseRepository", () => {
     it("should delegate transaction to adapter", async () => {
       // Act
       const result = await repository.transaction(async (tx) => {
-        await tx.create({ data: { id: "1", name: "Test", email: "test@test.com" } });
+        await tx.create({
+          data: { id: "1", name: "Test", email: "test@test.com" },
+        });
         return "success";
       });
 
@@ -209,4 +237,3 @@ describe("BaseRepository", () => {
     });
   });
 });
-

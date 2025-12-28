@@ -3,7 +3,13 @@
 import "reflect-metadata";
 import { InMemoryAdapter, InMemoryDatabase } from "../in-memory.adapter";
 import { IEntity } from "../../schema/entity.interface";
-import { Entity, HasMany, HasOne, BelongsTo, SchemaRegistry } from "../../schema/decorators";
+import {
+  Entity,
+  HasMany,
+  HasOne,
+  BelongsTo,
+  SchemaRegistry,
+} from "../../schema/decorators";
 
 interface UserEntity extends IEntity {
   name: string;
@@ -406,7 +412,9 @@ describe("InMemoryAdapter includes and relations", () => {
       // Verify relations are registered
       const userRelations = SchemaRegistry.getRelations(User);
       expect(userRelations.length).toBeGreaterThan(0);
-      const postsRelation = userRelations.find((r) => String(r.field) === "posts");
+      const postsRelation = userRelations.find(
+        (r) => String(r.field) === "posts",
+      );
       expect(postsRelation).toBeDefined();
 
       // Act
@@ -527,7 +535,12 @@ describe("InMemoryAdapter includes and relations", () => {
       // Assert
       expect(result).toBeDefined();
       // Nested includes may not resolve fully, but code paths should execute
-      if (result && result.posts && Array.isArray(result.posts) && result.posts[0]) {
+      if (
+        result &&
+        result.posts &&
+        Array.isArray(result.posts) &&
+        result.posts[0]
+      ) {
         // If nested relation resolved
         if (result.posts[0].author !== undefined) {
           expect(result.posts[0].author).toBeDefined();
@@ -569,4 +582,3 @@ describe("InMemoryAdapter includes and relations", () => {
     });
   });
 });
-

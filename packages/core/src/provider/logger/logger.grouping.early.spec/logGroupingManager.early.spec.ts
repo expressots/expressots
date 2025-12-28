@@ -1,6 +1,10 @@
 // Unit tests for: LogGroupingManager class
 
-import { LogGroupingManager, GroupedLogEntry, calculateSimilarity } from "../logger.grouping";
+import {
+  LogGroupingManager,
+  GroupedLogEntry,
+  calculateSimilarity,
+} from "../logger.grouping";
 import { LogEntry } from "../utils/log-entry";
 import { LogLevel } from "../utils/log-levels";
 
@@ -492,4 +496,3 @@ describe("calculateSimilarity()", () => {
     expect(similarity).toBeLessThan(0.5);
   });
 });
-

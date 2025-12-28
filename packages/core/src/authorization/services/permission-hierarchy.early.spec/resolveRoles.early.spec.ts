@@ -67,4 +67,3 @@ describe("PermissionHierarchy.resolveRoles() resolveRoles method", () => {
 });
 
 // End of unit tests for: PermissionHierarchy.resolveRoles
-

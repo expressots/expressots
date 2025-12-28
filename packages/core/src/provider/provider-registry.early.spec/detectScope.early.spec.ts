@@ -32,7 +32,11 @@ describe("ProviderRegistry.detectScope()", () => {
   it("should detect scope from METADATA_KEY.scope", () => {
     // Arrange
     class TestProvider {}
-    Reflect.defineMetadata(METADATA_KEY.scope, BindingScopeEnum.Singleton, TestProvider);
+    Reflect.defineMetadata(
+      METADATA_KEY.scope,
+      BindingScopeEnum.Singleton,
+      TestProvider,
+    );
     (Reflect.getMetadata as jest.Mock).mockImplementation((key, target) => {
       if (key === METADATA_KEY.provide && target === Reflect) {
         return [{ implementationType: TestProvider }];
@@ -59,7 +63,11 @@ describe("ProviderRegistry.detectScope()", () => {
     const providerMeta: ProviderOptions = {
       scope: BindingScopeEnum.Transient,
     };
-    Reflect.defineMetadata(METADATA_KEY.providerMeta, providerMeta, TestProvider);
+    Reflect.defineMetadata(
+      METADATA_KEY.providerMeta,
+      providerMeta,
+      TestProvider,
+    );
     (Reflect.getMetadata as jest.Mock).mockImplementation((key, target) => {
       if (key === METADATA_KEY.provide && target === Reflect) {
         return [{ implementationType: TestProvider }];
@@ -100,4 +108,3 @@ describe("ProviderRegistry.detectScope()", () => {
     expect(provider?.scope).toBe(BindingScopeEnum.Request);
   });
 });
-

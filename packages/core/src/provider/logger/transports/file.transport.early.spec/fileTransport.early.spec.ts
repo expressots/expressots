@@ -181,7 +181,10 @@ describe("FileTransport", () => {
       await transport.log(entry);
 
       // Assert
-      const exists = await fs.access(newDir).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(newDir)
+        .then(() => true)
+        .catch(() => false);
       expect(exists).toBe(true);
     });
 
@@ -406,7 +409,7 @@ describe("FileTransport", () => {
         // Let's check if the file matches the intent of the pattern
         return f.startsWith("test-") && f.endsWith(".log");
       });
-      
+
       // The cleanup logic uses includes() which might not match our test files
       // But we can verify that cleanup runs and handles the maxFiles logic
       // If pattern matched, files should be <= maxFiles
@@ -449,7 +452,9 @@ describe("FileTransport", () => {
 
       // Assert
       const files = await fs.readdir(testDir);
-      const logFile = files.find((f) => f.startsWith("app-") && f.endsWith(".log"));
+      const logFile = files.find(
+        (f) => f.startsWith("app-") && f.endsWith(".log"),
+      );
       expect(logFile).toBeDefined();
       if (logFile) {
         // Should contain date in YYYY-MM-DD format
@@ -462,10 +467,10 @@ describe("FileTransport", () => {
     it("should return early if no file to rotate", async () => {
       // Arrange
       transport = new FileTransport({ directory: testDir });
-      
+
       // Act - rotate with no current file
       await (transport as any).rotateFile();
-      
+
       // Assert - should not throw
       expect(transport).toBeDefined();
     });
@@ -475,17 +480,17 @@ describe("FileTransport", () => {
       transport = new FileTransport({ directory: testDir });
       const filename = "test.log";
       const filePath = join(testDir, filename);
-      
+
       // Create file then delete it before rotation
       await fs.writeFile(filePath, "content");
       (transport as any).currentFilename = filename;
-      
+
       // Delete file before rotation
       await fs.unlink(filePath);
-      
+
       // Act - should handle ENOENT gracefully
       await (transport as any).rotateFile(filename);
-      
+
       // Assert - should not throw
       expect(transport).toBeDefined();
     });
@@ -497,15 +502,15 @@ describe("FileTransport", () => {
       const filePath = join(testDir, filename);
       await fs.writeFile(filePath, "content");
       (transport as any).currentFilename = filename;
-      
+
       // Create a file that will cause rename to fail (use invalid path)
       // Actually, we can't easily mock fs.rename, so we'll test the error handling
       // by ensuring the code path exists. The actual error handling is tested
       // through the ENOENT case above.
-      
+
       // Act - rotate should handle errors gracefully
       await (transport as any).rotateFile(filename);
-      
+
       // Assert - should not throw
       expect(transport).toBeDefined();
     });
@@ -518,18 +523,18 @@ describe("FileTransport", () => {
         directory: testDir,
         compress: true,
       });
-      
+
       const filename = "test.log";
       const filePath = join(testDir, filename);
       await fs.writeFile(filePath, "test content");
-      
+
       // Test compression error handling by using an invalid file path
       // The compressFile method should catch errors and log them
       const invalidPath = join(testDir, "nonexistent.log");
-      
+
       // Act - should handle error gracefully
       await (transport as any).compressFile(invalidPath);
-      
+
       // Assert - should not throw
       expect(transport).toBeDefined();
     });
@@ -543,18 +548,18 @@ describe("FileTransport", () => {
         filename: "app-%DATE%.log",
         maxAge: 1000,
       });
-      
+
       // Create a file that matches pattern
       const fileName = "app-something.log";
       const filePath = join(testDir, fileName);
       await fs.writeFile(filePath, "content");
-      
+
       // Delete file after creation to cause stat error
       await fs.unlink(filePath);
-      
+
       // Act - cleanup should handle stat errors gracefully
       await (transport as any).cleanupOldFiles();
-      
+
       // Assert - should handle gracefully
       expect(transport).toBeDefined();
     });
@@ -566,24 +571,24 @@ describe("FileTransport", () => {
         filename: "app-%DATE%.log",
         maxAge: 1000,
       });
-      
+
       // Create old file
       const fileName = "app-old.log";
       const filePath = join(testDir, fileName);
       await fs.writeFile(filePath, "content");
       const oldTime = new Date(Date.now() - 2000);
       await fs.utimes(filePath, oldTime, oldTime);
-      
+
       // Mock fs.unlink to throw error
       const originalUnlink = fs.unlink;
       fs.unlink = jest.fn().mockRejectedValue(new Error("Cannot delete"));
-      
+
       // Act
       await (transport as any).cleanupOldFiles();
-      
+
       // Restore
       fs.unlink = originalUnlink;
-      
+
       // Assert - should handle gracefully
       expect(transport).toBeDefined();
     });
@@ -595,7 +600,7 @@ describe("FileTransport", () => {
         filename: "app-%DATE%.log",
         maxFiles: 2,
       });
-      
+
       const baseTime = Date.now();
       // Create files matching pattern
       for (let i = 0; i < 5; i++) {
@@ -605,10 +610,10 @@ describe("FileTransport", () => {
         const time = new Date(baseTime - (5 - i) * 1000);
         await fs.utimes(filePath, time, time);
       }
-      
+
       // Act
       await (transport as any).cleanupOldFiles();
-      
+
       // Assert - files should be cleaned up
       const files = await fs.readdir(testDir);
       // Should have at most maxFiles + 1 (current log file might exist)
@@ -622,14 +627,14 @@ describe("FileTransport", () => {
         filename: "app-%DATE%.log",
         maxFiles: 2,
       });
-      
+
       // Create files that match pattern
       for (let i = 0; i < 3; i++) {
         const fileName = `app-2024-01-0${i}.log`;
         const filePath = join(testDir, fileName);
         await fs.writeFile(filePath, `content ${i}`);
       }
-      
+
       // Delete files before cleanup to test error handling
       // (cleanup will try to delete already-deleted files)
       for (let i = 0; i < 3; i++) {
@@ -641,10 +646,10 @@ describe("FileTransport", () => {
           // Ignore if already deleted
         }
       }
-      
+
       // Act - cleanup should handle deletion errors gracefully
       await (transport as any).cleanupOldFiles();
-      
+
       // Assert - should handle gracefully
       expect(transport).toBeDefined();
     });
@@ -658,10 +663,10 @@ describe("FileTransport", () => {
         filename: "app-%DATE%.log",
         maxAge: 1000,
       });
-      
+
       // Act - cleanup should handle readdir errors gracefully
       await (transport as any).cleanupOldFiles();
-      
+
       // Assert - should handle gracefully
       expect(transport).toBeDefined();
     });
@@ -676,17 +681,16 @@ describe("FileTransport", () => {
         directory: invalidDir,
         maxAge: 1000,
       });
-      
+
       // Act - constructor already called startCleanupInterval
       // Initial cleanup should handle errors gracefully
       await new Promise((resolve) => setTimeout(resolve, 100));
-      
+
       // Assert - should not throw
       expect(transport).toBeDefined();
-      
+
       // Cleanup
       await transport.close();
     });
   });
 });
-

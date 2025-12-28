@@ -26,4 +26,3 @@ describe("ResourceOwnerGuard() ResourceOwnerGuard constructor", () => {
 });
 
 // End of unit tests for: ResourceOwnerGuard constructor
-

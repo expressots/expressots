@@ -312,4 +312,3 @@ describe("logger.metrics", () => {
     });
   });
 });
-

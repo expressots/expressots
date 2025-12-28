@@ -35,7 +35,9 @@ describe("QueryEngine.matchesDateFilter() matchesDateFilter method", () => {
       const date2 = new Date("2023-01-02");
 
       // Act
-      const result = (engine as any).matchesDateFilter(date1, { equals: date2 });
+      const result = (engine as any).matchesDateFilter(date1, {
+        equals: date2,
+      });
 
       // Assert
       expect(result).toBe(false);
@@ -235,4 +237,3 @@ describe("QueryEngine.matchesDateFilter() matchesDateFilter method", () => {
     });
   });
 });
-

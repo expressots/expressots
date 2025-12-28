@@ -137,26 +137,28 @@ describe("InMemoryDBProvider.configure() configure method", () => {
       consoleLogSpy.mockClear();
       const table = provider.table<TestEntity>("test");
       await table.create({ data: { name: "Test", id: "1" } });
-      
+
       // Ensure snapshot has data (not "{}")
       const snapshot = provider.snapshot();
       expect(snapshot).not.toBe("{}");
-      
+
       // Mock InMemoryDatabase.prototype.restore to throw for new instances
       const { InMemoryDatabase } = await import("../adapter/in-memory.adapter");
       const originalRestore = InMemoryDatabase.prototype.restore;
       let restoreCallCount = 0;
-      
+
       // Mock restore to throw on the first call (which will be on the new database instance)
-      InMemoryDatabase.prototype.restore = jest.fn().mockImplementation(function(this: any, json: string) {
-        restoreCallCount++;
-        // The first restore call will be on the new database instance created during configure
-        if (restoreCallCount === 1) {
-          throw new Error("Restore failed");
-        }
-        return originalRestore.call(this, json);
-      });
-      
+      InMemoryDatabase.prototype.restore = jest
+        .fn()
+        .mockImplementation(function (this: any, json: string) {
+          restoreCallCount++;
+          // The first restore call will be on the new database instance created during configure
+          if (restoreCallCount === 1) {
+            throw new Error("Restore failed");
+          }
+          return originalRestore.call(this, json);
+        });
+
       // Mock snapshot on the old database to return our snapshot
       const oldDatabase = provider.getDatabase();
       jest.spyOn(oldDatabase, "snapshot").mockReturnValue(snapshot);
@@ -168,7 +170,7 @@ describe("InMemoryDBProvider.configure() configure method", () => {
       expect(consoleLogSpy).toHaveBeenCalledWith(
         "[InMemoryDB] Could not restore data after config change, starting fresh",
       );
-      
+
       // Cleanup
       InMemoryDatabase.prototype.restore = originalRestore;
     });
@@ -191,4 +193,3 @@ describe("InMemoryDBProvider.configure() configure method", () => {
     });
   });
 });
-

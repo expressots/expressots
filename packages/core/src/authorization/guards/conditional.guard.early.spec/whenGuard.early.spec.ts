@@ -133,4 +133,3 @@ describe("whenGuard() whenGuard function", () => {
 });
 
 // End of unit tests for: whenGuard
-

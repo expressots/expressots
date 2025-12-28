@@ -99,4 +99,3 @@ describe("Logger log() - flow data extraction", () => {
     );
   });
 });
-

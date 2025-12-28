@@ -18,4 +18,3 @@ describe("RequirePermission() RequirePermission factory function", () => {
 });
 
 // End of unit tests for: RequirePermission factory function
-

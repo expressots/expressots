@@ -37,4 +37,3 @@ describe("Report.forbidden() forbidden method", () => {
 });
 
 // End of unit tests for: Report.forbidden
-

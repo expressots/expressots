@@ -370,7 +370,10 @@ describe("logger.formatter", () => {
       };
 
       // Act
-      const result = formatProd(entry, { redact: true, redactor: mockRedactor });
+      const result = formatProd(entry, {
+        redact: true,
+        redactor: mockRedactor,
+      });
       const parsed = JSON.parse(result);
 
       // Assert
@@ -777,4 +780,3 @@ describe("logger.formatter", () => {
     });
   });
 });
-

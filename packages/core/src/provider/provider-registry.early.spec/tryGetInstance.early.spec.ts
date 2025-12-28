@@ -61,4 +61,3 @@ describe("ProviderRegistry.tryGetInstance()", () => {
     expect(result).toBeNull();
   });
 });
-

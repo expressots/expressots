@@ -15,4 +15,3 @@ describe("RequireAuth() RequireAuth factory function", () => {
 });
 
 // End of unit tests for: RequireAuth factory function
-

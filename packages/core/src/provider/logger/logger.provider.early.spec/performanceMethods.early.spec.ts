@@ -98,4 +98,3 @@ describe("Logger performance methods", () => {
     });
   });
 });
-

@@ -346,8 +346,8 @@ export function getErrorHints(
 
   // Database connection errors (only if showErrorHints is enabled)
   if (
-    suggestionsConfig.showErrorHints &&
-    (errorMessage.includes("connection") &&
+    (suggestionsConfig.showErrorHints &&
+      errorMessage.includes("connection") &&
       (errorMessage.includes("database") ||
         errorMessage.includes("db") ||
         errorMessage.includes("postgres") ||
@@ -482,8 +482,7 @@ export function getErrorHints(
       (errorMessage.includes("directory") &&
         (errorMessage.includes("not found") ||
           errorMessage.includes("does not exist"))) ||
-      (errorMessage.includes("path") &&
-        errorMessage.includes("not found")))
+      (errorMessage.includes("path") && errorMessage.includes("not found")))
   ) {
     hints.push({
       type: "hint",

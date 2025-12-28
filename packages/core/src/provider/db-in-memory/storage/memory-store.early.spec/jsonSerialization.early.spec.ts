@@ -109,7 +109,9 @@ describe("MemoryStore JSON serialization", () => {
       const json = store.toJSON();
 
       // Create new store and restore
-      const newStore = new MemoryStore<TestEntity>("test", { timestamps: true });
+      const newStore = new MemoryStore<TestEntity>("test", {
+        timestamps: true,
+      });
       newStore.fromJSON(json);
 
       // Assert
@@ -182,4 +184,3 @@ describe("MemoryStore JSON serialization", () => {
     });
   });
 });
-

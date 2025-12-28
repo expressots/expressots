@@ -23,7 +23,9 @@ describe("QueryEngine.matchesStringFilter() matchesStringFilter method", () => {
       const entity: TestEntity = { id: "1", name: "Test" };
 
       // Act
-      const result = (engine as any).matchesStringFilter("Test", { equals: "Test" });
+      const result = (engine as any).matchesStringFilter("Test", {
+        equals: "Test",
+      });
 
       // Assert
       expect(result).toBe(true);
@@ -34,7 +36,9 @@ describe("QueryEngine.matchesStringFilter() matchesStringFilter method", () => {
       const entity: TestEntity = { id: "1", name: "Test" };
 
       // Act
-      const result = (engine as any).matchesStringFilter("Test", { equals: "Wrong" });
+      const result = (engine as any).matchesStringFilter("Test", {
+        equals: "Wrong",
+      });
 
       // Assert
       expect(result).toBe(false);
@@ -45,7 +49,9 @@ describe("QueryEngine.matchesStringFilter() matchesStringFilter method", () => {
       const entity: TestEntity = { id: "1", name: "Test" };
 
       // Act
-      const result = (engine as any).matchesStringFilter("Test", { not: "Wrong" });
+      const result = (engine as any).matchesStringFilter("Test", {
+        not: "Wrong",
+      });
 
       // Assert
       expect(result).toBe(true);
@@ -56,7 +62,9 @@ describe("QueryEngine.matchesStringFilter() matchesStringFilter method", () => {
       const entity: TestEntity = { id: "1", name: "Test" };
 
       // Act
-      const result = (engine as any).matchesStringFilter("Test", { not: "Test" });
+      const result = (engine as any).matchesStringFilter("Test", {
+        not: "Test",
+      });
 
       // Assert
       expect(result).toBe(false);
@@ -211,7 +219,9 @@ describe("QueryEngine.matchesStringFilter() matchesStringFilter method", () => {
       const entity: TestEntity = { id: "1", name: "Test" };
 
       // Act
-      const result1 = (engine as any).matchesStringFilter(null, { equals: "Test" });
+      const result1 = (engine as any).matchesStringFilter(null, {
+        equals: "Test",
+      });
       const result2 = (engine as any).matchesStringFilter(undefined, {
         equals: "Test",
       });
@@ -235,4 +245,3 @@ describe("QueryEngine.matchesStringFilter() matchesStringFilter method", () => {
     });
   });
 });
-

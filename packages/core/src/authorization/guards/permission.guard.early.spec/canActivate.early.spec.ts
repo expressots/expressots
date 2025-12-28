@@ -59,7 +59,9 @@ describe("PermissionGuard.canActivate() canActivate method", () => {
       // Assert
       expect(result).toBeInstanceOf(GuardResult);
       expect(result.allowed).toBe(true);
-      expect(mockSecurityContext.hasPermission).toHaveBeenCalledWith("documents:read");
+      expect(mockSecurityContext.hasPermission).toHaveBeenCalledWith(
+        "documents:read",
+      );
     });
 
     it("should deny access when SecurityContext does not have permission", async () => {
@@ -76,7 +78,9 @@ describe("PermissionGuard.canActivate() canActivate method", () => {
       expect(result.allowed).toBe(false);
       expect(result.error).toBeInstanceOf(AppError);
       expect(result.error?.statusCode).toBe(StatusCode.Forbidden);
-      expect(result.error?.message).toContain("Missing permission: documents:read");
+      expect(result.error?.message).toContain(
+        "Missing permission: documents:read",
+      );
     });
 
     it("should use principal.hasPermission when SecurityContext is not available", async () => {
@@ -91,7 +95,9 @@ describe("PermissionGuard.canActivate() canActivate method", () => {
       // Assert
       expect(result).toBeInstanceOf(GuardResult);
       expect(result.allowed).toBe(true);
-      expect((mockPrincipal as any).hasPermission).toHaveBeenCalledWith("documents:read");
+      expect((mockPrincipal as any).hasPermission).toHaveBeenCalledWith(
+        "documents:read",
+      );
     });
 
     it("should deny access when principal.hasPermission returns false", async () => {
@@ -106,7 +112,9 @@ describe("PermissionGuard.canActivate() canActivate method", () => {
       // Assert
       expect(result).toBeInstanceOf(GuardResult);
       expect(result.allowed).toBe(false);
-      expect(result.error?.message).toContain("Missing permission: documents:read");
+      expect(result.error?.message).toContain(
+        "Missing permission: documents:read",
+      );
     });
   });
 
@@ -123,10 +131,11 @@ describe("PermissionGuard.canActivate() canActivate method", () => {
       // Assert
       expect(result).toBeInstanceOf(GuardResult);
       expect(result.allowed).toBe(false);
-      expect(result.error?.message).toContain("Permission check not available: documents:read");
+      expect(result.error?.message).toContain(
+        "Permission check not available: documents:read",
+      );
     });
   });
 });
 
 // End of unit tests for: PermissionGuard.canActivate
-

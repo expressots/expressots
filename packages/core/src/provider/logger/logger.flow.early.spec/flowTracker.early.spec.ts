@@ -27,9 +27,7 @@ describe("FlowTracker", () => {
       const tracker = new FlowTracker("req-123", "GET", "/api/test");
 
       // Assert
-      expect(tracker.isEnabled()).toBe(
-        process.env.NODE_ENV !== "production",
-      );
+      expect(tracker.isEnabled()).toBe(process.env.NODE_ENV !== "production");
     });
 
     it("should merge custom config with defaults", () => {
@@ -526,4 +524,3 @@ describe("removeFlowTracker", () => {
     expect(findFlowTracker("req-123")).toBeUndefined();
   });
 });
-

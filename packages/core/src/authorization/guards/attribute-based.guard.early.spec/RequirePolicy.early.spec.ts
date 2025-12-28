@@ -18,4 +18,3 @@ describe("RequirePolicy() RequirePolicy factory function", () => {
 });
 
 // End of unit tests for: RequirePolicy factory function
-
