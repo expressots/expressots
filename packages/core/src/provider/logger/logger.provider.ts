@@ -463,32 +463,40 @@ class Logger implements IProvider {
     }
 
     // Merge all data sources
-    const mergedData =
-      dataWithoutFlow || Object.keys(mergedContextObject).length > 0
-        ? {
-            ...(typeof dataWithoutFlow === "object" && dataWithoutFlow !== null
-              ? dataWithoutFlow
-              : {}),
-            // Include request context metadata if present
-            ...(mergedContextObject.requestId
-              ? { requestId: mergedContextObject.requestId }
-              : {}),
-            ...(mergedContextObject.userId
-              ? { userId: mergedContextObject.userId }
-              : {}),
-            ...(mergedContextObject.tenantId
-              ? { tenantId: mergedContextObject.tenantId }
-              : {}),
-            ...(mergedContextObject.correlationId
-              ? { correlationId: mergedContextObject.correlationId }
-              : {}),
-          }
-        : undefined;
+    // Preserve arrays as arrays, don't convert to objects
+    let finalData: unknown = dataWithoutFlow;
+    
+    if (Array.isArray(dataWithoutFlow)) {
+      // Keep arrays as arrays
+      finalData = dataWithoutFlow;
+    } else if (dataWithoutFlow || Object.keys(mergedContextObject).length > 0) {
+      finalData = {
+        ...(typeof dataWithoutFlow === "object" && dataWithoutFlow !== null
+          ? dataWithoutFlow
+          : {}),
+        // Include request context metadata if present
+        ...(mergedContextObject.requestId
+          ? { requestId: mergedContextObject.requestId }
+          : {}),
+        ...(mergedContextObject.userId
+          ? { userId: mergedContextObject.userId }
+          : {}),
+        ...(mergedContextObject.tenantId
+          ? { tenantId: mergedContextObject.tenantId }
+          : {}),
+        ...(mergedContextObject.correlationId
+          ? { correlationId: mergedContextObject.correlationId }
+          : {}),
+      };
+      // Only use merged object if it has keys
+      if (Object.keys(finalData as Record<string, unknown>).length === 0) {
+        finalData = undefined;
+      }
+    }
 
     const entry = createLogEntry(level, message, {
       context: finalContext,
-      data:
-        Object.keys(mergedData || {}).length > 0 ? mergedData : dataWithoutFlow,
+      data: finalData,
       error: options?.error,
       trace: options?.trace,
       performance: options?.performance,
@@ -841,6 +849,7 @@ class Logger implements IProvider {
   stopHealthMonitoring(): void {
     if (this.healthMonitor) {
       this.healthMonitor.stop();
+      this.healthMonitor = null;
     }
   }
 

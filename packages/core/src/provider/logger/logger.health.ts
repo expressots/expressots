@@ -6,6 +6,8 @@ import { formatMemory } from "./logger.metrics";
  * @public API
  */
 export interface HealthStatus {
+  /** Overall health status */
+  status: "healthy" | "degraded" | "unhealthy";
   /** Application uptime in milliseconds */
   uptime: number;
   /** Uptime formatted as human-readable string */
@@ -150,7 +152,29 @@ export async function collectHealthStatus(
     }
   }
 
+  // Determine overall status based on thresholds and services
+  let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (memoryUsagePercent > 90) {
+    status = "unhealthy";
+  } else if (memoryUsagePercent > 80) {
+    status = "degraded";
+  }
+  // Check service statuses
+  if (Object.keys(services).length > 0) {
+    const unhealthyServices = Object.values(services).filter(
+      (s) => s.status === "unhealthy",
+    );
+    if (unhealthyServices.length > 0) {
+      status = "unhealthy";
+    } else if (
+      Object.values(services).some((s) => s.status === "degraded")
+    ) {
+      status = status === "unhealthy" ? "unhealthy" : "degraded";
+    }
+  }
+
   return {
+    status,
     uptime,
     uptimeFormatted: formatUptime(uptime),
     memoryUsage,

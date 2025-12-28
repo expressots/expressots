@@ -4,12 +4,9 @@
  * @runnable true
  */
 
-import {
-  Guard,
-  IGuard,
-  GuardContext,
-  GuardResult,
-} from "../../guard.interface";
+import { Guard } from "../../guard-decorators";
+import type { IGuard, GuardContext } from "../../guard.interface";
+import { GuardResult } from "../../guard.interface";
 
 /**
  * Simple guard that always allows access

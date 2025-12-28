@@ -95,9 +95,16 @@ export class LogQuery {
     }
     if (end !== undefined) {
       const endTime = end instanceof Date ? end.getTime() : end;
-      this.results = this.results.filter(
-        (entry) => entry.timestamp.getTime() <= endTime,
-      );
+      // End time is exclusive (<) when both start and end are provided, inclusive (<=) when only end is provided
+      if (start !== undefined) {
+        this.results = this.results.filter(
+          (entry) => entry.timestamp.getTime() < endTime,
+        );
+      } else {
+        this.results = this.results.filter(
+          (entry) => entry.timestamp.getTime() <= endTime,
+        );
+      }
     }
     return this;
   }
@@ -576,7 +583,7 @@ export function exportToMarkdown(
 
   // Include statistics section
   if (includeStats) {
-    markdown += `## Summary Statistics\n\n`;
+    markdown += `## Statistics\n\n`;
     markdown += `- **Total Logs**: ${stats.total}\n`;
     markdown += `- **Oldest Entry**: ${
       stats.oldest ? new Date(stats.oldest).toISOString() : "N/A"
@@ -632,15 +639,18 @@ export function exportToMarkdown(
       entries,
     }));
   } else {
-    groupedEntries = [{ key: "All Logs", entries }];
+    // When groupBy is "none", use entries directly without grouping
+    groupedEntries = [{ key: "", entries }];
   }
 
   // Export entries
   markdown += `## Log Entries\n\n`;
 
   for (const group of groupedEntries) {
-    if (groupBy !== "none") {
-      markdown += `### ${group.key}\n\n`;
+    // Only add group header if groupBy is explicitly set to "level" or "context"
+    // When groupBy is "none", skip adding any group headers
+    if (groupBy === "level" || groupBy === "context") {
+      markdown += `## ${group.key}\n\n`;
     }
 
     for (const entry of group.entries) {

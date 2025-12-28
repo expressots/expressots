@@ -13,6 +13,8 @@ const config: JestConfigWithTsJest = {
     "!packages/core/src/middleware/**/*.ts",
     "!packages/core/src/application/application.types.ts",
     "!packages/core/src/provider/dto-validator/package-resolver.ts",
+    "!**/.docs/**/*.ts",
+    "!**/examples/**/*.ts",
   ],
   moduleNameMapper: {
     "^@src/(.*)$": "<rootDir>/packages/core/src/$1",

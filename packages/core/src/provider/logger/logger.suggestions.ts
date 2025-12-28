@@ -347,13 +347,14 @@ export function getErrorHints(
   // Database connection errors (only if showErrorHints is enabled)
   if (
     suggestionsConfig.showErrorHints &&
-    errorMessage.includes("connection") &&
-    (errorMessage.includes("database") ||
-      errorMessage.includes("db") ||
-      errorMessage.includes("postgres") ||
-      errorMessage.includes("mysql") ||
-      errorMessage.includes("mongodb") ||
-      errorMessage.includes("sqlite"))
+    (errorMessage.includes("connection") &&
+      (errorMessage.includes("database") ||
+        errorMessage.includes("db") ||
+        errorMessage.includes("postgres") ||
+        errorMessage.includes("mysql") ||
+        errorMessage.includes("mongodb") ||
+        errorMessage.includes("sqlite"))) ||
+    errorMessage.includes("cannot connect to database")
   ) {
     hints.push({
       type: "hint",
@@ -372,13 +373,16 @@ export function getErrorHints(
   // Port already in use (only if showErrorHints is enabled)
   if (
     suggestionsConfig.showErrorHints &&
-    errorMessage.includes("port") &&
-    (errorMessage.includes("already in use") ||
+    (errorName.includes("eaddrinuse") ||
       errorMessage.includes("eaddrinuse") ||
-      errorMessage.includes("address already in use"))
+      (errorMessage.includes("port") &&
+        (errorMessage.includes("already in use") ||
+          errorMessage.includes("address already in use"))))
   ) {
     const portMatch =
-      errorMessage.match(/port\s+(\d+)/i) || errorMessage.match(/:(\d+)/);
+      errorMessage.match(/port\s+(\d+)/i) ||
+      errorMessage.match(/:::(\d+)/) ||
+      errorMessage.match(/:(\d+)/);
     const port = portMatch ? portMatch[1] : "unknown";
 
     hints.push({
@@ -466,11 +470,46 @@ export function getErrorHints(
     });
   }
 
+  // File system errors (only if showErrorHints is enabled)
+  // Check for file system errors BEFORE 404 route suggestions to avoid conflicts
+  if (
+    suggestionsConfig.showErrorHints &&
+    (errorMessage.includes("enoent") ||
+      (errorMessage.includes("file") &&
+        (errorMessage.includes("not found") ||
+          errorMessage.includes("does not exist") ||
+          errorMessage.includes("cannot find"))) ||
+      (errorMessage.includes("directory") &&
+        (errorMessage.includes("not found") ||
+          errorMessage.includes("does not exist"))) ||
+      (errorMessage.includes("path") &&
+        errorMessage.includes("not found")))
+  ) {
+    hints.push({
+      type: "hint",
+      title: "📁 File System Error",
+      message: "File or directory not found",
+      actions: [
+        "Check file path is correct",
+        "Verify file exists at the specified location",
+        "Check file permissions",
+        "Review relative vs absolute paths",
+        "Verify working directory",
+      ],
+    });
+    // Return early to avoid matching 404 route suggestion
+    return hints;
+  }
+
   // 404 Not Found (route suggestions)
+  // Only check for route suggestions if it's not a file system error
   if (
     suggestionsConfig.showRouteSuggestions &&
     (context?.statusCode === 404 ||
-      errorMessage.includes("not found") ||
+      (errorMessage.includes("not found") &&
+        !errorMessage.includes("file") &&
+        !errorMessage.includes("directory") &&
+        !errorMessage.includes("enoent")) ||
       errorName.includes("notfound"))
   ) {
     const requestedPath = context?.path || "unknown";
@@ -524,28 +563,6 @@ export function getErrorHints(
         "Check for missing type definitions: npm install --save-dev @types/<package>",
         "Review type errors in IDE",
         "Try rebuilding: npm run build",
-      ],
-    });
-  }
-
-  // File system errors (only if showErrorHints is enabled)
-  if (
-    suggestionsConfig.showErrorHints &&
-    (errorMessage.includes("enoent") ||
-      errorMessage.includes("file") ||
-      errorMessage.includes("directory") ||
-      errorMessage.includes("path"))
-  ) {
-    hints.push({
-      type: "hint",
-      title: "📁 File System Error",
-      message: "File or directory not found",
-      actions: [
-        "Check file path is correct",
-        "Verify file exists at the specified location",
-        "Check file permissions",
-        "Review relative vs absolute paths",
-        "Verify working directory",
       ],
     });
   }
