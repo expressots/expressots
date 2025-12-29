@@ -65,10 +65,7 @@ export class EventRecorder implements IEventRecorder {
   /**
    * Configure the recorder.
    */
-  configure(options: {
-    maxEvents?: number;
-    autoStart?: boolean;
-  }): void {
+  configure(options: { maxEvents?: number; autoStart?: boolean }): void {
     if (options.maxEvents !== undefined) {
       this.maxEvents = options.maxEvents;
     }
@@ -108,10 +105,7 @@ export class EventRecorder implements IEventRecorder {
   /**
    * Record an event.
    */
-  record<T>(
-    event: T,
-    handlerResults?: RecordedEvent["handlerResults"],
-  ): void {
+  record<T>(event: T, handlerResults?: RecordedEvent["handlerResults"]): void {
     if (!this.recording) {
       return;
     }
@@ -146,9 +140,9 @@ export class EventRecorder implements IEventRecorder {
    * Get events filtered by type.
    */
   getEventsByType<T>(eventClass: EventClass<T>): Array<RecordedEvent<T>> {
-    return this.events.filter(
-      (e) => e.type === eventClass,
-    ) as Array<RecordedEvent<T>>;
+    return this.events.filter((e) => e.type === eventClass) as Array<
+      RecordedEvent<T>
+    >;
   }
 
   /**
@@ -158,9 +152,7 @@ export class EventRecorder implements IEventRecorder {
     from: number,
     to: number = Date.now(),
   ): Array<RecordedEvent> {
-    return this.events.filter(
-      (e) => e.timestamp >= from && e.timestamp <= to,
-    );
+    return this.events.filter((e) => e.timestamp >= from && e.timestamp <= to);
   }
 
   /**
@@ -168,9 +160,7 @@ export class EventRecorder implements IEventRecorder {
    */
   async replay(options: ReplayOptions = {}): Promise<void> {
     if (!this.replayEmitter) {
-      throw new Error(
-        "Replay emitter not set. Call setReplayEmitter() first.",
-      );
+      throw new Error("Replay emitter not set. Call setReplayEmitter() first.");
     }
 
     // Filter events
@@ -185,9 +175,7 @@ export class EventRecorder implements IEventRecorder {
     }
 
     if (options.eventTypes && options.eventTypes.length > 0) {
-      filtered = filtered.filter((e) =>
-        options.eventTypes!.includes(e.type),
-      );
+      filtered = filtered.filter((e) => options.eventTypes!.includes(e.type));
     }
 
     if (options.filter) {
@@ -255,12 +243,11 @@ export class EventRecorder implements IEventRecorder {
    * Export as CSV.
    */
   private exportCsv(): string {
-    const lines: Array<string> = [
-      "id,type,timestamp,date,handlers,success",
-    ];
+    const lines: Array<string> = ["id,type,timestamp,date,handlers,success"];
 
     for (const event of this.events) {
-      const handlers = event.handlerResults?.map((h) => h.handler).join(";") || "";
+      const handlers =
+        event.handlerResults?.map((h) => h.handler).join(";") || "";
       const success = event.handlerResults?.every((h) => h.success) ?? true;
 
       lines.push(
@@ -279,19 +266,14 @@ export class EventRecorder implements IEventRecorder {
       return "No events recorded.";
     }
 
-    const lines: Array<string> = [
-      "Event Timeline",
-      "═".repeat(60),
-      "",
-    ];
+    const lines: Array<string> = ["Event Timeline", "═".repeat(60), ""];
 
     let lastTimestamp = 0;
 
     for (const event of this.events) {
       // Calculate time delta
-      const delta = lastTimestamp > 0
-        ? `+${event.timestamp - lastTimestamp}ms`
-        : "START";
+      const delta =
+        lastTimestamp > 0 ? `+${event.timestamp - lastTimestamp}ms` : "START";
       lastTimestamp = event.timestamp;
 
       // Format timestamp
@@ -301,10 +283,8 @@ export class EventRecorder implements IEventRecorder {
       const handlers = event.handlerResults?.length || 0;
       const success = event.handlerResults?.every((h) => h.success) ?? true;
       const status = success ? "✓" : "✗";
-      const duration = event.handlerResults?.reduce(
-        (sum, h) => sum + h.duration,
-        0,
-      ) || 0;
+      const duration =
+        event.handlerResults?.reduce((sum, h) => sum + h.duration, 0) || 0;
 
       lines.push(
         `${time} │ ${status} ${event.typeName.padEnd(30)} │ ${handlers} handlers │ ${duration}ms │ ${delta}`,
@@ -363,4 +343,3 @@ export class EventRecorder implements IEventRecorder {
 export function createEventRecorder(): EventRecorder {
   return new EventRecorder();
 }
-

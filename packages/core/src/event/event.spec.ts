@@ -107,7 +107,10 @@ class ConditionalHandler implements IEventHandler<UserCreatedEvent> {
 
 @provide(MultiEventHandler)
 @OnEvents([UserCreatedEvent, UserUpdatedEvent, UserDeletedEvent])
-class MultiEventHandler implements IEventHandler<UserCreatedEvent | UserUpdatedEvent | UserDeletedEvent> {
+class MultiEventHandler
+  implements
+    IEventHandler<UserCreatedEvent | UserUpdatedEvent | UserDeletedEvent>
+{
   public events: Array<unknown> = [];
   handle(event: UserCreatedEvent | UserUpdatedEvent | UserDeletedEvent): void {
     this.events.push(event);
@@ -191,7 +194,7 @@ describe("Event Decorators", () => {
 
     it("should evaluate condition correctly", async () => {
       const condition = getEventCondition<UserCreatedEvent>(ConditionalHandler);
-      
+
       const premiumUser = new UserCreatedEvent("1", "user@premium.com");
       const regularUser = new UserCreatedEvent("2", "user@regular.com");
 
@@ -252,9 +255,15 @@ describe("EventRegistry", () => {
         MultiEventHandler,
       );
 
-      expect(registry.hasHandler(UserCreatedEvent, MultiEventHandler)).toBe(true);
-      expect(registry.hasHandler(UserUpdatedEvent, MultiEventHandler)).toBe(true);
-      expect(registry.hasHandler(UserDeletedEvent, MultiEventHandler)).toBe(true);
+      expect(registry.hasHandler(UserCreatedEvent, MultiEventHandler)).toBe(
+        true,
+      );
+      expect(registry.hasHandler(UserUpdatedEvent, MultiEventHandler)).toBe(
+        true,
+      );
+      expect(registry.hasHandler(UserDeletedEvent, MultiEventHandler)).toBe(
+        true,
+      );
     });
   });
 
@@ -375,11 +384,11 @@ describe("EventRecorder", () => {
     it("should filter events by time range", async () => {
       const before = Date.now();
       recorder.record(new UserCreatedEvent("1", "a@test.com"));
-      
+
       // Wait a bit to ensure timestamp difference
       await new Promise((r) => setTimeout(r, 10));
       const middle = Date.now() - 1; // Ensure middle is before next event
-      
+
       await new Promise((r) => setTimeout(r, 10));
       recorder.record(new UserCreatedEvent("2", "b@test.com"));
 
@@ -459,7 +468,12 @@ describe("EventFlowTracker", () => {
 
     it("should record events in flow", () => {
       tracker.startFlow("req-123");
-      tracker.recordEvent("req-123", "UserCreatedEvent", ["Handler1", "Handler2"], 100);
+      tracker.recordEvent(
+        "req-123",
+        "UserCreatedEvent",
+        ["Handler1", "Handler2"],
+        100,
+      );
 
       const flow = tracker.getFlow("req-123");
       expect(flow).toBeDefined();
@@ -470,10 +484,10 @@ describe("EventFlowTracker", () => {
 
     it("should end a flow", async () => {
       tracker.startFlow("req-123");
-      
+
       // Small delay to ensure duration > 0
       await new Promise((r) => setTimeout(r, 5));
-      
+
       tracker.recordEvent("req-123", "UserCreatedEvent", ["Handler1"], 50);
 
       const flow = tracker.endFlow("req-123");
@@ -486,7 +500,12 @@ describe("EventFlowTracker", () => {
   describe("visualize", () => {
     it("should visualize flow as ASCII art", () => {
       tracker.startFlow("req-123");
-      tracker.recordEvent("req-123", "UserCreatedEvent", ["Handler1", "Handler2"], 100);
+      tracker.recordEvent(
+        "req-123",
+        "UserCreatedEvent",
+        ["Handler1", "Handler2"],
+        100,
+      );
       tracker.recordEvent("req-123", "EmailSentEvent", ["EmailHandler"], 50);
 
       const flow = tracker.endFlow("req-123");
@@ -521,7 +540,7 @@ describe("EventFlowTracker", () => {
 describe("Event System Integration", () => {
   it("should work with type-safe events", () => {
     const event = new UserCreatedEvent("123", "user@example.com");
-    
+
     // TypeScript knows the types!
     expect(event.userId).toBe("123");
     expect(event.email).toBe("user@example.com");
@@ -536,20 +555,23 @@ describe("Event System Integration", () => {
 
   it("should support conditional execution logic", () => {
     const condition = getEventCondition<UserCreatedEvent>(ConditionalHandler);
-    
+
     // Premium users should pass
-    expect(condition?.condition(new UserCreatedEvent("1", "vip@premium.com"))).toBe(true);
-    
+    expect(
+      condition?.condition(new UserCreatedEvent("1", "vip@premium.com")),
+    ).toBe(true);
+
     // Regular users should not pass
-    expect(condition?.condition(new UserCreatedEvent("2", "user@regular.com"))).toBe(false);
+    expect(
+      condition?.condition(new UserCreatedEvent("2", "user@regular.com")),
+    ).toBe(false);
   });
 
   it("should support multiple events per handler", () => {
     const classes = getEventClasses(MultiEventHandler);
-    
+
     expect(classes).toContain(UserCreatedEvent);
     expect(classes).toContain(UserUpdatedEvent);
     expect(classes).toContain(UserDeletedEvent);
   });
 });
-

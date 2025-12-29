@@ -22,7 +22,11 @@
  */
 
 import { injectable } from "../di/inversify";
-import { EventFlow, EventFlowNode, IEventFlowTracker } from "./event.interfaces";
+import {
+  EventFlow,
+  EventFlowNode,
+  IEventFlowTracker,
+} from "./event.interfaces";
 
 /**
  * Event flow tracker implementation.
@@ -244,11 +248,12 @@ export class EventFlowTracker implements IEventFlowTracker {
   ): void {
     // Build the connector
     const connector = isLast ? "└─>" : "├─>";
-    const handlerList = node.handlers.length > 0
-      ? ` [${node.handlers.join(", ")}]`
-      : "";
+    const handlerList =
+      node.handlers.length > 0 ? ` [${node.handlers.join(", ")}]` : "";
 
-    lines.push(`${prefix}${connector} ${node.name} (${node.duration}ms)${handlerList}`);
+    lines.push(
+      `${prefix}${connector} ${node.name} (${node.duration}ms)${handlerList}`,
+    );
 
     // Visualize children
     if (node.children && node.children.length > 0) {
@@ -288,4 +293,3 @@ interface FlowState {
 export function createEventFlowTracker(): EventFlowTracker {
   return new EventFlowTracker();
 }
-

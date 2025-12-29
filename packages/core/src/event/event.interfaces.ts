@@ -675,4 +675,3 @@ export const EVENT_METADATA = {
   EVENT_CONDITION: Symbol("expressots:event:condition"),
   IS_EVENT_HANDLER: Symbol("expressots:event:is-handler"),
 } as const;
-

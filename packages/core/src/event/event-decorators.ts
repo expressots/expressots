@@ -256,12 +256,14 @@ export function When<T = unknown>(
  * }
  * ```
  */
-export function Event(metadata: {
-  name?: string;
-  version?: number;
-  description?: string;
-  tags?: Array<string>;
-} = {}): ClassDecorator {
+export function Event(
+  metadata: {
+    name?: string;
+    version?: number;
+    description?: string;
+    tags?: Array<string>;
+  } = {},
+): ClassDecorator {
   return function (target: object): void {
     // Store metadata on the event class itself
     Reflect.defineMetadata("expressots:event:metadata", metadata, target);
@@ -276,17 +278,13 @@ export function Event(metadata: {
  * Check if a class is an event handler.
  */
 export function isEventHandler(target: object): boolean {
-  return (
-    Reflect.getMetadata(EVENT_METADATA.IS_EVENT_HANDLER, target) === true
-  );
+  return Reflect.getMetadata(EVENT_METADATA.IS_EVENT_HANDLER, target) === true;
 }
 
 /**
  * Get the event class from a handler.
  */
-export function getEventClass<T>(
-  handler: object,
-): EventClass<T> | undefined {
+export function getEventClass<T>(handler: object): EventClass<T> | undefined {
   return Reflect.getMetadata(EVENT_METADATA.EVENT_CLASS, handler);
 }
 
@@ -320,7 +318,13 @@ export function getEventCondition<T>(
  */
 export function getEventMetadata(
   eventClass: EventClass,
-): { name?: string; version?: number; description?: string; tags?: Array<string> } | undefined {
+):
+  | {
+      name?: string;
+      version?: number;
+      description?: string;
+      tags?: Array<string>;
+    }
+  | undefined {
   return Reflect.getMetadata("expressots:event:metadata", eventClass);
 }
-
