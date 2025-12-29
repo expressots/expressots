@@ -34,6 +34,12 @@ export interface ProviderView {
     hasLifecycle: boolean;
     hasHealthCheck: boolean;
     hasMetrics: boolean;
+    /** Provider is an event handler */
+    isEventHandler?: boolean;
+    /** Provider is an interceptor */
+    isInterceptor?: boolean;
+    /** Provider is a lazy module */
+    isLazyModule?: boolean;
   }>;
   total: number;
   remaining: number;
@@ -325,17 +331,30 @@ export class BannerGenerator {
       healthLines.push(
         `   ├─ Middleware: ${colorText(String(metrics.middleware), "green")} active`,
       );
-      if (metrics.guards > 0 || metrics.filters > 0) {
-        if (metrics.guards > 0) {
-          healthLines.push(
-            `   ├─ Guards: ${colorText(String(metrics.guards), "green")} active`,
-          );
-        }
-        if (metrics.filters > 0) {
-          healthLines.push(
-            `   ├─ Filters: ${colorText(String(metrics.filters), "green")} active`,
-          );
-        }
+      if (metrics.guards && metrics.guards > 0) {
+        healthLines.push(
+          `   ├─ Guards: ${colorText(String(metrics.guards), "green")} active`,
+        );
+      }
+      if (metrics.filters && metrics.filters > 0) {
+        healthLines.push(
+          `   ├─ Filters: ${colorText(String(metrics.filters), "green")} active`,
+        );
+      }
+      if (metrics.interceptors && metrics.interceptors > 0) {
+        healthLines.push(
+          `   ├─ Interceptors: ${colorText(String(metrics.interceptors), "green")} active`,
+        );
+      }
+      if (metrics.eventHandlers && metrics.eventHandlers > 0) {
+        healthLines.push(
+          `   ├─ Event Handlers: ${colorText(String(metrics.eventHandlers), "green")} registered`,
+        );
+      }
+      if (metrics.lazyModules && metrics.lazyModules > 0) {
+        healthLines.push(
+          `   ├─ Lazy Modules: ${colorText(String(metrics.lazyModules), "green")} configured`,
+        );
       }
       healthLines.push(
         `   └─ Routes: ${colorText(String(metrics.routes), "green")} registered`,
@@ -394,6 +413,11 @@ export class BannerGenerator {
           const isLast = i === arr.length - 1 && providerView.remaining === 0;
           const connector = isLast ? "└─" : "├─";
           const icons: Array<string> = [];
+          // v4.0 feature icons (show first for visibility)
+          if (prv.isEventHandler) icons.push("⚡");
+          if (prv.isInterceptor) icons.push("🎭");
+          if (prv.isLazyModule) icons.push("💤");
+          // Original capability icons
           if (prv.hasLifecycle) icons.push("🔄");
           if (prv.hasHealthCheck) icons.push("💚");
           if (prv.hasMetrics) icons.push("📊");
@@ -444,10 +468,14 @@ export class BannerGenerator {
           { name: "Smart Validation", enabled: features.smartValidation },
           { name: "Authorization (Guards)", enabled: features.authorization },
           { name: "Exception Filters", enabled: features.exceptionFilters },
+          { name: "Interceptors", enabled: features.interceptors },
           { name: "Error Handler", enabled: features.errorHandler },
           { name: "Graceful Shutdown", enabled: features.gracefulShutdown },
           { name: "Lifecycle Hooks", enabled: features.lifecycleHooks },
           { name: "Request Logging", enabled: features.requestLogging },
+          { name: "Event System", enabled: features.eventSystem },
+          { name: "Lazy Loading", enabled: features.lazyLoading },
+          { name: "Enhanced Config", enabled: features.enhancedConfiguration },
           { name: "Custom Scopes", enabled: features.customScopes },
         ];
         featureList.forEach((feat, i) => {

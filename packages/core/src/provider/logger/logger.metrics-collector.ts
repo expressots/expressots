@@ -7,6 +7,11 @@ import {
 import { METADATA_KEY } from "../../di/binding-decorator/constants";
 import { GuardRegistry } from "../../authorization/guard-registry";
 import { ExceptionFilterRegistry } from "../../error/exception-filter-registry";
+import { InterceptorRegistry } from "../../interceptor/interceptor-registry";
+import { EventRegistry } from "../../event/event-registry";
+import { LazyModuleLoader } from "../../lazy-loading/lazy-module-loader";
+import { INTERCEPTOR_METADATA_KEY } from "../../interceptor/interceptor-constants";
+import { EVENT_METADATA } from "../../event/event.interfaces";
 
 /**
  * Collect application metrics from container and metadata.
@@ -36,6 +41,7 @@ export class MetricsCollector {
       hasGlobalRoutePrefix?: () => boolean;
       hasErrorHandler?: () => boolean;
       hasRequestLogging?: () => boolean;
+      hasEnhancedConfiguration?: () => boolean;
     },
   ): {
     metrics: ApplicationMetrics;
@@ -112,6 +118,79 @@ export class MetricsCollector {
       // Filters not available
     }
 
+    // Count interceptors (check metadata and registry)
+    let interceptorsCount = 0;
+    let hasInterceptors = false;
+    try {
+      // Check metadata for registered interceptors
+      const interceptorMetadata =
+        Reflect.getMetadata(INTERCEPTOR_METADATA_KEY.interceptor, Reflect) ||
+        [];
+      interceptorsCount = interceptorMetadata.length;
+      hasInterceptors = interceptorsCount > 0;
+
+      // Also check if InterceptorRegistry is bound and has interceptors
+      if (!hasInterceptors && container.isBound(InterceptorRegistry)) {
+        const registry = container.get(InterceptorRegistry);
+        const allInterceptors = registry.getAll();
+        interceptorsCount = allInterceptors.length;
+        hasInterceptors = interceptorsCount > 0;
+      }
+    } catch {
+      // Interceptors not available
+    }
+
+    // Count event handlers (check EventRegistry)
+    let eventHandlersCount = 0;
+    let hasEventSystem = false;
+    try {
+      if (container.isBound(EventRegistry)) {
+        const registry = container.get(EventRegistry);
+        const handlers = registry.getHandlerClasses();
+        eventHandlersCount = handlers.length;
+        hasEventSystem = eventHandlersCount > 0;
+      } else {
+        // Fallback: check metadata for event handlers
+        const provideMetadataForEvents =
+          Reflect.getMetadata(METADATA_KEY.provide, Reflect) || [];
+        provideMetadataForEvents.forEach(
+          (metadata: { implementationType: NewableFunction }) => {
+            const target = metadata.implementationType;
+            if (target) {
+              const isHandler = Reflect.getMetadata(
+                EVENT_METADATA.IS_EVENT_HANDLER,
+                target,
+              );
+              if (isHandler) {
+                eventHandlersCount++;
+                hasEventSystem = true;
+              }
+            }
+          },
+        );
+      }
+    } catch {
+      // Event system not available
+    }
+
+    // Count lazy modules (check LazyModuleLoader)
+    let lazyModulesCount = 0;
+    let hasLazyLoading = false;
+    try {
+      if (container.isBound(LazyModuleLoader)) {
+        const loader = container.get(LazyModuleLoader);
+        const allModules = loader.getAll();
+        lazyModulesCount = allModules.length;
+        hasLazyLoading = lazyModulesCount > 0;
+      }
+    } catch {
+      // Lazy loading not available
+    }
+
+    // Detect enhanced configuration
+    const hasEnhancedConfiguration =
+      options.hasEnhancedConfiguration?.() ?? false;
+
     const metrics: ApplicationMetrics = {
       controllers: controllerCount,
       providers: providerCount,
@@ -121,6 +200,9 @@ export class MetricsCollector {
       routes: routeCount,
       bootstrapProviders: bootstrapCount > 0 ? bootstrapCount : undefined,
       shutdownProviders: shutdownCount > 0 ? shutdownCount : undefined,
+      interceptors: interceptorsCount > 0 ? interceptorsCount : undefined,
+      eventHandlers: eventHandlersCount > 0 ? eventHandlersCount : undefined,
+      lazyModules: lazyModulesCount > 0 ? lazyModulesCount : undefined,
     };
 
     const features: FeaturesStatus = detectFeaturesStatus({
@@ -134,6 +216,10 @@ export class MetricsCollector {
       hasGlobalRoutePrefix: options.hasGlobalRoutePrefix?.() ?? false,
       hasErrorHandler: options.hasErrorHandler?.() ?? false,
       hasRequestLogging: options.hasRequestLogging?.() ?? false,
+      hasInterceptors,
+      hasEventSystem,
+      hasLazyLoading,
+      hasEnhancedConfiguration,
     });
 
     return { metrics, features };

@@ -49,6 +49,10 @@ describe("BannerGenerator.display() display method", () => {
         lifecycleHooks: true,
         requestLogging: true,
         customScopes: false,
+        interceptors: true,
+        eventSystem: true,
+        lazyLoading: false,
+        enhancedConfiguration: true,
       };
       const config = {
         port: 3000,
@@ -432,6 +436,10 @@ describe("BannerGenerator.display() display method", () => {
         lifecycleHooks: true,
         requestLogging: true,
         customScopes: false,
+        interceptors: true,
+        eventSystem: true,
+        lazyLoading: false,
+        enhancedConfiguration: true,
       };
 
       // Act

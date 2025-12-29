@@ -19,6 +19,12 @@ export interface ApplicationMetrics {
   bootstrapProviders?: number;
   /** Number of shutdown providers */
   shutdownProviders?: number;
+  /** Number of interceptors active */
+  interceptors?: number;
+  /** Number of event handlers registered */
+  eventHandlers?: number;
+  /** Number of lazy modules registered */
+  lazyModules?: number;
 }
 
 /**
@@ -48,6 +54,14 @@ export interface FeaturesStatus {
   errorHandler: boolean;
   /** Request Logging enabled */
   requestLogging: boolean;
+  /** Interceptors enabled */
+  interceptors: boolean;
+  /** Event System enabled */
+  eventSystem: boolean;
+  /** Lazy Loading enabled */
+  lazyLoading: boolean;
+  /** Enhanced Configuration enabled */
+  enhancedConfiguration: boolean;
 }
 
 /**
@@ -180,6 +194,10 @@ export function detectFeaturesStatus(options?: {
   hasGlobalRoutePrefix?: boolean;
   hasErrorHandler?: boolean;
   hasRequestLogging?: boolean;
+  hasInterceptors?: boolean;
+  hasEventSystem?: boolean;
+  hasLazyLoading?: boolean;
+  hasEnhancedConfiguration?: boolean;
 }): FeaturesStatus {
   return {
     contentNegotiation: options?.hasContentNegotiation ?? false,
@@ -193,6 +211,10 @@ export function detectFeaturesStatus(options?: {
     globalRoutePrefix: options?.hasGlobalRoutePrefix ?? false,
     errorHandler: options?.hasErrorHandler ?? false,
     requestLogging: options?.hasRequestLogging ?? false,
+    interceptors: options?.hasInterceptors ?? false,
+    eventSystem: options?.hasEventSystem ?? false,
+    lazyLoading: options?.hasLazyLoading ?? false,
+    enhancedConfiguration: options?.hasEnhancedConfiguration ?? false,
   };
 }
 

@@ -59,6 +59,10 @@ describe("MetricsCollector", () => {
         globalRoutePrefix: false,
         errorHandler: false,
         requestLogging: false,
+        interceptors: false,
+        eventSystem: false,
+        lazyLoading: false,
+        enhancedConfiguration: false,
       });
     });
 
@@ -333,6 +337,10 @@ describe("MetricsCollector", () => {
         globalRoutePrefix: true,
         errorHandler: true,
         requestLogging: true,
+        interceptors: false,
+        eventSystem: false,
+        lazyLoading: false,
+        enhancedConfiguration: false,
       });
     });
 

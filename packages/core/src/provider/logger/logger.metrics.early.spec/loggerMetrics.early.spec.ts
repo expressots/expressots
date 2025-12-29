@@ -191,6 +191,10 @@ describe("logger.metrics", () => {
         globalRoutePrefix: false,
         errorHandler: false,
         requestLogging: false,
+        interceptors: false,
+        eventSystem: false,
+        lazyLoading: false,
+        enhancedConfiguration: false,
       });
     });
 
@@ -207,6 +211,10 @@ describe("logger.metrics", () => {
         hasGlobalRoutePrefix: true,
         hasErrorHandler: true,
         hasRequestLogging: true,
+        hasInterceptors: true,
+        hasEventSystem: true,
+        hasLazyLoading: true,
+        hasEnhancedConfiguration: true,
       };
 
       // Act
@@ -224,6 +232,10 @@ describe("logger.metrics", () => {
       expect(status.globalRoutePrefix).toBe(true);
       expect(status.errorHandler).toBe(true);
       expect(status.requestLogging).toBe(true);
+      expect(status.interceptors).toBe(true);
+      expect(status.eventSystem).toBe(true);
+      expect(status.lazyLoading).toBe(true);
+      expect(status.enhancedConfiguration).toBe(true);
     });
 
     it("should use default values for undefined options", () => {
