@@ -1,4 +1,5 @@
 export * from "./application";
+export * from "./config";
 export * from "./console";
 export * from "./container-module";
 export * from "./decorator";
