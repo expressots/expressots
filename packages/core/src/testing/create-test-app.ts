@@ -21,7 +21,11 @@
 
 import { Container } from "../di/inversify";
 import { AppFactory } from "../application/application-factory";
-import { IWebServer, IWebServerBuilder, IWebServerConstructor } from "@expressots/shared";
+import {
+  IWebServer,
+  IWebServerBuilder,
+  IWebServerConstructor,
+} from "@expressots/shared";
 import {
   CreateTestAppOptions,
   TestAppResult,
@@ -37,7 +41,7 @@ import { Logger } from "../provider/logger/logger.provider";
  */
 interface ListenResult {
   port?: number;
-  server?: { 
+  server?: {
     address: () => { port: number } | null;
     close: (callback?: () => void) => void;
   };
@@ -54,7 +58,7 @@ class TestApp implements ITestApp {
 
   constructor(
     private appInstance: IWebServerBuilder,
-    container: Container
+    container: Container,
   ) {
     this._container = container;
   }
@@ -77,7 +81,9 @@ class TestApp implements ITestApp {
    * Close the test server.
    */
   async close(): Promise<void> {
-    const app = this.appInstance as IWebServerBuilder & { close?: () => Promise<void> };
+    const app = this.appInstance as IWebServerBuilder & {
+      close?: () => Promise<void>;
+    };
     if (app && typeof app.close === "function") {
       await app.close();
     }
@@ -106,10 +112,10 @@ class TestApp implements ITestApp {
    */
   overrideProvider<T>(
     serviceIdentifier: ServiceIdentifier<T>,
-    mock: Partial<T>
+    mock: Partial<T>,
   ): void {
     this.overrides.set(serviceIdentifier, mock);
-    
+
     // Rebind in container if already bound
     const id = serviceIdentifier as symbol | string;
     if (this._container.isBound(id)) {
@@ -179,7 +185,7 @@ const activeTestApps: Array<TestApp> = [];
  */
 export async function createTestApp<T extends IWebServer>(
   AppClass: IWebServerConstructor<T>,
-  options: CreateTestAppOptions = {}
+  options: CreateTestAppOptions = {},
 ): Promise<TestAppResult> {
   // Set up test environment variables
   const originalEnv = { ...process.env };
@@ -191,17 +197,18 @@ export async function createTestApp<T extends IWebServer>(
   try {
     // Create the app instance using AppFactory
     const appInstance = await AppFactory.create(AppClass);
-    
+
     // Get the container from the app
     // Note: AppExpress stores container in private property
-    type AppWithContainer = IWebServerBuilder & { 
-      container?: { Container?: Container }; 
+    type AppWithContainer = IWebServerBuilder & {
+      container?: { Container?: Container };
       _container?: Container;
     };
     const appWithContainer = appInstance as AppWithContainer;
-    const container = appWithContainer.container?.Container || 
-                      appWithContainer._container ||
-                      getContainerFromApp(appInstance);
+    const container =
+      appWithContainer.container?.Container ||
+      appWithContainer._container ||
+      getContainerFromApp(appInstance);
 
     // Create test app wrapper
     const testApp = new TestApp(appInstance, container);
@@ -213,20 +220,23 @@ export async function createTestApp<T extends IWebServer>(
 
     // Start the server on a random port
     const port = options.port ?? 0;
-    const serverResult = await appInstance.listen(port, {
+    const serverResult = (await appInstance.listen(port, {
       appName: "Test App",
       appVersion: "1.0.0",
-    }) as ListenResult;
+    })) as ListenResult;
 
     // Get the actual port
-    const actualPort = serverResult?.port || 
-                       (serverResult?.server?.address?.()?.port) || 
-                       port;
+    const actualPort =
+      serverResult?.port || serverResult?.server?.address?.()?.port || port;
 
     // Store HTTP server reference
-    type AppWithHttpServer = IWebServerBuilder & { getHttpServer?: () => unknown };
+    type AppWithHttpServer = IWebServerBuilder & {
+      getHttpServer?: () => unknown;
+    };
     const appWithServer = appInstance as AppWithHttpServer;
-    testApp.setHttpServer(appWithServer.getHttpServer?.() || serverResult?.server);
+    testApp.setHttpServer(
+      appWithServer.getHttpServer?.() || serverResult?.server,
+    );
 
     // Track active test apps for cleanup
     activeTestApps.push(testApp);
@@ -236,7 +246,7 @@ export async function createTestApp<T extends IWebServer>(
     // Create cleanup function
     const cleanup = async (): Promise<void> => {
       // Restore environment
-      Object.keys(options.env || {}).forEach(key => {
+      Object.keys(options.env || {}).forEach((key) => {
         if (originalEnv[key] !== undefined) {
           process.env[key] = originalEnv[key];
         } else {
@@ -283,7 +293,7 @@ export async function createTestApp<T extends IWebServer>(
  */
 function applyMockProviders(
   testApp: TestApp,
-  providers: Array<MockProviderConfig>
+  providers: Array<MockProviderConfig>,
 ): void {
   for (const provider of providers) {
     let mockValue: unknown;
@@ -316,8 +326,10 @@ function getContainerFromApp(appInstance: IWebServerBuilder): Container {
 
   for (const path of possiblePaths) {
     const appRecord = appInstance as unknown as Record<string, unknown>;
-    const containerOrWrapper = appRecord[path] as 
-      { Container?: Container } | Container | undefined;
+    const containerOrWrapper = appRecord[path] as
+      | { Container?: Container }
+      | Container
+      | undefined;
     if (containerOrWrapper) {
       // Could be the container wrapper or the container itself
       if ("Container" in containerOrWrapper && containerOrWrapper.Container) {
@@ -332,7 +344,7 @@ function getContainerFromApp(appInstance: IWebServerBuilder): Container {
   // If we can't find the container, throw helpful error
   throw new Error(
     "Could not find DI container on app instance. " +
-    "Make sure your app extends AppExpress and initializes the container properly."
+      "Make sure your app extends AppExpress and initializes the container properly.",
   );
 }
 
@@ -342,7 +354,7 @@ function getContainerFromApp(appInstance: IWebServerBuilder): Container {
 function registerCleanupHook(cleanup: () => Promise<void>): void {
   // Try to register with global afterAll/afterEach
   // This works with both Jest and Vitest
-  type GlobalWithTestHooks = typeof globalThis & { 
+  type GlobalWithTestHooks = typeof globalThis & {
     afterAll?: (fn: () => Promise<void>) => void;
   };
   const globalWithHooks = globalThis as GlobalWithTestHooks;
@@ -358,7 +370,7 @@ function registerCleanupHook(cleanup: () => Promise<void>): void {
  * Useful for cleanup in test teardown.
  */
 export async function cleanupAllTestApps(): Promise<void> {
-  const cleanupPromises = activeTestApps.map(app => app.close());
+  const cleanupPromises = activeTestApps.map((app) => app.close());
   await Promise.all(cleanupPromises);
   activeTestApps.length = 0;
 }
@@ -370,4 +382,3 @@ export async function cleanupAllTestApps(): Promise<void> {
 export function getActiveTestAppCount(): number {
   return activeTestApps.length;
 }
-

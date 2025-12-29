@@ -87,10 +87,19 @@
 export * from "./testing.interfaces";
 
 // Test app creation
-export { createTestApp, cleanupAllTestApps, getActiveTestAppCount } from "./create-test-app";
+export {
+  createTestApp,
+  cleanupAllTestApps,
+  getActiveTestAppCount,
+} from "./create-test-app";
 
 // Smart mocking
-export { mockProvider, createMock, createMockObject, spyOn } from "./mock-provider";
+export {
+  mockProvider,
+  createMock,
+  createMockObject,
+  spyOn,
+} from "./mock-provider";
 
 // Fluent HTTP testing
 export { createFluentRequest, request } from "./fluent-request";
@@ -102,7 +111,11 @@ export { snapshotRequest, toMatchApiSnapshot } from "./snapshot-request";
 export { loadTest, benchmark, stressTest } from "./load-test";
 
 // Database testing
-export { createTestDatabase, createFixtureFactory, fixture } from "./create-test-database";
+export {
+  createTestDatabase,
+  createFixtureFactory,
+  fixture,
+} from "./create-test-database";
 
 // Request context mocking
 export {
@@ -114,4 +127,3 @@ export {
 
 // Custom matchers
 export { expressoTSMatchers, setupExpressoTSMatchers } from "./matchers";
-

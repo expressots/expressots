@@ -54,7 +54,9 @@ interface RequestResult {
 function parseDuration(duration: string): number {
   const match = duration.match(/^(\d+(?:\.\d+)?)(ms|s|m|h)?$/);
   if (!match) {
-    throw new Error(`Invalid duration format: ${duration}. Use "10s", "1m", "500ms", etc.`);
+    throw new Error(
+      `Invalid duration format: ${duration}. Use "10s", "1m", "500ms", etc.`,
+    );
   }
 
   const value = parseFloat(match[1]);
@@ -120,9 +122,13 @@ function calculateDistribution(times: Array<number>): ResponseTimeDistribution {
  */
 function verifyAssertions(
   assertions: LoadTestAssertions,
-  results: Partial<LoadTestResults>
+  results: Partial<LoadTestResults>,
 ): Array<{ assertion: string; expected: unknown; actual: unknown }> {
-  const failures: Array<{ assertion: string; expected: unknown; actual: unknown }> = [];
+  const failures: Array<{
+    assertion: string;
+    expected: unknown;
+    actual: unknown;
+  }> = [];
 
   if (assertions.maxErrorRate !== undefined) {
     if ((results.errorRate || 0) > assertions.maxErrorRate) {
@@ -185,14 +191,16 @@ async function executeRequest(
   method: HttpMethod,
   body: unknown | undefined,
   headers: Record<string, string>,
-  timeout: number
+  timeout: number,
 ): Promise<RequestResult> {
   const startTime = Date.now();
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   // Prevent timer from keeping Jest alive
-  const timerWithUnref = timeoutId as ReturnType<typeof setTimeout> & { unref?: () => void };
+  const timerWithUnref = timeoutId as ReturnType<typeof setTimeout> & {
+    unref?: () => void;
+  };
   if (typeof timerWithUnref.unref === "function") {
     timerWithUnref.unref();
   }
@@ -277,7 +285,7 @@ async function executeRequest(
  */
 export async function loadTest(
   appOrUrl: { baseUrl: string } | string,
-  options: LoadTestOptions
+  options: LoadTestOptions,
 ): Promise<LoadTestResults> {
   const baseUrl = typeof appOrUrl === "string" ? appOrUrl : appOrUrl.baseUrl;
   const url = `${baseUrl}${options.endpoint}`;
@@ -308,12 +316,14 @@ export async function loadTest(
   if (warmupRequests > 0) {
     console.log(`🔥 Warming up with ${warmupRequests} requests...`);
     const warmupPromises = Array.from({ length: warmupRequests }, () =>
-      executeRequest(url, method, body, headers, timeout)
+      executeRequest(url, method, body, headers, timeout),
     );
     await Promise.all(warmupPromises);
   }
 
-  console.log(`🚀 Starting load test: ${concurrent} concurrent requests for ${duration}`);
+  console.log(
+    `🚀 Starting load test: ${concurrent} concurrent requests for ${duration}`,
+  );
   const testStartTime = Date.now();
 
   // Progress tracking
@@ -329,8 +339,8 @@ export async function loadTest(
 
     const elapsed = (now - testStartTime) / 1000;
     const sortedTimes = results
-      .filter(r => r.success)
-      .map(r => r.responseTime)
+      .filter((r) => r.success)
+      .map((r) => r.responseTime)
       .sort((a, b) => a - b);
 
     const progress: LoadTestProgress = {
@@ -347,12 +357,10 @@ export async function loadTest(
   // Worker function
   const worker = async (workerId: number): Promise<void> => {
     // Calculate ramp-up delay for this worker
-    const rampUpDelay = rampUpMs > 0
-      ? (workerId / concurrent) * rampUpMs
-      : 0;
+    const rampUpDelay = rampUpMs > 0 ? (workerId / concurrent) * rampUpMs : 0;
 
     if (rampUpDelay > 0) {
-      await new Promise(resolve => setTimeout(resolve, rampUpDelay));
+      await new Promise((resolve) => setTimeout(resolve, rampUpDelay));
     }
 
     // Run until duration expires
@@ -366,7 +374,8 @@ export async function loadTest(
       }
 
       // Track status codes
-      statusCodes[result.statusCode] = (statusCodes[result.statusCode] || 0) + 1;
+      statusCodes[result.statusCode] =
+        (statusCodes[result.statusCode] || 0) + 1;
 
       updateProgress();
     }
@@ -380,20 +389,24 @@ export async function loadTest(
   const totalDuration = testEndTime - testStartTime;
 
   // Calculate metrics
-  const responseTimes = results.map(r => r.responseTime);
-  const successfulTimes = results.filter(r => r.success).map(r => r.responseTime);
+  const responseTimes = results.map((r) => r.responseTime);
+  const successfulTimes = results
+    .filter((r) => r.success)
+    .map((r) => r.responseTime);
   const sortedTimes = [...successfulTimes].sort((a, b) => a - b);
 
   const totalRequests = results.length;
-  const successfulRequests = results.filter(r => r.success).length;
-  const errors = results.filter(r => !r.success).length;
+  const successfulRequests = results.filter((r) => r.success).length;
+  const errors = results.filter((r) => !r.success).length;
 
-  const averageResponseTime = successfulTimes.length > 0
-    ? successfulTimes.reduce((a, b) => a + b, 0) / successfulTimes.length
-    : 0;
+  const averageResponseTime =
+    successfulTimes.length > 0
+      ? successfulTimes.reduce((a, b) => a + b, 0) / successfulTimes.length
+      : 0;
 
   const minResponseTime = sortedTimes.length > 0 ? sortedTimes[0] : 0;
-  const maxResponseTime = sortedTimes.length > 0 ? sortedTimes[sortedTimes.length - 1] : 0;
+  const maxResponseTime =
+    sortedTimes.length > 0 ? sortedTimes[sortedTimes.length - 1] : 0;
   const medianResponseTime = percentile(sortedTimes, 50);
   const p95ResponseTime = percentile(sortedTimes, 95);
   const p99ResponseTime = percentile(sortedTimes, 99);
@@ -431,12 +444,20 @@ export async function loadTest(
   console.log(`\n📊 Load Test Results:`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log(`   Total Requests:    ${totalRequests}`);
-  console.log(`   Successful:        ${successfulRequests} (${((successfulRequests / totalRequests) * 100).toFixed(1)}%)`);
-  console.log(`   Failed:            ${errors} (${(loadTestResults.errorRate * 100).toFixed(2)}%)`);
-  console.log(`   Throughput:        ${loadTestResults.throughput.toFixed(1)} req/s`);
+  console.log(
+    `   Successful:        ${successfulRequests} (${((successfulRequests / totalRequests) * 100).toFixed(1)}%)`,
+  );
+  console.log(
+    `   Failed:            ${errors} (${(loadTestResults.errorRate * 100).toFixed(2)}%)`,
+  );
+  console.log(
+    `   Throughput:        ${loadTestResults.throughput.toFixed(1)} req/s`,
+  );
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log(`   Response Times:`);
-  console.log(`   ├─ Average:        ${loadTestResults.averageResponseTime.toFixed(1)}ms`);
+  console.log(
+    `   ├─ Average:        ${loadTestResults.averageResponseTime.toFixed(1)}ms`,
+  );
   console.log(`   ├─ Min:            ${minResponseTime}ms`);
   console.log(`   ├─ Max:            ${maxResponseTime}ms`);
   console.log(`   ├─ Median:         ${medianResponseTime}ms`);
@@ -447,7 +468,9 @@ export async function loadTest(
   if (loadTestResults.failedAssertions.length > 0) {
     console.log(`\n❌ Failed Assertions:`);
     for (const failure of loadTestResults.failedAssertions) {
-      console.log(`   • ${failure.assertion}: expected ${failure.expected}, got ${failure.actual}`);
+      console.log(
+        `   • ${failure.assertion}: expected ${failure.expected}, got ${failure.actual}`,
+      );
     }
   } else if (assertions) {
     console.log(`\n✅ All assertions passed!`);
@@ -474,7 +497,7 @@ export async function loadTest(
  */
 export async function benchmark(
   fn: () => Promise<unknown> | unknown,
-  iterations: number = 1000
+  iterations: number = 1000,
 ): Promise<{
   average: number;
   min: number;
@@ -539,11 +562,15 @@ export async function stressTest(
     maxConcurrent?: number;
     stepDuration?: string;
     thresholds?: LoadTestAssertions;
-  }
+  },
 ): Promise<{
   maxConcurrent: number;
   breakingPoint: number;
-  results: Array<{ concurrent: number; passed: boolean; metrics: Partial<LoadTestResults> }>;
+  results: Array<{
+    concurrent: number;
+    passed: boolean;
+    metrics: Partial<LoadTestResults>;
+  }>;
 }> {
   const {
     endpoint,
@@ -605,7 +632,9 @@ export async function stressTest(
   }
 
   console.log(`\n🎯 Stress Test Complete:`);
-  console.log(`   Maximum sustainable load: ${lastPassingConcurrent} concurrent`);
+  console.log(
+    `   Maximum sustainable load: ${lastPassingConcurrent} concurrent`,
+  );
   console.log(`   Breaking point: ${breakingPoint} concurrent`);
 
   return {
@@ -614,4 +643,3 @@ export async function stressTest(
     results: testResults,
   };
 }
-

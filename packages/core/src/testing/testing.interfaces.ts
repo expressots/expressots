@@ -127,7 +127,7 @@ export interface ITestApp {
    */
   overrideProvider<T>(
     serviceIdentifier: ServiceIdentifier<T>,
-    mock: Partial<T>
+    mock: Partial<T>,
   ): void;
 }
 
@@ -244,9 +244,7 @@ export type MockDependencies<T> = {
 /**
  * Helper type to extract constructor dependencies.
  */
-export type ExtractDependencies<T> = T extends new (
-  ...args: infer P
-) => unknown
+export type ExtractDependencies<T> = T extends new (...args: infer P) => unknown
   ? P extends Array<unknown>
     ? { [K in keyof P]: P[K] }
     : never
@@ -264,7 +262,10 @@ export type MockOf<T> = {
 /**
  * Mock function interface (compatible with Jest and Vitest).
  */
-export interface MockFunction<A extends Array<unknown> = Array<unknown>, R = unknown> {
+export interface MockFunction<
+  A extends Array<unknown> = Array<unknown>,
+  R = unknown,
+> {
   (...args: A): R;
   mockReturnValue: (value: R) => MockFunction<A, R>;
   mockResolvedValue: (value: Awaited<R>) => MockFunction<A, R>;
@@ -285,7 +286,14 @@ export interface MockFunction<A extends Array<unknown> = Array<unknown>, R = unk
 /**
  * HTTP methods supported by the fluent request builder.
  */
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS";
 
 /**
  * Fluent request builder for testing HTTP endpoints.
@@ -397,7 +405,9 @@ export interface FluentRequest {
    * Assert response body.
    * Supports exact match, partial match, or predicate.
    */
-  expectBody<T>(expected: T | Partial<T> | ((body: T) => boolean)): FluentRequest;
+  expectBody<T>(
+    expected: T | Partial<T> | ((body: T) => boolean),
+  ): FluentRequest;
 
   /**
    * Assert response body with JSON path.
@@ -996,7 +1006,7 @@ export interface ITestDatabase {
   update<T>(
     table: string,
     where: Record<string, unknown>,
-    data: Partial<T>
+    data: Partial<T>,
   ): Promise<number>;
 
   /**
@@ -1174,4 +1184,3 @@ export interface TestLifecycleHooks {
  * Setup function for test lifecycle.
  */
 export type SetupTestLifecycle = (hooks: TestLifecycleHooks) => void;
-

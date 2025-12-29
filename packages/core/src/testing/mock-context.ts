@@ -20,7 +20,11 @@
  */
 
 import { Request, Response } from "express";
-import { MockContextOptions, MockContext, MockFunction } from "./testing.interfaces";
+import {
+  MockContextOptions,
+  MockContext,
+  MockFunction,
+} from "./testing.interfaces";
 
 /**
  * Create a mock function.
@@ -76,7 +80,9 @@ function createMockFn(): MockFunction {
     return mockFn;
   };
 
-  mockFn.mockImplementation = (fn: (...args: Array<unknown>) => unknown): MockFunction => {
+  mockFn.mockImplementation = (
+    fn: (...args: Array<unknown>) => unknown,
+  ): MockFunction => {
     implementation = fn;
     return mockFn;
   };
@@ -149,31 +155,41 @@ function createMockRequest(options: MockContextOptions): Request {
     signedCookies: {},
     app: {} as Request["app"],
     res: undefined,
-    
+
     // Methods
     get: ((name: string): string | undefined => {
       return normalizedHeaders[name.toLowerCase()];
     }) as Request["get"],
-    
+
     header: ((name: string): string | undefined => {
       return normalizedHeaders[name.toLowerCase()];
     }) as Request["header"],
-    
-    accepts: createMockFn().mockReturnValue(true) as unknown as Request["accepts"],
-    acceptsCharsets: createMockFn().mockReturnValue(true) as unknown as Request["acceptsCharsets"],
-    acceptsEncodings: createMockFn().mockReturnValue(true) as unknown as Request["acceptsEncodings"],
-    acceptsLanguages: createMockFn().mockReturnValue(true) as unknown as Request["acceptsLanguages"],
-    
+
+    accepts: createMockFn().mockReturnValue(
+      true,
+    ) as unknown as Request["accepts"],
+    acceptsCharsets: createMockFn().mockReturnValue(
+      true,
+    ) as unknown as Request["acceptsCharsets"],
+    acceptsEncodings: createMockFn().mockReturnValue(
+      true,
+    ) as unknown as Request["acceptsEncodings"],
+    acceptsLanguages: createMockFn().mockReturnValue(
+      true,
+    ) as unknown as Request["acceptsLanguages"],
+
     is: ((type: string | Array<string>): string | false | null => {
       const contentType = normalizedHeaders["content-type"] || "";
       if (Array.isArray(type)) {
-        return type.find(t => contentType.includes(t)) || false;
+        return type.find((t) => contentType.includes(t)) || false;
       }
       return contentType.includes(type) ? type : false;
     }) as Request["is"],
-    
-    range: createMockFn().mockReturnValue(undefined) as unknown as Request["range"],
-    
+
+    range: createMockFn().mockReturnValue(
+      undefined,
+    ) as unknown as Request["range"],
+
     ...customRequest,
   };
 
@@ -209,28 +225,27 @@ function createMockResponse(options: MockContextOptions): Response {
     locals,
     app: {} as Response["app"],
     req: undefined,
-    
+
     // Chainable methods
-    status: function(this: Response, code: number): Response {
+    status: function (this: Response, code: number): Response {
       statusCode = code;
       this.statusCode = code;
       return this;
     } as Response["status"],
-    
-    sendStatus: function(this: Response, code: number): Response {
+
+    sendStatus: function (this: Response, code: number): Response {
       statusCode = code;
       this.statusCode = code;
       return this;
     } as Response["sendStatus"],
-    
   };
 
   // Create the mock response object with proper this binding
   // We'll define methods that return the mockRes object
-  const setFn = function(
+  const setFn = function (
     this: Response,
     field: string | Record<string, string>,
-    val?: string
+    val?: string,
   ): Response {
     if (typeof field === "object") {
       for (const [key, value] of Object.entries(field)) {
@@ -244,64 +259,64 @@ function createMockResponse(options: MockContextOptions): Response {
 
   Object.assign(mockRes, {
     set: setFn as Response["set"],
-    
+
     header: setFn as Response["header"],
-    
-    get: function(field: string): string | undefined {
+
+    get: function (field: string): string | undefined {
       return responseHeaders[field.toLowerCase()];
     } as Response["get"],
-    
-    json: function(body: unknown): Response {
+
+    json: function (body: unknown): Response {
       responseBody = body;
       responseHeaders["content-type"] = "application/json";
       return mockRes as Response;
     } as Response["json"],
-    
-    send: function(body: unknown): Response {
+
+    send: function (body: unknown): Response {
       responseBody = body;
       return mockRes as Response;
     } as Response["send"],
-    
+
     end: createMockFn() as unknown as Response["end"],
-    
-    type: function(typeValue: string): Response {
+
+    type: function (typeValue: string): Response {
       responseHeaders["content-type"] = typeValue;
       return mockRes as Response;
     } as Response["type"],
-    
-    contentType: function(typeValue: string): Response {
+
+    contentType: function (typeValue: string): Response {
       responseHeaders["content-type"] = typeValue;
       return mockRes as Response;
     } as Response["contentType"],
-    
+
     format: createMockFn() as unknown as Response["format"],
-    
-    attachment: function(filename?: string): Response {
+
+    attachment: function (filename?: string): Response {
       responseHeaders["content-disposition"] = filename
         ? `attachment; filename="${filename}"`
         : "attachment";
       return mockRes as Response;
     } as Response["attachment"],
-    
+
     cookie: createMockFn() as unknown as Response["cookie"],
     clearCookie: createMockFn() as unknown as Response["clearCookie"],
-    
+
     redirect: createMockFn() as unknown as Response["redirect"],
     render: createMockFn() as unknown as Response["render"],
-    
-    location: function(url: string): Response {
+
+    location: function (url: string): Response {
       responseHeaders["location"] = url;
       return mockRes as Response;
     } as Response["location"],
-    
+
     links: createMockFn() as unknown as Response["links"],
-    
-    vary: function(field: string): Response {
+
+    vary: function (field: string): Response {
       responseHeaders["vary"] = field;
       return mockRes as Response;
     } as Response["vary"],
-    
-    append: function(field: string, val: string | Array<string>): Response {
+
+    append: function (field: string, val: string | Array<string>): Response {
       const existing = responseHeaders[field.toLowerCase()];
       const newVal = Array.isArray(val) ? val.join(", ") : val;
       responseHeaders[field.toLowerCase()] = existing
@@ -309,7 +324,7 @@ function createMockResponse(options: MockContextOptions): Response {
         : newVal;
       return mockRes as Response;
     } as Response["append"],
-    
+
     ...customResponse,
   });
 
@@ -318,12 +333,12 @@ function createMockResponse(options: MockContextOptions): Response {
     get: () => responseBody,
     enumerable: true,
   });
-  
+
   Object.defineProperty(mockRes, "_headers", {
     get: () => ({ ...responseHeaders }),
     enumerable: true,
   });
-  
+
   Object.defineProperty(mockRes, "_status", {
     get: () => statusCode,
     enumerable: true,
@@ -380,26 +395,26 @@ export function mockContext(options: MockContextOptions = {}): MockContext {
     get request() {
       return request;
     },
-    
+
     get response() {
       return response;
     },
-    
+
     get next() {
       return next;
     },
-    
+
     get user() {
       return currentOptions.user;
     },
-    
+
     reset() {
       currentOptions = { ...options };
       request = createMockRequest(currentOptions);
       response = createMockResponse(currentOptions);
       next = createMockFn();
     },
-    
+
     update(newOptions: Partial<MockContextOptions>) {
       currentOptions = { ...currentOptions, ...newOptions };
       request = createMockRequest(currentOptions);
@@ -430,13 +445,16 @@ export function mockExecutionContext(options: MockContextOptions = {}): {
   getResponse: () => Response;
   getClass: () => new (...args: Array<unknown>) => unknown;
   getHandler: () => (...args: Array<unknown>) => unknown;
-  switchToHttp: () => { getRequest: () => Request; getResponse: () => Response };
+  switchToHttp: () => {
+    getRequest: () => Request;
+    getResponse: () => Response;
+  };
 } {
   const ctx = mockContext(options);
-  
+
   // Mock controller class
   class MockController {}
-  
+
   // Mock handler function
   const mockHandler = (): unknown => undefined;
 
@@ -495,4 +513,3 @@ export function mockReqRes(options: MockContextOptions = {}): {
     next: ctx.next,
   };
 }
-

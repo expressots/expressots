@@ -284,7 +284,7 @@ describe("Mock Context", () => {
     it("should set headers on request", () => {
       const ctx = mockContext({
         headers: {
-          "Authorization": "Bearer token123",
+          Authorization: "Bearer token123",
           "X-Custom-Header": "value",
         },
       });
@@ -314,7 +314,10 @@ describe("Mock Context", () => {
         body: { name: "John", email: "john@test.com" },
       });
 
-      expect(ctx.request.body).toEqual({ name: "John", email: "john@test.com" });
+      expect(ctx.request.body).toEqual({
+        name: "John",
+        email: "john@test.com",
+      });
     });
 
     it("should set method on request", () => {
@@ -442,7 +445,10 @@ describe("Test Database", () => {
     it("should insert and find records", async () => {
       const db = createTestDatabase();
 
-      const user = await db.insert("users", { name: "John", email: "john@test.com" }) as { id: number; name: string; email: string };
+      const user = (await db.insert("users", {
+        name: "John",
+        email: "john@test.com",
+      })) as { id: number; name: string; email: string };
 
       expect(user.id).toBeDefined();
       expect(user.name).toBe("John");
@@ -454,19 +460,31 @@ describe("Test Database", () => {
     it("should update records", async () => {
       const db = createTestDatabase();
 
-      const user = await db.insert("users", { name: "John" }) as { id: number; name: string };
-      const updated = await db.update("users", { id: user.id }, { name: "Jane" });
+      const user = (await db.insert("users", { name: "John" })) as {
+        id: number;
+        name: string;
+      };
+      const updated = await db.update(
+        "users",
+        { id: user.id },
+        { name: "Jane" },
+      );
 
       expect(updated).toBe(1);
 
-      const found = await db.findOne("users", { id: user.id }) as { name: string } | null;
+      const found = (await db.findOne("users", { id: user.id })) as {
+        name: string;
+      } | null;
       expect(found?.name).toBe("Jane");
     });
 
     it("should delete records", async () => {
       const db = createTestDatabase();
 
-      const user = await db.insert("users", { name: "John" }) as { id: number; name: string };
+      const user = (await db.insert("users", { name: "John" })) as {
+        id: number;
+        name: string;
+      };
       const deleted = await db.delete("users", { id: user.id });
 
       expect(deleted).toBe(1);
@@ -531,17 +549,21 @@ describe("Test Database", () => {
       const count = await db.count("users");
       expect(count).toBe(2);
 
-      const admin = await db.findOne("users", { role: "admin" }) as { name: string } | null;
+      const admin = (await db.findOne("users", { role: "admin" })) as {
+        name: string;
+      } | null;
       expect(admin?.name).toBe("Admin");
     });
   });
 
   describe("createFixtureFactory", () => {
     it("should create factory function", () => {
-      const userFactory = createFixtureFactory<{ name: string; email: string }>({
-        name: (i) => `User ${i}`,
-        email: (i) => `user${i}@test.com`,
-      });
+      const userFactory = createFixtureFactory<{ name: string; email: string }>(
+        {
+          name: (i) => `User ${i}`,
+          email: (i) => `user${i}@test.com`,
+        },
+      );
 
       const users = userFactory(3);
 
@@ -583,17 +605,19 @@ describe("Test Database", () => {
 
 describe("Custom Matchers", () => {
   describe("expressoTSMatchers", () => {
-    const createMockResponse = (overrides: Partial<{
-      status: number;
-      body: unknown;
-      headers: Record<string, string>;
-      time: number;
-      contentType: string;
-      ok: boolean;
-      redirect: boolean;
-      clientError: boolean;
-      serverError: boolean;
-    }> = {}) => ({
+    const createMockResponse = (
+      overrides: Partial<{
+        status: number;
+        body: unknown;
+        headers: Record<string, string>;
+        time: number;
+        contentType: string;
+        ok: boolean;
+        redirect: boolean;
+        clientError: boolean;
+        serverError: boolean;
+      }> = {},
+    ) => ({
       status: 200,
       statusText: "OK",
       headers: {},
@@ -656,7 +680,7 @@ describe("Custom Matchers", () => {
         });
         const result = expressoTSMatchers.toHaveBody(
           response,
-          (body: any) => body.id > 0
+          (body: any) => body.id > 0,
         );
 
         expect(result.pass).toBe(true);
@@ -671,7 +695,7 @@ describe("Custom Matchers", () => {
         const result = expressoTSMatchers.toHaveHeader(
           response,
           "content-type",
-          "application/json"
+          "application/json",
         );
 
         expect(result.pass).toBe(true);
@@ -693,7 +717,7 @@ describe("Custom Matchers", () => {
         const result = expressoTSMatchers.toHaveHeader(
           response,
           "content-type",
-          /json/
+          /json/,
         );
 
         expect(result.pass).toBe(true);
@@ -736,7 +760,7 @@ describe("Custom Matchers", () => {
         const result = expressoTSMatchers.toHaveBodyProperty(
           response,
           "user.name",
-          "John"
+          "John",
         );
 
         expect(result.pass).toBe(true);
@@ -783,4 +807,3 @@ describe("Custom Matchers", () => {
     });
   });
 });
-

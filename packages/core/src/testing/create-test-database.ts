@@ -56,16 +56,16 @@ class InMemoryDatabase implements ITestDatabase {
   private initialize(): void {
     this.store = {};
     this.idCounters = {};
-    
+
     for (const fixture of this.fixtures) {
       this.store[fixture.table] = [];
-      
+
       if (fixture.data) {
         for (const item of fixture.data) {
           this.insertInternal(fixture.table, item as Record<string, unknown>);
         }
       }
-      
+
       if (fixture.factory) {
         const generated = fixture.factory(10); // Default 10 items
         for (const item of generated) {
@@ -82,18 +82,15 @@ class InMemoryDatabase implements ITestDatabase {
     if (!this.store[table]) {
       this.store[table] = [];
     }
-    
+
     // Auto-generate ID if not present
     if (!data.id) {
       this.idCounters[table] = (this.idCounters[table] || 0) + 1;
       data.id = this.idCounters[table];
     } else if (typeof data.id === "number") {
-      this.idCounters[table] = Math.max(
-        this.idCounters[table] || 0,
-        data.id
-      );
+      this.idCounters[table] = Math.max(this.idCounters[table] || 0, data.id);
     }
-    
+
     this.store[table].push({ ...data });
   }
 
@@ -121,23 +118,23 @@ class InMemoryDatabase implements ITestDatabase {
   async query<T>(sql: string, params: Array<unknown> = []): Promise<Array<T>> {
     // Basic SQL parser for in-memory database
     const sqlLower = sql.toLowerCase().trim();
-    
+
     if (sqlLower.startsWith("select")) {
       return this.executeSelect<T>(sql, params);
     }
-    
+
     if (sqlLower.startsWith("insert")) {
       return this.executeInsert<T>(sql, params);
     }
-    
+
     if (sqlLower.startsWith("update")) {
       return this.executeUpdate<T>(sql, params);
     }
-    
+
     if (sqlLower.startsWith("delete")) {
       return this.executeDelete<T>(sql, params);
     }
-    
+
     throw new Error(`Unsupported SQL operation: ${sql}`);
   }
 
@@ -150,27 +147,27 @@ class InMemoryDatabase implements ITestDatabase {
     if (!match) {
       throw new Error(`Cannot parse table name from: ${sql}`);
     }
-    
+
     const table = match[1];
     let records = [...(this.store[table] || [])];
-    
+
     // Handle WHERE clause
     const whereMatch = sql.match(/where\s+(.+?)(?:order|limit|$)/i);
     if (whereMatch && params.length > 0) {
       const whereClause = whereMatch[1];
       const conditions = whereClause.split(/\s+and\s+/i);
-      
+
       let paramIndex = 0;
       for (const condition of conditions) {
         const condMatch = condition.match(/(\w+)\s*=\s*\$\d+/);
         if (condMatch && paramIndex < params.length) {
           const field = condMatch[1];
           const value = params[paramIndex++];
-          records = records.filter(r => r[field] === value);
+          records = records.filter((r) => r[field] === value);
         }
       }
     }
-    
+
     return records as Array<T>;
   }
 
@@ -182,21 +179,21 @@ class InMemoryDatabase implements ITestDatabase {
     if (!match) {
       throw new Error(`Cannot parse table name from: ${sql}`);
     }
-    
+
     const table = match[1];
     const data: Record<string, unknown> = {};
-    
+
     // Extract column names
     const colMatch = sql.match(/\(([^)]+)\)/);
     if (colMatch) {
-      const columns = colMatch[1].split(",").map(c => c.trim());
+      const columns = colMatch[1].split(",").map((c) => c.trim());
       columns.forEach((col, i) => {
         if (i < params.length) {
           data[col] = params[i];
         }
       });
     }
-    
+
     this.insertInternal(table, data);
     return [data as T];
   }
@@ -210,10 +207,10 @@ class InMemoryDatabase implements ITestDatabase {
     if (!match) {
       throw new Error(`Cannot parse table name from: ${sql}`);
     }
-    
+
     const table = match[1];
     const records = this.store[table] || [];
-    
+
     // Very basic implementation - just returns count
     return [{ count: records.length }] as Array<T>;
   }
@@ -226,10 +223,10 @@ class InMemoryDatabase implements ITestDatabase {
     if (!match) {
       throw new Error(`Cannot parse table name from: ${sql}`);
     }
-    
+
     const table = match[1];
     const originalCount = (this.store[table] || []).length;
-    
+
     // Handle WHERE clause
     const whereMatch = sql.match(/where\s+(.+)/i);
     if (whereMatch && params.length > 0) {
@@ -238,12 +235,14 @@ class InMemoryDatabase implements ITestDatabase {
       if (condMatch) {
         const field = condMatch[1];
         const value = params[0];
-        this.store[table] = (this.store[table] || []).filter(r => r[field] !== value);
+        this.store[table] = (this.store[table] || []).filter(
+          (r) => r[field] !== value,
+        );
       }
     } else {
       this.store[table] = [];
     }
-    
+
     const deletedCount = originalCount - (this.store[table]?.length || 0);
     return [{ count: deletedCount }] as Array<T>;
   }
@@ -255,15 +254,15 @@ class InMemoryDatabase implements ITestDatabase {
     if (!this.store[table]) {
       this.store[table] = [];
     }
-    
+
     const record = { ...data } as Record<string, unknown>;
-    
+
     // Auto-generate ID
     if (!record.id) {
       this.idCounters[table] = (this.idCounters[table] || 0) + 1;
       record.id = this.idCounters[table];
     }
-    
+
     // Add timestamps
     if (!record.createdAt) {
       record.createdAt = new Date();
@@ -271,7 +270,7 @@ class InMemoryDatabase implements ITestDatabase {
     if (!record.updatedAt) {
       record.updatedAt = new Date();
     }
-    
+
     this.store[table].push(record);
     return record as T;
   }
@@ -279,14 +278,17 @@ class InMemoryDatabase implements ITestDatabase {
   /**
    * Find records.
    */
-  async find<T>(table: string, where?: Record<string, unknown>): Promise<Array<T>> {
+  async find<T>(
+    table: string,
+    where?: Record<string, unknown>,
+  ): Promise<Array<T>> {
     const records = this.store[table] || [];
-    
+
     if (!where) {
       return records as Array<T>;
     }
-    
-    return records.filter(record => {
+
+    return records.filter((record) => {
       return Object.entries(where).every(([key, value]) => {
         return record[key] === value;
       });
@@ -296,7 +298,10 @@ class InMemoryDatabase implements ITestDatabase {
   /**
    * Find one record.
    */
-  async findOne<T>(table: string, where: Record<string, unknown>): Promise<T | null> {
+  async findOne<T>(
+    table: string,
+    where: Record<string, unknown>,
+  ): Promise<T | null> {
     const results = await this.find<T>(table, where);
     return results[0] || null;
   }
@@ -307,22 +312,22 @@ class InMemoryDatabase implements ITestDatabase {
   async update<T>(
     table: string,
     where: Record<string, unknown>,
-    data: Partial<T>
+    data: Partial<T>,
   ): Promise<number> {
     const records = this.store[table] || [];
     let updatedCount = 0;
-    
+
     for (const record of records) {
       const matches = Object.entries(where).every(([key, value]) => {
         return record[key] === value;
       });
-      
+
       if (matches) {
         Object.assign(record, data, { updatedAt: new Date() });
         updatedCount++;
       }
     }
-    
+
     return updatedCount;
   }
 
@@ -332,13 +337,13 @@ class InMemoryDatabase implements ITestDatabase {
   async delete(table: string, where: Record<string, unknown>): Promise<number> {
     const records = this.store[table] || [];
     const originalLength = records.length;
-    
-    this.store[table] = records.filter(record => {
+
+    this.store[table] = records.filter((record) => {
       return !Object.entries(where).every(([key, value]) => {
         return record[key] === value;
       });
     });
-    
+
     return originalLength - this.store[table].length;
   }
 
@@ -410,32 +415,36 @@ class InMemoryDatabase implements ITestDatabase {
  * test("creates a user", async () => {
  *   const user = await db.insert("users", { name: "Test" });
  *   expect(user.id).toBeDefined();
- *   
+ *
  *   const found = await db.findOne("users", { id: user.id });
  *   expect(found?.name).toBe("Test");
  * });
  * ```
  */
 export function createTestDatabase(
-  options: CreateTestDatabaseOptions = {}
+  options: CreateTestDatabaseOptions = {},
 ): ITestDatabase {
   const { type = "in-memory", fixtures = [] } = options;
 
   switch (type) {
     case "in-memory":
       return new InMemoryDatabase(fixtures);
-    
+
     case "sqlite":
       // SQLite implementation would go here
-      console.warn("SQLite test database not yet implemented. Using in-memory.");
+      console.warn(
+        "SQLite test database not yet implemented. Using in-memory.",
+      );
       return new InMemoryDatabase(fixtures);
-    
+
     case "postgres":
     case "mysql":
       // External database implementations would go here
-      console.warn(`${type} test database not yet implemented. Using in-memory.`);
+      console.warn(
+        `${type} test database not yet implemented. Using in-memory.`,
+      );
       return new InMemoryDatabase(fixtures);
-    
+
     default:
       return new InMemoryDatabase(fixtures);
   }
@@ -456,17 +465,17 @@ export function createTestDatabase(
  * // Creates 5 users with incremental names and emails
  * ```
  */
-export function createFixtureFactory<T extends Record<string, unknown>>(
-  template: {
-    [K in keyof T]: T[K] | ((index: number) => T[K]);
-  }
-): (count: number) => Array<T> {
+export function createFixtureFactory<
+  T extends Record<string, unknown>,
+>(template: {
+  [K in keyof T]: T[K] | ((index: number) => T[K]);
+}): (count: number) => Array<T> {
   return (count: number): Array<T> => {
     const items: Array<T> = [];
-    
+
     for (let i = 0; i < count; i++) {
       const item: Record<string, unknown> = {};
-      
+
       for (const [key, value] of Object.entries(template)) {
         if (typeof value === "function") {
           item[key] = (value as (index: number) => unknown)(i);
@@ -474,10 +483,10 @@ export function createFixtureFactory<T extends Record<string, unknown>>(
           item[key] = value;
         }
       }
-      
+
       items.push(item as T);
     }
-    
+
     return items;
   };
 }
@@ -496,8 +505,7 @@ export function createFixtureFactory<T extends Record<string, unknown>>(
 export function fixture<T>(
   table: string,
   data: Array<T>,
-  factory?: (count: number) => Array<T>
+  factory?: (count: number) => Array<T>,
 ): DatabaseFixture<T> {
   return { table, data, factory };
 }
-

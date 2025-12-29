@@ -68,7 +68,10 @@ class FluentRequestImpl implements FluentRequest {
   /**
    * Set request headers.
    */
-  set(headersOrKey: Record<string, string> | string, value?: string): FluentRequest {
+  set(
+    headersOrKey: Record<string, string> | string,
+    value?: string,
+  ): FluentRequest {
     if (typeof headersOrKey === "string" && value !== undefined) {
       this.config.headers[headersOrKey] = value;
     } else if (typeof headersOrKey === "object") {
@@ -150,7 +153,7 @@ class FluentRequestImpl implements FluentRequest {
       if (response.status !== status) {
         throw new Error(
           `Expected status ${status}, but got ${response.status}\n` +
-          `Response body: ${JSON.stringify(response.body, null, 2)}`
+            `Response body: ${JSON.stringify(response.body, null, 2)}`,
         );
       }
     });
@@ -160,7 +163,9 @@ class FluentRequestImpl implements FluentRequest {
   /**
    * Assert response body.
    */
-  expectBody<T>(expected: T | Partial<T> | ((body: T) => boolean)): FluentRequest {
+  expectBody<T>(
+    expected: T | Partial<T> | ((body: T) => boolean),
+  ): FluentRequest {
     this.config.assertions.push((response) => {
       const body = response.body as T;
 
@@ -170,7 +175,7 @@ class FluentRequestImpl implements FluentRequest {
         if (!predicate(body)) {
           throw new Error(
             `Body predicate assertion failed.\n` +
-            `Body: ${JSON.stringify(body, null, 2)}`
+              `Body: ${JSON.stringify(body, null, 2)}`,
           );
         }
       } else if (typeof expected === "object" && expected !== null) {
@@ -178,7 +183,7 @@ class FluentRequestImpl implements FluentRequest {
         if (!deepPartialMatch(body, expected)) {
           throw new Error(
             `Expected body to match:\n${JSON.stringify(expected, null, 2)}\n` +
-            `Actual body:\n${JSON.stringify(body, null, 2)}`
+              `Actual body:\n${JSON.stringify(body, null, 2)}`,
           );
         }
       } else {
@@ -186,7 +191,7 @@ class FluentRequestImpl implements FluentRequest {
         if (body !== expected) {
           throw new Error(
             `Expected body: ${JSON.stringify(expected)}\n` +
-            `Actual body: ${JSON.stringify(body)}`
+              `Actual body: ${JSON.stringify(body)}`,
           );
         }
       }
@@ -203,7 +208,7 @@ class FluentRequestImpl implements FluentRequest {
       if (!deepEqual(value, expected)) {
         throw new Error(
           `Expected body.${path} to be ${JSON.stringify(expected)}, ` +
-          `but got ${JSON.stringify(value)}`
+            `but got ${JSON.stringify(value)}`,
         );
       }
     });
@@ -220,12 +225,12 @@ class FluentRequestImpl implements FluentRequest {
         if (expected instanceof RegExp) {
           if (!expected.test(actual)) {
             throw new Error(
-              `Expected header "${key}" to match ${expected}, but got "${actual}"`
+              `Expected header "${key}" to match ${expected}, but got "${actual}"`,
             );
           }
         } else if (actual !== expected) {
           throw new Error(
-            `Expected header "${key}" to be "${expected}", but got "${actual}"`
+            `Expected header "${key}" to be "${expected}", but got "${actual}"`,
           );
         }
       }
@@ -250,13 +255,13 @@ class FluentRequestImpl implements FluentRequest {
 
       if (options.lessThan !== undefined && time >= options.lessThan) {
         throw new Error(
-          `Expected response time < ${options.lessThan}ms, but got ${time}ms`
+          `Expected response time < ${options.lessThan}ms, but got ${time}ms`,
         );
       }
 
       if (options.greaterThan !== undefined && time <= options.greaterThan) {
         throw new Error(
-          `Expected response time > ${options.greaterThan}ms, but got ${time}ms`
+          `Expected response time > ${options.greaterThan}ms, but got ${time}ms`,
         );
       }
 
@@ -264,7 +269,7 @@ class FluentRequestImpl implements FluentRequest {
         const [min, max] = options.between;
         if (time < min || time > max) {
           throw new Error(
-            `Expected response time between ${min}ms and ${max}ms, but got ${time}ms`
+            `Expected response time between ${min}ms and ${max}ms, but got ${time}ms`,
           );
         }
       }
@@ -281,12 +286,12 @@ class FluentRequestImpl implements FluentRequest {
       if (type instanceof RegExp) {
         if (!type.test(contentType)) {
           throw new Error(
-            `Expected content-type to match ${type}, but got "${contentType}"`
+            `Expected content-type to match ${type}, but got "${contentType}"`,
           );
         }
       } else if (!contentType.includes(type)) {
         throw new Error(
-          `Expected content-type to contain "${type}", but got "${contentType}"`
+          `Expected content-type to contain "${type}", but got "${contentType}"`,
         );
       }
     });
@@ -297,7 +302,9 @@ class FluentRequestImpl implements FluentRequest {
    * Custom assertion.
    */
   expect<T>(assertion: (response: FluentResponse<T>) => void): FluentRequest {
-    this.config.assertions.push(assertion as (response: FluentResponse<unknown>) => void);
+    this.config.assertions.push(
+      assertion as (response: FluentResponse<unknown>) => void,
+    );
     return this;
   }
 
@@ -326,16 +333,19 @@ class FluentRequestImpl implements FluentRequest {
 
     // Add body if present
     if (this.config.body !== undefined) {
-      fetchOptions.body = typeof this.config.body === "string"
-        ? this.config.body
-        : JSON.stringify(this.config.body);
+      fetchOptions.body =
+        typeof this.config.body === "string"
+          ? this.config.body
+          : JSON.stringify(this.config.body);
     }
 
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
     // Prevent timer from keeping Jest alive
-    const timerWithUnref = timeoutId as ReturnType<typeof setTimeout> & { unref?: () => void };
+    const timerWithUnref = timeoutId as ReturnType<typeof setTimeout> & {
+      unref?: () => void;
+    };
     if (typeof timerWithUnref.unref === "function") {
       timerWithUnref.unref();
     }
@@ -453,7 +463,7 @@ export function createFluentRequest(baseUrl: string): FluentRequestBuilder {
  * ```
  */
 export function request(
-  appOrUrl: { baseUrl: string } | string
+  appOrUrl: { baseUrl: string } | string,
 ): FluentRequestBuilder {
   const baseUrl = typeof appOrUrl === "string" ? appOrUrl : appOrUrl.baseUrl;
   return createFluentRequest(baseUrl);
@@ -480,16 +490,20 @@ function deepPartialMatch(actual: unknown, expected: unknown): boolean {
   if (Array.isArray(expected)) {
     if (!Array.isArray(actual)) return false;
     if (expected.length !== actual.length) return false;
-    return expected.every((item, index) => deepPartialMatch(actual[index], item));
+    return expected.every((item, index) =>
+      deepPartialMatch(actual[index], item),
+    );
   }
 
   // Object comparison
   for (const key of Object.keys(expected)) {
     if (!(key in (actual as Record<string, unknown>))) return false;
-    if (!deepPartialMatch(
-      (actual as Record<string, unknown>)[key],
-      (expected as Record<string, unknown>)[key]
-    )) {
+    if (
+      !deepPartialMatch(
+        (actual as Record<string, unknown>)[key],
+        (expected as Record<string, unknown>)[key],
+      )
+    ) {
       return false;
     }
   }
@@ -521,11 +535,11 @@ function deepEqual(a: unknown, b: unknown): boolean {
 
   if (keysA.length !== keysB.length) return false;
 
-  return keysA.every(key =>
+  return keysA.every((key) =>
     deepEqual(
       (a as Record<string, unknown>)[key],
-      (b as Record<string, unknown>)[key]
-    )
+      (b as Record<string, unknown>)[key],
+    ),
   );
 }
 
@@ -558,4 +572,3 @@ function getValueByPath(obj: unknown, path: string): unknown {
 
   return current;
 }
-

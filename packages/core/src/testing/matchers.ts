@@ -132,7 +132,7 @@ export const expressoTSMatchers = {
    */
   toHaveBody(
     received: FluentResponse,
-    expected: unknown | ((body: unknown) => boolean)
+    expected: unknown | ((body: unknown) => boolean),
   ): MatcherResult {
     let pass: boolean;
 
@@ -161,7 +161,7 @@ export const expressoTSMatchers = {
   toHaveHeader(
     received: FluentResponse,
     header: string,
-    value?: string | RegExp
+    value?: string | RegExp,
   ): MatcherResult {
     const headerValue = received.headers[header.toLowerCase()];
     let pass: boolean;
@@ -192,7 +192,7 @@ export const expressoTSMatchers = {
    */
   toHaveContentType(
     received: FluentResponse,
-    expected: string | RegExp
+    expected: string | RegExp,
   ): MatcherResult {
     const contentType = received.contentType;
     let pass: boolean;
@@ -237,7 +237,8 @@ export const expressoTSMatchers = {
    * expect(response).toBeJSON();
    */
   toBeJSON(received: FluentResponse): MatcherResult {
-    const isJSON = received.contentType.includes("application/json") &&
+    const isJSON =
+      received.contentType.includes("application/json") &&
       typeof received.body === "object";
 
     return {
@@ -259,7 +260,7 @@ export const expressoTSMatchers = {
   toHaveBodyProperty(
     received: FluentResponse,
     path: string,
-    value?: unknown
+    value?: unknown,
   ): MatcherResult {
     const actualValue = getValueByPath(received.body, path);
     let pass: boolean;
@@ -334,7 +335,7 @@ export const expressoTSMatchers = {
       message: () =>
         pass
           ? `Expected body not to match schema`
-          : `Expected body to match schema, but found errors:\n${errors.map(e => `  - ${e}`).join("\n")}`,
+          : `Expected body to match schema, but found errors:\n${errors.map((e) => `  - ${e}`).join("\n")}`,
     };
   },
 };
@@ -355,7 +356,7 @@ export function setupExpressoTSMatchers(): void {
   } else {
     console.warn(
       "Could not setup ExpressoTS matchers: expect.extend is not available. " +
-      "Make sure you're running this in a Jest or Vitest environment."
+        "Make sure you're running this in a Jest or Vitest environment.",
     );
   }
 }
@@ -409,15 +410,19 @@ function deepPartialMatch(actual: unknown, expected: unknown): boolean {
   if (Array.isArray(expected)) {
     if (!Array.isArray(actual)) return false;
     if (expected.length !== actual.length) return false;
-    return expected.every((item, index) => deepPartialMatch(actual[index], item));
+    return expected.every((item, index) =>
+      deepPartialMatch(actual[index], item),
+    );
   }
 
   for (const key of Object.keys(expected)) {
     if (!(key in (actual as Record<string, unknown>))) return false;
-    if (!deepPartialMatch(
-      (actual as Record<string, unknown>)[key],
-      (expected as Record<string, unknown>)[key]
-    )) {
+    if (
+      !deepPartialMatch(
+        (actual as Record<string, unknown>)[key],
+        (expected as Record<string, unknown>)[key],
+      )
+    ) {
       return false;
     }
   }
@@ -444,11 +449,11 @@ function deepEqual(a: unknown, b: unknown): boolean {
 
   if (keysA.length !== keysB.length) return false;
 
-  return keysA.every(key =>
+  return keysA.every((key) =>
     deepEqual(
       (a as Record<string, unknown>)[key],
-      (b as Record<string, unknown>)[key]
-    )
+      (b as Record<string, unknown>)[key],
+    ),
   );
 }
 
@@ -490,21 +495,29 @@ interface JSONSchema {
 /**
  * Basic JSON Schema validation.
  */
-function validateSchema(value: unknown, schema: JSONSchema, path: string = ""): Array<string> {
+function validateSchema(
+  value: unknown,
+  schema: JSONSchema,
+  path: string = "",
+): Array<string> {
   const errors: Array<string> = [];
 
   // Type validation
   if (schema.type) {
     const actualType = getJSONType(value);
     if (actualType !== schema.type) {
-      errors.push(`${path || "value"} should be ${schema.type}, got ${actualType}`);
+      errors.push(
+        `${path || "value"} should be ${schema.type}, got ${actualType}`,
+      );
       return errors;
     }
   }
 
   // Enum validation
   if (schema.enum && !schema.enum.includes(value)) {
-    errors.push(`${path || "value"} should be one of [${schema.enum.join(", ")}]`);
+    errors.push(
+      `${path || "value"} should be one of [${schema.enum.join(", ")}]`,
+    );
   }
 
   // Number constraints
@@ -520,10 +533,14 @@ function validateSchema(value: unknown, schema: JSONSchema, path: string = ""): 
   // String constraints
   if (typeof value === "string") {
     if (schema.minLength !== undefined && value.length < schema.minLength) {
-      errors.push(`${path || "value"} should have length >= ${schema.minLength}`);
+      errors.push(
+        `${path || "value"} should have length >= ${schema.minLength}`,
+      );
     }
     if (schema.maxLength !== undefined && value.length > schema.maxLength) {
-      errors.push(`${path || "value"} should have length <= ${schema.maxLength}`);
+      errors.push(
+        `${path || "value"} should have length <= ${schema.maxLength}`,
+      );
     }
     if (schema.pattern && !new RegExp(schema.pattern).test(value)) {
       errors.push(`${path || "value"} should match pattern ${schema.pattern}`);
@@ -547,7 +564,13 @@ function validateSchema(value: unknown, schema: JSONSchema, path: string = ""): 
     if (schema.properties) {
       for (const [key, propSchema] of Object.entries(schema.properties)) {
         if (key in obj) {
-          errors.push(...validateSchema(obj[key], propSchema, `${path ? `${path}.` : ""}${key}`));
+          errors.push(
+            ...validateSchema(
+              obj[key],
+              propSchema,
+              `${path ? `${path}.` : ""}${key}`,
+            ),
+          );
         }
       }
     }
@@ -571,4 +594,3 @@ function getJSONType(value: unknown): string {
   if (Array.isArray(value)) return "array";
   return typeof value;
 }
-

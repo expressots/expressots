@@ -48,7 +48,10 @@ class SnapshotRequestImpl implements SnapshotRequest {
   // Delegate all FluentRequest methods
   set(headers: Record<string, string>): SnapshotRequest;
   set(key: string, value: string): SnapshotRequest;
-  set(headersOrKey: Record<string, string> | string, value?: string): SnapshotRequest {
+  set(
+    headersOrKey: Record<string, string> | string,
+    value?: string,
+  ): SnapshotRequest {
     if (typeof headersOrKey === "string" && value !== undefined) {
       this.fluentRequest.set(headersOrKey, value);
     } else {
@@ -112,7 +115,11 @@ class SnapshotRequestImpl implements SnapshotRequest {
     return this;
   }
 
-  expectTime(options: { lessThan?: number; greaterThan?: number; between?: [number, number] }): SnapshotRequest {
+  expectTime(options: {
+    lessThan?: number;
+    greaterThan?: number;
+    between?: [number, number];
+  }): SnapshotRequest {
     this.fluentRequest.expectTime(options);
     return this;
   }
@@ -149,7 +156,7 @@ class SnapshotRequestImpl implements SnapshotRequest {
     if (fs.existsSync(snapshotPath)) {
       // Compare with existing snapshot
       const existingSnapshot = fs.readFileSync(snapshotPath, "utf-8");
-      
+
       if (options.update) {
         // Update mode - write new snapshot
         this.writeSnapshot(snapshotPath, serializedBody);
@@ -159,10 +166,10 @@ class SnapshotRequestImpl implements SnapshotRequest {
         const diff = generateDiff(existingSnapshot, serializedBody);
         throw new Error(
           `Snapshot mismatch!\n\n` +
-          `Expected:\n${existingSnapshot}\n\n` +
-          `Received:\n${serializedBody}\n\n` +
-          `Diff:\n${diff}\n\n` +
-          `💡 To update the snapshot, run with { update: true } or use updateSnapshot()`
+            `Expected:\n${existingSnapshot}\n\n` +
+            `Received:\n${serializedBody}\n\n` +
+            `Diff:\n${diff}\n\n` +
+            `💡 To update the snapshot, run with { update: true } or use updateSnapshot()`,
         );
       }
     } else {
@@ -175,7 +182,9 @@ class SnapshotRequestImpl implements SnapshotRequest {
   /**
    * Create or update snapshot.
    */
-  async updateSnapshot(options: Omit<SnapshotOptions, "update"> = {}): Promise<void> {
+  async updateSnapshot(
+    options: Omit<SnapshotOptions, "update"> = {},
+  ): Promise<void> {
     return this.expectSnapshot({ ...options, update: true });
   }
 
@@ -184,7 +193,7 @@ class SnapshotRequestImpl implements SnapshotRequest {
    */
   async getSnapshot(options: SnapshotOptions = {}): Promise<unknown> {
     const snapshotPath = this.getSnapshotPath(options);
-    
+
     if (fs.existsSync(snapshotPath)) {
       const content = fs.readFileSync(snapshotPath, "utf-8");
       try {
@@ -193,7 +202,7 @@ class SnapshotRequestImpl implements SnapshotRequest {
         return content;
       }
     }
-    
+
     return null;
   }
 
@@ -203,13 +212,13 @@ class SnapshotRequestImpl implements SnapshotRequest {
   private getSnapshotPath(options: SnapshotOptions): string {
     const directory = options.directory || "__snapshots__";
     const name = options.name || this.generateSnapshotName();
-    
+
     // Ensure directory exists
     const snapshotDir = path.resolve(process.cwd(), directory);
     if (!fs.existsSync(snapshotDir)) {
       fs.mkdirSync(snapshotDir, { recursive: true });
     }
-    
+
     return path.join(snapshotDir, `${name}.snap`);
   }
 
@@ -217,30 +226,31 @@ class SnapshotRequestImpl implements SnapshotRequest {
    * Generate a unique snapshot name based on test and request.
    */
   private generateSnapshotName(): string {
-    const testPart = this.testName
-      .replace(/[^a-zA-Z0-9]/g, "_")
-      .toLowerCase();
+    const testPart = this.testName.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
     const requestPart = `${this.method.toLowerCase()}_${this.urlPath.replace(/[^a-zA-Z0-9]/g, "_")}`;
-    
+
     return `${testPart}_${requestPart}`;
   }
 
   /**
    * Serialize body for snapshot, applying ignore rules.
    */
-  private serializeForSnapshot(body: unknown, options: SnapshotOptions): string {
+  private serializeForSnapshot(
+    body: unknown,
+    options: SnapshotOptions,
+  ): string {
     let processed = body;
-    
+
     // Apply ignore rules
     if (options.ignore && options.ignore.length > 0) {
       processed = removeIgnoredFields(body, options.ignore);
     }
-    
+
     // Use custom serializer if provided
     if (options.serializer) {
       return options.serializer(processed);
     }
-    
+
     // Default: Pretty-print JSON
     return JSON.stringify(processed, null, 2);
   }
@@ -267,7 +277,7 @@ class SnapshotRequestImpl implements SnapshotRequest {
  * ```
  */
 export function snapshotRequest(
-  appOrUrl: { baseUrl: string } | string
+  appOrUrl: { baseUrl: string } | string,
 ): SnapshotRequestBuilder {
   const baseUrl = typeof appOrUrl === "string" ? appOrUrl : appOrUrl.baseUrl;
 
@@ -311,7 +321,7 @@ export function snapshotRequest(
  */
 function getTestName(): string {
   // Try Jest
-  type ExpectWithState = typeof expect & { 
+  type ExpectWithState = typeof expect & {
     getState?: () => { currentTestName?: string };
   };
   const expectWithState = expect as ExpectWithState;
@@ -321,9 +331,9 @@ function getTestName(): string {
       return state.currentTestName;
     }
   }
-  
+
   // Try Vitest
-  type GlobalWithVitest = typeof globalThis & { 
+  type GlobalWithVitest = typeof globalThis & {
     __vitest_worker__?: { current?: { name?: string } };
   };
   const globalWithVitest = globalThis as GlobalWithVitest;
@@ -333,7 +343,7 @@ function getTestName(): string {
       return worker.current.name;
     }
   }
-  
+
   // Fallback: Generate hash based on stack trace
   const stack = new Error().stack || "";
   return crypto.createHash("md5").update(stack).digest("hex").substring(0, 8);
@@ -346,14 +356,14 @@ function removeIgnoredFields(obj: unknown, ignore: Array<string>): unknown {
   if (obj === null || obj === undefined) {
     return obj;
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => removeIgnoredFields(item, ignore));
+    return obj.map((item) => removeIgnoredFields(item, ignore));
   }
-  
+
   if (typeof obj === "object") {
     const result: Record<string, unknown> = {};
-    
+
     for (const [key, value] of Object.entries(obj)) {
       if (ignore.includes(key)) {
         result[key] = "[IGNORED]";
@@ -363,10 +373,10 @@ function removeIgnoredFields(obj: unknown, ignore: Array<string>): unknown {
         result[key] = value;
       }
     }
-    
+
     return result;
   }
-  
+
   return obj;
 }
 
@@ -377,13 +387,13 @@ function generateDiff(expected: string, received: string): string {
   const expectedLines = expected.split("\n");
   const receivedLines = received.split("\n");
   const diff: Array<string> = [];
-  
+
   const maxLines = Math.max(expectedLines.length, receivedLines.length);
-  
+
   for (let i = 0; i < maxLines; i++) {
     const expectedLine = expectedLines[i];
     const receivedLine = receivedLines[i];
-    
+
     if (expectedLine === receivedLine) {
       diff.push(`  ${expectedLine || ""}`);
     } else {
@@ -395,7 +405,7 @@ function generateDiff(expected: string, received: string): string {
       }
     }
   }
-  
+
   return diff.join("\n");
 }
 
@@ -411,12 +421,12 @@ function generateDiff(expected: string, received: string): string {
  */
 export function toMatchApiSnapshot(
   received: unknown,
-  options: SnapshotOptions = {}
+  options: SnapshotOptions = {},
 ): { pass: boolean; message: () => string } {
   const processed = options.ignore
     ? removeIgnoredFields(received, options.ignore)
     : received;
-  
+
   // Use Jest/Vitest's built-in snapshot matching
   type ExpectWithState = typeof expect & { getState?: () => unknown };
   if (typeof expect !== "undefined" && (expect as ExpectWithState).getState) {
@@ -433,10 +443,9 @@ export function toMatchApiSnapshot(
       };
     }
   }
-  
+
   return {
     pass: true,
     message: () => "Snapshot matching not available in this environment",
   };
 }
-
