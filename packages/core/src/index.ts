@@ -5,6 +5,7 @@ export * from "./decorator";
 export * from "./error";
 export * from "./event";
 export * from "./interceptor";
+export * from "./lazy-loading";
 export * from "./lifecycle";
 export * from "./middleware";
 export * from "./provider";
