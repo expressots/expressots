@@ -42,10 +42,7 @@ export type {
   LazyLoadingExpressResult,
   LazyRouteMapping,
 } from "./setup-lazy-loading";
-export {
-  createLazyModuleMiddleware,
-  createRouteMappings,
-} from "./lazy-module-middleware";
+export { createLazyModuleMiddleware, createRouteMappings } from "./lazy-module-middleware";
 
 // Validation decorators
 export {

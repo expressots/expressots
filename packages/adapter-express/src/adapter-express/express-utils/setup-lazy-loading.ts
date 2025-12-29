@@ -245,7 +245,9 @@ export function setupLazyLoadingForExpress(
     });
 
     if (options.logLevel !== "none") {
-      const routes = routeMappings.map((r) => `${options.globalPrefix || ""}${r.prefix}`).join(", ");
+      const routes = routeMappings
+        .map((r) => `${options.globalPrefix || ""}${r.prefix}`)
+        .join(", ");
       console.log(`[Lazy Loading] Auto-load middleware active for routes: ${routes}`);
     }
   }
@@ -334,12 +336,6 @@ export interface LazyLoadingExpressResult extends LazyLoadingSetupResult {
 }
 
 // Re-export types
-export type {
-  LazyLoadingOptions,
-  LazyLoadingSetupResult,
-} from "@expressots/core";
+export type { LazyLoadingOptions, LazyLoadingSetupResult } from "@expressots/core";
 
-export type {
-  LazyRouteMapping,
-} from "./lazy-module-middleware";
-
+export type { LazyRouteMapping } from "./lazy-module-middleware";

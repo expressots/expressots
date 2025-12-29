@@ -8,10 +8,7 @@
  */
 
 import { Request, Response, NextFunction, RequestHandler, Router, Express } from "express";
-import {
-  LazyModuleLoader,
-  ILazyModule,
-} from "@expressots/core";
+import { LazyModuleLoader, ILazyModule } from "@expressots/core";
 
 // ============================================================================
 // Types
@@ -93,9 +90,7 @@ export interface LazyModuleMiddlewareConfig {
  *
  * @public API
  */
-export function createLazyModuleMiddleware(
-  config: LazyModuleMiddlewareConfig,
-): RequestHandler {
+export function createLazyModuleMiddleware(config: LazyModuleMiddlewareConfig): RequestHandler {
   const { routes, loader, globalPrefix = "" } = config;
 
   // Create a map for O(1) prefix lookup
@@ -170,7 +165,7 @@ export function createLazyModuleMiddleware(
 
       console.log(
         `[Lazy Loading] Module '${matchedRoute.moduleName}' loaded on-demand in ${loadTime}ms ` +
-        `(triggered by ${req.method} ${req.path})`
+          `(triggered by ${req.method} ${req.path})`,
       );
 
       loadingModules.delete(matchedRoute.moduleName);
@@ -185,12 +180,12 @@ export function createLazyModuleMiddleware(
           // Mount the new routes (Express will pick them up for future requests)
           // For THIS request, we continue to let it fall through
           console.log(
-            `[Lazy Loading] Dynamically registered routes for '${matchedRoute.moduleName}'`
+            `[Lazy Loading] Dynamically registered routes for '${matchedRoute.moduleName}'`,
           );
         } catch (registrationError) {
           console.warn(
             `[Lazy Loading] Dynamic route registration failed for '${matchedRoute.moduleName}':`,
-            registrationError
+            registrationError,
           );
         }
       }
@@ -216,7 +211,7 @@ export function createLazyModuleMiddleware(
 
       console.error(
         `[Lazy Loading] Failed to load module '${matchedRoute.moduleName}':`,
-        err.message
+        err.message,
       );
 
       res.status(500).json({
@@ -265,11 +260,13 @@ export function extractRoutePrefixes(lazyModule: ILazyModule): Array<string> {
 
   // 3. Last resort: infer from module name
   // "AdminModule" -> "/admin", "UserSettingsModule" -> "/usersettings"
-  const inferredPrefix = "/" + lazyModule.name
-    .replace(/Module$/i, "")
-    .replace(/([A-Z])/g, (match, p1, offset) => 
-      offset > 0 ? `-${p1.toLowerCase()}` : p1.toLowerCase()
-    );
+  const inferredPrefix =
+    "/" +
+    lazyModule.name
+      .replace(/Module$/i, "")
+      .replace(/([A-Z])/g, (match, p1, offset) =>
+        offset > 0 ? `-${p1.toLowerCase()}` : p1.toLowerCase(),
+      );
 
   return [inferredPrefix];
 }
@@ -332,4 +329,3 @@ export function createRouteMappings(
 
   return mappings;
 }
-
