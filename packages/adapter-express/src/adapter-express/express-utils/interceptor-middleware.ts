@@ -54,7 +54,9 @@ export class InterceptorMiddleware {
 
       if (interceptors.length === 0) {
         // No interceptors, proceed directly
-        return handler(req, res, next).then(() => {}).catch(next);
+        return handler(req, res, next)
+          .then(() => {})
+          .catch(next);
       }
 
       // Get interceptor names for tracking
@@ -85,15 +87,11 @@ export class InterceptorMiddleware {
         );
 
         // Execute interceptors with handler
-        const result = await this.executor.execute(
-          interceptors,
-          context,
-          async () => {
-            // This is the actual handler execution
-            const handlerResult = await handler(req, res, next);
-            return handlerResult;
-          },
-        );
+        const result = await this.executor.execute(interceptors, context, async () => {
+          // This is the actual handler execution
+          const handlerResult = await handler(req, res, next);
+          return handlerResult;
+        });
 
         // End interceptor step with success
         if (flowTracker?.isEnabled()) {
@@ -160,4 +158,3 @@ export function createInterceptorMiddleware(
   const middleware = container.get<InterceptorMiddleware>(InterceptorMiddleware);
   return middleware.createMiddleware(controllerClass, methodName, handler);
 }
-
