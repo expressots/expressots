@@ -220,4 +220,3 @@ export function setupEventSystemForExpress(
     handlersDiscovered,
   };
 }
-
