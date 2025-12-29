@@ -65,6 +65,14 @@ export class AppExpress implements Server.IWebServer {
   private bannerGenerator: BannerGenerator | null = null;
   private bannerConfig: BannerConfig | undefined;
   private shutdownHandlers: Map<NodeJS.Signals, () => void> = new Map();
+  /** Track active connections for force-close during shutdown */
+  private activeConnections: Set<import("net").Socket> = new Set();
+  /** Timeout for force-closing connections during shutdown (ms) */
+  private shutdownTimeout: number = 5000;
+  /** Number of retries when port is in use (for hot-reload scenarios) */
+  private portRetryAttempts: number = 10;
+  /** Delay between port retry attempts (ms) */
+  private portRetryDelay: number = 500;
 
   // Log buffering for banner-first display
   // IMPORTANT: All these properties must be declared BEFORE initBuffering!
@@ -304,19 +312,63 @@ export class AppExpress implements Server.IWebServer {
     // 2. Call user's serverShutdown hook
     await this.handleSyncOrAsync(this.serverShutdown(signal));
 
-    // 3. Gracefully close the HTTP server
+    // 3. Gracefully close the HTTP server with connection force-close
     if (this.serverInstance) {
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
+        // Set a timeout to force-destroy connections if graceful shutdown takes too long
+        const forceCloseTimeout = setTimeout(() => {
+          console.log(
+            `⚠️  Force-closing ${this.activeConnections.size} active connections after ${this.shutdownTimeout}ms timeout`,
+          );
+          this.destroyAllConnections();
+          resolve();
+        }, this.shutdownTimeout);
+
+        // Try graceful close first
         this.serverInstance!.close((err) => {
+          clearTimeout(forceCloseTimeout);
           if (err) {
-            this.logger.error(`Error closing server: ${err.message}`, "adapter-express");
-            reject(err);
-          } else {
-            resolve();
+            // Don't fail on close error during shutdown - just log it
+            console.log(`Note: Server close returned: ${err.message}`);
           }
+          resolve();
         });
+
+        // Immediately destroy idle connections (keep-alive connections with no pending requests)
+        // This speeds up shutdown significantly
+        this.serverInstance!.closeIdleConnections?.();
       });
+
+      // Clear all remaining connections
+      this.destroyAllConnections();
     }
+  }
+
+  /**
+   * Destroy all active connections immediately.
+   * Used during forced shutdown.
+   * @private
+   */
+  private destroyAllConnections(): void {
+    for (const socket of this.activeConnections) {
+      try {
+        socket.destroy();
+      } catch {
+        // Ignore errors during connection destruction
+      }
+    }
+    this.activeConnections.clear();
+  }
+
+  /**
+   * Track a new connection for shutdown management.
+   * @private
+   */
+  private trackConnection(socket: import("net").Socket): void {
+    this.activeConnections.add(socket);
+    socket.once("close", () => {
+      this.activeConnections.delete(socket);
+    });
   }
 
   /**
@@ -598,8 +650,30 @@ export class AppExpress implements Server.IWebServer {
       throw error;
     }
 
+    // Ensure port is available (handles hot-reload scenarios)
+    // This will kill the previous process if needed - safest approach for dev experience
+    const portAvailable = await this.ensurePortAvailable(this.port);
+    if (!portAvailable) {
+      const errorMessage = `Port ${this.port} is still in use and could not be freed`;
+      this.logger.error(errorMessage, "adapter-express");
+      this.logger.info("💡 Try manually killing the process:", "adapter-express");
+      this.logger.info(
+        process.platform === "win32"
+          ? `   netstat -ano | findstr :${this.port} && taskkill /F /PID <pid>`
+          : `   lsof -ti:${this.port} | xargs kill -9`,
+        "adapter-express",
+      );
+      throw new Error(errorMessage);
+    }
+
     return new Promise<IWebServerPublic>((resolve, reject) => {
       this.serverInstance = this.app.listen(this.port, async () => {
+        // Track all connections for graceful shutdown
+        // This enables force-closing connections during hot-reload
+        this.serverInstance!.on("connection", (socket) => {
+          this.trackConnection(socket);
+        });
+
         // Update port with actual assigned port (important for port 0 auto-assign)
         this.port = (this.serverInstance?.address() as AddressInfo)?.port || this.port;
 
@@ -613,12 +687,14 @@ export class AppExpress implements Server.IWebServer {
         // - SIGHUP: Terminal hangup
         // - SIGQUIT: Quit with core dump request
         // - SIGBREAK: Windows break signal (Ctrl+Break)
+        // - SIGUSR2: Used by nodemon for restart (not on Windows)
         const shutdownSignals: Array<NodeJS.Signals> = [
           "SIGTERM",
           "SIGINT",
           "SIGHUP",
           "SIGQUIT",
           "SIGBREAK",
+          ...(process.platform !== "win32" ? (["SIGUSR2"] as Array<NodeJS.Signals>) : []),
         ];
 
         for (const signal of shutdownSignals) {
@@ -652,6 +728,28 @@ export class AppExpress implements Server.IWebServer {
           // Store handler for later removal and register it
           this.shutdownHandlers.set(signal, handler);
           process.on(signal, handler);
+        }
+
+        // Setup exit handler to force-close connections immediately
+        // This is a last-resort handler for when signals don't arrive or complete in time
+        // (e.g., during hot-reload when the process is killed quickly)
+        const exitHandler = (): void => {
+          if (this.serverInstance) {
+            // Synchronously destroy all connections - this is our last chance
+            this.destroyAllConnections();
+            // Try to close the server synchronously (won't block but releases the port faster)
+            try {
+              this.serverInstance.close();
+            } catch {
+              // Ignore errors during exit
+            }
+          }
+        };
+
+        // Register exit handler (only once)
+        if (!this.shutdownHandlers.has("exit" as NodeJS.Signals)) {
+          this.shutdownHandlers.set("exit" as NodeJS.Signals, exitHandler);
+          process.once("exit", exitHandler);
         }
 
         try {
@@ -720,14 +818,147 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Wait for a specified duration.
+   * @private
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Kill the process using a specific port.
+   * @private
+   */
+  private async killProcessOnPort(port: number): Promise<boolean> {
+    const { exec } = await import("child_process");
+    const { promisify } = await import("util");
+    const execAsync = promisify(exec);
+
+    try {
+      if (process.platform === "win32") {
+        // Windows: Find PID using netstat and kill it
+        const { stdout } = await execAsync(`netstat -ano | findstr :${port} | findstr LISTENING`);
+        const lines = stdout.trim().split("\n");
+
+        for (const line of lines) {
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[parts.length - 1];
+
+          if (pid && pid !== String(process.pid) && /^\d+$/.test(pid)) {
+            console.log(`🔪 Killing previous process (PID: ${pid}) on port ${port}...`);
+            try {
+              await execAsync(`taskkill /F /PID ${pid}`);
+              return true;
+            } catch {
+              // Process might have already exited
+            }
+          }
+        }
+      } else {
+        // Linux/Mac: Use lsof to find PID and kill it
+        try {
+          const { stdout } = await execAsync(`lsof -ti:${port}`);
+          const pids = stdout.trim().split("\n").filter(Boolean);
+
+          for (const pid of pids) {
+            if (pid !== String(process.pid)) {
+              console.log(`🔪 Killing previous process (PID: ${pid}) on port ${port}...`);
+              try {
+                await execAsync(`kill -9 ${pid}`);
+                return true;
+              } catch {
+                // Process might have already exited
+              }
+            }
+          }
+        } catch {
+          // No process found on port
+        }
+      }
+    } catch {
+      // Command failed - port might already be free
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if the port is available by attempting to bind to it.
+   * @private
+   */
+  private async isPortAvailable(port: number): Promise<boolean> {
+    const net = await import("net");
+
+    return new Promise<boolean>((resolve) => {
+      const testServer = net.createServer();
+
+      testServer.once("error", () => {
+        resolve(false);
+      });
+
+      testServer.once("listening", () => {
+        testServer.close(() => {
+          resolve(true);
+        });
+      });
+
+      testServer.listen(port);
+    });
+  }
+
+  /**
+   * Ensure the port is available, killing the existing process if needed.
+   * This is the safest approach for hot-reload scenarios.
+   * @private
+   */
+  private async ensurePortAvailable(port: number): Promise<boolean> {
+    // First, check if port is already available
+    if (await this.isPortAvailable(port)) {
+      return true;
+    }
+
+    // Port is in use - try to kill the process using it
+    console.log(`⚠️  Port ${port} is in use, attempting to free it for hot-reload...`);
+
+    const killed = await this.killProcessOnPort(port);
+
+    if (killed) {
+      // Wait a moment for the port to be released
+      await this.delay(300);
+    }
+
+    // Retry a few times to check if port is now available
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      if (await this.isPortAvailable(port)) {
+        console.log(`✅ Port ${port} is now available`);
+        return true;
+      }
+
+      if (attempt < 5) {
+        console.log(`⏳ Waiting for port ${port} to be released... (attempt ${attempt}/5)`);
+        await this.delay(this.portRetryDelay);
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Remove existing shutdown signal handlers to prevent duplicates.
    * @private
    */
   private removeShutdownHandlers(): void {
     this.shutdownHandlers.forEach((handler, signal) => {
-      process.removeListener(signal, handler);
+      // Handle "exit" event specially (it's not a signal but we track it the same way)
+      if (signal === ("exit" as NodeJS.Signals)) {
+        process.removeListener("exit", handler);
+      } else {
+        process.removeListener(signal, handler);
+      }
     });
     this.shutdownHandlers.clear();
+    // Also clear any tracked connections from previous runs
+    this.activeConnections.clear();
   }
 
   /**
