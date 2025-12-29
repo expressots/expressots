@@ -801,6 +801,36 @@ describe("Custom Matchers", () => {
         expect(result.pass).toBe(true);
       });
     });
+
+    describe("toBeRedirect", () => {
+      it("should pass for redirect response", () => {
+        const response = createMockResponse({ redirect: true });
+        const result = expressoTSMatchers.toBeRedirect(response);
+        expect(result.pass).toBe(true);
+      });
+
+      it("should fail for non-redirect response", () => {
+        const response = createMockResponse({ redirect: false });
+        const result = expressoTSMatchers.toBeRedirect(response);
+        expect(result.pass).toBe(false);
+      });
+    });
+
+    describe("toBeClientError", () => {
+      it("should pass for client error response", () => {
+        const response = createMockResponse({ clientError: true });
+        const result = expressoTSMatchers.toBeClientError(response);
+        expect(result.pass).toBe(true);
+      });
+    });
+
+    describe("toBeServerError", () => {
+      it("should pass for server error response", () => {
+        const response = createMockResponse({ serverError: true });
+        const result = expressoTSMatchers.toBeServerError(response);
+        expect(result.pass).toBe(true);
+      });
+    });
   });
 
   describe("setupExpressoTSMatchers", () => {
@@ -810,6 +840,722 @@ describe("Custom Matchers", () => {
 
     it("should not throw", () => {
       expect(() => setupExpressoTSMatchers()).not.toThrow();
+    });
+  });
+});
+
+// ============================================================================
+// Load Test Utilities Tests
+// ============================================================================
+
+import { loadTest, benchmark, stressTest } from "./load-test";
+
+describe("Load Test Utilities", () => {
+  describe("benchmark", () => {
+    it("should benchmark a sync function", async () => {
+      const results = await benchmark(() => {
+        let sum = 0;
+        for (let i = 0; i < 100; i++) sum += i;
+        return sum;
+      }, 10);
+
+      expect(results.average).toBeDefined();
+      expect(results.min).toBeDefined();
+      expect(results.max).toBeDefined();
+      expect(results.median).toBeDefined();
+      expect(results.p95).toBeDefined();
+      expect(results.p99).toBeDefined();
+      expect(results.total).toBeDefined();
+    });
+
+    it("should benchmark an async function", async () => {
+      const results = await benchmark(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        return 42;
+      }, 5);
+
+      expect(results.average).toBeGreaterThanOrEqual(1);
+      expect(results.total).toBeGreaterThanOrEqual(5);
+    });
+
+    it("should use default iterations", async () => {
+      const callCount = { value: 0 };
+      const results = await benchmark(() => {
+        callCount.value++;
+        return callCount.value;
+      });
+
+      // Default iterations is 1000
+      expect(callCount.value).toBe(1000);
+    });
+  });
+});
+
+// ============================================================================
+// Snapshot Request Tests
+// ============================================================================
+
+import { snapshotRequest, toMatchApiSnapshot } from "./snapshot-request";
+
+describe("Snapshot Request", () => {
+  describe("snapshotRequest", () => {
+    it("should create a snapshot request builder from URL", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+
+      expect(builder.get).toBeDefined();
+      expect(builder.post).toBeDefined();
+      expect(builder.put).toBeDefined();
+      expect(builder.patch).toBeDefined();
+      expect(builder.delete).toBeDefined();
+      expect(builder.head).toBeDefined();
+      expect(builder.options).toBeDefined();
+    });
+
+    it("should create a snapshot request builder from object", () => {
+      const builder = snapshotRequest({ baseUrl: "http://localhost:3000" });
+
+      expect(builder.get).toBeDefined();
+    });
+
+    it("should create GET request", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/users");
+
+      expect(req).toBeDefined();
+      expect(req.set).toBeDefined();
+      expect(req.send).toBeDefined();
+      expect(req.expectSnapshot).toBeDefined();
+      expect(req.updateSnapshot).toBeDefined();
+      expect(req.getSnapshot).toBeDefined();
+    });
+
+    it("should support method chaining", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder
+        .post("/users")
+        .set("Authorization", "Bearer token")
+        .send({ name: "John" })
+        .type("application/json")
+        .timeout(5000);
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create all HTTP method requests", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+
+      expect(builder.get("/test")).toBeDefined();
+      expect(builder.post("/test")).toBeDefined();
+      expect(builder.put("/test")).toBeDefined();
+      expect(builder.patch("/test")).toBeDefined();
+      expect(builder.delete("/test")).toBeDefined();
+      expect(builder.head("/test")).toBeDefined();
+      expect(builder.options("/test")).toBeDefined();
+    });
+  });
+
+  describe("toMatchApiSnapshot", () => {
+    it("should process object without ignore", () => {
+      const result = toMatchApiSnapshot({ id: 1, name: "test" });
+      expect(result.pass).toBe(true);
+    });
+
+    it("should process object with ignore", () => {
+      const result = toMatchApiSnapshot(
+        { id: 1, name: "test", createdAt: new Date() },
+        { ignore: ["createdAt"] },
+      );
+      expect(result.pass).toBe(true);
+    });
+  });
+});
+
+// ============================================================================
+// Create Test App Tests
+// ============================================================================
+
+import { cleanupAllTestApps, getActiveTestAppCount } from "./create-test-app";
+
+describe("Create Test App Utilities", () => {
+  describe("cleanupAllTestApps", () => {
+    it("should cleanup all test apps", async () => {
+      await cleanupAllTestApps();
+      expect(getActiveTestAppCount()).toBe(0);
+    });
+  });
+
+  describe("getActiveTestAppCount", () => {
+    it("should return active test app count", () => {
+      const count = getActiveTestAppCount();
+      expect(typeof count).toBe("number");
+      expect(count).toBeGreaterThanOrEqual(0);
+    });
+  });
+});
+
+// ============================================================================
+// Additional Mock Provider Tests
+// ============================================================================
+
+describe("Mock Provider Extended", () => {
+  describe("createMock advanced", () => {
+    it("should support mockRejectedValue", async () => {
+      const mockFn = createMock<[], Promise<string>>();
+      mockFn.mockRejectedValue(new Error("Test error"));
+
+      await expect(mockFn()).rejects.toThrow("Test error");
+    });
+
+    it("should support mockClear", () => {
+      const mockFn = createMock<[string], string>();
+      mockFn.mockReturnValue("result");
+
+      mockFn("arg1");
+      mockFn("arg2");
+      expect(mockFn.mock.calls).toHaveLength(2);
+
+      mockFn.mockClear();
+      expect(mockFn.mock.calls).toHaveLength(0);
+    });
+
+    it("should support mockReset", () => {
+      const mockFn = createMock<[], number>();
+      mockFn.mockReturnValue(42);
+
+      expect(mockFn()).toBe(42);
+
+      mockFn.mockReset();
+      expect(mockFn()).toBeUndefined();
+    });
+  });
+
+  describe("spyOn advanced", () => {
+    it("should return spy with mock properties", () => {
+      const obj = {
+        getValue(): string {
+          return "value";
+        },
+      };
+
+      const spy = spyOn(obj, "getValue");
+
+      expect(spy.mock).toBeDefined();
+      expect(spy.mockReturnValue).toBeDefined();
+      expect(spy.mockClear).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Additional Mock Context Tests
+// ============================================================================
+
+describe("Mock Context Extended", () => {
+  describe("mockContext advanced", () => {
+    it("should support cookies", () => {
+      const ctx = mockContext({
+        cookies: { sessionId: "abc123" },
+      });
+
+      expect(ctx.request.cookies).toEqual({ sessionId: "abc123" });
+    });
+
+    it("should update multiple properties", () => {
+      const ctx = mockContext({
+        user: { id: 1 },
+      });
+
+      ctx.update({
+        user: { id: 2, role: "admin" },
+        body: { name: "John" },
+        headers: { "X-Custom": "value" },
+      });
+
+      expect(ctx.user).toEqual({ id: 2, role: "admin" });
+      expect(ctx.request.body).toEqual({ name: "John" });
+    });
+  });
+
+  describe("mockExecutionContext advanced", () => {
+    it("should provide getRequest and getResponse methods", () => {
+      const ctx = mockExecutionContext({
+        params: { id: "123" },
+      });
+
+      expect(ctx.getRequest()).toBeDefined();
+      expect(ctx.getResponse()).toBeDefined();
+    });
+
+    it("should provide getClass and getHandler methods", () => {
+      const ctx = mockExecutionContext();
+
+      expect(ctx.getClass()).toBeDefined();
+      expect(ctx.getHandler()).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Additional Test Database Tests
+// ============================================================================
+
+describe("Test Database Extended", () => {
+  describe("createTestDatabase advanced", () => {
+    it("should support transaction-like operations", async () => {
+      const db = createTestDatabase();
+
+      await db.insert("users", { name: "John" });
+      await db.insert("users", { name: "Jane" });
+
+      const users = await db.find("users", {});
+      expect(users).toHaveLength(2);
+    });
+
+    it("should support query with complex conditions", async () => {
+      const db = createTestDatabase();
+
+      await db.insert("users", { name: "John", age: 25 });
+      await db.insert("users", { name: "Jane", age: 30 });
+      await db.insert("users", { name: "Bob", age: 25 });
+
+      const result = await db.find("users", { age: 25 });
+      expect(result).toHaveLength(2);
+    });
+
+    it("should support findOne returning null", async () => {
+      const db = createTestDatabase();
+
+      const result = await db.findOne("users", { id: 999 });
+      expect(result).toBeNull();
+    });
+
+    it("should handle delete on non-existent record", async () => {
+      const db = createTestDatabase();
+
+      const deleted = await db.delete("users", { id: 999 });
+      expect(deleted).toBe(0);
+    });
+
+    it("should handle update on non-existent record", async () => {
+      const db = createTestDatabase();
+
+      const updated = await db.update("users", { id: 999 }, { name: "New" });
+      expect(updated).toBe(0);
+    });
+  });
+
+  describe("createFixtureFactory advanced", () => {
+    it("should create fixture with nested objects", () => {
+      const userFactory = createFixtureFactory<{
+        name: string;
+        profile: { bio: string };
+      }>({
+        name: (i) => `User ${i}`,
+        profile: (i) => ({ bio: `Bio ${i}` }),
+      });
+
+      const users = userFactory(2);
+
+      expect(users[0].profile.bio).toBe("Bio 0");
+      expect(users[1].profile.bio).toBe("Bio 1");
+    });
+  });
+});
+
+// ============================================================================
+// Additional Matchers Tests
+// ============================================================================
+
+describe("Express Matchers Extended", () => {
+  const createMockResponse = (
+    overrides: Partial<{
+      status: number;
+      body: unknown;
+      headers: Record<string, string>;
+      time: number;
+      contentType: string;
+      ok: boolean;
+      redirect: boolean;
+      clientError: boolean;
+      serverError: boolean;
+    }> = {},
+  ) => ({
+    status: 200,
+    statusText: "OK",
+    headers: {},
+    body: {},
+    text: "{}",
+    time: 50,
+    contentType: "application/json",
+    ok: true,
+    redirect: false,
+    clientError: false,
+    serverError: false,
+    ...overrides,
+  });
+
+  describe("toHaveBodyArray advanced", () => {
+    it("should fail for non-array body", () => {
+      const response = createMockResponse({ body: { id: 1 } });
+      const result = expressoTSMatchers.toHaveBodyArray(response);
+      expect(result.pass).toBe(false);
+    });
+
+    it("should fail for wrong array length", () => {
+      const response = createMockResponse({ body: [1, 2] });
+      const result = expressoTSMatchers.toHaveBodyArray(response, 3);
+      expect(result.pass).toBe(false);
+    });
+  });
+
+  describe("toHaveBodyProperty advanced", () => {
+    it("should handle deeply nested paths", () => {
+      const response = createMockResponse({
+        body: { a: { b: { c: "deep" } } },
+      });
+      const result = expressoTSMatchers.toHaveBodyProperty(
+        response,
+        "a.b.c",
+        "deep",
+      );
+      expect(result.pass).toBe(true);
+    });
+
+    it("should fail for non-existent path", () => {
+      const response = createMockResponse({ body: { id: 1 } });
+      const result = expressoTSMatchers.toHaveBodyProperty(response, "missing");
+      expect(result.pass).toBe(false);
+    });
+  });
+
+  describe("toHaveHeader advanced", () => {
+    it("should fail for non-existent header", () => {
+      const response = createMockResponse({ headers: {} });
+      const result = expressoTSMatchers.toHaveHeader(response, "x-missing");
+      expect(result.pass).toBe(false);
+    });
+
+    it("should fail for wrong header value", () => {
+      const response = createMockResponse({
+        headers: { "content-type": "text/html" },
+      });
+      const result = expressoTSMatchers.toHaveHeader(
+        response,
+        "content-type",
+        "application/json",
+      );
+      expect(result.pass).toBe(false);
+    });
+  });
+});
+
+// ============================================================================
+// Fluent Request Extended Tests
+// ============================================================================
+
+describe("Fluent Request Extended", () => {
+  describe("createFluentRequest methods", () => {
+    it("should create PUT request", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.put("/users/123");
+
+      expect(req).toBeDefined();
+      expect(req.send).toBeDefined();
+    });
+
+    it("should create PATCH request", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.patch("/users/123");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create DELETE request", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.delete("/users/123");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create HEAD request", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.head("/users");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create OPTIONS request", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.options("/users");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support custom request method", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.request("POST", "/custom");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support expectBodyPath", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.get("/users").expectBodyPath("data.id", 123);
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support expectHeaders", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.get("/users").expectHeaders({
+        "content-type": "application/json",
+      });
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support expectHeader", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.get("/users").expectHeader("content-type", /json/);
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support expectContentType", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.get("/users").expectContentType("application/json");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support attach method", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.post("/upload").attach("file", "/path/to/file.txt");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should support end method as alias for execute", () => {
+      const builder = createFluentRequest("http://localhost:3000");
+      const req = builder.get("/users");
+
+      expect(req.end).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Mock Provider Extended Tests
+// ============================================================================
+
+describe("Mock Provider Extended Tests", () => {
+  describe("mockProvider with class", () => {
+    @injectable()
+    class ServiceA {
+      getValue(): string {
+        return "A";
+      }
+    }
+
+    @injectable()
+    class ServiceB {
+      constructor(@inject(ServiceA) public readonly a: ServiceA) {}
+      getCombined(): string {
+        return this.a.getValue() + "B";
+      }
+    }
+
+    it("should handle multiple dependencies", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { service, mocks } = mockProvider(ServiceB as any, {
+        mocks: {
+          ServiceA: {
+            getValue: jest.fn().mockReturnValue("mocked"),
+          },
+        },
+        autoMock: false,
+      });
+
+      expect(service).toBeDefined();
+      expect(mocks).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Snapshot Request Extended Tests
+// ============================================================================
+
+describe("Snapshot Request Extended", () => {
+  describe("snapshotRequest methods", () => {
+    it("should create request with headers object", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder
+        .post("/test")
+        .set({ Authorization: "Bearer token", "X-Custom": "value" });
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with auth", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/protected").auth("token123", "Basic");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with attach", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.post("/upload").attach("file", "/path/to/file");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with type", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.post("/data").type("application/xml");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with accept", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/data").accept("text/html");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with timeout", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/slow").timeout(10000);
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with expectStatus", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/users").expectStatus(200);
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with expectBodyPath", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/users").expectBodyPath("data.length", 10);
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with expectHeaders", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/users").expectHeaders({
+        "cache-control": /max-age/,
+      });
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with expectHeader", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/users").expectHeader("x-rate-limit", "100");
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with expectTime", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/users").expectTime({ lessThan: 1000 });
+
+      expect(req).toBeDefined();
+    });
+
+    it("should create request with expectContentType", () => {
+      const builder = snapshotRequest("http://localhost:3000");
+      const req = builder.get("/api").expectContentType(/json/);
+
+      expect(req).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Additional Mock Context Tests
+// ============================================================================
+
+describe("Mock Context Additional", () => {
+  describe("mockContext advanced scenarios", () => {
+    it("should set ip on request", () => {
+      const ctx = mockContext({
+        ip: "192.168.1.1",
+      });
+
+      expect(ctx.request.ip).toBe("192.168.1.1");
+    });
+
+    it("should set originalUrl on request", () => {
+      const ctx = mockContext({
+        url: "/api/v1/users?page=1",
+      });
+
+      expect(ctx.request.originalUrl).toBe("/api/v1/users?page=1");
+    });
+  });
+
+  describe("mockReqRes advanced", () => {
+    it("should create with custom headers", () => {
+      const { req, res, next } = mockReqRes({
+        headers: { Authorization: "Bearer token" },
+      });
+
+      expect(req.get("authorization")).toBe("Bearer token");
+    });
+
+    it("should create with path", () => {
+      const { req } = mockReqRes({
+        path: "/custom/path",
+      });
+
+      expect(req.path).toBe("/custom/path");
+    });
+  });
+});
+
+// ============================================================================
+// Test Database Extended Tests
+// ============================================================================
+
+describe("Test Database Extended", () => {
+  describe("find with multiple conditions", () => {
+    it("should find records matching all conditions", async () => {
+      const db = createTestDatabase();
+
+      await db.insert("users", { name: "John", active: true, role: "admin" });
+      await db.insert("users", { name: "Jane", active: true, role: "user" });
+      await db.insert("users", { name: "Bob", active: false, role: "user" });
+
+      const activeUsers = await db.find("users", { active: true });
+      expect(activeUsers).toHaveLength(2);
+    });
+  });
+
+  describe("fixture factory with overrides", () => {
+    it("should allow overrides per item", () => {
+      const userFactory = createFixtureFactory<{
+        name: string;
+        email: string;
+        role: string;
+      }>({
+        name: (i) => `User ${i}`,
+        email: (i) => `user${i}@test.com`,
+        role: "user",
+      });
+
+      const users = userFactory(3);
+
+      expect(users[0].name).toBe("User 0");
+      expect(users[1].name).toBe("User 1");
+      expect(users[2].name).toBe("User 2");
+      expect(users.every((u) => u.role === "user")).toBe(true);
     });
   });
 });

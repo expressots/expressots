@@ -678,4 +678,386 @@ describe("LazyModuleWarmup", () => {
       expect(warmup.getProgress()).toBe(100);
     });
   });
+
+  describe("duplicate start", () => {
+    it("should warn and return if already running", async () => {
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      const module = createLazyModule(
+        async () => {
+          await new Promise((r) => setTimeout(r, 100));
+          return createTestContainerModule();
+        },
+        { name: "SlowModule", preloadHint: "high" },
+      );
+
+      loader.register(module);
+
+      // Start warmup
+      const promise1 = warmup.start({
+        strategy: "immediate",
+        hints: ["high"],
+      });
+
+      // Try to start again immediately
+      await warmup.start({ strategy: "immediate", hints: ["high"] });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        "[LazyModuleWarmup] Warmup already in progress",
+      );
+
+      await promise1;
+      warnSpy.mockRestore();
+    });
+  });
+});
+
+// ============================================================================
+// Additional LazyLoadMetrics Tests
+// ============================================================================
+
+describe("LazyLoadMetrics Extended", () => {
+  let loader: LazyModuleLoader;
+  let metrics: LazyLoadMetrics;
+
+  beforeEach(() => {
+    loader = createLazyModuleLoader();
+    metrics = createLazyLoadMetrics(loader);
+  });
+
+  describe("getRecommendation()", () => {
+    it("should return recommendation for specific module", () => {
+      const module = CreateLazyModule([TestController], {
+        name: "TestModule",
+      }).withPreloadHint("low");
+      loader.register(module);
+
+      const rec = metrics.getRecommendation("TestModule");
+
+      expect(rec).toBeDefined();
+      expect(rec?.currentStrategy).toBe("lazy");
+    });
+
+    it("should return undefined for non-existent module", () => {
+      const rec = metrics.getRecommendation("NonExistent");
+      expect(rec).toBeUndefined();
+    });
+  });
+
+  describe("applyRecommendations()", () => {
+    it("should not apply if autoOptimize is false", async () => {
+      const module = CreateLazyModule([TestController], {
+        name: "TestModule",
+      });
+      loader.register(module);
+
+      // Record access to trigger preloading suggestion
+      metrics.recordAccess("TestModule");
+      metrics.recordLoadTime("TestModule", 100);
+
+      await metrics.applyRecommendations({ autoOptimize: false });
+
+      // Module should still be pending
+      expect(loader.isLoaded("TestModule")).toBe(false);
+    });
+
+    it("should apply recommendations with maxStartupTime limit", async () => {
+      const module1 = createLazyModule(() => createTestContainerModule(), {
+        name: "FastModule",
+        preloadHint: "low",
+      });
+      const module2 = createLazyModule(() => createTestContainerModule(), {
+        name: "SlowModule",
+        preloadHint: "low",
+      });
+
+      loader.register(module1);
+      loader.register(module2);
+
+      // Record very early access for FastModule
+      metrics.recordAccess("FastModule");
+      metrics.recordLoadTime("FastModule", 50);
+
+      await metrics.applyRecommendations({
+        autoOptimize: true,
+        maxStartupTime: 100,
+      });
+
+      // Implementation detail: only preloads if suggestion includes "preloading"
+      // Since we recorded early access, it should suggest preloading
+    });
+
+    it("should handle load failure gracefully", async () => {
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      const failingModule = createLazyModule(
+        () => {
+          throw new Error("Load failed");
+        },
+        { name: "FailingModule", preloadHint: "low" },
+      );
+
+      loader.register(failingModule);
+
+      // Record very early access to trigger preloading
+      metrics.recordAccess("FailingModule");
+
+      await metrics.applyRecommendations({
+        autoOptimize: true,
+        maxStartupTime: 1000,
+      });
+
+      // Should not throw, just warn
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("recordLoadTime()", () => {
+    it("should record multiple load times", () => {
+      metrics.recordLoadTime("Module1", 100);
+      metrics.recordLoadTime("Module2", 200);
+
+      // Verify through export
+      const exported = JSON.parse(metrics.export());
+      expect(exported.startupTimeSaved).toBeDefined();
+    });
+  });
+
+  describe("recommendation generation", () => {
+    it("should suggest eager for frequently accessed modules", () => {
+      const module = CreateLazyModule([TestController], {
+        name: "FrequentModule",
+      }).withPreloadHint("high"); // eager
+      loader.register(module);
+
+      // Record multiple early accesses
+      for (let i = 0; i < 10; i++) {
+        metrics.recordAccess("FrequentModule");
+      }
+
+      const rec = metrics.getRecommendation("FrequentModule");
+      expect(rec?.currentStrategy).toBe("eager");
+    });
+  });
+});
+
+// ============================================================================
+// Additional LazyModuleLoader Tests
+// ============================================================================
+
+describe("LazyModuleLoader Extended", () => {
+  let loader: LazyModuleLoader;
+  let container: Container;
+
+  beforeEach(() => {
+    container = new Container();
+    loader = createLazyModuleLoader(container);
+  });
+
+  describe("loadAll() with errors", () => {
+    it("should throw if one module fails", async () => {
+      const failingModule = createLazyModule(
+        () => {
+          throw new Error("Module failed");
+        },
+        { name: "FailingModule" },
+      );
+      const successModule = CreateLazyModule([TestController], {
+        name: "SuccessModule",
+      });
+
+      loader.register(failingModule);
+      loader.register(successModule);
+
+      await expect(
+        loader.loadAll(["FailingModule", "SuccessModule"]),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("get()", () => {
+    it("should return module by name", () => {
+      const module = CreateLazyModule([TestController], { name: "TestModule" });
+      loader.register(module);
+
+      expect(loader.get("TestModule")).toBe(module);
+    });
+
+    it("should return undefined for non-existent module", () => {
+      expect(loader.get("NonExistent")).toBeUndefined();
+    });
+  });
+
+  describe("getStatus()", () => {
+    it("should return module status", () => {
+      const module = CreateLazyModule([TestController], { name: "TestModule" });
+      loader.register(module);
+
+      expect(loader.getStatus("TestModule")).toBe("pending");
+    });
+
+    it("should return undefined for non-existent module", () => {
+      expect(loader.getStatus("NonExistent")).toBeUndefined();
+    });
+  });
+
+  describe("loadByHint()", () => {
+    it("should load all modules with matching hint", async () => {
+      const highModule = CreateLazyModule([TestController], {
+        name: "HighModule",
+      }).withPreloadHint("high");
+      const lowModule = CreateLazyModule([AdminController], {
+        name: "LowModule",
+      }).withPreloadHint("low");
+
+      loader.register(highModule);
+      loader.register(lowModule);
+
+      await loader.loadByHint("high");
+
+      expect(loader.isLoaded("HighModule")).toBe(true);
+      expect(loader.isLoaded("LowModule")).toBe(false);
+    });
+  });
+
+  describe("registerAll()", () => {
+    it("should register multiple modules", () => {
+      const module1 = CreateLazyModule([TestController], { name: "Module1" });
+      const module2 = CreateLazyModule([AdminController], { name: "Module2" });
+
+      loader.registerAll([module1, module2]);
+
+      expect(loader.getAll()).toHaveLength(2);
+    });
+  });
+});
+
+// ============================================================================
+// Additional LazyModule Tests
+// ============================================================================
+
+describe("LazyModule Extended", () => {
+  describe("timeout handling", () => {
+    it("should handle module with timeout configuration", () => {
+      const lazyModule = new LazyModule(() => createTestContainerModule(), {
+        name: "TimeoutModule",
+        timeout: 5000,
+      });
+
+      expect(lazyModule.config.timeout).toBe(5000);
+    });
+  });
+
+  describe("concurrent load calls", () => {
+    it("should return same promise for concurrent loads", async () => {
+      const factory = jest.fn(() => {
+        return new Promise<ContainerModule>((resolve) => {
+          setTimeout(() => resolve(createTestContainerModule()), 50);
+        });
+      });
+
+      const lazyModule = new LazyModule(factory, { name: "ConcurrentModule" });
+
+      // Start multiple loads concurrently
+      const [result1, result2, result3] = await Promise.all([
+        lazyModule.load(),
+        lazyModule.load(),
+        lazyModule.load(),
+      ]);
+
+      // All should return the same module
+      expect(result1).toBe(result2);
+      expect(result2).toBe(result3);
+
+      // Factory should only be called once
+      expect(factory).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("dependencies configuration", () => {
+    it("should store dependencies in config", () => {
+      const lazyModule = new LazyModule(() => createTestContainerModule(), {
+        name: "DependentModule",
+        dependencies: ["ModuleA", "ModuleB"],
+      });
+
+      expect(lazyModule.config.dependencies).toEqual(["ModuleA", "ModuleB"]);
+    });
+  });
+});
+
+// ============================================================================
+// Additional LazyModuleManager Tests
+// ============================================================================
+
+describe("LazyModuleManager Extended", () => {
+  let loader: LazyModuleLoader;
+  let manager: LazyModuleManager;
+
+  beforeEach(() => {
+    loader = createLazyModuleLoader();
+    manager = createLazyModuleManager(loader);
+  });
+
+  describe("getFailedModules()", () => {
+    it("should return failed modules", async () => {
+      const failingModule = createLazyModule(
+        () => {
+          throw new Error("Failed");
+        },
+        { name: "FailingModule" },
+      );
+
+      loader.register(failingModule);
+
+      try {
+        await manager.load("FailingModule");
+      } catch {
+        // Expected
+      }
+
+      const failed = manager.getFailedModules();
+      expect(failed).toContain("FailingModule");
+    });
+  });
+
+  describe("unload()", () => {
+    it("should attempt to unload a module", async () => {
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      const module = CreateLazyModule([TestController], {
+        name: "UnloadableModule",
+      });
+      loader.register(module);
+
+      await manager.load("UnloadableModule");
+
+      const result = await manager.unload("UnloadableModule");
+
+      // Currently unload returns false because it's not fully supported
+      expect(result).toBe(false);
+      expect(warnSpy).toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it("should return false for non-existent module", async () => {
+      const result = await manager.unload("NonExistent");
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("loadByHint()", () => {
+    it("should load modules by hint", async () => {
+      const module = CreateLazyModule([TestController], {
+        name: "HighModule",
+      }).withPreloadHint("high");
+
+      loader.register(module);
+
+      await manager.loadByHint("high");
+
+      expect(manager.isLoaded("HighModule")).toBe(true);
+    });
+  });
 });

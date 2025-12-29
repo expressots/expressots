@@ -79,19 +79,21 @@ describe("LogGroupingManager", () => {
 
     it("should return original entry when below minOccurrences", () => {
       // Arrange
+      const fixedTimestamp = new Date();
       const entry: LogEntry = {
         level: LogLevel.INFO,
         message: "Test message",
-        timestamp: new Date(),
+        timestamp: fixedTimestamp,
       };
 
       // Act
       const result1 = manager.processEntry(entry);
-      const result2 = manager.processEntry({ ...entry, timestamp: new Date() });
+      const entry2: LogEntry = { ...entry, timestamp: fixedTimestamp };
+      const result2 = manager.processEntry(entry2);
 
       // Assert
       expect(result1).toEqual(entry);
-      expect(result2).toEqual(entry);
+      expect(result2).toEqual(entry2);
     });
 
     it("should return grouped entry when minOccurrences reached", () => {

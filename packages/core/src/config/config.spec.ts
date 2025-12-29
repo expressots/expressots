@@ -803,5 +803,371 @@ describe("Enhanced Configuration Module", () => {
 
       expect(config.values.port).toBe(8080);
     });
+
+    it("should call onConfigChange callback when reloading", () => {
+      process.env.PORT = "3000";
+      const changeHandler = jest.fn();
+
+      const config = defineConfig(
+        {
+          port: Env.port("PORT"),
+        },
+        { onConfigChange: changeHandler },
+      );
+
+      // Access values to initialize
+      expect(config.values.port).toBe(3000);
+
+      // Change and reload
+      process.env.PORT = "8080";
+      config.reload();
+
+      // Callback should have been called with changes
+      expect(changeHandler).toHaveBeenCalled();
+      const call = changeHandler.mock.calls[0][0];
+      expect(call.changes).toBeDefined();
+      expect(call.timestamp).toBeInstanceOf(Date);
+    });
+  });
+
+  // ==========================================================================
+  // Additional Field Builder Tests
+  // ==========================================================================
+
+  describe("Additional Field Builders", () => {
+    describe("Env.string() advanced", () => {
+      it("should validate maxLength", () => {
+        process.env.NAME = "This is a very long string that exceeds the limit";
+
+        const config = defineConfig(
+          {
+            name: Env.string("NAME", { maxLength: 10 }),
+          },
+          { throwOnError: false, logLevel: "none" },
+        );
+
+        expect(config.isValid()).toBe(false);
+      });
+
+      it("should validate pattern", () => {
+        process.env.CODE = "invalid!code";
+
+        const config = defineConfig(
+          {
+            code: Env.string("CODE", { pattern: /^[a-z]+$/ }),
+          },
+          { throwOnError: false, logLevel: "none" },
+        );
+
+        expect(config.isValid()).toBe(false);
+      });
+
+      it("should apply uppercase transform", () => {
+        process.env.NAME = "lowercase";
+
+        const config = defineConfig({
+          name: Env.string("NAME", { uppercase: true }),
+        });
+
+        expect(config.values.name).toBe("LOWERCASE");
+      });
+
+      it("should validate url format", () => {
+        process.env.URL = "https://example.com";
+
+        const config = defineConfig({
+          url: Env.string("URL", { format: "url" }),
+        });
+
+        expect(config.isValid()).toBe(true);
+      });
+
+      it("should validate uuid format", () => {
+        process.env.UUID = "550e8400-e29b-41d4-a716-446655440000";
+
+        const config = defineConfig({
+          uuid: Env.string("UUID", { format: "uuid" }),
+        });
+
+        expect(config.isValid()).toBe(true);
+      });
+    });
+
+    describe("Env.number() advanced", () => {
+      it("should validate positive requirement", () => {
+        process.env.COUNT = "-5";
+
+        const config = defineConfig(
+          {
+            count: Env.number("COUNT", { positive: true }),
+          },
+          { throwOnError: false, logLevel: "none" },
+        );
+
+        expect(config.isValid()).toBe(false);
+      });
+
+      it("should accept Infinity as valid number", () => {
+        process.env.COUNT = "Infinity";
+
+        const config = defineConfig({
+          count: Env.number("COUNT"),
+        });
+
+        // Infinity is parsed as a valid number
+        expect(config.values.count).toBe(Infinity);
+      });
+    });
+
+    describe("Env.array() advanced", () => {
+      it("should parse array with spaces", () => {
+        process.env.ITEMS = "a, b, c";
+
+        const config = defineConfig({
+          items: Env.array("ITEMS"),
+        });
+
+        // Array items are trimmed
+        expect(config.values.items).toHaveLength(3);
+      });
+
+      it("should handle single item", () => {
+        process.env.ITEMS = "single";
+
+        const config = defineConfig({
+          items: Env.array("ITEMS"),
+        });
+
+        expect(config.values.items).toEqual(["single"]);
+      });
+    });
+
+    describe("Env.json() advanced", () => {
+      it("should use default value", () => {
+        const defaultValue = { key: "value" };
+
+        const config = defineConfig({
+          data: Env.json("JSON_DATA", { default: defaultValue }),
+        });
+
+        expect(config.values.data).toEqual(defaultValue);
+      });
+
+      it("should validate with custom validator returning error string", () => {
+        process.env.DATA = '{"count": -5}';
+
+        const config = defineConfig(
+          {
+            data: Env.json<{ count: number }>("DATA", {
+              validate: (v) => (v.count > 0 ? true : "Count must be positive"),
+            }),
+          },
+          { throwOnError: false, logLevel: "none" },
+        );
+
+        expect(config.isValid()).toBe(false);
+      });
+    });
+
+    describe("Env.url() advanced", () => {
+      it("should accept valid URL with path", () => {
+        process.env.API_URL = "https://api.example.com/v1/endpoint";
+
+        const config = defineConfig({
+          apiUrl: Env.url("API_URL"),
+        });
+
+        expect(config.isValid()).toBe(true);
+        expect(config.values.apiUrl).toBe("https://api.example.com/v1/endpoint");
+      });
+    });
+  });
+
+  // ==========================================================================
+  // Additional SecretValue Tests
+  // ==========================================================================
+
+  describe("SecretValue Advanced", () => {
+    it("should handle timing-safe equals for different lengths", () => {
+      const secret = createSecretValue("short");
+
+      expect(secret.equals("much longer string")).toBe(false);
+    });
+
+    it("should return false for empty comparison", () => {
+      const secret = createSecretValue("value");
+
+      expect(secret.equals("")).toBe(false);
+    });
+
+    it("should return [NOT SET] for empty secret", () => {
+      const secret = createSecretValue("");
+
+      expect(secret.toString()).toBe("[NOT SET]");
+    });
+
+    it("should handle reveal with very short secret", () => {
+      process.env.NODE_ENV = "development";
+
+      const secret = createSecretValue("ab", {
+        revealStart: 1,
+        revealEnd: 1,
+        allowPartialReveal: true,
+      });
+
+      // Too short to reveal meaningfully
+      expect(secret.reveal()).toBe("[REDACTED]");
+    });
+
+    it("should use custom inspect method", () => {
+      process.env.NODE_ENV = "production";
+
+      const secret = createSecretValue("my-secret-value");
+      const inspectSymbol = Symbol.for("nodejs.util.inspect.custom");
+
+      expect((secret as any)[inspectSymbol]()).toBe("[REDACTED]");
+    });
+  });
+
+  // ==========================================================================
+  // Config Instance Methods Extended
+  // ==========================================================================
+
+  describe("Config Instance Extended", () => {
+    it("should return undefined for non-existent nested path", () => {
+      const config = defineConfig({
+        server: {
+          port: Env.port("PORT", { default: 3000 }),
+        },
+      });
+
+      expect(config.get("server.missing.deep.path")).toBeUndefined();
+    });
+
+    it("should handle null in path traversal", () => {
+      const config = defineConfig({
+        value: Env.string("VALUE", { default: "test" }),
+      });
+
+      expect(config.get("nonexistent.path")).toBeUndefined();
+    });
+
+    it("should return toJSON string", () => {
+      process.env.PORT = "3000";
+
+      const config = defineConfig({
+        port: Env.port("PORT"),
+      });
+
+      const json = config.toJSON();
+      expect(typeof json).toBe("string");
+
+      const parsed = JSON.parse(json);
+      expect(parsed.port).toBe(3000);
+    });
+
+    it("should redact nested secrets in toObject", () => {
+      process.env.SECRET_KEY = "my-secret";
+
+      const config = defineConfig({
+        auth: {
+          key: Env.secret("SECRET_KEY"),
+        },
+      });
+
+      const obj = config.toObject();
+      expect(obj.auth).toBeDefined();
+      expect((obj.auth as any).key).toBe("[REDACTED]");
+    });
+  });
+
+  // ==========================================================================
+  // Validation Edge Cases
+  // ==========================================================================
+
+  describe("Validation Edge Cases", () => {
+    it("should handle empty schema", () => {
+      const config = defineConfig({});
+
+      expect(config.isValid()).toBe(true);
+      expect(config.getErrors()).toHaveLength(0);
+    });
+
+    it("should handle deeply nested configuration", () => {
+      process.env.DEEP_VALUE = "test";
+
+      const config = defineConfig({
+        level1: {
+          level2: {
+            level3: {
+              value: Env.string("DEEP_VALUE"),
+            },
+          },
+        },
+      });
+
+      expect(config.values.level1.level2.level3.value).toBe("test");
+    });
+
+    it("should report multiple errors", () => {
+      const config = defineConfig(
+        {
+          required1: Env.string("REQUIRED_1", { required: true }),
+          required2: Env.string("REQUIRED_2", { required: true }),
+          required3: Env.string("REQUIRED_3", { required: true }),
+        },
+        { throwOnError: false, logLevel: "none" },
+      );
+
+      expect(config.isValid()).toBe(false);
+      expect(config.getErrors().length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  // ==========================================================================
+  // Documentation Generation Extended
+  // ==========================================================================
+
+  describe("Documentation Generation Extended", () => {
+    it("should include deprecated fields in markdown", () => {
+      process.env.OLD_VAR = "value";
+
+      const config = defineConfig({
+        oldVar: Env.string("OLD_VAR", {
+          deprecated: "Use NEW_VAR instead",
+          description: "Old variable",
+        }),
+      });
+
+      const docs = config.generateDocs("markdown");
+
+      expect(docs).toContain("OLD_VAR");
+      expect(docs).toContain("Deprecated");
+    });
+
+    it("should include secret indicator in markdown", () => {
+      process.env.SECRET = "value";
+
+      const config = defineConfig({
+        secret: Env.secret("SECRET"),
+      });
+
+      const docs = config.generateDocs("markdown");
+
+      expect(docs).toContain("Secret");
+    });
+
+    it("should include default in markdown", () => {
+      const config = defineConfig({
+        port: Env.port("PORT", {
+          default: 3000,
+        }),
+      });
+
+      const docs = config.generateDocs("markdown");
+
+      expect(docs).toContain("Default");
+      expect(docs).toContain("3000");
+    });
   });
 });
