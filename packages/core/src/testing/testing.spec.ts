@@ -113,7 +113,9 @@ describe("Mock Provider", () => {
 
     @injectable()
     class TestService {
-      constructor(@inject(MockDependency) public readonly dep: MockDependency) {}
+      constructor(
+        @inject(MockDependency) public readonly dep: MockDependency,
+      ) {}
 
       getValueFromDep(): string {
         return this.dep.getValue();
