@@ -25,6 +25,15 @@ export { PermissionPreloaderMiddleware } from "./permission-preloader.middleware
 export { TYPE } from "./constants";
 export type { AuthProvider, Principal } from "./interfaces";
 export { setupAuthorizationForExpress } from "./setup-authorization";
+export { setupEventSystemForExpress } from "./setup-event-system";
+export type { EventSystemOptions, EventSystemSetupResult } from "./setup-event-system";
+export { setupInterceptorsForExpress } from "./setup-interceptors";
+export type {
+  InterceptorSystemOptions,
+  InterceptorSystemSetupResult,
+  BuiltInInterceptor,
+  InterceptorClass,
+} from "./setup-interceptors";
 
 // Validation decorators
 export {
