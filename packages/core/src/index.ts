@@ -3,6 +3,7 @@ export * from "./console";
 export * from "./container-module";
 export * from "./decorator";
 export * from "./error";
+export * from "./interceptor";
 export * from "./lifecycle";
 export * from "./middleware";
 export * from "./provider";
