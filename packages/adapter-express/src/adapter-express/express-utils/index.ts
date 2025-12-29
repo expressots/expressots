@@ -18,6 +18,7 @@ export { Catch, UseFilters } from "./exception-filter-decorators";
 export { getControllerGuards, getMethodGuards } from "./guard-utils";
 export { GuardContextFactory } from "./guard-context-factory";
 export { GuardMiddleware } from "./guard-middleware";
+export { InterceptorMiddleware, createInterceptorMiddleware } from "./interceptor-middleware";
 export { ScopeExtractor } from "./scope-extractor";
 export type { IScopeExtractor } from "./scope-extractor.interface";
 export { PermissionPreloaderMiddleware } from "./permission-preloader.middleware";

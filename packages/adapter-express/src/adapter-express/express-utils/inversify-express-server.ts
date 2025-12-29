@@ -15,7 +15,11 @@ import {
   ContextManager,
   findFlowTracker,
   NotFoundError,
+  InterceptorExecutor,
+  InterceptorRegistry,
+  INTERCEPTOR_METADATA_KEY,
 } from "@expressots/core";
+import type { InterceptorClass, IInterceptor } from "@expressots/core";
 import { GuardContextFactory } from "./guard-context-factory";
 import { BaseMiddleware } from "./base-middleware";
 import {
@@ -63,6 +67,7 @@ import { getControllerGuards, getMethodGuards } from "./guard-utils";
 import { GuardMiddleware } from "./guard-middleware";
 
 import { ValidationService } from "./validation-service";
+import { InterceptorMiddleware, createInterceptorMiddleware } from "./interceptor-middleware";
 
 // Lazy-load route registry to avoid circular dependencies
 let routeRegistryModule: {
@@ -198,6 +203,9 @@ export class InversifyExpressServer {
     // Fake HttpContext is needed during registration
     this._container.bind<HttpContext>(TYPE.HttpContext).toConstantValue({} as HttpContext);
 
+    // Initialize interceptor system if not already bound
+    this.initializeInterceptorSystem();
+
     const constructors = getControllersFromMetadata();
 
     constructors.forEach((constructor) => {
@@ -228,13 +236,30 @@ export class InversifyExpressServer {
           if (parameterMetadata) {
             paramList = parameterMetadata[metadata.key] || [];
           }
-          const handler: express.RequestHandler = this.handlerFactory(
+
+          // Create base handler
+          let handler: express.RequestHandler = this.handlerFactory(
             (controllerMetadata.target as { name: string }).name,
             metadata.key,
             paramList,
             controller.constructor as NewableFunction, // Pass controller constructor for metadata
             metadata, // Pass method metadata for route-specific filters
           );
+
+          // Wrap handler with interceptor middleware if interceptors are defined
+          const interceptors = this.extractInterceptors(
+            controller.constructor as NewableFunction,
+            metadata.key,
+          );
+
+          if (interceptors.length > 0 && this.isInterceptorSystemReady()) {
+            handler = this.wrapWithInterceptors(
+              handler,
+              controller.constructor as NewableFunction,
+              metadata.key,
+            );
+          }
+
           const routeMiddleware = this.resolveMiddleware(...metadata.middleware);
 
           // Determine version: method-level version overrides controller-level version
@@ -266,6 +291,102 @@ export class InversifyExpressServer {
     });
 
     this._app.use(this._routingConfig.rootPath, this._router);
+  }
+
+  /**
+   * Initialize the interceptor system by binding required components
+   * @private
+   */
+  private initializeInterceptorSystem(): void {
+    try {
+      // Bind InterceptorRegistry if not already bound
+      if (!this._container.isBound(InterceptorRegistry)) {
+        this._container.bind(InterceptorRegistry).toSelf().inSingletonScope();
+      }
+
+      // Bind InterceptorExecutor if not already bound
+      if (!this._container.isBound(InterceptorExecutor)) {
+        this._container.bind(InterceptorExecutor).toSelf().inSingletonScope();
+      }
+
+      // Bind InterceptorMiddleware if not already bound
+      if (!this._container.isBound(InterceptorMiddleware)) {
+        this._container.bind(InterceptorMiddleware).toSelf().inSingletonScope();
+      }
+    } catch {
+      // Interceptor system initialization failed (non-critical)
+      // Routes will work without interceptors
+    }
+  }
+
+  /**
+   * Check if the interceptor system is properly initialized
+   * @private
+   */
+  private isInterceptorSystemReady(): boolean {
+    try {
+      return (
+        this._container.isBound(InterceptorExecutor) &&
+        this._container.isBound(InterceptorMiddleware)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Extract interceptors from controller and method metadata
+   * @private
+   */
+  private extractInterceptors(
+    controllerClass: NewableFunction,
+    methodName: string,
+  ): Array<InterceptorClass | IInterceptor | unknown> {
+    try {
+      // Get controller-level interceptors
+      const controllerInterceptors =
+        (Reflect.getMetadata(
+          INTERCEPTOR_METADATA_KEY.controllerInterceptors,
+          controllerClass,
+        ) as Array<InterceptorClass | IInterceptor | unknown>) || [];
+
+      // Get method-level interceptors
+      const methodInterceptors =
+        (Reflect.getMetadata(
+          INTERCEPTOR_METADATA_KEY.methodInterceptors,
+          controllerClass,
+          methodName,
+        ) as Array<InterceptorClass | IInterceptor | unknown>) || [];
+
+      // Combine: controller + method level
+      return [...controllerInterceptors, ...methodInterceptors];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Wrap a handler with interceptor middleware
+   * @private
+   */
+  private wrapWithInterceptors(
+    handler: express.RequestHandler,
+    controllerClass: NewableFunction,
+    methodName: string,
+  ): express.RequestHandler {
+    try {
+      const interceptorMiddleware = createInterceptorMiddleware(
+        this._container as unknown as interfaces.Container,
+        controllerClass,
+        methodName,
+        handler as (req: Request, res: Response, next: NextFunction) => Promise<unknown>,
+      );
+
+      return interceptorMiddleware as express.RequestHandler;
+    } catch {
+      // Fall back to original handler if interceptor wrapping fails
+      return handler;
+    }
   }
 
   /**
