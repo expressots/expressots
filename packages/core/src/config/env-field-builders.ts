@@ -209,7 +209,10 @@ function enumField<T extends string>(
  * })
  * ```
  */
-function url(envVar: string, options: UrlFieldOptions = {}): ConfigField<string, false> {
+function url(
+  envVar: string,
+  options: UrlFieldOptions = {},
+): ConfigField<string, false> {
   return {
     envVar,
     type: "url",
@@ -242,7 +245,10 @@ function url(envVar: string, options: UrlFieldOptions = {}): ConfigField<string,
  * })
  * ```
  */
-function port(envVar: string, options: PortFieldOptions = {}): ConfigField<number, false> {
+function port(
+  envVar: string,
+  options: PortFieldOptions = {},
+): ConfigField<number, false> {
   return {
     envVar,
     type: "port",
@@ -449,4 +455,3 @@ export {
   json as envJson,
   array as envArray,
 };
-

@@ -61,7 +61,11 @@ export class SecretValueImpl implements SecretValue {
    * Check if secret is set (non-empty).
    */
   get isSet(): boolean {
-    return this._value !== undefined && this._value !== null && this._value.length > 0;
+    return (
+      this._value !== undefined &&
+      this._value !== null &&
+      this._value.length > 0
+    );
   }
 
   /**
@@ -198,4 +202,3 @@ export function createSecretValue(
 export function isSecretValue(value: unknown): value is SecretValue {
   return value instanceof SecretValueImpl;
 }
-

@@ -411,7 +411,10 @@ describe("Enhanced Configuration Module", () => {
           dbConfig: Env.json<{ host: string; port: number }>("DB_CONFIG"),
         });
 
-        expect(config.values.dbConfig).toEqual({ host: "localhost", port: 5432 });
+        expect(config.values.dbConfig).toEqual({
+          host: "localhost",
+          port: 5432,
+        });
       });
 
       it("should error on invalid JSON", () => {
@@ -802,4 +805,3 @@ describe("Enhanced Configuration Module", () => {
     });
   });
 });
-

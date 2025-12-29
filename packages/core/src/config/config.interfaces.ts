@@ -648,13 +648,14 @@ export interface SecretValue {
 /**
  * Type helper to extract the value type from a ConfigField.
  */
-type ExtractFieldValue<T> = T extends ConfigField<infer V, infer S>
-  ? S extends true
-    ? SecretValue
-    : V
-  : T extends Record<string, unknown>
-    ? { [K in keyof T]: ExtractFieldValue<T[K]> }
-    : T;
+type ExtractFieldValue<T> =
+  T extends ConfigField<infer V, infer S>
+    ? S extends true
+      ? SecretValue
+      : V
+    : T extends Record<string, unknown>
+      ? { [K in keyof T]: ExtractFieldValue<T[K]> }
+      : T;
 
 /**
  * Type helper to resolve config schema to actual values.
@@ -732,4 +733,3 @@ export interface IConfigInstance<T> {
    */
   generateDocs(format?: "markdown" | "json"): string;
 }
-
