@@ -259,10 +259,10 @@ export class AppContainer {
    *
    * @public API
    */
-  public getContainerOptions(): interfaces.ContainerOptions {
+  public getContainerOptions(): interfaces.ContainerOptions | undefined {
     if (!this.container) {
       this.getLogger().error("Container not created yet.", "app-container");
-      return;
+      return undefined;
     }
 
     return this.container.options;
