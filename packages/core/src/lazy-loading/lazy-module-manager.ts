@@ -188,7 +188,8 @@ export class LazyModuleManager implements ILazyModuleManager {
       .filter((t): t is number => t !== null);
 
     const totalLoadTime = loadTimes.reduce((sum, t) => sum + t, 0);
-    const avgLoadTime = loadTimes.length > 0 ? totalLoadTime / loadTimes.length : 0;
+    const avgLoadTime =
+      loadTimes.length > 0 ? totalLoadTime / loadTimes.length : 0;
 
     // Estimate memory saved (rough estimate: 50KB per lazy module)
     const estimatedMemorySaved = pendingModules.length * 50 * 1024;
@@ -229,7 +230,7 @@ export class LazyModuleManager implements ILazyModuleManager {
     // We'll mark this as a limitation and return false
     console.warn(
       `[LazyModuleManager] Module unloading is not fully supported. ` +
-      `Module '${moduleName}' bindings will remain in the container.`
+        `Module '${moduleName}' bindings will remain in the container.`,
     );
 
     return false;
@@ -248,7 +249,8 @@ export class LazyModuleManager implements ILazyModuleManager {
  *
  * @public API
  */
-export function createLazyModuleManager(loader: LazyModuleLoader): LazyModuleManager {
+export function createLazyModuleManager(
+  loader: LazyModuleLoader,
+): LazyModuleManager {
   return new LazyModuleManager(loader);
 }
-

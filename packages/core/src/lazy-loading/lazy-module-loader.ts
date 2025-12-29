@@ -91,11 +91,15 @@ export class LazyModuleLoader implements ILazyModuleLoader {
    */
   register(module: ILazyModule): void {
     if (!isLazyModule(module)) {
-      throw new Error("Invalid lazy module: must implement ILazyModule interface");
+      throw new Error(
+        "Invalid lazy module: must implement ILazyModule interface",
+      );
     }
 
     if (this.modules.has(module.name)) {
-      console.warn(`[LazyModuleLoader] Module '${module.name}' already registered, skipping`);
+      console.warn(
+        `[LazyModuleLoader] Module '${module.name}' already registered, skipping`,
+      );
       return;
     }
 
@@ -284,7 +288,9 @@ export class LazyModuleLoader implements ILazyModuleLoader {
     const visit = (name: string): void => {
       if (visited.has(name)) return;
       if (visiting.has(name)) {
-        throw new Error(`Circular dependency detected involving module '${name}'`);
+        throw new Error(
+          `Circular dependency detected involving module '${name}'`,
+        );
       }
 
       visiting.add(name);
@@ -331,11 +337,12 @@ export class LazyModuleLoader implements ILazyModuleLoader {
  *
  * @public API
  */
-export function createLazyModuleLoader(container?: Container): LazyModuleLoader {
+export function createLazyModuleLoader(
+  container?: Container,
+): LazyModuleLoader {
   const loader = new LazyModuleLoader();
   if (container) {
     loader.setContainer(container);
   }
   return loader;
 }
-

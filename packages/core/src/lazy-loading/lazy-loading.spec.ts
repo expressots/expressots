@@ -13,7 +13,10 @@ import {
   isLazyModule,
 } from "./lazy-module";
 import { LazyModuleLoader, createLazyModuleLoader } from "./lazy-module-loader";
-import { LazyModuleManager, createLazyModuleManager } from "./lazy-module-manager";
+import {
+  LazyModuleManager,
+  createLazyModuleManager,
+} from "./lazy-module-manager";
 import { LazyLoadMetrics, createLazyLoadMetrics } from "./lazy-load-metrics";
 import { LazyModuleWarmup, createLazyModuleWarmup } from "./lazy-module-warmup";
 import { ILazyModule, PreloadHint } from "./lazy.interfaces";
@@ -121,7 +124,10 @@ describe("LazyModule", () => {
       const factory = () => {
         throw new Error("Factory failed");
       };
-      const lazyModule = new LazyModule(factory, { name: "FailingModule", timeout: 100 });
+      const lazyModule = new LazyModule(factory, {
+        name: "FailingModule",
+        timeout: 100,
+      });
 
       await expect(lazyModule.load()).rejects.toThrow("Factory failed");
       expect(lazyModule.status).toBe("failed");
@@ -133,8 +139,7 @@ describe("LazyModule", () => {
   describe("withPreloadHint()", () => {
     it("should set preload hint with fluent API", () => {
       const factory = () => createTestContainerModule();
-      const lazyModule = new LazyModule(factory)
-        .withPreloadHint("high");
+      const lazyModule = new LazyModule(factory).withPreloadHint("high");
 
       expect(lazyModule.config.preloadHint).toBe("high");
     });
@@ -153,11 +158,12 @@ describe("LazyModule", () => {
   describe("withLazyConfig()", () => {
     it("should merge configuration", () => {
       const factory = () => createTestContainerModule();
-      const lazyModule = new LazyModule(factory, { name: "Test" })
-        .withLazyConfig({
-          prefetchAfterIdle: 5000,
-          dependencies: ["OtherModule"],
-        });
+      const lazyModule = new LazyModule(factory, {
+        name: "Test",
+      }).withLazyConfig({
+        prefetchAfterIdle: 5000,
+        dependencies: ["OtherModule"],
+      });
 
       expect(lazyModule.config.prefetchAfterIdle).toBe(5000);
       expect(lazyModule.config.dependencies).toEqual(["OtherModule"]);
@@ -203,10 +209,9 @@ describe("CreateLazyModule", () => {
 
 describe("createLazyModule", () => {
   it("should create a lazy module from factory", () => {
-    const lazyModule = createLazyModule(
-      () => createTestContainerModule(),
-      { name: "FactoryModule" }
-    );
+    const lazyModule = createLazyModule(() => createTestContainerModule(), {
+      name: "FactoryModule",
+    });
 
     expect(isLazyModule(lazyModule)).toBe(true);
     expect(lazyModule.name).toBe("FactoryModule");
@@ -218,7 +223,7 @@ describe("createLazyModule", () => {
         await new Promise((r) => setTimeout(r, 5));
         return createTestContainerModule();
       },
-      { name: "AsyncFactoryModule" }
+      { name: "AsyncFactoryModule" },
     );
 
     const module = await lazyModule.load();
@@ -259,7 +264,9 @@ describe("LazyModuleLoader", () => {
 
   describe("register()", () => {
     it("should register a lazy module", () => {
-      const lazyModule = CreateLazyModule([TestController], { name: "TestModule" });
+      const lazyModule = CreateLazyModule([TestController], {
+        name: "TestModule",
+      });
 
       loader.register(lazyModule);
 
@@ -269,7 +276,9 @@ describe("LazyModuleLoader", () => {
 
     it("should warn on duplicate registration", () => {
       const warnSpy = jest.spyOn(console, "warn").mockImplementation();
-      const lazyModule = CreateLazyModule([TestController], { name: "TestModule" });
+      const lazyModule = CreateLazyModule([TestController], {
+        name: "TestModule",
+      });
 
       loader.register(lazyModule);
       loader.register(lazyModule);
@@ -281,13 +290,17 @@ describe("LazyModuleLoader", () => {
     });
 
     it("should throw on invalid module", () => {
-      expect(() => loader.register({} as ILazyModule)).toThrow("Invalid lazy module");
+      expect(() => loader.register({} as ILazyModule)).toThrow(
+        "Invalid lazy module",
+      );
     });
   });
 
   describe("load()", () => {
     it("should load a registered module", async () => {
-      const lazyModule = CreateLazyModule([TestController], { name: "TestModule" });
+      const lazyModule = CreateLazyModule([TestController], {
+        name: "TestModule",
+      });
       loader.register(lazyModule);
 
       const containerModule = await loader.load("TestModule");
@@ -308,7 +321,7 @@ describe("LazyModuleLoader", () => {
           loadOrder.push("Dependency");
           return createTestContainerModule();
         },
-        { name: "Dependency" }
+        { name: "Dependency" },
       );
 
       const mainModule = createLazyModule(
@@ -316,7 +329,7 @@ describe("LazyModuleLoader", () => {
           loadOrder.push("Main");
           return createTestContainerModule();
         },
-        { name: "Main", dependencies: ["Dependency"] }
+        { name: "Main", dependencies: ["Dependency"] },
       );
 
       loader.register(depModule);
@@ -347,16 +360,25 @@ describe("LazyModuleLoader", () => {
       const loadOrder: string[] = [];
 
       const module1 = createLazyModule(
-        () => { loadOrder.push("A"); return createTestContainerModule(); },
-        { name: "A" }
+        () => {
+          loadOrder.push("A");
+          return createTestContainerModule();
+        },
+        { name: "A" },
       );
       const module2 = createLazyModule(
-        () => { loadOrder.push("B"); return createTestContainerModule(); },
-        { name: "B", dependencies: ["A"] }
+        () => {
+          loadOrder.push("B");
+          return createTestContainerModule();
+        },
+        { name: "B", dependencies: ["A"] },
       );
       const module3 = createLazyModule(
-        () => { loadOrder.push("C"); return createTestContainerModule(); },
-        { name: "C", dependencies: ["B"] }
+        () => {
+          loadOrder.push("C");
+          return createTestContainerModule();
+        },
+        { name: "C", dependencies: ["B"] },
       );
 
       loader.register(module1);
@@ -382,10 +404,12 @@ describe("LazyModuleLoader", () => {
     });
 
     it("should query by hint", () => {
-      const highModule = CreateLazyModule([TestController], { name: "High" })
-        .withPreloadHint("high");
-      const lowModule = CreateLazyModule([AdminController], { name: "Low" })
-        .withPreloadHint("low");
+      const highModule = CreateLazyModule([TestController], {
+        name: "High",
+      }).withPreloadHint("high");
+      const lowModule = CreateLazyModule([AdminController], {
+        name: "Low",
+      }).withPreloadHint("low");
 
       loader.register(highModule);
       loader.register(lowModule);
@@ -485,10 +509,12 @@ describe("LazyLoadMetrics", () => {
 
   describe("getRecommendations()", () => {
     it("should generate recommendations for all modules", () => {
-      const module1 = CreateLazyModule([TestController], { name: "Module1" })
-        .withPreloadHint("low");
-      const module2 = CreateLazyModule([AdminController], { name: "Module2" })
-        .withPreloadHint("high");
+      const module1 = CreateLazyModule([TestController], {
+        name: "Module1",
+      }).withPreloadHint("low");
+      const module2 = CreateLazyModule([AdminController], {
+        name: "Module2",
+      }).withPreloadHint("high");
 
       loader.register(module1);
       loader.register(module2);
@@ -547,10 +573,12 @@ describe("LazyModuleWarmup", () => {
 
   describe("start()", () => {
     it("should warm up modules", async () => {
-      const module1 = CreateLazyModule([TestController], { name: "Module1" })
-        .withPreloadHint("high");
-      const module2 = CreateLazyModule([AdminController], { name: "Module2" })
-        .withPreloadHint("high");
+      const module1 = CreateLazyModule([TestController], {
+        name: "Module1",
+      }).withPreloadHint("high");
+      const module2 = CreateLazyModule([AdminController], {
+        name: "Module2",
+      }).withPreloadHint("high");
 
       loader.register(module1);
       loader.register(module2);
@@ -568,12 +596,18 @@ describe("LazyModuleWarmup", () => {
       const loadOrder: string[] = [];
 
       const module1 = createLazyModule(
-        () => { loadOrder.push("A"); return createTestContainerModule(); },
-        { name: "A", preloadHint: "high" }
+        () => {
+          loadOrder.push("A");
+          return createTestContainerModule();
+        },
+        { name: "A", preloadHint: "high" },
       );
       const module2 = createLazyModule(
-        () => { loadOrder.push("B"); return createTestContainerModule(); },
-        { name: "B", preloadHint: "high" }
+        () => {
+          loadOrder.push("B");
+          return createTestContainerModule();
+        },
+        { name: "B", preloadHint: "high" },
       );
 
       loader.register(module1);
@@ -600,7 +634,7 @@ describe("LazyModuleWarmup", () => {
           await new Promise((r) => setTimeout(r, 50));
           return createTestContainerModule();
         },
-        { name: "WarmupStopTestModule", preloadHint: "high" }
+        { name: "WarmupStopTestModule", preloadHint: "high" },
       );
 
       loader.register(module);
@@ -624,10 +658,12 @@ describe("LazyModuleWarmup", () => {
 
   describe("getProgress()", () => {
     it("should report progress", async () => {
-      const module1 = CreateLazyModule([TestController], { name: "Module1" })
-        .withPreloadHint("high");
-      const module2 = CreateLazyModule([AdminController], { name: "Module2" })
-        .withPreloadHint("high");
+      const module1 = CreateLazyModule([TestController], {
+        name: "Module1",
+      }).withPreloadHint("high");
+      const module2 = CreateLazyModule([AdminController], {
+        name: "Module2",
+      }).withPreloadHint("high");
 
       loader.register(module1);
       loader.register(module2);
@@ -643,4 +679,3 @@ describe("LazyModuleWarmup", () => {
     });
   });
 });
-

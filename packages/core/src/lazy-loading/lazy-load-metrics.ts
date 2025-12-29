@@ -145,7 +145,8 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
     const moduleMetrics = this.calculateModuleMetrics();
 
     for (const metrics of moduleMetrics) {
-      recommendations[metrics.moduleName] = this.generateRecommendation(metrics);
+      recommendations[metrics.moduleName] =
+        this.generateRecommendation(metrics);
     }
 
     return recommendations;
@@ -175,7 +176,9 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
    * });
    * ```
    */
-  async applyRecommendations(options: ApplyRecommendationsOptions): Promise<void> {
+  async applyRecommendations(
+    options: ApplyRecommendationsOptions,
+  ): Promise<void> {
     if (!options.autoOptimize) {
       return;
     }
@@ -188,7 +191,10 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
     let estimatedStartupTime = 0;
 
     for (const [moduleName, rec] of Object.entries(recommendations)) {
-      if (rec.currentStrategy === "lazy" && rec.suggestion.includes("preloading")) {
+      if (
+        rec.currentStrategy === "lazy" &&
+        rec.suggestion.includes("preloading")
+      ) {
         const loadTimeMs = parseInt(rec.loadTime) || 0;
 
         if (estimatedStartupTime + loadTimeMs <= maxStartup) {
@@ -201,14 +207,17 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
     // Preload recommended modules
     if (modulesToPreload.length > 0) {
       console.log(
-        `[LazyLoadMetrics] Auto-optimizing: preloading ${modulesToPreload.length} modules`
+        `[LazyLoadMetrics] Auto-optimizing: preloading ${modulesToPreload.length} modules`,
       );
 
       for (const moduleName of modulesToPreload) {
         try {
           await this.loader.load(moduleName);
         } catch (error) {
-          console.warn(`[LazyLoadMetrics] Failed to preload '${moduleName}':`, error);
+          console.warn(
+            `[LazyLoadMetrics] Failed to preload '${moduleName}':`,
+            error,
+          );
         }
       }
     }
@@ -270,7 +279,7 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
         recommendations,
       },
       null,
-      2
+      2,
     );
   }
 
@@ -329,12 +338,18 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
     let accessFrequency: string;
     if (metrics.accessCount === 0) {
       accessFrequency = "Never accessed";
-    } else if (metrics.firstAccessTime !== null && metrics.firstAccessTime < 5000) {
+    } else if (
+      metrics.firstAccessTime !== null &&
+      metrics.firstAccessTime < 5000
+    ) {
       const percentage = Math.round(
-        (metrics.accessCount / Math.max(this.accessRecords.length, 1)) * 100
+        (metrics.accessCount / Math.max(this.accessRecords.length, 1)) * 100,
       );
       accessFrequency = `${percentage}% within 5s of startup`;
-    } else if (metrics.firstAccessTime !== null && metrics.firstAccessTime < 60000) {
+    } else if (
+      metrics.firstAccessTime !== null &&
+      metrics.firstAccessTime < 60000
+    ) {
       accessFrequency = "Accessed within first minute";
     } else {
       accessFrequency = "Rarely accessed early";
@@ -348,7 +363,10 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
       if (metrics.accessCount === 0) {
         suggestion = "Keep lazy - never accessed";
         estimatedSavings = `+${loadTimeMs}ms startup saved`;
-      } else if (metrics.firstAccessTime !== null && metrics.firstAccessTime < 2000) {
+      } else if (
+        metrics.firstAccessTime !== null &&
+        metrics.firstAccessTime < 2000
+      ) {
         suggestion = "Consider preloading - frequently accessed early";
         estimatedSavings = `-${loadTimeMs}ms startup, +${loadTimeMs}ms first access`;
       } else {
@@ -359,7 +377,10 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
       if (metrics.accessCount === 0) {
         suggestion = "Consider lazy loading - never accessed";
         estimatedSavings = `+${loadTimeMs}ms startup if lazy`;
-      } else if (metrics.firstAccessTime !== null && metrics.firstAccessTime > 30000) {
+      } else if (
+        metrics.firstAccessTime !== null &&
+        metrics.firstAccessTime > 30000
+      ) {
         suggestion = "Consider lazy loading - accessed late";
         estimatedSavings = `+${loadTimeMs}ms startup, -${loadTimeMs}ms on access`;
       } else {
@@ -391,7 +412,8 @@ export class LazyLoadMetrics implements ILazyLoadMetrics {
  *
  * @public API
  */
-export function createLazyLoadMetrics(loader: LazyModuleLoader): LazyLoadMetrics {
+export function createLazyLoadMetrics(
+  loader: LazyModuleLoader,
+): LazyLoadMetrics {
   return new LazyLoadMetrics(loader);
 }
-

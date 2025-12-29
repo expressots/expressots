@@ -122,11 +122,12 @@ export class LazyModuleWarmup implements ILazyModuleWarmup {
 
     console.log(
       `[LazyModuleWarmup] Starting warmup of ${modulesToWarm.length} modules ` +
-      `(strategy: ${fullConfig.strategy})`
+        `(strategy: ${fullConfig.strategy})`,
     );
 
     // Apply delay based on strategy
-    const delay = fullConfig.strategy === "immediate" ? 0 : fullConfig.delay ?? 5000;
+    const delay =
+      fullConfig.strategy === "immediate" ? 0 : (fullConfig.delay ?? 5000);
 
     if (delay > 0) {
       await this.delay(delay);
@@ -142,7 +143,7 @@ export class LazyModuleWarmup implements ILazyModuleWarmup {
 
     this.running = false;
     console.log(
-      `[LazyModuleWarmup] Warmup complete. Warmed ${this.warmedModules.size}/${this.totalToWarm} modules`
+      `[LazyModuleWarmup] Warmup complete. Warmed ${this.warmedModules.size}/${this.totalToWarm} modules`,
     );
   }
 
@@ -213,12 +214,13 @@ export class LazyModuleWarmup implements ILazyModuleWarmup {
     if (config.hints && config.hints.length > 0) {
       const hintsSet = new Set(config.hints);
       modulesToWarm = allModules
-        .filter((m) => !m.isLoaded && hintsSet.has(m.config.preloadHint as PreloadHint))
+        .filter(
+          (m) =>
+            !m.isLoaded && hintsSet.has(m.config.preloadHint as PreloadHint),
+        )
         .map((m) => m.name);
     } else {
-      modulesToWarm = allModules
-        .filter((m) => !m.isLoaded)
-        .map((m) => m.name);
+      modulesToWarm = allModules.filter((m) => !m.isLoaded).map((m) => m.name);
     }
 
     // Apply priority ordering if specified
@@ -318,7 +320,8 @@ export class LazyModuleWarmup implements ILazyModuleWarmup {
  *
  * @public API
  */
-export function createLazyModuleWarmup(loader: LazyModuleLoader): LazyModuleWarmup {
+export function createLazyModuleWarmup(
+  loader: LazyModuleLoader,
+): LazyModuleWarmup {
   return new LazyModuleWarmup(loader);
 }
-

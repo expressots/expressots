@@ -59,17 +59,16 @@ export class LazyModule implements ILazyModule {
   private readonly _name: string;
   private readonly _factory: LazyModuleFactory;
 
-  constructor(
-    factory: LazyModuleFactory,
-    config: LazyModuleConfig = {},
-  ) {
+  constructor(factory: LazyModuleFactory, config: LazyModuleConfig = {}) {
     this._factory = factory;
     this._config = {
       preloadHint: "low",
       timeout: 30000,
       ...config,
     };
-    this._name = config.name || `LazyModule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    this._name =
+      config.name ||
+      `LazyModule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
   // ============================================================================
@@ -186,7 +185,9 @@ export class LazyModule implements ILazyModule {
       const timeoutId = setTimeout(() => {
         if (!completed) {
           completed = true;
-          reject(new Error(`Module '${this._name}' load timeout after ${timeout}ms`));
+          reject(
+            new Error(`Module '${this._name}' load timeout after ${timeout}ms`),
+          );
         }
       }, timeout);
 
@@ -314,10 +315,7 @@ export function CreateLazyModule(
   const detectedPaths = extractControllerPaths(controllers);
 
   // Merge with any explicit routePrefixes
-  const allPrefixes = [
-    ...(config.routePrefixes || []),
-    ...detectedPaths,
-  ];
+  const allPrefixes = [...(config.routePrefixes || []), ...detectedPaths];
   const uniquePrefixes = [...new Set(allPrefixes)];
 
   // Create config with auto-detected prefixes
@@ -404,11 +402,12 @@ export function isLazyModule(value: unknown): value is ILazyModule {
  *
  * @internal
  */
-export function getModuleName(module: ContainerModule | ILazyModule): string | undefined {
+export function getModuleName(
+  module: ContainerModule | ILazyModule,
+): string | undefined {
   if (isLazyModule(module)) {
     return module.name;
   }
   // Regular ContainerModule doesn't have a name
   return undefined;
 }
-
