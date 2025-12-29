@@ -4,6 +4,8 @@
  * Tests all testing utilities to ensure they work correctly.
  */
 
+import "reflect-metadata";
+import { injectable, inject } from "../di/inversify";
 import {
   createFluentRequest,
   request,
@@ -102,14 +104,16 @@ describe("Fluent Request", () => {
 
 describe("Mock Provider", () => {
   describe("mockProvider", () => {
+    @injectable()
     class MockDependency {
       getValue(): string {
         return "real value";
       }
     }
 
+    @injectable()
     class TestService {
-      constructor(public readonly dep: MockDependency) {}
+      constructor(@inject(MockDependency) public readonly dep: MockDependency) {}
 
       getValueFromDep(): string {
         return this.dep.getValue();

@@ -4,7 +4,6 @@
  * Comprehensive test coverage for the event system.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import "reflect-metadata";
 import { Container } from "../di/inversify";
 import { provide } from "../di/binding-decorator";
