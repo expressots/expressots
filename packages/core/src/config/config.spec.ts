@@ -978,7 +978,9 @@ describe("Enhanced Configuration Module", () => {
         });
 
         expect(config.isValid()).toBe(true);
-        expect(config.values.apiUrl).toBe("https://api.example.com/v1/endpoint");
+        expect(config.values.apiUrl).toBe(
+          "https://api.example.com/v1/endpoint",
+        );
       });
     });
   });

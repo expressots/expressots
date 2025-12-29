@@ -383,8 +383,12 @@ describe("EventRegistry", () => {
       const stats = registry.getStatistics();
       expect(stats.totalHandlers).toBeGreaterThanOrEqual(2); // Unique handler classes
       expect(stats.totalEvents).toBeGreaterThanOrEqual(2);
-      expect(stats.handlersPerEvent["UserCreatedEvent"]).toBeGreaterThanOrEqual(2);
-      expect(stats.handlersPerEvent["UserUpdatedEvent"]).toBeGreaterThanOrEqual(1);
+      expect(stats.handlersPerEvent["UserCreatedEvent"]).toBeGreaterThanOrEqual(
+        2,
+      );
+      expect(stats.handlersPerEvent["UserUpdatedEvent"]).toBeGreaterThanOrEqual(
+        1,
+      );
     });
   });
 });
@@ -986,8 +990,13 @@ describe("EventRegistry Additional", () => {
         MultiEventHandler,
       );
       const handlers = registry.getHandlers(UserCreatedEvent);
-      const handler = handlers.find((h) => h.handlerClass === MultiEventHandler);
-      expect(handler?.eventClasses).toEqual([UserCreatedEvent, UserUpdatedEvent]);
+      const handler = handlers.find(
+        (h) => h.handlerClass === MultiEventHandler,
+      );
+      expect(handler?.eventClasses).toEqual([
+        UserCreatedEvent,
+        UserUpdatedEvent,
+      ]);
     });
   });
 });
@@ -1067,8 +1076,7 @@ describe("EventRecorder Additional", () => {
       recorder.record(new UserCreatedEvent("1", "test1@test.com"));
       recorder.record(new UserCreatedEvent("2", "test2@test.com"));
       await recorder.replay({
-        filter: (event) =>
-          (event.data as UserCreatedEvent).userId === "1",
+        filter: (event) => (event.data as UserCreatedEvent).userId === "1",
       });
       expect(emitter).toHaveBeenCalledTimes(1);
     });
