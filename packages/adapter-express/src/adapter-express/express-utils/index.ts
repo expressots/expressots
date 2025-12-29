@@ -34,6 +34,18 @@ export type {
   BuiltInInterceptor,
   InterceptorClass,
 } from "./setup-interceptors";
+export { setupLazyLoadingForExpress } from "./setup-lazy-loading";
+export type {
+  LazyLoadingOptions,
+  LazyLoadingSetupResult,
+  LazyLoadingExpressOptions,
+  LazyLoadingExpressResult,
+  LazyRouteMapping,
+} from "./setup-lazy-loading";
+export {
+  createLazyModuleMiddleware,
+  createRouteMappings,
+} from "./lazy-module-middleware";
 
 // Validation decorators
 export {
