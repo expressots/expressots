@@ -921,6 +921,9 @@ export function resolveSchema<T extends Record<string, unknown>>(
             : `${fieldOrNested.envVar} is deprecated`;
         warnings.push(`⚠️  ${currentPath}: ${message}`);
       }
+    } else if (Array.isArray(fieldOrNested)) {
+      // It's a static array - preserve as-is
+      values[key] = fieldOrNested;
     } else if (typeof fieldOrNested === "object" && fieldOrNested !== null) {
       // It's a nested object - recurse
       const nestedResult = resolveSchema(
@@ -932,6 +935,15 @@ export function resolveSchema<T extends Record<string, unknown>>(
       errors.push(...nestedResult.errors);
       warnings.push(...nestedResult.warnings);
       fields.push(...nestedResult.fields);
+    } else if (
+      typeof fieldOrNested === "string" ||
+      typeof fieldOrNested === "number" ||
+      typeof fieldOrNested === "boolean" ||
+      fieldOrNested === null
+    ) {
+      // It's a static primitive value - preserve as-is
+      // This allows static configuration values like file paths, feature flags, etc.
+      values[key] = fieldOrNested;
     }
   }
 

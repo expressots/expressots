@@ -37,14 +37,13 @@ import { createFluentRequest } from "./fluent-request";
 import { Logger } from "../provider/logger/logger.provider";
 
 /**
- * Extended web server interface with listen result type.
+ * HTTP Server interface for cleanup.
  */
-interface ListenResult {
-  port?: number;
-  server?: {
-    address: () => { port: number } | null;
-    close: (callback?: () => void) => void;
-  };
+interface HTTPServer {
+  address: () => { port: number } | null;
+  close: (callback?: (err?: Error) => void) => void;
+  closeIdleConnections?: () => void;
+  destroy?: () => void;
 }
 
 /**
@@ -79,13 +78,61 @@ class TestApp implements ITestApp {
 
   /**
    * Close the test server.
+   * Handles cleanup of both the app instance and the underlying HTTP server.
    */
   async close(): Promise<void> {
+    // First, try to close via app instance if it has close method
     const app = this.appInstance as IWebServerBuilder & {
       close?: () => Promise<void>;
+      getHttpServer?: () => Promise<HTTPServer>;
     };
     if (app && typeof app.close === "function") {
       await app.close();
+      return;
+    }
+
+    // Get the HTTP server from the app instance if available
+    let httpServer: HTTPServer | null = null;
+    if (app && typeof app.getHttpServer === "function") {
+      try {
+        httpServer = (await app.getHttpServer()) as HTTPServer;
+      } catch {
+        // Server might not be initialized, try fallback
+      }
+    }
+
+    // Fallback: use stored server reference
+    if (!httpServer && this.server) {
+      httpServer = this.server as HTTPServer;
+    }
+
+    // Close the HTTP server
+    if (httpServer && typeof httpServer.close === "function") {
+      // Close idle connections first for faster cleanup (like AppExpress does internally)
+      if (typeof httpServer.closeIdleConnections === "function") {
+        httpServer.closeIdleConnections();
+      }
+
+      // Close the server with proper error handling
+      await new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          // Force destroy if close takes too long
+          if (httpServer && typeof httpServer.destroy === "function") {
+            httpServer.destroy();
+          }
+          resolve();
+        }, 5000); // 5 second timeout
+
+        httpServer!.close((err) => {
+          clearTimeout(timeout);
+          if (err) {
+            // Don't fail on close error - just log and resolve
+            // This matches AppExpress graceful shutdown behavior
+            console.log(`Note: Test server close returned: ${err?.message}`);
+          }
+          resolve();
+        });
+      });
     }
   }
 
@@ -220,23 +267,56 @@ export async function createTestApp<T extends IWebServer>(
 
     // Start the server on a random port
     const port = options.port ?? 0;
-    const serverResult = (await appInstance.listen(port, {
+    await appInstance.listen(port, {
       appName: "Test App",
       appVersion: "1.0.0",
-    })) as ListenResult;
+    });
 
-    // Get the actual port
-    const actualPort =
-      serverResult?.port || serverResult?.server?.address?.()?.port || port;
-
-    // Store HTTP server reference
+    // Get the HTTP server instance (AppExpress has getHttpServer method)
     type AppWithHttpServer = IWebServerBuilder & {
-      getHttpServer?: () => unknown;
+      getHttpServer?: () => Promise<HTTPServer>;
     };
     const appWithServer = appInstance as AppWithHttpServer;
-    testApp.setHttpServer(
-      appWithServer.getHttpServer?.() || serverResult?.server,
-    );
+
+    let httpServer: HTTPServer | null = null;
+    let actualPort = port;
+
+    if (typeof appWithServer.getHttpServer === "function") {
+      try {
+        httpServer = (await appWithServer.getHttpServer()) as HTTPServer;
+        // Get the actual port from the server
+        const address = httpServer.address();
+        if (
+          address &&
+          typeof address === "object" &&
+          address !== null &&
+          "port" in address
+        ) {
+          actualPort = (address as { port: number }).port;
+        }
+      } catch (error) {
+        // If getHttpServer fails, try to get port from app instance
+        const appWithPort = appInstance as IWebServerBuilder & {
+          port?: number;
+        };
+        if (appWithPort.port !== undefined) {
+          actualPort = appWithPort.port;
+        }
+      }
+    } else {
+      // Fallback: try to get port from app instance directly
+      const appWithPort = appInstance as IWebServerBuilder & {
+        port?: number;
+      };
+      if (appWithPort.port !== undefined) {
+        actualPort = appWithPort.port;
+      }
+    }
+
+    // Store HTTP server reference for cleanup
+    if (httpServer) {
+      testApp.setHttpServer(httpServer);
+    }
 
     // Track active test apps for cleanup
     activeTestApps.push(testApp);

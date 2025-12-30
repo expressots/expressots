@@ -6,6 +6,10 @@ import { Logger } from "../provider/logger/logger.provider";
 import fs from "fs";
 import path from "path";
 
+// Note: Path resolution is auto-initialized in core/src/index.ts as a side effect
+// when the @expressots/core module is first imported. This happens BEFORE
+// bootstrap() is called, ensuring path aliases work in production.
+
 /**
  * Common environment names used in ExpressoTS applications.
  * @public API
@@ -236,6 +240,162 @@ export interface EnvironmentFileConfig {
    */
   skipFileLoading?: boolean;
 }
+
+/**
+ * Options for loadEnvSync().
+ * @public API
+ */
+export interface LoadEnvSyncOptions {
+  /**
+   * Custom mapping of environment names to .env file names.
+   * @default Uses convention: `.env.{currentEnvironment}`
+   */
+  files?: EnvironmentFileMap;
+
+  /**
+   * Force reload even if already loaded.
+   * Useful for hot reload scenarios.
+   * @default false
+   */
+  force?: boolean;
+}
+
+/**
+ * Synchronously load .env files BEFORE defineConfig() resolves.
+ *
+ * Call this at the top of your config file to ensure environment variables
+ * are available when defineConfig() runs.
+ *
+ * @param options - Environment file configuration
+ *
+ * @example
+ * ```typescript
+ * // config.ts
+ * import { defineConfig, Env, loadEnvSync } from "@expressots/core";
+ *
+ * // Load .env files first
+ * loadEnvSync({
+ *   files: {
+ *     development: ".env.dev",
+ *     production: ".env.prod",
+ *   },
+ * });
+ *
+ * // Now defineConfig() will read from loaded .env files
+ * export const appConfig = defineConfig({
+ *   server: {
+ *     port: Env.port("PORT", { default: 3000 }),
+ *   },
+ * });
+ * ```
+ *
+ * @public API
+ */
+export function loadEnvSync(options?: LoadEnvSyncOptions): void {
+  // Skip if already loaded (unless force reload)
+  if (process.env._EXPRESSOTS_ENV_LOADED === "true" && !options?.force) {
+    return;
+  }
+
+  // Determine current environment
+  const currentEnvironment = process.env.NODE_ENV ?? "development";
+
+  // Determine the file name for current environment
+  const envFileName =
+    options?.files?.[currentEnvironment] ?? `.env.${currentEnvironment}`;
+
+  // Load optional base files first (they get overridden by environment-specific file)
+  // Use override: true to ensure new values overwrite existing ones (important for hot reload)
+  const optionalFiles = [".env", ".env.local", `${envFileName}.local`];
+  for (const file of optionalFiles) {
+    try {
+      if (fs.existsSync(file)) {
+        config({ path: file, override: true });
+      }
+    } catch {
+      // Silently skip optional files
+    }
+  }
+
+  // Load the environment-specific file
+  if (fs.existsSync(envFileName)) {
+    config({ path: envFileName, override: true });
+  }
+
+  // Mark as loaded
+  process.env._EXPRESSOTS_ENV_LOADED = "true";
+}
+
+/**
+ * Config object shape that can be passed directly to bootstrap().
+ * This allows config objects from defineConfig() to be used directly.
+ *
+ * The config object must have at least the required properties (app.name, app.version,
+ * app.environment, server.port), but can have additional properties (like logging,
+ * server.host, etc.) which will be ignored.
+ *
+ * @layer public
+ * @audience application-developers
+ *
+ * @example
+ * ```typescript
+ * const config = defineConfig({
+ *   app: {
+ *     name: Env.string("APP_NAME", { default: "My App" }),
+ *     version: Env.string("APP_VERSION", { default: "1.0.0" }),
+ *     environment: Env.enum("NODE_ENV", ["development", "production"])
+ *   },
+ *   server: {
+ *     port: Env.port("PORT", { default: 3000 })
+ *   },
+ *   bootstrap: {
+ *     envFileConfig: {
+ *       autoCreateTemplate: true,
+ *       files: {
+ *         development: ".env.dev",
+ *         production: ".env.prod"
+ *       }
+ *     }
+ *   }
+ * });
+ *
+ * // Pass config directly to bootstrap - extra properties are ignored!
+ * bootstrap(App, config.values);
+ * ```
+ *
+ * @public API
+ */
+export type BootstrapConfig = {
+  /**
+   * Application metadata (required).
+   */
+  app: {
+    /** Application name */
+    name: string;
+    /** Application version */
+    version: string;
+    /** Current environment */
+    environment: EnvironmentName;
+  };
+  /**
+   * Server configuration (required).
+   */
+  server: {
+    /** Server port */
+    port: number;
+    // Additional server properties are allowed but ignored
+    [key: string]: unknown;
+  };
+  /**
+   * Bootstrap-specific configuration (optional).
+   */
+  bootstrap?: {
+    /** Environment file configuration */
+    envFileConfig?: EnvironmentFileConfig;
+  };
+  // Additional top-level properties are allowed but ignored
+  [key: string]: unknown;
+};
 
 /**
  * Bootstrap options for application startup.
@@ -1075,24 +1235,135 @@ async function readPackageJson(): Promise<{ name?: string; version?: string }> {
  *
  * @public API
  */
+
+/**
+ * Type guard to check if argument is BootstrapConfig.
+ * Detects config objects by checking for the required structure.
+ * @internal
+ */
+function isBootstrapConfig(
+  arg: BootstrapOptions | BootstrapConfig | undefined,
+): arg is BootstrapConfig {
+  if (!arg || typeof arg !== "object") return false;
+
+  // Check if it has BootstrapOptions properties (direct options)
+  if ("appName" in arg || "port" in arg || "currentEnvironment" in arg) {
+    // If it has BootstrapOptions properties but NOT config structure, it's BootstrapOptions
+    if (!("app" in arg && "server" in arg)) {
+      return false;
+    }
+  }
+
+  // Check for config structure
+  return (
+    "app" in arg &&
+    "server" in arg &&
+    typeof arg.app === "object" &&
+    arg.app !== null &&
+    typeof arg.server === "object" &&
+    arg.server !== null &&
+    "name" in arg.app &&
+    "version" in arg.app &&
+    "environment" in arg.app &&
+    "port" in arg.server
+  );
+}
+
+/**
+ * Transform BootstrapConfig to BootstrapOptions.
+ * @internal
+ */
+function transformConfigToOptions(config: BootstrapConfig): BootstrapOptions {
+  return {
+    appName: config.app.name,
+    appVersion: config.app.version,
+    port: config.server.port,
+    currentEnvironment: config.app.environment,
+    envFileConfig: config.bootstrap?.envFileConfig,
+  };
+}
+
+/**
+ * Bootstrap with BootstrapOptions (existing behavior).
+ */
 export async function bootstrap(
   AppClass: new () => IWebServer,
-  options?: BootstrapOptions,
+  options: BootstrapOptions,
+): Promise<IWebServerPublic>;
+
+/**
+ * Bootstrap with config object (new convenience overload).
+ */
+export async function bootstrap(
+  AppClass: new () => IWebServer,
+  config: BootstrapConfig,
+): Promise<IWebServerPublic>;
+
+/**
+ * Bootstrap with no options (zero-config).
+ */
+export async function bootstrap(
+  AppClass: new () => IWebServer,
+): Promise<IWebServerPublic>;
+
+/**
+ * Implementation.
+ */
+export async function bootstrap(
+  AppClass: new () => IWebServer,
+  optionsOrConfig?: BootstrapOptions | BootstrapConfig,
 ): Promise<IWebServerPublic> {
   let logger: Logger | undefined;
 
-  try {
-    // STEP 1: Detect current environment
-    const currentEnvironment =
-      options?.currentEnvironment ?? process.env.NODE_ENV ?? "development";
+  // Note: Path resolution is auto-initialized as a side effect when
+  // @expressots/core is imported (see core/src/index.ts).
+  // This happens BEFORE bootstrap() runs, ensuring path aliases work.
 
-    // STEP 2: Smart Environment Loading & Validation
-    // Only ONE file is loaded - the file for the current environment
-    const envResult = await loadAndValidateEnvironment(
+  // STEP 0: Load .env files FIRST (before config resolution)
+  // This ensures config reads from .env files when it resolves
+  let envFileConfig: EnvironmentFileConfig | undefined;
+  let currentEnvironment: string;
+  let envResult: EnvironmentResult;
+
+  if (isBootstrapConfig(optionsOrConfig)) {
+    // Extract envFileConfig from config structure (static values, no resolution needed)
+    envFileConfig = optionsOrConfig.bootstrap?.envFileConfig;
+
+    // Determine environment: Use NODE_ENV first, then fallback to config
+    // We load .env files first to minimize impact of config resolution
+    currentEnvironment = process.env.NODE_ENV ?? "development";
+
+    // Load .env files BEFORE config resolution
+    envResult = await loadAndValidateEnvironment(
       currentEnvironment,
-      options?.envFileConfig,
+      envFileConfig,
     );
 
+    // Now transform config (it will read from loaded .env files)
+    // This may trigger config resolution, but .env files are already loaded
+  } else {
+    // BootstrapOptions - no config to resolve
+    currentEnvironment =
+      optionsOrConfig?.currentEnvironment ??
+      process.env.NODE_ENV ??
+      "development";
+    envFileConfig = optionsOrConfig?.envFileConfig;
+
+    // Load .env files
+    envResult = await loadAndValidateEnvironment(
+      currentEnvironment,
+      envFileConfig,
+    );
+  }
+
+  // Transform config to BootstrapOptions if needed (after .env files are loaded)
+  const options: BootstrapOptions | undefined = isBootstrapConfig(
+    optionsOrConfig,
+  )
+    ? transformConfigToOptions(optionsOrConfig)
+    : optionsOrConfig;
+
+  try {
     // Show helpful feedback
     if (envResult.createdTemplates && envResult.createdTemplates.length > 0) {
       if (envResult.createdTemplates.length === 1) {

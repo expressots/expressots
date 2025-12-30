@@ -1,3 +1,9 @@
+/**
+ * ExpressoTS Core
+ *
+ * @packageDocumentation
+ */
+
 export * from "./application";
 export * from "./config";
 export * from "./console";
@@ -13,3 +19,10 @@ export * from "./provider";
 export * from "./di/inversify";
 export * from "./authorization";
 export * from "./testing";
+
+/**
+ * Path resolution utilities (for advanced use cases)
+ * Note: Path aliases are automatically resolved at build time by the CLI.
+ * These exports are available for manual/advanced scenarios only.
+ */
+export { initializePathResolution } from "./path-resolver";

@@ -353,3 +353,5 @@ describe("LogQuery", () => {
     });
   });
 });
+
+

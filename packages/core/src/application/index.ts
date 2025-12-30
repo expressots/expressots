@@ -4,7 +4,10 @@ export { ServerEnvironment } from "./application.types";
 export {
   bootstrap,
   BootstrapOptions,
+  BootstrapConfig,
   EnvironmentName,
   EnvironmentFileMap,
   EnvironmentFileConfig,
+  loadEnvSync,
+  LoadEnvSyncOptions,
 } from "./bootstrap";

@@ -168,8 +168,9 @@ class ConfigInstance<T extends Record<string, unknown>>
       ...options,
     };
 
-    // Resolve immediately
-    this._resolve();
+    // Lazy resolution: Don't resolve immediately
+    // Resolution happens when .values is accessed for the first time
+    // This allows bootstrap() to load .env files before config is resolved
   }
 
   /**
@@ -274,7 +275,10 @@ class ConfigInstance<T extends Record<string, unknown>>
    * Get validation errors.
    */
   getErrors(): Array<ConfigValidationError> {
-    return this._resolved?.errors ?? [];
+    if (!this._resolved) {
+      this._resolve();
+    }
+    return this._resolved!.errors;
   }
 
   /**
@@ -306,7 +310,10 @@ class ConfigInstance<T extends Record<string, unknown>>
    * Get all config as plain object (secrets redacted).
    */
   toObject(): Record<string, unknown> {
-    return this._redactSecrets(this._resolved?.values ?? {});
+    if (!this._resolved) {
+      this._resolve();
+    }
+    return this._redactSecrets(this._resolved!.values);
   }
 
   /**
@@ -428,7 +435,10 @@ class ConfigInstance<T extends Record<string, unknown>>
    * Get list of all environment variables used.
    */
   getEnvVars(): Array<string> {
-    return this._resolved?.fields.map((f) => f.field.envVar) ?? [];
+    if (!this._resolved) {
+      this._resolve();
+    }
+    return this._resolved!.fields.map((f) => f.field.envVar);
   }
 
   /**

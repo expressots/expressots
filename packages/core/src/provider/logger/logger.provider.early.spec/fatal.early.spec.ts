@@ -70,3 +70,5 @@ describe("Logger.fatal()", () => {
     );
   });
 });
+
+
