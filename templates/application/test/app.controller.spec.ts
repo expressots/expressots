@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 import {
     createTestApp,
     setupExpressoTSMatchers,
@@ -15,22 +13,21 @@ describe("AppController", () => {
     let testApp: TestAppResult;
 
     beforeAll(async () => {
-        // Zero-config test app creation
         testApp = await createTestApp(App, {
             env: {
                 NODE_ENV: "test",
             },
+            autoCleanup: false,
         });
     });
 
     afterAll(async () => {
-        // Clean up test app
         await testApp.cleanup();
     });
 
     describe("GET /", () => {
         it("should return welcome message", async () => {
-            const response = await testApp.request
+            await testApp.request
                 .get("/")
                 .expectStatus(200)
                 .expectBody("Hello from ExpressoTS!")

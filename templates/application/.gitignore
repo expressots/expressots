@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+*.tsbuildinfo
 
 # Environment files (except examples)
 .env
@@ -27,4 +28,3 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
-
