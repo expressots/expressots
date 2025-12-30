@@ -2,6 +2,7 @@ import {
 	anyCaseToCamelCase,
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
+	anyCaseToUpperSnakeCase,
 } from "./string-utils";
 import * as nodePath from "node:path";
 import fs from "fs";
@@ -23,12 +24,21 @@ import {
 import { ExpressoConfig } from "@expressots/shared";
 
 /**
+ * Additional options for v4.0 schematics
+ */
+type V4Options = {
+	event?: string;
+	priority?: number;
+};
+
+/**
  * Process commands for opinionated service scaffolding
  * @param schematic - Resource to scaffold
  * @param target - Target path
  * @param method - HTTP method
  * @param expressoConfig - Expresso configuration [expressots.config.ts]
  * @param pathStyle - Path command style [sugar, nested, single]
+ * @param v4Options - Additional options for v4.0 schematics
  * @returns
  */
 export async function opinionatedProcess(
@@ -37,6 +47,7 @@ export async function opinionatedProcess(
 	method: string,
 	expressoConfig: ExpressoConfig,
 	pathStyle: string,
+	v4Options: V4Options = {},
 ): Promise<string> {
 	const f: FileOutput = await validateAndPrepareFile({
 		schematic,
@@ -176,6 +187,36 @@ export async function opinionatedProcess(
 				f.path,
 			);
 			await printGenerateSuccess(schematic, f.file);
+			break;
+		// NEW v4.0 schematics
+		case "interceptor":
+			await generateInterceptor(
+				f.outputPath,
+				f.className,
+				v4Options.priority ?? 10,
+			);
+			await printGenerateSuccess("interceptor", f.file);
+			break;
+		case "event":
+			await generateEvent(f.outputPath, f.className);
+			await printGenerateSuccess("event", f.file);
+			break;
+		case "handler":
+			await generateHandler(
+				f.outputPath,
+				f.className,
+				v4Options.event ?? "MyEvent",
+				v4Options.priority ?? 10,
+			);
+			await printGenerateSuccess("handler", f.file);
+			break;
+		case "guard":
+			await generateGuard(f.outputPath, f.className);
+			await printGenerateSuccess("guard", f.file);
+			break;
+		case "config":
+			await generateConfig(f.outputPath, f.className, f.moduleName);
+			await printGenerateSuccess("config", f.file);
 			break;
 	}
 
@@ -671,6 +712,108 @@ async function generateModule(
 				className,
 				moduleName: anyCaseToPascalCase(moduleName),
 				path,
+			},
+		},
+	});
+}
+
+// NEW v4.0 Schematic Generators
+
+/**
+ * Generate an interceptor
+ */
+async function generateInterceptor(
+	outputPath: string,
+	className: string,
+	priority: number,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/opinionated/interceptor.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+				priority: priority.toString(),
+			},
+		},
+	});
+}
+
+/**
+ * Generate an event
+ */
+async function generateEvent(
+	outputPath: string,
+	className: string,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/opinionated/event.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+			},
+		},
+	});
+}
+
+/**
+ * Generate an event handler
+ */
+async function generateHandler(
+	outputPath: string,
+	className: string,
+	eventName: string,
+	priority: number,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/opinionated/handler.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+				eventName: anyCaseToPascalCase(eventName),
+				eventPath: `./${anyCaseToKebabCase(eventName)}.event`,
+				priority: priority.toString(),
+			},
+		},
+	});
+}
+
+/**
+ * Generate a guard
+ */
+async function generateGuard(
+	outputPath: string,
+	className: string,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/opinionated/guard.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+			},
+		},
+	});
+}
+
+/**
+ * Generate a config module
+ */
+async function generateConfig(
+	outputPath: string,
+	className: string,
+	moduleName: string,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/opinionated/config.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+				moduleName: anyCaseToCamelCase(moduleName || className),
+				envPrefix: anyCaseToUpperSnakeCase(className),
 			},
 		},
 	});

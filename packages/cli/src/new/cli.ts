@@ -22,7 +22,7 @@ const commandOptions = (yargs: Argv): Argv => {
 		.option("template", {
 			describe: "The project template to use",
 			type: "string",
-			choices: ["opinionated", "non-opinionated", "micro"],
+			choices: ["application", "micro"],
 			alias: "t",
 		})
 		.option("package-manager", {
@@ -41,12 +41,12 @@ const commandOptions = (yargs: Argv): Argv => {
 };
 
 const checkNodeVersion = (): void => {
-	const minVersion = "18.0.0";
-	const maxVersion = "22.5.1";
+	const minVersion = "20.0.0";
+	const maxVersion = "24.0.0";
 	const currentVersion = process.version;
 
 	if (!semver.satisfies(currentVersion, `>=${minVersion} <=${maxVersion}`)) {
-		const msg: string = `Node.js version [${chalk.bold(chalk.white(currentVersion))}] is not tested. Please use a version between ${minVersion} and ${maxVersion}.`;
+		const msg: string = `Node.js version [${chalk.bold(chalk.white(currentVersion))}] is not fully tested. Recommended: v20.x or v22.x LTS.`;
 		printWarning(msg);
 	}
 };

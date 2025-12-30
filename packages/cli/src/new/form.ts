@@ -10,6 +10,9 @@ import { centerText } from "../utils/center-text";
 import { changePackageName } from "../utils/change-package-info";
 import { printError } from "../utils/cli-ui";
 
+/**
+ * Install dependencies using the selected package manager
+ */
 async function packageManagerInstall({
 	packageManager,
 	directory,
@@ -46,11 +49,7 @@ async function packageManagerInstall({
 		// Handle stdout for meaningful output or progress feedback
 		installProcess.stdout?.on("data", (data: Buffer) => {
 			const output = data.toString().trim();
-
-			// Remove all data from || to the end of the line
 			const cleanedOutput = output.replace(/\|\|.*$/g, "");
-
-			// Match and handle npm-specific progress
 			const npmProgressMatch = cleanedOutput.match(
 				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
 			);
@@ -62,23 +61,20 @@ async function packageManagerInstall({
 				);
 				progressBar.update(progress, { doing: task });
 			} else {
-				// Update "task" without changing the progress
 				progressBar.update(progress, { doing: cleanedOutput });
 			}
 		});
 
-		// Handle errors
 		installProcess.on("error", (error) => {
-			clearInterval(interval); // Stop interval on error
+			clearInterval(interval);
 			progressBar.stop();
 			reject(new Error(`Failed to start subprocess: ${error.message}`));
 		});
 
-		// Finalize progress on close
 		installProcess.on("close", (code) => {
-			clearInterval(interval); // Stop interval when the process ends
+			clearInterval(interval);
 			if (code === 0) {
-				progressBar.update(100, { doing: "Complete!" }); // Finalize progress
+				progressBar.update(100, { doing: "Complete!" });
 				progressBar.stop();
 				resolve("Installation Done!");
 			} else {
@@ -93,6 +89,9 @@ async function packageManagerInstall({
 	});
 }
 
+/**
+ * Check if the package manager is installed
+ */
 async function checkIfPackageManagerExists(packageManager: string) {
 	try {
 		execSync(`${packageManager} --version`);
@@ -103,26 +102,39 @@ async function checkIfPackageManagerExists(packageManager: string) {
 	}
 }
 
-function renameEnvFile(directory: string): void {
-	try {
-		const envExamplePath = path.join(directory, ".env.example");
-		const envPath = path.join(directory, ".env");
+/**
+ * Copy directory recursively (for local template testing)
+ */
+function copyDirectorySync(src: string, dest: string): void {
+	if (!fs.existsSync(dest)) {
+		fs.mkdirSync(dest, { recursive: true });
+	}
 
-		if (!fs.existsSync(envExamplePath)) {
-			throw new Error(`File not found: ${envExamplePath}`);
+	const entries = fs.readdirSync(src, { withFileTypes: true });
+
+	for (const entry of entries) {
+		const srcPath = path.join(src, entry.name);
+		const destPath = path.join(dest, entry.name);
+
+		// Skip node_modules and dist directories
+		if (entry.name === "node_modules" || entry.name === "dist") {
+			continue;
 		}
 
-		fs.renameSync(envExamplePath, envPath);
-	} catch (error: any) {
-		printError("Error renaming .env.example file", ".env.example to .env");
-		process.exit(1);
+		if (entry.isDirectory()) {
+			copyDirectorySync(srcPath, destPath);
+		} else {
+			fs.copyFileSync(srcPath, destPath);
+		}
 	}
 }
 
+/**
+ * Template definitions for v4.0
+ */
 enum Template {
-	nonopinionated = "Non-Opinionated :: Start with a clean slate and build your project from scratch.",
-	opinionated = "Opinionated :: Automatically scaffolds resources into a preset project structure. (Recommended)",
-	micro = "Micro :: A minimalistic template for building micro api's.",
+	application = "Application :: Full-featured ExpressoTS application. (Recommended)",
+	micro = "Micro :: A minimalistic template for building micro APIs and serverless functions.",
 }
 
 const enum PackageManager {
@@ -133,9 +145,38 @@ const enum PackageManager {
 }
 
 type TemplateKeys = keyof typeof Template;
-
 type ProjectFormArgs = [PackageManager, TemplateKeys, string];
 
+/**
+ * Template folder mapping
+ */
+const TEMPLATE_FOLDERS: Record<string, string> = {
+	Application: "application",
+	Micro: "micro",
+};
+
+/**
+ * Enable local template mode for testing
+ * Set to true to use local templates instead of GitHub
+ */
+const USE_LOCAL_TEMPLATES = false;
+
+/**
+ * Skip npm install for testing (useful when templates have unpublished dependencies)
+ * Set to true when testing with unpublished package versions
+ */
+const SKIP_INSTALL_FOR_TESTING = false;
+
+/**
+ * Local templates path (relative to CLI installation)
+ * For development: points to the templates folder in the monorepo
+ * For production: this will be replaced with the actual path
+ */
+const LOCAL_TEMPLATES_PATH = path.resolve(__dirname, "../../../templates");
+
+/**
+ * Main project creation form
+ */
 const projectForm = async (
 	projectName: string,
 	args: ProjectFormArgs,
@@ -171,18 +212,22 @@ const projectForm = async (
 				type: "list",
 				name: "packageManager",
 				message: "Package manager",
-				choices: ["npm", "yarn", "pnpm", "bun"],
+				choices: [
+					"npm",
+					"yarn",
+					"pnpm",
+					...(process.platform !== "win32" ? ["bun"] : []),
+				],
 			},
 			{
 				type: "list",
 				name: "template",
 				message: "Select a template",
 				choices: [
-					`Opinionated :: Automatically scaffolds resources into a preset project structure. (${chalk.yellow(
+					`Application :: Full-featured ExpressoTS application. (${chalk.yellow(
 						"Recommended",
 					)})`,
-					"NonOpinionated :: Allows users to choose where to scaffold resources, offering flexible project organization.",
-					"Micro :: A minimalistic template for building micro api's.",
+					"Micro :: A minimalistic template for building micro APIs and serverless functions.",
 				],
 			},
 			{
@@ -202,13 +247,6 @@ const projectForm = async (
 			process.exit(1);
 		}
 	}
-
-	// Hashmap of templates and their directories
-	const templates: Record<string, unknown> = {
-		NonOpinionated: "non_opinionated",
-		Opinionated: "opinionated",
-		Micro: "micro",
-	};
 
 	if (answer.confirm) {
 		// Check if package manager is bun and OS is Windows
@@ -234,17 +272,47 @@ const projectForm = async (
 		);
 
 		progressBar.start(100, 0, {
-			doing: "Cloning project",
+			doing: "Creating project",
 		});
 
-		const [_, template] = answer.template.match(/(.*) ::/) as Array<string>;
-
-		const repo: string = `expressots/templates/${templates[template]}#${BUNDLE_VERSION}`;
+		// Extract template name from selection
+		const [_, templateName] = answer.template.match(
+			/(.*) ::/,
+		) as Array<string>;
+		const templateFolder = TEMPLATE_FOLDERS[templateName];
 
 		try {
-			const emitter = degit(repo);
+			if (USE_LOCAL_TEMPLATES) {
+				// LOCAL TEMPLATE MODE (for testing)
+				const localTemplatePath = path.join(
+					LOCAL_TEMPLATES_PATH,
+					templateFolder,
+				);
 
-			await emitter.clone(answer.name);
+				if (!fs.existsSync(localTemplatePath)) {
+					progressBar.stop();
+					printError(
+						`Local template not found at: ${localTemplatePath}`,
+						"Please check your templates folder",
+					);
+					process.exit(1);
+				}
+
+				// Create target directory
+				fs.mkdirSync(answer.name, { recursive: true });
+
+				// Copy template files
+				copyDirectorySync(localTemplatePath, answer.name);
+
+				progressBar.update(30, { doing: "Template copied" });
+			} else {
+				// GITHUB MODE (production)
+				// Download latest from feature/v4.0 branch
+				const repo: string = `expressots/templates/${templateFolder}#feature/v4.0`;
+				const emitter = degit(repo);
+				await emitter.clone(answer.name);
+				progressBar.update(30, { doing: "Template cloned" });
+			}
 		} catch (err: any) {
 			console.log("\n");
 			printError(
@@ -254,15 +322,21 @@ const projectForm = async (
 			process.exit(1);
 		}
 
-		progressBar.update(50, {
-			doing: "Installing dependencies",
-		});
+		if (SKIP_INSTALL_FOR_TESTING) {
+			progressBar.update(90, {
+				doing: "Skipping install (testing mode)",
+			});
+		} else {
+			progressBar.update(50, {
+				doing: "Installing dependencies",
+			});
 
-		await packageManagerInstall({
-			packageManager: answer.packageManager,
-			directory: answer.name,
-			progressBar,
-		});
+			await packageManagerInstall({
+				packageManager: answer.packageManager,
+				directory: answer.name,
+				progressBar,
+			});
+		}
 
 		progressBar.update(90);
 
@@ -272,7 +346,6 @@ const projectForm = async (
 		});
 
 		progressBar.update(100);
-
 		progressBar.stop();
 
 		console.log("\n");

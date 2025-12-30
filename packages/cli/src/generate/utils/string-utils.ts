@@ -65,3 +65,15 @@ export function anyCaseToLowerCase(str: string): string {
 		.replace(/[-_]+(.)?/g, (_, char) => (char ? char.toLowerCase() : ""))
 		.toLowerCase();
 }
+
+/**
+ * Converts a string from any case (camelCase, PascalCase, kebab-case, snake_case) to UPPER_SNAKE_CASE.
+ * @param str - The input string to be converted.
+ * @returns The converted string in UPPER_SNAKE_CASE.
+ */
+export function anyCaseToUpperSnakeCase(str: string): string {
+	return str
+		.replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+		.replace(/[-]+/g, "_")
+		.toUpperCase();
+}

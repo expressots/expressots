@@ -74,7 +74,10 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 	}
 
 	if (opinionated) {
-		const folderSchematic = schematicFolder(fp.schematic);
+		const folderSchematic = schematicFolder(
+			fp.schematic,
+			scaffoldSchematics,
+		);
 
 		const folderToScaffold = `${sourceRoot}/${folderSchematic}`;
 		const { path, file, className, moduleName, modulePath } =
@@ -295,30 +298,48 @@ export const writeTemplate = ({
 };
 
 /**
- * Returns the folder where the schematic should be placed
- * @param schematic
+ * Default folder mappings for opinionated scaffolding
  */
-export const schematicFolder = (schematic: string): string | undefined => {
-	switch (schematic) {
-		case "usecase":
-			return "useCases";
-		case "controller":
-			return "useCases";
-		case "dto":
-			return "useCases";
-		case "service":
-			return "useCases";
-		case "provider":
-			return "providers";
-		case "entity":
-			return "entities";
-		case "middleware":
-			return "providers/middlewares";
-		case "module":
-			return "useCases";
+const DEFAULT_SCHEMATIC_FOLDERS: Record<string, string> = {
+	usecase: "useCases",
+	controller: "useCases",
+	dto: "useCases",
+	service: "useCases",
+	provider: "providers",
+	entity: "entities",
+	middleware: "middleware",
+	module: "useCases",
+	// NEW v4.0 schematics
+	interceptor: "interceptors",
+	event: "events",
+	handler: "events",
+	guard: "guards",
+	config: "config",
+};
+
+/**
+ * Returns the folder where the schematic should be placed.
+ * Uses scaffoldSchematics from config if defined, otherwise falls back to defaults.
+ *
+ * @param schematic - The schematic type (usecase, controller, etc.)
+ * @param scaffoldSchematics - Custom folder mappings from expressots.config.ts
+ * @returns The folder path for the schematic
+ */
+export const schematicFolder = (
+	schematic: string,
+	scaffoldSchematics?: ExpressoConfig["scaffoldSchematics"],
+): string | undefined => {
+	// Check if custom mapping is defined in config
+	if (scaffoldSchematics) {
+		const customFolder =
+			scaffoldSchematics[schematic as keyof typeof scaffoldSchematics];
+		if (customFolder) {
+			return customFolder;
+		}
 	}
 
-	return undefined;
+	// Fall back to default mappings
+	return DEFAULT_SCHEMATIC_FOLDERS[schematic];
 };
 
 /**

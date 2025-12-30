@@ -88,7 +88,7 @@ async function buildDevArgs(
 		"--signal",
 		"SIGTERM", // Use SIGTERM for graceful shutdown
 		"--delay",
-		"500ms", // Debounce rapid file changes
+		"1000ms", // Debounce rapid file changes (allow time for port release)
 		"--watch",
 		"src",
 		"--ext",
@@ -204,23 +204,137 @@ const compileTypescript = async () => {
 };
 
 /**
+ * Transform path aliases to relative paths in compiled JavaScript files.
+ * This runs after TypeScript compilation to ensure production builds work
+ * without runtime path resolution.
+ *
+ * @param outDir - The output directory (e.g., "./dist")
+ */
+const transformPathAliases = async (outDir: string): Promise<void> => {
+	const tsconfigPath = join(process.cwd(), "tsconfig.build.json");
+
+	if (!existsSync(tsconfigPath)) {
+		return; // No tsconfig.build.json, skip transformation
+	}
+
+	const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf-8"));
+	const paths = tsconfig.compilerOptions?.paths;
+	const baseUrl = tsconfig.compilerOptions?.baseUrl;
+
+	if (!paths || !baseUrl) {
+		return; // No path aliases defined, skip
+	}
+
+	// Build regex patterns for each alias
+	const aliasPatterns: Array<{
+		pattern: RegExp;
+		alias: string;
+		target: string;
+	}> = [];
+
+	for (const [alias, targets] of Object.entries(paths)) {
+		if (!Array.isArray(targets) || targets.length === 0) continue;
+
+		// Convert @alias/* to regex pattern
+		// Matches: require("@alias/something") or require('@alias/something')
+		const aliasBase = alias.replace("/*", "");
+		const targetBase = (targets[0] as string).replace("/*", "");
+
+		// Pattern to match require("@alias/...") or require('@alias/...')
+		const pattern = new RegExp(
+			`require\\(["']${aliasBase.replace("@", "\\@")}/([^"']+)["']\\)`,
+			"g",
+		);
+
+		aliasPatterns.push({
+			pattern,
+			alias: aliasBase,
+			target: targetBase,
+		});
+	}
+
+	if (aliasPatterns.length === 0) {
+		return;
+	}
+
+	// Recursively find all .js files in outDir
+	const findJsFiles = async (dir: string): Promise<Array<string>> => {
+		const files: Array<string> = [];
+		const entries = await fs.readdir(dir, { withFileTypes: true });
+
+		for (const entry of entries) {
+			const fullPath = join(dir, entry.name);
+			if (entry.isDirectory()) {
+				files.push(...(await findJsFiles(fullPath)));
+			} else if (entry.name.endsWith(".js")) {
+				files.push(fullPath);
+			}
+		}
+
+		return files;
+	};
+
+	const jsFiles = await findJsFiles(outDir);
+	let transformedCount = 0;
+
+	for (const file of jsFiles) {
+		let content = await fs.readFile(file, "utf-8");
+		let modified = false;
+
+		// Get the directory of the current file relative to outDir
+		const fileDir = path.dirname(file);
+
+		for (const { pattern, alias, target } of aliasPatterns) {
+			// Calculate the relative path from this file to the target
+			const targetDir = join(outDir, baseUrl.replace("./", ""), target);
+			let relativePath = path.relative(fileDir, targetDir);
+
+			// Ensure it starts with ./ or ../
+			if (!relativePath.startsWith(".")) {
+				relativePath = "./" + relativePath;
+			}
+
+			// Replace Windows backslashes with forward slashes
+			relativePath = relativePath.replace(/\\/g, "/");
+
+			// Replace the alias with the relative path
+			const newContent = content.replace(pattern, (match, subPath) => {
+				modified = true;
+				return `require("${relativePath}/${subPath}")`;
+			});
+
+			if (newContent !== content) {
+				content = newContent;
+			}
+		}
+
+		if (modified) {
+			await fs.writeFile(file, content, "utf-8");
+			transformedCount++;
+		}
+	}
+
+	if (transformedCount > 0) {
+		printSuccess(
+			`Path aliases resolved in ${transformedCount} files`,
+			"transform-paths",
+		);
+	}
+};
+
+/**
  * Helper function to copy files to the dist directory
  */
 const copyFiles = async (outDir: string) => {
-	const { opinionated } = await Compiler.loadConfig();
-	let filesToCopy: Array<string> = [];
-	if (opinionated) {
-		filesToCopy = [
-			"./register-path.js",
-			"tsconfig.build.json",
-			"package.json",
-		];
-	} else {
-		filesToCopy = ["tsconfig.json", "package.json"];
+	// Only copy package.json - path aliases are resolved at build time
+	// No need for tsconfig files or register-path.js in production
+	const filesToCopy = ["package.json"];
+
+	for (const file of filesToCopy) {
+		if (existsSync(file)) {
+			await fs.copyFile(file, join(outDir, path.basename(file)));
+		}
 	}
-	filesToCopy.forEach((file) => {
-		fs.copyFile(file, join(outDir, path.basename(file)));
-	});
 };
 
 /**
@@ -269,6 +383,10 @@ export const runCommand = async ({
 				}
 				await cleanDist(outDir);
 				await compileTypescript();
+				// Transform path aliases to relative paths for production
+				if (opinionated) {
+					await transformPathAliases(outDir);
+				}
 				await copyFiles(outDir);
 				break;
 			case "prod": {
@@ -281,12 +399,11 @@ export const runCommand = async ({
 				}
 
 				let config: Array<string> = [];
+
+				// ✅ NEW: Simplified - no more register-path.js
+				// Path resolution is now built-in to @expressots/core
 				if (opinionated) {
-					config = [
-						"-r",
-						`./${outDir}/register-path.js`,
-						`./${outDir}/src/${entryPoint}.js`,
-					];
+					config = [`./${outDir}/src/${entryPoint}.js`];
 				} else {
 					config = [`./${outDir}/${entryPoint}.js`];
 				}

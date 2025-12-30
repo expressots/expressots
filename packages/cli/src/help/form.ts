@@ -12,11 +12,13 @@ const helpForm = async (): Promise<void> => {
 	});
 
 	table.push(
-		["new project", "new", "Generate a new project"],
+		// Project commands
+		["new project", "new", "Generate a new project (application or micro)"],
 		["info", "i", "Provides project information"],
 		["resources", "r", "Displays cli commands and resources"],
 		["scripts", "scripts", "Run scripts list or specific scripts"],
 		["help", "h", "Show command help"],
+		// Core schematics
 		[
 			"service",
 			"g s",
@@ -26,6 +28,15 @@ const helpForm = async (): Promise<void> => {
 		["usecase", "g u", "Generate a usecase"],
 		["dto", "g d", "Generate a dto"],
 		["entity", "g e", "Generate an entity"],
+		["module", "g mo", "Generate a module"],
+		["middleware", "g mi", "Generate a middleware"],
+		// v4.0 schematics
+		["interceptor", "g i", "Generate an interceptor (--priority)"],
+		["event", "g ev", "Generate a type-safe event"],
+		["handler", "g h", "Generate an event handler (--event, --priority)"],
+		["guard", "g gu", "Generate an authorization guard"],
+		["config", "g cfg", "Generate a config module"],
+		// Provider commands
 		["provider", "g p", "Generate internal provider"],
 		[
 			"provider",
@@ -34,8 +45,6 @@ const helpForm = async (): Promise<void> => {
 		],
 		["provider", "remove", "Remove provider from the project"],
 		["provider", "create", "Create external provider"],
-		["module", "g mo", "Generate a module"],
-		["middleware", "g mi", "Generate a middleware"],
 	);
 	console.log(
 		chalk.bold.white("ExpressoTS:", `${chalk.green("Resources List")}`),

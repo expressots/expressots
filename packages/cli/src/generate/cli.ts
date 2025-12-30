@@ -22,6 +22,17 @@ const coerceSchematicAliases = (arg: string) => {
 			return "module";
 		case "mi":
 			return "middleware";
+		// NEW v4.0 schematics
+		case "i":
+			return "interceptor";
+		case "ev":
+			return "event";
+		case "h":
+			return "handler";
+		case "gu":
+			return "guard";
+		case "cfg":
+			return "config";
 		default:
 			return arg;
 	}
@@ -43,6 +54,12 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 					"entity",
 					"module",
 					"middleware",
+					// NEW v4.0 schematics
+					"interceptor",
+					"event",
+					"handler",
+					"guard",
+					"config",
 				] as const,
 				describe: "The schematic to generate",
 				type: "string",
@@ -62,10 +79,23 @@ const generateProject = (): CommandModule<CommandModuleArgs, any> => {
 				alias: "m",
 			});
 
+			// NEW: Options for v4.0 schematics
+			yargs.option("event", {
+				describe: "Event class name for handler generation",
+				type: "string",
+			});
+
+			yargs.option("priority", {
+				describe:
+					"Priority for interceptors/handlers (lower = earlier execution)",
+				type: "number",
+				default: 10,
+			});
+
 			return yargs;
 		},
-		handler: async ({ schematic, path, method }) => {
-			await createTemplate({ schematic, path, method });
+		handler: async ({ schematic, path, method, event, priority }) => {
+			await createTemplate({ schematic, path, method, event, priority });
 		},
 	};
 };
