@@ -3,7 +3,7 @@ import { controller, Get } from "@expressots/adapter-express";
 @controller("/")
 export class AppController {
     @Get("/")
-    execute(): string {
+    execute() {
         return "Hello from ExpressoTS!";
     }
 }
