@@ -1,38 +1,38 @@
 {
-  "name": "expressots-app",
-  "version": "1.0.0",
-  "description": "ExpressoTS Application",
-  "author": "",
-  "license": "MIT",
-  "main": "dist/src/main.js",
-  "scripts": {
-    "dev": "expressots dev",
-    "build": "expressots build",
-    "prod": "expressots prod",
-    "test": "jest --runInBand",
-    "test:watch": "jest --watchAll",
-    "test:cov": "jest --coverage",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint": "eslint \"src/**/*.ts\" --fix"
-  },
-  "dependencies": {
-    "@expressots/adapter-express": "^4.0.0-beta.1",
-    "@expressots/core": "^4.0.0-beta.1",
-    "express": "^5.0.1",
-    "reflect-metadata": "^0.2.2"
-  },
-  "devDependencies": {
-    "@expressots/cli": "^2.0.0",
-    "@expressots/shared": "^1.5.0",
-    "@types/express": "^5.0.0",
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.10.2",
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.9",
-    "prettier": "^3.4.2",
-    "ts-jest": "^29.2.5",
-    "tsconfig-paths": "^4.2.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
-  }
+    "name": "expressots-app",
+    "version": "1.0.0",
+    "description": "ExpressoTS Application",
+    "author": "",
+    "license": "MIT",
+    "main": "dist/src/main.js",
+    "scripts": {
+        "dev": "expressots dev",
+        "build": "expressots build",
+        "prod": "expressots prod",
+        "test": "jest --runInBand",
+        "test:watch": "jest --watchAll",
+        "test:cov": "jest --coverage",
+        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "lint": "eslint \"src/**/*.ts\" --fix"
+    },
+    "dependencies": {
+        "@expressots/adapter-express": "4.0.0-beta.1",
+        "@expressots/core": "4.0.0-beta.1",
+        "express": "5.2.1",
+        "reflect-metadata": "0.2.2"
+    },
+    "devDependencies": {
+        "@expressots/cli": "4.0.0-beta.1",
+        "@expressots/shared": "4.0.0-beta.1",
+        "@types/express": "5.0.0",
+        "@types/jest": "29.5.14",
+        "@types/node": "22.10.2",
+        "jest": "^29.7.0",
+        "nodemon": "3.1.11",
+        "prettier": "^3.4.2",
+        "ts-jest": "29.2.5",
+        "tsconfig-paths": "^4.2.0",
+        "tsx": "4.19.2",
+        "typescript": "5.7.2"
+    }
 }
