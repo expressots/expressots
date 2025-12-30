@@ -35,5 +35,11 @@ export interface ExpressoConfig {
     module?: string;
     provider?: string;
     middleware?: string;
+    // NEW v4.0 schematics
+    interceptor?: string;
+    event?: string;
+    handler?: string;
+    guard?: string;
+    config?: string;
   };
 }
