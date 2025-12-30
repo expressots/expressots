@@ -87,5 +87,3 @@ describe("Logger log() - transport error handling", () => {
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
 });
-
-

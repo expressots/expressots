@@ -112,5 +112,3 @@ describe("Logger log filters", () => {
     });
   });
 });
-
-

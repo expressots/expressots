@@ -85,5 +85,3 @@ describe("Logger health monitoring methods", () => {
     });
   });
 });
-
-

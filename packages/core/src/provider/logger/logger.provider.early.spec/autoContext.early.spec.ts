@@ -53,5 +53,3 @@ describe("Logger auto context methods", () => {
     });
   });
 });
-
-

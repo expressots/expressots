@@ -209,5 +209,3 @@ describe("Logger query methods", () => {
     });
   });
 });
-
-
