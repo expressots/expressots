@@ -1,74 +1,91 @@
-# Expresso TS
+# ExpressoTS Micro
 
-A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
+A lightweight, minimal ExpressoTS microservice template.
 
-## Philosophy
+## Features
 
-ExpressoTS is a TypeScript lightweight framework for building scalable, readable and maintainable server-side applications. The framework provides a level of abstraction on top of common HTTP server framework Expressjs exposing their API's directly to the developer. This provides freedom and brings to the developer a tool that is well known and easy to use.
+- 🚀 **Minimal Footprint** - Just the essentials for microservices
+- 🔧 **Type-Safe Config** - Environment variables with full TypeScript support
+- ⚡ **Fast Startup** - Optimized for serverless and containers
+- 🧪 **Testing Ready** - Jest configured out of the box
 
-## How to use
-
-### Executing in development mode
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-```
 
-### Generating production build
-
-```bash
+# Build for production
 npm run build
-```
 
-### Executing in production mode
-
-```bash
+# Run in production
 npm run prod
 ```
 
-## Test
+## Project Structure
 
-How to run test scripts
-
-### Unit tests
-
-```bash
-npm run test
+```
+src/
+└── api.ts          # Single file containing all routes and config
 ```
 
-### Test coverage
+## Configuration
 
-```bash
-npm run test:cov
+The micro template uses inline configuration with `defineConfig`:
+
+```typescript
+const config = defineConfig({
+    app: {
+        name: Env.string("APP_NAME", { default: "ExpressoTS Micro" }),
+    },
+    server: {
+        port: Env.number("PORT", { default: 3000 }),
+    },
+});
 ```
 
-## Documentation
+## API Endpoints
 
-- Here is our [Official Documentation](https://expresso-ts.com/)
-- Checkout our [First Steps documentation](https://expresso-ts.com/docs/overview/first-steps)
-- Our [CLI Documentation](https://expresso-ts.com/docs/category/cli)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | / | Service info |
+| GET | /health | Health check |
 
-## Questions
+## Adding Routes
 
-For questions and support please use the Official [Discord Channel](https://discord.com/invite/PyPJfGK). We have a very active community there, that will be happy to help you. Post your questions in the channel called **HELP EXPRESSO TS** and forum called **help**.
+```typescript
+app.Route.get("/users", (req, res) => {
+    res.json({ users: [] });
+});
 
-## Issues
+app.Route.post("/users", (req, res) => {
+    const user = req.body;
+    res.status(201).json(user);
+});
+```
 
-The [Issue Reporting Channel](https://github.com/expressots/expressots/issues) is for bug report and feature request **only**.
+## Environment Variables
 
-Before you create an issue, please make sure you read the [Contribution Guidelines](CONTRIBUTING.md).
+Create a `.env.local` file for development:
 
-## Support the project
+```env
+APP_NAME="My Microservice"
+APP_VERSION="1.0.0"
+PORT=3000
+```
 
-Expresso TS is an MIT-licensed open source project. It's an independent project with ongoing development made possible thanks to your support. If you'd like to help, please consider:
+## Use Cases
 
-- Become a sponsor on **[Sponsor no GitHub](https://github.com/sponsors/expressots)**
-- Follow the **[organization](https://github.com/expressots)** on GitHub and Star ⭐ the project
-- Subscribe to the Twitch channel: **[Richard Zampieri](https://www.twitch.tv/richardzampieri)**
-- Join our **[Discord](https://discord.com/invite/PyPJfGK)**
-- Contribute submitting **[issues and pull requests](https://github.com/expressots/expressots/issues/new/choose)**
-- Share the project with your friends and colleagues
+- Microservices in a distributed system
+- Serverless functions (AWS Lambda, Vercel)
+- Lightweight APIs
+- Proof of concept / prototypes
 
-## License
+## Learn More
 
-ExpressoTS is **[MIT licensed](LICENSE.md)**
+- [ExpressoTS Documentation](https://expresso-ts.com)
+- [GitHub Repository](https://github.com/expressots)
+- [Discord Community](https://discord.gg/PyPJfGK)

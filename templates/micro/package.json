@@ -1,41 +1,38 @@
 {
-    "name": "micro",
+    "name": "expressots-micro",
     "version": "1.0.0",
-    "description": "",
+    "description": "ExpressoTS Microservice",
     "author": "",
-    "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "main": "dist/src/api.js",
     "scripts": {
         "build": "expressots build",
         "dev": "expressots dev",
         "prod": "expressots prod",
-        "test": "jest",
+        "test": "jest --runInBand",
         "test:watch": "jest --watchAll",
         "test:cov": "jest --coverage",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "lint": "eslint \"src/**/*.ts\" --fix"
     },
-    "keywords": [],
     "dependencies": {
-        "@expressots/adapter-express": "3.0.0",
-        "@expressots/core": "3.0.0",
-        "@expressots/shared": "3.0.0"
+        "@expressots/adapter-express": "file:../../adapter-express",
+        "@expressots/core": "file:../../expressots/expressots-core-4.0.0-beta.1.tgz",
+        "express": "^5.2.1",
+        "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
-        "@expressots/cli": "3.0.0",
-        "@types/express": "5.0.0",
-        "@types/jest": "29.5.14",
-        "@types/node": "20.12.7",
-        "@typescript-eslint/eslint-plugin": "8.0.0",
-        "@typescript-eslint/parser": "8.0.0",
-        "eslint": "8.57.0",
-        "eslint-config-prettier": "9.0.0",
-        "eslint-plugin-prettier": "5.0.0",
-        "jest": "29.7.0",
-        "prettier": "3.2.5",
+        "@expressots/cli": "file:../../expressots-cli",
+        "@expressots/shared": "file:../../shared",
+        "@types/express": "^5.0.0",
+        "@types/jest": "^29.5.14",
+        "@types/node": "^22.10.2",
+        "jest": "^29.7.0",
+        "nodemon": "^3.1.11",
+        "prettier": "^3.4.2",
         "supertest": "^7.0.0",
-        "ts-jest": "29.1.2",
-        "tsx": "4.19.2",
-        "typescript": "5.1.3"
+        "ts-jest": "^29.2.5",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.2"
     }
 }

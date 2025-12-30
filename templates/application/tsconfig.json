@@ -2,31 +2,28 @@
     "compilerOptions": {
         "target": "ES2021",
         "module": "commonjs",
-        "lib": ["es2021"],
-        "declaration": false,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
         "removeComments": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "resolveJsonModule": true,
-        "sourceMap": false,
         "outDir": "./dist",
         "rootDir": "./",
         "baseUrl": "./src",
         "paths": {
-            "@entities/*": ["entities/*"],
-            "@providers/*": ["providers/*"],
-            "@repositories/*": ["repositories/*"],
-            "@useCases/*": ["useCases/*"]
+            "@app/*": ["*"]
         },
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
-        "allowJs": true,
         "noImplicitAny": false,
         "strictPropertyInitialization": false,
         "skipLibCheck": true,
         "types": ["node", "jest"]
     },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules", "dist", "test/**/*.ts"]
+    "include": ["src/**/*.ts", "test/**/*.ts"],
+    "exclude": ["node_modules", "dist"]
 }
+
