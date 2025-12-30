@@ -9,9 +9,9 @@
         "dev": "expressots dev",
         "build": "expressots build",
         "prod": "expressots prod",
-        "test": "jest --runInBand --detectOpenHandles",
+        "test": "jest --runInBand",
         "test:watch": "jest --watchAll",
-        "coverage": "jest --coverage --detectOpenHandles",
+        "coverage": "jest --coverage",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix"
     },
