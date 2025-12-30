@@ -612,6 +612,8 @@ export class AppExpress implements Server.IWebServer {
         "adapter-express",
       );
       await this.closeExistingServer();
+
+      this.logger.info("✓ Application reloaded", "adapter-express");
     }
 
     // Remove old signal handlers to prevent duplicates
@@ -845,7 +847,6 @@ export class AppExpress implements Server.IWebServer {
           const pid = parts[parts.length - 1];
 
           if (pid && pid !== String(process.pid) && /^\d+$/.test(pid)) {
-            console.log(`🔪 Killing previous process (PID: ${pid}) on port ${port}...`);
             try {
               await execAsync(`taskkill /F /PID ${pid}`);
               return true;
@@ -862,7 +863,6 @@ export class AppExpress implements Server.IWebServer {
 
           for (const pid of pids) {
             if (pid !== String(process.pid)) {
-              console.log(`🔪 Killing previous process (PID: ${pid}) on port ${port}...`);
               try {
                 await execAsync(`kill -9 ${pid}`);
                 return true;
@@ -917,25 +917,30 @@ export class AppExpress implements Server.IWebServer {
       return true;
     }
 
-    // Port is in use - try to kill the process using it
-    console.log(`⚠️  Port ${port} is in use, attempting to free it for hot-reload...`);
-
-    const killed = await this.killProcessOnPort(port);
+    // Try to kill the process on the port
+    let killed = await this.killProcessOnPort(port);
 
     if (killed) {
       // Wait a moment for the port to be released
-      await this.delay(300);
+      await this.delay(500);
     }
 
-    // Retry a few times to check if port is now available
-    for (let attempt = 1; attempt <= 5; attempt++) {
+    // Retry multiple times to check if port is now available
+    // Hot reload scenarios may need more time for the old process to shut down
+    for (let attempt = 1; attempt <= this.portRetryAttempts; attempt++) {
       if (await this.isPortAvailable(port)) {
-        console.log(`✅ Port ${port} is now available`);
         return true;
       }
 
-      if (attempt < 5) {
-        console.log(`⏳ Waiting for port ${port} to be released... (attempt ${attempt}/5)`);
+      // Try to kill again if still not available (process might be slow to release)
+      if (attempt % 3 === 0) {
+        killed = await this.killProcessOnPort(port);
+        if (killed) {
+          await this.delay(300);
+        }
+      }
+
+      if (attempt < this.portRetryAttempts) {
         await this.delay(this.portRetryDelay);
       }
     }
