@@ -25,7 +25,8 @@
         // Path Mapping
         "baseUrl": "./src",
         "paths": {
-            "@app/*": ["*"]
+            "@useCases/*": ["./useCases/*"],
+            "@controllers/*": ["./controllers/*"]
         },
 
         // Type Checking

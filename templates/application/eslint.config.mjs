@@ -26,6 +26,7 @@ export default tseslint.config(
             ],
             "@typescript-eslint/explicit-function-return-type": "off",
             "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-vars": "off",
             "@typescript-eslint/no-non-null-assertion": "warn",
         },
     },

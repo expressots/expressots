@@ -10,7 +10,12 @@
         "incremental": true,
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "isolatedModules": true,
-        "types": ["node"]
+        "types": ["node"],
+        "baseUrl": ".",
+        "paths": {
+            "@useCases/*": ["./src/useCases/*"],
+            "@controllers/*": ["./src/controllers/*"]
+        }
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules", "dist", "test"]
