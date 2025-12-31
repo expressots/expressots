@@ -10,6 +10,7 @@ import {
   urlencoded,
 } from "express";
 
+import { injectable } from "../di/inversify";
 import defaultErrorHandler from "../error/error-handler-middleware";
 import { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
 import { ExceptionHandlerMiddleware } from "../error/exception-handler-middleware";
@@ -109,6 +110,7 @@ interface IExpressoMiddleware {
  *
  * @public API
  */
+@injectable()
 export abstract class ExpressoMiddleware implements IExpressoMiddleware {
   get name(): string {
     return this.constructor.name;
