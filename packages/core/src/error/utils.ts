@@ -229,7 +229,10 @@ export function beautifyStackTrace(stack: string): string {
   // Error origin (first application frame)
   const origin = appFrames[0] || frames[0];
   writeBoxLine(colorText("[>] Origin:", "yellow", true));
-  writeBoxLine("    " + colorText(truncateText(origin.functionName, CONTENT_WIDTH - 4), "cyan"));
+  writeBoxLine(
+    "    " +
+      colorText(truncateText(origin.functionName, CONTENT_WIDTH - 4), "cyan"),
+  );
 
   // File path - truncate and wrap if needed
   const originLocation = `${origin.filePath}:${origin.lineNumber}:${origin.columnNumber}`;
@@ -241,7 +244,11 @@ export function beautifyStackTrace(stack: string): string {
   // Application Stack Frames
   if (appFrames.length > 0) {
     writeBoxLine(
-      colorText(`[+] Application Stack (${appFrames.length} frames):`, "green", true),
+      colorText(
+        `[+] Application Stack (${appFrames.length} frames):`,
+        "green",
+        true,
+      ),
     );
 
     const maxAppFrames = Math.min(appFrames.length, 5);
