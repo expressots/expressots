@@ -38,11 +38,27 @@ async function packageManagerInstall({
 		});
 
 		// Simulate incremental progress
-		let progress = 0;
+		// Start from 50% (where we left off) and go up to 88% max
+		// This leaves room for the actual completion and final steps
+		// On Windows, npm can be slow, so we continue updating to show activity
+		let progress = 50;
+		let lastProgressUpdate = Date.now();
 		const interval = setInterval(() => {
-			if (progress < 90) {
-				progress += 5;
-				progressBar.update(progress);
+			const now = Date.now();
+			// If we haven't received real progress updates in a while, continue incrementing
+			// This prevents the progress bar from appearing stuck on slow Windows systems
+			if (progress < 88) {
+				// Increment slower as we approach the limit to avoid hitting it too quickly
+				const increment = progress < 70 ? 3 : 1;
+				progress = Math.min(progress + increment, 88);
+				progressBar.update(progress, {
+					doing: "Installing dependencies...",
+				});
+			} else if (now - lastProgressUpdate > 3000) {
+				// Even at max, update the "doing" text to show it's still working
+				progressBar.update(progress, {
+					doing: "Installing dependencies...",
+				});
 			}
 		}, 1000);
 
@@ -56,12 +72,32 @@ async function packageManagerInstall({
 
 			if (npmProgressMatch) {
 				const [, current, total, task] = npmProgressMatch;
-				progress = Math.round(
-					(parseInt(current) / parseInt(total)) * 100,
-				);
+				// Map npm progress (0-100%) to our range (50-90%)
+				const npmProgress = (parseInt(current) / parseInt(total)) * 100;
+				progress = Math.round(50 + npmProgress * 0.4); // 50% + (0-100% * 0.4) = 50-90%
+				lastProgressUpdate = Date.now();
 				progressBar.update(progress, { doing: task });
-			} else {
+			} else if (cleanedOutput) {
+				lastProgressUpdate = Date.now();
 				progressBar.update(progress, { doing: cleanedOutput });
+			}
+		});
+
+		// On Windows, npm may output progress to stderr
+		installProcess.stderr?.on("data", (data: Buffer) => {
+			const output = data.toString().trim();
+			const cleanedOutput = output.replace(/\|\|.*$/g, "");
+			const npmProgressMatch = cleanedOutput.match(
+				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
+			);
+
+			if (npmProgressMatch) {
+				const [, current, total, task] = npmProgressMatch;
+				// Map npm progress (0-100%) to our range (50-90%)
+				const npmProgress = (parseInt(current) / parseInt(total)) * 100;
+				progress = Math.round(50 + npmProgress * 0.4); // 50% + (0-100% * 0.4) = 50-90%
+				lastProgressUpdate = Date.now();
+				progressBar.update(progress, { doing: task });
 			}
 		});
 
@@ -74,8 +110,8 @@ async function packageManagerInstall({
 		installProcess.on("close", (code) => {
 			clearInterval(interval);
 			if (code === 0) {
-				progressBar.update(100, { doing: "Complete!" });
-				progressBar.stop();
+				// Update to 90% to leave room for final steps (package name change)
+				progressBar.update(90, { doing: "Dependencies installed" });
 				resolve("Installation Done!");
 			} else {
 				progressBar.stop();
@@ -338,7 +374,11 @@ const projectForm = async (
 			});
 		}
 
-		progressBar.update(90);
+		// Progress should already be at 90% from packageManagerInstall
+		// Only update if we skipped installation
+		if (!SKIP_INSTALL_FOR_TESTING) {
+			progressBar.update(90, { doing: "Finalizing project" });
+		}
 
 		changePackageName({
 			directory: answer.name,

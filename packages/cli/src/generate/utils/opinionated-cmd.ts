@@ -559,10 +559,13 @@ async function generateModuleServiceSugarPath(
 		},
 	});
 
+	// Extract folder name from folderToScaffold (e.g., "src/useCases" -> "useCases")
+	const folderName = nodePath.basename(folderToScaffold);
 	await addModuleToContainer(
 		anyCaseToPascalCase(moduleName),
 		`${moduleName}/${file.replace(".ts", "")}`,
 		path,
+		folderName,
 	);
 }
 
@@ -621,10 +624,13 @@ async function generateModuleServiceSinglePath(
 		},
 	});
 
+	// Extract folder name from folderToScaffold (e.g., "src/useCases" -> "useCases")
+	const folderName = nodePath.basename(folderToScaffold);
 	await addModuleToContainer(
 		anyCaseToPascalCase(moduleName),
 		`${moduleName}/${file.replace(".ts", "")}`,
 		path,
+		folderName,
 	);
 }
 
@@ -685,9 +691,12 @@ async function generateModuleServiceNestedPath(
 		},
 	});
 
+	// Extract folder name from folderToScaffold (e.g., "src/useCases" -> "useCases")
+	const folderName = nodePath.basename(folderToScaffold);
 	await addModuleToContainerNestedPath(
 		anyCaseToPascalCase(moduleFileName),
 		path,
+		folderName,
 	);
 }
 
@@ -773,7 +782,7 @@ async function generateHandler(
 			data: {
 				className: anyCaseToPascalCase(className),
 				eventName: anyCaseToPascalCase(eventName),
-				eventPath: `./${anyCaseToKebabCase(eventName)}.event`,
+				eventPath: `@events/${anyCaseToKebabCase(eventName)}.event`,
 				priority: priority.toString(),
 			},
 		},

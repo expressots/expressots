@@ -3,6 +3,7 @@ import { globSync } from "glob";
 import fs from "node:fs";
 import { printError } from "./cli-ui";
 import Compiler from "./compiler";
+import { getPathAliasForFolder } from "./update-tsconfig-paths";
 
 const APP_CONTAINER = "app.ts";
 
@@ -80,8 +81,8 @@ async function addModuleToContainer(
 	name: string,
 	modulePath?: string,
 	path?: string,
+	folderName?: string,
 ) {
-	console.log("To chamando esse cara");
 	const containerData: AppContainerType = await validateAppContainer();
 
 	const moduleName = (name[0].toUpperCase() + name.slice(1)).trimStart();
@@ -89,7 +90,12 @@ async function addModuleToContainer(
 
 	let usecaseDir: string;
 	if (opinionated) {
-		usecaseDir = `@useCases/`;
+		// Use dynamic path alias based on the actual folder
+		// Default to @useCases for backward compatibility
+		const pathAlias = folderName
+			? getPathAliasForFolder(folderName)
+			: "@useCases";
+		usecaseDir = `${pathAlias}/`;
 	} else {
 		usecaseDir = `./`;
 	}
@@ -136,7 +142,11 @@ async function addModuleToContainer(
 	await fs.promises.writeFile(containerData.path, newFileContent, "utf8");
 }
 
-async function addModuleToContainerNestedPath(name: string, path?: string) {
+async function addModuleToContainerNestedPath(
+	name: string,
+	path?: string,
+	folderName?: string,
+) {
 	const containerData: AppContainerType = await validateAppContainer();
 
 	const moduleName = (name[0].toUpperCase() + name.slice(1)).trimStart();
@@ -144,7 +154,12 @@ async function addModuleToContainerNestedPath(name: string, path?: string) {
 
 	let usecaseDir: string;
 	if (opinionated) {
-		usecaseDir = `@useCases/`;
+		// Use dynamic path alias based on the actual folder
+		// Default to @useCases for backward compatibility
+		const pathAlias = folderName
+			? getPathAliasForFolder(folderName)
+			: "@useCases";
+		usecaseDir = `${pathAlias}/`;
 	} else {
 		usecaseDir = `./`;
 	}

@@ -11,6 +11,7 @@ import {
 import { printError } from "../../utils/cli-ui";
 import { verifyIfFileExists } from "../../utils/verify-file-exists";
 import Compiler from "../../utils/compiler";
+import { updateTsconfigPaths } from "../../utils/update-tsconfig-paths";
 import { ExpressoConfig, Pattern } from "@expressots/shared";
 
 export const enum PathStyle {
@@ -89,6 +90,11 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 		const outputPath = `${folderToScaffold}/${path}/${file}`;
 		await verifyIfFileExists(outputPath, fp.schematic);
 		mkdirSync(`${folderToScaffold}/${path}`, { recursive: true });
+
+		// Update tsconfig paths dynamically (handles both default and custom folder names)
+		if (folderSchematic) {
+			await updateTsconfigPaths(folderSchematic, sourceRoot);
+		}
 
 		return {
 			path,
@@ -219,34 +225,52 @@ export const splitTarget = async ({
 		if (schematic === "service") schematic = "controller";
 		// 1. Extract the name (first part of the target)
 		const [name, ...remainingPath] = target.split("/");
-		// 2. Check if the name is camelCase or kebab-case
+		// 2. Check if the name is camelCase or kebab-case (compound word)
 		const camelCaseRegex = /[A-Z]/;
 		const kebabCaseRegex = /[_\-\s]+/;
 		const isCamelCase = camelCaseRegex.test(name);
 		const isKebabCase = kebabCaseRegex.test(name);
+
+		// Schematics that should create their own subfolder (grouped resources)
+		const groupedSchematics = [
+			"usecase",
+			"controller",
+			"service",
+			"dto",
+			"module",
+		];
+		const shouldCreateFolder = groupedSchematics.includes(schematic);
+
 		if (isCamelCase || isKebabCase) {
-			const [wordName, ...path] = name
-				? name
-						.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)
-						.map((word) => word.toLowerCase())
-				: [];
+			// Convert compound name to kebab-case for folder path (e.g., confirmLogin -> confirm-login)
+			const folderName = anyCaseToKebabCase(name);
+			// Extract first word for module name
+			const firstWord = name
+				.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)[0]
+				.toLowerCase();
+
+			// For standalone schematics (entity, provider, middleware, etc.),
+			// only create folder if explicit path is provided
+			const computedPath = shouldCreateFolder
+				? `${folderName}${pathEdgeCase(remainingPath)}`
+				: remainingPath.length > 0
+					? `${folderName}${pathEdgeCase(remainingPath)}`
+					: "";
 
 			return {
-				path: `${wordName}/${pathEdgeCase(path)}${pathEdgeCase(
-					remainingPath,
-				)}`,
+				path: computedPath,
 				file: `${await getNameWithScaffoldPattern(
 					name,
 				)}.${schematic}.ts`,
 				className: anyCaseToPascalCase(name),
-				moduleName: wordName,
+				moduleName: firstWord,
 				modulePath: pathContent[0].split("-")[1],
 			};
 		}
 
 		// 3. Return the base case
 		return {
-			path: "",
+			path: shouldCreateFolder ? name : "",
 			file: `${await getNameWithScaffoldPattern(name)}.${schematic}.ts`,
 			className: anyCaseToPascalCase(name),
 			moduleName: name,

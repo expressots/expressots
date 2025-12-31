@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import chalk from "chalk";
-import { stdout } from "process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import {
@@ -15,7 +14,7 @@ import { infoProject } from "./info";
 import { createProject } from "./new";
 import { addProviderCMD, removeProviderCMD } from "./providers";
 import { createExternalProviderCMD } from "./providers/create/cli";
-import { printError } from "./utils/cli-ui";
+import { printError, printHeader } from "./utils/cli-ui";
 import { scriptsCommand } from "./scripts";
 
 /**
@@ -24,7 +23,7 @@ import { scriptsCommand } from "./scripts";
  */
 export const BUNDLE_VERSION = "4.0.0-beta.1";
 
-stdout.write(`\n${[chalk.bold.green("🐎 Expressots")]}\n\n`);
+printHeader();
 
 yargs(hideBin(process.argv))
 	.scriptName("expressots")

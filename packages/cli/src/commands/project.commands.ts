@@ -68,11 +68,13 @@ async function buildTsxArgs(opinionated: boolean): Promise<Array<string>> {
  *
  * @param opinionated - Whether to use opinionated configuration
  * @param verbose - Whether to show verbose nodemon output (for debugging)
+ * @param clear - Whether to clear console on restart (default: true)
  * @returns The nodemon arguments array
  */
 async function buildDevArgs(
 	opinionated: boolean,
 	verbose: boolean = false,
+	clear: boolean = true,
 ): Promise<Array<string>> {
 	const tsxArgs = await buildTsxArgs(opinionated);
 
@@ -82,6 +84,14 @@ async function buildDevArgs(
 	if (!verbose) {
 		args.push("--quiet");
 	}
+
+	// Build the exec command with optional clear
+	const clearCmd = clear
+		? os.platform() === "win32"
+			? "cls &&"
+			: "clear &&"
+		: "";
+	const execCommand = `${clearCmd} tsx ${tsxArgs.join(" ")}`.trim();
 
 	// Core nodemon configuration
 	args.push(
@@ -98,7 +108,7 @@ async function buildDevArgs(
 		"--ignore",
 		"src/**/*.test.ts",
 		"--exec",
-		`tsx ${tsxArgs.join(" ")}`,
+		execCommand,
 	);
 
 	return args;
@@ -109,6 +119,7 @@ async function buildDevArgs(
  */
 interface DevCommandOptions {
 	verbose?: boolean;
+	clear?: boolean;
 }
 
 /**
@@ -126,9 +137,19 @@ export const devCommand: CommandModule<object, DevCommandOptions> = {
 			default: false,
 			description: "Show verbose nodemon output for debugging",
 		},
+		clear: {
+			alias: "c",
+			type: "boolean",
+			default: true,
+			description: "Clear console on restart (default: true)",
+		},
 	},
 	handler: async (argv) => {
-		await runCommand({ command: "dev", verbose: argv.verbose });
+		await runCommand({
+			command: "dev",
+			verbose: argv.verbose,
+			clear: argv.clear,
+		});
 	},
 };
 
@@ -352,6 +373,7 @@ const clearScreen = () => {
 interface RunCommandOptions {
 	command: string;
 	verbose?: boolean;
+	clear?: boolean;
 }
 
 /**
@@ -361,6 +383,7 @@ interface RunCommandOptions {
 export const runCommand = async ({
 	command,
 	verbose = false,
+	clear = true,
 }: RunCommandOptions): Promise<void> => {
 	const { opinionated, entryPoint } = await Compiler.loadConfig();
 	const outDir = getOutDir();
@@ -370,7 +393,7 @@ export const runCommand = async ({
 			case "dev":
 				await execCmd(
 					"nodemon",
-					await buildDevArgs(opinionated, verbose),
+					await buildDevArgs(opinionated, verbose, clear),
 				);
 				break;
 			case "build":
