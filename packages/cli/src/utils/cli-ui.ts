@@ -121,14 +121,6 @@ export async function printGenerateSuccess(
 }
 
 /**
- * Clear the console
- */
-export function clearConsole(): void {
-	// Clear console and move cursor to top-left
-	stdout.write("\x1Bc");
-}
-
-/**
  * Print the ExpressoTS CLI header
  */
 export function printHeader(): void {
