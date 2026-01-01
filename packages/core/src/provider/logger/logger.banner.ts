@@ -304,9 +304,7 @@ export class BannerGenerator {
     );
 
     if (apiVersions) {
-      writeStdout(
-        `   ${colorText(`API Versions: ${apiVersions}`, "blue")}\n`,
-      );
+      writeStdout(`   ${colorText(`API Versions: ${apiVersions}`, "blue")}\n`);
     }
 
     writeStdout("\n");
@@ -328,9 +326,7 @@ export class BannerGenerator {
     if (this.config.showMetrics && metrics) {
       col1Lines.push(``);
       col1Lines.push(colorText("📊 Metrics", "yellow"));
-      col1Lines.push(
-        `  Routes: ${colorText(String(metrics.routes), "green")}`,
-      );
+      col1Lines.push(`  Routes: ${colorText(String(metrics.routes), "green")}`);
       col1Lines.push(
         `  Controllers: ${colorText(String(metrics.controllers), "green")}`,
       );
@@ -357,7 +353,9 @@ export class BannerGenerator {
         col2Lines.push(`  ${displayKey}: ${colorText(truncatedVal, "cyan")}`);
       });
       if (entries.length > 6) {
-        col2Lines.push(`  ${colorText(`+${entries.length - 6} more...`, "white")}`);
+        col2Lines.push(
+          `  ${colorText(`+${entries.length - 6} more...`, "white")}`,
+        );
       }
     }
 
@@ -416,12 +414,18 @@ export class BannerGenerator {
     if (this.config.showPerformance) {
       if (col3Lines.length > 0) col3Lines.push(``);
       col3Lines.push(colorText("⏱️  Startup", "yellow"));
-      col3Lines.push(`  Time: ${colorText(`${startupTime.toFixed(0)}ms`, "green")}`);
+      col3Lines.push(
+        `  Time: ${colorText(`${startupTime.toFixed(0)}ms`, "green")}`,
+      );
       col3Lines.push(`  URL: ${colorText(`localhost:${port}`, "cyan")}`);
     }
 
     // Render 3 columns side by side
-    const maxRows = Math.max(col1Lines.length, col2Lines.length, col3Lines.length);
+    const maxRows = Math.max(
+      col1Lines.length,
+      col2Lines.length,
+      col3Lines.length,
+    );
     for (let i = 0; i < maxRows; i++) {
       const c1 = col1Lines[i] || "";
       const c2 = col2Lines[i] || "";
@@ -511,7 +515,9 @@ export class BannerGenerator {
         const right = prvLines[i] || "";
         const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
         const padding = twoColWidth - leftVisible.length;
-        writeStdout(left + " ".repeat(Math.max(0, padding)) + "  " + right + "\n");
+        writeStdout(
+          left + " ".repeat(Math.max(0, padding)) + "  " + right + "\n",
+        );
       }
     }
 
@@ -538,7 +544,9 @@ export class BannerGenerator {
         let row = "   ";
         for (let j = 0; j < featuresPerRow && i + j < featureList.length; j++) {
           const feat = featureList[i + j];
-          const icon = feat.enabled ? colorText("✓", "green") : colorText("✗", "red");
+          const icon = feat.enabled
+            ? colorText("✓", "green")
+            : colorText("✗", "red");
           const text = `${icon} ${feat.name}`;
           const textVisible = `${feat.enabled ? "✓" : "✗"} ${feat.name}`;
           const pad = featureColWidth - textVisible.length;
