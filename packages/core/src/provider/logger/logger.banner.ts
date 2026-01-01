@@ -160,13 +160,13 @@ export class BannerGenerator {
     this.config = {
       style: config?.style ?? "full",
       showMetrics: config?.showMetrics ?? true,
-      showFeatures: config?.showFeatures ?? true,
+      showFeatures: config?.showFeatures ?? false, // Disabled by default
       showConfig: config?.showConfig ?? true,
       showPerformance: config?.showPerformance ?? true,
       showHealth: config?.showHealth ?? true,
-      showResources: config?.showResources ?? true,
-      showMiddlewarePipeline: config?.showMiddlewarePipeline ?? true,
-      showProviderRegistry: config?.showProviderRegistry ?? true,
+      showResources: config?.showResources ?? false, // Disabled by default
+      showMiddlewarePipeline: config?.showMiddlewarePipeline ?? false, // Disabled by default
+      showProviderRegistry: config?.showProviderRegistry ?? false, // Disabled by default
       maxMiddlewareDisplay: config?.maxMiddlewareDisplay ?? 6,
       maxProviderDisplay: config?.maxProviderDisplay ?? 5,
       ...config,
@@ -237,7 +237,9 @@ export class BannerGenerator {
   }
 
   /**
-   * Display full banner.
+   * Display full banner with clean 3-column layout.
+   * Default shows: Banner, Server Status, Configuration, System Health, Performance
+   * Optional (user-enabled): Features, Middleware Pipeline, Provider Registry, Resources
    */
   private displayFullBanner(
     port: number,
@@ -250,144 +252,215 @@ export class BannerGenerator {
     memoryFormatted: string,
     bannerData?: BannerData,
   ): void {
+    // Banner box width is ~93 chars, calculate column widths for 3 columns
+    const totalWidth = 93;
+    const colWidth = 29;
+    const colSeparator = "  ";
+
     // Logo with TS in white
     writeStdout(getExpressoTSLogo());
     writeStdout("\n\n");
 
-    // Version and platform info
+    // ══════════════════════════════════════════════════════════════════════
+    // Version info line (matches banner width)
+    // ══════════════════════════════════════════════════════════════════════
     const frameworkVersion = "4.0.0-beta.1";
     const nodeVersion = process.version;
     const platform = process.platform;
     const appName = appInfo?.appName || "App";
     const appVersion = appInfo?.appVersion || "not provided";
 
-    // Align Node with Platform (both right-side items should align)
-    const frameworkText = `ExpressoTS  v${frameworkVersion}`;
-    const nodeText = `Node ${nodeVersion}`;
-    const appText = `${appName} v${appVersion}`;
-    const platformText = `Platform: ${platform}`;
-
-    // Calculate padding to align Node with Platform
-    // Both right-side items should start at the same column (around column 50)
-    const leftPrefix = "   "; // 3 spaces
-    const targetColumn = 50; // Target column for right-side alignment
-
-    const frameworkLineLength = leftPrefix.length + frameworkText.length;
-    const appLineLength = leftPrefix.length + appText.length;
-
-    const nodePadding = Math.max(1, targetColumn - frameworkLineLength);
-    const platformPadding = Math.max(1, targetColumn - appLineLength);
-
-    writeStdout(
-      colorText(`${leftPrefix}${frameworkText}`, "green") +
-        colorText(`${" ".repeat(nodePadding)}${nodeText}`, "blue") +
-        "\n",
-    );
-    writeStdout(
-      colorText(`${leftPrefix}${appText}`, "blue") +
-        colorText(`${" ".repeat(platformPadding)}${platformText}`, "blue") +
-        "\n",
-    );
-
     // Display API versions if available
     const appInfoWithVersions = appInfo as IConsoleMessage & {
       apiVersions?: Array<string>;
     };
-    if (
-      appInfoWithVersions?.apiVersions &&
-      appInfoWithVersions.apiVersions.length > 0
-    ) {
-      const apiVersionsText = `   API Versions: ${appInfoWithVersions.apiVersions.join(", ")}`;
-      writeStdout(colorText(`${leftPrefix}${apiVersionsText}`, "blue") + "\n");
-    }
+    const apiVersions = appInfoWithVersions?.apiVersions?.join(", ") || "";
 
-    writeStdout("\n");
+    // Build a clean header line
+    const headerLeft = `   ${colorText(`ExpressoTS v${frameworkVersion}`, "green")}`;
+    const headerMid = `${colorText(`${appName} v${appVersion}`, "blue")}`;
+    const headerRight = `${colorText(`Node ${nodeVersion} (${platform})`, "white")}`;
 
-    // Two-column layout: Server Status (left) | Application Health (right)
-    const colWidth = 40;
-    const separator = "   ";
+    // Calculate padding for even distribution
+    const headerLeftVisible = `   ExpressoTS v${frameworkVersion}`;
+    const headerMidVisible = `${appName} v${appVersion}`;
+    const headerRightVisible = `Node ${nodeVersion} (${platform})`;
 
-    // Server Status (left column)
-    const serverLines: Array<string> = [
-      colorText("⚡ Server Status", "yellow"),
-      `   ├─ Env: ${this.colorEnvironment(environment)}`,
-      `   ├─ Port: ${colorText(String(port), "blue")}`,
-      `   ├─ PID: ${colorText(String(process.pid), "blue")}`,
-      `   └─ URL: ${colorText(`http://localhost:${port}`, "blue")}`,
-    ];
+    const leftPad = colWidth - headerLeftVisible.length;
+    const midPad =
+      totalWidth -
+      headerLeftVisible.length -
+      headerMidVisible.length -
+      headerRightVisible.length -
+      leftPad;
 
-    // Application Health (right column)
-    const healthLines: Array<string> = [
-      colorText("🎯 Application Health", "yellow"),
-    ];
+    writeStdout(
+      headerLeft +
+        " ".repeat(Math.max(1, leftPad)) +
+        headerMid +
+        " ".repeat(Math.max(1, midPad)) +
+        headerRight +
+        "\n",
+    );
 
-    if (this.config.showMetrics && metrics) {
-      healthLines.push(
-        `   ├─ Controllers: ${colorText(String(metrics.controllers), "green")} loaded`,
-      );
-      healthLines.push(
-        `   ├─ Providers: ${colorText(String(metrics.providers), "green")} registered`,
-      );
-      healthLines.push(
-        `   ├─ Middleware: ${colorText(String(metrics.middleware), "green")} active`,
-      );
-      if (metrics.guards && metrics.guards > 0) {
-        healthLines.push(
-          `   ├─ Guards: ${colorText(String(metrics.guards), "green")} active`,
-        );
-      }
-      if (metrics.filters && metrics.filters > 0) {
-        healthLines.push(
-          `   ├─ Filters: ${colorText(String(metrics.filters), "green")} active`,
-        );
-      }
-      if (metrics.interceptors && metrics.interceptors > 0) {
-        healthLines.push(
-          `   ├─ Interceptors: ${colorText(String(metrics.interceptors), "green")} active`,
-        );
-      }
-      if (metrics.eventHandlers && metrics.eventHandlers > 0) {
-        healthLines.push(
-          `   ├─ Event Handlers: ${colorText(String(metrics.eventHandlers), "green")} registered`,
-        );
-      }
-      if (metrics.lazyModules && metrics.lazyModules > 0) {
-        healthLines.push(
-          `   ├─ Lazy Modules: ${colorText(String(metrics.lazyModules), "green")} configured`,
-        );
-      }
-      healthLines.push(
-        `   └─ Routes: ${colorText(String(metrics.routes), "green")} registered`,
-      );
-    }
-
-    // Render two columns side by side
-    const maxRows = Math.max(serverLines.length, healthLines.length);
-    for (let i = 0; i < maxRows; i++) {
-      const left = serverLines[i] || "";
-      const right = healthLines[i] || "";
-      // Calculate visible length (strip ANSI codes for padding)
-      const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
-      const padding = colWidth - leftVisible.length;
+    if (apiVersions) {
       writeStdout(
-        left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
+        `   ${colorText(`API Versions: ${apiVersions}`, "blue")}\n`,
       );
     }
+
     writeStdout("\n");
 
     // ══════════════════════════════════════════════════════════════════════
-    // Middleware Pipeline | Provider Registry (Two-column layout)
+    // Main info: 3 columns - Server Status | Configuration | System Health
     // ══════════════════════════════════════════════════════════════════════
+    const col1Lines: Array<string> = []; // Server Status
+    const col2Lines: Array<string> = []; // Configuration
+    const col3Lines: Array<string> = []; // System Health
+
+    // Column 1: Server Status
+    col1Lines.push(colorText("⚡ Server", "yellow"));
+    col1Lines.push(`  Env: ${this.colorEnvironment(environment)}`);
+    col1Lines.push(`  Port: ${colorText(String(port), "cyan")}`);
+    col1Lines.push(`  PID: ${colorText(String(process.pid), "cyan")}`);
+
+    // Add metrics summary if available
+    if (this.config.showMetrics && metrics) {
+      col1Lines.push(``);
+      col1Lines.push(colorText("📊 Metrics", "yellow"));
+      col1Lines.push(
+        `  Routes: ${colorText(String(metrics.routes), "green")}`,
+      );
+      col1Lines.push(
+        `  Controllers: ${colorText(String(metrics.controllers), "green")}`,
+      );
+      col1Lines.push(
+        `  Providers: ${colorText(String(metrics.providers), "green")}`,
+      );
+      if (metrics.middleware > 0) {
+        col1Lines.push(
+          `  Middleware: ${colorText(String(metrics.middleware), "green")}`,
+        );
+      }
+    }
+
+    // Column 2: Configuration
+    if (this.config.showConfig && config) {
+      col2Lines.push(colorText("⚙️  Config", "yellow"));
+      const entries = Object.entries(config);
+      entries.slice(0, 6).forEach(([key, value]) => {
+        // Truncate key if too long
+        const displayKey = key.length > 12 ? key.slice(0, 11) + "…" : key;
+        const displayVal = String(value);
+        const truncatedVal =
+          displayVal.length > 10 ? displayVal.slice(0, 9) + "…" : displayVal;
+        col2Lines.push(`  ${displayKey}: ${colorText(truncatedVal, "cyan")}`);
+      });
+      if (entries.length > 6) {
+        col2Lines.push(`  ${colorText(`+${entries.length - 6} more...`, "white")}`);
+      }
+    }
+
+    // Add guards/filters/interceptors info if any
+    if (this.config.showMetrics && metrics) {
+      const hasExtras =
+        (metrics.guards ?? 0) > 0 ||
+        (metrics.filters ?? 0) > 0 ||
+        (metrics.interceptors ?? 0) > 0;
+
+      if (hasExtras) {
+        if (col2Lines.length > 0) col2Lines.push(``);
+        col2Lines.push(colorText("🛡️  Security", "yellow"));
+        if (metrics.guards && metrics.guards > 0) {
+          col2Lines.push(
+            `  Guards: ${colorText(String(metrics.guards), "green")}`,
+          );
+        }
+        if (metrics.filters && metrics.filters > 0) {
+          col2Lines.push(
+            `  Filters: ${colorText(String(metrics.filters), "green")}`,
+          );
+        }
+        if (metrics.interceptors && metrics.interceptors > 0) {
+          col2Lines.push(
+            `  Interceptors: ${colorText(String(metrics.interceptors), "green")}`,
+          );
+        }
+      }
+    }
+
+    // Column 3: System Health
+    if (this.config.showHealth) {
+      const memory = process.memoryUsage();
+      const memoryUsagePercent = Math.round(
+        (memory.heapUsed / memory.heapTotal) * 100,
+      );
+      const memoryColor: Color =
+        memoryUsagePercent >= 80
+          ? "red"
+          : memoryUsagePercent >= 60
+            ? "yellow"
+            : "green";
+
+      col3Lines.push(colorText("💚 Health", "yellow"));
+      col3Lines.push(
+        `  Memory: ${colorText(`${memoryFormatted}`, memoryColor)}`,
+      );
+      col3Lines.push(
+        `  Heap: ${colorText(`${memoryUsagePercent}%`, memoryColor)}`,
+      );
+      col3Lines.push(`  RSS: ${colorText(formatMemory(memory.rss), "cyan")}`);
+    }
+
+    // Add performance to column 3
+    if (this.config.showPerformance) {
+      if (col3Lines.length > 0) col3Lines.push(``);
+      col3Lines.push(colorText("⏱️  Startup", "yellow"));
+      col3Lines.push(`  Time: ${colorText(`${startupTime.toFixed(0)}ms`, "green")}`);
+      col3Lines.push(`  URL: ${colorText(`localhost:${port}`, "cyan")}`);
+    }
+
+    // Render 3 columns side by side
+    const maxRows = Math.max(col1Lines.length, col2Lines.length, col3Lines.length);
+    for (let i = 0; i < maxRows; i++) {
+      const c1 = col1Lines[i] || "";
+      const c2 = col2Lines[i] || "";
+      const c3 = col3Lines[i] || "";
+
+      // Calculate visible lengths (strip ANSI codes for padding)
+      const c1Visible = c1.replace(ANSI_STRIP_REGEX, "");
+      const c2Visible = c2.replace(ANSI_STRIP_REGEX, "");
+
+      const pad1 = colWidth - c1Visible.length;
+      const pad2 = colWidth - c2Visible.length;
+
+      writeStdout(
+        c1 +
+          " ".repeat(Math.max(1, pad1)) +
+          colSeparator +
+          c2 +
+          " ".repeat(Math.max(1, pad2)) +
+          colSeparator +
+          c3 +
+          "\n",
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Optional sections (only shown if user enables them)
+    // ══════════════════════════════════════════════════════════════════════
+
+    // Middleware Pipeline | Provider Registry (if enabled)
     const middlewareView = bannerData?.middlewareView;
     const providerView = bannerData?.providerView;
-    const showMw = this.config.showMiddlewarePipeline !== false;
-    const showPrv = this.config.showProviderRegistry !== false;
+    const showMw = this.config.showMiddlewarePipeline === true;
+    const showPrv = this.config.showProviderRegistry === true;
 
     if ((showMw && middlewareView) || (showPrv && providerView)) {
+      writeStdout("\n");
       const mwLines: Array<string> = [];
       const prvLines: Array<string> = [];
 
-      // Middleware Pipeline (left column)
       if (showMw && middlewareView && middlewareView.total > 0) {
         mwLines.push(colorText("🔌 Middleware Pipeline", "yellow"));
         middlewareView.entries.forEach((mw, i, arr) => {
@@ -406,18 +479,15 @@ export class BannerGenerator {
         }
       }
 
-      // Provider Registry (right column)
       if (showPrv && providerView && providerView.total > 0) {
         prvLines.push(colorText("📚 Provider Registry", "yellow"));
         providerView.entries.forEach((prv, i, arr) => {
           const isLast = i === arr.length - 1 && providerView.remaining === 0;
           const connector = isLast ? "└─" : "├─";
           const icons: Array<string> = [];
-          // v4.0 feature icons (show first for visibility)
           if (prv.isEventHandler) icons.push("⚡");
           if (prv.isInterceptor) icons.push("🎭");
           if (prv.isLazyModule) icons.push("💤");
-          // Original capability icons
           if (prv.hasLifecycle) icons.push("🔄");
           if (prv.hasHealthCheck) icons.push("💚");
           if (prv.hasMetrics) icons.push("📊");
@@ -434,159 +504,62 @@ export class BannerGenerator {
         }
       }
 
-      // Render two columns
+      const twoColWidth = 45;
       const pipelineMaxRows = Math.max(mwLines.length, prvLines.length);
       for (let i = 0; i < pipelineMaxRows; i++) {
         const left = mwLines[i] || "";
         const right = prvLines[i] || "";
         const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
-        const padding = colWidth - leftVisible.length;
-        writeStdout(
-          left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
-        );
+        const padding = twoColWidth - leftVisible.length;
+        writeStdout(left + " ".repeat(Math.max(0, padding)) + "  " + right + "\n");
       }
-      writeStdout("\n");
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // Features | Configuration (Two-column layout)
-    // ══════════════════════════════════════════════════════════════════════
-    if (
-      (this.config.showFeatures && features) ||
-      (this.config.showConfig && config)
-    ) {
-      const featLines: Array<string> = [];
-      const cfgLines: Array<string> = [];
-
-      // Features (left column)
-      if (this.config.showFeatures && features) {
-        featLines.push(colorText("📦 Features Enabled", "yellow"));
-        const featureList = [
-          { name: "Global Route Prefix", enabled: features.globalRoutePrefix },
-          { name: "API Versioning", enabled: features.apiVersioning },
-          { name: "Content Negotiation", enabled: features.contentNegotiation },
-          { name: "Smart Validation", enabled: features.smartValidation },
-          { name: "Authorization (Guards)", enabled: features.authorization },
-          { name: "Exception Filters", enabled: features.exceptionFilters },
-          { name: "Interceptors", enabled: features.interceptors },
-          { name: "Error Handler", enabled: features.errorHandler },
-          { name: "Graceful Shutdown", enabled: features.gracefulShutdown },
-          { name: "Lifecycle Hooks", enabled: features.lifecycleHooks },
-          { name: "Request Logging", enabled: features.requestLogging },
-          { name: "Event System", enabled: features.eventSystem },
-          { name: "Lazy Loading", enabled: features.lazyLoading },
-          { name: "Enhanced Config", enabled: features.enhancedConfiguration },
-          { name: "Custom Scopes", enabled: features.customScopes },
-        ];
-        featureList.forEach((feat, i) => {
-          const isLast = i === featureList.length - 1;
-          const connector = isLast ? "└─" : "├─";
-          const status = feat.enabled
-            ? colorText("✅", "green")
-            : colorText("❌", "red");
-          featLines.push(`   ${connector} ${status} ${feat.name}`);
-        });
-      }
-
-      // Configuration (right column)
-      if (this.config.showConfig && config) {
-        cfgLines.push(colorText("⚙️  Configuration", "yellow"));
-        const entries = Object.entries(config);
-        entries.forEach(([key, value], i) => {
-          const isLast = i === entries.length - 1;
-          const connector = isLast ? "└─" : "├─";
-          cfgLines.push(
-            `   ${connector} ${key}: ${colorText(String(value), "blue")}`,
-          );
-        });
-      }
-
-      // Render two columns
-      const fcMaxRows = Math.max(featLines.length, cfgLines.length);
-      for (let i = 0; i < fcMaxRows; i++) {
-        const left = featLines[i] || "";
-        const right = cfgLines[i] || "";
-        const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
-        const padding = colWidth - leftVisible.length;
-        writeStdout(
-          left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
-        );
-      }
+    // Features (if enabled)
+    if (this.config.showFeatures && features) {
       writeStdout("\n");
+      writeStdout(colorText("📦 Features Enabled", "yellow") + "\n");
+      const featureList = [
+        { name: "Global Prefix", enabled: features.globalRoutePrefix },
+        { name: "API Versioning", enabled: features.apiVersioning },
+        { name: "Validation", enabled: features.smartValidation },
+        { name: "Guards", enabled: features.authorization },
+        { name: "Filters", enabled: features.exceptionFilters },
+        { name: "Interceptors", enabled: features.interceptors },
+        { name: "Lifecycle", enabled: features.lifecycleHooks },
+        { name: "Events", enabled: features.eventSystem },
+        { name: "Lazy Loading", enabled: features.lazyLoading },
+      ];
+
+      // Display in 3 columns
+      const featuresPerRow = 3;
+      const featureColWidth = 28;
+      for (let i = 0; i < featureList.length; i += featuresPerRow) {
+        let row = "   ";
+        for (let j = 0; j < featuresPerRow && i + j < featureList.length; j++) {
+          const feat = featureList[i + j];
+          const icon = feat.enabled ? colorText("✓", "green") : colorText("✗", "red");
+          const text = `${icon} ${feat.name}`;
+          const textVisible = `${feat.enabled ? "✓" : "✗"} ${feat.name}`;
+          const pad = featureColWidth - textVisible.length;
+          row += text + " ".repeat(Math.max(1, pad));
+        }
+        writeStdout(row + "\n");
+      }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // Resources | System Health (Two-column layout)
-    // ══════════════════════════════════════════════════════════════════════
-    if (this.config.showResources || this.config.showHealth) {
-      const resLines: Array<string> = [];
-      const healthLines: Array<string> = [];
-
-      // Resources (left column)
-      if (this.config.showResources) {
-        resLines.push(colorText("🔗 Resources", "yellow"));
-        resLines.push(
-          `   ├─ Docs: ${colorText("https://expresso-ts.com", "blue")}`,
-        );
-        resLines.push(
-          `   ├─ GitHub: ${colorText("github.com/expressots", "blue")}`,
-        );
-        resLines.push(
-          `   └─ Discord: ${colorText("discord.gg/PyPJfGK", "blue")}`,
-        );
-      }
-
-      // System Health (right column)
-      if (this.config.showHealth) {
-        const memory = process.memoryUsage();
-        const memoryUsagePercent = Math.round(
-          (memory.heapUsed / memory.heapTotal) * 100,
-        );
-        const memoryColor: Color =
-          memoryUsagePercent >= 80
-            ? "red"
-            : memoryUsagePercent >= 60
-              ? "yellow"
-              : "green";
-
-        healthLines.push(colorText("💚 System Health", "yellow"));
-        healthLines.push(
-          `   ├─ Memory: ${colorText(`${memoryFormatted} (${memoryUsagePercent}%)`, memoryColor)}`,
-        );
-        healthLines.push(
-          `   ├─ Heap: ${colorText(formatMemory(memory.heapTotal), "blue")}`,
-        );
-        healthLines.push(
-          `   └─ RSS: ${colorText(formatMemory(memory.rss), "blue")}`,
-        );
-      }
-
-      // Render two columns
-      const rhMaxRows = Math.max(resLines.length, healthLines.length);
-      for (let i = 0; i < rhMaxRows; i++) {
-        const left = resLines[i] || "";
-        const right = healthLines[i] || "";
-        const leftVisible = left.replace(ANSI_STRIP_REGEX, "");
-        const padding = colWidth - leftVisible.length;
-        writeStdout(
-          left + " ".repeat(Math.max(0, padding)) + separator + right + "\n",
-        );
-      }
+    // Resources (if enabled)
+    if (this.config.showResources) {
       writeStdout("\n");
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // Performance (Single line at the bottom)
-    // ══════════════════════════════════════════════════════════════════════
-    if (this.config.showPerformance) {
+      writeStdout(colorText("🔗 Resources", "yellow") + "\n");
       writeStdout(
-        colorText(`⏱️  Startup: ${startupTime.toFixed(0)}ms`, "yellow") +
-          colorText(` | Memory: ${memoryFormatted}`, "yellow") +
-          colorText(` | PID: ${process.pid}`, "yellow") +
-          "\n",
+        `   ${colorText("Docs:", "white")} expresso-ts.com  ` +
+          `${colorText("GitHub:", "white")} github.com/expressots  ` +
+          `${colorText("Discord:", "white")} discord.gg/PyPJfGK\n`,
       );
-      writeStdout("\n");
     }
+
+    writeStdout("\n");
   }
 
   /**

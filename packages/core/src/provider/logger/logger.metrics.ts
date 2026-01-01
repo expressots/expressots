@@ -133,13 +133,13 @@ export function getDefaultBannerConfig(
   return {
     style: isDev ? "full" : "compact",
     showMetrics: true,
-    showFeatures: isDev,
-    showConfig: isDev,
+    showFeatures: false, // Disabled by default - user can enable
+    showConfig: true,
     showPerformance: true,
-    showHealth: isDev,
-    showResources: isDev,
-    showMiddlewarePipeline: isDev,
-    showProviderRegistry: isDev,
+    showHealth: true,
+    showResources: false, // Disabled by default - user can enable
+    showMiddlewarePipeline: false, // Disabled by default - user can enable
+    showProviderRegistry: false, // Disabled by default - user can enable
     maxMiddlewareDisplay: 6,
     maxProviderDisplay: 5,
     showInEnvironments: ["development", "production", "staging", "test"],
