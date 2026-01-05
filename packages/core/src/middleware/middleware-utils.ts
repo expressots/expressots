@@ -266,7 +266,10 @@ export function parallel(middleware: RequestHandler): RequestHandler {
  *
  * @public API
  */
-export function timeout(ms: number, middleware: RequestHandler): RequestHandler {
+export function timeout(
+  ms: number,
+  middleware: RequestHandler,
+): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
     let called = false;
 

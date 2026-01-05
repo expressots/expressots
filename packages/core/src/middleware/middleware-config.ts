@@ -159,7 +159,11 @@ export interface MiddlewareLoggerConfig {
    * Implementation-specific options.
    * The type depends on the implementation chosen.
    */
-  options?: MorganLoggerOptions | PinoLoggerOptions | WinstonLoggerOptions | unknown;
+  options?:
+    | MorganLoggerOptions
+    | PinoLoggerOptions
+    | WinstonLoggerOptions
+    | unknown;
 
   /**
    * Custom logger middleware.
@@ -294,10 +298,7 @@ export type CompressionAlgorithm = "br" | "gzip" | "deflate";
 /**
  * Compression implementation.
  */
-export type CompressionImplementation =
-  | "compression"
-  | "shrink-ray"
-  | "auto";
+export type CompressionImplementation = "compression" | "shrink-ray" | "auto";
 
 /**
  * Configuration for the compress() method.
@@ -430,7 +431,13 @@ export interface SessionConfig {
 /**
  * Storage provider type.
  */
-export type StorageProvider = "disk" | "memory" | "s3" | "gcs" | "azure" | "cloudinary";
+export type StorageProvider =
+  | "disk"
+  | "memory"
+  | "s3"
+  | "gcs"
+  | "azure"
+  | "cloudinary";
 
 /**
  * Configuration for the upload() method.
@@ -471,9 +478,7 @@ export interface UploadConfig {
    * File filter function.
    * Return true to accept, false to reject.
    */
-  fileFilter?: (
-    file: Express.Multer.File,
-  ) => boolean | Promise<boolean>;
+  fileFilter?: (file: Express.Multer.File) => boolean | Promise<boolean>;
 
   /**
    * Preserve original filename.
@@ -484,9 +489,7 @@ export interface UploadConfig {
   /**
    * Custom filename generator.
    */
-  filenameGenerator?: (
-    file: Express.Multer.File,
-  ) => string;
+  filenameGenerator?: (file: Express.Multer.File) => string;
 
   // Cloud storage options (S3, GCS, Azure)
   /** Bucket name */
