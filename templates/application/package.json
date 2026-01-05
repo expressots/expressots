@@ -16,14 +16,10 @@
         "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix"
     },
     "dependencies": {
-        "@expressots/adapter-express": "file:../adapter-express/expressots-adapter-express-4.0.0-beta.1.tgz",
-        "@expressots/core": "file:../expressots/expressots-core-4.0.0-beta.1.tgz",
-        "@expressots/shared": "file:../shared/expressots-shared-4.0.0-beta.1.tgz",
         "express": "5.2.1"
     },
     "devDependencies": {
         "@eslint/js": "9.39.2",
-        "@expressots/cli": "file:../expressots-cli/expressots-cli-4.0.0-beta.1.tgz",
         "@types/express": "5.0.6",
         "@types/jest": "30.0.0",
         "@types/node": "25.0.3",
