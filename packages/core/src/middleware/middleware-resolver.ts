@@ -17,6 +17,10 @@ const MIDDLEWARE_REGISTRY = {
   rateLimit: "express-rate-limit",
   multer: "multer",
   session: "express-session",
+  // v4 additions
+  pino: "pino-http",
+  winston: "express-winston",
+  shrinkRay: "shrink-ray-current",
 } as const;
 
 /**
@@ -44,6 +48,15 @@ const installStatusCache = new Map<string, boolean>();
 let loggerInstance: Logger | null = null;
 
 /**
+ * Buffered startup warnings from resolver (for display after banner).
+ * @internal
+ */
+const resolverStartupWarnings: Array<{
+  message: string;
+  type: "info" | "warn";
+}> = [];
+
+/**
  * Get the singleton logger instance.
  * @returns Logger instance
  * @internal
@@ -53,6 +66,34 @@ function getLogger(): Logger {
     loggerInstance = new Logger();
   }
   return loggerInstance;
+}
+
+/**
+ * Get buffered resolver startup warnings.
+ * @returns Array of warning messages
+ * @public API
+ */
+function getResolverStartupWarnings(): Array<{
+  message: string;
+  type: "info" | "warn";
+}> {
+  return [...resolverStartupWarnings];
+}
+
+/**
+ * Clear buffered resolver startup warnings.
+ * @public API
+ */
+function clearResolverStartupWarnings(): void {
+  resolverStartupWarnings.length = 0;
+}
+
+/**
+ * Buffer a startup warning instead of logging immediately.
+ * @internal
+ */
+function bufferStartupWarning(message: string): void {
+  resolverStartupWarnings.push({ message, type: "warn" });
 }
 
 /**
@@ -99,7 +140,26 @@ function resolveModule<T = unknown>(packageName: string): T | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mod = require(packageName);
-    const resolved = mod.default ?? mod;
+
+    // Handle various module export patterns:
+    // 1. CommonJS: module.exports = fn → mod is the function
+    // 2. ES Module with default: export default fn → mod.default is the function
+    // 3. ES Module transpiled: mod.__esModule with default → mod.default
+    let resolved: T;
+    if (typeof mod === "function") {
+      // Direct function export (most CommonJS modules like morgan, cors, etc.)
+      resolved = mod;
+    } else if (mod && typeof mod.default === "function") {
+      // ES module with default export
+      resolved = mod.default;
+    } else if (mod && mod.__esModule && mod.default) {
+      // Transpiled ES module
+      resolved = mod.default;
+    } else {
+      // Object export (for modules like express-winston that export { logger })
+      resolved = mod;
+    }
+
     moduleCache.set(packageName, resolved);
     return resolved as T;
   } catch (error) {
@@ -174,24 +234,39 @@ function middlewareResolver(
 
   // Check installation status first (cached)
   if (!isPackageInstalled(packageName)) {
-    getLogger().warn(
-      `Middleware [${packageName}] not installed. Please install it using your package manager.`,
-      "middleware-resolver",
-    );
+    // Buffer warning for display after banner instead of immediate log
+    bufferStartupWarning(`${packageName} not installed`);
     return null;
   }
 
   // Resolve the module (cached)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const middlewareFactory =
-    resolveModule<(...args: Array<any>) => ExpressHandler>(packageName);
+  const middlewareFactory = resolveModule<any>(packageName);
 
   if (!middlewareFactory) {
     return null;
   }
 
+  // Handle both function exports and objects with default export
+  const factory =
+    typeof middlewareFactory === "function"
+      ? middlewareFactory
+      : typeof middlewareFactory.default === "function"
+        ? middlewareFactory.default
+        : null;
+
+  if (!factory) {
+    getLogger().error(
+      `Middleware [${middlewareName}] does not export a function. Got: ${typeof middlewareFactory}`,
+      "middleware-resolver",
+    );
+    return null;
+  }
+
   try {
-    return middlewareFactory(...options);
+    // Filter out undefined options to avoid passing them to middleware
+    const filteredOptions = options.filter((opt) => opt !== undefined);
+    return factory(...filteredOptions);
   } catch (error) {
     getLogger().error(
       `Failed to initialize middleware [${middlewareName}]: ${error}`,
@@ -279,12 +354,41 @@ function getPackageName(
   return MIDDLEWARE_REGISTRY[middlewareName as RegisteredMiddlewareName];
 }
 
+/**
+ * Check if any npm package is installed (not just registered middleware).
+ *
+ * @param packageName - The npm package name to check
+ * @returns True if the package is installed
+ *
+ * @public API
+ */
+function isPackageAvailable(packageName: string): boolean {
+  return isPackageInstalled(packageName);
+}
+
+/**
+ * Resolve any npm module by package name.
+ * Used for dynamic logger and compression resolution.
+ *
+ * @param packageName - The npm package name
+ * @returns The resolved module or null
+ *
+ * @public API
+ */
+function resolvePackage<T = unknown>(packageName: string): T | null {
+  return resolveModule<T>(packageName);
+}
+
 export {
   middlewareResolver,
   isMiddlewareAvailable,
+  isPackageAvailable,
+  resolvePackage,
   getAvailableMiddleware,
   getRegisteredMiddleware,
   clearMiddlewareCache,
   getPackageName,
+  getResolverStartupWarnings,
+  clearResolverStartupWarnings,
   MIDDLEWARE_REGISTRY,
 };

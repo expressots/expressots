@@ -21,6 +21,8 @@ export {
 export {
   middlewareResolver,
   isMiddlewareAvailable,
+  isPackageAvailable,
+  resolvePackage,
   getAvailableMiddleware,
   getRegisteredMiddleware,
   clearMiddlewareCache,
@@ -85,3 +87,71 @@ export type {
   XmlFormatOptions,
   YamlFormatOptions,
 } from "./interfaces/content-negotiation.interface";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// V4 EXPORTS - New unified middleware system
+// ═══════════════════════════════════════════════════════════════════════════
+
+// V4 Middleware utilities
+export { use, compose, when, parallel, timeout } from "./middleware-utils";
+
+// V4 Middleware registry
+export {
+  MiddlewareRegistry,
+  getMiddlewareRegistry,
+  resetMiddlewareRegistry,
+} from "./middleware-registry";
+export type { MiddlewareEntry as RegistryMiddlewareEntry } from "./middleware-registry";
+
+// V4 Upload registry (for @FileUpload decorator integration)
+export {
+  setGlobalUploadConfig,
+  getGlobalUploadConfig,
+  hasGlobalUploadConfig,
+  clearGlobalUploadConfig,
+  mergeUploadConfigs,
+} from "./upload-registry";
+
+// V4 Middleware configuration types
+export type {
+  // Parse options
+  ParseOptions,
+  // Logger options
+  MiddlewareLoggerConfig,
+  LoggerImplementation,
+  MorganLoggerOptions,
+  PinoLoggerOptions,
+  WinstonLoggerOptions,
+  // Security options
+  SecurityConfig,
+  SecurityPreset,
+  EnhancedRateLimitConfig,
+  CsrfConfig,
+  RateLimitStrategy,
+  // Compression options
+  CompressConfig,
+  CompressionAlgorithm,
+  CompressionImplementation,
+  // Session options
+  SessionConfig,
+  SessionType,
+  JwtSessionOptions,
+  // Upload options
+  UploadConfig,
+  UploadHandler,
+  StorageProvider,
+  // Static options
+  StaticConfig,
+  // Preset options
+  PresetName,
+  MiddlewareConfig,
+  // Optimization options
+  OptimizationConfig,
+  // Analysis options
+  PipelineAnalysis,
+  Recommendation,
+  RecommendationType,
+  RecommendationSeverity,
+  // Registry types
+  RegisteredMiddleware,
+} from "./middleware-config";

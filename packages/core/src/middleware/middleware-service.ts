@@ -15,23 +15,37 @@ import defaultErrorHandler from "../error/error-handler-middleware";
 import { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
 import { ExceptionHandlerMiddleware } from "../error/exception-handler-middleware";
 import { Logger } from "../provider/logger/logger.provider";
-import { OptionsJson } from "./interfaces/body-parser.interface";
-import { CompressionOptions } from "./interfaces/compression.interface";
-import { CookieParserOptions } from "./interfaces/cookie-parser.interface";
-import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
-import { CorsOptions } from "./interfaces/cors.interface";
-import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
-import { SessionOptions } from "./interfaces/express-session.interface";
-import { OptionsHelmet } from "./interfaces/helmet.interface";
-import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
 import { multer } from "./interfaces/multer.interface";
-import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
 import { ServeStaticOptions } from "./interfaces/serve-static.interface";
-import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
 import {
   middlewareResolver,
   isMiddlewareAvailable,
+  isPackageAvailable,
+  resolvePackage,
+  getResolverStartupWarnings,
+  clearResolverStartupWarnings,
 } from "./middleware-resolver";
+import {
+  getMiddlewareRegistry,
+  MiddlewareEntry as RegistryEntry,
+} from "./middleware-registry";
+import { setGlobalUploadConfig } from "./upload-registry";
+import type {
+  ParseOptions,
+  MiddlewareLoggerConfig,
+  LoggerImplementation,
+  SecurityConfig,
+  SecurityPreset,
+  CompressConfig,
+  SessionConfig as V4SessionConfig,
+  UploadConfig,
+  UploadHandler,
+  StaticConfig,
+  MiddlewareConfig as V4MiddlewareConfig,
+  OptimizationConfig,
+  PipelineAnalysis,
+  Recommendation,
+} from "./middleware-config";
 import { ContentNegotiationService } from "./content-negotiation/content-negotiation-service";
 import { ContentNegotiationOptions } from "./interfaces/content-negotiation.interface";
 import type { ValidationConfig } from "../provider/validation/validation.interface";
@@ -40,13 +54,6 @@ import {
   MiddlewareMetrics,
   ProfilerStats,
 } from "./middleware-profiler";
-import {
-  MiddlewarePresetName,
-  MiddlewarePreset,
-  ApplyPresetOptions,
-  MIDDLEWARE_PRESETS,
-  getPreset,
-} from "./middleware-presets";
 
 /**
  * ExpressHandler Type
@@ -380,17 +387,66 @@ export class Middleware implements IMiddleware {
   private sortedPipelineCache: Array<MiddlewarePipeline> | null = null;
   // Error handler
   private errorHandler: ExpressHandler | undefined;
-  // Singleton logger
-  private logger: Logger;
+  // Singleton logger (renamed to avoid conflict with logger() method)
+  private _logger: Logger;
   // Content negotiation service
   private contentNegotiationService: ContentNegotiationService | undefined;
   // Profiler instance
   private profiler: MiddlewareProfiler | null = null;
   // Profiling enabled flag
   private profilingEnabled = false;
+  // v4: Custom presets storage
+  private customPresets = new Map<string, V4MiddlewareConfig>();
+  // v4: Middleware registry reference
+  private registry = getMiddlewareRegistry();
+  // v4: Buffered startup logs (displayed after banner)
+  private startupLogs: Array<{ message: string; type: "info" | "warn" }> = [];
+  // v4: Track registered middleware names for summary
+  private registeredMiddlewareNames: Array<string> = [];
 
   constructor() {
-    this.logger = new Logger();
+    this._logger = new Logger();
+  }
+
+  /**
+   * Buffer a startup log message to be displayed after the banner.
+   * Only buffers in development mode.
+   * @param message - The message to buffer
+   * @param type - Log type: "info" or "warn"
+   */
+  private bufferStartupLog(
+    message: string,
+    type: "info" | "warn" = "info",
+  ): void {
+    this.startupLogs.push({ message, type });
+  }
+
+  /**
+   * Get all buffered startup logs for display after the banner.
+   * Includes warnings from the middleware resolver (e.g., missing packages).
+   * @returns Array of startup log entries
+   */
+  public getStartupLogs(): Array<{ message: string; type: "info" | "warn" }> {
+    // Combine service logs with resolver warnings
+    const logs = [...this.startupLogs, ...getResolverStartupWarnings()];
+
+    // Add registered middleware summary at the end if any were registered
+    if (this.registeredMiddlewareNames.length > 0) {
+      logs.push({
+        message: `Registered: ${this.registeredMiddlewareNames.join(", ")}`,
+        type: "info",
+      });
+    }
+    return logs;
+  }
+
+  /**
+   * Clear all buffered startup logs.
+   */
+  public clearStartupLogs(): void {
+    this.startupLogs = [];
+    this.registeredMiddlewareNames = [];
+    clearResolverStartupWarnings();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -445,7 +501,7 @@ export class Middleware implements IMiddleware {
     middlewareFactory: () => ExpressHandler | null,
   ): boolean {
     if (this.middlewareExists(name)) {
-      this.logger.warn(
+      this._logger.warn(
         `[${name}] already exists. Skipping...`,
         "middleware-service",
       );
@@ -558,123 +614,15 @@ export class Middleware implements IMiddleware {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // BUILT-IN MIDDLEWARE METHODS
+  // INTERNAL MIDDLEWARE HELPERS (used by v4 unified methods)
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Adds a URL Encoded Parser middleware to the middleware collection.
-   * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
-   *
-   * @param options - Optional configuration options for the URL Encoded Parser.
+   * Internal: Sets up Multer middleware for handling multipart/form-data.
+   * Used by upload() method.
+   * @internal
    */
-  addUrlEncodedParser(options?: OptionsUrlencoded): void {
-    this.addBuiltInMiddleware("urlencodedParser", "parser", () =>
-      urlencoded(options),
-    );
-  }
-
-  /**
-   * Adds a Rate Limit middleware to the middleware collection.
-   *
-   * @param options - Optional configuration options for the rate limiter.
-   */
-  public addRateLimiter(options?: RateLimitOptions): void {
-    this.addBuiltInMiddleware("rateLimit", "security", () =>
-      middlewareResolver("rateLimit", options),
-    );
-  }
-
-  /**
-   * Adds a Body Parser middleware to the middleware collection using the given options.
-   *
-   * @param options - Optional configuration options for the JSON body parser.
-   */
-  public addBodyParser(options?: OptionsJson): void {
-    this.addBuiltInMiddleware("jsonParser", "parser", () => json(options));
-  }
-
-  /**
-   * Adds Cross-Origin Resource Sharing (CORS) middleware to enable or control cross-origin requests.
-   *
-   * @param options - Optional configuration options for CORS.
-   */
-  addCors(options?: CorsOptions): void {
-    this.addBuiltInMiddleware("cors", "security", () =>
-      middlewareResolver("cors", options),
-    );
-  }
-
-  /**
-   * Adds Compression middleware to reduce the size of the response body.
-   *
-   * @param options - Optional configuration options for Compression.
-   */
-  addCompression(options?: CompressionOptions): void {
-    this.addBuiltInMiddleware("compression", "other", () =>
-      middlewareResolver("compression", options),
-    );
-  }
-
-  /**
-   * Adds Morgan middleware to log HTTP requests.
-   *
-   * @param format - The log format. Can be a string or a function.
-   * @param options - Optional configuration options for Morgan.
-   */
-  addMorgan(
-    format: string | FormatFn,
-    options?: OptionsMorgan | undefined,
-  ): void {
-    this.addBuiltInMiddleware("morgan", "logging", () =>
-      middlewareResolver("morgan", format, options),
-    );
-  }
-
-  /**
-   * Adds Cookie Parser middleware to parse the cookie header.
-   *
-   * @param secret - A string or array used for signing cookies.
-   * @param options - Optional configuration options for Cookie Parser.
-   */
-  addCookieParser(
-    secret?: string | Array<string> | undefined,
-    options?: CookieParserOptions | undefined,
-  ): void {
-    this.addBuiltInMiddleware("cookieParser", "session", () =>
-      middlewareResolver("cookieParser", secret, options),
-    );
-  }
-
-  /**
-   * Adds Cookie Session middleware to enable cookie-based sessions.
-   *
-   * @param options - Configuration options for Cookie Session.
-   */
-  addCookieSession(options: CookieSessionOptions): void {
-    this.addBuiltInMiddleware("cookieSession", "session", () =>
-      middlewareResolver("cookieSession", options),
-    );
-  }
-
-  /**
-   * Adds a middleware to serve the favicon.
-   *
-   * @param path - The path to the favicon file.
-   * @param options - Optional configuration options for serving the favicon.
-   */
-  addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void {
-    this.addBuiltInMiddleware("serveFavicon", "static", () =>
-      middlewareResolver("serveFavicon", path, options),
-    );
-  }
-
-  /**
-   * Sets up Multer middleware for handling multipart/form-data.
-   *
-   * @param options - Optional configuration options for Multer.
-   * @returns The Multer middleware instance.
-   */
-  public setupMulter(options?: multer.Options): multer.Multer {
+  private setupMulter(options?: multer.Options): multer.Multer {
     const multerMiddleware = middlewareResolver("multer", options);
 
     if (multerMiddleware) {
@@ -685,34 +633,11 @@ export class Middleware implements IMiddleware {
   }
 
   /**
-   * Adds Helmet middleware to enhance security by setting various HTTP headers.
-   *
-   * @param options - Optional configuration options for Helmet.
+   * Internal: Adds a middleware to serve static files.
+   * Used by static() method.
+   * @internal
    */
-  addHelmet(options?: OptionsHelmet): void {
-    this.addBuiltInMiddleware("helmet", "security", () =>
-      middlewareResolver("helmet", options),
-    );
-  }
-
-  /**
-   * Add express-session middleware.
-   *
-   * @param options - Configuration options for Session.
-   */
-  addSession(options: SessionOptions): void {
-    this.addBuiltInMiddleware("session", "session", () =>
-      middlewareResolver("session", options),
-    );
-  }
-
-  /**
-   * Adds a middleware to serve static files from the specified root directory.
-   *
-   * @param root - The root directory from which the static assets are to be served.
-   * @param options - Optional configuration options for serving static files.
-   */
-  serveStatic(root: string, options?: ServeStaticOptions): void {
+  private serveStatic(root: string, options?: ServeStaticOptions): void {
     this.addBuiltInMiddleware("serveStatic", "static", () =>
       expressStatic(root, options),
     );
@@ -729,7 +654,7 @@ export class Middleware implements IMiddleware {
     const config = middleware as MiddlewareConfig;
 
     if (config.middlewares.length === 0) {
-      this.logger.warn(
+      this._logger.warn(
         `No middlewares in the route [${config.path}]. Skipping...`,
         "middleware-service",
       );
@@ -739,7 +664,7 @@ export class Middleware implements IMiddleware {
     const configKey = config.path || `config_${this.insertionOrder}`;
 
     if (this.middlewareExists(configKey)) {
-      this.logger.warn(
+      this._logger.warn(
         `[${config.path}] route already exists. Skipping...`,
         "middleware-service",
       );
@@ -767,7 +692,7 @@ export class Middleware implements IMiddleware {
       middleware?.name || `anonymous_${this.insertionOrder}`;
 
     if (this.middlewareExists(middlewareName) && middleware?.name) {
-      this.logger.warn(
+      this._logger.warn(
         `[${middlewareName}] already exists. Skipping...`,
         "middleware-service",
       );
@@ -794,7 +719,7 @@ export class Middleware implements IMiddleware {
     const middlewareName = middleware.constructor.name;
 
     if (this.middlewareExists(middlewareName)) {
-      this.logger.warn(
+      this._logger.warn(
         `[${middlewareName}] already exists. Skipping...`,
         "middleware-service",
       );
@@ -892,7 +817,7 @@ export class Middleware implements IMiddleware {
     const name = config.name || `conditional_${this.insertionOrder}`;
 
     if (this.middlewareExists(name)) {
-      this.logger.warn(
+      this._logger.warn(
         `[${name}] already exists. Skipping...`,
         "middleware-service",
       );
@@ -922,167 +847,6 @@ export class Middleware implements IMiddleware {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PRESETS
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  /**
-   * Apply a middleware preset bundle.
-   *
-   * @param preset - The preset name or custom preset object
-   * @param options - Options for applying the preset
-   *
-   * @example
-   * ```typescript
-   * // Apply the API preset
-   * middleware.usePreset("api");
-   *
-   * // Apply with overrides
-   * middleware.usePreset("api", {
-   *   overrides: {
-   *     Cors: { origin: "https://myapp.com" },
-   *     RateLimiter: { max: 200 }
-   *   }
-   * });
-   *
-   * // Skip specific middleware
-   * middleware.usePreset("production", {
-   *   skip: ["Morgan", "Compression"]
-   * });
-   * ```
-   *
-   * @public API
-   */
-  usePreset(
-    preset: MiddlewarePresetName | MiddlewarePreset,
-    options?: ApplyPresetOptions,
-  ): void {
-    const presetConfig =
-      typeof preset === "string" ? getPreset(preset) : preset;
-
-    if (!presetConfig) {
-      this.logger.error(`Unknown preset: ${preset}`, "middleware-service");
-      return;
-    }
-
-    this.logger.info(
-      `Applying preset: ${presetConfig.name} (${presetConfig.description})`,
-      "middleware-service",
-    );
-
-    for (const mwConfig of presetConfig.middleware) {
-      // Skip if in skip list
-      if (options?.skip?.includes(mwConfig.name)) {
-        continue;
-      }
-
-      // Skip if only installed and not available
-      if (
-        options?.onlyInstalled &&
-        !this.isMiddlewareMethodAvailable(mwConfig.name)
-      ) {
-        if (!mwConfig.optional) {
-          this.logger.warn(
-            `Middleware [${mwConfig.name}] not available, skipping...`,
-            "middleware-service",
-          );
-        }
-        continue;
-      }
-
-      // Get options with overrides
-      const mwOptions = options?.overrides?.[mwConfig.name] ?? mwConfig.options;
-
-      // Call the appropriate add method
-      this.applyMiddlewareByName(mwConfig.name, mwOptions);
-    }
-  }
-
-  /**
-   * Check if a middleware add method is available.
-   */
-  private isMiddlewareMethodAvailable(name: string): boolean {
-    const methodMap: Record<string, () => boolean> = {
-      Cors: () => isMiddlewareAvailable("cors"),
-      Helmet: () => isMiddlewareAvailable("helmet"),
-      Compression: () => isMiddlewareAvailable("compression"),
-      Morgan: () => isMiddlewareAvailable("morgan"),
-      CookieParser: () => isMiddlewareAvailable("cookieParser"),
-      CookieSession: () => isMiddlewareAvailable("cookieSession"),
-      Session: () => isMiddlewareAvailable("session"),
-      RateLimiter: () => isMiddlewareAvailable("rateLimit"),
-      ServeFavicon: () => isMiddlewareAvailable("serveFavicon"),
-      // Built-in Express middleware always available
-      BodyParser: () => true,
-      UrlEncodedParser: () => true,
-    };
-
-    return methodMap[name]?.() ?? false;
-  }
-
-  /**
-   * Apply middleware by name using the appropriate add method.
-   */
-  private applyMiddlewareByName(name: string, options?: unknown): void {
-    switch (name) {
-      case "Cors":
-        this.addCors(options as CorsOptions);
-        break;
-      case "Helmet":
-        this.addHelmet(options as OptionsHelmet);
-        break;
-      case "BodyParser":
-        this.addBodyParser(options as OptionsJson);
-        break;
-      case "UrlEncodedParser":
-        this.addUrlEncodedParser(options as OptionsUrlencoded);
-        break;
-      case "Compression":
-        this.addCompression(options as CompressionOptions);
-        break;
-      case "Morgan":
-        // Morgan requires format as first argument
-        if (typeof options === "string") {
-          this.addMorgan(options);
-        } else {
-          this.addMorgan("combined");
-        }
-        break;
-      case "CookieParser":
-        this.addCookieParser(undefined, options as CookieParserOptions);
-        break;
-      case "CookieSession":
-        this.addCookieSession(options as CookieSessionOptions);
-        break;
-      case "Session":
-        this.addSession(options as SessionOptions);
-        break;
-      case "RateLimiter":
-        this.addRateLimiter(options as RateLimitOptions);
-        break;
-      case "ServeFavicon":
-        if (typeof options === "string") {
-          this.addServeFavicon(options);
-        }
-        break;
-      default:
-        this.logger.warn(
-          `Unknown middleware in preset: ${name}`,
-          "middleware-service",
-        );
-    }
-  }
-
-  /**
-   * Get all available presets.
-   *
-   * @returns Record of preset names to preset configurations
-   * @public API
-   */
-  getAvailablePresets(): Record<MiddlewarePresetName, MiddlewarePreset> {
-    return MIDDLEWARE_PRESETS;
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   // ERROR HANDLER
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1103,7 +867,7 @@ export class Middleware implements IMiddleware {
     if (errorHandling) {
       this.errorHandler = errorHandling;
       if (enableExceptionFilters) {
-        this.logger.warn(
+        this._logger.warn(
           "Custom errorHandler provided - exception filters are disabled. Remove errorHandler to use exception filters.",
           "middleware-service",
         );
@@ -1121,7 +885,7 @@ export class Middleware implements IMiddleware {
         );
         this.errorHandler = exceptionHandler.handle;
       } catch (error) {
-        this.logger.warn(
+        this._logger.warn(
           `Failed to enable exception filters: ${error}. Falling back to default error handler.`,
           "middleware-service",
         );
@@ -1139,7 +903,7 @@ export class Middleware implements IMiddleware {
 
     // Warn if enableExceptionFilters is true but container is not provided
     if (enableExceptionFilters && !container) {
-      this.logger.warn(
+      this._logger.warn(
         "enableExceptionFilters is true but container is not provided. Exception filters will not be enabled.",
         "middleware-service",
       );
@@ -1632,5 +1396,877 @@ export class Middleware implements IMiddleware {
    */
   public count(): number {
     return this.middlewarePipeline.length;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 UNIFIED METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configure request parsing (unified method).
+   * Replaces: addBodyParser, addUrlEncodedParser, addCookieParser
+   */
+  public parse(options?: ParseOptions): void {
+    const opts = options || {};
+
+    // JSON parsing (default: enabled)
+    if (opts.json !== false) {
+      const jsonOpts =
+        typeof opts.json === "object" ? opts.json : { limit: "100kb" };
+      this.addBuiltInMiddleware("jsonParser", "parser", () => json(jsonOpts));
+    }
+
+    // URL-encoded parsing (default: enabled)
+    if (opts.urlencoded !== false) {
+      const urlencodedOpts =
+        typeof opts.urlencoded === "object"
+          ? opts.urlencoded
+          : { extended: true };
+      this.addBuiltInMiddleware("urlencodedParser", "parser", () =>
+        urlencoded(urlencodedOpts),
+      );
+    }
+
+    // Cookie parsing (default: disabled, requires package)
+    if (opts.cookies) {
+      const cookieOpts = typeof opts.cookies === "object" ? opts.cookies : {};
+      this.addBuiltInMiddleware("cookieParser", "parser", () =>
+        middlewareResolver(
+          "cookieParser",
+          cookieOpts.secret,
+          cookieOpts.options,
+        ),
+      );
+    }
+
+    this.bufferStartupLog("Request parsing configured");
+  }
+
+  /**
+   * Configure logging with any implementation.
+   * Replaces: addMorgan
+   */
+  public logger(config?: MiddlewareLoggerConfig): void {
+    // Skip in test if configured
+    if (config?.disableInTest !== false && process.env.NODE_ENV === "test") {
+      return;
+    }
+
+    // Custom logger takes precedence
+    if (config?.custom) {
+      const customHandler = config.custom;
+      this.addBuiltInMiddleware(
+        "customLogger",
+        "logging",
+        () => customHandler as ExpressHandler,
+      );
+      this.bufferStartupLog("Using custom logger");
+      return;
+    }
+
+    const implementation = config?.implementation || "auto";
+    const handler = this.resolveLoggerImplementation(
+      implementation,
+      config?.options,
+      config?.skip,
+    );
+
+    if (handler) {
+      const implName =
+        implementation === "auto" ? this.detectBestLogger() : implementation;
+      this.addBuiltInMiddleware(`logger-${implName}`, "logging", () => handler);
+      this.bufferStartupLog(
+        `Using ${implName} logger${implementation === "auto" ? " (auto-detected)" : ""}`,
+      );
+    }
+  }
+
+  // Internal logger getter
+  private get loggerInstance(): Logger {
+    return this._logger;
+  }
+
+  /**
+   * Detect the best available logger.
+   */
+  private detectBestLogger(): LoggerImplementation {
+    if (isPackageAvailable("pino-http")) return "pino";
+    if (isPackageAvailable("express-winston")) return "winston";
+    if (isMiddlewareAvailable("morgan")) return "morgan";
+    return "console";
+  }
+
+  /**
+   * Resolve logger implementation.
+   */
+  private resolveLoggerImplementation(
+    implementation: LoggerImplementation,
+    options?: unknown,
+    skip?: (req: Request) => boolean,
+  ): ExpressHandler | null {
+    const impl =
+      implementation === "auto" ? this.detectBestLogger() : implementation;
+
+    switch (impl) {
+      case "morgan": {
+        const morganOpts = options as { format?: string } | undefined;
+        const format = morganOpts?.format || "combined";
+        // Only pass options object if skip is defined to avoid passing undefined
+        if (skip) {
+          return middlewareResolver("morgan", format, { skip });
+        }
+        return middlewareResolver("morgan", format);
+      }
+
+      case "pino": {
+        const pino =
+          resolvePackage<(opts?: unknown) => ExpressHandler>("pino-http");
+        if (pino) {
+          return pino(options);
+        }
+        this.bufferStartupLog(
+          "pino-http not installed, falling back to morgan",
+          "warn",
+        );
+        return this.resolveLoggerImplementation("morgan", options, skip);
+      }
+
+      case "winston": {
+        const winston = resolvePackage<{
+          logger: (opts?: unknown) => ExpressHandler;
+        }>("express-winston");
+        if (winston?.logger) {
+          return winston.logger(options);
+        }
+        this.bufferStartupLog(
+          "express-winston not installed, falling back to morgan",
+          "warn",
+        );
+        return this.resolveLoggerImplementation("morgan", options, skip);
+      }
+
+      case "console": {
+        // Simple console logger
+        const handler: RequestHandler = (req, _res, next) => {
+          console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+          next();
+        };
+        return handler;
+      }
+
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Unified security configuration.
+   * Replaces: addHelmet, addCors, addRateLimiter
+   */
+  public security(config?: SecurityConfig | SecurityPreset): void {
+    // Handle preset strings
+    const secConfig: SecurityConfig =
+      typeof config === "string"
+        ? this.getSecurityPreset(config)
+        : config || this.getSecurityPreset("standard");
+
+    // Helmet/security headers
+    if (secConfig.headers !== false) {
+      const helmetOpts =
+        typeof secConfig.headers === "object" ? secConfig.headers : {};
+      this.addBuiltInMiddleware("helmet", "security", () =>
+        middlewareResolver("helmet", helmetOpts),
+      );
+    }
+
+    // CORS
+    if (secConfig.cors !== false) {
+      const corsOpts =
+        typeof secConfig.cors === "object" ? secConfig.cors : { origin: true };
+      this.addBuiltInMiddleware("cors", "security", () =>
+        middlewareResolver("cors", corsOpts),
+      );
+    }
+
+    // Rate limiting
+    if (secConfig.rateLimit) {
+      const rateLimitOpts =
+        typeof secConfig.rateLimit === "object"
+          ? secConfig.rateLimit
+          : { windowMs: 60000, max: 100 };
+      this.addBuiltInMiddleware("rateLimit", "security", () =>
+        middlewareResolver("rateLimit", rateLimitOpts),
+      );
+    }
+
+    // Custom security middleware
+    if (secConfig.custom) {
+      for (const middleware of secConfig.custom) {
+        this.addMiddleware(middleware);
+      }
+    }
+
+    this.bufferStartupLog("Security configured");
+  }
+
+  /**
+   * Get security preset configuration.
+   */
+  private getSecurityPreset(preset: SecurityPreset): SecurityConfig {
+    const presets: Record<SecurityPreset, SecurityConfig> = {
+      standard: {
+        headers: "helmet",
+        cors: true,
+        rateLimit: false,
+      },
+      strict: {
+        headers: "helmet",
+        cors: { origin: false, credentials: true },
+        rateLimit: { windowMs: 60000, max: 60 },
+      },
+      api: {
+        headers: "helmet",
+        cors: {
+          origin: true,
+          credentials: true,
+          methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        },
+        rateLimit: { windowMs: 60000, max: 100 },
+      },
+      minimal: {
+        headers: false,
+        cors: true,
+        rateLimit: false,
+      },
+      relaxed: {
+        headers: false,
+        cors: { origin: true },
+        rateLimit: false,
+      },
+    };
+    return presets[preset] || presets.standard;
+  }
+
+  /**
+   * Configure compression.
+   * Replaces: addCompression
+   */
+  public compress(config?: CompressConfig): void {
+    const impl = config?.implementation || "auto";
+    let handler: ExpressHandler | null = null;
+
+    if (impl === "auto") {
+      // Try shrink-ray first, then compression
+      if (isPackageAvailable("shrink-ray-current")) {
+        const shrinkRay =
+          resolvePackage<(opts?: unknown) => ExpressHandler>(
+            "shrink-ray-current",
+          );
+        if (shrinkRay) {
+          handler = shrinkRay(config);
+          this.bufferStartupLog("Using shrink-ray compression (auto-detected)");
+        }
+      }
+
+      if (!handler) {
+        handler = middlewareResolver("compression", config);
+        if (handler) {
+          this.bufferStartupLog("Using compression (auto-detected)");
+        }
+      }
+    } else if (impl === "shrink-ray") {
+      const shrinkRay =
+        resolvePackage<(opts?: unknown) => ExpressHandler>(
+          "shrink-ray-current",
+        );
+      if (shrinkRay) {
+        handler = shrinkRay(config);
+      }
+    } else {
+      handler = middlewareResolver("compression", config);
+    }
+
+    if (handler) {
+      this.addBuiltInMiddleware("compression", "other", () => handler);
+    }
+  }
+
+  /**
+   * Unified session management.
+   * Replaces: addSession, addCookieSession
+   */
+  public session(config: V4SessionConfig): void {
+    switch (config.type) {
+      case "cookie": {
+        // Use cookie-session
+        const cookieSessionOpts = {
+          name: config.name || "session",
+          secret: config.secret,
+          keys: config.keys || [
+            typeof config.secret === "string"
+              ? config.secret
+              : config.secret[0],
+          ],
+          ...config.cookie,
+        };
+        this.addBuiltInMiddleware("cookieSession", "session", () =>
+          middlewareResolver("cookieSession", cookieSessionOpts),
+        );
+        break;
+      }
+
+      case "store": {
+        // Use express-session
+        const sessionOpts = {
+          secret: config.secret,
+          name: config.name,
+          store: config.store,
+          resave: config.resave ?? false,
+          saveUninitialized: config.saveUninitialized ?? false,
+          rolling: config.rolling,
+          cookie: config.cookie,
+        };
+        this.addBuiltInMiddleware("session", "session", () =>
+          middlewareResolver("session", sessionOpts),
+        );
+        break;
+      }
+
+      case "jwt": {
+        // JWT session - minimal implementation
+        this.bufferStartupLog(
+          "JWT sessions require custom implementation. Use Middleware.add() with your JWT middleware.",
+          "warn",
+        );
+        break;
+      }
+    }
+  }
+
+  /**
+   * Enhanced file upload handling.
+   * Configures global upload settings and returns upload handlers.
+   *
+   * When called, this stores the configuration globally so that
+   * @FileUpload decorators can use these settings as defaults.
+   *
+   * @param config - Upload configuration
+   * @returns Upload handler with single, array, fields, any, none methods
+   *
+   * @example
+   * ```typescript
+   * // In app.ts - configure globally
+   * this.Middleware.upload({
+   *   destination: './uploads',
+   *   limits: { fileSize: 10 * 1024 * 1024 }
+   * });
+   *
+   * // In controller - @FileUpload uses global config
+   * @FileUpload({ fieldName: 'avatar' })
+   * uploadAvatar(req: Request) { }
+   * ```
+   *
+   * @public API
+   */
+  public upload(config?: UploadConfig): UploadHandler {
+    // Store configuration globally for @FileUpload decorator
+    if (config) {
+      setGlobalUploadConfig(config);
+      this.bufferStartupLog("Upload configured");
+    }
+
+    const multerOpts: multer.Options = {
+      dest: config?.destination,
+      limits: config?.limits,
+    };
+
+    if (config?.fileFilter) {
+      const userFilter = config.fileFilter;
+      multerOpts.fileFilter = (_req, file, cb): void => {
+        try {
+          const result = userFilter(file as unknown as Express.Multer.File);
+          if (result instanceof Promise) {
+            result
+              .then((accepted) => cb(null, accepted))
+              .catch((err) => cb(err));
+          } else {
+            cb(null, result);
+          }
+        } catch (err) {
+          cb(err as Error);
+        }
+      };
+    }
+
+    const multerInstance = this.setupMulter(multerOpts);
+
+    return {
+      single: (fieldName: string) => multerInstance.single(fieldName),
+      array: (fieldName: string, maxCount?: number) =>
+        multerInstance.array(fieldName, maxCount),
+      fields: (fields: Array<{ name: string; maxCount?: number }>) =>
+        multerInstance.fields(fields),
+      any: () => multerInstance.any(),
+      none: () => multerInstance.none(),
+    };
+  }
+
+  /**
+   * Enhanced static file serving.
+   * Replaces: serveStatic, addServeFavicon
+   */
+  public static(
+    config: StaticConfig | string | Array<StaticConfig | string>,
+  ): void {
+    const configs = Array.isArray(config) ? config : [config];
+
+    for (const cfg of configs) {
+      if (typeof cfg === "string") {
+        // Simple path string
+        this.serveStatic(cfg);
+      } else {
+        // Full config object
+        const staticOpts: ServeStaticOptions = {
+          maxAge: cfg.maxAge,
+          etag: cfg.etag,
+          index: cfg.spa ? false : cfg.index,
+          ...cfg.options,
+        };
+
+        if (cfg.prefix) {
+          // Route-specific static serving
+          this.addMiddleware({
+            path: cfg.prefix,
+            middlewares: [expressStatic(cfg.path, staticOpts)],
+          });
+        } else {
+          this.serveStatic(cfg.path, staticOpts);
+        }
+
+        // SPA support - serve index.html for all non-file routes
+        if (cfg.spa) {
+          const indexPath = cfg.index || "index.html";
+          const spaHandler: RequestHandler = (_req, res, next) => {
+            const filePath = `${cfg.path}/${indexPath}`;
+            res.sendFile(filePath, { root: process.cwd() }, (err) => {
+              if (err) next(err);
+            });
+          };
+          this.addBuiltInMiddleware("spa-fallback", "static", () => spaHandler);
+        }
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 MIDDLEWARE REGISTRY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Register a named middleware for use in routes.
+   */
+  public register(
+    name: string,
+    handler: RequestHandler | Array<RequestHandler> | RegistryEntry,
+  ): void {
+    this.registry.register(name, handler);
+    // Track registered names for summary (no individual logging)
+    this.registeredMiddlewareNames.push(name);
+  }
+
+  /**
+   * Get a registered middleware by name.
+   */
+  public get(name: string): RequestHandler | Array<RequestHandler> | undefined {
+    return this.registry.get(name);
+  }
+
+  /**
+   * Check if a middleware is registered.
+   */
+  public has(name: string): boolean {
+    return this.registry.has(name);
+  }
+
+  /**
+   * Get all registered middleware names.
+   */
+  public getRegisteredNames(): Array<string> {
+    return this.registry.getRegisteredNames();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 PRESET SYSTEM
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Define a custom reusable preset.
+   */
+  public definePreset(name: string, config: V4MiddlewareConfig): void {
+    this.customPresets.set(name, config);
+    this.bufferStartupLog(`Defined custom preset: ${name}`);
+  }
+
+  /**
+   * Apply a preset configuration.
+   */
+  public applyPreset(
+    preset: string,
+    overrides?: Partial<V4MiddlewareConfig>,
+  ): void {
+    const config = this.getPresetConfig(preset);
+    if (!config) {
+      this.loggerInstance.error(
+        `Preset '${preset}' not found. Available: ${this.getAvailablePresetNames().join(", ")}`,
+        "middleware",
+      );
+      return;
+    }
+
+    // Merge with overrides
+    const finalConfig = overrides
+      ? this.mergeConfigs(config, overrides)
+      : config;
+
+    // Apply each category
+    if (finalConfig.parse) {
+      if (typeof finalConfig.parse === "boolean") {
+        this.parse();
+      } else {
+        this.parse(finalConfig.parse);
+      }
+    }
+
+    if (finalConfig.logger) {
+      if (typeof finalConfig.logger === "boolean") {
+        this.logger();
+      } else {
+        this.logger(finalConfig.logger);
+      }
+    }
+
+    if (finalConfig.security) {
+      if (typeof finalConfig.security === "boolean") {
+        this.security();
+      } else {
+        this.security(finalConfig.security);
+      }
+    }
+
+    if (finalConfig.compress) {
+      if (typeof finalConfig.compress === "boolean") {
+        this.compress();
+      } else {
+        this.compress(finalConfig.compress);
+      }
+    }
+
+    if (finalConfig.session) {
+      this.session(finalConfig.session);
+    }
+
+    if (finalConfig.static) {
+      this.static(finalConfig.static);
+    }
+
+    this.bufferStartupLog(`Applied preset: ${preset}`);
+  }
+
+  /**
+   * Get all available presets.
+   */
+  public getAllPresets(): Record<string, V4MiddlewareConfig> {
+    const builtIn = this.getBuiltInPresets();
+    const custom = Object.fromEntries(this.customPresets);
+    return { ...builtIn, ...custom };
+  }
+
+  /**
+   * Get built-in presets.
+   */
+  private getBuiltInPresets(): Record<string, V4MiddlewareConfig> {
+    return {
+      api: {
+        parse: true,
+        logger: { implementation: "auto" },
+        security: "api",
+        compress: true,
+      },
+      web: {
+        parse: { json: true, urlencoded: true, cookies: true },
+        logger: { implementation: "auto" },
+        security: "standard",
+        compress: true,
+      },
+      spa: {
+        parse: { json: true, urlencoded: true },
+        security: "standard",
+        compress: true,
+      },
+      microservice: {
+        parse: { json: { limit: "1mb" } },
+        compress: true,
+      },
+      graphql: {
+        parse: { json: { limit: "50mb" } },
+        security: {
+          headers: "helmet",
+          cors: { origin: true, methods: ["GET", "POST", "OPTIONS"] },
+        },
+        compress: true,
+      },
+      minimal: {
+        parse: true,
+      },
+      development: {
+        parse: true,
+        logger: { implementation: "morgan", options: { format: "dev" } },
+        security: "relaxed",
+      },
+      production: {
+        parse: true,
+        logger: { implementation: "auto", disableInTest: true },
+        security: "strict",
+        compress: true,
+      },
+    };
+  }
+
+  /**
+   * Get preset config by name.
+   */
+  private getPresetConfig(name: string): V4MiddlewareConfig | undefined {
+    return this.customPresets.get(name) || this.getBuiltInPresets()[name];
+  }
+
+  /**
+   * Get available preset names.
+   */
+  private getAvailablePresetNames(): Array<string> {
+    return [
+      ...Object.keys(this.getBuiltInPresets()),
+      ...this.customPresets.keys(),
+    ];
+  }
+
+  /**
+   * Merge two configs.
+   */
+  private mergeConfigs(
+    base: V4MiddlewareConfig,
+    override: Partial<V4MiddlewareConfig>,
+  ): V4MiddlewareConfig {
+    return {
+      ...base,
+      ...override,
+      // Deep merge for nested objects
+      parse:
+        override.parse !== undefined
+          ? typeof override.parse === "object" && typeof base.parse === "object"
+            ? { ...base.parse, ...override.parse }
+            : override.parse
+          : base.parse,
+      logger:
+        override.logger !== undefined
+          ? typeof override.logger === "object" &&
+            typeof base.logger === "object"
+            ? { ...base.logger, ...override.logger }
+            : override.logger
+          : base.logger,
+      security:
+        override.security !== undefined ? override.security : base.security,
+      compress:
+        override.compress !== undefined ? override.compress : base.compress,
+      session: override.session !== undefined ? override.session : base.session,
+      static: override.static !== undefined ? override.static : base.static,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 ADVANCED FEATURES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Conditional middleware application.
+   */
+  public when(
+    condition: boolean | (() => boolean),
+    handler: RequestHandler | (() => void),
+  ): void {
+    const shouldApply =
+      typeof condition === "function" ? condition() : condition;
+
+    if (shouldApply) {
+      if (typeof handler === "function" && handler.length === 0) {
+        // It's a callback function, execute it
+        (handler as () => void)();
+      } else {
+        // It's a middleware handler
+        this.addMiddleware(handler as RequestHandler);
+      }
+    }
+  }
+
+  /**
+   * Auto-optimize middleware pipeline.
+   */
+  public optimize(config?: OptimizationConfig): void {
+    if (config?.autoReorder) {
+      this.reorderForPerformance();
+    }
+
+    if (config?.metrics) {
+      this.enableProfiling();
+    }
+
+    this.bufferStartupLog("Middleware pipeline optimized");
+  }
+
+  /**
+   * Reorder middleware for optimal performance.
+   */
+  private reorderForPerformance(): void {
+    // Priority order: security first, then parsers, then logging, then others
+    const priorityOrder: Record<MiddlewareCategory, number> = {
+      security: 1,
+      parser: 2,
+      logging: 3,
+      session: 4,
+      validation: 5,
+      static: 6,
+      other: 7,
+      error: 100, // Error handlers go last
+    };
+
+    this.middlewarePipeline.sort((a, b) => {
+      const priorityA = priorityOrder[a.category] || 50;
+      const priorityB = priorityOrder[b.category] || 50;
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      return a.order - b.order;
+    });
+
+    this.invalidateCache();
+  }
+
+  /**
+   * Analyze middleware pipeline.
+   */
+  public analyze(): PipelineAnalysis {
+    const info = this.getPipelineInfo();
+    const issues: Array<string> = [];
+    const bottlenecks: Array<string> = [];
+
+    // Check for common issues
+    if (!this.middlewareExists("jsonParser")) {
+      issues.push("No JSON body parser configured");
+    }
+
+    if (
+      !this.middlewareExists("compression") &&
+      process.env.NODE_ENV === "production"
+    ) {
+      issues.push("Compression not enabled in production");
+    }
+
+    if (
+      !this.middlewareExists("rateLimit") &&
+      process.env.NODE_ENV === "production"
+    ) {
+      issues.push("Rate limiting not enabled in production");
+    }
+
+    // Identify potential bottlenecks
+    if (this.profilingEnabled && this.profiler) {
+      const metrics = this.profiler.getAllMetrics();
+      for (const metric of metrics) {
+        if (metric.avgExecutionMs > 50) {
+          bottlenecks.push(
+            `${metric.name}: avg ${metric.avgExecutionMs.toFixed(2)}ms`,
+          );
+        }
+      }
+    }
+
+    return {
+      count: info.total,
+      estimatedOverhead: info.total * 0.1, // Rough estimate: 0.1ms per middleware
+      order: info.entries.map((e) => ({
+        name: e.name,
+        category: e.category,
+        isBuiltIn: e.type === "built-in",
+      })),
+      issues,
+      bottlenecks,
+    };
+  }
+
+  /**
+   * Get recommendations for improvement.
+   */
+  public getRecommendations(): Array<Recommendation> {
+    const recommendations: Array<Recommendation> = [];
+    const analysis = this.analyze();
+
+    // Check compression
+    if (!this.middlewareExists("compression")) {
+      recommendations.push({
+        type: "performance",
+        severity: "medium",
+        message: "Compression is not enabled. Responses can be 60-80% smaller.",
+        action: "this.Middleware.compress()",
+      });
+    }
+
+    // Check rate limiting in production
+    if (
+      !this.middlewareExists("rateLimit") &&
+      process.env.NODE_ENV === "production"
+    ) {
+      recommendations.push({
+        type: "security",
+        severity: "high",
+        message:
+          "Rate limiting not enabled in production. API is vulnerable to abuse.",
+        action: "this.Middleware.security({ rateLimit: true })",
+      });
+    }
+
+    // Check helmet in production
+    if (
+      !this.middlewareExists("helmet") &&
+      process.env.NODE_ENV === "production"
+    ) {
+      recommendations.push({
+        type: "security",
+        severity: "high",
+        message: "Security headers (Helmet) not enabled in production.",
+        action: "this.Middleware.security('standard')",
+      });
+    }
+
+    // Check for issues
+    for (const issue of analysis.issues) {
+      recommendations.push({
+        type: "best-practice",
+        severity: "low",
+        message: issue,
+      });
+    }
+
+    return recommendations;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 ALIAS: add() for addMiddleware()
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add custom middleware to global pipeline.
+   * Alias for addMiddleware() with shorter name.
+   */
+  public add(middleware: MiddlewareOptions): void {
+    this.addMiddleware(middleware);
   }
 }
