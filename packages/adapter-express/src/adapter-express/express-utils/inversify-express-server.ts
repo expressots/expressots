@@ -308,11 +308,7 @@ export class InversifyExpressServer {
           const versionPrefix = version ? `/${version}` : "";
 
           // Properly join paths to avoid issues like "/api" + "users" = "/apiusers"
-          const routePath = joinRoutePaths(
-            versionPrefix,
-            controllerMetadata.path,
-            metadata.path,
-          );
+          const routePath = joinRoutePaths(versionPrefix, controllerMetadata.path, metadata.path);
           const fullPath = joinRoutePaths(this._routingConfig.rootPath, routePath);
 
           // Register route for suggestions system (synchronous approach)

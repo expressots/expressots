@@ -1,11 +1,6 @@
 import "reflect-metadata";
 
-import {
-  inject,
-  injectable,
-  decorate,
-  getGlobalUploadConfig,
-} from "@expressots/core";
+import { inject, injectable, decorate, getGlobalUploadConfig } from "@expressots/core";
 import {
   TYPE,
   METADATA_KEY,
