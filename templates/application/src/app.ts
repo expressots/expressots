@@ -7,7 +7,7 @@ export class App extends AppExpress {
         CreateModule([AppController]),
     ]);
 
-    async globalConfiguration(): Promise<void> {}
+    globalConfiguration(): void {}
 
     async configureServices(): Promise<void> {
         this.Middleware.addBodyParser();
