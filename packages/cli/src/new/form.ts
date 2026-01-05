@@ -180,8 +180,25 @@ const enum PackageManager {
 	bun = "bun",
 }
 
+/**
+ * Middleware presets for Application template
+ */
+enum MiddlewarePreset {
+	api = "API :: REST API with security, compression, and auto-logging. (Recommended)",
+	web = "Web :: Full web app with cookies and session support.",
+	graphql = "GraphQL :: Optimized for GraphQL APIs.",
+	microservice = "Microservice :: Minimal setup for microservices.",
+	minimal = "Minimal :: Just request parsing, customize everything yourself.",
+}
+
 type TemplateKeys = keyof typeof Template;
-type ProjectFormArgs = [PackageManager, TemplateKeys, string];
+type MiddlewarePresetKeys = keyof typeof MiddlewarePreset;
+type ProjectFormArgs = [
+	PackageManager,
+	TemplateKeys,
+	string,
+	MiddlewarePresetKeys,
+];
 
 /**
  * Template folder mapping
@@ -190,6 +207,44 @@ const TEMPLATE_FOLDERS: Record<string, string> = {
 	Application: "application",
 	Micro: "micro",
 };
+
+/**
+ * Middleware preset mapping to code
+ */
+const PRESET_CODE: Record<string, string> = {
+	API: `this.Middleware.applyPreset("api");`,
+	Web: `this.Middleware.applyPreset("web");`,
+	GraphQL: `this.Middleware.applyPreset("graphql");`,
+	Microservice: `this.Middleware.applyPreset("microservice");`,
+	Minimal: `this.Middleware.parse();`,
+};
+
+/**
+ * Apply the selected middleware preset to the generated app.ts
+ */
+function applyMiddlewarePreset(directory: string, preset: string): void {
+	const appTsPath = path.join(directory, "src", "app.ts");
+
+	if (!fs.existsSync(appTsPath)) {
+		return;
+	}
+
+	// Extract preset name from selection (e.g., "API :: ..." -> "API")
+	const presetMatch = preset.match(/^(\w+) ::/);
+	const presetName = presetMatch ? presetMatch[1] : "API";
+
+	const presetCode = PRESET_CODE[presetName] || PRESET_CODE["API"];
+
+	let content = fs.readFileSync(appTsPath, "utf-8");
+
+	// Replace the placeholder with the preset code
+	content = content.replace(
+		/\/\/ __MIDDLEWARE_PRESET_PLACEHOLDER__/,
+		presetCode,
+	);
+
+	fs.writeFileSync(appTsPath, content, "utf-8");
+}
 
 /**
  * Enable local template mode for testing
@@ -221,20 +276,22 @@ const projectForm = async (
 		name: string;
 		packageManager: string;
 		template: Template;
+		preset?: MiddlewarePreset;
 		confirm: boolean;
 	};
 
-	const [packageManager, template, directory] = args;
+	const [packageManager, template, directory, preset] = args;
 
 	if (packageManager && template) {
 		answer = {
 			name: projectName,
 			packageManager: packageManager,
 			template: Template[template],
+			preset: preset ? MiddlewarePreset[preset] : undefined,
 			confirm: true,
 		};
 	} else {
-		answer = await inquirer.prompt([
+		const baseAnswers = await inquirer.prompt([
 			{
 				type: "input",
 				name: "name",
@@ -266,6 +323,30 @@ const projectForm = async (
 					"Micro :: A minimalistic template for building micro APIs and serverless functions.",
 				],
 			},
+		]);
+
+		// Only show preset selection for Application template
+		let presetAnswer: { preset?: MiddlewarePreset } = {};
+		if (baseAnswers.template.startsWith("Application")) {
+			presetAnswer = await inquirer.prompt([
+				{
+					type: "list",
+					name: "preset",
+					message: "Select a middleware preset",
+					choices: [
+						`API :: REST API with security, compression, and auto-logging. (${chalk.yellow(
+							"Recommended",
+						)})`,
+						"Web :: Full web app with cookies and session support.",
+						"GraphQL :: Optimized for GraphQL APIs.",
+						"Microservice :: Minimal setup for microservices.",
+						"Minimal :: Just request parsing, customize everything yourself.",
+					],
+				},
+			]);
+		}
+
+		const confirmAnswer = await inquirer.prompt([
 			{
 				type: "confirm",
 				name: "confirm",
@@ -273,6 +354,12 @@ const projectForm = async (
 				default: true,
 			},
 		]);
+
+		answer = {
+			...baseAnswers,
+			...presetAnswer,
+			...confirmAnswer,
+		};
 	}
 
 	if (directory) {
@@ -378,6 +465,11 @@ const projectForm = async (
 		// Only update if we skipped installation
 		if (!SKIP_INSTALL_FOR_TESTING) {
 			progressBar.update(90, { doing: "Finalizing project" });
+		}
+
+		// Apply middleware preset for Application template
+		if (answer.preset && templateFolder === "application") {
+			applyMiddlewarePreset(answer.name, answer.preset);
 		}
 
 		changePackageName({

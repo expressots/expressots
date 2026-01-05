@@ -13,6 +13,14 @@ const packageManagers: Array<string> = [
 	...(process.platform !== "win32" ? ["bun"] : []),
 ];
 
+const middlewarePresets: Array<string> = [
+	"api",
+	"web",
+	"graphql",
+	"microservice",
+	"minimal",
+];
+
 const commandOptions = (yargs: Argv): Argv => {
 	return yargs
 		.positional("project-name", {
@@ -31,13 +39,20 @@ const commandOptions = (yargs: Argv): Argv => {
 			choices: packageManagers,
 			alias: "p",
 		})
+		.option("preset", {
+			describe: "Middleware preset for Application template",
+			type: "string",
+			choices: middlewarePresets,
+			alias: "s",
+		})
 		.option("directory", {
 			describe: "The directory for new project",
 			type: "string",
 			alias: "d",
 		})
 		.implies("package-manager", "template")
-		.implies("template", "package-manager");
+		.implies("template", "package-manager")
+		.implies("preset", "template");
 };
 
 const checkNodeVersion = (): void => {
@@ -61,12 +76,14 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 			packageManager,
 			template,
 			directory,
+			preset,
 		}) => {
 			checkNodeVersion();
 			return await projectForm(projectName, [
 				packageManager,
 				template,
 				directory,
+				preset,
 			]);
 		},
 	};
