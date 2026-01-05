@@ -10,7 +10,7 @@ export class App extends AppExpress {
     globalConfiguration(): void {}
 
     async configureServices(): Promise<void> {
-        this.Middleware.addBodyParser();
+        this.Middleware.parse();
         this.Middleware.setErrorHandler({
             showStackTrace: await this.isDevelopment(),
         });
