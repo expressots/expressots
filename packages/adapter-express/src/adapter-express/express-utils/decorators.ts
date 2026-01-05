@@ -1,6 +1,11 @@
 import "reflect-metadata";
 
-import { inject, injectable, decorate } from "@expressots/core";
+import {
+  inject,
+  injectable,
+  decorate,
+  getGlobalUploadConfig,
+} from "@expressots/core";
 import {
   TYPE,
   METADATA_KEY,
@@ -54,8 +59,19 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
 
     for (const key in pathMetadata) {
       if (statusCodeMetadata && statusCodeMetadata[key]) {
-        const realPath =
-          pathMetadata[key]["path"] === "/" ? path : `${path}${pathMetadata[key]["path"]}`;
+        const methodPath = pathMetadata[key]["path"];
+        // Properly join controller and method paths
+        let realPath: string;
+        if (methodPath === "/" || methodPath === "") {
+          realPath = path;
+        } else if (path === "/" || path === "") {
+          realPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
+        } else {
+          // Normalize: remove trailing slash from controller, ensure method has leading slash
+          const basePath = path.endsWith("/") ? path.slice(0, -1) : path;
+          const subPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
+          realPath = `${basePath}${subPath}`;
+        }
 
         statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] =
           statusCodeMetadata[key];
@@ -599,11 +615,40 @@ function isResponse(obj: unknown): obj is Response {
 }
 
 /**
- * File upload decorator to handle file uploads
- * @param options
- * @param multerOptions
+ * File upload decorator to handle file uploads.
+ *
+ * This decorator integrates with the global upload configuration
+ * set via `Middleware.upload()` in app.ts. If global config exists,
+ * it will be used as defaults, with local options taking precedence.
+ *
+ * @param options - Field configuration (fieldName, maxCount, none, any)
+ * @param multerOptions - Optional multer options (overrides global config)
  * @default { none: true }
  * @returns MethodDecorator
+ *
+ * @example
+ * ```typescript
+ * // In app.ts - configure globally (optional)
+ * this.Middleware.upload({
+ *   destination: './uploads',
+ *   limits: { fileSize: 10 * 1024 * 1024 }
+ * });
+ *
+ * // In controller - uses global config automatically
+ * @Post('avatar')
+ * @FileUpload({ fieldName: 'avatar' })
+ * uploadAvatar(req: Request) {
+ *   return req.file;
+ * }
+ *
+ * // Override global config for specific endpoint
+ * @Post('document')
+ * @FileUpload({ fieldName: 'doc' }, { limits: { fileSize: 50 * 1024 * 1024 } })
+ * uploadDocument(req: Request) {
+ *   return req.file;
+ * }
+ * ```
+ *
  * @public API
  */
 export function FileUpload(
@@ -620,7 +665,44 @@ export function FileUpload(
       options = { none: true };
     }
 
-    upload = multer(multerOptions);
+    // Get global upload configuration (set via Middleware.upload())
+    const globalConfig = getGlobalUploadConfig();
+
+    // Build final multer options, merging global config with local options
+    // Local options always take precedence over global config
+    const finalMulterOptions: MulterOptions = {};
+
+    // Apply global config as defaults
+    if (globalConfig) {
+      if (globalConfig.destination) {
+        finalMulterOptions.dest = globalConfig.destination;
+      }
+      if (globalConfig.limits) {
+        finalMulterOptions.limits = globalConfig.limits;
+      }
+    }
+
+    // Apply local options (overrides global)
+    if (multerOptions) {
+      if (multerOptions.dest) {
+        finalMulterOptions.dest = multerOptions.dest;
+      }
+      if (multerOptions.limits) {
+        // Merge limits - local takes precedence
+        finalMulterOptions.limits = {
+          ...finalMulterOptions.limits,
+          ...multerOptions.limits,
+        };
+      }
+      if (multerOptions.storage) {
+        finalMulterOptions.storage = multerOptions.storage;
+      }
+      if (multerOptions.fileFilter) {
+        finalMulterOptions.fileFilter = multerOptions.fileFilter;
+      }
+    }
+
+    upload = multer(finalMulterOptions);
     method = inferMulterMethod(options);
   }
 

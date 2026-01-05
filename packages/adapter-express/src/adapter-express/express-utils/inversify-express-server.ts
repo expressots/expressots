@@ -98,6 +98,47 @@ function getRouteRegistryModule(): {
   return routeRegistryModule;
 }
 
+/**
+ * Properly join route path segments, handling:
+ * - Controller "/" + method "/users" = "/users"
+ * - Controller "/api" + method "users" = "/api/users"
+ * - Controller "/api/" + method "/users" = "/api/users"
+ * - Controller "/" + method "/" = "/"
+ */
+function joinRoutePaths(...segments: Array<string | undefined>): string {
+  const parts: Array<string> = [];
+
+  for (const segment of segments) {
+    if (!segment || segment === "") continue;
+
+    // For root path only, skip if we have parts
+    if (segment === "/" && parts.length > 0) continue;
+
+    // Remove trailing slash
+    let cleaned = segment.endsWith("/") && segment.length > 1 ? segment.slice(0, -1) : segment;
+
+    // Handle leading slash
+    if (parts.length > 0) {
+      // Ensure leading slash for non-first segments
+      cleaned = cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
+    } else {
+      // First segment - ensure starts with /
+      cleaned = cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
+    }
+
+    if (cleaned && cleaned !== "/") {
+      parts.push(cleaned);
+    } else if (parts.length === 0) {
+      parts.push("/");
+    }
+  }
+
+  if (parts.length === 0) return "/";
+
+  // Join and normalize double slashes
+  return parts.join("").replace(/\/+/g, "/");
+}
+
 export class InversifyExpressServer {
   private _router: Router;
   private _container: interfaces.Container;
@@ -265,8 +306,14 @@ export class InversifyExpressServer {
           // Determine version: method-level version overrides controller-level version
           const version = metadata.version || controllerMetadata.version;
           const versionPrefix = version ? `/${version}` : "";
-          const routePath = `${versionPrefix}${controllerMetadata.path}${metadata.path}`;
-          const fullPath = `${this._routingConfig.rootPath}${routePath}`;
+
+          // Properly join paths to avoid issues like "/api" + "users" = "/apiusers"
+          const routePath = joinRoutePaths(
+            versionPrefix,
+            controllerMetadata.path,
+            metadata.path,
+          );
+          const fullPath = joinRoutePaths(this._routingConfig.rootPath, routePath);
 
           // Register route for suggestions system (synchronous approach)
           try {

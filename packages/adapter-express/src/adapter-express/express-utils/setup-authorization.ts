@@ -77,6 +77,6 @@ export function setupAuthorizationForExpress(
     // by the middleware resolution system (see inversify-express-server.ts)
     const middlewareInstance = container.get(PermissionPreloaderMiddleware);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    middleware.addMiddleware(middlewareInstance as any);
+    middleware.add(middlewareInstance as any);
   }
 }

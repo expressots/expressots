@@ -1141,6 +1141,29 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Display middleware startup logs after the banner.
+   * This makes startup logging transparent to the user - no need for manual code in postServerInitialization().
+   * @private
+   */
+  private displayMiddlewareStartupLogs(): void {
+    const isDev = this.environment === "development";
+    if (!isDev) return;
+
+    const startupLogs = (this.Middleware as Middleware).getStartupLogs();
+    if (startupLogs.length === 0) return;
+
+    startupLogs.forEach((log) => {
+      if (log.type === "warn") {
+        this.logger.warn(log.message, "middleware");
+      } else {
+        this.logger.info(log.message, "middleware");
+      }
+    });
+
+    (this.Middleware as Middleware).clearStartupLogs();
+  }
+
+  /**
    * Display startup banner with application metrics.
    * @param appInfo - Application info
    * @private
@@ -1149,6 +1172,8 @@ export class AppExpress implements Server.IWebServer {
     if (!this.bannerGenerator) {
       // Fallback to old console message if banner generator not initialized
       this.console.messageServer(this.port, this.environment || "development", appInfo);
+      // Still display middleware startup logs even in fallback mode
+      this.displayMiddlewareStartupLogs();
       return;
     }
 
@@ -1228,6 +1253,9 @@ export class AppExpress implements Server.IWebServer {
         },
         bannerData,
       );
+
+      // Automatically display middleware startup logs after banner (transparent to user)
+      this.displayMiddlewareStartupLogs();
     } catch (error) {
       // Fallback to old console message on error
       this.logger.warn(
@@ -1236,6 +1264,8 @@ export class AppExpress implements Server.IWebServer {
         error,
       );
       this.console.messageServer(this.port, this.environment || "development", appInfo);
+      // Still display middleware startup logs even in fallback mode
+      this.displayMiddlewareStartupLogs();
     }
   }
 }
