@@ -52,6 +52,14 @@ export namespace Server {
      * @public API
      */
     getHttpServer(): Promise<HTTPServer>;
+
+    /**
+     * Get the port the server is listening on.
+     * Useful for dynamic port assignment (port: 0) in testing scenarios.
+     * @returns The actual port number the server is bound to.
+     * @public API
+     */
+    getPort(): Promise<number>;
   }
 }
 
