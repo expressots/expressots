@@ -1098,6 +1098,26 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Get the port the server is listening on.
+   * Useful for dynamic port assignment (port: 0) in testing scenarios.
+   * @returns The actual port number the server is bound to.
+   * @public API
+   */
+  public async getPort(): Promise<number> {
+    if (!this.serverInstance) {
+      this.logger.error("Server instance not initialized yet", "adapter-express");
+      throw new Error("Server instance not initialized yet");
+    }
+
+    const address = this.serverInstance.address();
+    if (address && typeof address === "object" && "port" in address) {
+      return Promise.resolve(address.port);
+    }
+
+    throw new Error("Unable to determine server port");
+  }
+
+  /**
    * Detect API versions from @Version() decorators on controllers.
    * @returns Array of unique API versions (e.g., ["v1", "v2"])
    * @private
