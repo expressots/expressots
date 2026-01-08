@@ -1,99 +1,211 @@
-<a name="readme-top"></a>
+# ExpressoTS Templates Repository
 
-<!-- PROJECT SHIELDS -->
-[![Version][version-shield]][version-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
+Community-maintained templates and pricing data for the [ExpressoTS CLI](https://github.com/expressots/expressots-cli).
 
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="Logo" width="120">
-  </a>
+## What's This?
 
-  <h3 align="center">ExpressoTS Framework</h3>
+This repository contains all the templates used by ExpressoTS CLI to generate:
+- **CI/CD Pipelines** (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.)
+- **Docker Configurations** (Dockerfiles, docker-compose)
+- **Kubernetes Manifests** (deployments, services, ingress)
+- **Migration Guides** (Heroku → Railway/Render/Fly, Compose → K8s)
+- **Cloud Provider Pricing** (for cost estimation)
 
-  <p align="center">
-    Everything you need to know to build applications with ExpressoTS
-    <br />
-    <a href="https://doc.expresso-ts.com/"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/expressots/expressots/discussions">Let's discuss</a>
-    ·
-    <a href="https://github.com/expressots/expressots/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/expressots/expressots/issues">Request Feature</a>
-  </p>
-</div>
+## Why a Separate Repository?
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li><a href="#about-the-project">About The Project</a></li>
-    <li><a href="#getting-started">Getting Started</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#support-the-project">Support the project</a></li>
-    <li><a href="#license">License</a></li>
-  </ol>
-</details>
+**Fast Updates:** Templates can be updated without releasing a new CLI version. Users get updates within 24 hours.
 
-<!-- ABOUT THE PROJECT -->
-# About The Project
+**Community Contributions:** Anyone can contribute templates or update pricing - no CLI expertise needed.
 
-ExpressoTS is a [Typescript](https://www.typescriptlang.org/) + [Node.js](https://nodejs.org/en/) lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🐎
+**Offline Support:** CLI has embedded fallbacks, so it works without internet.
 
-## Getting Started
+**Version Control:** Templates are versioned independently from the CLI.
 
-- Here is our [Site](https://expresso-ts.com/)
-- You can find our [Documentation here](https://doc.expresso-ts.com/)
-- Checkout our [First Steps documentation](https://doc.expresso-ts.com/docs/overview/first-steps)
-- Our [CLI Documentation](https://doc.expresso-ts.com/docs/cli/overview)
+## Repository Structure
+
+```
+cli-templates/
+├── manifest.json              # Template registry with versions
+├── pricing.json               # Cloud provider pricing data
+├── README.md                  # This file
+├── cicd/                      # CI/CD pipeline templates
+│   ├── github/
+│   │   ├── basic.yml
+│   │   ├── comprehensive.yml
+│   │   └── security-focused.yml
+│   ├── gitlab/
+│   ├── circleci/
+│   ├── jenkins/
+│   ├── bitbucket/
+│   └── azure/
+├── docker/                    # Docker templates
+│   ├── Dockerfile.production.tpl
+│   ├── Dockerfile.development.tpl
+│   ├── docker-compose.yml.tpl
+│   └── docker-compose.development.yml.tpl
+├── kubernetes/                # Kubernetes manifest templates
+│   ├── deployment.yml.tpl
+│   ├── service.yml.tpl
+│   ├── configmap.yml.tpl
+│   └── ingress.yml.tpl
+└── migrations/                # Migration templates
+    ├── heroku-to-railway/
+    ├── heroku-to-render/
+    ├── heroku-to-fly/
+    └── compose-to-kubernetes/
+```
+
+## How to Use
+
+### For Users
+
+Users don't need to interact with this repository directly. The ExpressoTS CLI automatically fetches templates:
+
+```bash
+# List available templates
+expressots templates list
+
+# Update to latest versions
+expressots templates update
+
+# Generate CI/CD pipeline
+expressots cicd generate github --strategy comprehensive
+```
+
+### For Contributors
+
+Want to improve templates or update pricing? See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed instructions.
+
+**Quick start:**
+
+1. Fork this repository
+2. Edit a template file (e.g., `cicd/github/basic.yml`)
+3. Update `manifest.json` with new version
+4. Test locally:
+   ```bash
+   expressots templates repo set YOUR_USERNAME/templates
+   expressots templates update
+   expressots cicd generate github
+   ```
+5. Submit a pull request
+
+### For Organizations
+
+Use custom templates for your organization:
+
+```bash
+# Fork this repo, customize, then:
+expressots templates repo set mycompany/expressots-templates
+
+# Team members automatically get company templates
+expressots cicd generate github
+```
+
+## Template Syntax
+
+Templates use Mustache-like syntax:
+
+```yaml
+name: {{projectName}}
+
+{{#includeSecurity}}
+security:
+  scan: enabled
+{{/includeSecurity}}
+
+{{^isProduction}}
+dev-tools:
+  - nodemon
+{{/isProduction}}
+```
+
+**Supported:**
+- Variables: `{{name}}`
+- Conditionals: `{{#cond}}...{{/cond}}`
+- Negative conditionals: `{{^cond}}...{{/cond}}`
+- Loops: `{{#each items}}...{{/each}}`
 
 ## Contributing
 
-Welcome to the ExpressoTS community, a place bustling with innovative minds just like yours. We're absolutely thrilled to have you here!
-ExpressoTS is more than just a TypeScript framework; it's a collective effort by developers who are passionate about creating a more efficient, secure, and robust web ecosystem. We firmly believe that the best ideas come from a diversity of perspectives, backgrounds, and skills.
+We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+- How to add new templates
+- How to update pricing data
+- Testing guidelines
+- Review process
+- Best practices
 
-Why Contribute to Documentation?
+**Common contributions:**
+- Add new CI/CD strategies
+- Update cloud provider pricing
+- Improve security scanning
+- Add new platform support
+- Fix bugs in templates
 
-- **Share Knowledge**: If you've figured out something cool, why keep it to yourself?
-- **Build Your Portfolio**: Contributing to an open-source project like ExpressoTS is a great way to showcase your skills.
-- **Join a Network**: Get to know a community of like-minded developers.
-- **Improve the Product**: Help us fill in the gaps, correct errors, or make complex topics easier to understand.
+## Pricing Data
 
-Ready to contribute?
+Cloud provider pricing is stored in `cli-templates/pricing.json` and used by the CLI's cost estimation features.
 
-- [Contributing Guidelines](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md)
-- [How to Contribute](https://github.com/expressots/expressots/blob/main/CONTRIBUTING_HOWTO.md)
-- [Coding Guidelines](https://github.com/rsaz/TypescriptCodingGuidelines)
+**Updating pricing:**
 
-## Support the project
+1. Visit official pricing pages (links in `pricing.json`)
+2. Update prices for a provider
+3. Update `lastVerified` date
+4. Submit PR with source URLs
 
-ExpressoTS is an independent open source project with ongoing development made possible thanks to your support. If you'd like to help, please consider:
+**Example:**
+```json
+{
+  "providers": {
+    "aws": {
+      "cpuPerHour": 0.04048,
+      "source": "https://aws.amazon.com/fargate/pricing/",
+      "lastVerified": "2026-01-15"
+    }
+  }
+}
+```
 
-- Become a **[sponsor on GitHub](https://github.com/sponsors/expressots)**
-- Follow the **[organization](https://github.com/expressots)** on GitHub and Star ⭐ the project
-- Subscribe to the Twitch channel: **[Richard Zampieri](https://www.twitch.tv/richardzampieri)**
-- Join our **[Discord](https://discord.com/invite/PyPJfGK)**
-- Contribute submitting **[issues and pull requests](https://github.com/expressots/expressots/issues)**
-- Share the project with your friends and colleagues
+## Versioning
+
+### Template Versions
+
+Each template has its own version:
+- **Patch (1.0.1):** Bug fixes, typos
+- **Minor (1.1.0):** New features, backward compatible
+- **Major (2.0.0):** Breaking changes
+
+### Manifest Version
+
+The manifest version tracks overall structure changes:
+```json
+{
+  "version": "1.0.0",
+  "updated": "2026-01-07T00:00:00Z"
+}
+```
+
+## Release Process
+
+1. PRs merged to `main` branch
+2. CI validates manifest and templates
+3. Changes immediately available to CLI users
+4. Users' local cache updates within 24 hours
+5. Or manually: `expressots templates update`
+
+## Support
+
+- **Documentation:** https://expresso-ts.com/docs/cli/templates
+- **Issues:** https://github.com/expressots/expressots-cli/issues
+- **Discord:** https://discord.gg/expressots
 
 ## License
 
-Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expressots/expressots/blob/main/LICENSE) for more information.
+MIT License - see [LICENSE](./LICENSE) for details.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## Acknowledgments
 
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+This repository is maintained by the ExpressoTS community. Special thanks to all contributors who help keep templates and pricing data up-to-date!
 
-[version-shield]: https://img.shields.io/github/v/tag/expressots/templates?style=for-the-badge&logo=github
-[version-url]: https://img.shields.io/github/v/tag/expressots/templates?style=for-the-badge&logo=github
-[license-shield]: https://img.shields.io/github/license/expressots/expressots-project-template?style=for-the-badge
-[license-url]: https://github.com/expressots/expressots-project-template/blob/main/LICENSE
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/company/expresso-ts/
-[product-screenshot]: images/screenshot.png
+---
+
+**Built with ❤️ by the ExpressoTS community**
