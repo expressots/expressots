@@ -1303,10 +1303,7 @@ export class AppExpress implements Server.IWebServer {
    */
   private displayCIDetectionLogs(appInfo?: IConsoleMessage): void {
     if (appInfo?.ciDetection?.detected) {
-      this.logger.info(
-        `🔍 CI environment detected: ${appInfo.ciDetection.platform}`,
-        "bootstrap",
-      );
+      this.logger.info(`🔍 CI environment detected: ${appInfo.ciDetection.platform}`, "bootstrap");
       this.logger.info(`✅ Skipping .env file loading (using process.env)`, "bootstrap");
     }
   }
