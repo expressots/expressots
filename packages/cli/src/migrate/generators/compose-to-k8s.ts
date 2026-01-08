@@ -2,13 +2,19 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import type { MigrationOptions } from "../form";
-import { loadMigrationTemplate, buildMigrationVars, logTemplateSource } from "./template-loader";
+import {
+	loadMigrationTemplate,
+	buildMigrationVars,
+	logTemplateSource,
+} from "./template-loader";
 
 export async function generateComposeToK8s(
 	outputDir: string,
-	options: MigrationOptions
+	options: MigrationOptions,
 ): Promise<void> {
-	console.log(chalk.yellow("  Generating Docker Compose → Kubernetes migration..."));
+	console.log(
+		chalk.yellow("  Generating Docker Compose → Kubernetes migration..."),
+	);
 	const vars = buildMigrationVars(options);
 
 	const k8sDir = path.join(outputDir, "k8s");
@@ -41,17 +47,29 @@ export async function generateComposeToK8s(
 
 	// Generate kustomization.yaml
 	const kustomization = generateKustomization();
-	fs.writeFileSync(path.join(k8sDir, "kustomization.yaml"), kustomization, "utf-8");
+	fs.writeFileSync(
+		path.join(k8sDir, "kustomization.yaml"),
+		kustomization,
+		"utf-8",
+	);
 	console.log(chalk.green("    ✓ Created k8s/kustomization.yaml"));
 
 	// Generate migration checklist
 	const checklist = generateK8sChecklist();
-	fs.writeFileSync(path.join(outputDir, "MIGRATION_CHECKLIST.md"), checklist, "utf-8");
+	fs.writeFileSync(
+		path.join(outputDir, "MIGRATION_CHECKLIST.md"),
+		checklist,
+		"utf-8",
+	);
 	console.log(chalk.green("    ✓ Created MIGRATION_CHECKLIST.md"));
 
 	// Generate kompose command reference
 	const komposeRef = generateKomposeReference();
-	fs.writeFileSync(path.join(outputDir, "kompose-reference.md"), komposeRef, "utf-8");
+	fs.writeFileSync(
+		path.join(outputDir, "kompose-reference.md"),
+		komposeRef,
+		"utf-8",
+	);
 	console.log(chalk.green("    ✓ Created kompose-reference.md"));
 }
 

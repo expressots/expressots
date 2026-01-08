@@ -27,14 +27,14 @@ export async function analyzeImage(imageName: string): Promise<ImageAnalysis> {
 	let created = "Unknown";
 	let os = "Unknown";
 	let architecture = "Unknown";
-	
+
 	try {
 		// Use double quotes for cross-platform compatibility (Windows + Unix)
 		const inspectOutput = execSync(
 			`docker inspect ${imageName} --format "{{.Size}} {{.Created}} {{.Os}} {{.Architecture}}"`,
-			{ encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] }
+			{ encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
 		).trim();
-		
+
 		const parts = inspectOutput.split(" ");
 		const sizeBytes = parseInt(parts[0], 10);
 		size = formatBytes(sizeBytes);
@@ -45,9 +45,9 @@ export async function analyzeImage(imageName: string): Promise<ImageAnalysis> {
 		// Get layer count - cross-platform (count lines in Node.js instead of wc -l)
 		const historyOutput = execSync(
 			`docker history ${imageName} --format "{{.ID}}"`,
-			{ encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] }
+			{ encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
 		).trim();
-		layers = historyOutput.split("\n").filter(line => line.trim()).length;
+		layers = historyOutput.split("\n").filter((line) => line.trim()).length;
 	} catch (error) {
 		// Docker command failed, image might not exist or Docker not running
 		throw new Error(`Failed to inspect image: ${imageName}`);
@@ -55,17 +55,21 @@ export async function analyzeImage(imageName: string): Promise<ImageAnalysis> {
 
 	// Try to scan for vulnerabilities using Trivy if available
 	const vulnerabilities: Vulnerability[] = [];
-	
+
 	try {
 		// Check if Trivy is available
 		execSync("trivy --version", { stdio: ["pipe", "pipe", "pipe"] });
-		
+
 		// Run Trivy scan
 		const trivyOutput = execSync(
 			`trivy image --format json --severity HIGH,CRITICAL ${imageName}`,
-			{ encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"], maxBuffer: 50 * 1024 * 1024 }
+			{
+				encoding: "utf-8",
+				stdio: ["pipe", "pipe", "pipe"],
+				maxBuffer: 50 * 1024 * 1024,
+			},
 		);
-		
+
 		const trivyResult = JSON.parse(trivyOutput);
 		if (trivyResult.Results) {
 			for (const result of trivyResult.Results) {
@@ -74,7 +78,10 @@ export async function analyzeImage(imageName: string): Promise<ImageAnalysis> {
 						vulnerabilities.push({
 							id: vuln.VulnerabilityID,
 							severity: vuln.Severity?.toLowerCase() || "unknown",
-							description: vuln.Title || vuln.Description || "No description",
+							description:
+								vuln.Title ||
+								vuln.Description ||
+								"No description",
 							package: vuln.PkgName,
 							fixedVersion: vuln.FixedVersion,
 						});

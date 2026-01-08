@@ -3,7 +3,11 @@ import path from "path";
 import chalk from "chalk";
 import type { ProjectAnalysis } from "../analyzers/project-analyzer";
 import { getPresetConfig } from "../presets/preset-registry";
-import { loadDockerTemplate, buildDockerVars, logTemplateSource } from "./template-loader";
+import {
+	loadDockerTemplate,
+	buildDockerVars,
+	logTemplateSource,
+} from "./template-loader";
 
 type GeneratorOptions = {
 	environment: string;
@@ -31,17 +35,21 @@ function detectEntryPoint(cwd: string): string {
 				const cleanContent = content
 					.replace(/\/\*[\s\S]*?\*\//g, "") // Remove block comments
 					.replace(/\/\/.*/g, ""); // Remove line comments
-				
+
 				const tsconfig = JSON.parse(cleanContent);
 				const outDir = tsconfig.compilerOptions?.outDir || "./dist";
 				const rootDir = tsconfig.compilerOptions?.rootDir || "./";
-				
+
 				// Determine the entry point based on rootDir
 				// If rootDir is "." or "./" (project root), output will be dist/src/main.js
 				// If rootDir is "./src" or "src", output will be dist/main.js
-				const normalizedRootDir = rootDir.replace(/^\.\//, "").replace(/\/$/, "");
-				const normalizedOutDir = outDir.replace(/^\.\//, "").replace(/\/$/, "");
-				
+				const normalizedRootDir = rootDir
+					.replace(/^\.\//, "")
+					.replace(/\/$/, "");
+				const normalizedOutDir = outDir
+					.replace(/^\.\//, "")
+					.replace(/\/$/, "");
+
 				if (normalizedRootDir === "" || normalizedRootDir === ".") {
 					// rootDir is project root, so src/ folder is preserved
 					return `${normalizedOutDir}/src/main.js`;
@@ -70,30 +78,35 @@ export async function generateDockerfiles(
 	const preset = getPresetConfig(options.preset);
 	const entryPoint = detectEntryPoint(cwd);
 
-	console.log(chalk.yellow(`📝 Generating Dockerfile${options.environment !== "all" ? `.${options.environment}` : "s"}...`));
+	console.log(
+		chalk.yellow(
+			`📝 Generating Dockerfile${options.environment !== "all" ? `.${options.environment}` : "s"}...`,
+		),
+	);
 
 	// Always generate production Dockerfile (as "Dockerfile")
 	// Plus environment-specific if requested
-	const environments = options.environment === "all"
-		? ["development", "production"]
-		: options.environment === "development"
-			? ["development", "production"] // Also generate production Dockerfile
-			: [options.environment];
+	const environments =
+		options.environment === "all"
+			? ["development", "production"]
+			: options.environment === "development"
+				? ["development", "production"] // Also generate production Dockerfile
+				: [options.environment];
 
 	for (const env of environments) {
-		const templateType = env === "production" ? "production" : "development";
+		const templateType =
+			env === "production" ? "production" : "development";
 		const vars = buildDockerVars(analysis, entryPoint);
-		
+
 		// Try remote template, fall back to embedded
-		const result = await loadDockerTemplate(
-			templateType,
-			vars,
-			() => generateDockerfileContent(env, preset, analysis, entryPoint)
+		const result = await loadDockerTemplate(templateType, vars, () =>
+			generateDockerfileContent(env, preset, analysis, entryPoint),
 		);
-		
+
 		logTemplateSource(`Dockerfile.${env}`, result.source);
 
-		const filename = env === "production" ? "Dockerfile" : `Dockerfile.${env}`;
+		const filename =
+			env === "production" ? "Dockerfile" : `Dockerfile.${env}`;
 		const filepath = path.join(cwd, filename);
 
 		fs.writeFileSync(filepath, result.content, "utf-8");
@@ -108,17 +121,39 @@ export async function generateDockerfiles(
 	// Generate helper script for local dependencies ONLY if needed
 	// This is a temporary solution for unpublished packages
 	if (analysis?.hasLocalDependencies) {
-		const setupScriptNode = generateDockerSetupScriptNode(analysis.localDependencyPaths);
-		fs.writeFileSync(path.join(cwd, "docker-setup.js"), setupScriptNode, "utf-8");
-		console.log(chalk.green(`  ✓ Created docker-setup.js (for local dependencies)`));
-		
+		const setupScriptNode = generateDockerSetupScriptNode(
+			analysis.localDependencyPaths,
+		);
+		fs.writeFileSync(
+			path.join(cwd, "docker-setup.js"),
+			setupScriptNode,
+			"utf-8",
+		);
+		console.log(
+			chalk.green(`  ✓ Created docker-setup.js (for local dependencies)`),
+		);
+
 		// Also update package.json with docker:setup script
 		updatePackageJsonWithDockerScript(cwd);
-		console.log(chalk.green(`  ✓ Updated package.json with docker:setup script`));
-		
-		console.log(chalk.yellow(`\n⚠️  Note: .docker-deps/ and package.docker.json are temporary solutions`));
-		console.log(chalk.yellow(`   for local file dependencies. Once packages are published to npm,`));
-		console.log(chalk.yellow(`   you can remove these and use a simpler Dockerfile.\n`));
+		console.log(
+			chalk.green(`  ✓ Updated package.json with docker:setup script`),
+		);
+
+		console.log(
+			chalk.yellow(
+				`\n⚠️  Note: .docker-deps/ and package.docker.json are temporary solutions`,
+			),
+		);
+		console.log(
+			chalk.yellow(
+				`   for local file dependencies. Once packages are published to npm,`,
+			),
+		);
+		console.log(
+			chalk.yellow(
+				`   you can remove these and use a simpler Dockerfile.\n`,
+			),
+		);
 	}
 }
 
@@ -133,10 +168,23 @@ function generateDockerfileContent(
 	const port = analysis?.port || 3000;
 
 	if (environment === "development") {
-		return generateDevelopmentDockerfile(nodeVersion, packageManager, port, preset, analysis);
+		return generateDevelopmentDockerfile(
+			nodeVersion,
+			packageManager,
+			port,
+			preset,
+			analysis,
+		);
 	}
 
-	return generateProductionDockerfile(nodeVersion, packageManager, port, preset, analysis, entryPoint);
+	return generateProductionDockerfile(
+		nodeVersion,
+		packageManager,
+		port,
+		preset,
+		analysis,
+		entryPoint,
+	);
 }
 
 function generateDevelopmentDockerfile(
@@ -209,7 +257,14 @@ function generateProductionDockerfile(
 	const hasLocalDeps = analysis?.hasLocalDependencies ?? false;
 
 	if (!isMultiStage) {
-		return generateSingleStageDockerfile(baseImage, packageManager, port, preset, analysis, entryPoint);
+		return generateSingleStageDockerfile(
+			baseImage,
+			packageManager,
+			port,
+			preset,
+			analysis,
+			entryPoint,
+		);
 	}
 
 	// Generate local dependency copy commands (only if using local file: deps)
@@ -261,7 +316,9 @@ RUN npm run build
 
 ${pruneCommand}
 
-${preset.security?.enabled ? `
+${
+	preset.security?.enabled
+		? `
 # ============================================
 # Stage 2: Production
 # ============================================
@@ -280,7 +337,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 # Switch to non-root user
 USER nodejs
-` : `
+`
+		: `
 # ============================================
 # Stage 2: Production
 # ============================================
@@ -292,7 +350,8 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
-`}
+`
+}
 
 # Expose port
 EXPOSE ${port}
@@ -301,17 +360,29 @@ EXPOSE ${port}
 ENV NODE_ENV=production
 ENV PORT=${port}
 
-${analysis?.hasDatabase ? `# Database connection will be provided via environment variables
+${
+	analysis?.hasDatabase
+		? `# Database connection will be provided via environment variables
 # Example: DATABASE_URL=postgresql://user:pass@host:5432/db
-` : ""}
-${analysis?.hasRedis ? `# Redis connection will be provided via environment variables
+`
+		: ""
+}
+${
+	analysis?.hasRedis
+		? `# Redis connection will be provided via environment variables
 # Example: REDIS_URL=redis://host:6379
-` : ""}
+`
+		: ""
+}
 
-${preset.healthCheck?.enabled ? `# Health check
+${
+	preset.healthCheck?.enabled
+		? `# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \\
   CMD node -e "require('http').get('http://localhost:${port}/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-` : ""}
+`
+		: ""
+}
 
 # Start application
 CMD ["node", "${entryPoint}"]
@@ -394,14 +465,18 @@ function generateLocalDependencyCopies(localDependencyPaths: string[]): string {
 
 	// Generate COPY commands for local dependencies
 	// We need to copy them to a local location that's within the build context
-	return `
+	return (
+		`
 # Copy local dependencies (these should be in the project directory)
-# Run the setup script first: npm run docker:setup` + "\n" + localDependencyPaths
-		.map((depPath) => {
-			const filename = path.basename(depPath);
-			return `COPY ./.docker-deps/${filename} ./.docker-deps/${filename}`;
-		})
-		.join("\n");
+# Run the setup script first: npm run docker:setup` +
+		"\n" +
+		localDependencyPaths
+			.map((depPath) => {
+				const filename = path.basename(depPath);
+				return `COPY ./.docker-deps/${filename} ./.docker-deps/${filename}`;
+			})
+			.join("\n")
+	);
 }
 
 function generateDockerignoreContent(analysis?: ProjectAnalysis): string {
@@ -485,17 +560,17 @@ if (!fs.existsSync(depsDir)) {
 
 // Copy local dependency files
 ${localDependencyPaths
-		.map((depPath) => {
-			const filename = path.basename(depPath);
-			return `console.log('  Copying ${filename}...');
+	.map((depPath) => {
+		const filename = path.basename(depPath);
+		return `console.log('  Copying ${filename}...');
 try {
   fs.copyFileSync('${depPath.replace(/\\/g, "/")}', path.join(depsDir, '${filename}'));
 } catch (err) {
   console.error('  ❌ Failed to copy ${filename}:', err.message);
   process.exit(1);
 }`;
-		})
-		.join("\n")}
+	})
+	.join("\n")}
 
 console.log('  Creating Docker-compatible package.json...');
 
@@ -537,11 +612,17 @@ function updatePackageJsonWithDockerScript(cwd: string): void {
 
 	// Use node script for cross-platform compatibility
 	// Use project name from package.json for image name
-	const imageName = packageJson.name?.replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "expressots-app";
+	const imageName =
+		packageJson.name?.replace(/[^a-z0-9-]/gi, "-").toLowerCase() ||
+		"expressots-app";
 	packageJson.scripts["docker:setup"] = "node docker-setup.js";
-	packageJson.scripts["docker:build"] = `npm run docker:setup && docker build -t ${imageName} .`;
+	packageJson.scripts["docker:build"] =
+		`npm run docker:setup && docker build -t ${imageName} .`;
 	packageJson.scripts["docker:run"] = `docker run -p 3000:3000 ${imageName}`;
 
-	fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n", "utf-8");
+	fs.writeFileSync(
+		packageJsonPath,
+		JSON.stringify(packageJson, null, 2) + "\n",
+		"utf-8",
+	);
 }
-

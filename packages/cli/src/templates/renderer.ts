@@ -30,12 +30,17 @@ export class TemplateRenderer {
 	/**
 	 * Process conditional blocks {{#condition}}...{{/condition}}
 	 */
-	private processConditionals(template: string, options: RenderOptions): string {
+	private processConditionals(
+		template: string,
+		options: RenderOptions,
+	): string {
 		const pattern = /\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g;
 
 		return template.replace(pattern, (match, condition, content) => {
-			const value = options.conditionals?.[condition] ?? options.variables[condition];
-			
+			const value =
+				options.conditionals?.[condition] ??
+				options.variables[condition];
+
 			// Check if value is truthy
 			if (this.isTruthy(value)) {
 				// Recursively process the content
@@ -48,12 +53,17 @@ export class TemplateRenderer {
 	/**
 	 * Process negative conditional blocks {{^condition}}...{{/condition}}
 	 */
-	private processNegativeConditionals(template: string, options: RenderOptions): string {
+	private processNegativeConditionals(
+		template: string,
+		options: RenderOptions,
+	): string {
 		const pattern = /\{\{\^(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g;
 
 		return template.replace(pattern, (match, condition, content) => {
-			const value = options.conditionals?.[condition] ?? options.variables[condition];
-			
+			const value =
+				options.conditionals?.[condition] ??
+				options.variables[condition];
+
 			// Check if value is falsy
 			if (!this.isTruthy(value)) {
 				return this.render(content, options);
@@ -70,26 +80,28 @@ export class TemplateRenderer {
 
 		return template.replace(pattern, (match, arrayName, content) => {
 			const array = options.variables[arrayName];
-			
+
 			if (!Array.isArray(array)) {
 				return "";
 			}
 
-			return array.map((item, index) => {
-				// Create new options with item context
-				const itemOptions: RenderOptions = {
-					...options,
-					variables: {
-						...options.variables,
-						".": String(item),
-						"@index": index,
-						"@first": index === 0,
-						"@last": index === array.length - 1,
-						...(typeof item === "object" ? item : {}),
-					},
-				};
-				return this.render(content, itemOptions);
-			}).join("");
+			return array
+				.map((item, index) => {
+					// Create new options with item context
+					const itemOptions: RenderOptions = {
+						...options,
+						variables: {
+							...options.variables,
+							".": String(item),
+							"@index": index,
+							"@first": index === 0,
+							"@last": index === array.length - 1,
+							...(typeof item === "object" ? item : {}),
+						},
+					};
+					return this.render(content, itemOptions);
+				})
+				.join("");
 		});
 	}
 
@@ -102,15 +114,15 @@ export class TemplateRenderer {
 
 		return template.replace(pattern, (match, variable) => {
 			const trimmedVar = variable.trim();
-			
+
 			// Handle dot notation for nested variables
 			const value = this.getNestedValue(options.variables, trimmedVar);
-			
+
 			if (value === undefined || value === null) {
 				// Keep the placeholder if variable not found (for debugging)
 				return "";
 			}
-			
+
 			return String(value);
 		});
 	}
@@ -118,7 +130,10 @@ export class TemplateRenderer {
 	/**
 	 * Get nested value from object using dot notation
 	 */
-	private getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+	private getNestedValue(
+		obj: Record<string, unknown>,
+		path: string,
+	): unknown {
 		const parts = path.split(".");
 		let current: unknown = obj;
 
@@ -190,7 +205,7 @@ export class TemplateRenderer {
 	 */
 	extractVariables(template: string): string[] {
 		const variables = new Set<string>();
-		
+
 		// Match simple variables
 		const simplePattern = /\{\{([^#/^}][^}]*?)\}\}/g;
 		let match;

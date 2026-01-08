@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import type { ProjectAnalysis } from "../analyzers/project-analyzer";
-import { loadDockerTemplate, logTemplateSource, type DockerTemplateVars } from "./template-loader";
+import {
+	loadDockerTemplate,
+	logTemplateSource,
+	type DockerTemplateVars,
+} from "./template-loader";
 
 type GeneratorOptions = {
 	environment: string;
@@ -19,14 +23,16 @@ export async function generateDockerCompose(
 	console.log(chalk.yellow(`📝 Generating docker-compose.yml...`));
 
 	// Always generate production docker-compose.yml plus environment-specific if needed
-	const environments = options.environment === "all"
-		? ["development", "production"]
-		: options.environment === "development"
-			? ["development", "production"]  // Also generate production compose
-			: [options.environment];
+	const environments =
+		options.environment === "all"
+			? ["development", "production"]
+			: options.environment === "development"
+				? ["development", "production"] // Also generate production compose
+				: [options.environment];
 
 	for (const env of environments) {
-		const templateType = env === "production" ? "compose" : "compose-development";
+		const templateType =
+			env === "production" ? "compose" : "compose-development";
 		const vars: DockerTemplateVars = {
 			nodeVersion: analysis?.nodeVersion || "20",
 			packageManager: "npm",
@@ -40,17 +46,16 @@ export async function generateDockerCompose(
 		};
 
 		// Try remote template, fall back to embedded
-		const result = await loadDockerTemplate(
-			templateType,
-			vars,
-			() => generateDockerComposeContent(env, analysis)
+		const result = await loadDockerTemplate(templateType, vars, () =>
+			generateDockerComposeContent(env, analysis),
 		);
 
 		logTemplateSource(`docker-compose.${env}`, result.source);
 
-		const filename = env === "production"
-			? "docker-compose.yml"
-			: `docker-compose.${env}.yml`;
+		const filename =
+			env === "production"
+				? "docker-compose.yml"
+				: `docker-compose.${env}.yml`;
 		const filepath = path.join(cwd, filename);
 
 		fs.writeFileSync(filepath, result.content, "utf-8");
@@ -69,7 +74,12 @@ function generateDockerComposeContent(
 	const services: string[] = [];
 
 	// App service
-	const appService = generateAppService(environment, port, hasDatabase, hasRedis);
+	const appService = generateAppService(
+		environment,
+		port,
+		hasDatabase,
+		hasRedis,
+	);
 	services.push(appService);
 
 	// Database service
@@ -91,10 +101,14 @@ version: '3.8'
 services:
 ${services.join("\n\n")}
 
-${hasDatabase || hasRedis ? `
+${
+	hasDatabase || hasRedis
+		? `
 volumes:
 ${hasDatabase ? "  postgres_data:\n    driver: local\n" : ""}${hasRedis ? "  redis_data:\n    driver: local\n" : ""}
-` : ""}
+`
+		: ""
+}
 ${generateNetworkConfig()}
 `;
 }

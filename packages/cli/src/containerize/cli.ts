@@ -7,7 +7,8 @@ type CommandModuleArgs = {};
 const containerize = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "containerize [target] [environment]",
-		describe: "Generate container configurations for your ExpressoTS application.",
+		describe:
+			"Generate container configurations for your ExpressoTS application.",
 		aliases: ["c"],
 		builder: (yargs: Argv): Argv => {
 			yargs.positional("target", {
@@ -18,7 +19,12 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.positional("environment", {
-				choices: ["development", "staging", "production", "all"] as const,
+				choices: [
+					"development",
+					"staging",
+					"production",
+					"all",
+				] as const,
 				describe: "Target environment",
 				type: "string",
 				alias: "env",
@@ -58,14 +64,26 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.option("ci-platform", {
-				choices: ["github", "gitlab", "circleci", "jenkins", "bitbucket", "azure", "all"] as const,
+				choices: [
+					"github",
+					"gitlab",
+					"circleci",
+					"jenkins",
+					"bitbucket",
+					"azure",
+					"all",
+				] as const,
 				describe: "CI/CD platform to generate configuration for",
 				type: "string",
 				default: "github",
 			});
 
 			yargs.option("ci-strategy", {
-				choices: ["basic", "comprehensive", "security-focused"] as const,
+				choices: [
+					"basic",
+					"comprehensive",
+					"security-focused",
+				] as const,
 				describe: "CI/CD pipeline strategy",
 				type: "string",
 				default: "comprehensive",
@@ -84,7 +102,12 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.option("deployment-strategy", {
-				choices: ["rolling", "blue-green", "canary", "recreate"] as const,
+				choices: [
+					"rolling",
+					"blue-green",
+					"canary",
+					"recreate",
+				] as const,
 				describe: "Kubernetes deployment strategy",
 				type: "string",
 				default: "rolling",

@@ -18,7 +18,14 @@ const devContainerCommand = (): CommandModule<CommandModuleArgs, any> => {
 		aliases: ["cdev", "docker-dev"],
 		builder: (yargs: Argv): Argv => {
 			yargs.positional("action", {
-				choices: ["start", "stop", "attach", "shell", "status", "logs"] as const,
+				choices: [
+					"start",
+					"stop",
+					"attach",
+					"shell",
+					"status",
+					"logs",
+				] as const,
 				describe: "Action to perform",
 				type: "string",
 				default: "start",
@@ -133,7 +140,9 @@ const devContainerCommand = (): CommandModule<CommandModuleArgs, any> => {
 					} else {
 						// Regular dev command (non-container) - delegate to existing
 						console.log("Starting local development...");
-						console.log("Use --container flag to develop inside Docker.");
+						console.log(
+							"Use --container flag to develop inside Docker.",
+						);
 						console.log("Or run: npm run dev");
 					}
 					break;

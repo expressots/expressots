@@ -28,11 +28,17 @@ export async function startDevContainer(options: DevOptions): Promise<void> {
 	// Check if docker-compose file exists
 	if (!fs.existsSync(composeFile)) {
 		console.log(chalk.yellow(`⚠️  ${options.composeFile} not found.`));
-		console.log(chalk.gray("Generating development Docker configuration..."));
-		
+		console.log(
+			chalk.gray("Generating development Docker configuration..."),
+		);
+
 		// Try to generate if containerize is available
-		console.log(chalk.gray("\nRun the following to generate development config:"));
-		console.log(chalk.white(`  expressots containerize docker --env development`));
+		console.log(
+			chalk.gray("\nRun the following to generate development config:"),
+		);
+		console.log(
+			chalk.white(`  expressots containerize docker --env development`),
+		);
 		console.log();
 		return;
 	}
@@ -40,7 +46,9 @@ export async function startDevContainer(options: DevOptions): Promise<void> {
 	// Check if Docker is running
 	if (!isDockerRunning()) {
 		console.log(chalk.red("Error: Docker is not running."));
-		console.log(chalk.gray("Please start Docker Desktop or Docker daemon."));
+		console.log(
+			chalk.gray("Please start Docker Desktop or Docker daemon."),
+		);
 		return;
 	}
 
@@ -56,7 +64,7 @@ export async function startDevContainer(options: DevOptions): Promise<void> {
 
 	// Start containers
 	console.log(chalk.yellow("🚀 Starting development containers..."));
-	
+
 	const upArgs = [...args, "up"];
 	if (options.detach) {
 		upArgs.push("-d");
@@ -74,13 +82,15 @@ export async function startDevContainer(options: DevOptions): Promise<void> {
 
 	if (options.detach) {
 		runDockerCompose(upArgs, { cwd, env });
-		console.log(chalk.green("\n✅ Development containers started in background.\n"));
+		console.log(
+			chalk.green("\n✅ Development containers started in background.\n"),
+		);
 		printDevInfo(options);
 	} else {
 		console.log(chalk.green("\n✅ Starting development environment...\n"));
 		printDevInfo(options);
 		console.log(chalk.gray("Press Ctrl+C to stop\n"));
-		
+
 		// Run in foreground
 		spawnDockerCompose(upArgs, { cwd, env, stdio: "inherit" });
 	}
@@ -124,10 +134,10 @@ export async function attachToContainer(options: DevOptions): Promise<void> {
 		return;
 	}
 
-	spawnDockerCompose(
-		["-f", composeFile, "attach", options.service],
-		{ cwd, stdio: "inherit" }
-	);
+	spawnDockerCompose(["-f", composeFile, "attach", options.service], {
+		cwd,
+		stdio: "inherit",
+	});
 }
 
 /**
@@ -145,10 +155,10 @@ export async function openShell(options: DevOptions): Promise<void> {
 	}
 
 	// Try sh first (Alpine), fall back to bash
-	spawnDockerCompose(
-		["-f", composeFile, "exec", options.service, "sh"],
-		{ cwd, stdio: "inherit" }
-	);
+	spawnDockerCompose(["-f", composeFile, "exec", options.service, "sh"], {
+		cwd,
+		stdio: "inherit",
+	});
 }
 
 /**
@@ -177,10 +187,13 @@ export async function showStatus(options: DevOptions): Promise<void> {
 	console.log(chalk.bold("\nResource Usage:"));
 	try {
 		// Use double quotes for cross-platform compatibility (Windows + Unix)
-		const output = execSync('docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"', {
-			encoding: "utf-8",
-			stdio: ["pipe", "pipe", "pipe"],
-		});
+		const output = execSync(
+			'docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"',
+			{
+				encoding: "utf-8",
+				stdio: ["pipe", "pipe", "pipe"],
+			},
+		);
 		console.log(output);
 	} catch {
 		console.log(chalk.gray("  Unable to get resource stats"));
@@ -202,11 +215,11 @@ export async function showLogs(options: DevOptions): Promise<void> {
 	}
 
 	const args = ["-f", composeFile, "logs"];
-	
+
 	if (options.follow) {
 		args.push("-f");
 	}
-	
+
 	args.push("--tail", String(options.tail));
 	args.push(options.service);
 
@@ -228,7 +241,10 @@ function isDockerRunning(): boolean {
 /**
  * Run docker-compose command synchronously
  */
-function runDockerCompose(args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv }): void {
+function runDockerCompose(
+	args: string[],
+	options: { cwd: string; env?: NodeJS.ProcessEnv },
+): void {
 	try {
 		// Try docker compose (v2) first
 		execSync(`docker compose ${args.join(" ")}`, {
@@ -280,13 +296,21 @@ function printDevInfo(options: DevOptions): void {
 	console.log(`  📁 Service:  ${options.service}`);
 	console.log();
 	console.log(chalk.bold("Available Commands:"));
-	console.log(`  ${chalk.gray("expressots dev status")}      Show container status`);
+	console.log(
+		`  ${chalk.gray("expressots dev status")}      Show container status`,
+	);
 	console.log(`  ${chalk.gray("expressots dev logs")}        View logs`);
-	console.log(`  ${chalk.gray("expressots dev shell")}       Open shell in container`);
-	console.log(`  ${chalk.gray("expressots dev stop")}        Stop containers`);
+	console.log(
+		`  ${chalk.gray("expressots dev shell")}       Open shell in container`,
+	);
+	console.log(
+		`  ${chalk.gray("expressots dev stop")}        Stop containers`,
+	);
 	console.log();
-	
+
 	if (options.watch) {
-		console.log(chalk.green("🔄 Hot reload is enabled - edit files to see changes"));
+		console.log(
+			chalk.green("🔄 Hot reload is enabled - edit files to see changes"),
+		);
 	}
 }

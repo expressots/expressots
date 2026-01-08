@@ -39,60 +39,80 @@ export class GitHubFetcher {
 	/**
 	 * Fetch content from URL with retry logic
 	 */
-	private async fetchWithRetry(url: string, attempt: number = 1): Promise<string> {
+	private async fetchWithRetry(
+		url: string,
+		attempt: number = 1,
+	): Promise<string> {
 		return new Promise((resolve, reject) => {
-			const request = https.get(url, { timeout: this.config.timeout }, (response) => {
-				// Handle redirects
-				if (response.statusCode === 301 || response.statusCode === 302) {
-					const redirectUrl = response.headers.location;
-					if (redirectUrl) {
-						this.fetchWithRetry(redirectUrl, attempt)
-							.then(resolve)
-							.catch(reject);
-						return;
-					}
-				}
-
-				if (response.statusCode === 404) {
-					reject(new Error(`Template not found: ${url}`));
-					return;
-				}
-
-				if (response.statusCode === 403) {
-					// Rate limited
-					if (attempt < this.retryCount) {
-						setTimeout(() => {
-							this.fetchWithRetry(url, attempt + 1)
+			const request = https.get(
+				url,
+				{ timeout: this.config.timeout },
+				(response) => {
+					// Handle redirects
+					if (
+						response.statusCode === 301 ||
+						response.statusCode === 302
+					) {
+						const redirectUrl = response.headers.location;
+						if (redirectUrl) {
+							this.fetchWithRetry(redirectUrl, attempt)
 								.then(resolve)
 								.catch(reject);
-						}, this.retryDelay * Math.pow(2, attempt - 1));
+							return;
+						}
+					}
+
+					if (response.statusCode === 404) {
+						reject(new Error(`Template not found: ${url}`));
 						return;
 					}
-					reject(new Error("GitHub API rate limit exceeded"));
-					return;
-				}
 
-				if (response.statusCode !== 200) {
-					reject(new Error(`HTTP ${response.statusCode}: Failed to fetch ${url}`));
-					return;
-				}
+					if (response.statusCode === 403) {
+						// Rate limited
+						if (attempt < this.retryCount) {
+							setTimeout(
+								() => {
+									this.fetchWithRetry(url, attempt + 1)
+										.then(resolve)
+										.catch(reject);
+								},
+								this.retryDelay * Math.pow(2, attempt - 1),
+							);
+							return;
+						}
+						reject(new Error("GitHub API rate limit exceeded"));
+						return;
+					}
 
-				let data = "";
-				response.on("data", (chunk) => {
-					data += chunk;
-				});
-				response.on("end", () => {
-					resolve(data);
-				});
-			});
+					if (response.statusCode !== 200) {
+						reject(
+							new Error(
+								`HTTP ${response.statusCode}: Failed to fetch ${url}`,
+							),
+						);
+						return;
+					}
+
+					let data = "";
+					response.on("data", (chunk) => {
+						data += chunk;
+					});
+					response.on("end", () => {
+						resolve(data);
+					});
+				},
+			);
 
 			request.on("error", (error) => {
 				if (attempt < this.retryCount) {
-					setTimeout(() => {
-						this.fetchWithRetry(url, attempt + 1)
-							.then(resolve)
-							.catch(reject);
-					}, this.retryDelay * Math.pow(2, attempt - 1));
+					setTimeout(
+						() => {
+							this.fetchWithRetry(url, attempt + 1)
+								.then(resolve)
+								.catch(reject);
+						},
+						this.retryDelay * Math.pow(2, attempt - 1),
+					);
 				} else {
 					reject(error);
 				}
@@ -101,11 +121,14 @@ export class GitHubFetcher {
 			request.on("timeout", () => {
 				request.destroy();
 				if (attempt < this.retryCount) {
-					setTimeout(() => {
-						this.fetchWithRetry(url, attempt + 1)
-							.then(resolve)
-							.catch(reject);
-					}, this.retryDelay * Math.pow(2, attempt - 1));
+					setTimeout(
+						() => {
+							this.fetchWithRetry(url, attempt + 1)
+								.then(resolve)
+								.catch(reject);
+						},
+						this.retryDelay * Math.pow(2, attempt - 1),
+					);
 				} else {
 					reject(new Error(`Timeout fetching ${url}`));
 				}
@@ -154,7 +177,7 @@ export class GitHubFetcher {
 	async fetchByType(
 		category: string,
 		platform: string,
-		variant?: string
+		variant?: string,
 	): Promise<FetchResult<string>> {
 		// Build the path based on category
 		let templatePath: string;
@@ -216,7 +239,9 @@ export class GitHubFetcher {
 // Singleton instance
 let fetcherInstance: GitHubFetcher | null = null;
 
-export function getGitHubFetcher(config?: Partial<FetcherConfig>): GitHubFetcher {
+export function getGitHubFetcher(
+	config?: Partial<FetcherConfig>,
+): GitHubFetcher {
 	if (!fetcherInstance) {
 		fetcherInstance = new GitHubFetcher(config);
 	}

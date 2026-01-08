@@ -27,9 +27,7 @@ export async function analyzeProject(): Promise<ProjectAnalysis> {
 		throw new Error("package.json not found in current directory");
 	}
 
-	const packageJson = JSON.parse(
-		fs.readFileSync(packageJsonPath, "utf-8"),
-	);
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
 	// Detect Node version
 	const nodeVersion =
@@ -43,7 +41,10 @@ export async function analyzeProject(): Promise<ProjectAnalysis> {
 	const devDependencies = Object.keys(packageJson.devDependencies || {});
 
 	// Detect local file dependencies
-	const allDeps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+	const allDeps = {
+		...packageJson.dependencies,
+		...packageJson.devDependencies,
+	};
 	const localDependencyPaths: string[] = [];
 	let hasLocalDependencies = false;
 
@@ -56,15 +57,14 @@ export async function analyzeProject(): Promise<ProjectAnalysis> {
 	}
 
 	// Detect database
-	const hasDatabase =
-		dependencies.some(
-			(dep) =>
-				dep.includes("pg") ||
-				dep.includes("mysql") ||
-				dep.includes("mongodb") ||
-				dep.includes("prisma") ||
-				dep.includes("typeorm"),
-		);
+	const hasDatabase = dependencies.some(
+		(dep) =>
+			dep.includes("pg") ||
+			dep.includes("mysql") ||
+			dep.includes("mongodb") ||
+			dep.includes("prisma") ||
+			dep.includes("typeorm"),
+	);
 
 	// Detect Redis
 	const hasRedis = dependencies.some(
@@ -105,9 +105,7 @@ export async function analyzeProject(): Promise<ProjectAnalysis> {
 	};
 }
 
-function detectPackageManager(
-	cwd: string,
-): "npm" | "pnpm" | "yarn" | "bun" {
+function detectPackageManager(cwd: string): "npm" | "pnpm" | "yarn" | "bun" {
 	if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) return "pnpm";
 	if (fs.existsSync(path.join(cwd, "yarn.lock"))) return "yarn";
 	if (fs.existsSync(path.join(cwd, "bun.lockb"))) return "bun";

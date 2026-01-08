@@ -18,7 +18,7 @@ export async function loadCICDTemplate(
 	platform: string,
 	strategy: string,
 	options: GeneratorOptions,
-	embeddedGenerator: (options: GeneratorOptions) => string
+	embeddedGenerator: (options: GeneratorOptions) => string,
 ): Promise<TemplateResult> {
 	const manager = getTemplateManager();
 
@@ -26,7 +26,7 @@ export async function loadCICDTemplate(
 		// Try to fetch from remote template repository
 		const result = await manager.fetchCICDTemplate(
 			platform as any,
-			strategy as any
+			strategy as any,
 		);
 
 		if (result.data) {
@@ -139,9 +139,13 @@ function getLintCommand(packageManager: string): string {
 /**
  * Log template source for debugging
  */
-export function logTemplateSource(platform: string, source: "remote" | "embedded"): void {
+export function logTemplateSource(
+	platform: string,
+	source: "remote" | "embedded",
+): void {
 	if (process.env.EXPRESSOTS_DEBUG) {
-		const sourceLabel = source === "remote" ? "remote template" : "embedded template";
+		const sourceLabel =
+			source === "remote" ? "remote template" : "embedded template";
 		console.log(`  [DEBUG] ${platform}: Using ${sourceLabel}`);
 	}
 }

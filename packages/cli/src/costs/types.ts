@@ -2,7 +2,15 @@
  * Pricing types and interfaces
  */
 
-export type CloudProvider = "aws" | "gcp" | "azure" | "railway" | "render" | "fly" | "digitalocean" | "heroku";
+export type CloudProvider =
+	| "aws"
+	| "gcp"
+	| "azure"
+	| "railway"
+	| "render"
+	| "fly"
+	| "digitalocean"
+	| "heroku";
 
 export type PricingModel = "per-hour" | "per-month" | "usage";
 

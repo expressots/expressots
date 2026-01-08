@@ -27,12 +27,36 @@ export interface CICDOptions {
 }
 
 const PLATFORMS: { id: CIPlatform; name: string; description: string }[] = [
-	{ id: "github", name: "GitHub Actions", description: "CI/CD for GitHub repositories" },
-	{ id: "gitlab", name: "GitLab CI", description: "CI/CD for GitLab repositories" },
-	{ id: "circleci", name: "CircleCI", description: "Cloud-based CI/CD platform" },
-	{ id: "jenkins", name: "Jenkins", description: "Self-hosted automation server" },
-	{ id: "bitbucket", name: "Bitbucket Pipelines", description: "CI/CD for Bitbucket Cloud" },
-	{ id: "azure", name: "Azure DevOps", description: "Microsoft Azure CI/CD platform" },
+	{
+		id: "github",
+		name: "GitHub Actions",
+		description: "CI/CD for GitHub repositories",
+	},
+	{
+		id: "gitlab",
+		name: "GitLab CI",
+		description: "CI/CD for GitLab repositories",
+	},
+	{
+		id: "circleci",
+		name: "CircleCI",
+		description: "Cloud-based CI/CD platform",
+	},
+	{
+		id: "jenkins",
+		name: "Jenkins",
+		description: "Self-hosted automation server",
+	},
+	{
+		id: "bitbucket",
+		name: "Bitbucket Pipelines",
+		description: "CI/CD for Bitbucket Cloud",
+	},
+	{
+		id: "azure",
+		name: "Azure DevOps",
+		description: "Microsoft Azure CI/CD platform",
+	},
 ];
 
 /**
@@ -43,19 +67,20 @@ export async function initCICD(options: CICDOptions): Promise<void> {
 
 	// Analyze project first
 	const analysis = await analyzeProject();
-	
+
 	// Interactive prompts
 	const answers = await inquirer.prompt([
 		{
 			type: "checkbox",
 			name: "platforms",
 			message: "Select CI/CD platforms to configure:",
-			choices: PLATFORMS.map(p => ({
+			choices: PLATFORMS.map((p) => ({
 				name: `${p.name} - ${p.description}`,
 				value: p.id,
 				checked: p.id === "github",
 			})),
-			validate: (input) => input.length > 0 || "Select at least one platform",
+			validate: (input) =>
+				input.length > 0 || "Select at least one platform",
 		},
 		{
 			type: "list",
@@ -63,8 +88,14 @@ export async function initCICD(options: CICDOptions): Promise<void> {
 			message: "Select CI/CD strategy:",
 			choices: [
 				{ name: "Basic - Lint, test, build", value: "basic" },
-				{ name: "Comprehensive - Full testing, security, coverage", value: "comprehensive" },
-				{ name: "Security-Focused - Maximum security scanning", value: "security-focused" },
+				{
+					name: "Comprehensive - Full testing, security, coverage",
+					value: "comprehensive",
+				},
+				{
+					name: "Security-Focused - Maximum security scanning",
+					value: "security-focused",
+				},
 			],
 			default: "comprehensive",
 		},
@@ -144,7 +175,11 @@ export async function generateCICD(options: CICDOptions): Promise<void> {
 	console.log(chalk.cyan("\n🔧 ExpressoTS CI/CD Generator\n"));
 
 	if (!options.platform) {
-		console.log(chalk.red("Error: Please specify a platform. Use 'expressots cicd list' to see available platforms."));
+		console.log(
+			chalk.red(
+				"Error: Please specify a platform. Use 'expressots cicd list' to see available platforms.",
+			),
+		);
 		return;
 	}
 
@@ -162,8 +197,10 @@ export async function generateCICD(options: CICDOptions): Promise<void> {
 
 	console.log(chalk.green("\n✅ CI/CD configuration generated!\n"));
 	printNextSteps(
-		options.platform === "all" ? PLATFORMS.map(p => p.id) : [options.platform],
-		options
+		options.platform === "all"
+			? PLATFORMS.map((p) => p.id)
+			: [options.platform],
+		options,
 	);
 }
 
@@ -173,21 +210,25 @@ export async function generateCICD(options: CICDOptions): Promise<void> {
 export async function listPlatforms(): Promise<void> {
 	console.log(chalk.cyan("\n📋 Available CI/CD Platforms\n"));
 
-	console.log(chalk.bold("Platform".padEnd(20) + "Description".padEnd(45) + "Status"));
+	console.log(
+		chalk.bold("Platform".padEnd(20) + "Description".padEnd(45) + "Status"),
+	);
 	console.log("-".repeat(80));
 
 	for (const platform of PLATFORMS) {
 		const status = chalk.green("✓ Available");
 		console.log(
 			chalk.white(platform.name.padEnd(20)) +
-			chalk.gray(platform.description.padEnd(45)) +
-			status
+				chalk.gray(platform.description.padEnd(45)) +
+				status,
 		);
 	}
 
 	console.log(chalk.gray("\nUsage: expressots cicd generate <platform>"));
 	console.log(chalk.gray("       expressots cicd generate all"));
-	console.log(chalk.gray("       expressots cicd init (interactive wizard)\n"));
+	console.log(
+		chalk.gray("       expressots cicd init (interactive wizard)\n"),
+	);
 }
 
 /**
@@ -197,11 +238,23 @@ export async function validatePipelines(): Promise<void> {
 	console.log(chalk.cyan("\n🔍 Validating CI/CD Configurations\n"));
 
 	const cwd = process.cwd();
-	const validations: { platform: string; file: string; exists: boolean; valid: boolean; issues: string[] }[] = [];
+	const validations: {
+		platform: string;
+		file: string;
+		exists: boolean;
+		valid: boolean;
+		issues: string[];
+	}[] = [];
 
 	// Check for each platform's config file
 	const platformFiles: { platform: string; paths: string[] }[] = [
-		{ platform: "GitHub Actions", paths: [".github/workflows/ci.yml", ".github/workflows/docker-deploy.yml"] },
+		{
+			platform: "GitHub Actions",
+			paths: [
+				".github/workflows/ci.yml",
+				".github/workflows/docker-deploy.yml",
+			],
+		},
 		{ platform: "GitLab CI", paths: [".gitlab-ci.yml"] },
 		{ platform: "CircleCI", paths: [".circleci/config.yml"] },
 		{ platform: "Jenkins", paths: ["Jenkinsfile"] },
@@ -213,14 +266,14 @@ export async function validatePipelines(): Promise<void> {
 		for (const filePath of paths) {
 			const fullPath = path.join(cwd, filePath);
 			const exists = fs.existsSync(fullPath);
-			
+
 			if (exists) {
 				const issues: string[] = [];
 				let valid = true;
 
 				try {
 					const content = fs.readFileSync(fullPath, "utf-8");
-					
+
 					// Basic validation checks
 					if (content.length < 50) {
 						issues.push("File seems too short");
@@ -228,30 +281,49 @@ export async function validatePipelines(): Promise<void> {
 					}
 
 					// Check for common issues
-					if (filePath.endsWith(".yml") || filePath.endsWith(".yaml")) {
+					if (
+						filePath.endsWith(".yml") ||
+						filePath.endsWith(".yaml")
+					) {
 						if (content.includes("\t")) {
-							issues.push("Contains tabs (YAML should use spaces)");
+							issues.push(
+								"Contains tabs (YAML should use spaces)",
+							);
 						}
 					}
 
 					// Check for placeholder values
-					if (content.includes("YOUR_") || content.includes("<REPLACE>")) {
-						issues.push("Contains placeholder values that need to be replaced");
+					if (
+						content.includes("YOUR_") ||
+						content.includes("<REPLACE>")
+					) {
+						issues.push(
+							"Contains placeholder values that need to be replaced",
+						);
 					}
-
 				} catch (err) {
 					issues.push("Failed to read file");
 					valid = false;
 				}
 
-				validations.push({ platform, file: filePath, exists, valid, issues });
+				validations.push({
+					platform,
+					file: filePath,
+					exists,
+					valid,
+					issues,
+				});
 			}
 		}
 	}
 
 	if (validations.length === 0) {
 		console.log(chalk.yellow("No CI/CD configuration files found."));
-		console.log(chalk.gray("\nRun 'expressots cicd init' to create CI/CD configurations.\n"));
+		console.log(
+			chalk.gray(
+				"\nRun 'expressots cicd init' to create CI/CD configurations.\n",
+			),
+		);
 		return;
 	}
 
@@ -259,12 +331,13 @@ export async function validatePipelines(): Promise<void> {
 	console.log("-".repeat(80));
 
 	for (const v of validations) {
-		const status = v.valid ? chalk.green("✓ Valid") : chalk.yellow("⚠ Warning");
-		const issues = v.issues.length > 0 ? chalk.gray(v.issues.join(", ")) : "";
+		const status = v.valid
+			? chalk.green("✓ Valid")
+			: chalk.yellow("⚠ Warning");
+		const issues =
+			v.issues.length > 0 ? chalk.gray(v.issues.join(", ")) : "";
 		console.log(
-			chalk.white(v.file.padEnd(45)) +
-			status.padEnd(24) +
-			issues
+			chalk.white(v.file.padEnd(45)) + status.padEnd(24) + issues,
 		);
 	}
 
@@ -277,7 +350,7 @@ export async function validatePipelines(): Promise<void> {
 async function generatePlatformConfig(
 	platform: CIPlatform,
 	options: CICDOptions,
-	analysis: any
+	analysis: any,
 ): Promise<void> {
 	const cwd = process.cwd();
 	const outputDir = options.outputDir || cwd;
@@ -325,7 +398,9 @@ function printNextSteps(platforms: CIPlatform[], options: CICDOptions): void {
 	console.log(chalk.bold("📖 Next Steps:\n"));
 
 	console.log(chalk.white("1. Review generated configuration files"));
-	console.log(chalk.white("2. Configure required secrets in your CI/CD platform:\n"));
+	console.log(
+		chalk.white("2. Configure required secrets in your CI/CD platform:\n"),
+	);
 
 	// Common secrets
 	const secrets = [
@@ -356,6 +431,10 @@ function printNextSteps(platforms: CIPlatform[], options: CICDOptions): void {
 	}
 
 	console.log(chalk.white("\n3. Commit and push to trigger the pipeline"));
-	
-	console.log(chalk.gray("\n💡 Tip: Run 'expressots cicd validate' to check your configurations\n"));
+
+	console.log(
+		chalk.gray(
+			"\n💡 Tip: Run 'expressots cicd validate' to check your configurations\n",
+		),
+	);
 }

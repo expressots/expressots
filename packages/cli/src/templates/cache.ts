@@ -8,7 +8,12 @@ import path from "path";
 import os from "os";
 import type { CacheEntry, CacheConfig } from "./types";
 
-const DEFAULT_CACHE_DIR = path.join(os.homedir(), ".expressots", "cache", "templates");
+const DEFAULT_CACHE_DIR = path.join(
+	os.homedir(),
+	".expressots",
+	"cache",
+	"templates",
+);
 const DEFAULT_TTL = 86400; // 24 hours in seconds
 
 export class TemplateCache {
@@ -34,7 +39,11 @@ export class TemplateCache {
 	/**
 	 * Generate cache key from template identifier
 	 */
-	private getCacheKey(category: string, platform: string, variant?: string): string {
+	private getCacheKey(
+		category: string,
+		platform: string,
+		variant?: string,
+	): string {
 		const parts = [category, platform];
 		if (variant) parts.push(variant);
 		return parts.join("-") + ".cache.json";
@@ -52,7 +61,7 @@ export class TemplateCache {
 	 */
 	private isValid<T>(entry: CacheEntry<T>): boolean {
 		const now = Date.now();
-		const expiresAt = entry.timestamp + (entry.ttl * 1000);
+		const expiresAt = entry.timestamp + entry.ttl * 1000;
 		return now < expiresAt;
 	}
 
@@ -86,7 +95,13 @@ export class TemplateCache {
 	/**
 	 * Set cached template content
 	 */
-	set<T>(category: string, platform: string, data: T, variant?: string, ttl?: number): void {
+	set<T>(
+		category: string,
+		platform: string,
+		data: T,
+		variant?: string,
+		ttl?: number,
+	): void {
 		const key = this.getCacheKey(category, platform, variant);
 		const cachePath = this.getCachePath(key);
 
@@ -97,7 +112,11 @@ export class TemplateCache {
 		};
 
 		try {
-			fs.writeFileSync(cachePath, JSON.stringify(entry, null, 2), "utf-8");
+			fs.writeFileSync(
+				cachePath,
+				JSON.stringify(entry, null, 2),
+				"utf-8",
+			);
 		} catch (error) {
 			// Silently fail - cache is optional
 			console.error("Failed to write cache:", error);
@@ -155,7 +174,9 @@ export class TemplateCache {
 				totalSize += stat.size;
 
 				try {
-					const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+					const content = JSON.parse(
+						fs.readFileSync(filePath, "utf-8"),
+					);
 					if (content.timestamp < oldestTimestamp) {
 						oldestTimestamp = content.timestamp;
 					}
@@ -170,7 +191,8 @@ export class TemplateCache {
 		return {
 			files,
 			totalSize,
-			oldestEntry: oldestTimestamp === Infinity ? null : new Date(oldestTimestamp),
+			oldestEntry:
+				oldestTimestamp === Infinity ? null : new Date(oldestTimestamp),
 		};
 	}
 

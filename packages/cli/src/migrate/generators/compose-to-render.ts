@@ -5,16 +5,18 @@ import type { MigrationOptions } from "../form";
 
 export async function generateComposeToRender(
 	outputDir: string,
-	options: MigrationOptions
+	options: MigrationOptions,
 ): Promise<void> {
-	console.log(chalk.yellow("  Generating Docker Compose → Render migration..."));
+	console.log(
+		chalk.yellow("  Generating Docker Compose → Render migration..."),
+	);
 
 	// Generate render.yaml blueprint
 	const renderConfig = generateRenderBlueprint();
 	fs.writeFileSync(
 		path.join(outputDir, "render.yaml"),
 		renderConfig,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created render.yaml"));
 
@@ -23,7 +25,7 @@ export async function generateComposeToRender(
 	fs.writeFileSync(
 		path.join(outputDir, "MIGRATION_CHECKLIST.md"),
 		checklist,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created MIGRATION_CHECKLIST.md"));
 }

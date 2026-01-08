@@ -99,7 +99,11 @@ export class ConfigManager {
 	 */
 	save(): void {
 		this.ensureConfigDir();
-		fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), "utf-8");
+		fs.writeFileSync(
+			this.configPath,
+			JSON.stringify(this.config, null, 2),
+			"utf-8",
+		);
 	}
 
 	/**

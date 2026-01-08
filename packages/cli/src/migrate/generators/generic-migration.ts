@@ -13,16 +13,20 @@ interface MigrationPath {
 export async function generateGenericMigration(
 	outputDir: string,
 	options: MigrationOptions,
-	migration?: MigrationPath
+	migration?: MigrationPath,
 ): Promise<void> {
-	console.log(chalk.yellow(`  Generating ${options.from} → ${options.to} migration...`));
+	console.log(
+		chalk.yellow(
+			`  Generating ${options.from} → ${options.to} migration...`,
+		),
+	);
 
 	// Generate generic checklist
 	const checklist = generateGenericChecklist(options, migration);
 	fs.writeFileSync(
 		path.join(outputDir, "MIGRATION_CHECKLIST.md"),
 		checklist,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created MIGRATION_CHECKLIST.md"));
 
@@ -31,7 +35,7 @@ export async function generateGenericMigration(
 	fs.writeFileSync(
 		path.join(outputDir, "env-mapping.md"),
 		envMapping,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created env-mapping.md"));
 
@@ -40,14 +44,17 @@ export async function generateGenericMigration(
 	fs.writeFileSync(
 		path.join(outputDir, "MIGRATION_NOTES.md"),
 		notes,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created MIGRATION_NOTES.md"));
 }
 
-function generateGenericChecklist(options: MigrationOptions, migration?: MigrationPath): string {
+function generateGenericChecklist(
+	options: MigrationOptions,
+	migration?: MigrationPath,
+): string {
 	const complexity = migration?.complexity || "medium";
-	
+
 	return `# Migration Checklist: ${options.from} → ${options.to}
 
 **Complexity**: ${complexity}
@@ -168,17 +175,24 @@ kubectl get secret your-secret -o yaml > secret-backup.yaml
 `;
 }
 
-function generateMigrationNotes(options: MigrationOptions, migration?: MigrationPath): string {
+function generateMigrationNotes(
+	options: MigrationOptions,
+	migration?: MigrationPath,
+): string {
 	return `# Migration Notes: ${options.from} → ${options.to}
 
 ## Overview
 
 This document contains notes and considerations for migrating from ${options.from} to ${options.to}.
 
-${migration ? `
+${
+	migration
+		? `
 **Complexity**: ${migration.complexity}
 **Description**: ${migration.description}
-` : ''}
+`
+		: ""
+}
 
 ## Key Differences
 

@@ -9,8 +9,21 @@ import {
 // eslint-disable-next-line @typescript-eslint/ban-types
 type CommandModuleArgs = {};
 
-export type MigrationSource = "heroku" | "docker-compose" | "vercel" | "aws-ecs" | "gcp-cloudrun" | "azure-container";
-export type MigrationTarget = "railway" | "render" | "fly" | "kubernetes" | "aws-ecs" | "gcp-cloudrun" | "azure-container";
+export type MigrationSource =
+	| "heroku"
+	| "docker-compose"
+	| "vercel"
+	| "aws-ecs"
+	| "gcp-cloudrun"
+	| "azure-container";
+export type MigrationTarget =
+	| "railway"
+	| "render"
+	| "fly"
+	| "kubernetes"
+	| "aws-ecs"
+	| "gcp-cloudrun"
+	| "azure-container";
 
 const migrateCommand = (): CommandModule<CommandModuleArgs, any> => {
 	return {
@@ -26,14 +39,29 @@ const migrateCommand = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.option("from", {
-				choices: ["heroku", "docker-compose", "vercel", "aws-ecs", "gcp-cloudrun", "azure-container"] as const,
+				choices: [
+					"heroku",
+					"docker-compose",
+					"vercel",
+					"aws-ecs",
+					"gcp-cloudrun",
+					"azure-container",
+				] as const,
 				describe: "Source platform to migrate from",
 				type: "string",
 				alias: "f",
 			});
 
 			yargs.option("to", {
-				choices: ["railway", "render", "fly", "kubernetes", "aws-ecs", "gcp-cloudrun", "azure-container"] as const,
+				choices: [
+					"railway",
+					"render",
+					"fly",
+					"kubernetes",
+					"aws-ecs",
+					"gcp-cloudrun",
+					"azure-container",
+				] as const,
 				describe: "Target platform to migrate to",
 				type: "string",
 				alias: "t",

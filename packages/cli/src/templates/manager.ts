@@ -42,7 +42,9 @@ export class TemplateManager {
 	/**
 	 * Fetch and cache the template manifest
 	 */
-	async getManifest(forceRefresh: boolean = false): Promise<TemplateManifest | null> {
+	async getManifest(
+		forceRefresh: boolean = false,
+	): Promise<TemplateManifest | null> {
 		// Check memory cache first
 		if (this.manifest && !forceRefresh) {
 			return this.manifest;
@@ -76,7 +78,7 @@ export class TemplateManager {
 	async fetchTemplate(
 		category: TemplateCategory,
 		platform: string,
-		variant?: string
+		variant?: string,
 	): Promise<FetchResult<string>> {
 		const cacheKey = variant ? `${platform}-${variant}` : platform;
 
@@ -96,7 +98,11 @@ export class TemplateManager {
 		}
 
 		// Fetch from remote
-		const result = await this.fetcher.fetchByType(category, platform, variant);
+		const result = await this.fetcher.fetchByType(
+			category,
+			platform,
+			variant,
+		);
 
 		if (result.data) {
 			// Cache the template
@@ -112,7 +118,7 @@ export class TemplateManager {
 	 */
 	async fetchCICDTemplate(
 		platform: CICDPlatform,
-		strategy: CIStrategy = "basic"
+		strategy: CIStrategy = "basic",
 	): Promise<FetchResult<string>> {
 		return this.fetchTemplate("cicd", platform, strategy);
 	}
@@ -137,7 +143,7 @@ export class TemplateManager {
 	async fetchMigrationTemplate(
 		from: string,
 		to: string,
-		file?: string
+		file?: string,
 	): Promise<FetchResult<string>> {
 		const migrationPath = `${from}-to-${to}`;
 		return this.fetchTemplate("migrations", migrationPath, file);
@@ -157,9 +163,13 @@ export class TemplateManager {
 		category: TemplateCategory,
 		platform: string,
 		variant: string | undefined,
-		renderOptions: RenderOptions
+		renderOptions: RenderOptions,
 	): Promise<FetchResult<string>> {
-		const fetchResult = await this.fetchTemplate(category, platform, variant);
+		const fetchResult = await this.fetchTemplate(
+			category,
+			platform,
+			variant,
+		);
 
 		if (!fetchResult.data) {
 			return fetchResult;
@@ -184,11 +194,17 @@ export class TemplateManager {
 
 		// Update CI/CD templates
 		if (manifest.templates.cicd) {
-			for (const [platform, strategies] of Object.entries(manifest.templates.cicd)) {
+			for (const [platform, strategies] of Object.entries(
+				manifest.templates.cicd,
+			)) {
 				for (const [strategy, info] of Object.entries(strategies)) {
 					const result = await this.fetcher.fetchTemplate(info.path);
 					if (result.data) {
-						this.cache.set("cicd", `${platform}-${strategy}`, result.data);
+						this.cache.set(
+							"cicd",
+							`${platform}-${strategy}`,
+							result.data,
+						);
 						updated++;
 					} else if (result.error) {
 						errors.push(`${platform}/${strategy}: ${result.error}`);
@@ -199,7 +215,9 @@ export class TemplateManager {
 
 		// Update Docker templates
 		if (manifest.templates.docker) {
-			for (const [type, info] of Object.entries(manifest.templates.docker)) {
+			for (const [type, info] of Object.entries(
+				manifest.templates.docker,
+			)) {
 				const result = await this.fetcher.fetchTemplate(info.path);
 				if (result.data) {
 					this.cache.set("docker", type, result.data);
@@ -212,7 +230,9 @@ export class TemplateManager {
 
 		// Update Kubernetes templates
 		if (manifest.templates.kubernetes) {
-			for (const [type, info] of Object.entries(manifest.templates.kubernetes)) {
+			for (const [type, info] of Object.entries(
+				manifest.templates.kubernetes,
+			)) {
 				const result = await this.fetcher.fetchTemplate(info.path);
 				if (result.data) {
 					this.cache.set("kubernetes", type, result.data);
@@ -237,7 +257,11 @@ export class TemplateManager {
 	/**
 	 * Get cache statistics
 	 */
-	getCacheStats(): { files: number; totalSize: number; oldestEntry: Date | null } {
+	getCacheStats(): {
+		files: number;
+		totalSize: number;
+		oldestEntry: Date | null;
+	} {
 		return this.cache.getStats();
 	}
 
@@ -265,7 +289,9 @@ export class TemplateManager {
 
 			// CI/CD templates
 			if (manifest.templates.cicd) {
-				for (const [platform, strategies] of Object.entries(manifest.templates.cicd)) {
+				for (const [platform, strategies] of Object.entries(
+					manifest.templates.cicd,
+				)) {
 					result.cicd[platform] = Object.keys(strategies);
 				}
 			}
@@ -282,7 +308,9 @@ export class TemplateManager {
 
 			// Migration templates
 			if (manifest.templates.migrations) {
-				for (const [from, targets] of Object.entries(manifest.templates.migrations)) {
+				for (const [from, targets] of Object.entries(
+					manifest.templates.migrations,
+				)) {
 					for (const to of Object.keys(targets)) {
 						result.migrations.push(`${from} → ${to}`);
 					}
@@ -315,7 +343,12 @@ export class TemplateManager {
 				bitbucket: ["basic"],
 				azure: ["basic"],
 			},
-			docker: ["production", "development", "compose", "compose-development"],
+			docker: [
+				"production",
+				"development",
+				"compose",
+				"compose-development",
+			],
 			kubernetes: ["deployment", "service", "configmap", "ingress"],
 			migrations: [
 				"heroku → railway",
@@ -351,7 +384,7 @@ export class TemplateManager {
 		cached: boolean;
 		manifest: boolean;
 	}> {
-		const online = !this.offline && await this.fetcher.checkConnection();
+		const online = !this.offline && (await this.fetcher.checkConnection());
 		const cached = this.cache.getStats().files > 0;
 		const manifest = (await this.getManifest()) !== null;
 
@@ -381,14 +414,22 @@ export class TemplateManager {
 
 		console.log(chalk.bold("\nTemplate System Status:\n"));
 
-		console.log(`  Online:   ${availability.online ? chalk.green("✓") : chalk.red("✗")}`);
-		console.log(`  Cached:   ${availability.cached ? chalk.green("✓") : chalk.yellow("No templates cached")}`);
-		console.log(`  Manifest: ${availability.manifest ? chalk.green("✓") : chalk.yellow("Not loaded")}`);
+		console.log(
+			`  Online:   ${availability.online ? chalk.green("✓") : chalk.red("✗")}`,
+		);
+		console.log(
+			`  Cached:   ${availability.cached ? chalk.green("✓") : chalk.yellow("No templates cached")}`,
+		);
+		console.log(
+			`  Manifest: ${availability.manifest ? chalk.green("✓") : chalk.yellow("Not loaded")}`,
+		);
 
 		console.log(chalk.bold("\nCache Statistics:\n"));
 		console.log(`  Files:    ${stats.files}`);
 		console.log(`  Size:     ${(stats.totalSize / 1024).toFixed(2)} KB`);
-		console.log(`  Oldest:   ${stats.oldestEntry?.toLocaleString() || "N/A"}`);
+		console.log(
+			`  Oldest:   ${stats.oldestEntry?.toLocaleString() || "N/A"}`,
+		);
 		console.log(`  Location: ${this.cache.getCacheDirectory()}`);
 	}
 }
@@ -396,7 +437,9 @@ export class TemplateManager {
 // Singleton instance
 let managerInstance: TemplateManager | null = null;
 
-export function getTemplateManager(config?: TemplateManagerConfig): TemplateManager {
+export function getTemplateManager(
+	config?: TemplateManagerConfig,
+): TemplateManager {
 	if (!managerInstance) {
 		managerInstance = new TemplateManager(config);
 	}

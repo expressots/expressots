@@ -40,7 +40,8 @@ export class PricingManager {
 	constructor(config?: PricingManagerConfig) {
 		const globalConfig = getConfigManager().getPricingConfig();
 		const sourcesToUse = config?.sources || globalConfig.sources;
-		this.cacheTTL = config?.cacheTTL || globalConfig.cacheTTL || DEFAULT_TTL;
+		this.cacheTTL =
+			config?.cacheTTL || globalConfig.cacheTTL || DEFAULT_TTL;
 
 		// Initialize sources based on configuration
 		for (const source of sourcesToUse) {
@@ -52,9 +53,13 @@ export class PricingManager {
 					this.sources.push(createRemoteJSONPricingSource());
 					break;
 				case "local":
-					this.sources.push(createLocalJSONPricingSource(
-						config?.customLocalFile || globalConfig.customFile || undefined
-					));
+					this.sources.push(
+						createLocalJSONPricingSource(
+							config?.customLocalFile ||
+								globalConfig.customFile ||
+								undefined,
+						),
+					);
 					break;
 			}
 		}
@@ -83,7 +88,7 @@ export class PricingManager {
 
 			// Check if cache is still valid
 			const now = Date.now();
-			const expiresAt = entry.timestamp + (this.cacheTTL * 1000);
+			const expiresAt = entry.timestamp + this.cacheTTL * 1000;
 
 			if (now < expiresAt) {
 				return entry;
@@ -108,7 +113,11 @@ export class PricingManager {
 		};
 
 		try {
-			fs.writeFileSync(CACHE_FILE, JSON.stringify(entry, null, 2), "utf-8");
+			fs.writeFileSync(
+				CACHE_FILE,
+				JSON.stringify(entry, null, 2),
+				"utf-8",
+			);
 		} catch {
 			// Silently fail - cache is optional
 		}
@@ -117,11 +126,13 @@ export class PricingManager {
 	/**
 	 * Fetch pricing data from sources with cascading fallback
 	 */
-	async fetchPricing(forceRefresh: boolean = false): Promise<PricingData | null> {
+	async fetchPricing(
+		forceRefresh: boolean = false,
+	): Promise<PricingData | null> {
 		// Check memory cache first
 		if (!forceRefresh && this.cachedData) {
 			const now = Date.now();
-			const expiresAt = this.cachedData.timestamp + (this.cacheTTL * 1000);
+			const expiresAt = this.cachedData.timestamp + this.cacheTTL * 1000;
 			if (now < expiresAt) {
 				this.lastSource = this.cachedData.source + " (memory)";
 				return this.cachedData.data;
@@ -144,7 +155,11 @@ export class PricingManager {
 				const data = await source.fetch();
 				if (data && this.validatePricing(data)) {
 					this.lastSource = source.name;
-					this.cachedData = { data, timestamp: Date.now(), source: source.name };
+					this.cachedData = {
+						data,
+						timestamp: Date.now(),
+						source: source.name,
+					};
 					this.saveCache(data, source.name);
 					return data;
 				}
@@ -188,7 +203,9 @@ export class PricingManager {
 	/**
 	 * Get pricing for a specific provider
 	 */
-	async getProviderPricing(provider: CloudProvider): Promise<ProviderPricing | null> {
+	async getProviderPricing(
+		provider: CloudProvider,
+	): Promise<ProviderPricing | null> {
 		const pricing = await this.fetchPricing();
 		if (!pricing) {
 			return null;
@@ -200,7 +217,10 @@ export class PricingManager {
 	/**
 	 * Get all provider pricing
 	 */
-	async getAllPricing(): Promise<Record<CloudProvider, ProviderPricing> | null> {
+	async getAllPricing(): Promise<Record<
+		CloudProvider,
+		ProviderPricing
+	> | null> {
 		const pricing = await this.fetchPricing();
 		if (!pricing) {
 			return null;
@@ -214,7 +234,7 @@ export class PricingManager {
 	 */
 	async calculateMonthlyCost(
 		provider: CloudProvider,
-		resources: ResourceEstimate
+		resources: ResourceEstimate,
 	): Promise<CostEstimate | null> {
 		const pricing = await this.getProviderPricing(provider);
 		if (!pricing) {
@@ -227,20 +247,24 @@ export class PricingManager {
 
 		switch (pricing.model) {
 			case "per-hour":
-				computeCost = resources.instances * (
-					resources.cpu * pricing.cpuPerHour * resources.hours +
-					resources.memory * pricing.memoryPerGbHour * resources.hours
-				);
+				computeCost =
+					resources.instances *
+					(resources.cpu * pricing.cpuPerHour * resources.hours +
+						resources.memory *
+							pricing.memoryPerGbHour *
+							resources.hours);
 				break;
 			case "per-month":
 				baseCost = resources.instances * pricing.basePrice * hoursRatio;
 				break;
 			case "usage":
 				baseCost = pricing.basePrice;
-				computeCost = resources.instances * (
-					resources.cpu * pricing.cpuPerHour * resources.hours +
-					resources.memory * pricing.memoryPerGbHour * resources.hours
-				);
+				computeCost =
+					resources.instances *
+					(resources.cpu * pricing.cpuPerHour * resources.hours +
+						resources.memory *
+							pricing.memoryPerGbHour *
+							resources.hours);
 				break;
 		}
 
@@ -248,7 +272,10 @@ export class PricingManager {
 		const storageCost = resources.storage * pricing.storagePerGb;
 
 		// Bandwidth cost (above free tier)
-		const billableBandwidth = Math.max(0, resources.bandwidth - pricing.freeBandwidth);
+		const billableBandwidth = Math.max(
+			0,
+			resources.bandwidth - pricing.freeBandwidth,
+		);
 		const bandwidthCost = billableBandwidth * pricing.bandwidthPerGb;
 
 		const totalCost = computeCost + storageCost + bandwidthCost + baseCost;
@@ -278,8 +305,13 @@ export class PricingManager {
 
 		const estimates: CostEstimate[] = [];
 
-		for (const provider of Object.keys(pricing.providers) as CloudProvider[]) {
-			const estimate = await this.calculateMonthlyCost(provider, resources);
+		for (const provider of Object.keys(
+			pricing.providers,
+		) as CloudProvider[]) {
+			const estimate = await this.calculateMonthlyCost(
+				provider,
+				resources,
+			);
 			if (estimate) {
 				estimates.push(estimate);
 			}
@@ -334,7 +366,9 @@ export class PricingManager {
 
 		let cacheAge: number | null = null;
 		if (this.cachedData) {
-			cacheAge = Math.floor((Date.now() - this.cachedData.timestamp) / 1000);
+			cacheAge = Math.floor(
+				(Date.now() - this.cachedData.timestamp) / 1000,
+			);
 		}
 
 		return {
@@ -356,7 +390,9 @@ export class PricingManager {
 		if (info) {
 			console.log(`  Version:     ${chalk.green(info.version)}`);
 			console.log(`  Last Update: ${chalk.cyan(info.updated)}`);
-			console.log(`  Source:      ${chalk.yellow(info.source || "Unknown")}`);
+			console.log(
+				`  Source:      ${chalk.yellow(info.source || "Unknown")}`,
+			);
 			if (info.cacheAge !== null) {
 				const hours = Math.floor(info.cacheAge / 3600);
 				const minutes = Math.floor((info.cacheAge % 3600) / 60);
@@ -364,7 +400,9 @@ export class PricingManager {
 			}
 		} else {
 			console.log(chalk.red("  Unable to fetch pricing data"));
-			console.log(chalk.gray("  Run 'expressots costs update' to refresh"));
+			console.log(
+				chalk.gray("  Run 'expressots costs update' to refresh"),
+			);
 		}
 	}
 
@@ -384,7 +422,9 @@ export class PricingManager {
 // Singleton instance
 let pricingManagerInstance: PricingManager | null = null;
 
-export function getPricingManager(config?: PricingManagerConfig): PricingManager {
+export function getPricingManager(
+	config?: PricingManagerConfig,
+): PricingManager {
 	if (!pricingManagerInstance) {
 		pricingManagerInstance = new PricingManager(config);
 	}

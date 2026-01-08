@@ -5,7 +5,11 @@ import { analyzeProject } from "./analyzers/project-analyzer";
 import { generateDockerfiles } from "./generators/dockerfile-generator";
 import { generateKubernetesConfigs } from "./generators/kubernetes-generator";
 import { generateDockerCompose } from "./generators/docker-compose-generator";
-import { generateCIConfig, type CIPlatform, type CIStrategy } from "./generators/ci-generator";
+import {
+	generateCIConfig,
+	type CIPlatform,
+	type CIStrategy,
+} from "./generators/ci-generator";
 
 type ContainerizeOptions = {
 	target: string;
@@ -25,9 +29,7 @@ export const containerizeProject = async (
 	options: ContainerizeOptions,
 ): Promise<void> => {
 	try {
-		console.log(
-			chalk.bold.cyan("\n🐳 ExpressoTS Containerization\n"),
-		);
+		console.log(chalk.bold.cyan("\n🐳 ExpressoTS Containerization\n"));
 
 		// Step 1: Analyze project (if enabled)
 		let analysis;
@@ -36,16 +38,12 @@ export const containerizeProject = async (
 			analysis = await analyzeProject();
 
 			console.log(chalk.white("Project Analysis:"));
-			console.log(
-				chalk.gray(`  Node version: ${analysis.nodeVersion}`),
-			);
+			console.log(chalk.gray(`  Node version: ${analysis.nodeVersion}`));
 			console.log(
 				chalk.gray(`  Package manager: ${analysis.packageManager}`),
 			);
 			console.log(
-				chalk.gray(
-					`  Dependencies: ${analysis.dependencies.length}`,
-				),
+				chalk.gray(`  Dependencies: ${analysis.dependencies.length}`),
 			);
 			console.log(
 				chalk.gray(`  Controllers: ${analysis.controllers.length}`),
@@ -112,13 +110,11 @@ export const containerizeProject = async (
 		console.log(chalk.white("📋 Summary:"));
 		console.log(chalk.gray("  • Generated files are fully customizable"));
 		console.log(chalk.gray("  • Edit them to fit your specific needs"));
-		console.log(chalk.gray("  • Run 'expressots container profile' to optimize"));
-
 		console.log(
-			chalk.cyan(
-				"\n📖 Next steps:",
-			),
+			chalk.gray("  • Run 'expressots container profile' to optimize"),
 		);
+
+		console.log(chalk.cyan("\n📖 Next steps:"));
 
 		if (analysis?.hasLocalDependencies) {
 			console.log(chalk.white("  1. Review generated files"));

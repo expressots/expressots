@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
-import { analyzeDockerfile, type DockerfileAnalysis } from "./analyzers/dockerfile-analyzer";
+import {
+	analyzeDockerfile,
+	type DockerfileAnalysis,
+} from "./analyzers/dockerfile-analyzer";
 import { analyzeImage } from "./analyzers/image-analyzer";
 import { generateOptimizations, applyOptimizations } from "./optimizers";
 
@@ -60,8 +63,14 @@ export async function profileContainer(options: ProfileOptions): Promise<void> {
 	const dockerfilePath = path.join(cwd, options.dockerfile);
 
 	if (!fs.existsSync(dockerfilePath)) {
-		console.log(chalk.red(`Error: Dockerfile not found at ${dockerfilePath}`));
-		console.log(chalk.gray("Run 'expressots containerize' to generate a Dockerfile first."));
+		console.log(
+			chalk.red(`Error: Dockerfile not found at ${dockerfilePath}`),
+		);
+		console.log(
+			chalk.gray(
+				"Run 'expressots containerize' to generate a Dockerfile first.",
+			),
+		);
 		return;
 	}
 
@@ -89,40 +98,52 @@ export async function profileImage(options: ProfileOptions): Promise<void> {
 
 	try {
 		const analysis = await analyzeImage(options.target);
-		
+
 		console.log(chalk.bold("Image Analysis:"));
 		console.log(`  Size: ${analysis.size}`);
 		console.log(`  Layers: ${analysis.layers}`);
 		console.log(`  Created: ${analysis.created}`);
 		console.log(`  OS/Arch: ${analysis.os}/${analysis.architecture}`);
-		
+
 		if (analysis.vulnerabilities && analysis.vulnerabilities.length > 0) {
 			console.log(chalk.bold("\nVulnerabilities:"));
 			for (const vuln of analysis.vulnerabilities) {
-				const color = vuln.severity === "critical" ? chalk.red :
-					vuln.severity === "high" ? chalk.yellow : chalk.gray;
-				console.log(`  ${color(`[${vuln.severity.toUpperCase()}]`)} ${vuln.id}: ${vuln.description}`);
+				const color =
+					vuln.severity === "critical"
+						? chalk.red
+						: vuln.severity === "high"
+							? chalk.yellow
+							: chalk.gray;
+				console.log(
+					`  ${color(`[${vuln.severity.toUpperCase()}]`)} ${vuln.id}: ${vuln.description}`,
+				);
 			}
 		} else {
 			console.log(chalk.green("\n✓ No vulnerabilities found"));
 		}
 	} catch (error) {
 		console.log(chalk.red(`Error analyzing image: ${error}`));
-		console.log(chalk.gray("Make sure Docker is running and the image exists."));
+		console.log(
+			chalk.gray("Make sure Docker is running and the image exists."),
+		);
 	}
 }
 
 /**
  * Generate and optionally apply optimizations
  */
-export async function optimizeContainer(options: ProfileOptions): Promise<void> {
+export async function optimizeContainer(
+	options: ProfileOptions,
+): Promise<void> {
 	console.log(chalk.cyan("\n⚡ ExpressoTS Container Optimizer\n"));
 
 	const cwd = process.cwd();
 	const dockerfilePath = path.join(cwd, options.dockerfile);
 
 	if (!fs.existsSync(dockerfilePath)) {
-		console.log(chalk.red(`Error: Dockerfile not found at ${dockerfilePath}`));
+		console.log(
+			chalk.red(`Error: Dockerfile not found at ${dockerfilePath}`),
+		);
 		return;
 	}
 
@@ -130,16 +151,26 @@ export async function optimizeContainer(options: ProfileOptions): Promise<void> 
 	const optimizations = generateOptimizations(analysis);
 
 	if (optimizations.length === 0) {
-		console.log(chalk.green("✓ No optimizations needed. Your Dockerfile looks great!"));
+		console.log(
+			chalk.green(
+				"✓ No optimizations needed. Your Dockerfile looks great!",
+			),
+		);
 		return;
 	}
 
 	console.log(chalk.bold(`Found ${optimizations.length} optimization(s):\n`));
 
 	for (const opt of optimizations) {
-		const priorityColor = opt.priority === "high" ? chalk.red :
-			opt.priority === "medium" ? chalk.yellow : chalk.gray;
-		console.log(`  ${priorityColor(`[${opt.priority.toUpperCase()}]`)} ${opt.title}`);
+		const priorityColor =
+			opt.priority === "high"
+				? chalk.red
+				: opt.priority === "medium"
+					? chalk.yellow
+					: chalk.gray;
+		console.log(
+			`  ${priorityColor(`[${opt.priority.toUpperCase()}]`)} ${opt.title}`,
+		);
 		console.log(chalk.gray(`    ${opt.description}`));
 		console.log(chalk.green(`    Impact: ${opt.impact}`));
 		console.log();
@@ -150,21 +181,29 @@ export async function optimizeContainer(options: ProfileOptions): Promise<void> 
 		const applied = await applyOptimizations(dockerfilePath, optimizations);
 		console.log(chalk.green(`✓ Applied ${applied} optimization(s)`));
 	} else {
-		console.log(chalk.gray("Tip: Use --auto-fix to automatically apply safe optimizations"));
+		console.log(
+			chalk.gray(
+				"Tip: Use --auto-fix to automatically apply safe optimizations",
+			),
+		);
 	}
 }
 
 /**
  * Show a comprehensive profile report
  */
-export async function showProfileReport(options: ProfileOptions): Promise<void> {
+export async function showProfileReport(
+	options: ProfileOptions,
+): Promise<void> {
 	console.log(chalk.cyan("\n📊 ExpressoTS Container Profile Report\n"));
 
 	const cwd = process.cwd();
 	const dockerfilePath = path.join(cwd, options.dockerfile);
 
 	if (!fs.existsSync(dockerfilePath)) {
-		console.log(chalk.red(`Error: Dockerfile not found at ${dockerfilePath}`));
+		console.log(
+			chalk.red(`Error: Dockerfile not found at ${dockerfilePath}`),
+		);
 		return;
 	}
 
@@ -193,7 +232,10 @@ export async function showProfileReport(options: ProfileOptions): Promise<void> 
 /**
  * Generate profile result from analysis
  */
-function generateProfileResult(analysis: DockerfileAnalysis, options: ProfileOptions): ProfileResult {
+function generateProfileResult(
+	analysis: DockerfileAnalysis,
+	options: ProfileOptions,
+): ProfileResult {
 	const issues: Issue[] = [];
 	const recommendations: Recommendation[] = [];
 
@@ -284,17 +326,25 @@ function generateProfileResult(analysis: DockerfileAnalysis, options: ProfileOpt
 	let score = 100;
 	for (const issue of issues) {
 		switch (issue.severity) {
-			case "critical": score -= 25; break;
-			case "high": score -= 15; break;
-			case "medium": score -= 10; break;
-			case "low": score -= 5; break;
+			case "critical":
+				score -= 25;
+				break;
+			case "high":
+				score -= 15;
+				break;
+			case "medium":
+				score -= 10;
+				break;
+			case "low":
+				score -= 5;
+				break;
 		}
 	}
 	score = Math.max(0, score);
 
 	return {
 		score,
-		issues: issues.filter(i => {
+		issues: issues.filter((i) => {
 			const severityOrder = { low: 0, medium: 1, high: 2, critical: 3 };
 			return severityOrder[i.severity] >= severityOrder[options.severity];
 		}),
@@ -315,26 +365,47 @@ function generateProfileResult(analysis: DockerfileAnalysis, options: ProfileOpt
  */
 function outputResult(result: ProfileResult, options: ProfileOptions): void {
 	// Score
-	const scoreColor = result.score >= 80 ? chalk.green :
-		result.score >= 60 ? chalk.yellow : chalk.red;
-	console.log(chalk.bold(`Container Health Score: ${scoreColor(`${result.score}/100`)}\n`));
+	const scoreColor =
+		result.score >= 80
+			? chalk.green
+			: result.score >= 60
+				? chalk.yellow
+				: chalk.red;
+	console.log(
+		chalk.bold(
+			`Container Health Score: ${scoreColor(`${result.score}/100`)}\n`,
+		),
+	);
 
 	// Metrics
 	console.log(chalk.bold("Metrics:"));
 	console.log(`  Base Image: ${result.metrics.baseImage || "Unknown"}`);
 	console.log(`  Layers: ${result.metrics.layers || "Unknown"}`);
-	console.log(`  Multi-stage: ${result.metrics.hasMultiStage ? chalk.green("✓") : chalk.red("✗")}`);
-	console.log(`  Health Check: ${result.metrics.hasHealthCheck ? chalk.green("✓") : chalk.red("✗")}`);
-	console.log(`  Non-root User: ${result.metrics.hasNonRootUser ? chalk.green("✓") : chalk.red("✗")}`);
+	console.log(
+		`  Multi-stage: ${result.metrics.hasMultiStage ? chalk.green("✓") : chalk.red("✗")}`,
+	);
+	console.log(
+		`  Health Check: ${result.metrics.hasHealthCheck ? chalk.green("✓") : chalk.red("✗")}`,
+	);
+	console.log(
+		`  Non-root User: ${result.metrics.hasNonRootUser ? chalk.green("✓") : chalk.red("✗")}`,
+	);
 
 	// Issues
 	if (result.issues.length > 0) {
 		console.log(chalk.bold(`\nIssues (${result.issues.length}):`));
 		for (const issue of result.issues) {
-			const color = issue.severity === "critical" ? chalk.red :
-				issue.severity === "high" ? chalk.yellow :
-				issue.severity === "medium" ? chalk.cyan : chalk.gray;
-			console.log(`  ${color(`[${issue.severity.toUpperCase()}]`)} ${issue.message}`);
+			const color =
+				issue.severity === "critical"
+					? chalk.red
+					: issue.severity === "high"
+						? chalk.yellow
+						: issue.severity === "medium"
+							? chalk.cyan
+							: chalk.gray;
+			console.log(
+				`  ${color(`[${issue.severity.toUpperCase()}]`)} ${issue.message}`,
+			);
 			if (issue.fix) {
 				console.log(chalk.gray(`    Fix: ${issue.fix}`));
 			}
@@ -348,7 +419,9 @@ function outputResult(result: ProfileResult, options: ProfileOptions): void {
 		console.log(chalk.bold(`\nRecommendations:`));
 		for (const rec of result.recommendations) {
 			const color = rec.priority === "high" ? chalk.yellow : chalk.gray;
-			console.log(`  ${color(`[${rec.priority.toUpperCase()}]`)} ${rec.title}`);
+			console.log(
+				`  ${color(`[${rec.priority.toUpperCase()}]`)} ${rec.title}`,
+			);
 			console.log(chalk.gray(`    ${rec.description}`));
 		}
 	}
@@ -360,8 +433,12 @@ function outputResult(result: ProfileResult, options: ProfileOptions): void {
  * Generate HTML report
  */
 function generateHtmlReport(result: ProfileResult): string {
-	const scoreColor = result.score >= 80 ? "#22c55e" :
-		result.score >= 60 ? "#eab308" : "#ef4444";
+	const scoreColor =
+		result.score >= 80
+			? "#22c55e"
+			: result.score >= 60
+				? "#eab308"
+				: "#ef4444";
 
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -404,31 +481,42 @@ function generateHtmlReport(result: ProfileResult): string {
             <h2>Metrics</h2>
             <div class="metric"><span>Base Image</span><span>${result.metrics.baseImage || "Unknown"}</span></div>
             <div class="metric"><span>Layers</span><span>${result.metrics.layers || "Unknown"}</span></div>
-            <div class="metric"><span>Multi-stage Build</span><span class="${result.metrics.hasMultiStage ? 'check' : 'cross'}">${result.metrics.hasMultiStage ? '✓' : '✗'}</span></div>
-            <div class="metric"><span>Health Check</span><span class="${result.metrics.hasHealthCheck ? 'check' : 'cross'}">${result.metrics.hasHealthCheck ? '✓' : '✗'}</span></div>
-            <div class="metric"><span>Non-root User</span><span class="${result.metrics.hasNonRootUser ? 'check' : 'cross'}">${result.metrics.hasNonRootUser ? '✓' : '✗'}</span></div>
+            <div class="metric"><span>Multi-stage Build</span><span class="${result.metrics.hasMultiStage ? "check" : "cross"}">${result.metrics.hasMultiStage ? "✓" : "✗"}</span></div>
+            <div class="metric"><span>Health Check</span><span class="${result.metrics.hasHealthCheck ? "check" : "cross"}">${result.metrics.hasHealthCheck ? "✓" : "✗"}</span></div>
+            <div class="metric"><span>Non-root User</span><span class="${result.metrics.hasNonRootUser ? "check" : "cross"}">${result.metrics.hasNonRootUser ? "✓" : "✗"}</span></div>
         </div>
         
         <div class="card">
             <h2>Issues (${result.issues.length})</h2>
-            ${result.issues.length === 0 ? '<p style="color: #22c55e;">✓ No issues found!</p>' :
-              result.issues.map(i => `
+            ${
+				result.issues.length === 0
+					? '<p style="color: #22c55e;">✓ No issues found!</p>'
+					: result.issues
+							.map(
+								(i) => `
                 <div class="issue ${i.severity}">
                     <strong>[${i.severity.toUpperCase()}]</strong> ${i.message}
-                    ${i.fix ? `<br><small style="color: #6b7280;">Fix: ${i.fix}</small>` : ''}
+                    ${i.fix ? `<br><small style="color: #6b7280;">Fix: ${i.fix}</small>` : ""}
                 </div>
-            `).join('')}
+            `,
+							)
+							.join("")
+			}
         </div>
         
         <div class="card">
             <h2>Recommendations (${result.recommendations.length})</h2>
-            ${result.recommendations.map(r => `
+            ${result.recommendations
+				.map(
+					(r) => `
                 <div class="issue low">
                     <strong>${r.title}</strong><br>
                     ${r.description}<br>
                     <small style="color: #22c55e;">Impact: ${r.impact}</small>
                 </div>
-            `).join('')}
+            `,
+				)
+				.join("")}
         </div>
         
         <div class="footer">

@@ -3,7 +3,11 @@
 import chalk from "chalk";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { buildCommand, devCommand, prodCommand } from "./commands/project.commands";
+import {
+	buildCommand,
+	devCommand,
+	prodCommand,
+} from "./commands/project.commands";
 import { containerize } from "./containerize";
 import { cicdCommand } from "./cicd";
 import { migrateCommand } from "./migrate";

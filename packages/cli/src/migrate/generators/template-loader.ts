@@ -19,7 +19,7 @@ export async function loadMigrationTemplate(
 	to: string,
 	file: string,
 	variables: Record<string, unknown>,
-	embeddedGenerator: () => string
+	embeddedGenerator: () => string,
 ): Promise<TemplateResult> {
 	const manager = getTemplateManager();
 
@@ -30,7 +30,10 @@ export async function loadMigrationTemplate(
 		if (result.data) {
 			// Template found, render with variables
 			const renderOptions: RenderOptions = {
-				variables: variables as Record<string, string | number | boolean | undefined>,
+				variables: variables as Record<
+					string,
+					string | number | boolean | undefined
+				>,
 			};
 
 			const rendered = manager.render(result.data, renderOptions);
@@ -50,7 +53,9 @@ export async function loadMigrationTemplate(
 /**
  * Build migration template variables
  */
-export function buildMigrationVars(options: MigrationOptions): Record<string, unknown> {
+export function buildMigrationVars(
+	options: MigrationOptions,
+): Record<string, unknown> {
 	return {
 		from: options.from,
 		to: options.to,
@@ -64,9 +69,13 @@ export function buildMigrationVars(options: MigrationOptions): Record<string, un
 /**
  * Log template source for debugging
  */
-export function logTemplateSource(templateName: string, source: "remote" | "embedded"): void {
+export function logTemplateSource(
+	templateName: string,
+	source: "remote" | "embedded",
+): void {
 	if (process.env.EXPRESSOTS_DEBUG) {
-		const sourceLabel = source === "remote" ? "remote template" : "embedded template";
+		const sourceLabel =
+			source === "remote" ? "remote template" : "embedded template";
 		console.log(`  [DEBUG] ${templateName}: Using ${sourceLabel}`);
 	}
 }

@@ -15,7 +15,9 @@ export interface Optimization {
 /**
  * Generate optimization recommendations based on Dockerfile analysis
  */
-export function generateOptimizations(analysis: DockerfileAnalysis): Optimization[] {
+export function generateOptimizations(
+	analysis: DockerfileAnalysis,
+): Optimization[] {
 	const optimizations: Optimization[] = [];
 
 	// Multi-stage build
@@ -25,7 +27,8 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
 			priority: "high",
 			category: "Size",
 			title: "Use multi-stage build",
-			description: "Multi-stage builds significantly reduce final image size by separating build and runtime dependencies.",
+			description:
+				"Multi-stage builds significantly reduce final image size by separating build and runtime dependencies.",
 			impact: "Can reduce image size by 50-80%",
 			autoFixable: false,
 		});
@@ -38,7 +41,8 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
 			priority: "high",
 			category: "Security",
 			title: "Run as non-root user",
-			description: "Running containers as root is a security risk. Create and use a non-root user.",
+			description:
+				"Running containers as root is a security risk. Create and use a non-root user.",
 			impact: "Reduces attack surface if container is compromised",
 			autoFixable: false,
 		});
@@ -51,7 +55,8 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
 			priority: "medium",
 			category: "Reliability",
 			title: "Add HEALTHCHECK instruction",
-			description: "Health checks allow orchestrators to detect and restart unhealthy containers.",
+			description:
+				"Health checks allow orchestrators to detect and restart unhealthy containers.",
 			impact: "Faster failure detection, better uptime",
 			autoFixable: true,
 			fix: (content) => {
@@ -62,7 +67,10 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 `;
-					return content.replace(cmdMatch[0], healthCheck + cmdMatch[0]);
+					return content.replace(
+						cmdMatch[0],
+						healthCheck + cmdMatch[0],
+					);
 				}
 				return content;
 			},
@@ -76,7 +84,8 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
 			priority: "low",
 			category: "Best Practice",
 			title: "Use npm ci instead of npm install",
-			description: "npm ci provides faster, more reliable, and reproducible builds.",
+			description:
+				"npm ci provides faster, more reliable, and reproducible builds.",
 			impact: "Faster builds, reproducible dependencies",
 			autoFixable: true,
 			fix: (content) => {
@@ -92,7 +101,8 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
 			priority: "medium",
 			category: "Size",
 			title: "Add .dockerignore file",
-			description: "Exclude unnecessary files from the build context to speed up builds and reduce image size.",
+			description:
+				"Exclude unnecessary files from the build context to speed up builds and reduce image size.",
 			impact: "Faster builds, smaller images",
 			autoFixable: false,
 		});
@@ -112,7 +122,11 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
 	}
 
 	// Check base image
-	if (analysis.baseImage && !analysis.baseImage.includes("alpine") && !analysis.baseImage.includes("slim")) {
+	if (
+		analysis.baseImage &&
+		!analysis.baseImage.includes("alpine") &&
+		!analysis.baseImage.includes("slim")
+	) {
 		optimizations.push({
 			id: "OPT007",
 			priority: "medium",
@@ -132,7 +146,7 @@ export function generateOptimizations(analysis: DockerfileAnalysis): Optimizatio
  */
 export async function applyOptimizations(
 	dockerfilePath: string,
-	optimizations: Optimization[]
+	optimizations: Optimization[],
 ): Promise<number> {
 	let content = fs.readFileSync(dockerfilePath, "utf-8");
 	let appliedCount = 0;

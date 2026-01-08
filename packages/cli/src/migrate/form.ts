@@ -31,19 +31,84 @@ interface MigrationPath {
 }
 
 const SUPPORTED_MIGRATIONS: MigrationPath[] = [
-	{ from: "heroku", to: "railway", description: "Heroku to Railway", complexity: "low" },
-	{ from: "heroku", to: "render", description: "Heroku to Render", complexity: "low" },
-	{ from: "heroku", to: "fly", description: "Heroku to Fly.io", complexity: "medium" },
-	{ from: "heroku", to: "kubernetes", description: "Heroku to Kubernetes", complexity: "high" },
-	{ from: "docker-compose", to: "kubernetes", description: "Docker Compose to Kubernetes", complexity: "medium" },
-	{ from: "docker-compose", to: "railway", description: "Docker Compose to Railway", complexity: "low" },
-	{ from: "docker-compose", to: "render", description: "Docker Compose to Render", complexity: "low" },
-	{ from: "docker-compose", to: "fly", description: "Docker Compose to Fly.io", complexity: "medium" },
-	{ from: "vercel", to: "railway", description: "Vercel to Railway", complexity: "low" },
-	{ from: "vercel", to: "render", description: "Vercel to Render", complexity: "low" },
-	{ from: "aws-ecs", to: "gcp-cloudrun", description: "AWS ECS to GCP Cloud Run", complexity: "high" },
-	{ from: "aws-ecs", to: "kubernetes", description: "AWS ECS to Kubernetes", complexity: "medium" },
-	{ from: "gcp-cloudrun", to: "aws-ecs", description: "GCP Cloud Run to AWS ECS", complexity: "high" },
+	{
+		from: "heroku",
+		to: "railway",
+		description: "Heroku to Railway",
+		complexity: "low",
+	},
+	{
+		from: "heroku",
+		to: "render",
+		description: "Heroku to Render",
+		complexity: "low",
+	},
+	{
+		from: "heroku",
+		to: "fly",
+		description: "Heroku to Fly.io",
+		complexity: "medium",
+	},
+	{
+		from: "heroku",
+		to: "kubernetes",
+		description: "Heroku to Kubernetes",
+		complexity: "high",
+	},
+	{
+		from: "docker-compose",
+		to: "kubernetes",
+		description: "Docker Compose to Kubernetes",
+		complexity: "medium",
+	},
+	{
+		from: "docker-compose",
+		to: "railway",
+		description: "Docker Compose to Railway",
+		complexity: "low",
+	},
+	{
+		from: "docker-compose",
+		to: "render",
+		description: "Docker Compose to Render",
+		complexity: "low",
+	},
+	{
+		from: "docker-compose",
+		to: "fly",
+		description: "Docker Compose to Fly.io",
+		complexity: "medium",
+	},
+	{
+		from: "vercel",
+		to: "railway",
+		description: "Vercel to Railway",
+		complexity: "low",
+	},
+	{
+		from: "vercel",
+		to: "render",
+		description: "Vercel to Render",
+		complexity: "low",
+	},
+	{
+		from: "aws-ecs",
+		to: "gcp-cloudrun",
+		description: "AWS ECS to GCP Cloud Run",
+		complexity: "high",
+	},
+	{
+		from: "aws-ecs",
+		to: "kubernetes",
+		description: "AWS ECS to Kubernetes",
+		complexity: "medium",
+	},
+	{
+		from: "gcp-cloudrun",
+		to: "aws-ecs",
+		description: "GCP Cloud Run to AWS ECS",
+		complexity: "high",
+	},
 ];
 
 /**
@@ -54,7 +119,7 @@ export async function initMigration(options: MigrationOptions): Promise<void> {
 
 	// Detect current platform
 	const detected = await detectCurrentPlatform();
-	
+
 	if (detected) {
 		console.log(chalk.green(`✓ Detected current platform: ${detected}`));
 	}
@@ -80,7 +145,9 @@ export async function initMigration(options: MigrationOptions): Promise<void> {
 			name: "to",
 			message: "Select target platform:",
 			choices: (prev) => {
-				const migrations = SUPPORTED_MIGRATIONS.filter(m => m.from === prev.from);
+				const migrations = SUPPORTED_MIGRATIONS.filter(
+					(m) => m.from === prev.from,
+				);
 				if (migrations.length === 0) {
 					// Show all targets if no specific migrations defined
 					return [
@@ -92,7 +159,7 @@ export async function initMigration(options: MigrationOptions): Promise<void> {
 						{ name: "GCP Cloud Run", value: "gcp-cloudrun" },
 					];
 				}
-				return migrations.map(m => ({
+				return migrations.map((m) => ({
 					name: `${m.to.charAt(0).toUpperCase() + m.to.slice(1)} (${m.complexity} complexity)`,
 					value: m.to,
 				}));
@@ -133,14 +200,26 @@ export async function initMigration(options: MigrationOptions): Promise<void> {
 /**
  * Generate migration scripts
  */
-export async function generateMigration(options: MigrationOptions): Promise<void> {
+export async function generateMigration(
+	options: MigrationOptions,
+): Promise<void> {
 	if (!options.from || !options.to) {
-		console.log(chalk.red("Error: Please specify both --from and --to platforms."));
-		console.log(chalk.gray("Use 'expressots migrate list' to see available migrations."));
+		console.log(
+			chalk.red("Error: Please specify both --from and --to platforms."),
+		);
+		console.log(
+			chalk.gray(
+				"Use 'expressots migrate list' to see available migrations.",
+			),
+		);
 		return;
 	}
 
-	console.log(chalk.cyan(`\n📦 Generating migration: ${options.from} → ${options.to}\n`));
+	console.log(
+		chalk.cyan(
+			`\n📦 Generating migration: ${options.from} → ${options.to}\n`,
+		),
+	);
 
 	// Create output directory
 	const outputDir = path.resolve(options.outputDir);
@@ -150,11 +229,13 @@ export async function generateMigration(options: MigrationOptions): Promise<void
 
 	// Find migration path
 	const migration = SUPPORTED_MIGRATIONS.find(
-		m => m.from === options.from && m.to === options.to
+		(m) => m.from === options.from && m.to === options.to,
 	);
 
 	if (options.dryRun) {
-		console.log(chalk.yellow("🔍 Dry run mode - showing migration steps:\n"));
+		console.log(
+			chalk.yellow("🔍 Dry run mode - showing migration steps:\n"),
+		);
 		printMigrationSteps(options, migration);
 		return;
 	}
@@ -162,8 +243,10 @@ export async function generateMigration(options: MigrationOptions): Promise<void
 	// Generate migration files based on source/target
 	try {
 		await generateMigrationFiles(options, outputDir, migration);
-		
-		console.log(chalk.green(`\n✅ Migration files generated in ${outputDir}\n`));
+
+		console.log(
+			chalk.green(`\n✅ Migration files generated in ${outputDir}\n`),
+		);
 		printNextSteps(options);
 	} catch (error) {
 		console.log(chalk.red(`Error generating migration: ${error}`));
@@ -177,31 +260,46 @@ export async function listMigrations(): Promise<void> {
 	console.log(chalk.cyan("\n📋 Available Migration Paths\n"));
 
 	// Group by source
-	const bySource = SUPPORTED_MIGRATIONS.reduce((acc, m) => {
-		if (!acc[m.from]) acc[m.from] = [];
-		acc[m.from].push(m);
-		return acc;
-	}, {} as Record<string, MigrationPath[]>);
+	const bySource = SUPPORTED_MIGRATIONS.reduce(
+		(acc, m) => {
+			if (!acc[m.from]) acc[m.from] = [];
+			acc[m.from].push(m);
+			return acc;
+		},
+		{} as Record<string, MigrationPath[]>,
+	);
 
 	for (const [source, migrations] of Object.entries(bySource)) {
 		console.log(chalk.bold(`\nFrom ${source}:`));
 		for (const m of migrations) {
-			const complexityColor = m.complexity === "low" ? chalk.green :
-				m.complexity === "medium" ? chalk.yellow : chalk.red;
+			const complexityColor =
+				m.complexity === "low"
+					? chalk.green
+					: m.complexity === "medium"
+						? chalk.yellow
+						: chalk.red;
 			console.log(
-				`  → ${m.to.padEnd(20)} ${complexityColor(`[${m.complexity}]`)}`
+				`  → ${m.to.padEnd(20)} ${complexityColor(`[${m.complexity}]`)}`,
 			);
 		}
 	}
 
-	console.log(chalk.gray("\n\nUsage: expressots migrate generate --from <source> --to <target>"));
-	console.log(chalk.gray("       expressots migrate init (interactive wizard)\n"));
+	console.log(
+		chalk.gray(
+			"\n\nUsage: expressots migrate generate --from <source> --to <target>",
+		),
+	);
+	console.log(
+		chalk.gray("       expressots migrate init (interactive wizard)\n"),
+	);
 }
 
 /**
  * Analyze migration complexity
  */
-export async function analyzeMigration(options: MigrationOptions): Promise<void> {
+export async function analyzeMigration(
+	options: MigrationOptions,
+): Promise<void> {
 	console.log(chalk.cyan("\n🔍 Migration Analysis\n"));
 
 	const detected = await detectCurrentPlatform();
@@ -209,36 +307,52 @@ export async function analyzeMigration(options: MigrationOptions): Promise<void>
 
 	console.log(chalk.bold("Current Setup:"));
 	console.log(`  Platform: ${detected || "Unknown"}`);
-	
+
 	// Analyze project files
 	const hasDockerfile = fs.existsSync(path.join(cwd, "Dockerfile"));
-	const hasDockerCompose = fs.existsSync(path.join(cwd, "docker-compose.yml"));
+	const hasDockerCompose = fs.existsSync(
+		path.join(cwd, "docker-compose.yml"),
+	);
 	const hasK8s = fs.existsSync(path.join(cwd, "k8s"));
 	const hasProcfile = fs.existsSync(path.join(cwd, "Procfile"));
 	const hasVercelConfig = fs.existsSync(path.join(cwd, "vercel.json"));
 	const hasRailwayConfig = fs.existsSync(path.join(cwd, "railway.json"));
 
-	console.log(`  Dockerfile: ${hasDockerfile ? chalk.green("✓") : chalk.gray("✗")}`);
-	console.log(`  Docker Compose: ${hasDockerCompose ? chalk.green("✓") : chalk.gray("✗")}`);
+	console.log(
+		`  Dockerfile: ${hasDockerfile ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
+	console.log(
+		`  Docker Compose: ${hasDockerCompose ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
 	console.log(`  Kubernetes: ${hasK8s ? chalk.green("✓") : chalk.gray("✗")}`);
-	console.log(`  Procfile (Heroku): ${hasProcfile ? chalk.green("✓") : chalk.gray("✗")}`);
-	console.log(`  Vercel Config: ${hasVercelConfig ? chalk.green("✓") : chalk.gray("✗")}`);
-	console.log(`  Railway Config: ${hasRailwayConfig ? chalk.green("✓") : chalk.gray("✗")}`);
+	console.log(
+		`  Procfile (Heroku): ${hasProcfile ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
+	console.log(
+		`  Vercel Config: ${hasVercelConfig ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
+	console.log(
+		`  Railway Config: ${hasRailwayConfig ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
 
 	// Check for environment variables
 	const hasEnvFile = fs.existsSync(path.join(cwd, ".env"));
 	const hasEnvExample = fs.existsSync(path.join(cwd, ".env.example"));
-	
+
 	console.log(chalk.bold("\nEnvironment:"));
-	console.log(`  .env file: ${hasEnvFile ? chalk.green("✓") : chalk.gray("✗")}`);
-	console.log(`  .env.example: ${hasEnvExample ? chalk.green("✓") : chalk.gray("✗")}`);
+	console.log(
+		`  .env file: ${hasEnvFile ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
+	console.log(
+		`  .env.example: ${hasEnvExample ? chalk.green("✓") : chalk.gray("✗")}`,
+	);
 
 	// Analyze package.json for dependencies
 	const packageJsonPath = path.join(cwd, "package.json");
 	if (fs.existsSync(packageJsonPath)) {
 		const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 		const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-		
+
 		console.log(chalk.bold("\nDependencies:"));
 		if (deps.pg || deps.postgres) console.log("  Database: PostgreSQL");
 		if (deps.mysql || deps.mysql2) console.log("  Database: MySQL");
@@ -248,9 +362,9 @@ export async function analyzeMigration(options: MigrationOptions): Promise<void>
 
 	if (options.to) {
 		const migration = SUPPORTED_MIGRATIONS.find(
-			m => m.from === (detected || options.from) && m.to === options.to
+			(m) => m.from === (detected || options.from) && m.to === options.to,
 		);
-		
+
 		if (migration) {
 			console.log(chalk.bold(`\nMigration to ${options.to}:`));
 			console.log(`  Complexity: ${migration.complexity}`);
@@ -267,7 +381,7 @@ export async function analyzeMigration(options: MigrationOptions): Promise<void>
 async function generateMigrationFiles(
 	options: MigrationOptions,
 	outputDir: string,
-	migration?: MigrationPath
+	migration?: MigrationPath,
 ): Promise<void> {
 	const { from, to } = options;
 
@@ -293,23 +407,26 @@ async function generateMigrationFiles(
 /**
  * Print migration steps for dry run
  */
-function printMigrationSteps(options: MigrationOptions, migration?: MigrationPath): void {
+function printMigrationSteps(
+	options: MigrationOptions,
+	migration?: MigrationPath,
+): void {
 	console.log(chalk.bold(`Migration: ${options.from} → ${options.to}`));
 	console.log(`Complexity: ${migration?.complexity || "unknown"}`);
 	console.log();
-	
+
 	console.log(chalk.bold("Steps:"));
 	console.log("  1. Generate target platform configuration");
 	console.log("  2. Create environment variable mapping");
-	
+
 	if (options.includeSecrets) {
 		console.log("  3. Generate secrets migration script");
 	}
-	
+
 	if (options.includeData) {
 		console.log("  4. Generate data migration scripts");
 	}
-	
+
 	console.log("  5. Create migration checklist (README.md)");
 	console.log();
 }
@@ -320,13 +437,15 @@ function printMigrationSteps(options: MigrationOptions, migration?: MigrationPat
 function printNextSteps(options: MigrationOptions): void {
 	console.log(chalk.bold("📖 Next Steps:"));
 	console.log(`  1. Review the migration files in ${options.outputDir}`);
-	console.log("  2. Check the MIGRATION_CHECKLIST.md for step-by-step instructions");
+	console.log(
+		"  2. Check the MIGRATION_CHECKLIST.md for step-by-step instructions",
+	);
 	console.log("  3. Set up environment variables on the target platform");
-	
+
 	if (options.includeData) {
 		console.log("  4. Review and run data migration scripts carefully");
 	}
-	
+
 	console.log("  5. Test the deployment in a staging environment first");
 	console.log();
 }

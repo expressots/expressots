@@ -11,7 +11,15 @@ import { getPricingManager } from "./pricing-manager";
 // eslint-disable-next-line @typescript-eslint/ban-types
 type CommandModuleArgs = {};
 
-export type CloudProvider = "aws" | "gcp" | "azure" | "railway" | "render" | "fly" | "digitalocean" | "heroku";
+export type CloudProvider =
+	| "aws"
+	| "gcp"
+	| "azure"
+	| "railway"
+	| "render"
+	| "fly"
+	| "digitalocean"
+	| "heroku";
 
 const costsCommand = (): CommandModule<CommandModuleArgs, any> => {
 	return {
@@ -20,21 +28,46 @@ const costsCommand = (): CommandModule<CommandModuleArgs, any> => {
 		aliases: ["cost", "pricing"],
 		builder: (yargs: Argv): Argv => {
 			yargs.positional("action", {
-				choices: ["estimate", "compare", "optimize", "pricing", "update", "info"] as const,
+				choices: [
+					"estimate",
+					"compare",
+					"optimize",
+					"pricing",
+					"update",
+					"info",
+				] as const,
 				describe: "Action to perform",
 				type: "string",
 				demandOption: true,
 			});
 
 			yargs.option("provider", {
-				choices: ["aws", "gcp", "azure", "railway", "render", "fly", "digitalocean", "heroku"] as const,
+				choices: [
+					"aws",
+					"gcp",
+					"azure",
+					"railway",
+					"render",
+					"fly",
+					"digitalocean",
+					"heroku",
+				] as const,
 				describe: "Cloud provider",
 				type: "string",
 				alias: "p",
 			});
 
 			yargs.option("service", {
-				choices: ["ecs", "eks", "lambda", "cloudrun", "gke", "aci", "aks", "web-service"] as const,
+				choices: [
+					"ecs",
+					"eks",
+					"lambda",
+					"cloudrun",
+					"gke",
+					"aci",
+					"aks",
+					"web-service",
+				] as const,
 				describe: "Specific service type",
 				type: "string",
 				alias: "s",
@@ -165,7 +198,7 @@ async function updatePricingData(): Promise<void> {
 
 	const manager = getPricingManager();
 	manager.clearCache();
-	
+
 	const success = await manager.updateCache();
 
 	if (success) {
@@ -174,7 +207,9 @@ async function updatePricingData(): Promise<void> {
 		console.log(chalk.gray(`  Source: ${source}`));
 	} else {
 		console.log(chalk.red("✗ Failed to update pricing data"));
-		console.log(chalk.gray("  Check your network connection and try again."));
+		console.log(
+			chalk.gray("  Check your network connection and try again."),
+		);
 	}
 	console.log();
 }

@@ -3,13 +3,19 @@ import {
 	initCICD,
 	generateCICD,
 	listPlatforms,
-	validatePipelines
+	validatePipelines,
 } from "./form";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type CommandModuleArgs = {};
 
-export type CIPlatform = "github" | "gitlab" | "circleci" | "jenkins" | "bitbucket" | "azure";
+export type CIPlatform =
+	| "github"
+	| "gitlab"
+	| "circleci"
+	| "jenkins"
+	| "bitbucket"
+	| "azure";
 export type CIStrategy = "basic" | "comprehensive" | "security-focused";
 
 const cicdCommand = (): CommandModule<CommandModuleArgs, any> => {
@@ -26,13 +32,25 @@ const cicdCommand = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.positional("platform", {
-				choices: ["github", "gitlab", "circleci", "jenkins", "bitbucket", "azure", "all"] as const,
+				choices: [
+					"github",
+					"gitlab",
+					"circleci",
+					"jenkins",
+					"bitbucket",
+					"azure",
+					"all",
+				] as const,
 				describe: "CI/CD platform to generate for",
 				type: "string",
 			});
 
 			yargs.option("strategy", {
-				choices: ["basic", "comprehensive", "security-focused"] as const,
+				choices: [
+					"basic",
+					"comprehensive",
+					"security-focused",
+				] as const,
 				describe: "CI/CD pipeline strategy",
 				type: "string",
 				alias: "s",
@@ -64,7 +82,15 @@ const cicdCommand = (): CommandModule<CommandModuleArgs, any> => {
 			});
 
 			yargs.option("deploy-target", {
-				choices: ["kubernetes", "ecs", "cloudrun", "railway", "render", "fly", "none"] as const,
+				choices: [
+					"kubernetes",
+					"ecs",
+					"cloudrun",
+					"railway",
+					"render",
+					"fly",
+					"none",
+				] as const,
 				describe: "Deployment target platform",
 				type: "string",
 				default: "none",

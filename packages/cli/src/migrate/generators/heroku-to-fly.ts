@@ -2,11 +2,15 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import type { MigrationOptions } from "../form";
-import { loadMigrationTemplate, buildMigrationVars, logTemplateSource } from "./template-loader";
+import {
+	loadMigrationTemplate,
+	buildMigrationVars,
+	logTemplateSource,
+} from "./template-loader";
 
 export async function generateHerokuToFly(
 	outputDir: string,
-	options: MigrationOptions
+	options: MigrationOptions,
 ): Promise<void> {
 	console.log(chalk.yellow("  Generating Heroku → Fly.io migration..."));
 	const vars = buildMigrationVars(options);
@@ -73,11 +77,7 @@ kill_timeout = "5s"
     protocol = "http"
 `;
 
-	fs.writeFileSync(
-		path.join(outputDir, "fly.toml"),
-		flyConfig,
-		"utf-8"
-	);
+	fs.writeFileSync(path.join(outputDir, "fly.toml"), flyConfig, "utf-8");
 	console.log(chalk.green("    ✓ Created fly.toml"));
 
 	// Generate migration checklist
@@ -85,26 +85,18 @@ kill_timeout = "5s"
 	fs.writeFileSync(
 		path.join(outputDir, "MIGRATION_CHECKLIST.md"),
 		checklist,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created MIGRATION_CHECKLIST.md"));
 
 	// Generate migration scripts (cross-platform)
 	const nodeScript = generateFlyMigrationScriptNode();
-	fs.writeFileSync(
-		path.join(outputDir, "migrate.js"),
-		nodeScript,
-		"utf-8"
-	);
+	fs.writeFileSync(path.join(outputDir, "migrate.js"), nodeScript, "utf-8");
 	console.log(chalk.green("    ✓ Created migrate.js (cross-platform)"));
 
 	// Also generate bash script for Unix users
 	const bashScript = generateFlyMigrationScriptBash();
-	fs.writeFileSync(
-		path.join(outputDir, "migrate.sh"),
-		bashScript,
-		"utf-8"
-	);
+	fs.writeFileSync(path.join(outputDir, "migrate.sh"), bashScript, "utf-8");
 	console.log(chalk.green("    ✓ Created migrate.sh (Unix/Mac)"));
 }
 

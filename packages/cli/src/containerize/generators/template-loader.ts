@@ -29,7 +29,7 @@ export interface TemplateResult {
 export async function loadDockerTemplate(
 	templateType: string,
 	variables: DockerTemplateVars,
-	embeddedGenerator: () => string
+	embeddedGenerator: () => string,
 ): Promise<TemplateResult> {
 	const manager = getTemplateManager();
 
@@ -69,7 +69,7 @@ export async function loadDockerTemplate(
 export async function loadKubernetesTemplate(
 	templateType: string,
 	variables: Record<string, unknown>,
-	embeddedGenerator: () => string
+	embeddedGenerator: () => string,
 ): Promise<TemplateResult> {
 	const manager = getTemplateManager();
 
@@ -80,7 +80,10 @@ export async function loadKubernetesTemplate(
 		if (result.data) {
 			// Template found, render with variables
 			const renderOptions: RenderOptions = {
-				variables: variables as Record<string, string | number | boolean | undefined>,
+				variables: variables as Record<
+					string,
+					string | number | boolean | undefined
+				>,
 			};
 
 			const rendered = manager.render(result.data, renderOptions);
@@ -103,7 +106,7 @@ export async function loadKubernetesTemplate(
 export function buildDockerVars(
 	analysis: ProjectAnalysis | undefined,
 	entryPoint: string,
-	packageManager: string = "npm"
+	packageManager: string = "npm",
 ): DockerTemplateVars {
 	return {
 		nodeVersion: analysis?.nodeVersion || "20",
@@ -113,7 +116,10 @@ export function buildDockerVars(
 		hasLocalDeps: analysis?.hasLocalDependencies || false,
 		healthCheckEndpoint: analysis?.healthCheckPaths?.[0] || "/health",
 		projectName: "expressots-app",
-		installCommand: getInstallCommand(packageManager, analysis?.hasLocalDependencies),
+		installCommand: getInstallCommand(
+			packageManager,
+			analysis?.hasLocalDependencies,
+		),
 		buildCommand: getBuildCommand(packageManager),
 	};
 }
@@ -121,13 +127,19 @@ export function buildDockerVars(
 /**
  * Get install command for package manager
  */
-function getInstallCommand(packageManager: string, hasLocalDeps?: boolean): string {
+function getInstallCommand(
+	packageManager: string,
+	hasLocalDeps?: boolean,
+): string {
 	if (hasLocalDeps) {
 		// Use npm install when local deps exist (npm ci doesn't work well with local deps)
-		return packageManager === "pnpm" ? "pnpm install" :
-			packageManager === "yarn" ? "yarn install" : "npm install";
+		return packageManager === "pnpm"
+			? "pnpm install"
+			: packageManager === "yarn"
+				? "yarn install"
+				: "npm install";
 	}
-	
+
 	switch (packageManager) {
 		case "pnpm":
 			return "pnpm install --frozen-lockfile";
@@ -155,9 +167,13 @@ function getBuildCommand(packageManager: string): string {
 /**
  * Log template source for debugging
  */
-export function logTemplateSource(templateName: string, source: "remote" | "embedded"): void {
+export function logTemplateSource(
+	templateName: string,
+	source: "remote" | "embedded",
+): void {
 	if (process.env.EXPRESSOTS_DEBUG) {
-		const sourceLabel = source === "remote" ? "remote template" : "embedded template";
+		const sourceLabel =
+			source === "remote" ? "remote template" : "embedded template";
 		console.log(`  [DEBUG] ${templateName}: Using ${sourceLabel}`);
 	}
 }

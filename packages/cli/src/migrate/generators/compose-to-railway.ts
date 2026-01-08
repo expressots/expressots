@@ -5,9 +5,11 @@ import type { MigrationOptions } from "../form";
 
 export async function generateComposeToRailway(
 	outputDir: string,
-	options: MigrationOptions
+	options: MigrationOptions,
 ): Promise<void> {
-	console.log(chalk.yellow("  Generating Docker Compose → Railway migration..."));
+	console.log(
+		chalk.yellow("  Generating Docker Compose → Railway migration..."),
+	);
 
 	// Generate railway.json
 	const railwayConfig = {
@@ -28,7 +30,7 @@ export async function generateComposeToRailway(
 	fs.writeFileSync(
 		path.join(outputDir, "railway.json"),
 		JSON.stringify(railwayConfig, null, 2),
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created railway.json"));
 
@@ -37,7 +39,7 @@ export async function generateComposeToRailway(
 	fs.writeFileSync(
 		path.join(outputDir, "service-mapping.md"),
 		serviceMapping,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created service-mapping.md"));
 
@@ -46,7 +48,7 @@ export async function generateComposeToRailway(
 	fs.writeFileSync(
 		path.join(outputDir, "MIGRATION_CHECKLIST.md"),
 		checklist,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created MIGRATION_CHECKLIST.md"));
 }

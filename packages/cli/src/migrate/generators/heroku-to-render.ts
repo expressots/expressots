@@ -2,11 +2,15 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import type { MigrationOptions } from "../form";
-import { loadMigrationTemplate, buildMigrationVars, logTemplateSource } from "./template-loader";
+import {
+	loadMigrationTemplate,
+	buildMigrationVars,
+	logTemplateSource,
+} from "./template-loader";
 
 export async function generateHerokuToRender(
 	outputDir: string,
-	options: MigrationOptions
+	options: MigrationOptions,
 ): Promise<void> {
 	console.log(chalk.yellow("  Generating Heroku → Render migration..."));
 	const vars = buildMigrationVars(options);
@@ -46,7 +50,7 @@ services:
 	fs.writeFileSync(
 		path.join(outputDir, "render.yaml"),
 		renderConfig,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created render.yaml"));
 
@@ -55,7 +59,7 @@ services:
 	fs.writeFileSync(
 		path.join(outputDir, "MIGRATION_CHECKLIST.md"),
 		checklist,
-		"utf-8"
+		"utf-8",
 	);
 	console.log(chalk.green("    ✓ Created MIGRATION_CHECKLIST.md"));
 
@@ -65,7 +69,7 @@ services:
 		fs.writeFileSync(
 			path.join(outputDir, "env-mapping.md"),
 			envMapping,
-			"utf-8"
+			"utf-8",
 		);
 		console.log(chalk.green("    ✓ Created env-mapping.md"));
 	}

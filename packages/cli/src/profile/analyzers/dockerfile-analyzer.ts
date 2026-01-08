@@ -25,12 +25,14 @@ export interface DockerInstruction {
 /**
  * Analyze a Dockerfile for issues and metrics
  */
-export async function analyzeDockerfile(dockerfilePath: string): Promise<DockerfileAnalysis> {
+export async function analyzeDockerfile(
+	dockerfilePath: string,
+): Promise<DockerfileAnalysis> {
 	const content = fs.readFileSync(dockerfilePath, "utf-8");
 	const lines = content.split("\n");
 	const instructions: DockerInstruction[] = [];
 	const stages: string[] = [];
-	
+
 	let hasMultiStage = false;
 	let hasHealthCheck = false;
 	let hasNonRootUser = false;
@@ -45,7 +47,7 @@ export async function analyzeDockerfile(dockerfilePath: string): Promise<Dockerf
 	for (const line of lines) {
 		currentLine++;
 		const trimmed = line.trim();
-		
+
 		// Skip comments and empty lines
 		if (!trimmed || trimmed.startsWith("#")) {
 			continue;
@@ -72,11 +74,11 @@ export async function analyzeDockerfile(dockerfilePath: string): Promise<Dockerf
 					hasMultiStage = true;
 				}
 				stages.push(args);
-				
+
 				// Extract base image info
 				if (!baseImage) {
 					baseImage = args.split(/\s+/)[0];
-					
+
 					// Try to extract Node version
 					const nodeMatch = baseImage.match(/node:(\d+)/);
 					if (nodeMatch) {
@@ -98,15 +100,17 @@ export async function analyzeDockerfile(dockerfilePath: string): Promise<Dockerf
 
 			case "RUN":
 				runLayerCount++;
-				
+
 				// Check for npm install vs npm ci
 				if (args.includes("npm install") && !args.includes("npm ci")) {
 					hasNpmInstallWithoutCi = true;
 				}
-				
+
 				// Check for curl/wget without cleanup
-				if ((args.includes("curl") || args.includes("wget")) &&
-					!args.includes("rm ")) {
+				if (
+					(args.includes("curl") || args.includes("wget")) &&
+					!args.includes("rm ")
+				) {
 					hasCurlOrWgetWithoutCleanup = true;
 				}
 				break;
@@ -114,7 +118,10 @@ export async function analyzeDockerfile(dockerfilePath: string): Promise<Dockerf
 	}
 
 	// Check for .dockerignore
-	const dockerignorePath = path.join(path.dirname(dockerfilePath), ".dockerignore");
+	const dockerignorePath = path.join(
+		path.dirname(dockerfilePath),
+		".dockerignore",
+	);
 	const hasDockerignore = fs.existsSync(dockerignorePath);
 
 	return {

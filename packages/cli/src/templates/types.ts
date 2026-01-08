@@ -4,13 +4,29 @@
 
 export type TemplateCategory = "cicd" | "docker" | "kubernetes" | "migrations";
 
-export type CICDPlatform = "github" | "gitlab" | "circleci" | "jenkins" | "bitbucket" | "azure";
+export type CICDPlatform =
+	| "github"
+	| "gitlab"
+	| "circleci"
+	| "jenkins"
+	| "bitbucket"
+	| "azure";
 
 export type CIStrategy = "basic" | "comprehensive" | "security-focused";
 
-export type DockerTemplate = "production" | "development" | "compose" | "compose-development";
+export type DockerTemplate =
+	| "production"
+	| "development"
+	| "compose"
+	| "compose-development";
 
-export type KubernetesTemplate = "deployment" | "service" | "configmap" | "ingress" | "secrets" | "kustomization";
+export type KubernetesTemplate =
+	| "deployment"
+	| "service"
+	| "configmap"
+	| "ingress"
+	| "secrets"
+	| "kustomization";
 
 export interface TemplateInfo {
 	path: string;

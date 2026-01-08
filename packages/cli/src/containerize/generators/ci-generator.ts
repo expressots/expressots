@@ -3,7 +3,14 @@ import path from "path";
 import chalk from "chalk";
 import type { ProjectAnalysis } from "../analyzers/project-analyzer";
 
-export type CIPlatform = "github" | "gitlab" | "circleci" | "jenkins" | "bitbucket" | "azure" | "all";
+export type CIPlatform =
+	| "github"
+	| "gitlab"
+	| "circleci"
+	| "jenkins"
+	| "bitbucket"
+	| "azure"
+	| "all";
 export type CIStrategy = "basic" | "comprehensive" | "security-focused";
 
 type GeneratorOptions = {
@@ -24,7 +31,9 @@ export async function generateCIConfig(
 	const platform = options.ciPlatform || "github";
 	const strategy = options.ciStrategy || "comprehensive";
 
-	console.log(chalk.yellow(`📝 Generating CI/CD configuration for ${platform}...`));
+	console.log(
+		chalk.yellow(`📝 Generating CI/CD configuration for ${platform}...`),
+	);
 
 	if (platform === "all") {
 		await generateAllPlatforms(cwd, options, analysis);
@@ -38,12 +47,19 @@ async function generateAllPlatforms(
 	options: GeneratorOptions,
 	analysis?: ProjectAnalysis,
 ): Promise<void> {
-	const platforms: CIPlatform[] = ["github", "gitlab", "circleci", "jenkins", "bitbucket", "azure"];
-	
+	const platforms: CIPlatform[] = [
+		"github",
+		"gitlab",
+		"circleci",
+		"jenkins",
+		"bitbucket",
+		"azure",
+	];
+
 	for (const platform of platforms) {
 		await generatePlatformConfig(cwd, platform, options, analysis);
 	}
-	
+
 	console.log(chalk.green(`  ✓ Generated CI/CD configs for all platforms`));
 }
 
@@ -83,7 +99,7 @@ async function generateGitHubActions(
 	analysis?: ProjectAnalysis,
 ): Promise<void> {
 	const githubDir = path.join(cwd, ".github", "workflows");
-	
+
 	if (!fs.existsSync(githubDir)) {
 		fs.mkdirSync(githubDir, { recursive: true });
 	}
@@ -314,18 +330,18 @@ jobs:
 
 	// Deploy Job
 	workflow += `  deploy:
-    name: Deploy to ${options.environment || 'production'}
+    name: Deploy to ${options.environment || "production"}
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
-      name: ${options.environment || 'production'}
+      name: ${options.environment || "production"}
       url: https://\${{ env.DOCKER_IMAGE }}.yourdomain.com
     
     steps:
       - name: Deploy notification
         run: |
-          echo "Deploying \${{ env.DOCKER_IMAGE }} to ${options.environment || 'production'}"
+          echo "Deploying \${{ env.DOCKER_IMAGE }} to ${options.environment || "production"}"
           echo "Image: \${{ secrets.DOCKER_USERNAME }}/\${{ env.DOCKER_IMAGE }}:latest"
 
       # Add your deployment steps here:
@@ -415,7 +431,9 @@ test:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
 
-${includeSecurityScans ? `# Security Scan Job
+${
+	includeSecurityScans
+		? `# Security Scan Job
 security:
   stage: security
   image: aquasec/trivy:latest
@@ -435,7 +453,9 @@ dependency-scanning:
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
-` : ''}
+`
+		: ""
+}
 
 # Build Docker Image
 build:
@@ -459,10 +479,10 @@ deploy:
   stage: deploy
   image: alpine:latest
   script:
-    - echo "Deploying $DOCKER_IMAGE to ${options.environment || 'production'}"
+    - echo "Deploying $DOCKER_IMAGE to ${options.environment || "production"}"
     - echo "⚠️  Add your deployment commands here"
   environment:
-    name: ${options.environment || 'production'}
+    name: ${options.environment || "production"}
     url: https://expressots-app.yourdomain.com
   only:
     - main
@@ -477,7 +497,7 @@ async function generateCircleCI(
 	analysis?: ProjectAnalysis,
 ): Promise<void> {
 	const circleCIDir = path.join(cwd, ".circleci");
-	
+
 	if (!fs.existsSync(circleCIDir)) {
 		fs.mkdirSync(circleCIDir, { recursive: true });
 	}
@@ -557,7 +577,7 @@ jobs:
       - run:
           name: Deploy application
           command: |
-            echo "Deploying to ${options.environment || 'production'}"
+            echo "Deploying to ${options.environment || "production"}"
             echo "⚠️  Add your deployment commands here"
 
 workflows:
@@ -690,7 +710,7 @@ pipeline {
                 branch 'main'
             }
             steps {
-                echo 'Deploying to ${options.environment || 'production'}'
+                echo 'Deploying to ${options.environment || "production"}'
                 echo '⚠️  Add your deployment commands here'
                 // sh 'kubectl apply -f k8s/'
                 // sh 'helm upgrade --install myapp ./helm-chart'
@@ -721,7 +741,11 @@ async function generateBitbucketPipelines(
 	analysis?: ProjectAnalysis,
 ): Promise<void> {
 	const config = generateBitbucketPipelinesConfig(options, analysis);
-	fs.writeFileSync(path.join(cwd, "bitbucket-pipelines.yml"), config, "utf-8");
+	fs.writeFileSync(
+		path.join(cwd, "bitbucket-pipelines.yml"),
+		config,
+		"utf-8",
+	);
 	console.log(chalk.green(`  ✓ Created bitbucket-pipelines.yml`));
 }
 
@@ -774,9 +798,9 @@ definitions:
     
     - step: &deploy
         name: Deploy
-        deployment: ${options.environment || 'production'}
+        deployment: ${options.environment || "production"}
         script:
-          - echo "Deploying to ${options.environment || 'production'}"
+          - echo "Deploying to ${options.environment || "production"}"
           - echo "⚠️  Add your deployment commands here"
 
 pipelines:
@@ -825,7 +849,7 @@ function generateAzureDevOpsConfig(
 
 	const azureNodeVersion = nodeVersion;
 	const azurePackageManager = packageManager;
-	const azureEnv = options.environment || 'production';
+	const azureEnv = options.environment || "production";
 
 	// Use string concatenation to avoid ESLint escape issues with Azure DevOps $(var) syntax
 	const vmImage = "$(vmImageName)";

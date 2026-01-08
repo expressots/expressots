@@ -12,9 +12,18 @@ export async function detectCurrentPlatform(): Promise<MigrationSource | null> {
 	const checks: { platform: MigrationSource; files: string[] }[] = [
 		{ platform: "heroku", files: ["Procfile", "app.json"] },
 		{ platform: "vercel", files: ["vercel.json", ".vercel"] },
-		{ platform: "docker-compose", files: ["docker-compose.yml", "docker-compose.yaml"] },
-		{ platform: "aws-ecs", files: ["ecs-task-definition.json", ".aws/ecs"] },
-		{ platform: "gcp-cloudrun", files: ["cloudbuild.yaml", ".gcp/cloudrun.yaml"] },
+		{
+			platform: "docker-compose",
+			files: ["docker-compose.yml", "docker-compose.yaml"],
+		},
+		{
+			platform: "aws-ecs",
+			files: ["ecs-task-definition.json", ".aws/ecs"],
+		},
+		{
+			platform: "gcp-cloudrun",
+			files: ["cloudbuild.yaml", ".gcp/cloudrun.yaml"],
+		},
 		{ platform: "azure-container", files: ["azure-pipelines.yml"] },
 	];
 
@@ -32,7 +41,7 @@ export async function detectCurrentPlatform(): Promise<MigrationSource | null> {
 		try {
 			const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 			const scripts = JSON.stringify(pkg.scripts || {});
-			
+
 			if (scripts.includes("heroku")) return "heroku";
 			if (scripts.includes("vercel")) return "vercel";
 			if (scripts.includes("railway")) return "docker-compose"; // likely uses Docker
@@ -89,7 +98,7 @@ export async function analyzePlatformConfig(): Promise<{
 				for (const line of serviceLines) {
 					const name = line.trim().replace(":", "");
 					services.push(name);
-					
+
 					// Check if it's a database
 					if (name.includes("postgres") || name.includes("pg")) {
 						databases.push("postgresql");
