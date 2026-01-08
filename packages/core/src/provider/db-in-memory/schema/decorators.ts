@@ -504,9 +504,7 @@ export class SchemaRegistry {
    * @returns Array of index metadata
    * @public API
    */
-  static getIndexes(
-    target: new (...args: Array<unknown>) => unknown,
-  ): Array<{
+  static getIndexes(target: new (...args: Array<unknown>) => unknown): Array<{
     field: string | symbol;
     name: string;
     composite?: Array<string>;

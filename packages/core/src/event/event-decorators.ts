@@ -316,9 +316,7 @@ export function getEventCondition<T>(
 /**
  * Get event metadata from an event class.
  */
-export function getEventMetadata(
-  eventClass: EventClass,
-):
+export function getEventMetadata(eventClass: EventClass):
   | {
       name?: string;
       version?: number;
