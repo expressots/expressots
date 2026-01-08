@@ -550,6 +550,10 @@ interface EnvironmentResult {
   createdTemplate?: string;
   createdTemplates?: Array<string>; // Multiple templates created
   warnings: Array<string>;
+  /** CI environment was detected */
+  ciDetected?: boolean;
+  /** Name of the detected CI platform */
+  ciPlatform?: string;
 }
 
 /**
@@ -895,9 +899,9 @@ async function loadAndValidateEnvironment(
   // 🎯 CI/CD: Skip file loading, use process.env directly
   if (isCI || skipFileLoading) {
     if (isCI) {
-      console.log(
-        `🔧 CI environment detected - using platform-injected variables`,
-      );
+      // Store CI info for logging after banner is displayed
+      result.ciDetected = true;
+      result.ciPlatform = detectCIPlatform();
     }
 
     // Support .env.vault in CI/CD
@@ -1408,8 +1412,17 @@ export async function bootstrap(
       appVersion: options?.appVersion ?? pkg.version ?? "1.0.0",
     };
 
-    // STEP 8: Listen (supports port 0 for auto-assign)
+    // STEP 8: Add CI detection info to appInfo (logged after banner, before middleware)
+    if (envResult.ciDetected) {
+      appInfo.ciDetection = {
+        detected: true,
+        platform: envResult.ciPlatform,
+      };
+    }
+
+    // STEP 9: Listen (supports port 0 for auto-assign)
     // Banner will be displayed inside listen() callback with correct port
+    // CI detection will be logged after banner, before middleware logs
     // Graceful shutdown handlers are already set up in AppExpress.listen()
     const webServer = await app.listen(port, appInfo);
 
