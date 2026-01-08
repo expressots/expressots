@@ -1192,6 +1192,8 @@ export class AppExpress implements Server.IWebServer {
     if (!this.bannerGenerator) {
       // Fallback to old console message if banner generator not initialized
       this.console.messageServer(this.port, this.environment || "development", appInfo);
+      // Log CI detection after banner, before middleware logs
+      this.displayCIDetectionLogs(appInfo);
       // Still display middleware startup logs even in fallback mode
       this.displayMiddlewareStartupLogs();
       return;
@@ -1274,6 +1276,9 @@ export class AppExpress implements Server.IWebServer {
         bannerData,
       );
 
+      // Log CI detection after banner, before middleware logs
+      this.displayCIDetectionLogs(appInfo);
+
       // Automatically display middleware startup logs after banner (transparent to user)
       this.displayMiddlewareStartupLogs();
     } catch (error) {
@@ -1284,8 +1289,25 @@ export class AppExpress implements Server.IWebServer {
         error,
       );
       this.console.messageServer(this.port, this.environment || "development", appInfo);
+      // Log CI detection after banner, before middleware logs
+      this.displayCIDetectionLogs(appInfo);
       // Still display middleware startup logs even in fallback mode
       this.displayMiddlewareStartupLogs();
+    }
+  }
+
+  /**
+   * Display CI detection logs after the banner but before middleware logs.
+   * @param appInfo - Application info containing CI detection data
+   * @private
+   */
+  private displayCIDetectionLogs(appInfo?: IConsoleMessage): void {
+    if (appInfo?.ciDetection?.detected) {
+      this.logger.info(
+        `🔍 CI environment detected: ${appInfo.ciDetection.platform}`,
+        "bootstrap",
+      );
+      this.logger.info(`✅ Skipping .env file loading (using process.env)`, "bootstrap");
     }
   }
 }
