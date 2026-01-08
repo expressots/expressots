@@ -1,7 +1,8 @@
-import { spawn } from "child_process";
-import { promises as fs, readFileSync, existsSync, mkdirSync } from "fs";
+import { spawn, execSync, spawnSync } from "child_process";
+import { promises as fs, readFileSync, existsSync, mkdirSync, readdirSync } from "fs";
 import os from "os";
 import path, { join } from "path";
+import chalk from "chalk";
 import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
@@ -109,6 +110,9 @@ async function buildDevArgs(
  */
 interface DevCommandOptions {
 	verbose?: boolean;
+	container?: boolean;
+	build?: boolean;
+	detach?: boolean;
 }
 
 /**
@@ -126,9 +130,36 @@ export const devCommand: CommandModule<object, DevCommandOptions> = {
 			default: false,
 			description: "Show verbose nodemon output for debugging",
 		},
+		container: {
+			alias: "c",
+			type: "boolean",
+			default: false,
+			description: "Run development inside Docker container",
+		},
+		build: {
+			alias: "b",
+			type: "boolean",
+			default: false,
+			description: "Rebuild container before starting (with --container)",
+		},
+		detach: {
+			alias: "d",
+			type: "boolean",
+			default: false,
+			description: "Run container in background (with --container)",
+		},
 	},
 	handler: async (argv) => {
-		await runCommand({ command: "dev", verbose: argv.verbose });
+		if (argv.container) {
+			// Use container-based development
+			await runContainerDev({
+				build: argv.build ?? false,
+				detach: argv.detach ?? false,
+			});
+		} else {
+			// Regular local development
+			await runCommand({ command: "dev", verbose: argv.verbose });
+		}
 	},
 };
 
@@ -345,6 +376,170 @@ const clearScreen = () => {
 	const command = platform === "win32" ? "cls" : "clear";
 	spawn(command, { stdio: "inherit", shell: true });
 };
+
+/**
+ * Container dev options
+ */
+interface ContainerDevOptions {
+	build: boolean;
+	detach: boolean;
+}
+
+/**
+ * Run development in Docker container with auto-setup
+ * This is the seamless "just works" experience
+ */
+async function runContainerDev(options: ContainerDevOptions): Promise<void> {
+	console.log(chalk.cyan("\n🐳 ExpressoTS Container Development\n"));
+
+	const cwd = process.cwd();
+	const composeDevFile = join(cwd, "docker-compose.development.yml");
+	const dockerfileDevFile = join(cwd, "Dockerfile.development");
+	const dockerSetupFile = join(cwd, "docker-setup.js");
+	const dockerDepsDir = join(cwd, ".docker-deps");
+	const packageDockerJson = join(cwd, "package.docker.json");
+
+	// Check if Docker is running
+	if (!isDockerRunning()) {
+		console.log(chalk.red("❌ Docker is not running."));
+		console.log(chalk.gray("   Please start Docker Desktop or Docker daemon."));
+		return;
+	}
+
+	// Step 1: Auto-generate Docker files if missing
+	if (!existsSync(dockerfileDevFile) || !existsSync(composeDevFile)) {
+		console.log(chalk.yellow("📝 Docker files not found. Generating..."));
+		
+		try {
+			// Import and run containerize
+			const { containerizeProject } = await import("../containerize/form");
+			await containerizeProject({
+				target: "docker",
+				environment: "development",
+				preset: "standard",
+				analyze: true,
+				skipCompose: false,
+				includeCi: false,
+			});
+			console.log();
+		} catch (error) {
+			console.log(chalk.red("❌ Failed to generate Docker files."));
+			console.log(chalk.gray("   Run manually: expressots containerize docker --env development"));
+			return;
+		}
+	}
+
+	// Step 2: Auto-run docker:setup if local dependencies exist
+	if (existsSync(packageDockerJson) && existsSync(dockerSetupFile)) {
+		// Check if .docker-deps needs to be updated
+		const needsSetup = !existsSync(dockerDepsDir) || isDirEmpty(dockerDepsDir);
+		
+		if (needsSetup) {
+			console.log(chalk.yellow("📦 Setting up local dependencies..."));
+			try {
+				execSync("node docker-setup.js", {
+					cwd,
+					stdio: "inherit",
+					encoding: "utf-8"
+				});
+				console.log();
+			} catch (error) {
+				console.log(chalk.red("❌ Failed to setup local dependencies."));
+				console.log(chalk.gray("   Run manually: npm run docker:setup"));
+				return;
+			}
+		}
+	}
+
+	// Step 3: Start the containers
+	console.log(chalk.yellow(`📄 Using docker-compose.development.yml`));
+	
+	const args: string[] = ["-f", composeDevFile, "up"];
+	
+	if (options.build) {
+		console.log(chalk.yellow("🔨 Rebuilding containers..."));
+		args.splice(2, 0, "--build");
+	}
+	
+	if (options.detach) {
+		args.push("-d");
+	}
+
+	console.log(chalk.yellow("🚀 Starting development containers...\n"));
+
+	// Print dev info
+	console.log(chalk.bold("Development Environment:"));
+	console.log(`  🌐 App:      http://localhost:3000`);
+	console.log(`  🔍 Debug:    localhost:9229`);
+	console.log();
+	console.log(chalk.bold("Commands:"));
+	console.log(`  ${chalk.gray("expressots dev -c")}           Start containers`);
+	console.log(`  ${chalk.gray("expressots dev -c -b")}        Rebuild & start`);
+	console.log(`  ${chalk.gray("expressots dev -c -d")}        Start in background`);
+	console.log(`  ${chalk.gray("docker-compose -f docker-compose.development.yml down")}  Stop`);
+	console.log();
+	console.log(chalk.green("🔄 Hot reload enabled - edit files to see changes"));
+	
+	if (!options.detach) {
+		console.log(chalk.gray("Press Ctrl+C to stop\n"));
+	}
+
+	// Run docker-compose
+	runDockerComposeCommand(args, cwd, options.detach);
+
+	if (options.detach) {
+		console.log(chalk.green("\n✅ Containers started in background."));
+		console.log(chalk.gray("   View logs: docker-compose -f docker-compose.development.yml logs -f"));
+	}
+}
+
+/**
+ * Check if Docker is running
+ */
+function isDockerRunning(): boolean {
+	try {
+		execSync("docker info", { stdio: ["pipe", "pipe", "pipe"] });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Check if directory is empty
+ */
+function isDirEmpty(dir: string): boolean {
+	try {
+		const files = readdirSync(dir);
+		return files.length === 0;
+	} catch {
+		return true;
+	}
+}
+
+/**
+ * Run docker-compose command
+ */
+function runDockerComposeCommand(args: string[], cwd: string, detach: boolean): void {
+	// Try docker compose (v2) first, fall back to docker-compose (v1)
+	try {
+		if (detach) {
+			execSync(`docker compose ${args.join(" ")}`, { cwd, stdio: "inherit" });
+		} else {
+			spawnSync("docker", ["compose", ...args], { cwd, stdio: "inherit", shell: true });
+		}
+	} catch {
+		try {
+			if (detach) {
+				execSync(`docker-compose ${args.join(" ")}`, { cwd, stdio: "inherit" });
+			} else {
+				spawnSync("docker-compose", args, { cwd, stdio: "inherit", shell: true });
+			}
+		} catch (error) {
+			console.log(chalk.red("Error running docker-compose"));
+		}
+	}
+}
 
 /**
  * Run command options

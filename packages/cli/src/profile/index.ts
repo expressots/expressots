@@ -1,0 +1,1 @@
+export { profileCommand } from "./cli";

@@ -3,11 +3,14 @@
 import chalk from "chalk";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import {
-	buildCommand,
-	devCommand,
-	prodCommand,
-} from "./commands/project.commands";
+import { buildCommand, devCommand, prodCommand } from "./commands/project.commands";
+import { containerize } from "./containerize";
+import { cicdCommand } from "./cicd";
+import { migrateCommand } from "./migrate";
+import { profileCommand } from "./profile";
+import { devContainerCommand } from "./dev";
+import { costsCommand } from "./costs";
+import { templatesCommand } from "./templates";
 import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
@@ -35,6 +38,13 @@ yargs(hideBin(process.argv))
 	.command(addProviderCMD())
 	.command(removeProviderCMD())
 	.command(generateProject())
+	.command(containerize())
+	.command(cicdCommand())
+	.command(migrateCommand())
+	.command(profileCommand())
+	.command(devContainerCommand())
+	.command(costsCommand())
+	.command(templatesCommand())
 	.command(scriptsCommand())
 	.command(infoProject())
 	.command(helpCommand())
