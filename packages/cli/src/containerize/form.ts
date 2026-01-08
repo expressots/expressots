@@ -1,7 +1,10 @@
 import chalk from "chalk";
 import Compiler from "../utils/compiler";
 import { printError, printSuccess } from "../utils/cli-ui";
-import { analyzeProject, type ProjectAnalysis } from "./analyzers/project-analyzer";
+import {
+	analyzeProject,
+	type ProjectAnalysis,
+} from "./analyzers/project-analyzer";
 import { generateDockerfiles } from "./generators/dockerfile-generator";
 import { generateKubernetesConfigs } from "./generators/kubernetes-generator";
 import { generateDockerCompose } from "./generators/docker-compose-generator";
@@ -166,9 +169,7 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 
 	// Show detected env file config
 	if (bootstrapConfig.skipFileLoading || bootstrapConfig.ciMode) {
-		console.log(
-			chalk.green("  ✓ Container-ready configuration detected"),
-		);
+		console.log(chalk.green("  ✓ Container-ready configuration detected"));
 		console.log(
 			chalk.gray(
 				`    Using ${bootstrapConfig.skipFileLoading ? "skipFileLoading" : "ciMode"} mode`,
@@ -181,7 +182,9 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 	const copyEnvFiles = shouldCopyEnvFiles(bootstrapConfig);
 
 	if (copyEnvFiles) {
-		console.log(chalk.yellow("  ⚠️  Environment file configuration detected"));
+		console.log(
+			chalk.yellow("  ⚠️  Environment file configuration detected"),
+		);
 
 		// Show existing env files
 		if (bootstrapConfig.existingEnvFiles.length > 0) {
@@ -229,9 +232,7 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 			chalk.gray("    1. Create the missing env files before building"),
 		);
 		console.log(
-			chalk.gray(
-				"    2. Update bootstrap to use skipFileLoading: true",
-			),
+			chalk.gray("    2. Update bootstrap to use skipFileLoading: true"),
 		);
 		console.log(
 			chalk.gray(

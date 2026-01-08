@@ -129,9 +129,7 @@ function parseBootstrapConfig(content: string, result: BootstrapConfig): void {
 	}
 
 	// Extract files mapping
-	const filesMatch = content.match(
-		/files\s*:\s*\{([^}]+)\}/s,
-	);
+	const filesMatch = content.match(/files\s*:\s*\{([^}]+)\}/s);
 	if (filesMatch) {
 		const filesContent = filesMatch[1];
 		// Match key-value pairs like: development: ".env.dev"
@@ -144,9 +142,7 @@ function parseBootstrapConfig(content: string, result: BootstrapConfig): void {
 	}
 
 	// Extract required variables
-	const requiredMatch = content.match(
-		/required\s*:\s*\[([^\]]+)\]/s,
-	);
+	const requiredMatch = content.match(/required\s*:\s*\[([^\]]+)\]/s);
 	if (requiredMatch) {
 		const requiredContent = requiredMatch[1];
 		const variables = requiredContent.matchAll(/["'`]([^"'`]+)["'`]/g);

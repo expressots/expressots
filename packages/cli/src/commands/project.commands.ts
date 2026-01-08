@@ -445,41 +445,67 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
 
 	// Step 1.5: Check bootstrap config and create missing env files if needed
 	try {
-		const { analyzeBootstrapConfig, shouldCopyEnvFiles, getEnvFileForEnvironment } =
-			await import("../containerize/analyzers/bootstrap-analyzer");
+		const {
+			analyzeBootstrapConfig,
+			shouldCopyEnvFiles,
+			getEnvFileForEnvironment,
+		} = await import("../containerize/analyzers/bootstrap-analyzer");
 		const bootstrapConfig = await analyzeBootstrapConfig();
 
-		if (bootstrapConfig.hasEnvFileConfig && shouldCopyEnvFiles(bootstrapConfig)) {
-			const devEnvFile = getEnvFileForEnvironment(bootstrapConfig, "development");
+		if (
+			bootstrapConfig.hasEnvFileConfig &&
+			shouldCopyEnvFiles(bootstrapConfig)
+		) {
+			const devEnvFile = getEnvFileForEnvironment(
+				bootstrapConfig,
+				"development",
+			);
 
 			// Check if required env file is missing
 			if (bootstrapConfig.missingEnvFiles.includes(devEnvFile)) {
 				console.log(
-					chalk.yellow(`⚠️  Required env file missing: ${devEnvFile}`),
+					chalk.yellow(
+						`⚠️  Required env file missing: ${devEnvFile}`,
+					),
 				);
 
 				// Auto-create template if configured or prompt user
 				if (bootstrapConfig.autoCreateTemplate) {
-					console.log(chalk.gray(`   Creating template ${devEnvFile}...`));
-					await createEnvTemplate(cwd, devEnvFile, "development", bootstrapConfig.requiredVariables);
+					console.log(
+						chalk.gray(`   Creating template ${devEnvFile}...`),
+					);
+					await createEnvTemplate(
+						cwd,
+						devEnvFile,
+						"development",
+						bootstrapConfig.requiredVariables,
+					);
 					console.log(chalk.green(`   ✓ Created ${devEnvFile}`));
 				} else {
 					// Provide helpful instructions
 					console.log(chalk.cyan("\n💡 To fix this, either:"));
 					console.log(
-						chalk.gray(`   1. Create ${devEnvFile} with your environment variables`),
+						chalk.gray(
+							`   1. Create ${devEnvFile} with your environment variables`,
+						),
 					);
 					console.log(
-						chalk.gray(`   2. Add autoCreateTemplate: true to envFileConfig in bootstrap`),
+						chalk.gray(
+							`   2. Add autoCreateTemplate: true to envFileConfig in bootstrap`,
+						),
 					);
 					console.log(
-						chalk.gray(`   3. Use skipFileLoading: true for container deployments`),
+						chalk.gray(
+							`   3. Use skipFileLoading: true for container deployments`,
+						),
 					);
 					console.log();
 
 					// Still continue - the container might work if env vars are set in docker-compose
 					console.log(
-						chalk.yellow(`   ⚠️  Container may fail if ${devEnvFile} is required`),
+						chalk.yellow(
+							`   ⚠️  Container may fail if ${devEnvFile} is required`,
+						),
 					);
 					console.log();
 				}
@@ -492,16 +518,16 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
 					console.log(chalk.gray(`   • ${varName}`));
 				});
 				console.log(
-					chalk.gray(`   Set these in ${devEnvFile} or docker-compose.development.yml`),
+					chalk.gray(
+						`   Set these in ${devEnvFile} or docker-compose.development.yml`,
+					),
 				);
 				console.log();
 			}
 		}
 	} catch (error) {
 		// Non-fatal - continue with container startup
-		console.log(
-			chalk.gray("   (Bootstrap analysis skipped)"),
-		);
+		console.log(chalk.gray("   (Bootstrap analysis skipped)"));
 	}
 
 	// Step 2: Auto-run docker:setup if local dependencies exist

@@ -135,7 +135,8 @@ function generateAppService(
 	const envFile = bootstrapConfig
 		? getEnvFileForEnvironment(bootstrapConfig, environment)
 		: null;
-	const envFileExists = envFile && bootstrapConfig?.existingEnvFiles.includes(envFile);
+	const envFileExists =
+		envFile && bootstrapConfig?.existingEnvFiles.includes(envFile);
 
 	let service = `  app:
     build:

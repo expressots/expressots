@@ -206,8 +206,7 @@ function generateDevelopmentDockerfile(
 
 	// Bootstrap config analysis for env files
 	const bootstrapConfig = analysis?.bootstrapConfig;
-	const copyEnvFiles =
-		bootstrapConfig && shouldCopyEnvFiles(bootstrapConfig);
+	const copyEnvFiles = bootstrapConfig && shouldCopyEnvFiles(bootstrapConfig);
 	const envFileCopies = copyEnvFiles
 		? generateEnvFileCopies(bootstrapConfig!, "development")
 		: "";
@@ -525,8 +524,7 @@ function generateLocalDependencyCopies(localDependencyPaths: string[]): string {
 function generateDockerignoreContent(analysis?: ProjectAnalysis): string {
 	// Bootstrap config determines which env files should NOT be ignored
 	const bootstrapConfig = analysis?.bootstrapConfig;
-	const copyEnvFiles =
-		bootstrapConfig && shouldCopyEnvFiles(bootstrapConfig);
+	const copyEnvFiles = bootstrapConfig && shouldCopyEnvFiles(bootstrapConfig);
 
 	// Build env file exclusions based on bootstrap config
 	let envFileSection = `# Environment files
