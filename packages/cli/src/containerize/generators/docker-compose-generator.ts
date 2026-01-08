@@ -7,6 +7,11 @@ import {
 	logTemplateSource,
 	type DockerTemplateVars,
 } from "./template-loader";
+import {
+	shouldCopyEnvFiles,
+	getEnvFileForEnvironment,
+	type BootstrapConfig,
+} from "../analyzers/bootstrap-analyzer";
 
 type GeneratorOptions = {
 	environment: string;
@@ -70,6 +75,7 @@ function generateDockerComposeContent(
 	const port = analysis?.port || 3000;
 	const hasDatabase = analysis?.hasDatabase || false;
 	const hasRedis = analysis?.hasRedis || false;
+	const bootstrapConfig = analysis?.bootstrapConfig;
 
 	const services: string[] = [];
 
@@ -79,6 +85,7 @@ function generateDockerComposeContent(
 		port,
 		hasDatabase,
 		hasRedis,
+		bootstrapConfig,
 	);
 	services.push(appService);
 
@@ -118,9 +125,17 @@ function generateAppService(
 	port: number,
 	hasDatabase: boolean,
 	hasRedis: boolean,
+	bootstrapConfig?: BootstrapConfig,
 ): string {
 	const isDev = environment === "development";
 	const dockerfile = isDev ? "Dockerfile.development" : "Dockerfile";
+
+	// Check if we should use env_file
+	const useEnvFile = bootstrapConfig && shouldCopyEnvFiles(bootstrapConfig);
+	const envFile = bootstrapConfig
+		? getEnvFileForEnvironment(bootstrapConfig, environment)
+		: null;
+	const envFileExists = envFile && bootstrapConfig?.existingEnvFiles.includes(envFile);
 
 	let service = `  app:
     build:
@@ -130,7 +145,20 @@ function generateAppService(
     ports:
       - "${port}:${port}"${isDev ? `\n      - "9229:9229"  # Debug port` : ""}`;
 
-	// Environment variables
+	// env_file section (if bootstrap config requires it)
+	if (useEnvFile && envFileExists) {
+		service += `\n    env_file:
+      - ${envFile}`;
+		// Also include .env if it exists
+		if (
+			bootstrapConfig?.existingEnvFiles.includes(".env") &&
+			envFile !== ".env"
+		) {
+			service += `\n      - .env`;
+		}
+	}
+
+	// Environment variables (always include these, they override env_file)
 	service += `\n    environment:
       - NODE_ENV=${environment}
       - PORT=${port}`;
@@ -143,11 +171,26 @@ function generateAppService(
 		service += `\n      - REDIS_URL=redis://redis:6379`;
 	}
 
+	// Add required variables as placeholders if not using env_file
+	if (!useEnvFile && bootstrapConfig?.requiredVariables.length) {
+		service += `\n      # Required variables from bootstrap config (set your values):`;
+		for (const varName of bootstrapConfig.requiredVariables) {
+			// Skip if already added (DATABASE_URL, REDIS_URL)
+			if (varName !== "DATABASE_URL" && varName !== "REDIS_URL") {
+				service += `\n      - ${varName}=\${${varName}:-}`;
+			}
+		}
+	}
+
 	// Volumes (for dev with hot reload)
 	if (isDev) {
 		service += `\n    volumes:
       - ./src:/app/src
       - /app/node_modules`;
+		// Mount env file for hot reload if using env files
+		if (useEnvFile && envFileExists) {
+			service += `\n      - ./${envFile}:/app/${envFile}:ro`;
+		}
 	}
 
 	// Dependencies

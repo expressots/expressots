@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import Compiler from "../utils/compiler";
 import { printError, printSuccess } from "../utils/cli-ui";
-import { analyzeProject } from "./analyzers/project-analyzer";
+import { analyzeProject, type ProjectAnalysis } from "./analyzers/project-analyzer";
 import { generateDockerfiles } from "./generators/dockerfile-generator";
 import { generateKubernetesConfigs } from "./generators/kubernetes-generator";
 import { generateDockerCompose } from "./generators/docker-compose-generator";
@@ -10,6 +10,7 @@ import {
 	type CIPlatform,
 	type CIStrategy,
 } from "./generators/ci-generator";
+import { shouldCopyEnvFiles } from "./analyzers/bootstrap-analyzer";
 
 type ContainerizeOptions = {
 	target: string;
@@ -32,7 +33,7 @@ export const containerizeProject = async (
 		console.log(chalk.bold.cyan("\n🐳 ExpressoTS Containerization\n"));
 
 		// Step 1: Analyze project (if enabled)
-		let analysis;
+		let analysis: ProjectAnalysis | undefined;
 		if (options.analyze) {
 			console.log(chalk.yellow("📊 Analyzing your project...\n"));
 			analysis = await analyzeProject();
@@ -67,6 +68,9 @@ export const containerizeProject = async (
 					),
 				);
 			}
+
+			// Bootstrap configuration analysis
+			printBootstrapAnalysis(analysis);
 
 			console.log("");
 		}
@@ -147,3 +151,92 @@ export const containerizeProject = async (
 		throw error;
 	}
 };
+
+/**
+ * Print bootstrap configuration analysis and recommendations
+ */
+function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
+	const bootstrapConfig = analysis.bootstrapConfig;
+
+	if (!bootstrapConfig.hasEnvFileConfig) {
+		return; // No env file config, nothing to warn about
+	}
+
+	console.log(chalk.cyan("\n📋 Bootstrap Configuration:"));
+
+	// Show detected env file config
+	if (bootstrapConfig.skipFileLoading || bootstrapConfig.ciMode) {
+		console.log(
+			chalk.green("  ✓ Container-ready configuration detected"),
+		);
+		console.log(
+			chalk.gray(
+				`    Using ${bootstrapConfig.skipFileLoading ? "skipFileLoading" : "ciMode"} mode`,
+			),
+		);
+		return;
+	}
+
+	// Check if env files are needed
+	const copyEnvFiles = shouldCopyEnvFiles(bootstrapConfig);
+
+	if (copyEnvFiles) {
+		console.log(chalk.yellow("  ⚠️  Environment file configuration detected"));
+
+		// Show existing env files
+		if (bootstrapConfig.existingEnvFiles.length > 0) {
+			console.log(chalk.gray("  Existing env files:"));
+			bootstrapConfig.existingEnvFiles.forEach((file) => {
+				console.log(chalk.green(`    ✓ ${file}`));
+			});
+		}
+
+		// Show missing env files
+		if (bootstrapConfig.missingEnvFiles.length > 0) {
+			console.log(chalk.gray("  Missing env files:"));
+			bootstrapConfig.missingEnvFiles.forEach((file) => {
+				console.log(chalk.red(`    ✗ ${file}`));
+			});
+		}
+
+		// Show required variables
+		if (bootstrapConfig.requiredVariables.length > 0) {
+			console.log(chalk.gray("  Required variables:"));
+			bootstrapConfig.requiredVariables.forEach((varName) => {
+				console.log(chalk.yellow(`    • ${varName}`));
+			});
+		}
+	}
+
+	// Show recommendations
+	if (bootstrapConfig.recommendations.length > 0) {
+		console.log(chalk.cyan("\n💡 Recommendations:"));
+		bootstrapConfig.recommendations.forEach((rec) => {
+			console.log(chalk.gray(`  • ${rec}`));
+		});
+	}
+
+	// Special warning for missing required env files
+	if (!bootstrapConfig.isContainerReady) {
+		console.log(chalk.red("\n⚠️  Container may fail to start!"));
+		console.log(
+			chalk.gray(
+				"  The bootstrap configuration requires env files that are missing.",
+			),
+		);
+		console.log(chalk.gray("  Options:"));
+		console.log(
+			chalk.gray("    1. Create the missing env files before building"),
+		);
+		console.log(
+			chalk.gray(
+				"    2. Update bootstrap to use skipFileLoading: true",
+			),
+		);
+		console.log(
+			chalk.gray(
+				"    3. Set environment variables in docker-compose.yml",
+			),
+		);
+	}
+}

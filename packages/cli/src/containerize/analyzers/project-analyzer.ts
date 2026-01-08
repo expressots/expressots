@@ -1,6 +1,10 @@
 import fs from "fs";
 import path from "path";
 import Compiler from "../../utils/compiler";
+import {
+	analyzeBootstrapConfig,
+	type BootstrapConfig,
+} from "./bootstrap-analyzer";
 
 export interface ProjectAnalysis {
 	nodeVersion: string;
@@ -17,6 +21,8 @@ export interface ProjectAnalysis {
 	port: number;
 	hasLocalDependencies: boolean;
 	localDependencyPaths: string[];
+	/** Bootstrap configuration analysis */
+	bootstrapConfig: BootstrapConfig;
 }
 
 export async function analyzeProject(): Promise<ProjectAnalysis> {
@@ -87,6 +93,9 @@ export async function analyzeProject(): Promise<ProjectAnalysis> {
 	// Detect port
 	const port = await detectPort(cwd);
 
+	// Analyze bootstrap configuration
+	const bootstrapConfig = await analyzeBootstrapConfig();
+
 	return {
 		nodeVersion,
 		packageManager,
@@ -102,6 +111,7 @@ export async function analyzeProject(): Promise<ProjectAnalysis> {
 		port,
 		hasLocalDependencies,
 		localDependencyPaths,
+		bootstrapConfig,
 	};
 }
 
