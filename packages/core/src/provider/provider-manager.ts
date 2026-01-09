@@ -144,8 +144,7 @@ export class ProviderManager {
       this.applyScope(binding, scopeDefinition);
     } else {
       const scopeDefinition =
-        (constructorOrScope as interfaces.BindingScope) ||
-        Scope.Transient;
+        (constructorOrScope as interfaces.BindingScope) || Scope.Transient;
 
       binding = this.container.bind<T>(serviceIdentifier).toSelf();
       this.applyScope(binding, scopeDefinition);

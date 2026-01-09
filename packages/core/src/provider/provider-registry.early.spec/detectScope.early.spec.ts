@@ -32,11 +32,7 @@ describe("ProviderRegistry.detectScope()", () => {
   it("should detect scope from METADATA_KEY.scope", () => {
     // Arrange
     class TestProvider {}
-    Reflect.defineMetadata(
-      METADATA_KEY.scope,
-      Scope.Singleton,
-      TestProvider,
-    );
+    Reflect.defineMetadata(METADATA_KEY.scope, Scope.Singleton, TestProvider);
     (Reflect.getMetadata as jest.Mock).mockImplementation((key, target) => {
       if (key === METADATA_KEY.provide && target === Reflect) {
         return [{ implementationType: TestProvider }];

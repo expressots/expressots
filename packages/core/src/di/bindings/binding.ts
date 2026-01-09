@@ -66,8 +66,7 @@ class Binding<TActivated> implements interfaces.Binding<TActivated> {
 
   public clone(): interfaces.Binding<TActivated> {
     const clone = new Binding(this.serviceIdentifier, this.scope);
-    clone.activated =
-      clone.scope === Scope.Singleton ? this.activated : false;
+    clone.activated = clone.scope === Scope.Singleton ? this.activated : false;
     clone.implementationType = this.implementationType;
     clone.dynamicValue = this.dynamicValue;
     clone.scope = this.scope;

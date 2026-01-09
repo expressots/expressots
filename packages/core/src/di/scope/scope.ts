@@ -26,10 +26,7 @@ export const tryGetFromScope = <T>(
   }
 
   // Handle Request scope
-  if (
-    binding.scope === Scope.Request &&
-    requestScope.has(binding.id)
-  ) {
+  if (binding.scope === Scope.Request && requestScope.has(binding.id)) {
     return requestScope.get(binding.id) as T | Promise<T>;
   }
 
