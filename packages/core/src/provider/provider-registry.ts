@@ -9,7 +9,7 @@
 
 import { interfaces } from "../di/inversify";
 import { METADATA_KEY } from "../di/binding-decorator/constants";
-import { BindingScopeEnum } from "../di/inversify";
+import { Scope } from "../di/inversify";
 import {
   ProviderInfo,
   ProviderCapabilities,
@@ -197,7 +197,7 @@ export class ProviderRegistry {
     }
 
     // Default to Request scope
-    return BindingScopeEnum.Request;
+    return Scope.Request;
   }
 
   /**

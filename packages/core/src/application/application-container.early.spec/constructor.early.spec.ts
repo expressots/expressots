@@ -1,7 +1,7 @@
 // Unit tests for: constructor
 
 import "reflect-metadata";
-import { BindingScopeEnum, interfaces } from "../../di/inversify";
+import { Scope, interfaces } from "../../di/inversify";
 import { AppContainer } from "../application-container";
 
 describe("AppContainer.constructor() constructor", () => {
@@ -17,7 +17,7 @@ describe("AppContainer.constructor() constructor", () => {
     it("should create an instance with custom options", () => {
       // Arrange
       const customOptions: interfaces.ContainerOptions = {
-        defaultScope: BindingScopeEnum.Singleton,
+        defaultScope: Scope.Singleton,
         autoBindInjectable: false,
         skipBaseClassChecks: true,
       };
@@ -32,7 +32,7 @@ describe("AppContainer.constructor() constructor", () => {
     it("should merge custom options with defaults", () => {
       // Arrange
       const customOptions: interfaces.ContainerOptions = {
-        defaultScope: BindingScopeEnum.Singleton,
+        defaultScope: Scope.Singleton,
       };
 
       // Act
@@ -41,7 +41,7 @@ describe("AppContainer.constructor() constructor", () => {
 
       // Assert
       const options = container.getContainerOptions();
-      expect(options.defaultScope).toBe(BindingScopeEnum.Singleton);
+      expect(options.defaultScope).toBe(Scope.Singleton);
       expect(options.autoBindInjectable).toBe(true); // Default value
     });
   });
@@ -55,7 +55,7 @@ describe("AppContainer.constructor() constructor", () => {
       expect(container).toBeInstanceOf(AppContainer);
       container.create([]);
       const options = container.getContainerOptions();
-      expect(options.defaultScope).toBe(BindingScopeEnum.Request);
+      expect(options.defaultScope).toBe(Scope.Request);
     });
 
     it("should handle empty options object", () => {
@@ -69,7 +69,7 @@ describe("AppContainer.constructor() constructor", () => {
       expect(container).toBeInstanceOf(AppContainer);
       container.create([]);
       const options = container.getContainerOptions();
-      expect(options.defaultScope).toBe(BindingScopeEnum.Request);
+      expect(options.defaultScope).toBe(Scope.Request);
     });
   });
 });

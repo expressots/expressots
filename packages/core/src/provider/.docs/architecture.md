@@ -200,7 +200,7 @@ private detectScope(
   }
   
   // Default to Request scope
-  return BindingScopeEnum.Request;
+  return Scope.Request;
 }
 ```
 

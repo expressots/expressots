@@ -1,4 +1,4 @@
-import { BindingScopeEnum, interfaces } from "../di/inversify";
+import { Scope, interfaces } from "../di/inversify";
 import { Logger } from "./logger/logger.provider";
 import { ProviderRegistry } from "./provider-registry";
 import {
@@ -29,7 +29,7 @@ export { IProvider };
  * const manager = new ProviderManager(container);
  *
  * // Register a provider
- * manager.register(MyProvider, BindingScopeEnum.Singleton);
+ * manager.register(MyProvider, Scope.Singleton);
  *
  * // Discover all providers
  * manager.discover();
@@ -123,7 +123,7 @@ export class ProviderManager {
   public register<T>(
     serviceIdentifier: interfaces.ServiceIdentifier<T>,
     constructorOrScope?: interfaces.Newable<T> | interfaces.BindingScope,
-    scope: interfaces.BindingScope = BindingScopeEnum.Request,
+    scope: interfaces.BindingScope = Scope.Request,
   ): void {
     if (this.container.isBound(serviceIdentifier)) {
       this.logger.warn(
@@ -138,14 +138,14 @@ export class ProviderManager {
     if (typeof constructorOrScope === "function") {
       // Overload where constructor is provided
       const constructor = constructorOrScope as interfaces.Newable<T>;
-      const scopeDefinition = scope || BindingScopeEnum.Transient;
+      const scopeDefinition = scope || Scope.Transient;
 
       binding = this.container.bind<T>(serviceIdentifier).to(constructor);
       this.applyScope(binding, scopeDefinition);
     } else {
       const scopeDefinition =
         (constructorOrScope as interfaces.BindingScope) ||
-        BindingScopeEnum.Transient;
+        Scope.Transient;
 
       binding = this.container.bind<T>(serviceIdentifier).toSelf();
       this.applyScope(binding, scopeDefinition);
@@ -183,13 +183,13 @@ export class ProviderManager {
   ): void {
     // Handle built-in scopes
     switch (scope) {
-      case BindingScopeEnum.Singleton:
+      case Scope.Singleton:
         binding.inSingletonScope();
         return;
-      case BindingScopeEnum.Request:
+      case Scope.Request:
         binding.inRequestScope();
         return;
-      case BindingScopeEnum.Transient:
+      case Scope.Transient:
         binding.inTransientScope();
         return;
     }
@@ -197,9 +197,9 @@ export class ProviderManager {
     // Handle custom scopes (any string that's not a built-in scope)
     if (
       typeof scope === "string" &&
-      scope !== BindingScopeEnum.Singleton &&
-      scope !== BindingScopeEnum.Request &&
-      scope !== BindingScopeEnum.Transient
+      scope !== Scope.Singleton &&
+      scope !== Scope.Request &&
+      scope !== Scope.Transient
     ) {
       binding.inScope(scope);
     } else {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingScopeEnum, BindingTypeEnum } from "../constants/literal_types";
+import { Scope, BindingTypeEnum } from "../constants/literal_types";
 import { interfaces } from "../interfaces/interfaces";
 import { BindingInWhenOnSyntax } from "./binding_in_when_on_syntax";
 import { BindingWhenOnSyntax } from "./binding_when_on_syntax";
@@ -36,7 +36,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
     this._binding.cache = value;
     this._binding.dynamicValue = null;
     this._binding.implementationType = null;
-    this._binding.scope = BindingScopeEnum.Singleton;
+    this._binding.scope = Scope.Singleton;
     return new BindingWhenOnSyntax<T>(this._binding);
   }
 
@@ -55,7 +55,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
   ): interfaces.BindingWhenOnSyntax<T> {
     this._binding.type = BindingTypeEnum.Constructor;
     this._binding.implementationType = constructor as unknown as T;
-    this._binding.scope = BindingScopeEnum.Singleton;
+    this._binding.scope = Scope.Singleton;
     return new BindingWhenOnSyntax<T>(this._binding);
   }
 
@@ -64,7 +64,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
   ): interfaces.BindingWhenOnSyntax<T> {
     this._binding.type = BindingTypeEnum.Factory;
     this._binding.factory = factory;
-    this._binding.scope = BindingScopeEnum.Singleton;
+    this._binding.scope = Scope.Singleton;
     return new BindingWhenOnSyntax<T>(this._binding);
   }
 
@@ -75,7 +75,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
     }
     const bindingWhenOnSyntax = this.toConstantValue(func);
     this._binding.type = BindingTypeEnum.Function;
-    this._binding.scope = BindingScopeEnum.Singleton;
+    this._binding.scope = Scope.Singleton;
     return bindingWhenOnSyntax;
   }
 
@@ -87,7 +87,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
       const autofactory = () => context.container.get<T2>(serviceIdentifier);
       return autofactory;
     };
-    this._binding.scope = BindingScopeEnum.Singleton;
+    this._binding.scope = Scope.Singleton;
     return new BindingWhenOnSyntax<T>(this._binding);
   }
 
@@ -107,7 +107,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
   ): interfaces.BindingWhenOnSyntax<T> {
     this._binding.type = BindingTypeEnum.Provider;
     this._binding.provider = provider;
-    this._binding.scope = BindingScopeEnum.Singleton;
+    this._binding.scope = Scope.Singleton;
     return new BindingWhenOnSyntax<T>(this._binding);
   }
 

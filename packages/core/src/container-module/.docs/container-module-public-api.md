@@ -29,9 +29,9 @@ const module = CreateModule([UserController, AuthController]);
 ### Level 2: With Scope
 
 ```typescript
-import { BindingScopeEnum } from "inversify";
+import { Scope } from "@expressots/core";
 
-const module = CreateModule([UserController], BindingScopeEnum.Singleton);
+const module = CreateModule([UserController], Scope.Singleton);
 ```
 
 ### Level 3: With Custom Bindings
@@ -77,7 +77,7 @@ Create a ContainerModule from controllers.
 const module = CreateModule([UserController]);
 
 // With scope
-const module = CreateModule([UserController], BindingScopeEnum.Singleton);
+const module = CreateModule([UserController], Scope.Singleton);
 
 // With bindings callback
 const module = CreateModule([UserController], (bind) => {
@@ -87,7 +87,7 @@ const module = CreateModule([UserController], (bind) => {
 // With scope AND bindings
 const module = CreateModule(
   [UserController],
-  BindingScopeEnum.Singleton,
+  Scope.Singleton,
   (bind) => {
     bind<ILogger>("ILogger").to(ConsoleLogger);
   }
@@ -145,7 +145,7 @@ Decorator to set binding scope for a class.
 **Example:**
 
 ```typescript
-@scope(BindingScopeEnum.Singleton)
+@scope(Scope.Singleton)
 export class CacheService { }
 ```
 
@@ -222,7 +222,7 @@ const module = CreateModule([UserController], (bind) => {
 ```typescript
 const module = CreateModule(
   [UserController],
-  BindingScopeEnum.Singleton
+  Scope.Singleton
 );
 ```
 
@@ -252,13 +252,13 @@ const module = CreateModule([UserController]);
 ### Singleton Scope
 
 ```typescript
-const module = CreateModule([UserController], BindingScopeEnum.Singleton);
+const module = CreateModule([UserController], Scope.Singleton);
 ```
 
 ### Transient Scope
 
 ```typescript
-const module = CreateModule([UserController], BindingScopeEnum.Transient);
+const module = CreateModule([UserController], Scope.Transient);
 ```
 
 ### Custom Scope

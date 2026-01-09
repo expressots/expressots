@@ -1,6 +1,6 @@
 // Unit tests for: saveToScope
 
-import { BindingScopeEnum } from "../../constants/literal_types";
+import { Scope } from "../../constants/literal_types";
 import { saveToScope } from "../scope";
 import { interfaces } from "../../interfaces/interfaces";
 import { globalScopeRegistry } from "../scope-registry";
@@ -13,7 +13,7 @@ describe("saveToScope() saveToScope function", () => {
     mockRequestScope = new Map() as interfaces.RequestScope;
     mockBinding = {
       id: 1,
-      scope: BindingScopeEnum.Transient,
+      scope: Scope.Transient,
       activated: false,
       cache: null,
     } as interfaces.Binding<unknown>;
@@ -24,7 +24,7 @@ describe("saveToScope() saveToScope function", () => {
     it("should save to Singleton scope cache", () => {
       // Arrange
       const instance = { value: "test" };
-      mockBinding.scope = BindingScopeEnum.Singleton;
+      mockBinding.scope = Scope.Singleton;
 
       // Act
       saveToScope(mockRequestScope, mockBinding, instance);
@@ -37,7 +37,7 @@ describe("saveToScope() saveToScope function", () => {
     it("should save to Request scope", () => {
       // Arrange
       const instance = { value: "test" };
-      mockBinding.scope = BindingScopeEnum.Request;
+      mockBinding.scope = Scope.Request;
 
       // Act
       saveToScope(mockRequestScope, mockBinding, instance);
@@ -63,7 +63,7 @@ describe("saveToScope() saveToScope function", () => {
       // Arrange
       const existingInstance = { value: "existing" };
       const newInstance = { value: "new" };
-      mockBinding.scope = BindingScopeEnum.Request;
+      mockBinding.scope = Scope.Request;
       mockRequestScope.set(mockBinding.id, existingInstance);
 
       // Act

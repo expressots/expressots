@@ -1,4 +1,4 @@
-import { BindingScopeEnum, BindingTypeEnum } from "../constants/literal_types";
+import { Scope, BindingTypeEnum } from "../constants/literal_types";
 import { interfaces } from "../interfaces/interfaces";
 import { id } from "../utils/id";
 
@@ -67,7 +67,7 @@ class Binding<TActivated> implements interfaces.Binding<TActivated> {
   public clone(): interfaces.Binding<TActivated> {
     const clone = new Binding(this.serviceIdentifier, this.scope);
     clone.activated =
-      clone.scope === BindingScopeEnum.Singleton ? this.activated : false;
+      clone.scope === Scope.Singleton ? this.activated : false;
     clone.implementationType = this.implementationType;
     clone.dynamicValue = this.dynamicValue;
     clone.scope = this.scope;

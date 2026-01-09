@@ -1,6 +1,6 @@
 import { interfaces } from "../interfaces/interfaces";
 
-const BindingScopeEnum: interfaces.BindingScopeEnum = {
+const Scope: interfaces.Scope = {
   Request: "Request",
   Singleton: "Singleton",
   Transient: "Transient",
@@ -23,4 +23,4 @@ const TargetTypeEnum: interfaces.TargetTypeEnum = {
   Variable: "Variable",
 };
 
-export { BindingScopeEnum, BindingTypeEnum, TargetTypeEnum };
+export { Scope, BindingTypeEnum, TargetTypeEnum };

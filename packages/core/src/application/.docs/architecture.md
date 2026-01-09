@@ -404,7 +404,7 @@ function isWebServerConstructor<T extends IWebServer>(
 
 ```typescript
 {
-  defaultScope: BindingScopeEnum.Request,  // One per HTTP request
+  defaultScope: Scope.Request,  // One per HTTP request
   autoBindInjectable: true                 // Auto-bind @injectable() classes
 }
 ```

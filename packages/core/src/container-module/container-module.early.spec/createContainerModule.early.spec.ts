@@ -1,7 +1,7 @@
 // Unit tests for: createContainerModule
 
 import "reflect-metadata";
-import { BindingScopeEnum, ContainerModule } from "../../di/inversify";
+import { Scope, ContainerModule } from "../../di/inversify";
 import { BINDING_TYPE_METADATA_KEY, BaseModule } from "../container-module";
 
 describe("BaseModule.createContainerModule() createContainerModule method", () => {
@@ -50,14 +50,14 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
       class MockController {}
       Reflect.defineMetadata(
         BINDING_TYPE_METADATA_KEY,
-        BindingScopeEnum.Singleton,
+        Scope.Singleton,
         MockController,
       );
 
       // Act
       const module = BaseModule.createContainerModule(
         [MockController],
-        BindingScopeEnum.Singleton,
+        Scope.Singleton,
       );
 
       // Assert
@@ -81,14 +81,14 @@ describe("BaseModule.createContainerModule() createContainerModule method", () =
       class MockController {}
       Reflect.defineMetadata(
         BINDING_TYPE_METADATA_KEY,
-        BindingScopeEnum.Transient,
+        Scope.Transient,
         MockController,
       );
 
       // Act
       const module = BaseModule.createContainerModule(
         [MockController],
-        BindingScopeEnum.Transient as any,
+        Scope.Transient as any,
       );
 
       // Assert

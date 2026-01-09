@@ -1,6 +1,6 @@
 import { Binding } from "../bindings/binding";
 import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingScopeEnum, TargetTypeEnum } from "../constants/literal_types";
+import { Scope, TargetTypeEnum } from "../constants/literal_types";
 import * as METADATA_KEY from "../constants/metadata_keys";
 import { interfaces } from "../interfaces/interfaces";
 import { MetadataReader } from "../planning/metadata_reader";
@@ -78,11 +78,11 @@ class Container implements interfaces.Container {
     }
 
     if (options.defaultScope === undefined) {
-      options.defaultScope = BindingScopeEnum.Transient;
+      options.defaultScope = Scope.Transient;
     } else if (
-      options.defaultScope !== BindingScopeEnum.Singleton &&
-      options.defaultScope !== BindingScopeEnum.Transient &&
-      options.defaultScope !== BindingScopeEnum.Request
+      options.defaultScope !== Scope.Singleton &&
+      options.defaultScope !== Scope.Transient &&
+      options.defaultScope !== Scope.Request
     ) {
       throw new Error(`${ERROR_MSGS.CONTAINER_OPTIONS_INVALID_DEFAULT_SCOPE}`);
     }
@@ -182,7 +182,7 @@ class Container implements interfaces.Container {
   public bind<T>(
     serviceIdentifier: interfaces.ServiceIdentifier<T>,
   ): interfaces.BindingToSyntax<T> {
-    const scope = this.options.defaultScope || BindingScopeEnum.Transient;
+    const scope = this.options.defaultScope || Scope.Transient;
     const binding = new Binding<T>(serviceIdentifier, scope);
     this._bindingDictionary.add(serviceIdentifier, binding as Binding<unknown>);
     return new BindingToSyntax<T>(binding);

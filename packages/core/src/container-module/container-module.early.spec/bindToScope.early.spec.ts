@@ -1,6 +1,6 @@
 // Unit tests for: bindToScope
 
-import { BindingScopeEnum } from "../../di/inversify";
+import { Scope } from "../../di/inversify";
 import { BaseModule } from "../container-module";
 
 // Mocking decorators
@@ -63,7 +63,7 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
       // Arrange
       const symbol = Symbol("TestSingleton");
       const target = class TestSingleton {};
-      const bindingType = BindingScopeEnum.Singleton;
+      const bindingType = Scope.Singleton;
 
       // Act
       BaseModule.bindToScope(symbol, target, bindingType, mockBind);
@@ -78,7 +78,7 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
       // Arrange
       const symbol = Symbol("TestTransient");
       const target = class TestTransient {};
-      const bindingType = BindingScopeEnum.Transient;
+      const bindingType = Scope.Transient;
 
       // Act
       BaseModule.bindToScope(symbol, target, bindingType, mockBind);
@@ -96,7 +96,7 @@ describe("BaseModule.bindToScope() bindToScope method", () => {
       // Arrange
       const symbol = Symbol("TestRequest");
       const target = class TestRequest {};
-      const bindingType = BindingScopeEnum.Request;
+      const bindingType = Scope.Request;
 
       // Act
       BaseModule.bindToScope(symbol, target, bindingType, mockBind);

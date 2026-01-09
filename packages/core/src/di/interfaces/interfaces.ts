@@ -28,7 +28,7 @@ namespace interfaces {
 
   export type TargetType = "ConstructorArgument" | "ClassProperty" | "Variable";
 
-  export interface BindingScopeEnum {
+  export interface Scope {
     Request: interfaces.BindingScope;
     Singleton: interfaces.BindingScope;
     Transient: interfaces.BindingScope;

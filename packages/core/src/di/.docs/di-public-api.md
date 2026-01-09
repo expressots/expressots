@@ -58,9 +58,9 @@ container.bind<IUserService>("IUserService").to(UserService);
 
 ### Scopes
 
-- `BindingScopeEnum.Singleton` - One instance for app lifetime
-- `BindingScopeEnum.Transient` - New instance every time
-- `BindingScopeEnum.Request` - One instance per HTTP request
+- `Scope.Singleton` - One instance for app lifetime
+- `Scope.Transient` - New instance every time
+- `Scope.Request` - One instance per HTTP request
 
 ---
 

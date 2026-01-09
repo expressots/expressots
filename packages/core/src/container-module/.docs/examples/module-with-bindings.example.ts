@@ -5,7 +5,7 @@
  */
 
 import { CreateModule } from "../../container-module";
-import { BindingScopeEnum } from "inversify";
+import { Scope } from "../../..";
 
 // Example classes
 class UserController {}

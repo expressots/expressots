@@ -32,10 +32,10 @@ container.create([new MyModule()]);
 ### Level 2: Custom Scope
 
 ```typescript
-import { BindingScopeEnum } from 'inversify';
+import { Scope } from '@expressots/core';
 
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Singleton
+  defaultScope: Scope.Singleton
 });
 container.create([new MyModule()]);
 ```
@@ -44,7 +44,7 @@ container.create([new MyModule()]);
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Singleton,
+  defaultScope: Scope.Singleton,
   skipBaseClassChecks: true,
   autoBindInjectable: true
 });
@@ -73,8 +73,8 @@ new AppContainer(options?: ContainerOptions)
 
 ```typescript
 {
-  defaultScope: BindingScopeEnum.Request,  // One instance per HTTP request
-  autoBindInjectable: true                  // Auto-bind @injectable() classes
+  defaultScope: Scope.Request,  // One instance per HTTP request
+  autoBindInjectable: true      // Auto-bind @injectable() classes
 }
 ```
 
@@ -140,12 +140,12 @@ Retrieves the container configuration options.
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Singleton
+  defaultScope: Scope.Singleton
 });
 container.create([new MyModule()]);
 
 const options = container.getContainerOptions();
-console.log(options.defaultScope);  // BindingScopeEnum.Singleton
+console.log(options.defaultScope);  // Scope.Singleton
 ```
 
 ##### `get Container(): Container`
@@ -176,7 +176,7 @@ const inversifyContainer = container.Container;
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Request
+  defaultScope: Scope.Request
 });
 ```
 
@@ -189,7 +189,7 @@ const container = new AppContainer({
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Singleton
+  defaultScope: Scope.Singleton
 });
 ```
 
@@ -202,7 +202,7 @@ const container = new AppContainer({
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Transient
+  defaultScope: Scope.Transient
 });
 ```
 
@@ -229,7 +229,7 @@ container.create([new AppModule()]);
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Singleton  // Shared services
+  defaultScope: Scope.Singleton  // Shared services
 });
 container.create([
   new DatabaseModule(),
@@ -281,7 +281,7 @@ container.create([new MyModule()]);
 
 ```typescript
 const container = new AppContainer({
-  defaultScope: BindingScopeEnum.Singleton
+  defaultScope: Scope.Singleton
 });
 container.create([new MyModule()]);
 ```

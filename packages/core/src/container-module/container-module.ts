@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BindingScopeEnum, ContainerModule, interfaces } from "../di/inversify";
+import { Scope, ContainerModule, interfaces } from "../di/inversify";
 import { provideSingleton, provideTransient } from "../decorator";
 import { provide } from "../di/binding-decorator";
 
@@ -170,7 +170,7 @@ export function createModule(callback: BindingsCallback): ContainerModule {
  *
  * @example
  * ```typescript
- * @scope(BindingScopeEnum.Singleton)
+ * @scope(Scope.Singleton)
  * export class CacheService { }
  * ```
  *
@@ -187,7 +187,7 @@ export function createModule(callback: BindingsCallback): ContainerModule {
  * - Transient → `@provideTransient()`
  * - Request/Other → `@provide()`
  *
- * @see {@link BindingScopeEnum} for built-in scopes
+ * @see {@link Scope} for built-in scopes
  *
  * @public API
  */
@@ -197,10 +197,10 @@ const scope = (binding: interfaces.BindingScope) => {
       Reflect.defineMetadata(BINDING_TYPE_METADATA_KEY, binding, target);
 
       switch (binding) {
-        case BindingScopeEnum.Singleton:
+        case Scope.Singleton:
           provideSingleton(target);
           break;
-        case BindingScopeEnum.Transient:
+        case Scope.Transient:
           provideTransient(target);
           break;
         default:
@@ -278,14 +278,14 @@ export class BaseModule {
   ) {
     // Handle built-in scopes
     switch (bindingType) {
-      case BindingScopeEnum.Singleton:
+      case Scope.Singleton:
         bind(symbol).to(target).inSingletonScope();
         return;
-      case BindingScopeEnum.Transient:
+      case Scope.Transient:
         bind(symbol).to(target).inTransientScope();
         provideTransient(target);
         return;
-      case BindingScopeEnum.Request:
+      case Scope.Request:
         bind(symbol).to(target).inRequestScope();
         return;
     }
@@ -293,9 +293,9 @@ export class BaseModule {
     // Handle custom scopes (any string that's not a built-in scope)
     if (
       typeof bindingType === "string" &&
-      bindingType !== BindingScopeEnum.Singleton &&
-      bindingType !== BindingScopeEnum.Request &&
-      bindingType !== BindingScopeEnum.Transient
+      bindingType !== Scope.Singleton &&
+      bindingType !== Scope.Request &&
+      bindingType !== Scope.Transient
     ) {
       bind(symbol).to(target).inScope(bindingType);
     } else {
@@ -321,7 +321,7 @@ export class BaseModule {
    * const module = CreateModule([UserController, AuthController]);
    *
    * // With scope
-   * const module = CreateModule([UserController], BindingScopeEnum.Singleton);
+   * const module = CreateModule([UserController], Scope.Singleton);
    *
    * // With custom bindings (simple callback)
    * const module = CreateModule([UserController], (bind) => {
@@ -329,7 +329,7 @@ export class BaseModule {
    * });
    *
    * // With scope AND custom bindings
-   * const module = CreateModule([UserController], BindingScopeEnum.Singleton, (bind) => {
+   * const module = CreateModule([UserController], Scope.Singleton, (bind) => {
    *   bind<ILogger>("ILogger").to(ConsoleLogger);
    * });
    * ```

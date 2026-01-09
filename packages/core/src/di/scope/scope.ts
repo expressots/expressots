@@ -1,4 +1,4 @@
-import { BindingScopeEnum } from "../constants/literal_types";
+import { Scope } from "../constants/literal_types";
 import type { interfaces } from "../interfaces/interfaces";
 import { isPromise } from "../utils/async";
 import { globalScopeRegistry } from "./scope-registry";
@@ -10,9 +10,9 @@ import { globalScopeRegistry } from "./scope-registry";
  */
 const isBuiltInScope = (scope: string): boolean => {
   return (
-    scope === BindingScopeEnum.Singleton ||
-    scope === BindingScopeEnum.Request ||
-    scope === BindingScopeEnum.Transient
+    scope === Scope.Singleton ||
+    scope === Scope.Request ||
+    scope === Scope.Transient
   );
 };
 
@@ -21,13 +21,13 @@ export const tryGetFromScope = <T>(
   binding: interfaces.Binding<T>,
 ): T | Promise<T> | null => {
   // Handle Singleton scope
-  if (binding.scope === BindingScopeEnum.Singleton && binding.activated) {
+  if (binding.scope === Scope.Singleton && binding.activated) {
     return binding.cache!;
   }
 
   // Handle Request scope
   if (
-    binding.scope === BindingScopeEnum.Request &&
+    binding.scope === Scope.Request &&
     requestScope.has(binding.id)
   ) {
     return requestScope.get(binding.id) as T | Promise<T>;
@@ -50,13 +50,13 @@ export const saveToScope = <T>(
   result: T | Promise<T>,
 ): void => {
   // Handle Singleton scope
-  if (binding.scope === BindingScopeEnum.Singleton) {
+  if (binding.scope === Scope.Singleton) {
     _saveToSingletonScope(binding, result);
     return;
   }
 
   // Handle Request scope
-  if (binding.scope === BindingScopeEnum.Request) {
+  if (binding.scope === Scope.Request) {
     _saveToRequestScope(requestScope, binding, result);
     return;
   }

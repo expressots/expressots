@@ -2,7 +2,7 @@
 
 import { interfaces } from "../../di/inversify";
 import { ProviderRegistry } from "../provider-registry";
-import { BindingScopeEnum } from "../../di/inversify";
+import { Scope } from "../../di/inversify";
 import { METADATA_KEY } from "../../di/binding-decorator/constants";
 import { ProviderOptions } from "../../decorator/scope-binding";
 
@@ -34,7 +34,7 @@ describe("ProviderRegistry.detectScope()", () => {
     class TestProvider {}
     Reflect.defineMetadata(
       METADATA_KEY.scope,
-      BindingScopeEnum.Singleton,
+      Scope.Singleton,
       TestProvider,
     );
     (Reflect.getMetadata as jest.Mock).mockImplementation((key, target) => {
@@ -54,14 +54,14 @@ describe("ProviderRegistry.detectScope()", () => {
 
     // Assert
     const provider = providers.find((p) => p.target === TestProvider);
-    expect(provider?.scope).toBe(BindingScopeEnum.Singleton);
+    expect(provider?.scope).toBe(Scope.Singleton);
   });
 
   it("should detect scope from providerMeta.scope fallback", () => {
     // Arrange
     class TestProvider {}
     const providerMeta: ProviderOptions = {
-      scope: BindingScopeEnum.Transient,
+      scope: Scope.Transient,
     };
     Reflect.defineMetadata(
       METADATA_KEY.providerMeta,
@@ -85,7 +85,7 @@ describe("ProviderRegistry.detectScope()", () => {
 
     // Assert
     const provider = providers.find((p) => p.target === TestProvider);
-    expect(provider?.scope).toBe(BindingScopeEnum.Transient);
+    expect(provider?.scope).toBe(Scope.Transient);
   });
 
   it("should default to Request scope when no metadata", () => {
@@ -105,6 +105,6 @@ describe("ProviderRegistry.detectScope()", () => {
 
     // Assert
     const provider = providers.find((p) => p.target === TestProvider);
-    expect(provider?.scope).toBe(BindingScopeEnum.Request);
+    expect(provider?.scope).toBe(Scope.Request);
   });
 });

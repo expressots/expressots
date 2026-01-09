@@ -117,10 +117,10 @@ Scope is determined in this order:
 
 ```typescript
 // 1. Explicit
-CreateModule([Controller], BindingScopeEnum.Singleton);
+CreateModule([Controller], Scope.Singleton);
 
 // 2. Metadata
-@scope(BindingScopeEnum.Singleton)
+@scope(Scope.Singleton)
 class Controller { }
 CreateModule([Controller]);
 

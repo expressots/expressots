@@ -5,7 +5,8 @@
  */
 
 import { AppContainer } from "../../application-container";
-import { ContainerModule, BindingScopeEnum } from "inversify";
+import { ContainerModule } from "inversify";
+import { Scope } from "../../..";
 
 // Example module
 class ExampleModule extends ContainerModule {
@@ -50,7 +51,7 @@ async function runSingletonExample() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   const container = new AppContainer({
-    defaultScope: BindingScopeEnum.Singleton,
+    defaultScope: Scope.Singleton,
   });
 
   container.create([new ExampleModule()]);

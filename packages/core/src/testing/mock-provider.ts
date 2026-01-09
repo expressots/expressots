@@ -21,7 +21,7 @@
  * ```
  */
 
-import { Container, BindingScopeEnum } from "../di/inversify";
+import { Container, Scope } from "../di/inversify";
 import {
   MockProviderOptions,
   MockProviderResult,
@@ -256,7 +256,7 @@ export function mockProvider<T>(
 
   // Create a test container
   const container = new Container({
-    defaultScope: BindingScopeEnum.Singleton,
+    defaultScope: Scope.Singleton,
   });
 
   // Extract dependencies from the service class

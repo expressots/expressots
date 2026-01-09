@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import {
-  BindingScopeEnum,
+  Scope,
   Container,
   ContainerModule,
   interfaces,
@@ -29,7 +29,7 @@ import { Logger } from "../provider";
  *
  * // With custom options
  * const container = new AppContainer({
- *   defaultScope: BindingScopeEnum.Singleton
+ *   defaultScope: Scope.Singleton
  * });
  * container.create([new MyModule()]);
  * ```
@@ -52,7 +52,7 @@ import { Logger } from "../provider";
  * - Provides debugging utilities (viewContainerBindings)
  *
  * **Default Behavior**
- * - `defaultScope`: `BindingScopeEnum.Request` (one per request)
+ * - `defaultScope`: `Scope.Request` (one per request)
  * - `autoBindInjectable`: `true` (automatic binding)
  * - Loads `buildProviderModule()` automatically
  *
@@ -67,7 +67,7 @@ import { Logger } from "../provider";
  * Custom scope configuration:
  * ```typescript
  * const container = new AppContainer({
- *   defaultScope: BindingScopeEnum.Singleton,  // One instance for app lifetime
+ *   defaultScope: Scope.Singleton,  // One instance for app lifetime
  *   skipBaseClassChecks: true
  * });
  * container.create([new MyModule()]);
@@ -103,7 +103,7 @@ export class AppContainer {
    * @default
    * ```typescript
    * {
-   *   defaultScope: BindingScopeEnum.Request,
+   *   defaultScope: Scope.Request,
    *   autoBindInjectable: true
    * }
    * ```
@@ -120,7 +120,7 @@ export class AppContainer {
    *
    * // Singleton scope
    * const container = new AppContainer({
-   *   defaultScope: BindingScopeEnum.Singleton
+   *   defaultScope: Scope.Singleton
    * });
    * ```
    *
@@ -128,7 +128,7 @@ export class AppContainer {
    */
   constructor(options?: interfaces.ContainerOptions) {
     this.options = {
-      defaultScope: BindingScopeEnum.Request,
+      defaultScope: Scope.Request,
       ...options,
     };
   }
@@ -249,12 +249,12 @@ export class AppContainer {
    * @example
    * ```typescript
    * const container = new AppContainer({
-   *   defaultScope: BindingScopeEnum.Singleton
+   *   defaultScope: Scope.Singleton
    * });
    * container.create([new MyModule()]);
    *
    * const options = container.getContainerOptions();
-   * console.log(options.defaultScope);  // BindingScopeEnum.Singleton
+   * console.log(options.defaultScope);  // Scope.Singleton
    * ```
    *
    * @public API

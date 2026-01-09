@@ -1,7 +1,7 @@
 // Unit tests for: getContainerOptions
 
 import "reflect-metadata";
-import { BindingScopeEnum, interfaces } from "../../di/inversify";
+import { Scope, interfaces } from "../../di/inversify";
 import { Logger } from "../../provider";
 import { AppContainer } from "../application-container";
 
@@ -18,7 +18,7 @@ jest.mock("../../di/binding-decorator", () => {
 // Mocking the Container class
 class MockContainer {
   public options: interfaces.ContainerOptions = {
-    defaultScope: BindingScopeEnum.Request,
+    defaultScope: Scope.Request,
     autoBindInjectable: true,
   };
   public bind = jest.fn();
