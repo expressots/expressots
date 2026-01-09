@@ -73,7 +73,9 @@ describe("Middleware.static() static method", () => {
       // Note: serveStatic name deduplication means only first is added as "serveStatic"
       // The second one uses a different name or is skipped
       expect(expressStatic).toHaveBeenCalled();
-      expect(middleware.getMiddlewarePipeline().length).toBeGreaterThanOrEqual(1);
+      expect(middleware.getMiddlewarePipeline().length).toBeGreaterThanOrEqual(
+        1,
+      );
     });
 
     it("should handle mixed array of strings and config objects", () => {

@@ -37,10 +37,7 @@ describe("Middleware.compress() compress method", () => {
     it("should add compression middleware with default options", () => {
       middleware.compress();
 
-      expect(middlewareResolver).toHaveBeenCalledWith(
-        "compression",
-        undefined,
-      );
+      expect(middlewareResolver).toHaveBeenCalledWith("compression", undefined);
       expect(middleware.getMiddlewarePipeline().length).toBe(1);
     });
 

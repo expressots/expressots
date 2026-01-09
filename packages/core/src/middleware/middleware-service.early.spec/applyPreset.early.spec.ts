@@ -53,8 +53,14 @@ describe("Middleware.applyPreset() applyPreset method", () => {
       // Should have parsers and security
       expect(json).toHaveBeenCalled();
       expect(urlencoded).toHaveBeenCalled();
-      expect(middlewareResolver).toHaveBeenCalledWith("helmet", expect.anything());
-      expect(middlewareResolver).toHaveBeenCalledWith("cors", expect.anything());
+      expect(middlewareResolver).toHaveBeenCalledWith(
+        "helmet",
+        expect.anything(),
+      );
+      expect(middlewareResolver).toHaveBeenCalledWith(
+        "cors",
+        expect.anything(),
+      );
       // Compression is also part of api preset
       expect(middlewareResolver).toHaveBeenCalledWith("compression", undefined);
     });
@@ -106,8 +112,14 @@ describe("Middleware.applyPreset() applyPreset method", () => {
     it("should apply 'production' preset with strict security", () => {
       middleware.applyPreset("production");
 
-      expect(middlewareResolver).toHaveBeenCalledWith("helmet", expect.anything());
-      expect(middlewareResolver).toHaveBeenCalledWith("rateLimit", expect.anything());
+      expect(middlewareResolver).toHaveBeenCalledWith(
+        "helmet",
+        expect.anything(),
+      );
+      expect(middlewareResolver).toHaveBeenCalledWith(
+        "rateLimit",
+        expect.anything(),
+      );
     });
   });
 

@@ -74,7 +74,9 @@ describe("Middleware Analysis Methods", () => {
 
       const analysis = middleware.analyze();
 
-      expect(analysis.issues).toContain("Compression not enabled in production");
+      expect(analysis.issues).toContain(
+        "Compression not enabled in production",
+      );
     });
 
     it("should report missing rate limiting in production", () => {
@@ -83,7 +85,9 @@ describe("Middleware Analysis Methods", () => {
 
       const analysis = middleware.analyze();
 
-      expect(analysis.issues).toContain("Rate limiting not enabled in production");
+      expect(analysis.issues).toContain(
+        "Rate limiting not enabled in production",
+      );
     });
 
     it("should calculate estimated overhead based on middleware count", () => {
@@ -117,8 +121,8 @@ describe("Middleware Analysis Methods", () => {
     it("should recommend compression when not enabled", () => {
       const recommendations = middleware.getRecommendations();
 
-      const compressionRec = recommendations.find(
-        (r) => r.message.includes("Compression"),
+      const compressionRec = recommendations.find((r) =>
+        r.message.includes("Compression"),
       );
       expect(compressionRec).toBeDefined();
       expect(compressionRec?.type).toBe("performance");
@@ -130,8 +134,8 @@ describe("Middleware Analysis Methods", () => {
 
       const recommendations = middleware.getRecommendations();
 
-      const rateLimitRec = recommendations.find(
-        (r) => r.message.includes("Rate limiting"),
+      const rateLimitRec = recommendations.find((r) =>
+        r.message.includes("Rate limiting"),
       );
       expect(rateLimitRec).toBeDefined();
       expect(rateLimitRec?.type).toBe("security");
@@ -143,8 +147,8 @@ describe("Middleware Analysis Methods", () => {
 
       const recommendations = middleware.getRecommendations();
 
-      const helmetRec = recommendations.find(
-        (r) => r.message.includes("Security headers"),
+      const helmetRec = recommendations.find((r) =>
+        r.message.includes("Security headers"),
       );
       expect(helmetRec).toBeDefined();
       expect(helmetRec?.type).toBe("security");
@@ -155,8 +159,8 @@ describe("Middleware Analysis Methods", () => {
 
       const recommendations = middleware.getRecommendations();
 
-      const compressionRec = recommendations.find(
-        (r) => r.message.includes("Compression is not enabled"),
+      const compressionRec = recommendations.find((r) =>
+        r.message.includes("Compression is not enabled"),
       );
       expect(compressionRec).toBeUndefined();
     });

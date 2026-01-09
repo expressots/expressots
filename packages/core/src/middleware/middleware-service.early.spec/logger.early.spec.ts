@@ -1,6 +1,10 @@
 // Unit tests for: logger
 
-import { middlewareResolver, isMiddlewareAvailable, isPackageAvailable } from "../middleware-resolver";
+import {
+  middlewareResolver,
+  isMiddlewareAvailable,
+  isPackageAvailable,
+} from "../middleware-resolver";
 import { Middleware } from "../middleware-service";
 
 jest.mock("../middleware-resolver", () => {

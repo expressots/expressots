@@ -60,8 +60,14 @@ describe("Middleware Registry Methods", () => {
     });
 
     it("should track registered names for startup logs", () => {
-      middleware.register("auth", jest.fn((req: any, res: any, next: any) => next()));
-      middleware.register("validation", jest.fn((req: any, res: any, next: any) => next()));
+      middleware.register(
+        "auth",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
+      middleware.register(
+        "validation",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
 
       const logs = middleware.getStartupLogs();
 
@@ -102,7 +108,10 @@ describe("Middleware Registry Methods", () => {
 
   describe("has()", () => {
     it("should return true for registered middleware", () => {
-      middleware.register("exists", jest.fn((req: any, res: any, next: any) => next()));
+      middleware.register(
+        "exists",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
 
       expect(middleware.has("exists")).toBe(true);
     });
@@ -118,9 +127,18 @@ describe("Middleware Registry Methods", () => {
     });
 
     it("should return all registered middleware names", () => {
-      middleware.register("auth", jest.fn((req: any, res: any, next: any) => next()));
-      middleware.register("validation", jest.fn((req: any, res: any, next: any) => next()));
-      middleware.register("logging", jest.fn((req: any, res: any, next: any) => next()));
+      middleware.register(
+        "auth",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
+      middleware.register(
+        "validation",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
+      middleware.register(
+        "logging",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
 
       const names = middleware.getRegisteredNames();
 
@@ -133,7 +151,10 @@ describe("Middleware Registry Methods", () => {
 
   describe("Startup Logs", () => {
     it("should get startup logs", () => {
-      middleware.register("test", jest.fn((req: any, res: any, next: any) => next()));
+      middleware.register(
+        "test",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
 
       const logs = middleware.getStartupLogs();
 
@@ -141,7 +162,10 @@ describe("Middleware Registry Methods", () => {
     });
 
     it("should clear startup logs", () => {
-      middleware.register("test", jest.fn((req: any, res: any, next: any) => next()));
+      middleware.register(
+        "test",
+        jest.fn((req: any, res: any, next: any) => next()),
+      );
       middleware.clearStartupLogs();
 
       const logs = middleware.getStartupLogs();
