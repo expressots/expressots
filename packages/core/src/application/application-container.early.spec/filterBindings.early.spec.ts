@@ -119,9 +119,9 @@ describe("AppContainer.filterBindings() filterBindings method", () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(
-        result.every((b) => b.scope === "Singleton" && b.cached),
-      ).toBe(true);
+      expect(result.every((b) => b.scope === "Singleton" && b.cached)).toBe(
+        true,
+      );
     });
   });
 

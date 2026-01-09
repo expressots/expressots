@@ -53,7 +53,12 @@ describe("AppContainer.getBindingsSummary() getBindingsSummary method", () => {
         },
       ]);
       mockContainer._bindingDictionary._map.set("Service3", [
-        { scope: "Request", type: "Constructor", cache: null, activated: false },
+        {
+          scope: "Request",
+          type: "Constructor",
+          cache: null,
+          activated: false,
+        },
       ]);
 
       // Act
@@ -118,7 +123,12 @@ describe("AppContainer.getBindingsSummary() getBindingsSummary method", () => {
           cache: {},
           activated: true,
         },
-        { scope: "Request", type: "Constructor", cache: null, activated: false },
+        {
+          scope: "Request",
+          type: "Constructor",
+          cache: null,
+          activated: false,
+        },
       ]);
 
       // Act

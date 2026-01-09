@@ -93,7 +93,12 @@ describe("AppContainer.getFormattedBindingsView() getFormattedBindingsView metho
         },
       ]);
       mockContainer._bindingDictionary._map.set("RequestService", [
-        { scope: "Request", type: "Constructor", cache: null, activated: false },
+        {
+          scope: "Request",
+          type: "Constructor",
+          cache: null,
+          activated: false,
+        },
       ]);
 
       // Act
@@ -111,7 +116,12 @@ describe("AppContainer.getFormattedBindingsView() getFormattedBindingsView metho
       const longName =
         "VeryLongServiceIdentifierThatExceedsFiftyCharactersAndNeedsTruncation";
       mockContainer._bindingDictionary._map.set(longName, [
-        { scope: "Singleton", type: "Constructor", cache: null, activated: false },
+        {
+          scope: "Singleton",
+          type: "Constructor",
+          cache: null,
+          activated: false,
+        },
       ]);
 
       // Act
