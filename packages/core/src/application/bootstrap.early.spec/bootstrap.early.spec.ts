@@ -28,6 +28,7 @@ class MockWebServer implements IWebServer {
   constructor() {
     this.mockServer = {
       getHttpServer: jest.fn().mockResolvedValue({} as Server),
+      getPort: jest.fn().mockResolvedValue(3000),
     } as IWebServerPublic;
   }
 

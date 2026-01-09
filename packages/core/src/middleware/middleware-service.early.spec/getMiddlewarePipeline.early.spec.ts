@@ -37,72 +37,110 @@ describe("Middleware.getMiddlewarePipeline() getMiddlewarePipeline method", () =
 
   describe("Happy Path", () => {
     it("should return an empty array when no middleware is added", () => {
-      // Test to ensure the pipeline is empty initially
       const pipeline = middleware.getMiddlewarePipeline();
       expect(pipeline).toEqual([]);
     });
 
     it("should return middleware in the order they were added", () => {
-      // Mock middleware functions
+      // Create distinct middleware with different names
       const mockMiddleware1: RequestHandler = jest.fn();
+      Object.defineProperty(mockMiddleware1, "name", { value: "middleware1" });
       const mockMiddleware2: RequestHandler = jest.fn();
+      Object.defineProperty(mockMiddleware2, "name", { value: "middleware2" });
 
-      // Add middleware to the pipeline
       middleware.addMiddleware(mockMiddleware1 as any);
       middleware.addMiddleware(mockMiddleware2 as any);
 
-      // Test to ensure the pipeline returns middleware in the correct order
       const pipeline = middleware.getMiddlewarePipeline();
-      expect(pipeline.length).toBe(1);
+      expect(pipeline.length).toBe(2);
       expect(pipeline[0].middleware).toBe(mockMiddleware1);
-      //expect(pipeline[1].middleware).toBe(mockMiddleware2);
+      expect(pipeline[1].middleware).toBe(mockMiddleware2);
+    });
+
+    it("should return sorted pipeline by insertion order", () => {
+      const handler1 = jest.fn();
+      Object.defineProperty(handler1, "name", { value: "first" });
+      const handler2 = jest.fn();
+      Object.defineProperty(handler2, "name", { value: "second" });
+      const handler3 = jest.fn();
+      Object.defineProperty(handler3, "name", { value: "third" });
+
+      middleware.addMiddleware(handler1);
+      middleware.addMiddleware(handler2);
+      middleware.addMiddleware(handler3);
+
+      const pipeline = middleware.getMiddlewarePipeline();
+
+      expect(pipeline[0].order).toBeLessThan(pipeline[1].order);
+      expect(pipeline[1].order).toBeLessThan(pipeline[2].order);
     });
   });
 
   describe("Edge Cases", () => {
-    it("should handle adding the same middleware multiple times", () => {
-      // Mock middleware function
+    it("should handle adding the same named middleware multiple times", () => {
       const mockMiddleware: RequestHandler = jest.fn();
+      Object.defineProperty(mockMiddleware, "name", { value: "duplicate" });
 
-      // Add the same middleware multiple times
       middleware.addMiddleware(mockMiddleware as any);
       middleware.addMiddleware(mockMiddleware as any);
 
-      // Test to ensure the middleware is not duplicated in the pipeline
       const pipeline = middleware.getMiddlewarePipeline();
       expect(pipeline.length).toBe(1);
       expect(pipeline[0].middleware).toBe(mockMiddleware);
     });
 
     it("should handle adding a middleware configuration object", () => {
-      // Mock middleware configuration
       const mockConfig: MockMiddlewareConfig = {
         path: "/test",
         middlewares: [jest.fn() as any],
       };
 
-      // Add middleware configuration to the pipeline
       middleware.addMiddleware(mockConfig as any);
 
-      // Test to ensure the configuration is added to the pipeline
       const pipeline = middleware.getMiddlewarePipeline();
       expect(pipeline.length).toBe(1);
       expect(pipeline[0].middleware).toBe(mockConfig);
     });
 
     it("should handle adding a custom Expresso middleware", () => {
-      // Mock custom Expresso middleware
       const mockExpressoMiddleware: MockIExpressoMiddleware = {
         use: jest.fn(),
       };
 
-      // Add custom middleware to the pipeline
       middleware.addMiddleware(mockExpressoMiddleware as any);
 
-      // Test to ensure the custom middleware is added to the pipeline
       const pipeline = middleware.getMiddlewarePipeline();
       expect(pipeline.length).toBe(1);
       expect(pipeline[0].middleware).toBe(mockExpressoMiddleware);
+    });
+
+    it("should cache sorted pipeline for performance", () => {
+      const handler = jest.fn();
+      Object.defineProperty(handler, "name", { value: "test" });
+      middleware.addMiddleware(handler);
+
+      const pipeline1 = middleware.getMiddlewarePipeline();
+      const pipeline2 = middleware.getMiddlewarePipeline();
+
+      // Same reference means cache is being used
+      expect(pipeline1).toBe(pipeline2);
+    });
+
+    it("should invalidate cache when middleware is added", () => {
+      const handler1 = jest.fn();
+      Object.defineProperty(handler1, "name", { value: "first" });
+      middleware.addMiddleware(handler1);
+
+      const pipeline1 = middleware.getMiddlewarePipeline();
+
+      const handler2 = jest.fn();
+      Object.defineProperty(handler2, "name", { value: "second" });
+      middleware.addMiddleware(handler2);
+
+      const pipeline2 = middleware.getMiddlewarePipeline();
+
+      expect(pipeline1).not.toBe(pipeline2);
+      expect(pipeline2.length).toBe(2);
     });
   });
 });

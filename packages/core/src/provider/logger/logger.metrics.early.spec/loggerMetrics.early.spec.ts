@@ -16,13 +16,13 @@ describe("logger.metrics", () => {
       // Assert
       expect(config.style).toBe("full");
       expect(config.showMetrics).toBe(true);
-      expect(config.showFeatures).toBe(true);
+      expect(config.showFeatures).toBe(false); // Disabled by default - user can enable
       expect(config.showConfig).toBe(true);
       expect(config.showPerformance).toBe(true);
       expect(config.showHealth).toBe(true);
-      expect(config.showResources).toBe(true);
-      expect(config.showMiddlewarePipeline).toBe(true);
-      expect(config.showProviderRegistry).toBe(true);
+      expect(config.showResources).toBe(false); // Disabled by default - user can enable
+      expect(config.showMiddlewarePipeline).toBe(false); // Disabled by default - user can enable
+      expect(config.showProviderRegistry).toBe(false); // Disabled by default - user can enable
       expect(config.maxMiddlewareDisplay).toBe(6);
       expect(config.maxProviderDisplay).toBe(5);
       expect(config.suppressLogsUntilBanner).toBe(true);
@@ -34,12 +34,12 @@ describe("logger.metrics", () => {
 
       // Assert
       expect(config.style).toBe("compact");
-      expect(config.showFeatures).toBe(false);
-      expect(config.showConfig).toBe(false);
-      expect(config.showHealth).toBe(false);
-      expect(config.showResources).toBe(false);
-      expect(config.showMiddlewarePipeline).toBe(false);
-      expect(config.showProviderRegistry).toBe(false);
+      expect(config.showFeatures).toBe(false); // Disabled by default
+      expect(config.showConfig).toBe(true); // Always true
+      expect(config.showHealth).toBe(true); // Always true
+      expect(config.showResources).toBe(false); // Disabled by default
+      expect(config.showMiddlewarePipeline).toBe(false); // Disabled by default
+      expect(config.showProviderRegistry).toBe(false); // Disabled by default
     });
 
     it("should return full config when environment is undefined", () => {
@@ -48,7 +48,7 @@ describe("logger.metrics", () => {
 
       // Assert
       expect(config.style).toBe("full");
-      expect(config.showFeatures).toBe(true);
+      expect(config.showFeatures).toBe(false); // Disabled by default - user can enable
     });
 
     it("should include showInEnvironments array", () => {
@@ -90,7 +90,7 @@ describe("logger.metrics", () => {
       expect(config.style).toBe("minimal");
       expect(config.showMetrics).toBe(false);
       expect(config.maxMiddlewareDisplay).toBe(10);
-      expect(config.showFeatures).toBe(true); // From defaults
+      expect(config.showFeatures).toBe(false); // From defaults (disabled by default)
     });
 
     it("should apply production environment overrides", () => {

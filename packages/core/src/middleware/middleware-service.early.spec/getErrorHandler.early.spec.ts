@@ -1,6 +1,5 @@
 // Unit tests for: getErrorHandler
 
-import { ErrorRequestHandler } from "express";
 import defaultErrorHandler from "../../error/error-handler-middleware";
 import { Middleware } from "../middleware-service";
 
@@ -14,6 +13,7 @@ jest.mock("../middleware-resolver", () => {
   const actual = jest.requireActual("../middleware-resolver");
   return {
     ...actual,
+    middlewareResolver: jest.fn(),
   };
 });
 
@@ -21,6 +21,7 @@ describe("Middleware.getErrorHandler() getErrorHandler method", () => {
   let middleware: Middleware;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     middleware = new Middleware();
   });
 
@@ -31,7 +32,16 @@ describe("Middleware.getErrorHandler() getErrorHandler method", () => {
       const result = middleware.getErrorHandler();
 
       expect(result).toBeDefined();
-      expect(defaultErrorHandler).not.toHaveBeenCalled();
+      expect(typeof result).toBe("function");
+    });
+
+    it("should return custom error handler when set", () => {
+      const customHandler = jest.fn();
+      middleware.setErrorHandler({ errorHandler: customHandler });
+
+      const result = middleware.getErrorHandler();
+
+      expect(result).toBe(customHandler);
     });
   });
 
@@ -51,7 +61,6 @@ describe("Middleware.getErrorHandler() getErrorHandler method", () => {
       const result = middleware.getErrorHandler();
 
       expect(result).toBeDefined();
-      expect(defaultErrorHandler).not.toHaveBeenCalled();
     });
 
     it("should handle missing options gracefully", () => {
@@ -60,7 +69,12 @@ describe("Middleware.getErrorHandler() getErrorHandler method", () => {
       const result = middleware.getErrorHandler();
 
       expect(result).toBeDefined();
-      expect(defaultErrorHandler).not.toHaveBeenCalled();
+    });
+
+    it("should return undefined when no handler is set and setErrorHandler not called", () => {
+      const result = middleware.getErrorHandler();
+
+      expect(result).toBeUndefined();
     });
   });
 });

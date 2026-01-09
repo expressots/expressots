@@ -121,7 +121,10 @@ describe("BannerGenerator.display() display method", () => {
 
     it("should display banner with middleware view", () => {
       // Arrange
-      bannerGenerator = new BannerGenerator({ style: "full" });
+      bannerGenerator = new BannerGenerator({
+        style: "full",
+        showMiddlewarePipeline: true, // Enable middleware display
+      });
       const port = 3000;
       const environment = "development";
       const bannerData: BannerData = {
@@ -163,7 +166,10 @@ describe("BannerGenerator.display() display method", () => {
 
     it("should display banner with provider view", () => {
       // Arrange
-      bannerGenerator = new BannerGenerator({ style: "full" });
+      bannerGenerator = new BannerGenerator({
+        style: "full",
+        showProviderRegistry: true, // Enable provider display
+      });
       const port = 3000;
       const environment = "development";
       const bannerData: BannerData = {
@@ -278,6 +284,7 @@ describe("BannerGenerator.display() display method", () => {
       bannerGenerator = new BannerGenerator({
         style: "full",
         maxMiddlewareDisplay: 2,
+        showMiddlewarePipeline: true, // Enable middleware display
       });
       const port = 3000;
       const environment = "development";
@@ -322,6 +329,7 @@ describe("BannerGenerator.display() display method", () => {
       bannerGenerator = new BannerGenerator({
         style: "full",
         maxProviderDisplay: 2,
+        showProviderRegistry: true, // Enable provider display
       });
       const port = 3000;
       const environment = "development";
