@@ -16,7 +16,7 @@ import {
   ILazyModule,
   LazyLoadingOptions,
   LazyLoadingSetupResult,
-  BindingScopeEnum,
+  Scope,
   ProviderManager,
   Logger,
 } from "@expressots/core";
@@ -104,7 +104,7 @@ export function setupLazyLoadingForExpress(
   // Register LazyModuleLoader if not already bound
   if (!container.isBound(LazyModuleLoader)) {
     if (provider) {
-      provider.register(LazyModuleLoader, BindingScopeEnum.Singleton);
+      provider.register(LazyModuleLoader, Scope.Singleton);
     } else {
       container.bind(LazyModuleLoader).toSelf().inSingletonScope();
     }
@@ -113,7 +113,7 @@ export function setupLazyLoadingForExpress(
   // Register LazyModuleManager if not already bound
   if (!container.isBound(LazyModuleManager)) {
     if (provider) {
-      provider.register(LazyModuleManager, BindingScopeEnum.Singleton);
+      provider.register(LazyModuleManager, Scope.Singleton);
     } else {
       container.bind(LazyModuleManager).toSelf().inSingletonScope();
     }
@@ -123,7 +123,7 @@ export function setupLazyLoadingForExpress(
   const enableMetrics = options.enableMetrics ?? isDev;
   if (enableMetrics && !container.isBound(LazyLoadMetrics)) {
     if (provider) {
-      provider.register(LazyLoadMetrics, BindingScopeEnum.Singleton);
+      provider.register(LazyLoadMetrics, Scope.Singleton);
     } else {
       container.bind(LazyLoadMetrics).toSelf().inSingletonScope();
     }
@@ -133,7 +133,7 @@ export function setupLazyLoadingForExpress(
   const enableWarmup = options.enableWarmup ?? true;
   if (enableWarmup && !container.isBound(LazyModuleWarmup)) {
     if (provider) {
-      provider.register(LazyModuleWarmup, BindingScopeEnum.Singleton);
+      provider.register(LazyModuleWarmup, Scope.Singleton);
     } else {
       container.bind(LazyModuleWarmup).toSelf().inSingletonScope();
     }
