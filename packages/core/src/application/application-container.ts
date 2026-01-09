@@ -223,7 +223,7 @@ export class AppContainer {
     }
 
     const dictionary = this.container["_bindingDictionary"]._map;
-    const entries: Array<[string, Array<interfaces.Binding>]> = Array.from(
+    const entries: Array<[unknown, Array<interfaces.Binding>]> = Array.from(
       dictionary.entries(),
     );
 
@@ -481,18 +481,45 @@ export class AppContainer {
 
   /**
    * Formats a service identifier for display.
+   * Handles string, Symbol, class constructor, and other identifier types.
    * @private
    */
-  private formatServiceIdentifier(identifier: string): string {
-    // Handle class constructors
-    if (identifier.startsWith("[class ")) {
-      return identifier.replace("[class ", "").replace("]", "");
+  private formatServiceIdentifier(identifier: unknown): string {
+    // Handle null/undefined
+    if (identifier == null) {
+      return "unknown";
     }
-    // Handle Symbol identifiers
-    if (identifier.startsWith("Symbol(")) {
+
+    // Handle string identifiers
+    if (typeof identifier === "string") {
+      if (identifier.startsWith("[class ")) {
+        return identifier.replace("[class ", "").replace("]", "");
+      }
       return identifier;
     }
-    return identifier;
+
+    // Handle Symbol identifiers
+    if (typeof identifier === "symbol") {
+      return identifier.toString();
+    }
+
+    // Handle class constructors (functions with a name)
+    if (typeof identifier === "function") {
+      return identifier.name || "AnonymousClass";
+    }
+
+    // Handle objects with toString (fallback)
+    if (typeof identifier === "object" && identifier !== null) {
+      const str = String(identifier);
+      // Clean up "[object Object]" style strings
+      if (str.startsWith("[class ")) {
+        return str.replace("[class ", "").replace("]", "");
+      }
+      return str;
+    }
+
+    // Final fallback
+    return String(identifier);
   }
 
   /**

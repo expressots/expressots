@@ -16,7 +16,7 @@ jest.mock("../../di/binding-decorator", () => {
 class MockContainer {
   public id = 123;
   public _bindingDictionary = {
-    _map: new Map<string, Array<any>>(),
+    _map: new Map<unknown, Array<any>>(),
   };
 
   public bind = jest.fn();
@@ -156,7 +156,7 @@ describe("AppContainer.getBindingsInfo() getBindingsInfo method", () => {
       expect(result[0].cached).toBe(false);
     });
 
-    it("should preserve Symbol identifiers", () => {
+    it("should handle string Symbol identifiers", () => {
       // Arrange
       const mockBindings = [
         {
@@ -177,6 +177,70 @@ describe("AppContainer.getBindingsInfo() getBindingsInfo method", () => {
 
       // Assert
       expect(result[0].serviceIdentifier).toBe("Symbol(MyToken)");
+    });
+
+    it("should handle actual Symbol identifiers", () => {
+      // Arrange
+      const mockBindings = [
+        {
+          scope: "Singleton",
+          type: "ConstantValue",
+          cache: {},
+          moduleId: 1,
+          activated: true,
+        },
+      ];
+      const symbolKey = Symbol.for("MySymbolService");
+      mockContainer._bindingDictionary._map.set(symbolKey, mockBindings);
+
+      // Act
+      const result = appContainer.getBindingsInfo();
+
+      // Assert
+      expect(result[0].serviceIdentifier).toBe("Symbol(MySymbolService)");
+    });
+
+    it("should handle class constructor identifiers", () => {
+      // Arrange
+      class TestController {}
+      const mockBindings = [
+        {
+          scope: "Request",
+          type: "Constructor",
+          cache: null,
+          moduleId: 1,
+          activated: false,
+        },
+      ];
+      mockContainer._bindingDictionary._map.set(TestController, mockBindings);
+
+      // Act
+      const result = appContainer.getBindingsInfo();
+
+      // Assert
+      expect(result[0].serviceIdentifier).toBe("TestController");
+    });
+
+    it("should handle anonymous class constructors", () => {
+      // Arrange
+      const AnonymousClass = class {};
+      const mockBindings = [
+        {
+          scope: "Singleton",
+          type: "Constructor",
+          cache: null,
+          moduleId: 1,
+          activated: false,
+        },
+      ];
+      mockContainer._bindingDictionary._map.set(AnonymousClass, mockBindings);
+
+      // Act
+      const result = appContainer.getBindingsInfo();
+
+      // Assert
+      // Anonymous classes have empty name, so fallback is used
+      expect(result[0].serviceIdentifier).toBeDefined();
     });
   });
 });
