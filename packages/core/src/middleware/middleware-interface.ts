@@ -28,6 +28,8 @@ import type {
   Recommendation,
 } from "./middleware-config";
 import type { MiddlewareEntry as RegistryEntry } from "./middleware-registry";
+import type { RenderConfig, PresetName } from "../render/render-config";
+import type { RenderService } from "../render/render-service";
 
 /**
  * ErrorHandlerOptions Interface
@@ -726,6 +728,60 @@ export interface IMiddleware {
    * @public API
    */
   count(): number;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 RENDER ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configure view rendering with unified API.
+   * Supports traditional engines (EJS, Pug, Handlebars) and modern frameworks (React, Vue, Svelte).
+   *
+   * @param config - Render configuration or preset name
+   *
+   * @example Auto-detect
+   * ```typescript
+   * this.Middleware.render();  // Detects installed engine
+   * ```
+   *
+   * @example With preset
+   * ```typescript
+   * this.Middleware.render('production');  // Production-optimized settings
+   * this.Middleware.render('development'); // Dev settings with hot reload
+   * ```
+   *
+   * @example Full configuration
+   * ```typescript
+   * this.Middleware.render({
+   *   engine: 'react',
+   *   viewsDir: 'src/views',
+   *   cache: 'auto',
+   *   ssr: { hydrate: true, streaming: true },
+   *   watch: 'auto'
+   * });
+   * ```
+   *
+   * @public API
+   */
+  render(config?: RenderConfig | PresetName): Promise<void>;
+
+  /**
+   * Get the render service instance.
+   * Use this to access advanced rendering features.
+   *
+   * @returns Render service or null if not configured
+   *
+   * @example
+   * ```typescript
+   * const renderService = this.Middleware.getRenderService();
+   * if (renderService) {
+   *   const html = await renderService.render('Home', { title: 'Welcome' });
+   * }
+   * ```
+   *
+   * @public API
+   */
+  getRenderService(): RenderService | null;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // V4 STARTUP LOGS (displayed after banner)

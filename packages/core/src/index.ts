@@ -16,6 +16,7 @@ export * from "./lazy-loading";
 export * from "./lifecycle";
 export * from "./middleware";
 export * from "./provider";
+export * from "./render";
 export * from "./di/inversify";
 export * from "./authorization";
 export * from "./testing";

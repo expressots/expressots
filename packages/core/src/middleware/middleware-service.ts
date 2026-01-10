@@ -2269,4 +2269,61 @@ export class Middleware implements IMiddleware {
   public add(middleware: MiddlewareOptions): void {
     this.addMiddleware(middleware);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 RENDER ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /** Render service instance (lazy initialized) */
+  private renderService: import("../render/render-service").RenderService | null = null;
+
+  /** Express app reference for render service */
+  private expressApp: import("express").Application | null = null;
+
+  /**
+   * Set the Express app reference for render service initialization.
+   * Called internally by AppExpress.
+   * @internal
+   */
+  public setExpressApp(app: import("express").Application): void {
+    this.expressApp = app;
+  }
+
+  /**
+   * Configure view rendering with unified API.
+   * Supports traditional engines (EJS, Pug, Handlebars) and modern frameworks (React, Vue, Svelte).
+   *
+   * @param config - Render configuration or preset name
+   */
+  public async render(
+    config?: import("../render/render-config").RenderConfig | import("../render/render-config").PresetName,
+  ): Promise<void> {
+    if (!this.expressApp) {
+      throw new Error(
+        "Express app not available. render() must be called within configureServices().",
+      );
+    }
+
+    // Lazy import to avoid circular dependencies
+    const { RenderService } = await import("../render/render-service");
+
+    if (!this.renderService) {
+      this.renderService = new RenderService(this.expressApp);
+    }
+
+    await this.renderService.configure(config || {});
+
+    // Buffer startup log
+    const engine = this.renderService.getActiveEngine().name;
+    this.bufferStartupLog(`Render engine configured: ${engine}`, "info");
+  }
+
+  /**
+   * Get the render service instance.
+   *
+   * @returns Render service or null if not configured
+   */
+  public getRenderService(): import("../render/render-service").RenderService | null {
+    return this.renderService;
+  }
 }
