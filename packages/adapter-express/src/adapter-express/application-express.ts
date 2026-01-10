@@ -538,6 +538,10 @@ export class AppExpress implements Server.IWebServer {
       process.exit(1);
     }
 
+    // Create Express app early so it's available during configureServices for render()
+    const tempApp = express();
+    (this.Middleware as Middleware).setExpressApp(tempApp);
+
     await this.handleSyncOrAsync(this.configureServices());
 
     const sortedMiddlewarePipeline = (this.Middleware as Middleware).getMiddlewarePipeline();
@@ -1043,18 +1047,59 @@ export class AppExpress implements Server.IWebServer {
     this.bannerConfig = config;
   }
 
+  /**
+   * Configure a view engine for server-side rendering.
+   *
+   * @deprecated Use `this.Middleware.render()` instead. Will be removed in v5.0.0.
+   *
+   * @example Migration
+   * ```typescript
+   * // Before (deprecated)
+   * this.setEngine(RenderEngine.Engine.EJS, { viewsDir: 'views' });
+   *
+   * // After (recommended)
+   * this.Middleware.render({ engine: 'ejs', viewsDir: 'views' });
+   *
+   * // Or with auto-detection
+   * this.Middleware.render();
+   * ```
+   *
+   * @param engine - The view engine to set
+   * @param options - The configuration options for the view engine
+   * @public API
+   */
   public async setEngine<T extends RenderEngine.EngineOptions>(
     engine: RenderEngine.Engine,
     options?: T,
   ): Promise<void> {
+    this.logger.warn(
+      "setEngine() is deprecated. Use this.Middleware.render() instead. Will be removed in v5.0.0.",
+      "adapter-express",
+    );
+
     try {
+      // Bridge to new render system
+      const engineMap: Record<string, string> = {
+        ejs: "ejs",
+        pug: "pug",
+        hbs: "hbs",
+      };
+
+      const engineName = engineMap[engine] || engine;
+
+      // Try to use the new render system
+      await (this.Middleware as Middleware).render({
+        engine: engineName as "ejs" | "pug" | "hbs",
+        viewsDir: options?.viewsDir,
+        partialsDir: (options as RenderEngine.HandlebarsOptions)?.partialsDir,
+      });
+    } catch {
+      // Fallback to old system if new system fails
       if (options) {
         this.renderOptions = { engine, options };
       } else {
         this.renderOptions = { engine };
       }
-    } catch (error: unknown) {
-      this.logger.error((error as Error).message, "adapter-express");
     }
   }
 
