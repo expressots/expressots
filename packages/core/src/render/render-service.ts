@@ -99,7 +99,9 @@ export class RenderService implements IRenderService {
     // Get and configure the engine adapter
     const adapter = this.registry.get(config.engine as string);
     if (!adapter) {
-      throw new Error(`Render engine '${config.engine}' not found or not registered`);
+      throw new Error(
+        `Render engine '${config.engine}' not found or not registered`,
+      );
     }
 
     // Build engine-specific options
@@ -109,11 +111,17 @@ export class RenderService implements IRenderService {
     this.activeEngine = adapter;
 
     // Enable features based on config
-    if (config.watch === true || (config.watch === "auto" && this.isDevelopment())) {
+    if (
+      config.watch === true ||
+      (config.watch === "auto" && this.isDevelopment())
+    ) {
       await this.enableHotReload();
     }
 
-    if (config.debug === true || (config.debug === undefined && this.isDevelopment())) {
+    if (
+      config.debug === true ||
+      (config.debug === undefined && this.isDevelopment())
+    ) {
       await this.enableViewDebugger();
     }
 
@@ -200,7 +208,9 @@ export class RenderService implements IRenderService {
     const adapter = this.getActiveEngine();
 
     if (!adapter.supportsStreaming || !adapter.renderStream) {
-      throw new Error(`Engine '${adapter.name}' does not support streaming. Use render() instead.`);
+      throw new Error(
+        `Engine '${adapter.name}' does not support streaming. Use render() instead.`,
+      );
     }
 
     return adapter.renderStream(view, { ...data, ...options?.locals });

@@ -79,7 +79,9 @@ export class StreamingRenderer {
    * @returns Whether streaming is supported
    */
   supportsStreaming(adapter: EngineAdapter): boolean {
-    return adapter.supportsStreaming && typeof adapter.renderStream === "function";
+    return (
+      adapter.supportsStreaming && typeof adapter.renderStream === "function"
+    );
   }
 
   /**

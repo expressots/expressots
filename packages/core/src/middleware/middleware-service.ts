@@ -2275,7 +2275,9 @@ export class Middleware implements IMiddleware {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /** Render service instance (lazy initialized) */
-  private renderService: import("../render/render-service").RenderService | null = null;
+  private renderService:
+    | import("../render/render-service").RenderService
+    | null = null;
 
   /** Express app reference for render service */
   private expressApp: import("express").Application | null = null;
@@ -2296,7 +2298,9 @@ export class Middleware implements IMiddleware {
    * @param config - Render configuration or preset name
    */
   public async render(
-    config?: import("../render/render-config").RenderConfig | import("../render/render-config").PresetName,
+    config?:
+      | import("../render/render-config").RenderConfig
+      | import("../render/render-config").PresetName,
   ): Promise<void> {
     if (!this.expressApp) {
       throw new Error(
@@ -2323,7 +2327,9 @@ export class Middleware implements IMiddleware {
    *
    * @returns Render service or null if not configured
    */
-  public getRenderService(): import("../render/render-service").RenderService | null {
+  public getRenderService():
+    | import("../render/render-service").RenderService
+    | null {
     return this.renderService;
   }
 }

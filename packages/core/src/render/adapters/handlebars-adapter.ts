@@ -95,9 +95,7 @@ export class HandlebarsAdapter extends BaseEngineAdapter {
    */
   async render(view: string, data: any): Promise<string> {
     if (!this.hbs) {
-      throw new Error(
-        "Handlebars engine not initialized. Call setup() first.",
-      );
+      throw new Error("Handlebars engine not initialized. Call setup() first.");
     }
 
     const viewPath = this.resolveViewPath(view);

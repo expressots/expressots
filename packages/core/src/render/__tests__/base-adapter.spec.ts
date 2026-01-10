@@ -127,9 +127,9 @@ describe("BaseEngineAdapter", () => {
     });
 
     it("should return false for non-installed packages", () => {
-      expect(adapter.testIsPackageInstalled("some-nonexistent-package-12345")).toBe(
-        false,
-      );
+      expect(
+        adapter.testIsPackageInstalled("some-nonexistent-package-12345"),
+      ).toBe(false);
     });
   });
 

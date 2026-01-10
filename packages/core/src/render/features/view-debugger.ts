@@ -52,10 +52,7 @@ export class ViewDebugger {
     });
 
     this.isRegistered = true;
-    this.logger.info(
-      "View debugger enabled at /__views",
-      "view-debugger",
-    );
+    this.logger.info("View debugger enabled at /__views", "view-debugger");
   }
 
   /**
@@ -92,9 +89,7 @@ export class ViewDebugger {
   ): Promise<void> {
     try {
       const view = req.params.view;
-      const data = req.query.data
-        ? JSON.parse(req.query.data as string)
-        : {};
+      const data = req.query.data ? JSON.parse(req.query.data as string) : {};
 
       const html = await this.renderService.render(view, data);
 
@@ -117,9 +112,7 @@ export class ViewDebugger {
       const viewFiles = this.renderService.getViewFiles();
 
       // Find matching view
-      const matchingFiles = viewFiles.filter((file) =>
-        file.includes(view),
-      );
+      const matchingFiles = viewFiles.filter((file) => file.includes(view));
 
       res.json({
         view,

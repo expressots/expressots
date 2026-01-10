@@ -315,11 +315,7 @@ export class ReactAdapter extends BaseEngineAdapter {
    * @param data - Props data
    * @returns Complete HTML document with hydration
    */
-  private wrapWithHydration(
-    html: string,
-    view: string,
-    data: any,
-  ): string {
+  private wrapWithHydration(html: string, view: string, data: any): string {
     // Escape data for safe embedding in script tag
     const safeData = JSON.stringify(data)
       .replace(/</g, "\\u003c")

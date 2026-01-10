@@ -32,12 +32,16 @@ export class TypeGenerator {
       const views = await this.scanViews(viewsDir);
 
       if (views.length === 0) {
-        this.logger.info("No views found, skipping type generation", "type-generator");
+        this.logger.info(
+          "No views found, skipping type generation",
+          "type-generator",
+        );
         return;
       }
 
       const typeDefinitions = this.generateTypes(views);
-      const outputPath = outputFile || path.join(viewsDir, "views.generated.d.ts");
+      const outputPath =
+        outputFile || path.join(viewsDir, "views.generated.d.ts");
 
       await fs.promises.writeFile(outputPath, typeDefinitions);
       this.logger.info(`Generated view types: ${outputPath}`, "type-generator");
@@ -175,7 +179,10 @@ export type RenderFunction = <T extends ViewName>(
   private mapExtensionToEngine(
     extension: string,
   ): "ejs" | "pug" | "hbs" | "react" | "vue" | "svelte" {
-    const map: Record<string, "ejs" | "pug" | "hbs" | "react" | "vue" | "svelte"> = {
+    const map: Record<
+      string,
+      "ejs" | "pug" | "hbs" | "react" | "vue" | "svelte"
+    > = {
       ".ejs": "ejs",
       ".pug": "pug",
       ".jade": "pug",

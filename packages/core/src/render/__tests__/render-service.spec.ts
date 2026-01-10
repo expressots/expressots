@@ -154,7 +154,9 @@ describe("RenderService", () => {
 
   describe("getActiveEngine", () => {
     it("should throw when not configured", () => {
-      expect(() => service.getActiveEngine()).toThrow(/No render engine configured/);
+      expect(() => service.getActiveEngine()).toThrow(
+        /No render engine configured/,
+      );
     });
 
     it("should return active engine after configuration", async () => {

@@ -208,10 +208,12 @@ describe("AutoDetection", () => {
   describe("isEngineAvailable", () => {
     beforeEach(() => {
       // Mock require.resolve
-      jest.spyOn(require, "resolve").mockImplementation((modulePath: string) => {
-        if (modulePath === "ejs") return "/node_modules/ejs/index.js";
-        throw new Error("Module not found");
-      });
+      jest
+        .spyOn(require, "resolve")
+        .mockImplementation((modulePath: string) => {
+          if (modulePath === "ejs") return "/node_modules/ejs/index.js";
+          throw new Error("Module not found");
+        });
     });
 
     afterEach(() => {
