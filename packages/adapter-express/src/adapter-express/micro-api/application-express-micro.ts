@@ -1,4 +1,4 @@
-import { IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
+import { Console, IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
 import { Env, IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import { Server } from "http";
@@ -198,6 +198,7 @@ class AppExpressMicro {
    */
   public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
     const logger: Logger = new Logger();
+    const console: Console = new Console();
     const normalizedPort = typeof port === "string" ? parseInt(port, 10) : port;
 
     this.configureMiddleware();
@@ -218,8 +219,11 @@ class AppExpressMicro {
           this.port = normalizedPort;
         }
 
-        const appInfoNormalized = appInfo ? `${appInfo?.appName} - ${appInfo?.appVersion} ` : "";
-        logger.info(`${appInfoNormalized}[${this.port}:${this.environment}]`, "MicroAPI");
+        // Display startup message using Console class
+        console.messageServer(this.port, this.environment, {
+          appName: appInfo?.appName || "ExpressoTS Micro",
+          appVersion: appInfo?.appVersion || "1.0.0",
+        });
 
         (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
           (signal) => {

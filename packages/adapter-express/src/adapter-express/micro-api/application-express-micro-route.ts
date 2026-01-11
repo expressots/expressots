@@ -2,10 +2,19 @@ import { Logger } from "@expressots/core";
 import express from "express";
 import { Middleware } from "../express-utils/interfaces";
 
+/**
+ * Handler function that can return a value to be sent as response
+ */
+type MicroRouteHandler = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => unknown | Promise<unknown>;
+
 type RouteDefinition = {
   method: "get" | "post" | "put" | "patch" | "delete";
   path: string;
-  handler: express.RequestHandler;
+  handler: MicroRouteHandler;
   middleware: Array<Middleware>;
 };
 
@@ -17,14 +26,14 @@ export interface IRoute {
   define(
     method: "get" | "post" | "put" | "delete" | "patch",
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void;
-  get(path: string, handler: express.RequestHandler, ...middleware: Array<Middleware>): void;
-  post(path: string, handler: express.RequestHandler, ...middleware: Array<Middleware>): void;
-  put(path: string, handler: express.RequestHandler, ...middleware: Array<Middleware>): void;
-  delete(path: string, handler: express.RequestHandler, ...middleware: Array<Middleware>): void;
-  patch(path: string, handler: express.RequestHandler, ...middleware: Array<Middleware>): void;
+  get(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void;
+  post(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void;
+  put(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void;
+  delete(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void;
+  patch(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void;
 }
 
 export class Route implements IRoute {
@@ -57,7 +66,7 @@ export class Route implements IRoute {
   public define(
     method: "get" | "post" | "put" | "delete" | "patch",
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void {
     const normalizedPath = `${this.globalPrefix.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
@@ -75,7 +84,7 @@ export class Route implements IRoute {
    */
   public get(
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void {
     this.define("get", path, handler, ...middleware);
@@ -90,7 +99,7 @@ export class Route implements IRoute {
    */
   public post(
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void {
     this.define("post", path, handler, ...middleware);
@@ -105,7 +114,7 @@ export class Route implements IRoute {
    */
   public put(
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void {
     this.define("put", path, handler, ...middleware);
@@ -120,7 +129,7 @@ export class Route implements IRoute {
    */
   public delete(
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void {
     this.define("delete", path, handler, ...middleware);
@@ -135,10 +144,44 @@ export class Route implements IRoute {
    */
   public patch(
     path: string,
-    handler: express.RequestHandler,
+    handler: MicroRouteHandler,
     ...middleware: Array<Middleware>
   ): void {
     this.define("patch", path, handler, ...middleware);
+  }
+
+  /**
+   * Wrap a handler to automatically send return values as response
+   * @param handler - The original handler
+   * @returns Wrapped Express request handler
+   * @private
+   */
+  private wrapHandler(handler: MicroRouteHandler): express.RequestHandler {
+    return async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ): Promise<void> => {
+      try {
+        const result = await handler(req, res, next);
+
+        // If the response has already been sent, don't send again
+        if (res.headersSent) {
+          return;
+        }
+
+        // If handler returned a value, send it as response
+        if (result !== undefined) {
+          if (typeof result === "string") {
+            res.send(result);
+          } else {
+            res.json(result);
+          }
+        }
+      } catch (error) {
+        next(error);
+      }
+    };
   }
 
   /**
@@ -146,8 +189,9 @@ export class Route implements IRoute {
    */
   public applyRoutes(): void {
     this.routes.forEach(({ method, path, handler, middleware }) => {
+      const wrappedHandler = this.wrapHandler(handler);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.app as any)[method](path, ...middleware, handler);
+      (this.app as any)[method](path, ...middleware, wrappedHandler);
     });
   }
 
