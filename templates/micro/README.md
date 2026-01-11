@@ -2,13 +2,6 @@
 
 A lightweight, minimal ExpressoTS microservice template.
 
-## Features
-
-- 🚀 **Minimal Footprint** - Just the essentials for microservices
-- 🔧 **Type-Safe Config** - Environment variables with full TypeScript support
-- ⚡ **Fast Startup** - Optimized for serverless and containers
-- 🧪 **Testing Ready** - Jest configured out of the box
-
 ## Quick Start
 
 ```bash
@@ -29,36 +22,14 @@ npm run prod
 
 ```
 src/
-└── api.ts          # Single file containing all routes and config
+└── api.ts          # Single file API
 ```
-
-## Configuration
-
-The micro template uses inline configuration with `defineConfig`:
-
-```typescript
-const config = defineConfig({
-    app: {
-        name: Env.string("APP_NAME", { default: "ExpressoTS Micro" }),
-    },
-    server: {
-        port: Env.number("PORT", { default: 3000 }),
-    },
-});
-```
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | / | Service info |
-| GET | /health | Health check |
 
 ## Adding Routes
 
 ```typescript
-app.Route.get("/users", (req, res) => {
-    res.json({ users: [] });
+app.Route.get("/users", () => {
+    return { users: [] };
 });
 
 app.Route.post("/users", (req, res) => {
@@ -66,23 +37,6 @@ app.Route.post("/users", (req, res) => {
     res.status(201).json(user);
 });
 ```
-
-## Environment Variables
-
-Create a `.env.local` file for development:
-
-```env
-APP_NAME="My Microservice"
-APP_VERSION="1.0.0"
-PORT=3000
-```
-
-## Use Cases
-
-- Microservices in a distributed system
-- Serverless functions (AWS Lambda, Vercel)
-- Lightweight APIs
-- Proof of concept / prototypes
 
 ## Learn More
 

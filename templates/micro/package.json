@@ -9,29 +9,19 @@
         "build": "expressots build",
         "dev": "expressots dev",
         "prod": "expressots prod",
-        "test": "jest --runInBand",
-        "test:watch": "jest --watchAll",
-        "test:cov": "jest --coverage",
-        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "format": "prettier --write \"src/**/*.ts\"",
         "lint": "eslint \"src/**/*.ts\" --fix"
     },
     "dependencies": {
         "@expressots/adapter-express": "file:../../adapter-express/expressots-adapter-express-4.0.0-beta.1.tgz",
         "@expressots/core": "file:../../expressots/expressots-core-4.0.0-beta.1.tgz",
-        "express": "^5.2.1",
+        "express": "^5.0.0",
         "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
         "@types/express": "^5.0.0",
-        "@types/jest": "^29.5.14",
         "@types/node": "^22.10.2",
-        "jest": "^29.7.0",
-        "nodemon": "^3.1.11",
         "prettier": "^3.4.2",
-        "supertest": "^7.0.0",
-        "ts-jest": "^29.2.5",
-        "ts-node": "^10.9.2",
-        "tsx": "^4.19.2",
         "typescript": "^5.7.2"
     }
 }
