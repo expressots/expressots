@@ -13,7 +13,7 @@
         "lint": "eslint \"src/**/*.ts\" --fix"
     },
     "dependencies": {
-        "@expressots/adapter-express": "file:../../adapter-express/expressots-adapter-express-4.0.0-beta.1.tgz",
+        "@expressots/adapter-express": "file:../../adapter-express/lib/expressots-adapter-express-4.0.0-beta.1.tgz",
         "@expressots/core": "file:../../expressots/expressots-core-4.0.0-beta.1.tgz",
         "express": "^5.0.0",
         "reflect-metadata": "^0.2.2"
