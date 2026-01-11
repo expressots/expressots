@@ -31,7 +31,6 @@ app.Middleware.security({ cors: true });
 app.Route.get("/", (req: Request, res: Response) => {
     res.json({
         message: "Hello from ExpressoTS on Lambda!",
-        requestId: (req as any).lambda?.context?.awsRequestId || "local",
         timestamp: new Date().toISOString(),
     });
 });
@@ -70,21 +69,34 @@ app.Route.post("/users", (req: Request, res: Response) => {
 // Lambda Handler Export
 // ============================================================================
 
+// Get the underlying Express app for serverless-http
+const expressApp = (microAPI as any).app;
+
 // For Lambda deployment, use serverless-http
+// Note: Install with: npm install serverless-http
 let handler: any;
 
-const createHandler = async () => {
+/**
+ * Create Lambda handler lazily
+ * Install serverless-http with: npm install serverless-http
+ */
+async function createHandler() {
     if (!handler) {
-        const serverlessHttp = await import("serverless-http");
-        // Get the underlying Express app
-        const expressApp = (app as any).getExpressApp?.() || (microAPI as any).app;
-        handler = serverlessHttp.default(expressApp);
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const serverlessHttp = require("serverless-http");
+            handler = serverlessHttp(expressApp);
+        } catch {
+            throw new Error(
+                "serverless-http is not installed. Install with: npm install serverless-http"
+            );
+        }
     }
     return handler;
-};
+}
 
 // Export for Lambda
-export const lambdaHandler = async (event: any, context: any) => {
+export const lambdaHandler = async (event: unknown, context: unknown) => {
     const h = await createHandler();
     return h(event, context);
 };
@@ -104,8 +116,9 @@ Endpoints:
   POST /users    - Create user
 
 Deploy to Lambda:
-  1. npm run build
-  2. serverless deploy
+  1. npm install serverless-http
+  2. npm run build
+  3. serverless deploy
 `);
 }
 

@@ -2,12 +2,15 @@
  * Event-Driven Microservice Example
  *
  * This example demonstrates how to build an event-driven microservice
- * using the ExpressoTS micro template with EventEmitter.
+ * using a simple event emitter pattern in the ExpressoTS micro template.
+ *
+ * Note: For full EventEmitter integration with DI, use the full template.
  */
 
 import { createMicroAPI } from "@expressots/adapter-express";
-import { EventEmitter, defineConfig, Env, loadEnvSync } from "@expressots/core";
+import { defineConfig, Env, loadEnvSync } from "@expressots/core";
 import { Request, Response } from "express";
+import { EventEmitter as NodeEventEmitter } from "events";
 
 // Load environment
 loadEnvSync({ files: { development: ".env.local", production: ".env.prod" } });
@@ -22,12 +25,12 @@ const config = defineConfig({
     },
 });
 
-// Create micro API with EventEmitter
-const microAPI = createMicroAPI();
-microAPI.Container.addSingleton(EventEmitter);
+// Create a simple event emitter for this micro service
+const events = new NodeEventEmitter();
 
+// Create micro API
+const microAPI = createMicroAPI();
 const app = microAPI.build();
-const events = microAPI.Container.get(EventEmitter);
 
 app.Middleware.parse();
 
@@ -36,7 +39,7 @@ app.Middleware.parse();
 // ============================================================================
 
 // Order events
-events.on("order.created", async (data: { orderId: string; userId: string }) => {
+events.on("order.created", (data: { orderId: string; userId: string }) => {
     console.log(`[Event] Order created: ${data.orderId} by user ${data.userId}`);
     // In a real app:
     // - Send confirmation email
@@ -44,14 +47,14 @@ events.on("order.created", async (data: { orderId: string; userId: string }) => 
     // - Notify warehouse
 });
 
-events.on("order.shipped", async (data: { orderId: string; trackingNumber: string }) => {
+events.on("order.shipped", (data: { orderId: string; trackingNumber: string }) => {
     console.log(`[Event] Order shipped: ${data.orderId}, tracking: ${data.trackingNumber}`);
     // In a real app:
     // - Send shipping notification
     // - Update order status
 });
 
-events.on("order.cancelled", async (data: { orderId: string; reason: string }) => {
+events.on("order.cancelled", (data: { orderId: string; reason: string }) => {
     console.log(`[Event] Order cancelled: ${data.orderId}, reason: ${data.reason}`);
     // In a real app:
     // - Process refund
@@ -60,7 +63,7 @@ events.on("order.cancelled", async (data: { orderId: string; reason: string }) =
 });
 
 // User events
-events.on("user.registered", async (data: { userId: string; email: string }) => {
+events.on("user.registered", (data: { userId: string; email: string }) => {
     console.log(`[Event] User registered: ${data.userId} (${data.email})`);
     // In a real app:
     // - Send welcome email
@@ -81,7 +84,7 @@ app.Route.get("/", (req: Request, res: Response) => {
 });
 
 // Create order - emits event
-app.Route.post("/orders", async (req: Request, res: Response) => {
+app.Route.post("/orders", (req: Request, res: Response) => {
     const { userId, items, total } = req.body;
 
     if (!userId || !items) {
@@ -98,7 +101,7 @@ app.Route.post("/orders", async (req: Request, res: Response) => {
     };
 
     // Emit event for async processing
-    await events.emit("order.created", {
+    events.emit("order.created", {
         orderId: order.id,
         userId: order.userId,
     });
@@ -107,7 +110,7 @@ app.Route.post("/orders", async (req: Request, res: Response) => {
 });
 
 // Ship order - emits event
-app.Route.post("/orders/:id/ship", async (req: Request, res: Response) => {
+app.Route.post("/orders/:id/ship", (req: Request, res: Response) => {
     const { id } = req.params;
     const { trackingNumber } = req.body;
 
@@ -116,7 +119,7 @@ app.Route.post("/orders/:id/ship", async (req: Request, res: Response) => {
     }
 
     // Emit event
-    await events.emit("order.shipped", {
+    events.emit("order.shipped", {
         orderId: id,
         trackingNumber,
     });
@@ -129,12 +132,12 @@ app.Route.post("/orders/:id/ship", async (req: Request, res: Response) => {
 });
 
 // Cancel order - emits event
-app.Route.post("/orders/:id/cancel", async (req: Request, res: Response) => {
+app.Route.post("/orders/:id/cancel", (req: Request, res: Response) => {
     const { id } = req.params;
     const { reason } = req.body;
 
     // Emit event
-    await events.emit("order.cancelled", {
+    events.emit("order.cancelled", {
         orderId: id,
         reason: reason || "No reason provided",
     });
@@ -146,7 +149,7 @@ app.Route.post("/orders/:id/cancel", async (req: Request, res: Response) => {
 });
 
 // Register user - emits event
-app.Route.post("/users", async (req: Request, res: Response) => {
+app.Route.post("/users", (req: Request, res: Response) => {
     const { email, name } = req.body;
 
     if (!email || !name) {
@@ -161,7 +164,7 @@ app.Route.post("/users", async (req: Request, res: Response) => {
     };
 
     // Emit event
-    await events.emit("user.registered", {
+    events.emit("user.registered", {
         userId: user.id,
         email: user.email,
     });
@@ -178,6 +181,12 @@ app.Route.get("/events/stats", (req: Request, res: Response) => {
             "order.cancelled",
             "user.registered",
         ],
+        listenerCounts: {
+            "order.created": events.listenerCount("order.created"),
+            "order.shipped": events.listenerCount("order.shipped"),
+            "order.cancelled": events.listenerCount("order.cancelled"),
+            "user.registered": events.listenerCount("user.registered"),
+        },
         timestamp: new Date().toISOString(),
     });
 });
