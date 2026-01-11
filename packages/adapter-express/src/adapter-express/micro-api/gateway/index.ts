@@ -3,14 +3,10 @@
  */
 
 export {
-    CircuitBreaker,
-    type CircuitBreakerConfig,
-    type CircuitBreakerStats,
-    type CircuitState,
+  CircuitBreaker,
+  type CircuitBreakerConfig,
+  type CircuitBreakerStats,
+  type CircuitState,
 } from "./circuit-breaker";
 
-export {
-    ServiceProxy,
-    createProxy,
-    type ServiceProxyConfig,
-} from "./service-proxy";
+export { ServiceProxy, createProxy, type ServiceProxyConfig } from "./service-proxy";

@@ -8,7 +8,7 @@ import { Middleware } from "../express-utils/interfaces";
 type MicroRouteHandler = (
   req: express.Request,
   res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => unknown | Promise<unknown>;
 
 type RouteDefinition = {
@@ -82,11 +82,7 @@ export class Route implements IRoute {
    * @param middleware - Route middleware
    * @public API
    */
-  public get(
-    path: string,
-    handler: MicroRouteHandler,
-    ...middleware: Array<Middleware>
-  ): void {
+  public get(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void {
     this.define("get", path, handler, ...middleware);
   }
 
@@ -97,11 +93,7 @@ export class Route implements IRoute {
    * @param middleware - Route middleware
    * @public API
    */
-  public post(
-    path: string,
-    handler: MicroRouteHandler,
-    ...middleware: Array<Middleware>
-  ): void {
+  public post(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void {
     this.define("post", path, handler, ...middleware);
   }
 
@@ -112,11 +104,7 @@ export class Route implements IRoute {
    * @param middleware - Route middleware
    * @public API
    */
-  public put(
-    path: string,
-    handler: MicroRouteHandler,
-    ...middleware: Array<Middleware>
-  ): void {
+  public put(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void {
     this.define("put", path, handler, ...middleware);
   }
 
@@ -127,11 +115,7 @@ export class Route implements IRoute {
    * @param middleware - Route middleware
    * @public API
    */
-  public delete(
-    path: string,
-    handler: MicroRouteHandler,
-    ...middleware: Array<Middleware>
-  ): void {
+  public delete(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void {
     this.define("delete", path, handler, ...middleware);
   }
 
@@ -142,11 +126,7 @@ export class Route implements IRoute {
    * @param middleware - Route middleware
    * @public API
    */
-  public patch(
-    path: string,
-    handler: MicroRouteHandler,
-    ...middleware: Array<Middleware>
-  ): void {
+  public patch(path: string, handler: MicroRouteHandler, ...middleware: Array<Middleware>): void {
     this.define("patch", path, handler, ...middleware);
   }
 
@@ -160,7 +140,7 @@ export class Route implements IRoute {
     return async (
       req: express.Request,
       res: express.Response,
-      next: express.NextFunction
+      next: express.NextFunction,
     ): Promise<void> => {
       try {
         const result = await handler(req, res, next);

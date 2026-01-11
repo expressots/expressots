@@ -3,11 +3,11 @@
  */
 
 export {
-    type QueueMessage,
-    type MessageHandler,
-    type QueueConsumerConfig,
-    type IQueueConsumer,
-    type QueueStats,
+  type QueueMessage,
+  type MessageHandler,
+  type QueueConsumerConfig,
+  type IQueueConsumer,
+  type QueueStats,
 } from "./queue.interface";
 
 export { RabbitMQConsumer, type RabbitMQConfig } from "./rabbitmq-consumer";
