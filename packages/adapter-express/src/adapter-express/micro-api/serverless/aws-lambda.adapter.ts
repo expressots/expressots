@@ -101,12 +101,28 @@ export function awsLambdaAdapter(
     }
 
     // Parse body
-    let body: string | Buffer | undefined;
+    let body: string | Buffer | object | undefined;
     if (event.body) {
+      let rawBody: string | Buffer;
       if (event.isBase64Encoded) {
-        body = Buffer.from(event.body, "base64");
+        rawBody = Buffer.from(event.body, "base64");
       } else {
-        body = event.body;
+        rawBody = event.body;
+      }
+
+      // Parse JSON body if content-type is application/json
+      const contentType =
+        event.headers?.["content-type"] || event.headers?.["Content-Type"] || "";
+      if (contentType.includes("application/json")) {
+        try {
+          const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString("utf8") : rawBody;
+          body = JSON.parse(bodyStr);
+        } catch {
+          // Keep as raw if JSON parsing fails
+          body = rawBody;
+        }
+      } else {
+        body = rawBody;
       }
     }
 
