@@ -116,7 +116,7 @@ export class Console {
         break;
     }
 
-    this.printColor(
+    await this.printColor(
       `[${appConsoleMessage.appName}] version [${appConsoleMessage.appVersion}] is running on ` +
         `port [${port}] - Environment: [${environment}]`,
       terminalColor,
