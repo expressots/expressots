@@ -85,11 +85,24 @@ export class AppExpress implements Server.IWebServer {
   private static originalGlobalConsole: any = null;
 
   // Initialize buffering when AppExpress class is loaded (before any instances are created)
+  // This ensures ALL logs are buffered from the very beginning for the full template.
+  // The micro() function explicitly disables this buffering since it doesn't use the banner system.
   // This MUST be declared AFTER all the static properties it uses!
   private static initBuffering = ((): boolean => {
     AppExpress.startLogBuffering();
     return true;
   })();
+
+  /**
+   * Disable log buffering. Called by micro() to restore normal console output
+   * since micro API doesn't use the banner system.
+   * @public API
+   */
+  public static disableBuffering(): void {
+    AppExpress.stopBuffering();
+    // Clear any buffered logs since micro() doesn't need them
+    AppExpress.logBuffer = [];
+  }
 
   /**
    * Start buffering all console output.
@@ -219,6 +232,7 @@ export class AppExpress implements Server.IWebServer {
 
   constructor() {
     // Buffering is already started via static initialization (initBuffering)
+    // This ensures ALL logs are captured from the very beginning
     this.globalConfiguration();
   }
 

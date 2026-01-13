@@ -2,6 +2,7 @@ import { Console, Logger } from "@expressots/core";
 import { IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import { Server } from "http";
+import { AppExpress } from "../application-express";
 
 /**
  * Minimal configuration for micro API
@@ -82,6 +83,10 @@ export interface MicroApp {
  * @public API
  */
 export function micro(config?: MicroConfig): MicroApp {
+  // Disable the log buffering from AppExpress since micro() doesn't use the banner system
+  // This restores normal console output for micro API users
+  AppExpress.disableBuffering();
+
   const app = express();
   const logger = new Logger();
   const console = new Console();
@@ -178,13 +183,13 @@ export function micro(config?: MicroConfig): MicroApp {
       }
 
       return new Promise((resolve, reject) => {
-        httpServer = app.listen(normalizedPort, () => {
+        httpServer = app.listen(normalizedPort, async () => {
           const address = httpServer.address();
           const actualPort =
             typeof address === "object" && address?.port ? address.port : normalizedPort;
 
           if (config?.showBanner !== false) {
-            console.messageServer(actualPort, "development", {
+            await console.messageServer(actualPort, "development", {
               appName: appInfo?.appName || "ExpressoTS Micro",
               appVersion: appInfo?.appVersion || "1.0.0",
             });

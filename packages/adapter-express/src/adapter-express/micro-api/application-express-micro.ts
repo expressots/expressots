@@ -210,7 +210,7 @@ class AppExpressMicro {
     }
 
     return new Promise((resolve, reject) => {
-      this.httpServer = this.app.listen(normalizedPort, () => {
+      this.httpServer = this.app.listen(normalizedPort, async () => {
         const address = this.httpServer.address();
 
         if (typeof address === "object" && address?.port) {
@@ -220,7 +220,7 @@ class AppExpressMicro {
         }
 
         // Display startup message using Console class
-        console.messageServer(this.port, this.environment, {
+        await console.messageServer(this.port, this.environment, {
           appName: appInfo?.appName || "ExpressoTS Micro",
           appVersion: appInfo?.appVersion || "1.0.0",
         });
