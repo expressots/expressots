@@ -1,20 +1,41 @@
 {
     "name": "expressots-micro",
     "version": "1.0.0",
-    "description": "ExpressoTS Microservice",
+    "description": "ExpressoTS Microservice - Lightweight API with Circuit Breaker, Service Discovery, and Serverless support",
     "author": "",
     "license": "MIT",
     "main": "dist/src/api.js",
+    "keywords": [
+        "expressots",
+        "microservices",
+        "micro-api",
+        "circuit-breaker",
+        "service-discovery",
+        "service-mesh",
+        "serverless",
+        "aws-lambda",
+        "vercel",
+        "cloudflare-workers",
+        "api-gateway",
+        "load-balancing",
+        "fault-tolerance",
+        "typescript",
+        "express"
+    ],
     "scripts": {
         "build": "expressots build",
         "dev": "expressots dev",
         "prod": "expressots prod",
         "format": "prettier --write \"src/**/*.ts\"",
-        "lint": "eslint \"src/**/*.ts\" --fix"
+        "lint": "eslint \"src/**/*.ts\" --fix",
+        "example:circuit-breaker": "tsx examples/circuit-breaker.example.ts",
+        "example:service-discovery": "tsx examples/service-discovery.example.ts",
+        "example:service-client": "tsx examples/service-client.example.ts",
+        "example:full-di-api": "tsx examples/full-di-api.example.ts"
     },
     "dependencies": {
-        "@expressots/adapter-express": "file:../../adapter-express/lib/expressots-adapter-express-4.0.0-beta.1.tgz",
-        "@expressots/core": "file:../../expressots/expressots-core-4.0.0-beta.1.tgz",
+        "@expressots/adapter-express": "^4.0.0",
+        "@expressots/core": "^4.0.0",
         "express": "^5.0.0",
         "reflect-metadata": "^0.2.2"
     },
@@ -22,6 +43,7 @@
         "@types/express": "^5.0.0",
         "@types/node": "^22.10.2",
         "prettier": "^3.4.2",
+        "tsx": "^4.21.0",
         "typescript": "^5.7.2"
     }
 }
