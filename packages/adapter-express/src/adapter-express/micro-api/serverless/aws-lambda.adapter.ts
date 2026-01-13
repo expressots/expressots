@@ -111,8 +111,7 @@ export function awsLambdaAdapter(
       }
 
       // Parse JSON body if content-type is application/json
-      const contentType =
-        event.headers?.["content-type"] || event.headers?.["Content-Type"] || "";
+      const contentType = event.headers?.["content-type"] || event.headers?.["Content-Type"] || "";
       if (contentType.includes("application/json")) {
         try {
           const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString("utf8") : rawBody;
