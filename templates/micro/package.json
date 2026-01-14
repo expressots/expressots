@@ -5,45 +5,41 @@
     "author": "",
     "license": "MIT",
     "main": "dist/src/api.js",
-    "keywords": [
-        "expressots",
-        "microservices",
-        "micro-api",
-        "circuit-breaker",
-        "service-discovery",
-        "service-mesh",
-        "serverless",
-        "aws-lambda",
-        "vercel",
-        "cloudflare-workers",
-        "api-gateway",
-        "load-balancing",
-        "fault-tolerance",
-        "typescript",
-        "express"
-    ],
     "scripts": {
         "build": "expressots build",
         "dev": "expressots dev",
         "prod": "expressots prod",
         "format": "prettier --write \"src/**/*.ts\"",
         "lint": "eslint \"src/**/*.ts\" --fix",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
         "example:circuit-breaker": "tsx examples/circuit-breaker.example.ts",
         "example:service-discovery": "tsx examples/service-discovery.example.ts",
         "example:service-client": "tsx examples/service-client.example.ts",
         "example:full-di-api": "tsx examples/full-di-api.example.ts"
     },
     "dependencies": {
-        "@expressots/adapter-express": "^4.0.0",
-        "@expressots/core": "^4.0.0",
-        "express": "^5.0.0",
-        "reflect-metadata": "^0.2.2"
+        "@expressots/adapter-express": "file:../adapter-express/expressots-adapter-express-4.0.0-beta.1.tgz",
+        "@expressots/core": "file:../expressots/expressots-core-4.0.0-beta.1.tgz",
+        "@expressots/shared": "file:../shared/expressots-shared-4.0.0-beta.1.tgz",
+        "express": "5.2.1"
     },
     "devDependencies": {
-        "@types/express": "^5.0.0",
-        "@types/node": "^22.10.2",
-        "prettier": "^3.4.2",
-        "tsx": "^4.21.0",
-        "typescript": "^5.7.2"
+        "@eslint/js": "9.39.2",
+        "@expressots/cli": "file:../expressots-cli/expressots-cli-4.0.0-beta.1.tgz",
+        "@types/express": "5.0.6",
+        "@types/jest": "30.0.0",
+        "@types/node": "25.0.3",
+        "@typescript-eslint/eslint-plugin": "8.51.0",
+        "@typescript-eslint/parser": "8.51.0",
+        "eslint": "9.39.2",
+        "jest": "30.2.0",
+        "nodemon": "3.1.11",
+        "prettier": "3.7.4",
+        "ts-jest": "29.4.6",
+        "tsx": "4.21.0",
+        "typescript": "5.9.3",
+        "typescript-eslint": "^8.53.0"
     }
 }

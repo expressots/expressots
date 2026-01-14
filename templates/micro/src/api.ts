@@ -6,4 +6,4 @@ app.get("/", () => {
     return "Hello from ExpressoTS Micro API!";
 });
 
-app.listen(3001);
+app.listen(3000);
