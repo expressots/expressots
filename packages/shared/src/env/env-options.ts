@@ -2,7 +2,7 @@
  * Module EnvOptions
  * Responsible for setting the options for the dotenv configuration if provided otherwise it will use the default values.
  */
-import { IConfigOptions } from "./interfaces";
+import { IConfigOptions } from "./interfaces.js";
 
 /**
  * The options for the dotenv configuration.

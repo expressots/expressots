@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { Options } from "./ejs.types";
+import { Options } from "./ejs.types.js";
 
 /**
  * The Render namespace contains all the types and interfaces related to rendering views.

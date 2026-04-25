@@ -5,9 +5,9 @@ import path from "path";
 import os from "os";
 import crypto from "crypto";
 
-import { LINE_REGEX } from "./constants";
-import { IConfigOptions, IConfigOutput, IEnvObject } from "./interfaces";
-import { log, LogLevel } from "../utils/logger";
+import { LINE_REGEX } from "./constants.js";
+import { IConfigOptions, IConfigOutput, IEnvObject } from "./interfaces.js";
+import { log, LogLevel } from "../utils/logger.js";
 
 /**
  * Module to parse the .env.vault file
@@ -184,10 +184,10 @@ export function config(options?: IConfigOptions): IConfigOutput {
   }
 
   const vaultPath = _vaultPath(options);
-  console.log(vaultPath);
   if (!vaultPath) {
+    const expected = path.resolve(process.cwd(), ".env.vault");
     log(
-      `You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`,
+      `You set DOTENV_KEY but no .env.vault file was found (expected at ${expected}). Did you forget to build it?`,
       LogLevel.Warn,
     );
     return configDotenv(options);

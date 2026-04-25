@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Server as HTTPServer } from "http";
-import { IConsoleMessage } from "./console.interface";
-import { RenderEngine } from "./render/render.types";
+import { IConsoleMessage } from "./console.interface.js";
+import { RenderEngine } from "./render/render.types.js";
 
 /**
  * Namespace for the Server Application.

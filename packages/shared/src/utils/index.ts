@@ -1,1 +1,1 @@
-export { Compiler } from "./compiler";
+export { Compiler } from "./compiler.js";

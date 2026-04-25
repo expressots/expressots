@@ -1,2 +1,2 @@
-export { IEnvObject, IConfigOptions, IConfigOutput } from "./interfaces";
-export * from "./environment";
+export { IEnvObject, IConfigOptions, IConfigOutput } from "./interfaces.js";
+export * from "./environment.js";
