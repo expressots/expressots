@@ -9,7 +9,7 @@ export {
   type LambdaResponse,
   type LambdaHandler,
   type LambdaAdapterConfig,
-} from "./aws-lambda.adapter";
+} from "./aws-lambda.adapter.js";
 
 export {
   vercelAdapter,
@@ -17,7 +17,7 @@ export {
   type VercelResponse,
   type VercelHandler,
   type VercelAdapterConfig,
-} from "./vercel.adapter";
+} from "./vercel.adapter.js";
 
 export {
   cloudflareAdapter,
@@ -25,4 +25,4 @@ export {
   type CloudflareContext,
   type CloudflareHandler,
   type CloudflareAdapterConfig,
-} from "./cloudflare.adapter";
+} from "./cloudflare.adapter.js";

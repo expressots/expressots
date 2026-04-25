@@ -4,7 +4,7 @@ import {
   QueueConsumerConfig,
   QueueMessage,
   QueueStats,
-} from "./queue.interface";
+} from "./queue.interface.js";
 
 /**
  * RabbitMQ-specific configuration
@@ -31,9 +31,16 @@ async function loadAmqpLib(): Promise<{
   connect: (url: string) => Promise<unknown>;
 }> {
   try {
-    // Use require to avoid TypeScript module resolution
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const amqp = require("amqplib");
+    // `amqplib` is an OPTIONAL peer dep - it is intentionally not installed
+    // in this package's devDependencies. We route the specifier through a
+    // variable so TypeScript does not try to statically resolve it during
+    // build (TS treats variable-typed specifiers in `await import(...)` as
+    // `any` and skips the resolution check). Resolution happens at runtime
+    // in user apps that have actually installed amqplib.
+    const specifier: string = "amqplib";
+    const amqp = (await import(specifier)) as unknown as {
+      connect: (url: string) => Promise<unknown>;
+    };
     return amqp;
   } catch {
     throw new Error(

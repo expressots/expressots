@@ -10,7 +10,6 @@ const config: JestConfigWithTsJest = {
     "!**/*.spec.ts",
     "!src/**/index.ts",
     "!src/di/**",
-    "!src/adapter-express/express-utils/**",
     "!src/adapter-express/render/resolve-render.ts",
     "!src/adapter-express/micro-api/application-express-micro.ts",
   ],

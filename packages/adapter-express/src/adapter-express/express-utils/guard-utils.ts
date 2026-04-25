@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { GUARD_METADATA_KEY } from "@expressots/core";
 import type { GuardClass, IGuard } from "@expressots/core";
-import type { NewableFunction } from "./interfaces";
+import type { NewableFunction } from "./interfaces.js";
 
 /**
  * Extract guards from controller metadata

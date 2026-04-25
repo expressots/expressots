@@ -24,7 +24,7 @@ import {
   createLazyModuleMiddleware,
   createRouteMappings,
   LazyRouteMapping,
-} from "./lazy-module-middleware";
+} from "./lazy-module-middleware.js";
 
 // ============================================================================
 // Setup Function
@@ -338,4 +338,4 @@ export interface LazyLoadingExpressResult extends LazyLoadingSetupResult {
 // Re-export types
 export type { LazyLoadingOptions, LazyLoadingSetupResult } from "@expressots/core";
 
-export type { LazyRouteMapping } from "./lazy-module-middleware";
+export type { LazyRouteMapping } from "./lazy-module-middleware.js";

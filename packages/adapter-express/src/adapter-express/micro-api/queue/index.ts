@@ -8,6 +8,6 @@ export {
   type QueueConsumerConfig,
   type IQueueConsumer,
   type QueueStats,
-} from "./queue.interface";
+} from "./queue.interface.js";
 
-export { RabbitMQConsumer, type RabbitMQConfig } from "./rabbitmq-consumer";
+export { RabbitMQConsumer, type RabbitMQConfig } from "./rabbitmq-consumer.js";

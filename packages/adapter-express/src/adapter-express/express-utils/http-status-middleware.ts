@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import { Request, Response, NextFunction } from "express";
 import { ExpressoMiddleware } from "@expressots/core";
-import { HTTP_CODE_METADATA } from "./constants";
+import { HTTP_CODE_METADATA } from "./constants.js";
 
 /**
  * Middleware that applies the status code to the response.

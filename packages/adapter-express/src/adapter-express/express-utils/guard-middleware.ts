@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { inject, injectable, Container, ContextManager, findFlowTracker } from "@expressots/core";
 import type { GuardClass, IGuard } from "@expressots/core";
 import { GuardExecutor } from "@expressots/core";
-import { GuardContextFactory } from "./guard-context-factory";
+import { GuardContextFactory } from "./guard-context-factory.js";
 import { AppError } from "@expressots/core";
 
 /**

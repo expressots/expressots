@@ -20,8 +20,8 @@ import {
   detectSchemaType,
   ClassValidatorAdapter,
 } from "@expressots/core";
-import { getValidationMetadata, ValidationSchemaMetadata } from "./validation-decorators";
-import type { NewableFunction } from "./interfaces";
+import { getValidationMetadata, ValidationSchemaMetadata } from "./validation-decorators.js";
+import type { NewableFunction } from "./interfaces.js";
 
 /**
  * Validation Service

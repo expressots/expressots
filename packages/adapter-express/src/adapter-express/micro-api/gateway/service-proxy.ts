@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { CircuitBreaker, CircuitBreakerConfig } from "./circuit-breaker";
+import { CircuitBreaker, CircuitBreakerConfig } from "./circuit-breaker.js";
 
 /**
  * Configuration for ServiceProxy

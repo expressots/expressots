@@ -8,7 +8,7 @@
  */
 
 import "reflect-metadata";
-import { METADATA_KEY, PARAMETER_TYPE } from "./constants";
+import { METADATA_KEY, PARAMETER_TYPE } from "./constants.js";
 import type { ValidationOptions } from "@expressots/core";
 
 /**

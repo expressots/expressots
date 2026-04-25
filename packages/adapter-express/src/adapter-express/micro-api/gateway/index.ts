@@ -7,6 +7,6 @@ export {
   type CircuitBreakerConfig,
   type CircuitBreakerStats,
   type CircuitState,
-} from "./circuit-breaker";
+} from "./circuit-breaker.js";
 
-export { ServiceProxy, createProxy, type ServiceProxyConfig } from "./service-proxy";
+export { ServiceProxy, createProxy, type ServiceProxyConfig } from "./service-proxy.js";

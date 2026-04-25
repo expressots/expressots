@@ -18,10 +18,15 @@ import {
   InterceptorExecutor,
   InterceptorRegistry,
   INTERCEPTOR_METADATA_KEY,
+  Logger,
+  getErrorHints,
+  getDefaultSuggestionsConfig,
+  formatSuggestions,
 } from "@expressots/core";
+import type { SuggestionsConfig } from "@expressots/core";
 import type { InterceptorClass, IInterceptor } from "@expressots/core";
-import { GuardContextFactory } from "./guard-context-factory";
-import { BaseMiddleware } from "./base-middleware";
+import { GuardContextFactory } from "./guard-context-factory.js";
+import { BaseMiddleware } from "./base-middleware.js";
 import {
   getControllersFromMetadata,
   getControllersFromContainer,
@@ -30,16 +35,16 @@ import {
   getControllerParameterMetadata,
   instanceOfIHttpActionResult,
   getContentNegotiationMetadata,
-} from "./utils";
-import { getValidationMetadata } from "./validation-decorators";
+} from "./utils.js";
+import { getValidationMetadata } from "./validation-decorators.js";
 import {
   TYPE,
   METADATA_KEY,
   DEFAULT_ROUTING_ROOT_PATH,
   PARAMETER_TYPE,
   DUPLICATED_CONTROLLER_NAME,
-} from "./constants";
-import { HttpResponseMessage } from "./httpResponseMessage";
+} from "./constants.js";
+import { HttpResponseMessage } from "./httpResponseMessage.js";
 
 import type {
   AuthProvider,
@@ -55,47 +60,32 @@ import type {
   ParameterMetadata,
   Principal,
   RoutingConfig,
-} from "./interfaces";
+} from "./interfaces.js";
 import type { OutgoingHttpHeaders } from "node:http";
-import { getRenderMetadata } from "./decorators";
+import { getRenderMetadata } from "./decorators.js";
 import {
   isConditionalMiddleware,
   type ConditionalMiddlewareConfig,
-} from "./conditional-middleware";
-import { isComposedMiddleware, type ComposedMiddlewareConfig } from "./middleware-composition";
-import { getControllerGuards, getMethodGuards } from "./guard-utils";
-import { GuardMiddleware } from "./guard-middleware";
+} from "./conditional-middleware.js";
+import { isComposedMiddleware, type ComposedMiddlewareConfig } from "./middleware-composition.js";
+import { getControllerGuards, getMethodGuards } from "./guard-utils.js";
+import { GuardMiddleware } from "./guard-middleware.js";
 
-import { ValidationService } from "./validation-service";
-import { InterceptorMiddleware, createInterceptorMiddleware } from "./interceptor-middleware";
+import { ValidationService } from "./validation-service.js";
+import { InterceptorMiddleware, createInterceptorMiddleware } from "./interceptor-middleware.js";
+import { getHttpContext, setHttpContext } from "./http-context-store.js";
 
-// Lazy-load route registry to avoid circular dependencies
-let routeRegistryModule: {
-  getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void };
-} | null = null;
+// Lazy-load route registry from @expressots/core. Static import because
+// `getRouteRegistry` is part of the core's public surface; we just guard
+// against it being undefined to keep this non-critical (suggestions are
+// optional).
+import { getRouteRegistry as coreGetRouteRegistry } from "@expressots/core";
 
 function getRouteRegistryModule(): {
   getRouteRegistry: () => { register: (method: string, path: string, fullPath: string) => void };
 } | null {
-  if (!routeRegistryModule) {
-    try {
-      // Try to load the suggestions module from @expressots/core
-      // The getRouteRegistry function is exported from @expressots/core via logger index
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const coreModule = require("@expressots/core");
-      if (coreModule && typeof coreModule.getRouteRegistry === "function") {
-        routeRegistryModule = { getRouteRegistry: coreModule.getRouteRegistry };
-      } else {
-        // Fallback: try direct path (may not work in all build configurations)
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        routeRegistryModule = require("@expressots/core/provider/logger/logger.suggestions");
-      }
-    } catch {
-      // Module not available, return null (non-critical - suggestions are optional)
-      routeRegistryModule = null;
-    }
-  }
-  return routeRegistryModule;
+  if (typeof coreGetRouteRegistry !== "function") return null;
+  return { getRouteRegistry: coreGetRouteRegistry };
 }
 
 /**
@@ -214,15 +204,17 @@ export class InversifyExpressServer {
    * Applies all routes and configuration to the server, returning the express application.
    */
   public build(): express.Application {
-    // The very first middleware to be invoked
-    // it creates a new httpContext and attaches it to the
-    // current request as metadata using Reflect
+    // The very first middleware to be invoked: create an HttpContext per
+    // request and attach it via a WeakMap (see ./http-context-store).
+    // This is cheaper than the previous `Reflect.defineMetadata` call
+    // because it bypasses reflect-metadata's string-keyed map.
     this._app.all("*", (req: Request, res: Response, next: NextFunction) => {
-      void (async (): Promise<void> => {
-        const httpContext = await this._createHttpContext(req, res, next);
-        Reflect.defineMetadata(METADATA_KEY.httpContext, httpContext, req);
-        next();
-      })();
+      this._createHttpContext(req, res, next)
+        .then((httpContext) => {
+          setHttpContext(req, httpContext);
+          next();
+        })
+        .catch(next);
     });
 
     // register server-level middleware before anything else
@@ -232,12 +224,143 @@ export class InversifyExpressServer {
 
     this.registerControllers();
 
+    this.registerNotFoundHandler();
+
     // register error handlers after controllers
     if (this._errorConfigFn) {
       this._errorConfigFn.apply(undefined, [this._app]);
     }
 
     return this._app;
+  }
+
+  /**
+   * Install a catch-all 404 handler that runs after every registered route.
+   *
+   * When the user has the suggestions feature enabled (default in development),
+   * this consults the route registry, computes "Did you mean ...?" suggestions
+   * via `getErrorHints` from `@expressots/core`, logs them through the framework
+   * Logger, and returns a structured RFC-7807-style JSON 404 instead of the
+   * default Express HTML.
+   *
+   * Users who want the legacy Express HTML 404 can opt out by configuring the
+   * Logger with `suggestions.enabled = false` (this also disables the JSON
+   * envelope so they can install their own 404 handler in the error-config fn).
+   *
+   * @private
+   */
+  private registerNotFoundHandler(): void {
+    this._app.use((req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) {
+        return next();
+      }
+
+      const suggestionsConfig = this.resolveSuggestionsConfig();
+
+      if (!suggestionsConfig.enabled) {
+        return next();
+      }
+
+      const requestedPath = req.originalUrl || req.url;
+      const requestedMethod = req.method;
+
+      const hints = getErrorHints(
+        new Error(`Route '${requestedMethod} ${requestedPath}' not found`),
+        {
+          path: requestedPath,
+          method: requestedMethod,
+          statusCode: 404,
+        },
+        suggestionsConfig,
+      );
+
+      if (hints.length > 0) {
+        try {
+          const formatted = formatSuggestions(hints);
+          if (formatted) {
+            const logger = this.resolveLogger();
+            if (logger) {
+              logger.warn(
+                `Route not found: ${requestedMethod} ${requestedPath}${formatted}`,
+                "router-404",
+              );
+            } else {
+              // eslint-disable-next-line no-console
+              console.warn(
+                `[router-404] Route not found: ${requestedMethod} ${requestedPath}${formatted}`,
+              );
+            }
+          }
+        } catch {
+          // Suggestion logging is best-effort; never fail the request because of it.
+        }
+      }
+
+      const routeSuggestion = hints.find((hint) => hint.type === "route");
+      const actionHint = hints.find((hint) => hint.type === "hint");
+
+      const body: Record<string, unknown> = {
+        type: "https://expressots.dev/errors/not-found",
+        title: "Route Not Found",
+        status: 404,
+        detail: `Route '${requestedMethod} ${requestedPath}' does not exist`,
+        instance: requestedPath,
+        timestamp: new Date().toISOString(),
+      };
+
+      if (routeSuggestion?.routes && routeSuggestion.routes.length > 0) {
+        body.suggestions = routeSuggestion.routes.map((suggestion) => ({
+          method: suggestion.route.method,
+          path: suggestion.route.fullPath || suggestion.route.path,
+          similarity: Math.round(suggestion.similarity * 100),
+          reason: suggestion.reason,
+        }));
+      } else if (actionHint?.actions && actionHint.actions.length > 0) {
+        body.actions = actionHint.actions;
+      }
+
+      res.status(404).type("application/json").send(JSON.stringify(body));
+    });
+  }
+
+  /**
+   * Resolve the user-configured suggestions config, falling back to the
+   * env-aware default when the Logger is not bound or has no overrides.
+   *
+   * @private
+   */
+  private resolveSuggestionsConfig(): SuggestionsConfig {
+    const fallback = getDefaultSuggestionsConfig();
+    const logger = this.resolveLogger();
+    if (!logger) {
+      return fallback;
+    }
+    try {
+      const loggerConfig = (logger as unknown as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }).getConfig?.();
+      if (loggerConfig?.suggestions) {
+        return { ...fallback, ...loggerConfig.suggestions };
+      }
+    } catch {
+      // Logger may not expose getConfig in older versions; fall through.
+    }
+    return fallback;
+  }
+
+  /**
+   * Resolve the framework Logger from DI when available.
+   *
+   * @private
+   */
+  private resolveLogger(): Logger | undefined {
+    try {
+      // The `Logger` symbol is the constructor itself in our DI bindings.
+      if (this._container.isBound(Logger)) {
+        return this._container.get<Logger>(Logger);
+      }
+    } catch {
+      // not bound yet
+    }
+    return undefined;
   }
 
   private registerControllers(): void {
@@ -1090,7 +1213,7 @@ export class InversifyExpressServer {
   }
 
   private _getHttpContext(req: express.Request): HttpContext {
-    return Reflect.getMetadata(METADATA_KEY.httpContext, req) as HttpContext;
+    return getHttpContext(req) as HttpContext;
   }
 
   /**

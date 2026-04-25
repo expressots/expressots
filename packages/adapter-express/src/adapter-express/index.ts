@@ -1,6 +1,6 @@
-export * from "./express-utils";
-export { AppExpress } from "./application-express";
-export * from "./micro-api";
+export * from "./express-utils/index.js";
+export { AppExpress } from "./application-express.js";
+export * from "./micro-api/index.js";
 export {
   IWebServerPublic,
   IWebServer,
@@ -9,5 +9,6 @@ export {
   IEnvironment,
   RenderEngine,
 } from "@expressots/shared";
-export * from "./render";
-export * from "./middleware";
+export * from "./render/index.js";
+export * from "./middleware/index.js";
+export * from "./studio/index.js";

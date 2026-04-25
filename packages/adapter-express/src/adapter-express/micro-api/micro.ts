@@ -1,8 +1,15 @@
-import { Console, Logger } from "@expressots/core";
+import {
+  Console,
+  Logger,
+  getRouteRegistry,
+  getErrorHints,
+  getDefaultSuggestionsConfig,
+  formatSuggestions,
+} from "@expressots/core";
 import { IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import { Server } from "http";
-import { AppExpress } from "../application-express";
+import { AppExpress } from "../application-express.js";
 
 /**
  * Minimal configuration for micro API
@@ -142,7 +149,87 @@ export function micro(config?: MicroConfig): MicroApp {
     app[method](fullPath, ...middleware, wrapHandler(handler));
     logger.info(`Route ${method.toUpperCase()} '${fullPath}' registered`, "micro");
 
+    // Register in the suggestions engine so 404s can produce "Did you mean ...?"
+    try {
+      getRouteRegistry().register(method.toUpperCase(), fullPath, fullPath);
+    } catch {
+      // Suggestions registry is optional; never fail registration because of it.
+    }
+
     return microApp;
+  };
+
+  /**
+   * Install a catch-all 404 fallback that mirrors the behavior of the full
+   * inversify-express-server: log "Did you mean ...?" via the framework Logger
+   * and respond with a structured RFC-7807-style JSON body.
+   *
+   * Skipped entirely when the suggestion engine is disabled (the env-aware
+   * default disables it in NODE_ENV=production).
+   */
+  const installNotFoundHandler = (): void => {
+    app.use((req, res, next) => {
+      if (res.headersSent) {
+        return next();
+      }
+
+      const suggestionsConfig = getDefaultSuggestionsConfig();
+      if (!suggestionsConfig.enabled) {
+        return next();
+      }
+
+      const requestedPath = req.originalUrl || req.url;
+      const requestedMethod = req.method;
+
+      const hints = getErrorHints(
+        new Error(`Route '${requestedMethod} ${requestedPath}' not found`),
+        {
+          path: requestedPath,
+          method: requestedMethod,
+          statusCode: 404,
+        },
+        suggestionsConfig,
+      );
+
+      if (hints.length > 0) {
+        try {
+          const formatted = formatSuggestions(hints);
+          if (formatted) {
+            logger.warn(
+              `Route not found: ${requestedMethod} ${requestedPath}${formatted}`,
+              "router-404",
+            );
+          }
+        } catch {
+          // best-effort logging
+        }
+      }
+
+      const routeSuggestion = hints.find((hint) => hint.type === "route");
+      const actionHint = hints.find((hint) => hint.type === "hint");
+
+      const body: Record<string, unknown> = {
+        type: "https://expressots.dev/errors/not-found",
+        title: "Route Not Found",
+        status: 404,
+        detail: `Route '${requestedMethod} ${requestedPath}' does not exist`,
+        instance: requestedPath,
+        timestamp: new Date().toISOString(),
+      };
+
+      if (routeSuggestion?.routes && routeSuggestion.routes.length > 0) {
+        body.suggestions = routeSuggestion.routes.map((suggestion) => ({
+          method: suggestion.route.method,
+          path: suggestion.route.fullPath || suggestion.route.path,
+          similarity: Math.round(suggestion.similarity * 100),
+          reason: suggestion.reason,
+        }));
+      } else if (actionHint?.actions && actionHint.actions.length > 0) {
+        body.actions = actionHint.actions;
+      }
+
+      res.status(404).type("application/json").send(JSON.stringify(body));
+    });
   };
 
   /**
@@ -177,9 +264,24 @@ export function micro(config?: MicroConfig): MicroApp {
     async listen(port, appInfo) {
       const normalizedPort = typeof port === "string" ? parseInt(port, 10) : port;
 
-      // Apply error handler last
+      // Install the 404 fallback before the user error handler so unmatched
+      // routes get suggestions instead of falling through to the default
+      // Express HTML or - worse - to a regular middleware that arity-confused
+      // its way into running on every request.
+      installNotFoundHandler();
+
+      // Apply error handler last. Wrap it in a 4-arity function so that
+      // Express recognizes it as an error-handling middleware regardless of
+      // whether the user wrote `(err, req, res)` or `(err, req, res, next)`.
+      // Without this wrapper, Express would treat a 3-arg user handler as a
+      // regular middleware and run it on every request, which both swallows
+      // 404s and crashes when the user calls `res.status(...)` (positional
+      // `res` would actually be Express's `next`).
       if (errorHandler) {
-        app.use(errorHandler);
+        const userHandler = errorHandler;
+        const wrappedErrorHandler: express.ErrorRequestHandler = (err, req, res, next) =>
+          userHandler(err, req, res, next);
+        app.use(wrappedErrorHandler);
       }
 
       return new Promise((resolve, reject) => {

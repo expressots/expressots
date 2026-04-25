@@ -1,6 +1,6 @@
 import { Logger } from "@expressots/core";
 import { interfaces } from "@expressots/core";
-import { METADATA_KEY, NO_CONTROLLERS_FOUND, TYPE } from "./constants";
+import { METADATA_KEY, NO_CONTROLLERS_FOUND, TYPE } from "./constants.js";
 import type {
   BaseController,
   ControllerMetadata,
@@ -8,7 +8,7 @@ import type {
   ControllerParameterMetadata,
   DecoratorTarget,
   IHttpActionResult,
-} from "./interfaces";
+} from "./interfaces.js";
 
 export function getControllersFromContainer(
   container: interfaces.Container,

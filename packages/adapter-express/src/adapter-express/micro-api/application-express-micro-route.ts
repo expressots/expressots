@@ -1,6 +1,6 @@
 import { Logger } from "@expressots/core";
 import express from "express";
-import { Middleware } from "../express-utils/interfaces";
+import { Middleware } from "../express-utils/interfaces.js";
 
 /**
  * Handler function that can return a value to be sent as response

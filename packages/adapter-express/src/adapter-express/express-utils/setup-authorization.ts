@@ -1,11 +1,11 @@
 import { interfaces } from "@expressots/core";
 import { setupAuthorization, type AuthorizationConfig } from "@expressots/core";
-import { ScopeExtractor } from "./scope-extractor";
-import { GuardContextFactory } from "./guard-context-factory";
-import { GuardMiddleware } from "./guard-middleware";
-import { PermissionPreloaderMiddleware } from "./permission-preloader.middleware";
-import { TYPE } from "./constants";
-import type { AuthProvider } from "./interfaces";
+import { ScopeExtractor } from "./scope-extractor.js";
+import { GuardContextFactory } from "./guard-context-factory.js";
+import { GuardMiddleware } from "./guard-middleware.js";
+import { PermissionPreloaderMiddleware } from "./permission-preloader.middleware.js";
+import { TYPE } from "./constants.js";
+import type { AuthProvider } from "./interfaces.js";
 import type { IMiddleware } from "@expressots/core";
 
 /**

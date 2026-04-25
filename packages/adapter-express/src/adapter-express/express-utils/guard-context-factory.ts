@@ -2,9 +2,9 @@ import "reflect-metadata";
 import { Request, Response } from "express";
 import { inject, injectable, Container, interfaces } from "@expressots/core";
 import type { GuardContext, RouteMetadata, Principal } from "@expressots/core";
-import type { HttpContext } from "./interfaces";
-import type { IScopeExtractor } from "./scope-extractor.interface";
-import { METADATA_KEY } from "./constants";
+import type { HttpContext } from "./interfaces.js";
+import type { IScopeExtractor } from "./scope-extractor.interface.js";
+import { getHttpContext } from "./http-context-store.js";
 
 /**
  * Factory for creating GuardContext from Express request/response
@@ -20,8 +20,9 @@ export class GuardContextFactory {
    * Create GuardContext from Express request/response
    */
   async create(req: Request, res: Response): Promise<GuardContext> {
-    // Get HttpContext (already created by InversifyExpressServer via Reflect.defineMetadata)
-    const httpContext = Reflect.getMetadata(METADATA_KEY.httpContext, req) as HttpContext;
+    // Get HttpContext (created by InversifyExpressServer's first middleware
+    // and stored in a per-request WeakMap; see http-context-store.ts).
+    const httpContext = getHttpContext(req) as HttpContext;
 
     if (!httpContext) {
       throw new Error(

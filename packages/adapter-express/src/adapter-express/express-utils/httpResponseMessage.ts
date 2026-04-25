@@ -1,5 +1,5 @@
 import type { OutgoingHttpHeaders } from "node:http";
-import { HttpContent } from "./content/httpContent";
+import { HttpContent } from "./content/httpContent.js";
 
 export class HttpResponseMessage {
   private _content!: HttpContent;

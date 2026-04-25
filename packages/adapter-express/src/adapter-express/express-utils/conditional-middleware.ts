@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import type { Middleware, MiddlewareClass } from "./interfaces";
+import type { Middleware, MiddlewareClass } from "./interfaces.js";
 
 /**
  * Type definition for middleware condition functions.

@@ -3,4 +3,4 @@
  * @description Exports for ExpressoTS middleware
  */
 
-export * from "./request-logging.middleware";
+export * from "./request-logging.middleware.js";

@@ -1,5 +1,6 @@
 import express from "express";
 import { Server as HTTPServer } from "http";
+import * as fs from "node:fs";
 
 // Note: We use the global `process` object directly instead of importing it
 // because signal handlers (SIGTERM, SIGINT, etc.) don't work correctly when
@@ -24,17 +25,18 @@ import {
 import { Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
 import { interfaces } from "@expressots/core";
-import { ExpressHandler, MiddlewareConfig } from "./application-express.types";
-import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware";
-import { InversifyExpressServer } from "./express-utils/inversify-express-server";
-import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine";
+import { ExpressHandler, MiddlewareConfig } from "./application-express.types.js";
+import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware.js";
+import { InversifyExpressServer } from "./express-utils/inversify-express-server.js";
+import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine.js";
 import { AddressInfo } from "net";
 import {
   getControllersFromMetadata,
   getControllersFromContainer,
   getControllerMethodMetadata,
   getControllerMetadata,
-} from "./express-utils/utils";
+} from "./express-utils/utils.js";
+import { initializeStudio, stopStudio, isStudioEnabled } from "./studio/index.js";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -65,6 +67,12 @@ export class AppExpress implements Server.IWebServer {
   private bannerGenerator: BannerGenerator | null = null;
   private bannerConfig: BannerConfig | undefined;
   private shutdownHandlers: Map<NodeJS.Signals, () => void> = new Map();
+  private studioConfig: {
+    enabled?: boolean;
+    port?: number;
+    dbPath?: string;
+    serviceName?: string;
+  } = {};
   /** Track active connections for force-close during shutdown */
   private activeConnections: Set<import("net").Socket> = new Set();
   /** Timeout for force-closing connections during shutdown (ms) */
@@ -116,9 +124,8 @@ export class AppExpress implements Server.IWebServer {
     AppExpress.originalStdoutWrite = process.stdout.write.bind(process.stdout);
     AppExpress.originalStderrWrite = process.stderr.write.bind(process.stderr);
 
-    // Create wrapper functions that use fs.writeSync directly (always works)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const fsModule = require("fs");
+    // Create wrapper functions that use fs.writeSync directly (always works
+    // in both CJS and ESM scope - hence the static `node:fs` import above).
     const createOriginalConsoleMethod =
       (useStderr: boolean = false) =>
       (...args: Array<unknown>): void => {
@@ -136,7 +143,7 @@ export class AppExpress implements Server.IWebServer {
             })
             .join(" ") + "\n";
         // Use fs.writeSync directly - this always works
-        fsModule.writeSync(useStderr ? 2 : 1, message);
+        fs.writeSync(useStderr ? 2 : 1, message);
       };
 
     AppExpress.originalGlobalConsole = {
@@ -318,15 +325,18 @@ export class AppExpress implements Server.IWebServer {
    * @internal
    */
   private async handleExit(signal?: NodeJS.Signals): Promise<void> {
-    // 1. Execute lifecycle shutdown hooks on all IShutdown providers
+    // 1. Stop Studio Agent if running
+    await stopStudio();
+
+    // 2. Execute lifecycle shutdown hooks on all IShutdown providers
     if (this.lifecycleRegistry) {
       await this.lifecycleRegistry.executeShutdown(signal);
     }
 
-    // 2. Call user's serverShutdown hook
+    // 3. Call user's serverShutdown hook
     await this.handleSyncOrAsync(this.serverShutdown(signal));
 
-    // 3. Gracefully close the HTTP server with connection force-close
+    // 4. Gracefully close the HTTP server with connection force-close
     if (this.serverInstance) {
       await new Promise<void>((resolve) => {
         // Set a timeout to force-destroy connections if graceful shutdown takes too long
@@ -556,6 +566,9 @@ export class AppExpress implements Server.IWebServer {
     const tempApp = express();
     (this.Middleware as Middleware).setExpressApp(tempApp);
 
+    // Initialize Studio Agent if available (adds middleware before user middlewares)
+    await initializeStudio(tempApp, this.studioConfig);
+
     await this.handleSyncOrAsync(this.configureServices());
 
     const sortedMiddlewarePipeline = (this.Middleware as Middleware).getMiddlewarePipeline();
@@ -566,9 +579,12 @@ export class AppExpress implements Server.IWebServer {
     /* Apply the status code to the response */
     this.middlewares.unshift(new HttpStatusCodeMiddleware(this.globalPrefix) as ExpressoMiddleware);
 
-    const expressServer = new InversifyExpressServer(this.appContainer.Container, null, {
-      rootPath: this.globalPrefix as string,
-    });
+    const expressServer = new InversifyExpressServer(
+      this.appContainer.Container,
+      null,
+      { rootPath: this.globalPrefix as string },
+      tempApp, // Pass tempApp to use the same Express app where studio middleware is registered
+    );
 
     // Pass ContentNegotiationService to InversifyExpressServer if available
     const contentNegotiationService = (
@@ -581,7 +597,9 @@ export class AppExpress implements Server.IWebServer {
     // Pass ValidationService to InversifyExpressServer if validation is configured
     const validationConfig = (this.Middleware as Middleware).getValidationConfig?.();
     if (validationConfig) {
-      const { ValidationService } = await import("./express-utils/validation-service");
+      // `.js` extension required by NodeNext for ESM consumers; the
+      // CJS build accepts it unchanged.
+      const { ValidationService } = await import("./express-utils/validation-service.js");
       const { ClassValidatorAdapter } = await import("@expressots/core");
 
       const validationService = new ValidationService();
@@ -1059,6 +1077,47 @@ export class AppExpress implements Server.IWebServer {
    */
   public setBanner(config: BannerConfig): void {
     this.bannerConfig = config;
+  }
+
+  /**
+   * Configure ExpressoTS Studio integration.
+   * When enabled and @expressots/studio-agent is installed, automatically
+   * instruments the application for request recording and real-time monitoring.
+   *
+   * By default, Studio is auto-enabled in development if the package is installed.
+   * Use this method to customize behavior or enable in production.
+   *
+   * @param config - Studio configuration options
+   * @example
+   * ```typescript
+   * export class App extends AppExpress {
+   *   configureServices(): void {
+   *     this.setStudio({
+   *       enabled: true,    // Force enable (default: auto in dev)
+   *       port: 3334,       // WebSocket port for UI connection
+   *       serviceName: 'my-app', // Service name for tracing
+   *     });
+   *   }
+   * }
+   * ```
+   * @public API
+   */
+  public setStudio(config: {
+    enabled?: boolean;
+    port?: number;
+    dbPath?: string;
+    serviceName?: string;
+  }): void {
+    this.studioConfig = config;
+  }
+
+  /**
+   * Check if ExpressoTS Studio is currently enabled.
+   * @returns Boolean indicating if Studio Agent is running.
+   * @public API
+   */
+  public isStudioEnabled(): boolean {
+    return isStudioEnabled();
   }
 
   /**

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { inject } from "@expressots/core";
-import { BaseMiddleware } from "./base-middleware";
+import { BaseMiddleware } from "./base-middleware.js";
 import type { ISecurityContext } from "@expressots/core";
-import type { HttpContext } from "./interfaces";
+import type { HttpContext } from "./interfaces.js";
 
 /**
  * Middleware that preloads permissions for authenticated users

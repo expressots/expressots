@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { injectable } from "@expressots/core";
 import type { GuardScope } from "@expressots/core";
-import type { IScopeExtractor } from "./scope-extractor.interface";
+import type { IScopeExtractor } from "./scope-extractor.interface.js";
 
 /**
  * Extracts scope information from requests

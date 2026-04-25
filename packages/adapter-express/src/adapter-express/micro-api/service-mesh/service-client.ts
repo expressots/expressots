@@ -1,4 +1,4 @@
-import { CircuitBreaker, CircuitBreakerConfig } from "../gateway/circuit-breaker";
+import { CircuitBreaker, CircuitBreakerConfig } from "../gateway/circuit-breaker.js";
 
 /**
  * Configuration for ServiceClient

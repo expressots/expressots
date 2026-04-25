@@ -1,4 +1,4 @@
-import type { Middleware } from "./interfaces";
+import type { Middleware } from "./interfaces.js";
 
 /**
  * Configuration object for composed middleware.

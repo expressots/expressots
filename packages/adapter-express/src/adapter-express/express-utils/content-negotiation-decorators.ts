@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { METADATA_KEY } from "./constants";
+import { METADATA_KEY } from "./constants.js";
 import type { CsvFormatOptions, XmlFormatOptions, YamlFormatOptions } from "@expressots/core";
 
 /**

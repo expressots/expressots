@@ -8,7 +8,7 @@ import {
   HTTP_VERBS_ENUM,
   HTTP_CODE_METADATA,
   RENDER_METADATA_KEY,
-} from "./constants";
+} from "./constants.js";
 import type {
   Controller,
   ControllerMetadata,
@@ -19,12 +19,17 @@ import type {
   Middleware,
   NewableFunction,
   ParameterMetadata,
-} from "./interfaces";
-import { packageResolver } from "./resolver-multer";
+} from "./interfaces.js";
+import { packageResolver } from "./resolver-multer.js";
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import { Report, StatusCode } from "@expressots/core";
 
-export const injectHttpContext = inject(TYPE.HttpContext);
+// Explicit type annotation: without this, the inferred type pulls a
+// non-portable path from @expressots/core's internal decorator_utils,
+// which TS2742 rejects under NodeNext when emitting .d.ts files.
+export const injectHttpContext: ParameterDecorator & PropertyDecorator = inject(
+  TYPE.HttpContext,
+);
 
 /**
  * Controller decorator to define a new controller

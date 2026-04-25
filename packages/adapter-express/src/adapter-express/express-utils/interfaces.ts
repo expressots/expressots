@@ -1,7 +1,7 @@
 import type { Application, NextFunction, Request, RequestHandler, Response } from "express";
 import { interfaces as inversifyInterfaces } from "@expressots/core";
-import { HTTP_VERBS_ENUM, PARAMETER_TYPE } from "./constants";
-import { HttpResponseMessage } from "./httpResponseMessage";
+import { HTTP_VERBS_ENUM, PARAMETER_TYPE } from "./constants.js";
+import { HttpResponseMessage } from "./httpResponseMessage.js";
 
 /**
  * Type for a constructor function (class)
