@@ -2,7 +2,12 @@ import { Application } from "express";
 import { Logger } from "@expressots/core";
 import { RenderEngine } from "@expressots/shared";
 import { packageResolver } from "./resolve-render.js";
-import { DEFAULT_PARTIALS_DIR, EJS_DEFAULTS, HANDLEBARS_DEFAULTS, PUG_DEFAULTS } from "./constants.js";
+import {
+  DEFAULT_PARTIALS_DIR,
+  EJS_DEFAULTS,
+  HANDLEBARS_DEFAULTS,
+  PUG_DEFAULTS,
+} from "./constants.js";
 
 /**
  * Set Ejs as the view engine

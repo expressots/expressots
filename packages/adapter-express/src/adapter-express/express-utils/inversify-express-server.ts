@@ -336,7 +336,9 @@ export class InversifyExpressServer {
       return fallback;
     }
     try {
-      const loggerConfig = (logger as unknown as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }).getConfig?.();
+      const loggerConfig = (
+        logger as unknown as { getConfig?: () => { suggestions?: Partial<SuggestionsConfig> } }
+      ).getConfig?.();
       if (loggerConfig?.suggestions) {
         return { ...fallback, ...loggerConfig.suggestions };
       }

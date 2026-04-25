@@ -27,9 +27,7 @@ import { Report, StatusCode } from "@expressots/core";
 // Explicit type annotation: without this, the inferred type pulls a
 // non-portable path from @expressots/core's internal decorator_utils,
 // which TS2742 rejects under NodeNext when emitting .d.ts files.
-export const injectHttpContext: ParameterDecorator & PropertyDecorator = inject(
-  TYPE.HttpContext,
-);
+export const injectHttpContext: ParameterDecorator & PropertyDecorator = inject(TYPE.HttpContext);
 
 /**
  * Controller decorator to define a new controller

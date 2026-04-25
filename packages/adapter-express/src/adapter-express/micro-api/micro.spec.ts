@@ -32,9 +32,7 @@ describe("micro()", () => {
   it("returns the underlying Express app via getApp()", () => {
     const expressApp = app.getApp();
     expect(typeof expressApp).toBe("function");
-    expect(typeof (expressApp as unknown as { use: unknown }).use).toBe(
-      "function",
-    );
+    expect(typeof (expressApp as unknown as { use: unknown }).use).toBe("function");
   });
 
   it("registers GET routes on the underlying Express app", async () => {
@@ -59,14 +57,13 @@ describe("micro()", () => {
       _router?: { stack: Array<{ route?: { path: string } }> };
     };
     const stack = expressApp._router?.stack ?? [];
-    const hasPrefixed = stack.some(
-      (layer) => layer.route?.path === "/api/users",
-    );
+    const hasPrefixed = stack.some((layer) => layer.route?.path === "/api/users");
     expect(hasPrefixed).toBe(true);
   });
 
   it("supports POST/PUT/PATCH/DELETE via the fluent API", () => {
-    app.post("/p", () => 1)
+    app
+      .post("/p", () => 1)
       .put("/p", () => 2)
       .patch("/p", () => 3)
       .delete("/p", () => 4);
@@ -88,8 +85,6 @@ describe("micro()", () => {
   });
 
   it("setErrorHandler() returns the same fluent instance", () => {
-    expect(app.setErrorHandler((_err, _req, _res, _next) => undefined)).toBe(
-      app,
-    );
+    expect(app.setErrorHandler((_err, _req, _res, _next) => undefined)).toBe(app);
   });
 });

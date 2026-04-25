@@ -65,10 +65,7 @@ describe("awsLambdaAdapter", () => {
     };
 
     const handler = awsLambdaAdapter(expressApp);
-    const response = await handler(
-      { httpMethod: "GET", path: "/" },
-      makeContext(),
-    );
+    const response = await handler({ httpMethod: "GET", path: "/" }, makeContext());
 
     expect(response.statusCode).toBe(500);
     expect(JSON.parse(response.body)).toEqual({ error: "kaboom" });
@@ -85,10 +82,7 @@ describe("awsLambdaAdapter", () => {
     const handler = awsLambdaAdapter(
       wrapper as unknown as { getExpressApp?: () => typeof expressApp },
     );
-    const response = await handler(
-      { httpMethod: "GET", path: "/" },
-      makeContext(),
-    );
+    const response = await handler({ httpMethod: "GET", path: "/" }, makeContext());
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toBe("ok");

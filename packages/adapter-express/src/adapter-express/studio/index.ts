@@ -3,4 +3,4 @@ export {
   stopStudio,
   isStudioEnabled,
   getStudioAgent,
-} from './studio-integration.js';
+} from "./studio-integration.js";
