@@ -24,7 +24,7 @@ function isStudioInstalled(): boolean {
 		// Check if the package exists in node_modules
 		const studioPath = resolve(
 			process.cwd(),
-			"node_modules/@expressots/studio"
+			"node_modules/@expressots/studio",
 		);
 		return existsSync(studioPath);
 	} catch {
@@ -53,14 +53,16 @@ async function installStudio(): Promise<boolean> {
 		}
 
 		execSync(command, { stdio: "pipe" });
-		spinner.succeed(chalk.green("@expressots/studio installed successfully"));
+		spinner.succeed(
+			chalk.green("@expressots/studio installed successfully"),
+		);
 		return true;
 	} catch (error) {
 		spinner.fail(chalk.red("Failed to install @expressots/studio"));
 		console.error(
 			chalk.yellow(
-				"\nPlease install manually: npm install -D @expressots/studio"
-			)
+				"\nPlease install manually: npm install -D @expressots/studio",
+			),
 		);
 		return false;
 	}
@@ -90,7 +92,7 @@ async function launchStudio(options: StudioOptions): Promise<void> {
 
 	const studioPath = resolve(
 		process.cwd(),
-		"node_modules/.bin/expressots-studio"
+		"node_modules/.bin/expressots-studio",
 	);
 
 	const child = spawn(studioPath, args, {
@@ -124,21 +126,23 @@ function printPreviewBanner(): void {
 	console.log("");
 	console.log(
 		chalk.yellow(
-			"  ⚠  PREVIEW: Studio is in technical preview for v4.0.0."
-		)
+			"  ⚠  PREVIEW: Studio is in technical preview for v4.0.0.",
+		),
 	);
 	console.log(
 		chalk.gray(
-			"     Replay, Architecture Map and AI Fix Generator are still being"
-		)
+			"     Replay, Architecture Map and AI Fix Generator are still being",
+		),
 	);
 	console.log(
 		chalk.gray(
-			"     finalized. The full release ships with v4.1.0. Roadmap:"
-		)
+			"     finalized. The full release ships with v4.1.0. Roadmap:",
+		),
 	);
 	console.log(
-		chalk.gray("     https://github.com/expressots/expressots/blob/main/ROADMAP_v4.1.md")
+		chalk.gray(
+			"     https://github.com/expressots/expressots/blob/main/ROADMAP_v4.1.md",
+		),
 	);
 	console.log("");
 }
@@ -152,7 +156,9 @@ async function studioHandler(options: StudioOptions): Promise<void> {
 	// Check if Studio is installed
 	if (!isStudioInstalled()) {
 		console.log(
-			chalk.yellow("📦 @expressots/studio is not installed in this project.")
+			chalk.yellow(
+				"📦 @expressots/studio is not installed in this project.",
+			),
 		);
 		console.log("");
 
