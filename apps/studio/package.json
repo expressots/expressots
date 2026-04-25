@@ -1,0 +1,66 @@
+{
+  "name": "@expressots/studio",
+  "version": "4.0.0-preview.1",
+  "publishConfig": {
+    "access": "public",
+    "tag": "preview"
+  },
+  "description": "ExpressoTS Studio - Developer Experience Platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "bin": {
+    "expressots-studio": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@expressots/studio-agent": "4.0.0-preview.1",
+    "@expressots/studio-ui": "4.0.0-preview.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "express": "^4.21.0",
+    "open": "^10.1.0",
+    "ora": "^8.1.0",
+    "serve-static": "^1.16.0",
+    "socket.io-client": "^4.8.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/serve-static": "^1.15.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/expressots-studio",
+    "directory": "packages/studio"
+  },
+  "keywords": [
+    "expressots",
+    "studio",
+    "devtools",
+    "observability",
+    "developer-experience"
+  ],
+  "author": "ExpressoTS Team",
+  "license": "MIT"
+}

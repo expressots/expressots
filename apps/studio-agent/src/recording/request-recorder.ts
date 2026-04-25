@@ -1,0 +1,487 @@
+/**
+ * Request/Response recorder for ExpressoTS Studio
+ * Stores request/response pairs for replay functionality
+ */
+
+import Database from 'better-sqlite3';
+import * as fs from 'fs';
+import * as path from 'path';
+import { randomUUID } from 'crypto';
+import type {
+  RecordedRequest,
+  RecordedResponse,
+  RecordedExchange,
+  TraceInfo,
+  HttpMethod,
+} from '../types/index.js';
+
+export class RequestRecorder {
+  private db: Database.Database | null = null;
+  private dbPath: string;
+  private maxExchanges: number;
+  private initialized: boolean = false;
+
+  constructor(dbPath: string = '.studio/studio.db', maxExchanges: number = 1000) {
+    this.dbPath = dbPath;
+    this.maxExchanges = maxExchanges;
+  }
+
+  /** Initialize the database */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    // Ensure directory exists
+    const dir = path.dirname(this.dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    this.db = new Database(this.dbPath);
+    this.db.pragma('journal_mode = WAL');
+
+    // Create tables
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS requests (
+        id TEXT PRIMARY KEY,
+        trace_id TEXT,
+        timestamp INTEGER NOT NULL,
+        method TEXT NOT NULL,
+        path TEXT NOT NULL,
+        url TEXT NOT NULL,
+        headers TEXT NOT NULL,
+        query TEXT NOT NULL,
+        body TEXT,
+        cookies TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS responses (
+        id TEXT PRIMARY KEY,
+        request_id TEXT NOT NULL,
+        trace_id TEXT,
+        timestamp INTEGER NOT NULL,
+        status_code INTEGER NOT NULL,
+        status_message TEXT NOT NULL,
+        headers TEXT NOT NULL,
+        body TEXT,
+        duration INTEGER NOT NULL,
+        FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS traces (
+        trace_id TEXT PRIMARY KEY,
+        request_id TEXT,
+        data TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_requests_timestamp ON requests(timestamp);
+      CREATE INDEX IF NOT EXISTS idx_requests_trace_id ON requests(trace_id);
+      CREATE INDEX IF NOT EXISTS idx_requests_path ON requests(path);
+      CREATE INDEX IF NOT EXISTS idx_responses_request_id ON responses(request_id);
+    `);
+
+    this.initialized = true;
+  }
+
+  /** Record a request */
+  recordRequest(
+    method: HttpMethod,
+    path: string,
+    url: string,
+    headers: Record<string, string>,
+    query: Record<string, string>,
+    body?: unknown,
+    cookies?: Record<string, string>,
+    traceId?: string
+  ): RecordedRequest {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const id = randomUUID();
+    const timestamp = Date.now();
+
+    const request: RecordedRequest = {
+      id,
+      traceId: traceId || '',
+      timestamp,
+      method,
+      path,
+      url,
+      headers,
+      query,
+      body,
+      cookies,
+    };
+
+    const stmt = this.db.prepare(`
+      INSERT INTO requests (id, trace_id, timestamp, method, path, url, headers, query, body, cookies)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      traceId || null,
+      timestamp,
+      method,
+      path,
+      url,
+      JSON.stringify(headers),
+      JSON.stringify(query),
+      body ? JSON.stringify(body) : null,
+      cookies ? JSON.stringify(cookies) : null
+    );
+
+    // Cleanup old entries if needed
+    this.cleanup();
+
+    return request;
+  }
+
+  /** Record a response */
+  recordResponse(
+    requestId: string,
+    statusCode: number,
+    statusMessage: string,
+    headers: Record<string, string>,
+    body?: unknown,
+    duration?: number,
+    traceId?: string
+  ): RecordedResponse {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const id = randomUUID();
+    const timestamp = Date.now();
+
+    const response: RecordedResponse = {
+      id,
+      requestId,
+      traceId: traceId || '',
+      timestamp,
+      statusCode,
+      statusMessage,
+      headers,
+      body,
+      duration: duration || 0,
+    };
+
+    const stmt = this.db.prepare(`
+      INSERT INTO responses (id, request_id, trace_id, timestamp, status_code, status_message, headers, body, duration)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      requestId,
+      traceId || null,
+      timestamp,
+      statusCode,
+      statusMessage,
+      JSON.stringify(headers),
+      body ? JSON.stringify(body) : null,
+      duration || 0
+    );
+
+    return response;
+  }
+
+  /** Record trace data */
+  recordTrace(traceId: string, trace: TraceInfo, requestId?: string): void {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO traces (trace_id, request_id, data, timestamp)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    stmt.run(traceId, requestId || null, JSON.stringify(trace), Date.now());
+  }
+
+  /** Get a recorded exchange by ID */
+  getExchange(requestId: string): RecordedExchange | null {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const requestStmt = this.db.prepare('SELECT * FROM requests WHERE id = ?');
+    const requestRow = requestStmt.get(requestId) as any;
+    if (!requestRow) return null;
+
+    const responseStmt = this.db.prepare(
+      'SELECT * FROM responses WHERE request_id = ?'
+    );
+    const responseRow = responseStmt.get(requestId) as any;
+
+    const traceStmt = this.db.prepare(
+      'SELECT * FROM traces WHERE request_id = ? OR trace_id = ?'
+    );
+    const traceRow = traceStmt.get(requestId, requestRow.trace_id) as any;
+
+    return {
+      id: requestRow.id,
+      request: {
+        id: requestRow.id,
+        traceId: requestRow.trace_id || '',
+        timestamp: requestRow.timestamp,
+        method: requestRow.method as HttpMethod,
+        path: requestRow.path,
+        url: requestRow.url,
+        headers: JSON.parse(requestRow.headers),
+        query: JSON.parse(requestRow.query),
+        body: requestRow.body ? JSON.parse(requestRow.body) : undefined,
+        cookies: requestRow.cookies ? JSON.parse(requestRow.cookies) : undefined,
+      },
+      response: responseRow
+        ? {
+            id: responseRow.id,
+            requestId: responseRow.request_id,
+            traceId: responseRow.trace_id || '',
+            timestamp: responseRow.timestamp,
+            statusCode: responseRow.status_code,
+            statusMessage: responseRow.status_message,
+            headers: JSON.parse(responseRow.headers),
+            body: responseRow.body ? JSON.parse(responseRow.body) : undefined,
+            duration: responseRow.duration,
+          }
+        : {
+            id: '',
+            requestId: requestRow.id,
+            traceId: '',
+            timestamp: 0,
+            statusCode: 0,
+            statusMessage: 'No response recorded',
+            headers: {},
+            duration: 0,
+          },
+      trace: traceRow ? JSON.parse(traceRow.data) : undefined,
+    };
+  }
+
+  /** Get recent exchanges */
+  getRecentExchanges(
+    limit: number = 100,
+    offset: number = 0
+  ): RecordedExchange[] {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const stmt = this.db.prepare(`
+      SELECT r.*, 
+             res.id as res_id, res.timestamp as res_timestamp, 
+             res.status_code, res.status_message, 
+             res.headers as res_headers, res.body as res_body, res.duration,
+             t.data as trace_data
+      FROM requests r
+      LEFT JOIN responses res ON r.id = res.request_id
+      LEFT JOIN traces t ON r.trace_id = t.trace_id
+      ORDER BY r.timestamp DESC
+      LIMIT ? OFFSET ?
+    `);
+
+    const rows = stmt.all(limit, offset) as any[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      request: {
+        id: row.id,
+        traceId: row.trace_id || '',
+        timestamp: row.timestamp,
+        method: row.method as HttpMethod,
+        path: row.path,
+        url: row.url,
+        headers: JSON.parse(row.headers),
+        query: JSON.parse(row.query),
+        body: row.body ? JSON.parse(row.body) : undefined,
+        cookies: row.cookies ? JSON.parse(row.cookies) : undefined,
+      },
+      response: row.res_id
+        ? {
+            id: row.res_id,
+            requestId: row.id,
+            traceId: row.trace_id || '',
+            timestamp: row.res_timestamp,
+            statusCode: row.status_code,
+            statusMessage: row.status_message,
+            headers: JSON.parse(row.res_headers),
+            body: row.res_body ? JSON.parse(row.res_body) : undefined,
+            duration: row.duration,
+          }
+        : {
+            id: '',
+            requestId: row.id,
+            traceId: '',
+            timestamp: 0,
+            statusCode: 0,
+            statusMessage: 'No response recorded',
+            headers: {},
+            duration: 0,
+          },
+      trace: row.trace_data ? JSON.parse(row.trace_data) : undefined,
+    }));
+  }
+
+  /** Search exchanges by path or method */
+  searchExchanges(
+    query: string,
+    method?: HttpMethod,
+    limit: number = 100
+  ): RecordedExchange[] {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    let sql = `
+      SELECT r.*, 
+             res.id as res_id, res.timestamp as res_timestamp, 
+             res.status_code, res.status_message, 
+             res.headers as res_headers, res.body as res_body, res.duration,
+             t.data as trace_data
+      FROM requests r
+      LEFT JOIN responses res ON r.id = res.request_id
+      LEFT JOIN traces t ON r.trace_id = t.trace_id
+      WHERE r.path LIKE ?
+    `;
+
+    const params: any[] = [`%${query}%`];
+
+    if (method) {
+      sql += ' AND r.method = ?';
+      params.push(method);
+    }
+
+    sql += ' ORDER BY r.timestamp DESC LIMIT ?';
+    params.push(limit);
+
+    const stmt = this.db.prepare(sql);
+    const rows = stmt.all(...params) as any[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      request: {
+        id: row.id,
+        traceId: row.trace_id || '',
+        timestamp: row.timestamp,
+        method: row.method as HttpMethod,
+        path: row.path,
+        url: row.url,
+        headers: JSON.parse(row.headers),
+        query: JSON.parse(row.query),
+        body: row.body ? JSON.parse(row.body) : undefined,
+        cookies: row.cookies ? JSON.parse(row.cookies) : undefined,
+      },
+      response: row.res_id
+        ? {
+            id: row.res_id,
+            requestId: row.id,
+            traceId: row.trace_id || '',
+            timestamp: row.res_timestamp,
+            statusCode: row.status_code,
+            statusMessage: row.status_message,
+            headers: JSON.parse(row.res_headers),
+            body: row.res_body ? JSON.parse(row.res_body) : undefined,
+            duration: row.duration,
+          }
+        : {
+            id: '',
+            requestId: row.id,
+            traceId: '',
+            timestamp: 0,
+            statusCode: 0,
+            statusMessage: 'No response recorded',
+            headers: {},
+            duration: 0,
+          },
+      trace: row.trace_data ? JSON.parse(row.trace_data) : undefined,
+    }));
+  }
+
+  /** Get statistics */
+  getStats(): {
+    totalRequests: number;
+    totalErrors: number;
+    avgDuration: number;
+    requestsByPath: Record<string, number>;
+    requestsByMethod: Record<string, number>;
+  } {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const totalStmt = this.db.prepare('SELECT COUNT(*) as count FROM requests');
+    const totalRow = totalStmt.get() as any;
+
+    const errorStmt = this.db.prepare(
+      'SELECT COUNT(*) as count FROM responses WHERE status_code >= 400'
+    );
+    const errorRow = errorStmt.get() as any;
+
+    const avgStmt = this.db.prepare(
+      'SELECT AVG(duration) as avg FROM responses'
+    );
+    const avgRow = avgStmt.get() as any;
+
+    const pathStmt = this.db.prepare(
+      'SELECT path, COUNT(*) as count FROM requests GROUP BY path ORDER BY count DESC LIMIT 20'
+    );
+    const pathRows = pathStmt.all() as any[];
+
+    const methodStmt = this.db.prepare(
+      'SELECT method, COUNT(*) as count FROM requests GROUP BY method'
+    );
+    const methodRows = methodStmt.all() as any[];
+
+    const requestsByPath: Record<string, number> = {};
+    for (const row of pathRows) {
+      requestsByPath[row.path] = row.count;
+    }
+
+    const requestsByMethod: Record<string, number> = {};
+    for (const row of methodRows) {
+      requestsByMethod[row.method] = row.count;
+    }
+
+    return {
+      totalRequests: totalRow.count,
+      totalErrors: errorRow.count,
+      avgDuration: avgRow.avg || 0,
+      requestsByPath,
+      requestsByMethod,
+    };
+  }
+
+  /** Delete an exchange */
+  deleteExchange(requestId: string): void {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    const stmt = this.db.prepare('DELETE FROM requests WHERE id = ?');
+    stmt.run(requestId);
+  }
+
+  /** Clear all recorded data */
+  clearAll(): void {
+    if (!this.db) throw new Error('RequestRecorder not initialized');
+
+    this.db.exec('DELETE FROM traces');
+    this.db.exec('DELETE FROM responses');
+    this.db.exec('DELETE FROM requests');
+  }
+
+  /** Cleanup old entries if exceeding max */
+  private cleanup(): void {
+    if (!this.db) return;
+
+    const countStmt = this.db.prepare('SELECT COUNT(*) as count FROM requests');
+    const row = countStmt.get() as any;
+
+    if (row.count > this.maxExchanges) {
+      const deleteCount = row.count - this.maxExchanges;
+      const deleteStmt = this.db.prepare(`
+        DELETE FROM requests WHERE id IN (
+          SELECT id FROM requests ORDER BY timestamp ASC LIMIT ?
+        )
+      `);
+      deleteStmt.run(deleteCount);
+    }
+  }
+
+  /** Close the database connection */
+  close(): void {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+      this.initialized = false;
+    }
+  }
+}

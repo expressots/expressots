@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build artifacts
+dist/
+build/
+lib/
+out/
+*.tsbuildinfo
+
+# npm pack output
+*.tgz
+
+# Vite / Studio UI
+packages/studio-ui/dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Studio runtime data
+.studio/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Private keys / certs - never commit
+*.pem
+*.key
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+
+# Misc
+*.swp
+*~
