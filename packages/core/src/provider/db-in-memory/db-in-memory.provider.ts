@@ -1,5 +1,9 @@
 import { provideSingleton } from "../../decorator/scope-binding.js";
-import { IDataProvider, IEntity, IDataTable } from "./db-in-memory.interface.js";
+import {
+  IDataProvider,
+  IEntity,
+  IDataTable,
+} from "./db-in-memory.interface.js";
 import {
   EntityAlreadyExistsError,
   EntityNotFoundError,

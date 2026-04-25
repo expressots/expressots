@@ -89,4 +89,7 @@ export {
 export { EventRegistry, createEventRegistry } from "./event-registry.js";
 export { EventEmitter, createEventEmitter } from "./event-emitter.js";
 export { EventRecorder, createEventRecorder } from "./event-recorder.js";
-export { EventFlowTracker, createEventFlowTracker } from "./event-flow-tracker.js";
+export {
+  EventFlowTracker,
+  createEventFlowTracker,
+} from "./event-flow-tracker.js";

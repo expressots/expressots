@@ -92,7 +92,10 @@ export {
 // Lazy Module Loader
 // ============================================================================
 
-export { LazyModuleLoader, createLazyModuleLoader } from "./lazy-module-loader.js";
+export {
+  LazyModuleLoader,
+  createLazyModuleLoader,
+} from "./lazy-module-loader.js";
 
 // ============================================================================
 // Lazy Module Manager
@@ -113,4 +116,7 @@ export { LazyLoadMetrics, createLazyLoadMetrics } from "./lazy-load-metrics.js";
 // Lazy Module Warmup
 // ============================================================================
 
-export { LazyModuleWarmup, createLazyModuleWarmup } from "./lazy-module-warmup.js";
+export {
+  LazyModuleWarmup,
+  createLazyModuleWarmup,
+} from "./lazy-module-warmup.js";

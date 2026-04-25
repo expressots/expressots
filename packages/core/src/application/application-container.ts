@@ -1,6 +1,11 @@
 import "reflect-metadata";
 
-import { Scope, Container, ContainerModule, interfaces } from "../di/inversify.js";
+import {
+  Scope,
+  Container,
+  ContainerModule,
+  interfaces,
+} from "../di/inversify.js";
 import { buildProviderModule } from "../di/binding-decorator/index.js";
 import { Logger } from "../provider/index.js";
 import {

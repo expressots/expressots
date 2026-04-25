@@ -28,7 +28,9 @@ export function forEachBinding(
   const dict = (container as any)._bindingDictionary;
   if (!dict) return 0;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const map = dict._map as Map<unknown, Array<interfaces.Binding<unknown>>> | undefined;
+  const map = dict._map as
+    | Map<unknown, Array<interfaces.Binding<unknown>>>
+    | undefined;
   if (!map) return 0;
 
   let count = 0;
