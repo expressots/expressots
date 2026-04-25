@@ -4,7 +4,7 @@
  * @runnable true
  */
 
-import { bootstrap } from "../../bootstrap";
+import { bootstrap } from "../../bootstrap.js";
 import { AppExpress } from "@expressots/adapter-express";
 
 class TestApp extends AppExpress {

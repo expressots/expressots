@@ -69,7 +69,7 @@ export {
   HandlerExecutionResult,
   EventSystemConfig,
   EVENT_METADATA,
-} from "./event.interfaces";
+} from "./event.interfaces.js";
 
 // Decorators
 export {
@@ -83,10 +83,10 @@ export {
   getEventOptions,
   getEventCondition,
   getEventMetadata,
-} from "./event-decorators";
+} from "./event-decorators.js";
 
 // Services
-export { EventRegistry, createEventRegistry } from "./event-registry";
-export { EventEmitter, createEventEmitter } from "./event-emitter";
-export { EventRecorder, createEventRecorder } from "./event-recorder";
-export { EventFlowTracker, createEventFlowTracker } from "./event-flow-tracker";
+export { EventRegistry, createEventRegistry } from "./event-registry.js";
+export { EventEmitter, createEventEmitter } from "./event-emitter.js";
+export { EventRecorder, createEventRecorder } from "./event-recorder.js";
+export { EventFlowTracker, createEventFlowTracker } from "./event-flow-tracker.js";

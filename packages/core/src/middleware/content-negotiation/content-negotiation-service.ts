@@ -1,19 +1,19 @@
 import { Request, Response } from "express";
-import { interfaces } from "../../di/interfaces/interfaces";
+import { interfaces } from "../../di/interfaces/interfaces.js";
 import {
   ContentNegotiationOptions,
   NegotiationResult,
   AcceptHeaderEntry,
-} from "../interfaces/content-negotiation.interface";
-import { FormatterRegistry } from "./formatter-registry";
-import { AcceptHeaderParser } from "./accept-header-parser";
+} from "../interfaces/content-negotiation.interface.js";
+import { FormatterRegistry } from "./formatter-registry.js";
+import { AcceptHeaderParser } from "./accept-header-parser.js";
 import {
   JsonFormatter,
   XmlFormatter,
   CsvFormatter,
   YamlFormatter,
   PlainTextFormatter,
-} from "./formatters";
+} from "./formatters/index.js";
 
 /**
  * Service for handling content negotiation.

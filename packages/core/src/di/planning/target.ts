@@ -1,9 +1,9 @@
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { id } from "../utils/id";
-import { getSymbolDescription } from "../utils/serialization";
-import { Metadata } from "./metadata";
-import { QueryableString } from "./queryable_string";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { id } from "../utils/id.js";
+import { getSymbolDescription } from "../utils/serialization.js";
+import { Metadata } from "./metadata.js";
+import { QueryableString } from "./queryable_string.js";
 
 class Target implements interfaces.Target {
   public id: number;

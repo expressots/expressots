@@ -1,4 +1,4 @@
-import { AcceptHeaderEntry } from "../interfaces/content-negotiation.interface";
+import { AcceptHeaderEntry } from "../interfaces/content-negotiation.interface.js";
 
 /**
  * Parser for Accept headers with quality value support (RFC 7231).

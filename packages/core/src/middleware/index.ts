@@ -8,14 +8,14 @@ export {
   MiddlewareEntry,
   MiddlewarePipelineInfo,
   ConditionalMiddlewareConfig,
-} from "./middleware-service";
+} from "./middleware-service.js";
 
 // Middleware interface
 export {
   ErrorHandlerOptions,
   IMiddleware,
   HealthCheckOptions,
-} from "./middleware-interface";
+} from "./middleware-interface.js";
 
 // Middleware resolver utilities
 export {
@@ -29,14 +29,14 @@ export {
   getPackageName,
   MIDDLEWARE_REGISTRY,
   RegisteredMiddlewareName,
-} from "./middleware-resolver";
+} from "./middleware-resolver.js";
 
 // Middleware profiler
 export {
   MiddlewareProfiler,
   MiddlewareMetrics,
   ProfilerStats,
-} from "./middleware-profiler";
+} from "./middleware-profiler.js";
 
 // Middleware presets
 export {
@@ -50,22 +50,25 @@ export {
   getPresetsByTag,
   createPreset,
   mergePresets,
-} from "./middleware-presets";
+} from "./middleware-presets.js";
 
-// Interface exports
-export { OptionsJson } from "./interfaces/body-parser.interface";
-export { CorsOptions } from "./interfaces/cors.interface";
-export { CompressionOptions } from "./interfaces/compression.interface";
-export { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
-export { OptionsHelmet } from "./interfaces/helmet.interface";
-export { SessionOptions } from "./interfaces/express-session.interface";
-export { Keygrip } from "./interfaces/cookie-session/keygrip.interface";
-export { CookieParserOptions } from "./interfaces/cookie-parser.interface";
-export { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
-export { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
-export { multer } from "./interfaces/multer.interface";
-export { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
-export * as IMorgan from "./interfaces/morgan.interface";
+// Interface exports - all type-only. Use `export type` so ESM link
+// validation doesn't reject these re-exports (the source files have
+// no runtime values; the CJS build silently emitted lazy `undefined`
+// getters for them, but ESM is strict about link-time presence).
+export type { OptionsJson } from "./interfaces/body-parser.interface.js";
+export type { CorsOptions } from "./interfaces/cors.interface.js";
+export type { CompressionOptions } from "./interfaces/compression.interface.js";
+export type { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface.js";
+export type { OptionsHelmet } from "./interfaces/helmet.interface.js";
+export type { SessionOptions } from "./interfaces/express-session.interface.js";
+export type { Keygrip } from "./interfaces/cookie-session/keygrip.interface.js";
+export type { CookieParserOptions } from "./interfaces/cookie-parser.interface.js";
+export type { ServeFaviconOptions } from "./interfaces/serve-favicon.interface.js";
+export type { RateLimitOptions } from "./interfaces/express-rate-limit.interface.js";
+export type { multer } from "./interfaces/multer.interface.js";
+export type { OptionsUrlencoded } from "./interfaces/url-encoded.interface.js";
+export type * as IMorgan from "./interfaces/morgan.interface.js";
 
 // Content Negotiation exports
 export {
@@ -77,7 +80,7 @@ export {
   CsvFormatter,
   YamlFormatter,
   PlainTextFormatter,
-} from "./content-negotiation";
+} from "./content-negotiation/index.js";
 export type {
   IContentFormatter,
   ContentNegotiationOptions,
@@ -86,22 +89,22 @@ export type {
   CsvFormatOptions,
   XmlFormatOptions,
   YamlFormatOptions,
-} from "./interfaces/content-negotiation.interface";
+} from "./interfaces/content-negotiation.interface.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // V4 EXPORTS - New unified middleware system
 // ═══════════════════════════════════════════════════════════════════════════
 
 // V4 Middleware utilities
-export { use, compose, when, parallel, timeout } from "./middleware-utils";
+export { use, compose, when, parallel, timeout } from "./middleware-utils.js";
 
 // V4 Middleware registry
 export {
   MiddlewareRegistry,
   getMiddlewareRegistry,
   resetMiddlewareRegistry,
-} from "./middleware-registry";
-export type { MiddlewareEntry as RegistryMiddlewareEntry } from "./middleware-registry";
+} from "./middleware-registry.js";
+export type { MiddlewareEntry as RegistryMiddlewareEntry } from "./middleware-registry.js";
 
 // V4 Upload registry (for @FileUpload decorator integration)
 export {
@@ -110,7 +113,7 @@ export {
   hasGlobalUploadConfig,
   clearGlobalUploadConfig,
   mergeUploadConfigs,
-} from "./upload-registry";
+} from "./upload-registry.js";
 
 // V4 Middleware configuration types
 export type {
@@ -154,4 +157,4 @@ export type {
   RecommendationSeverity,
   // Registry types
   RegisteredMiddleware,
-} from "./middleware-config";
+} from "./middleware-config.js";

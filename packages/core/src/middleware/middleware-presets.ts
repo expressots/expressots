@@ -1,10 +1,10 @@
-import type { OptionsJson } from "./interfaces/body-parser.interface";
-import type { CompressionOptions } from "./interfaces/compression.interface";
-import type { CorsOptions } from "./interfaces/cors.interface";
-import type { OptionsHelmet } from "./interfaces/helmet.interface";
-import type { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
-import type { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
-import type { OptionsMorgan } from "./interfaces/morgan.interface";
+import type { OptionsJson } from "./interfaces/body-parser.interface.js";
+import type { CompressionOptions } from "./interfaces/compression.interface.js";
+import type { CorsOptions } from "./interfaces/cors.interface.js";
+import type { OptionsHelmet } from "./interfaces/helmet.interface.js";
+import type { RateLimitOptions } from "./interfaces/express-rate-limit.interface.js";
+import type { OptionsUrlencoded } from "./interfaces/url-encoded.interface.js";
+import type { OptionsMorgan } from "./interfaces/morgan.interface.js";
 
 /**
  * Individual middleware configuration within a preset.

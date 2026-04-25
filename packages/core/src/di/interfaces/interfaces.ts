@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { FactoryType } from "../utils/factory_type";
+import { FactoryType } from "../utils/factory_type.js";
 
 namespace interfaces {
   export type DynamicValue<T> = (context: interfaces.Context) => T | Promise<T>;

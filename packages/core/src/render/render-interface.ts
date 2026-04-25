@@ -6,7 +6,7 @@ import type {
   StreamOptions,
   RenderMetrics,
   EngineType,
-} from "./render-config";
+} from "./render-config.js";
 
 /**
  * Engine Adapter Interface

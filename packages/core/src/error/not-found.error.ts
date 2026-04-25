@@ -1,5 +1,5 @@
-import { AppError } from "./app-error";
-import { StatusCode } from "./status-code";
+import { AppError } from "./app-error.js";
+import { StatusCode } from "./status-code.js";
 
 /**
  * NotFoundError - Specific error type for resource not found scenarios

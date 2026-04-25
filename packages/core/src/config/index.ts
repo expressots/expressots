@@ -60,7 +60,7 @@
 // Core Exports
 // ============================================================================
 
-export { defineConfig, Env } from "./define-config";
+export { defineConfig, Env } from "./define-config.js";
 
 // Individual field builders (for tree-shaking)
 export {
@@ -73,7 +73,7 @@ export {
   envSecret,
   envJson,
   envArray,
-} from "./env-field-builders";
+} from "./env-field-builders.js";
 
 // ============================================================================
 // Types & Interfaces
@@ -118,10 +118,10 @@ export type {
   // Resolved types
   ResolvedConfig,
   IConfigInstance,
-} from "./config.interfaces";
+} from "./config.interfaces.js";
 
 // ============================================================================
 // Secret Value
 // ============================================================================
 
-export { createSecretValue, isSecretValue } from "./secret-value";
+export { createSecretValue, isSecretValue } from "./secret-value.js";

@@ -8,4 +8,4 @@
  * - @expressots/validator-yup
  */
 
-export { ClassValidatorAdapter } from "./class-validator.adapter";
+export { ClassValidatorAdapter } from "./class-validator.adapter.js";

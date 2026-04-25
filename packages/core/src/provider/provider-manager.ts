@@ -1,6 +1,6 @@
-import { Scope, interfaces } from "../di/inversify";
-import { Logger } from "./logger/logger.provider";
-import { ProviderRegistry } from "./provider-registry";
+import { Scope, interfaces } from "../di/inversify.js";
+import { Logger } from "./logger/logger.provider.js";
+import { ProviderRegistry } from "./provider-registry.js";
 import {
   IProvider,
   ProviderInfo,
@@ -8,7 +8,7 @@ import {
   HealthDashboard,
   MetricsDashboard,
   ProviderCapabilities,
-} from "./provider.interface";
+} from "./provider.interface.js";
 
 // Re-export IProvider for backward compatibility
 export { IProvider };

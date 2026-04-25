@@ -6,11 +6,11 @@
  * This is one of ExpressoTS's jaw-dropping features - no other framework has this!
  */
 
-import { provideSingleton } from "../../decorator/scope-binding";
+import { provideSingleton } from "../../decorator/scope-binding.js";
 import {
   SmartFieldPattern,
   ValidationFieldError,
-} from "./validation.interface";
+} from "./validation.interface.js";
 
 /**
  * Smart Field Detector

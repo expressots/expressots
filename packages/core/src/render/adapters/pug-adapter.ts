@@ -2,8 +2,8 @@
 import * as path from "path";
 import * as fs from "fs";
 import type { Application } from "express";
-import { BaseEngineAdapter } from "./base-adapter";
-import type { PugConfig } from "../render-config";
+import { BaseEngineAdapter } from "./base-adapter.js";
+import type { PugConfig } from "../render-config.js";
 
 /**
  * Default Pug configuration.

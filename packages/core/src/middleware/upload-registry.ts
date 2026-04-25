@@ -8,7 +8,7 @@
  * @public API
  */
 
-import type { UploadConfig } from "./middleware-config";
+import type { UploadConfig } from "./middleware-config.js";
 
 /**
  * Global upload configuration storage.

@@ -7,7 +7,7 @@
  * @module db-in-memory/adapter
  */
 
-import { IEntity } from "../schema/entity.interface";
+import { IEntity } from "../schema/entity.interface.js";
 import {
   FindUniqueArgs,
   FindFirstArgs,
@@ -24,7 +24,7 @@ import {
   AggregateResult,
   BatchPayload,
   GroupByArgs,
-} from "../query/query.types";
+} from "../query/query.types.js";
 
 /**
  * Universal Data Adapter Interface.

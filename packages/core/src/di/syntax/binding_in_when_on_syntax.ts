@@ -1,7 +1,7 @@
-import { interfaces } from "../interfaces/interfaces";
-import { BindingInSyntax } from "./binding_in_syntax";
-import { BindingOnSyntax } from "./binding_on_syntax";
-import { BindingWhenSyntax } from "./binding_when_syntax";
+import { interfaces } from "../interfaces/interfaces.js";
+import { BindingInSyntax } from "./binding_in_syntax.js";
+import { BindingOnSyntax } from "./binding_on_syntax.js";
+import { BindingWhenSyntax } from "./binding_when_syntax.js";
 
 class BindingInWhenOnSyntax<T>
   implements

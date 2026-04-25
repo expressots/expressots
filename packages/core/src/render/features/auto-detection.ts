@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as fs from "fs";
 import * as path from "path";
-import { Logger } from "../../provider/logger/logger.provider";
-import type { EngineType } from "../render-config";
+import { Logger } from "../../provider/logger/logger.provider.js";
+import type { EngineType } from "../render-config.js";
 
 /**
  * Auto Detection

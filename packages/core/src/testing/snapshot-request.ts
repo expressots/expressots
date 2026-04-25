@@ -24,8 +24,8 @@ import {
   FluentRequest,
   HttpMethod,
   FluentResponse,
-} from "./testing.interfaces";
-import { createFluentRequest } from "./fluent-request";
+} from "./testing.interfaces.js";
+import { createFluentRequest } from "./fluent-request.js";
 
 /**
  * Internal snapshot request implementation.

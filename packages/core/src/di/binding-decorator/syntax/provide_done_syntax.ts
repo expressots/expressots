@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import interfaces from "../interfaces/interfaces";
+import interfaces from "../interfaces/interfaces.js";
 import {
   decorate,
   injectable,
   METADATA_KEY as inversify_METADATA_KEY,
-} from "../../inversify";
-import { METADATA_KEY } from "../constants";
+} from "../../inversify.js";
+import { METADATA_KEY } from "../constants.js";
 
 class ProvideDoneSyntax implements interfaces.ProvideDoneSyntax {
   private _binding: interfaces.BindConstraint;

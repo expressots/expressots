@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
-import { AppError } from "./app-error";
-import { StatusCode } from "./status-code";
-import { beautifyStackTrace } from "./utils";
+import { AppError } from "./app-error.js";
+import { StatusCode } from "./status-code.js";
+import { beautifyStackTrace } from "./utils.js";
 
 /**
  * errorHandler is a custom Express error-handling middleware function.

@@ -5,14 +5,14 @@
  * Central registry for managing validation adapters
  */
 
-import { provideSingleton } from "../../decorator/scope-binding";
+import { provideSingleton } from "../../decorator/scope-binding.js";
 import {
   IValidationAdapter,
   ValidationConfig,
   ValidationFieldError,
   ValidationOptions,
   ValidationResult,
-} from "./validation.interface";
+} from "./validation.interface.js";
 
 /**
  * Central registry for validation adapters

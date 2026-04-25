@@ -1,11 +1,11 @@
-import { inject, injectable } from "../../di/inversify";
-import { Logger } from "../../provider/logger/logger.provider";
+import { inject, injectable } from "../../di/inversify.js";
+import { Logger } from "../../provider/logger/logger.provider.js";
 import type {
   IInterceptor,
   ExecutionContext,
   CallHandler,
-} from "../interceptor.interface";
-import { Interceptor } from "../interceptor-decorators";
+} from "../interceptor.interface.js";
+import { Interceptor } from "../interceptor-decorators.js";
 
 /**
  * Performance metrics for a single endpoint

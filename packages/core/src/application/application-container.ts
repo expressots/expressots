@@ -1,14 +1,14 @@
 import "reflect-metadata";
 
-import { Scope, Container, ContainerModule, interfaces } from "../di/inversify";
-import { buildProviderModule } from "../di/binding-decorator";
-import { Logger } from "../provider";
+import { Scope, Container, ContainerModule, interfaces } from "../di/inversify.js";
+import { buildProviderModule } from "../di/binding-decorator/index.js";
+import { Logger } from "../provider/index.js";
 import {
   BindingInfo,
   BindingsSummary,
   BindingsFilterOptions,
   ContainerIntrospection,
-} from "./application.types";
+} from "./application.types.js";
 
 /**
  * Dependency injection container wrapper for ExpressoTS applications.

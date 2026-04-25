@@ -23,16 +23,16 @@ export type {
   ValidationResult,
   ParameterSource,
   SmartFieldPattern,
-} from "./validation.interface";
+} from "./validation.interface.js";
 
 // Core components
-export { ValidationRegistry } from "./validation-registry";
-export { SmartFieldDetector } from "./smart-field-detector";
+export { ValidationRegistry } from "./validation-registry.js";
+export { SmartFieldDetector } from "./smart-field-detector.js";
 export {
   HelpfulErrorFormatter,
   type ErrorFormat,
   type FormattedErrorResponse,
-} from "./helpful-error-formatter";
+} from "./helpful-error-formatter.js";
 
 // Type inference utilities
 export {
@@ -45,7 +45,7 @@ export {
   detectSchemaType,
   type InferredTypeInfo,
   type InferredPropertyInfo,
-} from "./type-inference";
+} from "./type-inference.js";
 
 // Built-in adapters
-export { ClassValidatorAdapter } from "./adapters";
+export { ClassValidatorAdapter } from "./adapters/index.js";

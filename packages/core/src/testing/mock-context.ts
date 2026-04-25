@@ -24,7 +24,7 @@ import {
   MockContextOptions,
   MockContext,
   MockFunction,
-} from "./testing.interfaces";
+} from "./testing.interfaces.js";
 
 /**
  * Create a mock function.

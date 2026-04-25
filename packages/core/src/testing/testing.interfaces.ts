@@ -7,7 +7,7 @@
  * These interfaces define the contract for all testing utilities.
  */
 
-import { Container } from "../di/inversify";
+import { Container } from "../di/inversify.js";
 import { Request, Response } from "express";
 
 // ============================================================================

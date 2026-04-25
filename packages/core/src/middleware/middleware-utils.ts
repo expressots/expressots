@@ -8,7 +8,7 @@
  */
 
 import type { Request, Response, NextFunction, RequestHandler } from "express";
-import { getMiddlewareRegistry } from "./middleware-registry";
+import { getMiddlewareRegistry } from "./middleware-registry.js";
 
 /**
  * Get registered middleware by name for use in route decorators.

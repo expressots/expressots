@@ -4,8 +4,8 @@
  * @runnable true
  */
 
-import { CreateModule } from "../../container-module";
-import { Scope } from "../../..";
+import { CreateModule } from "../../container-module.js";
+import { Scope } from "../../../index.js";
 
 // Example classes
 class UserController {}

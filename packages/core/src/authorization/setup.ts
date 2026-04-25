@@ -1,14 +1,14 @@
-import { interfaces } from "../di/inversify";
-import { GuardRegistry } from "./guard-registry";
-import { GuardExecutor } from "./guard-executor";
-import { GuardCache } from "./services/guard-cache";
-import { SecurityContext } from "./services/security-context";
-import { PermissionService } from "./services/permission-service";
-import { PermissionHierarchy } from "./services/permission-hierarchy";
-import type { AuthorizationConfig } from "./authorization-config.interface";
-import type { IGuardCache } from "./services/guard-cache.interface";
-import type { ISecurityContext } from "./services/security-context.interface";
-import type { IPermissionService } from "./services/permission-service.interface";
+import { interfaces } from "../di/inversify.js";
+import { GuardRegistry } from "./guard-registry.js";
+import { GuardExecutor } from "./guard-executor.js";
+import { GuardCache } from "./services/guard-cache.js";
+import { SecurityContext } from "./services/security-context.js";
+import { PermissionService } from "./services/permission-service.js";
+import { PermissionHierarchy } from "./services/permission-hierarchy.js";
+import type { AuthorizationConfig } from "./authorization-config.interface.js";
+import type { IGuardCache } from "./services/guard-cache.interface.js";
+import type { ISecurityContext } from "./services/security-context.interface.js";
+import type { IPermissionService } from "./services/permission-service.interface.js";
 
 /**
  * Default authorization configuration

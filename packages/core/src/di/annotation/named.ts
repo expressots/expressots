@@ -1,6 +1,6 @@
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { Metadata } from "../planning/metadata";
-import { createTaggedDecorator } from "./decorator_utils";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { Metadata } from "../planning/metadata.js";
+import { createTaggedDecorator } from "./decorator_utils.js";
 
 // Used to add named metadata which is used to resolve name-based contextual bindings.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

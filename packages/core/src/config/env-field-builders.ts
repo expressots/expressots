@@ -38,7 +38,7 @@ import {
   SecretFieldOptions,
   JsonFieldOptions,
   ArrayFieldOptions,
-} from "./config.interfaces";
+} from "./config.interfaces.js";
 
 // ============================================================================
 // Field Builders

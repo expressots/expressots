@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Application, Request, Response } from "express";
-import type { IRenderService } from "../render-interface";
-import { Logger } from "../../provider/logger/logger.provider";
+import type { IRenderService } from "../render-interface.js";
+import { Logger } from "../../provider/logger/logger.provider.js";
 
 /**
  * View Debugger

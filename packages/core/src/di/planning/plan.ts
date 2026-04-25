@@ -1,4 +1,4 @@
-import { interfaces } from "../interfaces/interfaces";
+import { interfaces } from "../interfaces/interfaces.js";
 
 class Plan implements interfaces.Plan {
   public parentContext: interfaces.Context;

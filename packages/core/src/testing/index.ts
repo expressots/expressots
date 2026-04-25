@@ -84,14 +84,14 @@
  */
 
 // Core interfaces and types
-export * from "./testing.interfaces";
+export * from "./testing.interfaces.js";
 
 // Test app creation
 export {
   createTestApp,
   cleanupAllTestApps,
   getActiveTestAppCount,
-} from "./create-test-app";
+} from "./create-test-app.js";
 
 // Smart mocking
 export {
@@ -99,23 +99,23 @@ export {
   createMock,
   createMockObject,
   spyOn,
-} from "./mock-provider";
+} from "./mock-provider.js";
 
 // Fluent HTTP testing
-export { createFluentRequest, request } from "./fluent-request";
+export { createFluentRequest, request } from "./fluent-request.js";
 
 // Snapshot testing
-export { snapshotRequest, toMatchApiSnapshot } from "./snapshot-request";
+export { snapshotRequest, toMatchApiSnapshot } from "./snapshot-request.js";
 
 // Load testing (UNIQUE!)
-export { loadTest, benchmark, stressTest } from "./load-test";
+export { loadTest, benchmark, stressTest } from "./load-test.js";
 
 // Database testing
 export {
   createTestDatabase,
   createFixtureFactory,
   fixture,
-} from "./create-test-database";
+} from "./create-test-database.js";
 
 // Request context mocking
 export {
@@ -123,7 +123,7 @@ export {
   mockExecutionContext,
   mockNextFunction,
   mockReqRes,
-} from "./mock-context";
+} from "./mock-context.js";
 
 // Custom matchers
-export { expressoTSMatchers, setupExpressoTSMatchers } from "./matchers";
+export { expressoTSMatchers, setupExpressoTSMatchers } from "./matchers.js";

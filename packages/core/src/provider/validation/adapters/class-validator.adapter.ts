@@ -5,14 +5,15 @@
  * Adapter for class-validator library - wraps existing ValidateDTO logic
  */
 
-import { provide } from "../../../decorator/scope-binding";
-import { packageResolver } from "../../dto-validator/package-resolver";
+import { provide } from "../../../decorator/scope-binding.js";
+import { packageResolver } from "../../dto-validator/package-resolver.js";
+import { nodeRequire } from "../../../utils/node-require.js";
 import {
   IValidationAdapter,
   ValidationFieldError,
   ValidationOptions,
   ValidationResult,
-} from "../validation.interface";
+} from "../validation.interface.js";
 
 /**
  * Validation adapter for class-validator library
@@ -309,8 +310,9 @@ export class ClassValidatorAdapter
    */
   private getMetadataStorage(): MetadataStorage | null {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-      const cv = require("class-validator");
+      const cv = nodeRequire<{ getMetadataStorage?: () => MetadataStorage }>(
+        "class-validator",
+      );
       return cv.getMetadataStorage?.() || null;
     } catch {
       return null;

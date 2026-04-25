@@ -2,8 +2,8 @@
 import * as path from "path";
 import * as fs from "fs";
 import type { Application } from "express";
-import { BaseEngineAdapter } from "./base-adapter";
-import type { HandlebarsConfig } from "../render-config";
+import { BaseEngineAdapter } from "./base-adapter.js";
+import type { HandlebarsConfig } from "../render-config.js";
 
 /**
  * Default Handlebars configuration.

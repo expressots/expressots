@@ -1,10 +1,10 @@
-import { Guard } from "../guard-decorators";
-import { injectable } from "../../di/inversify";
-import { inject } from "../../di/annotation/inject";
-import type { IGuard, GuardContext } from "../guard.interface";
-import { GuardResult } from "../guard.interface";
-import { AppError } from "../../error/app-error";
-import type { ISecurityContext } from "../services/security-context.interface";
+import { Guard } from "../guard-decorators.js";
+import { injectable } from "../../di/inversify.js";
+import { inject } from "../../di/annotation/inject.js";
+import type { IGuard, GuardContext } from "../guard.interface.js";
+import { GuardResult } from "../guard.interface.js";
+import { AppError } from "../../error/app-error.js";
+import type { ISecurityContext } from "../services/security-context.interface.js";
 
 /**
  * Guard that requires specific permission

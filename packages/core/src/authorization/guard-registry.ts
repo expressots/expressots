@@ -1,8 +1,8 @@
 import "reflect-metadata";
-import { inject, injectable, Container, interfaces } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
-import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface";
-import { GUARD_METADATA_KEY } from "./guard-constants";
+import { inject, injectable, Container, interfaces } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
+import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface.js";
+import { GUARD_METADATA_KEY } from "./guard-constants.js";
 
 /**
  * Registry for managing guards with automatic discovery

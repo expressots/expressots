@@ -1,8 +1,8 @@
-import { injectable } from "../../di/inversify";
-import { inject } from "../../di/annotation/inject";
-import { Logger } from "../../provider/logger/logger.provider";
-import type { ISecurityContext } from "./security-context.interface";
-import type { IPermissionService } from "./permission-service.interface";
+import { injectable } from "../../di/inversify.js";
+import { inject } from "../../di/annotation/inject.js";
+import { Logger } from "../../provider/logger/logger.provider.js";
+import type { ISecurityContext } from "./security-context.interface.js";
+import type { IPermissionService } from "./permission-service.interface.js";
 
 /**
  * Request-scoped security context for caching permissions

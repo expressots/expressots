@@ -1,1 +1,1 @@
-export * from "./log-performance.decorator";
+export * from "./log-performance.decorator.js";

@@ -1,12 +1,12 @@
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingTypeEnum } from "../constants/literal_types";
-import { interfaces } from "../interfaces/interfaces";
-import { getBindingDictionary } from "../planning/planner";
-import { saveToScope, tryGetFromScope } from "../scope/scope";
-import { isPromise } from "../utils/async";
-import { getFactoryDetails, ensureFullyBound } from "../utils/binding_utils";
-import { tryAndThrowErrorIfStackOverflow } from "../utils/exceptions";
-import { resolveInstance } from "./instantiation";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { BindingTypeEnum } from "../constants/literal_types.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { getBindingDictionary } from "../planning/planner.js";
+import { saveToScope, tryGetFromScope } from "../scope/scope.js";
+import { isPromise } from "../utils/async.js";
+import { getFactoryDetails, ensureFullyBound } from "../utils/binding_utils.js";
+import { tryAndThrowErrorIfStackOverflow } from "../utils/exceptions.js";
+import { resolveInstance } from "./instantiation.js";
 
 const _resolveRequest =
   <T>(requestScope: interfaces.RequestScope) =>

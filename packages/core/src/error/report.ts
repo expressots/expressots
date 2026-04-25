@@ -1,11 +1,11 @@
-import { injectable } from "../di/inversify";
-import { IProvider } from "../provider";
+import { injectable } from "../di/inversify.js";
+import { IProvider } from "../provider/index.js";
 import {
   AppError,
   type AppErrorOptions,
   type ValidationError,
-} from "./app-error";
-import { StatusCode } from "./status-code";
+} from "./app-error.js";
+import { StatusCode } from "./status-code.js";
 
 /**
  * Error reporting utility with helper methods for common error scenarios.

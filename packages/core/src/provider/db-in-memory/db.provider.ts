@@ -8,21 +8,21 @@
  * @module db-in-memory
  */
 
-import { provideSingleton } from "../../decorator/scope-binding";
+import { provideSingleton } from "../../decorator/scope-binding.js";
 import {
   IProvider,
   IHealthCheck,
   IMetrics,
   HealthCheckResult,
   ProviderMetrics,
-} from "../provider.interface";
-import { IBootstrap, IShutdown } from "../../lifecycle/lifecycle.interface";
-import { IEntity } from "./schema/entity.interface";
+} from "../provider.interface.js";
+import { IBootstrap, IShutdown } from "../../lifecycle/lifecycle.interface.js";
+import { IEntity } from "./schema/entity.interface.js";
 import {
   InMemoryDatabase,
   InMemoryDatabaseOptions,
   InMemoryAdapter,
-} from "./adapter";
+} from "./adapter/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IN-MEMORY DATABASE PROVIDER

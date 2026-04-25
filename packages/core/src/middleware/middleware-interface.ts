@@ -6,12 +6,12 @@ import {
   MiddlewareEntry,
   MiddlewarePipelineInfo,
   ConditionalMiddlewareConfig,
-} from "./middleware-service";
+} from "./middleware-service.js";
 import {
   MiddlewareProfiler,
   MiddlewareMetrics,
   ProfilerStats,
-} from "./middleware-profiler";
+} from "./middleware-profiler.js";
 import type {
   ParseOptions,
   MiddlewareLoggerConfig,
@@ -26,10 +26,10 @@ import type {
   OptimizationConfig,
   PipelineAnalysis,
   Recommendation,
-} from "./middleware-config";
-import type { MiddlewareEntry as RegistryEntry } from "./middleware-registry";
-import type { RenderConfig, PresetName } from "../render/render-config";
-import type { RenderService } from "../render/render-service";
+} from "./middleware-config.js";
+import type { MiddlewareEntry as RegistryEntry } from "./middleware-registry.js";
+import type { RenderConfig, PresetName } from "../render/render-config.js";
+import type { RenderService } from "../render/render-service.js";
 
 /**
  * ErrorHandlerOptions Interface
@@ -45,7 +45,7 @@ export interface ErrorHandlerOptions {
   errorHandler?: ExpressHandler;
   showStackTrace?: boolean;
   enableExceptionFilters?: boolean;
-  container?: import("../di/inversify").interfaces.Container;
+  container?: import("../di/inversify.js").interfaces.Container;
 }
 
 /**
@@ -539,7 +539,7 @@ export interface IMiddleware {
    * @public API
    */
   addContentNegotiation(
-    options?: import("./interfaces/content-negotiation.interface").ContentNegotiationOptions,
+    options?: import("./interfaces/content-negotiation.interface.js").ContentNegotiationOptions,
   ): void;
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -563,7 +563,7 @@ export interface IMiddleware {
    * @public API
    */
   addValidation(
-    options?: import("../provider/validation/validation.interface").ValidationConfig,
+    options?: import("../provider/validation/validation.interface.js").ValidationConfig,
   ): void;
 
   // ═══════════════════════════════════════════════════════════════════════════

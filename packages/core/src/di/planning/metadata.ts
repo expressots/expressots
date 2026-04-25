@@ -1,5 +1,5 @@
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
 
 class Metadata implements interfaces.Metadata {
   public key: string | number | symbol;

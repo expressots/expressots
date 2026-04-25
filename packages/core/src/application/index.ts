@@ -1,6 +1,6 @@
-export { AppContainer } from "./application-container";
-export { AppFactory } from "./application-factory";
-export { ServerEnvironment } from "./application.types";
+export { AppContainer } from "./application-container.js";
+export { AppFactory } from "./application-factory.js";
+export { ServerEnvironment } from "./application.types.js";
 export {
   bootstrap,
   BootstrapOptions,
@@ -10,4 +10,4 @@ export {
   EnvironmentFileConfig,
   loadEnvSync,
   LoadEnvSyncOptions,
-} from "./bootstrap";
+} from "./bootstrap.js";

@@ -6,21 +6,22 @@
  * Central registry for event handlers with auto-discovery support.
  */
 
-import { Container, injectable } from "../di/inversify";
+import { Container, injectable } from "../di/inversify.js";
+import { forEachBinding } from "../di/container-introspection.js";
 import {
   getEventClass,
   getEventClasses,
   getEventCondition,
   getEventOptions,
   isEventHandler,
-} from "./event-decorators";
+} from "./event-decorators.js";
 import {
   EventClass,
   EventHandlerClass,
   IEventRegistry,
   OnEventOptions,
   RegisteredHandler,
-} from "./event.interfaces";
+} from "./event.interfaces.js";
 
 /**
  * Event registry implementation.
@@ -181,55 +182,38 @@ export class EventRegistry implements IEventRegistry {
   discoverHandlers(container: Container): number {
     let discovered = 0;
 
-    // Get all bindings from container
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bindings = (container as any)._bindingDictionary;
-    if (!bindings) {
-      return discovered;
-    }
-
-    // Iterate through bindings
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dict = bindings._map as Map<any, Array<any>> | undefined;
-    if (!dict) {
-      return discovered;
-    }
-
-    for (const [, bindingArray] of dict) {
-      for (const binding of bindingArray) {
-        const target = binding.implementationType;
-        if (!target || typeof target !== "function") {
-          continue;
-        }
-
-        // Check if it's an event handler
-        if (!isEventHandler(target)) {
-          continue;
-        }
-
-        // Get event class(es)
-        const eventClasses = getEventClasses(target);
-        const eventClass = getEventClass(target);
-
-        if (eventClasses && eventClasses.length > 0) {
-          // Multiple events handler
-          this.registerMultiple(
-            eventClasses,
-            target as EventHandlerClass,
-            getEventOptions(target) || {},
-          );
-          discovered++;
-        } else if (eventClass) {
-          // Single event handler
-          this.register(
-            eventClass,
-            target as EventHandlerClass,
-            getEventOptions(target) || {},
-          );
-          discovered++;
-        }
+    forEachBinding(container, (binding) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const target = (binding as any).implementationType as
+        | NewableFunction
+        | undefined;
+      if (!target || typeof target !== "function") {
+        return;
       }
-    }
+
+      if (!isEventHandler(target)) {
+        return;
+      }
+
+      const eventClasses = getEventClasses(target);
+      const eventClass = getEventClass(target);
+
+      if (eventClasses && eventClasses.length > 0) {
+        this.registerMultiple(
+          eventClasses,
+          target as EventHandlerClass,
+          getEventOptions(target) || {},
+        );
+        discovered++;
+      } else if (eventClass) {
+        this.register(
+          eventClass,
+          target as EventHandlerClass,
+          getEventOptions(target) || {},
+        );
+        discovered++;
+      }
+    });
 
     return discovered;
   }

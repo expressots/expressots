@@ -1,5 +1,5 @@
-import { interfaces } from "../../di/interfaces/interfaces";
-import { IContentFormatter } from "../interfaces/content-negotiation.interface";
+import { interfaces } from "../../di/interfaces/interfaces.js";
+import { IContentFormatter } from "../interfaces/content-negotiation.interface.js";
 
 /**
  * Registry for managing content formatters with DI support and caching.

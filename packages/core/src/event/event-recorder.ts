@@ -26,13 +26,13 @@
  * ```
  */
 
-import { injectable } from "../di/inversify";
+import { injectable } from "../di/inversify.js";
 import {
   EventClass,
   IEventRecorder,
   RecordedEvent,
   ReplayOptions,
-} from "./event.interfaces";
+} from "./event.interfaces.js";
 
 /**
  * Generate a unique ID.

@@ -22,7 +22,7 @@ import {
   FluentResponse,
   HttpMethod,
   TimeAssertion,
-} from "./testing.interfaces";
+} from "./testing.interfaces.js";
 
 /**
  * HTTP client implementation using fetch.

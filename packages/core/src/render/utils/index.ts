@@ -10,7 +10,7 @@ export {
   PackageResolver,
   PackageNotInstalledError,
   getPackageResolver,
-} from "./package-resolver";
-export { ViewScanner, getViewScanner } from "./view-scanner";
-export { CacheManager, getCacheManager } from "./cache-manager";
-export type { CacheStats } from "./cache-manager";
+} from "./package-resolver.js";
+export { ViewScanner, getViewScanner } from "./view-scanner.js";
+export { CacheManager, getCacheManager } from "./cache-manager.js";
+export type { CacheStats } from "./cache-manager.js";

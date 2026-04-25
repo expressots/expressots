@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { CacheConfig } from "../render-config";
+import type { CacheConfig } from "../render-config.js";
 
 /**
  * Cache Entry

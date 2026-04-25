@@ -18,7 +18,7 @@
  * ```
  */
 
-import { FluentResponse } from "./testing.interfaces";
+import { FluentResponse } from "./testing.interfaces.js";
 
 /**
  * Matcher result interface compatible with Jest/Vitest.

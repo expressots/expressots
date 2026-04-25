@@ -1,5 +1,5 @@
-import { LogEntry } from "../utils/log-entry";
-import { LogLevel } from "../utils/log-levels";
+import { LogEntry } from "../utils/log-entry.js";
+import { LogLevel } from "../utils/log-levels.js";
 
 /**
  * Log transport interface for pluggable log destinations.

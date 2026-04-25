@@ -2,12 +2,12 @@ import {
   ON_DEACTIVATION_ERROR,
   POST_CONSTRUCT_ERROR,
   PRE_DESTROY_ERROR,
-} from "../constants/error_msgs";
-import { Scope, TargetTypeEnum } from "../constants/literal_types";
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { Metadata } from "../planning/metadata";
-import { isPromise, isPromiseOrContainsPromise } from "../utils/async";
+} from "../constants/error_msgs.js";
+import { Scope, TargetTypeEnum } from "../constants/literal_types.js";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { Metadata } from "../planning/metadata.js";
+import { isPromise, isPromiseOrContainsPromise } from "../utils/async.js";
 
 interface InstanceCreationInstruction {
   constructorInjections: Array<unknown>;

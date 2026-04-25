@@ -1,10 +1,10 @@
-import { UseGuards } from "../guard-decorators";
+import { UseGuards } from "../guard-decorators.js";
 import {
   RequireAuth,
   RequireRole,
   RequirePermission,
   RequireResourceOwner,
-} from "../guards";
+} from "../guards/index.js";
 
 /**
  * Shorthand decorator for requiring authentication

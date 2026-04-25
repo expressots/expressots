@@ -9,8 +9,8 @@ import {
   IGuard,
   GuardContext,
   GuardResult,
-} from "../../guard.interface";
-import { AppError } from "../../../error/app-error";
+} from "../../guard.interface.js";
+import { AppError } from "../../../error/app-error.js";
 
 /**
  * Guard that requires authentication

@@ -3,7 +3,7 @@ import type {
   InterceptorClass,
   ExecutionContext,
   ConditionalInterceptor,
-} from "./interceptor.interface";
+} from "./interceptor.interface.js";
 
 /**
  * Create a conditional interceptor that only runs when condition is true.

@@ -1,8 +1,8 @@
-import { provide } from "../../di/binding-decorator";
-import { AppError, type ProblemDetails } from "../app-error";
-import { BaseExceptionFilter } from "../base-exception-filter";
-import type { ExceptionContext } from "../exception-filter.interface";
-import { Catch } from "../exception-filter-decorators";
+import { provide } from "../../di/binding-decorator/index.js";
+import { AppError, type ProblemDetails } from "../app-error.js";
+import { BaseExceptionFilter } from "../base-exception-filter.js";
+import type { ExceptionContext } from "../exception-filter.interface.js";
+import { Catch } from "../exception-filter-decorators.js";
 
 /**
  * Built-in exception filter for AppError instances

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import type { Container, interfaces } from "../di/inversify";
-import { AppError } from "../error/app-error";
+import type { Container, interfaces } from "../di/inversify.js";
+import { AppError } from "../error/app-error.js";
 
 /**
  * Principal interface for authentication

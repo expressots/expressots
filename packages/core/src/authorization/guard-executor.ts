@@ -1,9 +1,9 @@
-import { inject, injectable } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
-import type { IGuard, GuardClass, GuardContext } from "./guard.interface";
-import { GuardResult } from "./guard.interface";
-import { GuardRegistry } from "./guard-registry";
-import type { IGuardCache } from "./services/guard-cache.interface";
+import { inject, injectable } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
+import type { IGuard, GuardClass, GuardContext } from "./guard.interface.js";
+import { GuardResult } from "./guard.interface.js";
+import { GuardRegistry } from "./guard-registry.js";
+import type { IGuardCache } from "./services/guard-cache.interface.js";
 
 /**
  * Executor for running guards in priority order with caching support

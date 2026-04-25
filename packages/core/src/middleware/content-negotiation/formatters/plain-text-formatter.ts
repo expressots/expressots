@@ -1,4 +1,4 @@
-import { IContentFormatter } from "../../interfaces/content-negotiation.interface";
+import { IContentFormatter } from "../../interfaces/content-negotiation.interface.js";
 
 /**
  * Plain text formatter for content negotiation.

@@ -8,7 +8,7 @@
  */
 
 import type { RequestHandler } from "express";
-import type { RegisteredMiddleware } from "./middleware-config";
+import type { RegisteredMiddleware } from "./middleware-config.js";
 
 /**
  * ExpressoMiddleware interface for class-based middleware.

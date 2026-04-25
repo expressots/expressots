@@ -1,7 +1,7 @@
 import {
   IContentFormatter,
   CsvFormatOptions,
-} from "../../interfaces/content-negotiation.interface";
+} from "../../interfaces/content-negotiation.interface.js";
 
 /**
  * CSV formatter for content negotiation.

@@ -1,8 +1,8 @@
-import { provide } from "../../di/binding-decorator";
-import { StatusCode } from "../status-code";
-import { BaseExceptionFilter } from "../base-exception-filter";
-import type { ExceptionContext } from "../exception-filter.interface";
-import { Catch } from "../exception-filter-decorators";
+import { provide } from "../../di/binding-decorator/index.js";
+import { StatusCode } from "../status-code.js";
+import { BaseExceptionFilter } from "../base-exception-filter.js";
+import type { ExceptionContext } from "../exception-filter.interface.js";
+import { Catch } from "../exception-filter-decorators.js";
 
 /**
  * Global exception filter that catches all unhandled exceptions

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Logger } from "../../provider/logger/logger.provider";
+import { Logger } from "../../provider/logger/logger.provider.js";
 
 /**
  * Package Resolver

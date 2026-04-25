@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Logger } from "../../provider/logger/logger.provider";
-import type { ViewInfo } from "../render-config";
+import { Logger } from "../../provider/logger/logger.provider.js";
+import type { ViewInfo } from "../render-config.js";
 
 /**
  * Type Generator

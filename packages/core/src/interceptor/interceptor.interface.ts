@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import type { Container, interfaces } from "../di/inversify";
+import type { Container, interfaces } from "../di/inversify.js";
 
 /**
  * Execution context providing comprehensive information for interceptor decisions.

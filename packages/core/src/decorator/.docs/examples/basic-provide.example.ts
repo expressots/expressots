@@ -8,7 +8,7 @@ import {
   provide,
   provideSingleton,
   provideTransient,
-} from "../../scope-binding";
+} from "../../scope-binding.js";
 
 // Service interfaces
 interface IUserService {

@@ -10,13 +10,13 @@ import {
   urlencoded,
 } from "express";
 
-import { injectable } from "../di/inversify";
-import defaultErrorHandler from "../error/error-handler-middleware";
-import { ErrorHandlerOptions, IMiddleware } from "./middleware-interface";
-import { ExceptionHandlerMiddleware } from "../error/exception-handler-middleware";
-import { Logger } from "../provider/logger/logger.provider";
-import { multer } from "./interfaces/multer.interface";
-import { ServeStaticOptions } from "./interfaces/serve-static.interface";
+import { injectable } from "../di/inversify.js";
+import defaultErrorHandler from "../error/error-handler-middleware.js";
+import { ErrorHandlerOptions, IMiddleware } from "./middleware-interface.js";
+import { ExceptionHandlerMiddleware } from "../error/exception-handler-middleware.js";
+import { Logger } from "../provider/logger/logger.provider.js";
+import { multer } from "./interfaces/multer.interface.js";
+import { ServeStaticOptions } from "./interfaces/serve-static.interface.js";
 import {
   middlewareResolver,
   isMiddlewareAvailable,
@@ -24,12 +24,12 @@ import {
   resolvePackage,
   getResolverStartupWarnings,
   clearResolverStartupWarnings,
-} from "./middleware-resolver";
+} from "./middleware-resolver.js";
 import {
   getMiddlewareRegistry,
   MiddlewareEntry as RegistryEntry,
-} from "./middleware-registry";
-import { setGlobalUploadConfig } from "./upload-registry";
+} from "./middleware-registry.js";
+import { setGlobalUploadConfig } from "./upload-registry.js";
 import type {
   ParseOptions,
   MiddlewareLoggerConfig,
@@ -45,15 +45,15 @@ import type {
   OptimizationConfig,
   PipelineAnalysis,
   Recommendation,
-} from "./middleware-config";
-import { ContentNegotiationService } from "./content-negotiation/content-negotiation-service";
-import { ContentNegotiationOptions } from "./interfaces/content-negotiation.interface";
-import type { ValidationConfig } from "../provider/validation/validation.interface";
+} from "./middleware-config.js";
+import { ContentNegotiationService } from "./content-negotiation/content-negotiation-service.js";
+import { ContentNegotiationOptions } from "./interfaces/content-negotiation.interface.js";
+import type { ValidationConfig } from "../provider/validation/validation.interface.js";
 import {
   MiddlewareProfiler,
   MiddlewareMetrics,
   ProfilerStats,
-} from "./middleware-profiler";
+} from "./middleware-profiler.js";
 
 /**
  * ExpressHandler Type
@@ -2276,7 +2276,7 @@ export class Middleware implements IMiddleware {
 
   /** Render service instance (lazy initialized) */
   private renderService:
-    | import("../render/render-service").RenderService
+    | import("../render/render-service.js").RenderService
     | null = null;
 
   /** Express app reference for render service */
@@ -2299,8 +2299,8 @@ export class Middleware implements IMiddleware {
    */
   public async render(
     config?:
-      | import("../render/render-config").RenderConfig
-      | import("../render/render-config").PresetName,
+      | import("../render/render-config.js").RenderConfig
+      | import("../render/render-config.js").PresetName,
   ): Promise<void> {
     if (!this.expressApp) {
       throw new Error(
@@ -2308,8 +2308,10 @@ export class Middleware implements IMiddleware {
       );
     }
 
-    // Lazy import to avoid circular dependencies
-    const { RenderService } = await import("../render/render-service");
+    // Lazy import to avoid circular dependencies.
+    // The `.js` extension is required by NodeNext for ESM consumers; the
+    // CJS build also accepts it (TypeScript rewrites unchanged).
+    const { RenderService } = await import("../render/render-service.js");
 
     if (!this.renderService) {
       this.renderService = new RenderService(this.expressApp);
@@ -2328,7 +2330,7 @@ export class Middleware implements IMiddleware {
    * @returns Render service or null if not configured
    */
   public getRenderService():
-    | import("../render/render-service").RenderService
+    | import("../render/render-service.js").RenderService
     | null {
     return this.renderService;
   }

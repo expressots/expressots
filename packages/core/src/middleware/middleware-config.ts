@@ -8,14 +8,14 @@
  */
 
 import { Request, Response, RequestHandler } from "express";
-import type { OptionsJson } from "./interfaces/body-parser.interface";
-import type { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
-import type { CookieParserOptions } from "./interfaces/cookie-parser.interface";
-import type { CorsOptions } from "./interfaces/cors.interface";
-import type { OptionsHelmet } from "./interfaces/helmet.interface";
-import type { CompressionOptions } from "./interfaces/compression.interface";
-import type { ServeStaticOptions } from "./interfaces/serve-static.interface";
-import type { multer } from "./interfaces/multer.interface";
+import type { OptionsJson } from "./interfaces/body-parser.interface.js";
+import type { OptionsUrlencoded } from "./interfaces/url-encoded.interface.js";
+import type { CookieParserOptions } from "./interfaces/cookie-parser.interface.js";
+import type { CorsOptions } from "./interfaces/cors.interface.js";
+import type { OptionsHelmet } from "./interfaces/helmet.interface.js";
+import type { CompressionOptions } from "./interfaces/compression.interface.js";
+import type { ServeStaticOptions } from "./interfaces/serve-static.interface.js";
+import type { multer } from "./interfaces/multer.interface.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PARSE OPTIONS

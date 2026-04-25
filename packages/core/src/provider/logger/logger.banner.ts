@@ -1,12 +1,12 @@
 import { IConsoleMessage } from "@expressots/shared";
-import { colorCodes, Color } from "../../console/color-codes";
+import { colorCodes, Color } from "../../console/color-codes.js";
 import {
   ApplicationMetrics,
   FeaturesStatus,
   BannerConfig,
   formatMemory,
-} from "./logger.metrics";
-import { MiddlewareCategory } from "../../middleware/middleware-service";
+} from "./logger.metrics.js";
+import { MiddlewareCategory } from "../../middleware/middleware-service.js";
 
 // eslint-disable-next-line no-control-regex
 const ANSI_STRIP_REGEX = /\x1b\[[0-9;]*m/g;

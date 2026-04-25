@@ -4,9 +4,9 @@
  * @runnable true
  */
 
-import { AppContainer } from "../../application-container";
+import { AppContainer } from "../../application-container.js";
 import { ContainerModule } from "inversify";
-import { Scope } from "../../..";
+import { Scope } from "../../../index.js";
 
 // Example module
 class ExampleModule extends ContainerModule {

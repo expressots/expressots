@@ -46,47 +46,47 @@ export type {
   PugConfig,
   HandlebarsConfig,
   ReactConfig,
-} from "./render-config";
+} from "./render-config.js";
 
 // Interfaces
-export type { EngineAdapter, IRenderService } from "./render-interface";
+export type { EngineAdapter, IRenderService } from "./render-interface.js";
 
 // Registry
-export { EngineRegistry } from "./render-registry";
+export { EngineRegistry } from "./render-registry.js";
 
 // Base adapter
-export { BaseEngineAdapter } from "./adapters/base-adapter";
+export { BaseEngineAdapter } from "./adapters/base-adapter.js";
 
 // Engine adapters
-export { EjsAdapter } from "./adapters/ejs-adapter";
-export { PugAdapter } from "./adapters/pug-adapter";
-export { HandlebarsAdapter } from "./adapters/handlebars-adapter";
-export { ReactAdapter } from "./adapters/react-adapter";
+export { EjsAdapter } from "./adapters/ejs-adapter.js";
+export { PugAdapter } from "./adapters/pug-adapter.js";
+export { HandlebarsAdapter } from "./adapters/handlebars-adapter.js";
+export { ReactAdapter } from "./adapters/react-adapter.js";
 
 // Utilities
 export {
   PackageResolver,
   PackageNotInstalledError,
   getPackageResolver,
-} from "./utils/package-resolver";
-export { ViewScanner, getViewScanner } from "./utils/view-scanner";
-export { CacheManager, getCacheManager } from "./utils/cache-manager";
-export type { CacheStats } from "./utils/cache-manager";
+} from "./utils/package-resolver.js";
+export { ViewScanner, getViewScanner } from "./utils/view-scanner.js";
+export { CacheManager, getCacheManager } from "./utils/cache-manager.js";
+export type { CacheStats } from "./utils/cache-manager.js";
 
-// Service (will be added in Phase 4)
-export { RenderService } from "./render-service";
+// Service
+export { RenderService } from "./render-service.js";
 
-// Features (will be added in Phase 5)
-export { AutoDetection } from "./features/auto-detection";
-export { HotReload } from "./features/hot-reload";
-export { ViewDebugger } from "./features/view-debugger";
-export { StreamingRenderer } from "./features/streaming";
-export { TypeGenerator } from "./features/type-generator";
+// Features
+export { AutoDetection } from "./features/auto-detection.js";
+export { HotReload } from "./features/hot-reload.js";
+export { ViewDebugger } from "./features/view-debugger.js";
+export { StreamingRenderer } from "./features/streaming.js";
+export { TypeGenerator } from "./features/type-generator.js";
 
-// Presets (will be added in Phase 6)
+// Presets
 export {
   developmentPreset as renderDevelopmentPreset,
   productionPreset as renderProductionPreset,
   ssrPreset as renderSsrPreset,
   getPreset as getRenderPreset,
-} from "./presets";
+} from "./presets/index.js";

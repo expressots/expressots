@@ -19,8 +19,8 @@
  * ```
  */
 
-import { Container } from "../di/inversify";
-import { AppFactory } from "../application/application-factory";
+import { Container } from "../di/inversify.js";
+import { AppFactory } from "../application/application-factory.js";
 import {
   IWebServer,
   IWebServerBuilder,
@@ -32,9 +32,9 @@ import {
   ITestApp,
   ServiceIdentifier,
   MockProviderConfig,
-} from "./testing.interfaces";
-import { createFluentRequest } from "./fluent-request";
-import { Logger } from "../provider/logger/logger.provider";
+} from "./testing.interfaces.js";
+import { createFluentRequest } from "./fluent-request.js";
+import { Logger } from "../provider/logger/logger.provider.js";
 
 /**
  * HTTP Server interface for cleanup.

@@ -2,7 +2,7 @@ import type {
   IInterceptor,
   InterceptorClass,
   ComposedInterceptor,
-} from "./interceptor.interface";
+} from "./interceptor.interface.js";
 
 /**
  * Compose multiple interceptors into a pipeline.

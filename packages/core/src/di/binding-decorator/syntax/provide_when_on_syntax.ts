@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import interfaces from "../interfaces/interfaces";
-import { interfaces as inversifyInterfaces } from "../../inversify";
+import interfaces from "../interfaces/interfaces.js";
+import { interfaces as inversifyInterfaces } from "../../inversify.js";
 
 class ProvideWhenOnSyntax<T> implements interfaces.ProvideWhenOnSyntax<T> {
   private _provideWhenSyntax: interfaces.ProvideWhenSyntax<T>;

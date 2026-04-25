@@ -7,15 +7,15 @@
  * @module lifecycle
  */
 
-import { interfaces } from "../di/inversify";
-import { METADATA_KEY } from "../di/binding-decorator/constants";
+import { interfaces } from "../di/inversify.js";
+import { METADATA_KEY } from "../di/binding-decorator/constants.js";
 import {
   IBootstrap,
   IShutdown,
   isBootstrap,
   isShutdown,
-} from "./lifecycle.interface";
-import { Logger } from "../provider/logger/logger.provider";
+} from "./lifecycle.interface.js";
+import { Logger } from "../provider/logger/logger.provider.js";
 
 /**
  * Registry for discovering and executing lifecycle hooks on providers.

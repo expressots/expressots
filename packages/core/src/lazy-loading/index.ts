@@ -73,7 +73,7 @@ export type {
   // Setup
   LazyLoadingOptions,
   LazyLoadingSetupResult,
-} from "./lazy.interfaces";
+} from "./lazy.interfaces.js";
 
 // ============================================================================
 // Lazy Module
@@ -86,13 +86,13 @@ export {
   isLazyModule,
   getModuleName,
   LAZY_MODULE_METADATA_KEY,
-} from "./lazy-module";
+} from "./lazy-module.js";
 
 // ============================================================================
 // Lazy Module Loader
 // ============================================================================
 
-export { LazyModuleLoader, createLazyModuleLoader } from "./lazy-module-loader";
+export { LazyModuleLoader, createLazyModuleLoader } from "./lazy-module-loader.js";
 
 // ============================================================================
 // Lazy Module Manager
@@ -101,16 +101,16 @@ export { LazyModuleLoader, createLazyModuleLoader } from "./lazy-module-loader";
 export {
   LazyModuleManager,
   createLazyModuleManager,
-} from "./lazy-module-manager";
+} from "./lazy-module-manager.js";
 
 // ============================================================================
 // Lazy Load Metrics
 // ============================================================================
 
-export { LazyLoadMetrics, createLazyLoadMetrics } from "./lazy-load-metrics";
+export { LazyLoadMetrics, createLazyLoadMetrics } from "./lazy-load-metrics.js";
 
 // ============================================================================
 // Lazy Module Warmup
 // ============================================================================
 
-export { LazyModuleWarmup, createLazyModuleWarmup } from "./lazy-module-warmup";
+export { LazyModuleWarmup, createLazyModuleWarmup } from "./lazy-module-warmup.js";

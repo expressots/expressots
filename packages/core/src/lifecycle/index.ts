@@ -11,5 +11,5 @@ export {
   IShutdown,
   isBootstrap,
   isShutdown,
-} from "./lifecycle.interface";
-export { LifecycleRegistry } from "./lifecycle-registry";
+} from "./lifecycle.interface.js";
+export { LifecycleRegistry } from "./lifecycle-registry.js";

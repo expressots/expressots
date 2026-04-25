@@ -21,14 +21,14 @@
  * ```
  */
 
-import { Container, Scope } from "../di/inversify";
+import { Container, Scope } from "../di/inversify.js";
 import {
   MockProviderOptions,
   MockProviderResult,
   MockDependencies,
   ServiceIdentifier,
   MockFunction,
-} from "./testing.interfaces";
+} from "./testing.interfaces.js";
 
 /**
  * Type for detecting the test framework in use.

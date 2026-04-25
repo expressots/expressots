@@ -33,7 +33,7 @@ import {
   LoadTestAssertions,
   ResponseTimeDistribution,
   HttpMethod,
-} from "./testing.interfaces";
+} from "./testing.interfaces.js";
 
 /**
  * Internal request result.

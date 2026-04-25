@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "reflect-metadata";
 
-import interfaces from "../interfaces/interfaces";
-import { METADATA_KEY } from "../constants";
+import interfaces from "../interfaces/interfaces.js";
+import { METADATA_KEY } from "../constants.js";
 import {
   interfaces as inversifyInterfaces,
   ContainerModule,
-} from "../../inversify";
+} from "../../inversify.js";
 
 /**
  * Builds a ContainerModule from all @provide() decorated classes.

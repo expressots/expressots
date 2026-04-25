@@ -1,5 +1,5 @@
-import type { EngineAdapter } from "./render-interface";
-import type { EngineType } from "./render-config";
+import type { EngineAdapter } from "./render-interface.js";
+import type { EngineType } from "./render-config.js";
 
 /**
  * Engine Registry

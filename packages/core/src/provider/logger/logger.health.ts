@@ -1,5 +1,5 @@
-import { Logger } from "./logger.provider";
-import { formatMemory } from "./logger.metrics";
+import { Logger } from "./logger.provider.js";
+import { formatMemory } from "./logger.metrics.js";
 
 /**
  * Health status data.

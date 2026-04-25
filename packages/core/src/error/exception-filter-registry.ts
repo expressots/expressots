@@ -1,12 +1,12 @@
 import "reflect-metadata";
-import { inject, injectable, Container, interfaces } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
+import { inject, injectable, Container, interfaces } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
 import type {
   IExceptionFilter,
   ExceptionFilterMetadata,
   ErrorConstructor,
-} from "./exception-filter.interface";
-import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants";
+} from "./exception-filter.interface.js";
+import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants.js";
 
 type ExceptionConstructor = ErrorConstructor;
 

@@ -7,14 +7,15 @@
  * @module db-in-memory/adapter
  */
 
-import { IEntity } from "../schema/entity.interface";
-import { SchemaRegistry, RelationMetadata } from "../schema/decorators";
+import { IEntity } from "../schema/entity.interface.js";
+import { SchemaRegistry, RelationMetadata } from "../schema/decorators.js";
+import { nodeRequire } from "../../../utils/node-require.js";
 import {
   MemoryStore,
   MemoryStoreOptions,
   EntityNotFoundError,
-} from "../storage/memory-store";
-import { QueryEngine } from "../query/query-engine";
+} from "../storage/memory-store.js";
+import { QueryEngine } from "../query/query-engine.js";
 import {
   FindUniqueArgs,
   FindFirstArgs,
@@ -33,7 +34,7 @@ import {
   GroupByArgs,
   WhereInput,
   IncludeInput,
-} from "../query/query.types";
+} from "../query/query.types.js";
 import {
   IDataAdapter,
   ITableAdapter,
@@ -41,7 +42,7 @@ import {
   ISubscription,
   ChangeEvent,
   ChangeType,
-} from "./adapter.interface";
+} from "./adapter.interface.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IN-MEMORY ADAPTER
@@ -894,9 +895,9 @@ export class InMemoryDatabase {
    */
   private writeToFile(path: string, data: string): void {
     try {
-      // Dynamic import to avoid issues in browser
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const fs = require("fs");
+      // Dynamic import via node-require helper so this works in both
+      // CJS and ESM compiled output.
+      const fs = nodeRequire<typeof import("node:fs")>("node:fs");
       fs.writeFileSync(path, data, "utf-8");
     } catch (error) {
       console.error("Failed to write snapshot to file:", error);
@@ -908,9 +909,7 @@ export class InMemoryDatabase {
    * @private
    */
   private async readFromFile(path: string): Promise<string> {
-    // Dynamic import to avoid issues in browser
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fs = require("fs");
+    const fs = nodeRequire<typeof import("node:fs")>("node:fs");
     return fs.readFileSync(path, "utf-8");
   }
 }

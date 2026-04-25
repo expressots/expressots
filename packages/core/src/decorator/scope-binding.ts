@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { fluentProvide, METADATA_KEY } from "../di/binding-decorator";
-import { ProviderSource } from "../provider/provider.interface";
+import { fluentProvide, METADATA_KEY } from "../di/binding-decorator/index.js";
+import { ProviderSource } from "../provider/provider.interface.js";
 
 // Re-export for convenience
 export { ProviderSource };

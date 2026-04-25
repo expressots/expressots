@@ -1,11 +1,11 @@
-import { LogLevel, LogLevelString } from "./utils/log-levels";
-import { ILogTransport } from "./transports/transport.interface";
-import { RedactionConfig } from "./logger.redaction";
-import { GroupingConfig } from "./logger.grouping";
-import { FlowConfig } from "./logger.flow";
-import { SuggestionsConfig } from "./logger.suggestions";
-import { HealthConfig } from "./logger.health";
-import { QueryConfig } from "./logger.query";
+import { LogLevel, LogLevelString } from "./utils/log-levels.js";
+import { ILogTransport } from "./transports/transport.interface.js";
+import { RedactionConfig } from "./logger.redaction.js";
+import { GroupingConfig } from "./logger.grouping.js";
+import { FlowConfig } from "./logger.flow.js";
+import { SuggestionsConfig } from "./logger.suggestions.js";
+import { HealthConfig } from "./logger.health.js";
+import { QueryConfig } from "./logger.query.js";
 
 /**
  * Filter configuration for log filtering.

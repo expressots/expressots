@@ -1,6 +1,6 @@
-import { Scope } from "../constants/literal_types";
-import { interfaces } from "../interfaces/interfaces";
-import { BindingWhenOnSyntax } from "./binding_when_on_syntax";
+import { Scope } from "../constants/literal_types.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { BindingWhenOnSyntax } from "./binding_when_on_syntax.js";
 
 class BindingInSyntax<T> implements interfaces.BindingInSyntax<T> {
   private _binding: interfaces.Binding<T>;

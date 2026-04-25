@@ -1,14 +1,15 @@
 import { config, parse } from "@expressots/shared";
-import { AppFactory } from "./application-factory";
+import { AppFactory } from "./application-factory.js";
 import { IWebServer, IWebServerPublic } from "@expressots/shared";
 import { IConsoleMessage } from "@expressots/shared";
-import { Logger } from "../provider/logger/logger.provider";
+import { Logger } from "../provider/logger/logger.provider.js";
 import fs from "fs";
 import path from "path";
 
-// Note: Path resolution is auto-initialized in core/src/index.ts as a side effect
-// when the @expressots/core module is first imported. This happens BEFORE
-// bootstrap() is called, ensuring path aliases work in production.
+// Path resolution is performed at build time by the CLI (see
+// `@expressots/cli` build pipeline). At runtime, advanced users can
+// opt in by importing `initializePathResolution` from `@expressots/core`
+// (re-exported from src/index.ts) and calling it before `bootstrap()`.
 
 /**
  * Common environment names used in ExpressoTS applications.

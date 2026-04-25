@@ -1,20 +1,20 @@
 import { Request, Response, NextFunction } from "express";
-import { interfaces } from "../di/inversify";
-import { ExceptionFilterRegistry } from "./exception-filter-registry";
-import { Logger } from "../provider/logger/logger.provider";
+import { interfaces } from "../di/inversify.js";
+import { ExceptionFilterRegistry } from "./exception-filter-registry.js";
+import { Logger } from "../provider/logger/logger.provider.js";
 import type {
   ExceptionContext,
   IExceptionFilter,
   IHttpContext,
-} from "./exception-filter.interface";
-import { AppError, StatusCode } from "./index";
-import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants";
+} from "./exception-filter.interface.js";
+import { AppError, StatusCode } from "./index.js";
+import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants.js";
 import {
   getErrorHints,
   formatSuggestions,
   getDefaultSuggestionsConfig,
   type SuggestionsConfig,
-} from "../provider/logger/logger.suggestions";
+} from "../provider/logger/logger.suggestions.js";
 
 /**
  * Type for a constructor function (class)

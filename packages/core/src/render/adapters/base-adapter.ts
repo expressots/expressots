@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Logger } from "../../provider/logger/logger.provider";
-import type { EngineAdapter } from "../render-interface";
+import { Logger } from "../../provider/logger/logger.provider.js";
+import type { EngineAdapter } from "../render-interface.js";
 import type { Application } from "express";
 
 /**

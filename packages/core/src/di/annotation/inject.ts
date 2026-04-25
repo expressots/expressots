@@ -1,5 +1,5 @@
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { injectBase } from "./inject_base";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { injectBase } from "./inject_base.js";
 
 /**
  * Marks a constructor parameter for injection.

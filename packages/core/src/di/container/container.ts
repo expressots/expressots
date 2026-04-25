@@ -1,22 +1,22 @@
-import { Binding } from "../bindings/binding";
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { Scope, TargetTypeEnum } from "../constants/literal_types";
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { MetadataReader } from "../planning/metadata_reader";
+import { Binding } from "../bindings/binding.js";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { Scope, TargetTypeEnum } from "../constants/literal_types.js";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { MetadataReader } from "../planning/metadata_reader.js";
 import {
   createMockRequest,
   getBindingDictionary,
   plan,
-} from "../planning/planner";
-import { resolve } from "../resolution/resolver";
-import { BindingToSyntax } from "../syntax/binding_to_syntax";
-import { isPromise, isPromiseOrContainsPromise } from "../utils/async";
-import { id } from "../utils/id";
-import { getServiceIdentifierAsString } from "../utils/serialization";
-import { ContainerSnapshot } from "./container_snapshot";
-import { Lookup } from "./lookup";
-import { ModuleActivationStore } from "./module_activation_store";
+} from "../planning/planner.js";
+import { resolve } from "../resolution/resolver.js";
+import { BindingToSyntax } from "../syntax/binding_to_syntax.js";
+import { isPromise, isPromiseOrContainsPromise } from "../utils/async.js";
+import { id } from "../utils/id.js";
+import { getServiceIdentifierAsString } from "../utils/serialization.js";
+import { ContainerSnapshot } from "./container_snapshot.js";
+import { Lookup } from "./lookup.js";
+import { ModuleActivationStore } from "./module_activation_store.js";
 
 type GetArgs<T> = Omit<
   interfaces.NextArgs<T>,

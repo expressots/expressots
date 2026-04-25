@@ -1,9 +1,9 @@
-import { LogEntry } from "./utils/log-entry";
-import { LogLevel, logLevelToString } from "./utils/log-levels";
-import { Color, colorCodes } from "../../console/color-codes";
-import { Redactor, getGlobalRedactor } from "./logger.redaction";
-import { GroupedLogEntry } from "./logger.grouping";
-import { RequestFlow, FlowStep, FlowStepType } from "./logger.flow";
+import { LogEntry } from "./utils/log-entry.js";
+import { LogLevel, logLevelToString } from "./utils/log-levels.js";
+import { Color, colorCodes } from "../../console/color-codes.js";
+import { Redactor, getGlobalRedactor } from "./logger.redaction.js";
+import { GroupedLogEntry } from "./logger.grouping.js";
+import { RequestFlow, FlowStep, FlowStepType } from "./logger.flow.js";
 
 /**
  * Options for log formatting.

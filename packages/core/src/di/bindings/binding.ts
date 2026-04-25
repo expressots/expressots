@@ -1,6 +1,6 @@
-import { Scope, BindingTypeEnum } from "../constants/literal_types";
-import { interfaces } from "../interfaces/interfaces";
-import { id } from "../utils/id";
+import { Scope, BindingTypeEnum } from "../constants/literal_types.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { id } from "../utils/id.js";
 
 class Binding<TActivated> implements interfaces.Binding<TActivated> {
   public id: number;

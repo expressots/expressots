@@ -10,7 +10,7 @@
  * - Grouped output formatting
  */
 
-import { LogEntry } from "./utils/log-entry";
+import { LogEntry } from "./utils/log-entry.js";
 
 /**
  * Configuration for log grouping.

@@ -22,11 +22,11 @@
  * ```
  */
 
-import { Container, inject, injectable, optional } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
-import { EventFlowTracker } from "./event-flow-tracker";
-import { EventRecorder } from "./event-recorder";
-import { EventRegistry } from "./event-registry";
+import { Container, inject, injectable, optional } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
+import { EventFlowTracker } from "./event-flow-tracker.js";
+import { EventRecorder } from "./event-recorder.js";
+import { EventRegistry } from "./event-registry.js";
 import {
   EventClass,
   EventSystemConfig,
@@ -35,7 +35,7 @@ import {
   IEventHandler,
   RegisteredHandler,
   WhenOptions,
-} from "./event.interfaces";
+} from "./event.interfaces.js";
 
 /**
  * Default event system configuration.

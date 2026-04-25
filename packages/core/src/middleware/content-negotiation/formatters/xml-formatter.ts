@@ -1,7 +1,7 @@
 import {
   IContentFormatter,
   XmlFormatOptions,
-} from "../../interfaces/content-negotiation.interface";
+} from "../../interfaces/content-negotiation.interface.js";
 
 /**
  * XML formatter for content negotiation.

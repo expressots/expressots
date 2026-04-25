@@ -1,10 +1,10 @@
 import "reflect-metadata";
-import { INTERCEPTOR_METADATA_KEY } from "./interceptor-constants";
+import { INTERCEPTOR_METADATA_KEY } from "./interceptor-constants.js";
 import type {
   IInterceptor,
   InterceptorClass,
   InterceptorMetadata,
-} from "./interceptor.interface";
+} from "./interceptor.interface.js";
 
 /**
  * Decorator to mark a class as an interceptor (for auto-discovery).

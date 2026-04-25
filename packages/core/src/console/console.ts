@@ -1,6 +1,6 @@
 import { stdout } from "process";
 import { IConsoleMessage } from "@expressots/shared";
-import { ColorStyle, bgColorCodes, colorCodes } from "./color-codes";
+import { ColorStyle, bgColorCodes, colorCodes } from "./color-codes.js";
 
 /**
  * Console class for displaying styled startup messages.

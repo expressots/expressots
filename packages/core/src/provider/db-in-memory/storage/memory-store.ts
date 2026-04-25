@@ -7,8 +7,8 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { IEntity } from "../schema/entity.interface";
-import { AutoGenerateStrategy, SchemaRegistry } from "../schema/decorators";
+import { IEntity } from "../schema/entity.interface.js";
+import { AutoGenerateStrategy, SchemaRegistry } from "../schema/decorators.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INDEX MANAGER

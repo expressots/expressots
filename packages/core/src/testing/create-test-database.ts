@@ -28,7 +28,7 @@ import {
   CreateTestDatabaseOptions,
   DatabaseFixture,
   ITestDatabase,
-} from "./testing.interfaces";
+} from "./testing.interfaces.js";
 
 /**
  * In-memory storage for test database.

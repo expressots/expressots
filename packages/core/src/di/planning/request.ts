@@ -1,5 +1,5 @@
-import { interfaces } from "../interfaces/interfaces";
-import { id } from "../utils/id";
+import { interfaces } from "../interfaces/interfaces.js";
+import { id } from "../utils/id.js";
 
 class Request implements interfaces.Request {
   public id: number;

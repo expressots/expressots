@@ -1,2 +1,2 @@
-export * from "./log-levels";
-export * from "./log-entry";
+export * from "./log-levels.js";
+export * from "./log-entry.js";

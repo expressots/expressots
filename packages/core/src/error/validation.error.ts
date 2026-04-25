@@ -1,8 +1,8 @@
 import {
   AppError,
   type ValidationError as ValidationErrorType,
-} from "./app-error";
-import { StatusCode } from "./status-code";
+} from "./app-error.js";
+import { StatusCode } from "./status-code.js";
 
 /**
  * ValidationError - Specific error type for validation failures

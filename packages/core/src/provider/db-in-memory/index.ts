@@ -61,7 +61,7 @@ export {
   InMemoryDBProvider,
   InMemoryDBConfig,
   BaseRepository,
-} from "./db.provider";
+} from "./db.provider.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ADAPTER
@@ -81,7 +81,7 @@ export {
   InMemoryAdapterOptions,
   InMemoryDatabase,
   InMemoryDatabaseOptions,
-} from "./adapter";
+} from "./adapter/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SCHEMA
@@ -114,7 +114,7 @@ export {
   // Registry
   SchemaRegistry,
   DB_METADATA_KEYS,
-} from "./schema";
+} from "./schema/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // QUERY
@@ -165,7 +165,7 @@ export {
   TransactionClient,
   // Engine
   QueryEngine,
-} from "./query";
+} from "./query/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STORAGE
@@ -179,7 +179,7 @@ export {
   UniqueConstraintError,
   EntityNotFoundError,
   EntityAlreadyExistsError,
-} from "./storage";
+} from "./storage/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LEGACY EXPORTS (Backward Compatibility)
@@ -190,19 +190,19 @@ export {
   IRepository,
   IDataTable,
   IDataProvider,
-} from "./db-in-memory.interface";
+} from "./db-in-memory.interface.js";
 
 // Legacy provider (deprecated, use InMemoryDBProvider)
 export {
   InMemoryDataProvider,
   InMemoryDataTable,
-} from "./db-in-memory.provider";
+} from "./db-in-memory.provider.js";
 
 // Legacy errors (now exported from storage)
 export {
   EntityNotFoundError as LegacyEntityNotFoundError,
   EntityAlreadyExistsError as LegacyEntityAlreadyExistsError,
-} from "./db-in-memory.types";
+} from "./db-in-memory.types.js";
 
 // Legacy base repository
-export { BaseRepository as LegacyBaseRepository } from "./base-repo.repository";
+export { BaseRepository as LegacyBaseRepository } from "./base-repo.repository.js";

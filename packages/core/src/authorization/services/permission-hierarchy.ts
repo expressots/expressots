@@ -1,5 +1,5 @@
-import { injectable } from "../../di/inversify";
-import type { IPermissionHierarchy } from "./permission-hierarchy.interface";
+import { injectable } from "../../di/inversify.js";
+import type { IPermissionHierarchy } from "./permission-hierarchy.interface.js";
 
 /**
  * Permission hierarchy service for role/permission inheritance

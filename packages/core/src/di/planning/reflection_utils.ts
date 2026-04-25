@@ -1,11 +1,11 @@
-import { LazyServiceIdentifier } from "../annotation/lazy_service_identifier";
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { TargetTypeEnum } from "../constants/literal_types";
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { getFunctionName } from "../utils/serialization";
-import { Metadata } from "./metadata";
-import { Target } from "./target";
+import { LazyServiceIdentifier } from "../annotation/lazy_service_identifier.js";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { TargetTypeEnum } from "../constants/literal_types.js";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { getFunctionName } from "../utils/serialization.js";
+import { Metadata } from "./metadata.js";
+import { Target } from "./target.js";
 
 function getDependencies(
   metadataReader: interfaces.MetadataReader,

@@ -4,7 +4,7 @@
  * @runnable true
  */
 
-import { bootstrap, BootstrapOptions } from "../../bootstrap";
+import { bootstrap, BootstrapOptions } from "../../bootstrap.js";
 import { AppExpress } from "@expressots/adapter-express";
 
 class AdvancedApp extends AppExpress {

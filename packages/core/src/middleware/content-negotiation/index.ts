@@ -1,7 +1,7 @@
 /**
  * Content negotiation module exports.
  */
-export { ContentNegotiationService } from "./content-negotiation-service";
-export { FormatterRegistry } from "./formatter-registry";
-export { AcceptHeaderParser } from "./accept-header-parser";
-export * from "./formatters";
+export { ContentNegotiationService } from "./content-negotiation-service.js";
+export { FormatterRegistry } from "./formatter-registry.js";
+export { AcceptHeaderParser } from "./accept-header-parser.js";
+export * from "./formatters/index.js";

@@ -4,7 +4,7 @@
  * @runnable true
  */
 
-import { AppFactory } from "../../application-factory";
+import { AppFactory } from "../../application-factory.js";
 import { AppExpress } from "@expressots/adapter-express";
 
 class ExampleApp extends AppExpress {

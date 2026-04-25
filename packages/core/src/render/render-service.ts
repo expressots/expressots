@@ -2,9 +2,9 @@
 import * as path from "path";
 import * as fs from "fs";
 import type { Application } from "express";
-import { Logger } from "../provider/logger/logger.provider";
-import { EngineRegistry } from "./render-registry";
-import type { EngineAdapter, IRenderService } from "./render-interface";
+import { Logger } from "../provider/logger/logger.provider.js";
+import { EngineRegistry } from "./render-registry.js";
+import type { EngineAdapter, IRenderService } from "./render-interface.js";
 import type {
   RenderConfig,
   RenderOptions,
@@ -12,12 +12,12 @@ import type {
   RenderMetrics,
   EngineType,
   PresetName,
-} from "./render-config";
-import { EjsAdapter } from "./adapters/ejs-adapter";
-import { PugAdapter } from "./adapters/pug-adapter";
-import { HandlebarsAdapter } from "./adapters/handlebars-adapter";
-import { ReactAdapter } from "./adapters/react-adapter";
-import { getPackageResolver } from "./utils/package-resolver";
+} from "./render-config.js";
+import { EjsAdapter } from "./adapters/ejs-adapter.js";
+import { PugAdapter } from "./adapters/pug-adapter.js";
+import { HandlebarsAdapter } from "./adapters/handlebars-adapter.js";
+import { ReactAdapter } from "./adapters/react-adapter.js";
+import { getPackageResolver } from "./utils/package-resolver.js";
 
 /**
  * Render Service
@@ -74,53 +74,58 @@ export class RenderService implements IRenderService {
    * @param config - Render configuration or preset name
    */
   async configure(config: RenderConfig | PresetName = {}): Promise<void> {
-    // Handle preset names
+    // Resolve preset names to a concrete RenderConfig object first, so the
+    // rest of the function deals with a single, well-typed shape (TS does
+    // not carry parameter narrowing across reassignments reliably).
+    let resolved: RenderConfig;
     if (typeof config === "string") {
-      const { getPreset } = await import("./presets");
-      config = getPreset(config);
+      const { getPreset } = await import("./presets/index.js");
+      resolved = getPreset(config);
+    } else {
+      resolved = config;
     }
 
     // Apply smart defaults
-    config = this.applyDefaults(config);
+    resolved = this.applyDefaults(resolved);
 
     // Auto-detect engine if needed
-    if (config.engine === "auto" || !config.engine) {
-      const { AutoDetection } = await import("./features/auto-detection");
+    if (resolved.engine === "auto" || !resolved.engine) {
+      const { AutoDetection } = await import("./features/auto-detection.js");
       const autoDetector = new AutoDetection();
-      config.engine = await autoDetector.detectEngine();
+      resolved.engine = await autoDetector.detectEngine();
       this.logger.info(
-        `Auto-detected render engine: ${config.engine}`,
+        `Auto-detected render engine: ${resolved.engine}`,
         "render-service",
       );
     }
 
-    this.config = config;
+    this.config = resolved;
 
     // Get and configure the engine adapter
-    const adapter = this.registry.get(config.engine as string);
+    const adapter = this.registry.get(resolved.engine as string);
     if (!adapter) {
       throw new Error(
-        `Render engine '${config.engine}' not found or not registered`,
+        `Render engine '${resolved.engine}' not found or not registered`,
       );
     }
 
     // Build engine-specific options
-    const engineOptions = this.buildEngineOptions(config);
+    const engineOptions = this.buildEngineOptions(resolved);
 
     await adapter.setup(this.app, engineOptions);
     this.activeEngine = adapter;
 
     // Enable features based on config
     if (
-      config.watch === true ||
-      (config.watch === "auto" && this.isDevelopment())
+      resolved.watch === true ||
+      (resolved.watch === "auto" && this.isDevelopment())
     ) {
       await this.enableHotReload();
     }
 
     if (
-      config.debug === true ||
-      (config.debug === undefined && this.isDevelopment())
+      resolved.debug === true ||
+      (resolved.debug === undefined && this.isDevelopment())
     ) {
       await this.enableViewDebugger();
     }
@@ -222,7 +227,7 @@ export class RenderService implements IRenderService {
   async enableHotReload(): Promise<void> {
     if (this.hotReloader) return;
 
-    const { HotReload } = await import("./features/hot-reload");
+    const { HotReload } = await import("./features/hot-reload.js");
     this.hotReloader = new HotReload(this.config.viewsDir || "views");
     this.hotReloader.setOnChange(() => {
       // Notify active engine
@@ -237,7 +242,7 @@ export class RenderService implements IRenderService {
   async enableTypeGeneration(): Promise<void> {
     if (this.typeGenerator) return;
 
-    const { TypeGenerator } = await import("./features/type-generator");
+    const { TypeGenerator } = await import("./features/type-generator.js");
     this.typeGenerator = new TypeGenerator();
 
     const viewsDir = this.config.viewsDir;
@@ -253,7 +258,7 @@ export class RenderService implements IRenderService {
   async enableViewDebugger(): Promise<void> {
     if (this.viewDebugger) return;
 
-    const { ViewDebugger } = await import("./features/view-debugger");
+    const { ViewDebugger } = await import("./features/view-debugger.js");
     this.viewDebugger = new ViewDebugger(this);
     this.viewDebugger.registerRoutes(this.app);
   }

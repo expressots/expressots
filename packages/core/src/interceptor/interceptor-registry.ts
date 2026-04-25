@@ -1,12 +1,12 @@
 import "reflect-metadata";
-import { inject, injectable, Container, interfaces } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
-import { INTERCEPTOR_METADATA_KEY } from "./interceptor-constants";
+import { inject, injectable, Container, interfaces } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
+import { INTERCEPTOR_METADATA_KEY } from "./interceptor-constants.js";
 import type {
   IInterceptor,
   InterceptorClass,
   InterceptorMetadata,
-} from "./interceptor.interface";
+} from "./interceptor.interface.js";
 
 /**
  * Registry for auto-discovering and resolving interceptors

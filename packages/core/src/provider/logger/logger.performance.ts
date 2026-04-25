@@ -10,7 +10,7 @@
  * - Memory and CPU usage tracking
  */
 
-import { Logger } from "./logger.provider";
+import { Logger } from "./logger.provider.js";
 
 /**
  * Timer interface for measuring execution time.

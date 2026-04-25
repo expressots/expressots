@@ -6,8 +6,8 @@
  * @module db-in-memory/query
  */
 
-import { IEntity } from "../schema/entity.interface";
-import { MemoryStore } from "../storage/memory-store";
+import { IEntity } from "../schema/entity.interface.js";
+import { MemoryStore } from "../storage/memory-store.js";
 import {
   WhereInput,
   OrderByInput,
@@ -20,7 +20,7 @@ import {
   SelectInput,
   AggregateArgs,
   AggregateResult,
-} from "./query.types";
+} from "./query.types.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // QUERY ENGINE

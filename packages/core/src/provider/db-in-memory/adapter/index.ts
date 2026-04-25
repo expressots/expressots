@@ -11,11 +11,11 @@ export {
   ISubscription,
   ChangeEvent,
   ChangeType,
-} from "./adapter.interface";
+} from "./adapter.interface.js";
 
 export {
   InMemoryAdapter,
   InMemoryAdapterOptions,
   InMemoryDatabase,
   InMemoryDatabaseOptions,
-} from "./in-memory.adapter";
+} from "./in-memory.adapter.js";

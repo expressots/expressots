@@ -1,16 +1,16 @@
-import { inject, injectable } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
-import { Report } from "./report";
+import { inject, injectable } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
+import { Report } from "./report.js";
 import type {
   IExceptionFilter,
   ExceptionContext,
-} from "./exception-filter.interface";
+} from "./exception-filter.interface.js";
 import {
   getErrorHints,
   formatSuggestions,
   getDefaultSuggestionsConfig,
   type SuggestionsConfig,
-} from "../provider/logger/logger.suggestions";
+} from "../provider/logger/logger.suggestions.js";
 
 /**
  * Base exception filter with common functionality.

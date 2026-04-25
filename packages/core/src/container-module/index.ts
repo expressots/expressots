@@ -6,4 +6,4 @@ export {
   type BindingsCallback,
   type SimpleBindingsCallback,
   type ExtendedBindingsCallback,
-} from "./container-module";
+} from "./container-module.js";

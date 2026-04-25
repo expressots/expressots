@@ -32,24 +32,24 @@
  */
 
 // Core interfaces and types
-export * from "./interceptor.interface";
-export * from "./interceptor-constants";
+export * from "./interceptor.interface.js";
+export * from "./interceptor-constants.js";
 
 // Decorators
-export * from "./interceptor-decorators";
+export * from "./interceptor-decorators.js";
 
 // Registry and Executor
-export * from "./interceptor-registry";
-export * from "./interceptor-executor";
+export * from "./interceptor-registry.js";
+export * from "./interceptor-executor.js";
 
 // Conditional interceptors
-export * from "./conditional-interceptor";
+export * from "./conditional-interceptor.js";
 
 // Composition utilities
-export * from "./interceptor-composition";
+export * from "./interceptor-composition.js";
 
 // Execution context
-export * from "./execution-context";
+export * from "./execution-context.js";
 
 // Built-in interceptors
-export * from "./interceptors";
+export * from "./interceptors/index.js";

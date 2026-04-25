@@ -4,8 +4,8 @@ import * as fs from "fs";
 import { Readable, Writable } from "stream";
 import type { Application } from "express";
 import express from "express";
-import { BaseEngineAdapter } from "./base-adapter";
-import type { ReactConfig, SSRConfig } from "../render-config";
+import { BaseEngineAdapter } from "./base-adapter.js";
+import type { ReactConfig, SSRConfig } from "../render-config.js";
 
 /**
  * Default React configuration.

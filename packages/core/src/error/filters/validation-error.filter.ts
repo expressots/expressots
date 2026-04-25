@@ -1,9 +1,9 @@
-import { provide } from "../../di/binding-decorator";
-import { StatusCode } from "../status-code";
-import { BaseExceptionFilter } from "../base-exception-filter";
-import type { ExceptionContext } from "../exception-filter.interface";
-import { Catch } from "../exception-filter-decorators";
-import { ValidationError } from "../validation.error";
+import { provide } from "../../di/binding-decorator/index.js";
+import { StatusCode } from "../status-code.js";
+import { BaseExceptionFilter } from "../base-exception-filter.js";
+import type { ExceptionContext } from "../exception-filter.interface.js";
+import { Catch } from "../exception-filter-decorators.js";
+import { ValidationError } from "../validation.error.js";
 
 /**
  * Built-in exception filter for ValidationError instances

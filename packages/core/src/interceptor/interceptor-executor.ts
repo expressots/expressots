@@ -1,16 +1,16 @@
-import { inject, injectable } from "../di/inversify";
-import { Logger } from "../provider/logger/logger.provider";
+import { inject, injectable } from "../di/inversify.js";
+import { Logger } from "../provider/logger/logger.provider.js";
 import type {
   IInterceptor,
   InterceptorClass,
   ExecutionContext,
   CallHandler,
-} from "./interceptor.interface";
+} from "./interceptor.interface.js";
 import {
   isConditionalInterceptor,
   isComposedInterceptor,
-} from "./interceptor.interface";
-import { InterceptorRegistry } from "./interceptor-registry";
+} from "./interceptor.interface.js";
+import { InterceptorRegistry } from "./interceptor-registry.js";
 
 /**
  * Executor for running interceptors in pipeline order

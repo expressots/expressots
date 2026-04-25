@@ -4,7 +4,7 @@
  * @runnable true
  */
 
-import { CreateModule } from "../../container-module";
+import { CreateModule } from "../../container-module.js";
 
 // Example controller classes
 class UserController {}

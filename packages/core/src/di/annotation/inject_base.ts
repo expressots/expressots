@@ -1,7 +1,7 @@
-import { UNDEFINED_INJECT_ANNOTATION } from "../constants/error_msgs";
-import { Metadata } from "../planning/metadata";
-import { createTaggedDecorator, DecoratorTarget } from "./decorator_utils";
-import { ServiceIdentifierOrFunc } from "./lazy_service_identifier";
+import { UNDEFINED_INJECT_ANNOTATION } from "../constants/error_msgs.js";
+import { Metadata } from "../planning/metadata.js";
+import { createTaggedDecorator, DecoratorTarget } from "./decorator_utils.js";
+import { ServiceIdentifierOrFunc } from "./lazy_service_identifier.js";
 
 export function injectBase(metadataKey: string) {
   return <T = unknown>(serviceIdentifier: ServiceIdentifierOrFunc<T>) => {

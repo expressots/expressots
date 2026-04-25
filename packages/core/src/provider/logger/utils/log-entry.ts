@@ -1,5 +1,5 @@
-import { LogLevel } from "./log-levels";
-import { RequestFlow } from "../logger.flow";
+import { LogLevel } from "./log-levels.js";
+import { RequestFlow } from "../logger.flow.js";
 
 /**
  * Trace information for request context.

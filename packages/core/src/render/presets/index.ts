@@ -6,7 +6,7 @@
  * @public API
  */
 
-import type { RenderConfig, PresetName } from "../render-config";
+import type { RenderConfig, PresetName } from "../render-config.js";
 
 /**
  * Development Preset

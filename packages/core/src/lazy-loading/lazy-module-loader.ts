@@ -6,15 +6,15 @@
  * @module lazy-loading
  */
 
-import { injectable } from "../di/inversify";
-import { Container, ContainerModule } from "../di/inversify";
+import { injectable } from "../di/inversify.js";
+import { Container, ContainerModule } from "../di/inversify.js";
 import {
   ILazyModule,
   ILazyModuleLoader,
   ModuleLoadStatus,
   PreloadHint,
-} from "./lazy.interfaces";
-import { isLazyModule } from "./lazy-module";
+} from "./lazy.interfaces.js";
+import { isLazyModule } from "./lazy-module.js";
 
 // ============================================================================
 // Lazy Module Loader

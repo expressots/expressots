@@ -1,8 +1,8 @@
-import { Guard } from "../guard-decorators";
-import { injectable } from "../../di/inversify";
-import type { IGuard, GuardContext } from "../guard.interface";
-import { GuardResult } from "../guard.interface";
-import { AppError } from "../../error/app-error";
+import { Guard } from "../guard-decorators.js";
+import { injectable } from "../../di/inversify.js";
+import type { IGuard, GuardContext } from "../guard.interface.js";
+import { GuardResult } from "../guard.interface.js";
+import { AppError } from "../../error/app-error.js";
 
 /**
  * Guard that requires resource ownership

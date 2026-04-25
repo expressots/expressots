@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { ViewInfo, EngineType } from "../render-config";
-import type { EngineRegistry } from "../render-registry";
+import type { ViewInfo, EngineType } from "../render-config.js";
+import type { EngineRegistry } from "../render-registry.js";
 
 /**
  * View Scanner

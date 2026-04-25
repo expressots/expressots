@@ -7,7 +7,7 @@
  * @module db-in-memory/query
  */
 
-import { IEntity } from "../schema/entity.interface";
+import { IEntity } from "../schema/entity.interface.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STRING FILTERS

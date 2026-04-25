@@ -3,7 +3,7 @@ import {
   IWebServerBuilder,
   IWebServerConstructor,
 } from "@expressots/shared";
-import { Logger } from "../provider/logger/logger.provider";
+import { Logger } from "../provider/logger/logger.provider.js";
 
 /**
  * Type guard to check if input is a constructor type of IWebServer.

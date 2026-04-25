@@ -1,12 +1,12 @@
-import { injectable } from "../../di/inversify";
+import { injectable } from "../../di/inversify.js";
 import type {
   IInterceptor,
   ExecutionContext,
   CallHandler,
-} from "../interceptor.interface";
-import { Interceptor } from "../interceptor-decorators";
-import { AppError } from "../../error/app-error";
-import { StatusCode } from "../../error/status-code";
+} from "../interceptor.interface.js";
+import { Interceptor } from "../interceptor-decorators.js";
+import { AppError } from "../../error/app-error.js";
+import { StatusCode } from "../../error/status-code.js";
 
 /**
  * Configuration for timeout interceptor

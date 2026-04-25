@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import * as ERROR_MSGS from "../constants/error_msgs";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
 
 export function isStackOverflowExeption(error: unknown): error is RangeError {
   return (

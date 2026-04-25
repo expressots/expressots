@@ -1,6 +1,6 @@
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { Metadata } from "../planning/metadata";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { Metadata } from "../planning/metadata.js";
 
 const traverseAncerstors = (
   request: interfaces.Request,

@@ -1,7 +1,7 @@
-import { ILogTransport } from "./transport.interface";
-import { LogEntry } from "../utils/log-entry";
-import { LogLevel, shouldLog } from "../utils/log-levels";
-import { formatProd } from "../logger.formatter";
+import { ILogTransport } from "./transport.interface.js";
+import { LogEntry } from "../utils/log-entry.js";
+import { LogLevel, shouldLog } from "../utils/log-levels.js";
+import { formatProd } from "../logger.formatter.js";
 import { promises as fs } from "fs";
 import { join } from "path";
 import { createGzip } from "zlib";

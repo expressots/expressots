@@ -6,8 +6,8 @@
  * examples, hints, and received values - making debugging easier.
  */
 
-import { provideSingleton } from "../../decorator/scope-binding";
-import { ValidationFieldError } from "./validation.interface";
+import { provideSingleton } from "../../decorator/scope-binding.js";
+import { ValidationFieldError } from "./validation.interface.js";
 
 /**
  * Error format options

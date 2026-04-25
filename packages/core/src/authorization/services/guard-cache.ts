@@ -1,6 +1,6 @@
-import { injectable } from "../../di/inversify";
-import type { GuardResult } from "../guard.interface";
-import type { IGuardCache } from "./guard-cache.interface";
+import { injectable } from "../../di/inversify.js";
+import type { GuardResult } from "../guard.interface.js";
+import type { IGuardCache } from "./guard-cache.interface.js";
 
 /**
  * Implementation of guard result caching

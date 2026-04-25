@@ -1,5 +1,5 @@
-import type { IGuard, GuardContext, GuardClass } from "../guard.interface";
-import { GuardResult } from "../guard.interface";
+import type { IGuard, GuardContext, GuardClass } from "../guard.interface.js";
+import { GuardResult } from "../guard.interface.js";
 
 /**
  * Combine multiple guards (all must pass)

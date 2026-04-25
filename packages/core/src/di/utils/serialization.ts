@@ -1,5 +1,5 @@
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { interfaces } from "../interfaces/interfaces";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { interfaces } from "../interfaces/interfaces.js";
 
 function getServiceIdentifierAsString(
   serviceIdentifier: interfaces.ServiceIdentifier,

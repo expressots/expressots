@@ -4,7 +4,7 @@
  * @runnable true
  */
 
-import { provideInScope } from "../../scope-binding";
+import { provideInScope } from "../../scope-binding.js";
 
 // Service interface
 interface ITenantService {

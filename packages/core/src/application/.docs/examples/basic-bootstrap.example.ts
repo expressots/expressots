@@ -5,7 +5,7 @@
  * @test-coverage 95%
  */
 
-import { bootstrap } from "../../bootstrap";
+import { bootstrap } from "../../bootstrap.js";
 import { AppExpress } from "@expressots/adapter-express";
 
 // Example application class - users can copy-paste this pattern

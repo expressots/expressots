@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import type { Container, interfaces } from "../di/inversify";
-import type { ExecutionContext } from "./interceptor.interface";
+import type { Container, interfaces } from "../di/inversify.js";
+import type { ExecutionContext } from "./interceptor.interface.js";
 
 /**
  * Implementation of ExecutionContext for Express adapter

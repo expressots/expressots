@@ -15,7 +15,7 @@
  * - Background warmup during idle time
  */
 
-import { ContainerModule } from "../di/inversify";
+import { ContainerModule } from "../di/inversify.js";
 
 // ============================================================================
 // Preload Hint Types

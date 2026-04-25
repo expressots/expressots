@@ -21,12 +21,12 @@
  * ```
  */
 
-import { injectable } from "../di/inversify";
+import { injectable } from "../di/inversify.js";
 import {
   EventFlow,
   EventFlowNode,
   IEventFlowTracker,
-} from "./event.interfaces";
+} from "./event.interfaces.js";
 
 /**
  * Event flow tracker implementation.

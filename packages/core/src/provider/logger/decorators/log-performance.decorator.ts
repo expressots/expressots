@@ -10,7 +10,7 @@
  * - Includes class and method name in logs
  */
 
-import { Logger } from "../logger.provider";
+import { Logger } from "../logger.provider.js";
 
 /**
  * Options for @LogPerformance decorator.

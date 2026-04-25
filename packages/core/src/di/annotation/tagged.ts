@@ -1,5 +1,5 @@
-import { Metadata } from "../planning/metadata";
-import { createTaggedDecorator } from "./decorator_utils";
+import { Metadata } from "../planning/metadata.js";
+import { createTaggedDecorator } from "./decorator_utils.js";
 
 // Used to add custom metadata which is used to resolve metadata-based contextual bindings.
 function tagged<T>(

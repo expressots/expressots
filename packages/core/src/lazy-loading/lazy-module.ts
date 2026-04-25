@@ -6,14 +6,14 @@
  * @module lazy-loading
  */
 
-import { ContainerModule } from "../di/inversify";
+import { ContainerModule } from "../di/inversify.js";
 import {
   ILazyModule,
   LazyModuleConfig,
   LazyModuleFactory,
   ModuleLoadStatus,
   PreloadHint,
-} from "./lazy.interfaces";
+} from "./lazy.interfaces.js";
 
 // ============================================================================
 // Lazy Module Metadata Key
@@ -324,10 +324,13 @@ export function CreateLazyModule(
     routePrefixes: uniquePrefixes.length > 0 ? uniquePrefixes : undefined,
   };
 
-  // Import CreateModule dynamically to avoid circular dependencies
-  const factory: LazyModuleFactory = () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { CreateModule } = require("../container-module/container-module");
+  // Import CreateModule dynamically to avoid circular dependencies.
+  // `await import` works identically in both CJS and ESM compiled output
+  // and the factory type already accepts Promise<ContainerModule>.
+  const factory: LazyModuleFactory = async () => {
+    const { CreateModule } = await import(
+      "../container-module/container-module.js"
+    );
     return CreateModule(controllers);
   };
 

@@ -1,17 +1,17 @@
-import { interfaces } from "../../di/inversify";
+import { interfaces } from "../../di/inversify.js";
 import {
   ApplicationMetrics,
   FeaturesStatus,
   detectFeaturesStatus,
-} from "./logger.metrics";
-import { METADATA_KEY } from "../../di/binding-decorator/constants";
-import { GuardRegistry } from "../../authorization/guard-registry";
-import { ExceptionFilterRegistry } from "../../error/exception-filter-registry";
-import { InterceptorRegistry } from "../../interceptor/interceptor-registry";
-import { EventRegistry } from "../../event/event-registry";
-import { LazyModuleLoader } from "../../lazy-loading/lazy-module-loader";
-import { INTERCEPTOR_METADATA_KEY } from "../../interceptor/interceptor-constants";
-import { EVENT_METADATA } from "../../event/event.interfaces";
+} from "./logger.metrics.js";
+import { METADATA_KEY } from "../../di/binding-decorator/constants.js";
+import { GuardRegistry } from "../../authorization/guard-registry.js";
+import { ExceptionFilterRegistry } from "../../error/exception-filter-registry.js";
+import { InterceptorRegistry } from "../../interceptor/interceptor-registry.js";
+import { EventRegistry } from "../../event/event-registry.js";
+import { LazyModuleLoader } from "../../lazy-loading/lazy-module-loader.js";
+import { INTERCEPTOR_METADATA_KEY } from "../../interceptor/interceptor-constants.js";
+import { EVENT_METADATA } from "../../event/event.interfaces.js";
 
 /**
  * Collect application metrics from container and metadata.
@@ -42,6 +42,15 @@ export class MetricsCollector {
       hasErrorHandler?: () => boolean;
       hasRequestLogging?: () => boolean;
       hasEnhancedConfiguration?: () => boolean;
+      /**
+       * Optional. The adapter (or app) can pass a probe that returns true
+       * when the application has registered scopes outside of Inversify's
+       * built-in `Singleton` / `Transient` / `Request` (e.g. tenant scope).
+       *
+       * When omitted, `customScopes` is reported as `false` — accurate by
+       * default for vanilla apps.
+       */
+      hasCustomScopes?: () => boolean;
     },
   ): {
     metrics: ApplicationMetrics;
@@ -211,7 +220,7 @@ export class MetricsCollector {
       hasAuthorization: options.hasAuthorization(),
       hasExceptionFilters: options.hasExceptionFilters(),
       hasLifecycleHooks: bootstrapCount > 0 || shutdownCount > 0,
-      hasCustomScopes: false, // TODO: Detect custom scopes
+      hasCustomScopes: options.hasCustomScopes?.() ?? false,
       hasApiVersioning: options.hasApiVersioning?.() ?? false,
       hasGlobalRoutePrefix: options.hasGlobalRoutePrefix?.() ?? false,
       hasErrorHandler: options.hasErrorHandler?.() ?? false,

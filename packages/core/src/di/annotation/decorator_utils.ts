@@ -1,7 +1,7 @@
-import * as ERROR_MSGS from "../constants/error_msgs";
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { getFirstArrayDuplicate } from "../utils/js";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { getFirstArrayDuplicate } from "../utils/js.js";
 
 function targetIsConstructorFunction<T = NonNullable<unknown>>(
   target: DecoratorTarget<T>,

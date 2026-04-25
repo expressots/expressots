@@ -27,8 +27,8 @@ import {
   SecretValue,
   StringFieldOptions,
   UrlFieldOptions,
-} from "./config.interfaces";
-import { createSecretValue } from "./secret-value";
+} from "./config.interfaces.js";
+import { createSecretValue } from "./secret-value.js";
 
 // ============================================================================
 // Environment Detection

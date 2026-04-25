@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { Scope, BindingTypeEnum } from "../constants/literal_types";
-import { interfaces } from "../interfaces/interfaces";
-import { BindingInWhenOnSyntax } from "./binding_in_when_on_syntax";
-import { BindingWhenOnSyntax } from "./binding_when_on_syntax";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { Scope, BindingTypeEnum } from "../constants/literal_types.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { BindingInWhenOnSyntax } from "./binding_in_when_on_syntax.js";
+import { BindingWhenOnSyntax } from "./binding_when_on_syntax.js";
 
 class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
   // TODO: Implement an internal type `_BindingToSyntax<T>` wherein this member

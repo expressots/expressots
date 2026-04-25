@@ -1,41 +1,41 @@
-import { provideSingleton } from "../../decorator/scope-binding";
-import { IProvider } from "../provider-manager";
+import { provideSingleton } from "../../decorator/scope-binding.js";
+import { IProvider } from "../provider-manager.js";
 import {
   LogLevel,
   LogLevelString,
   parseLogLevel,
   shouldLog,
-} from "./utils/log-levels";
-import { createLogEntry, LogTrace, LogEntry } from "./utils/log-entry";
-import { LoggerConfig, getDefaultLoggerConfig } from "./logger.config";
-import { ILogTransport } from "./transports/transport.interface";
-import { ConsoleTransport } from "./transports/console.transport";
+} from "./utils/log-levels.js";
+import { createLogEntry, LogTrace, LogEntry } from "./utils/log-entry.js";
+import { LoggerConfig, getDefaultLoggerConfig } from "./logger.config.js";
+import { ILogTransport } from "./transports/transport.interface.js";
+import { ConsoleTransport } from "./transports/console.transport.js";
 import {
   formatDev,
   formatGroupedDev,
   formatGroupedProd,
-} from "./logger.formatter";
-import { ContextManager, LogContext } from "./logger.context";
+} from "./logger.formatter.js";
+import { ContextManager, LogContext } from "./logger.context.js";
 import {
   Timer,
   ITimer,
   PerformanceMetricsCollector,
   measurePerformance,
   measurePerformanceSync,
-} from "./logger.performance";
-import { LogGroupingManager, GroupedLogEntry } from "./logger.grouping";
+} from "./logger.performance.js";
+import { LogGroupingManager, GroupedLogEntry } from "./logger.grouping.js";
 import {
   HealthMonitor,
   HealthStatus,
   collectHealthStatus,
-} from "./logger.health";
+} from "./logger.health.js";
 import {
   LogQueryManager,
   LogQueryOptions,
   LogQuery,
   exportToMarkdown,
   QueryStats,
-} from "./logger.query";
+} from "./logger.query.js";
 
 /**
  * Enhanced Logger provider with structured logging, multiple levels, and pluggable transports.
@@ -391,7 +391,7 @@ class Logger implements IProvider {
         memoryDelta?: number;
         cpuUsage?: number;
       };
-      flow?: import("./logger.flow").RequestFlow;
+      flow?: import("./logger.flow.js").RequestFlow;
     },
   ): void {
     const configuredLevel = parseLogLevel(this.config.level);

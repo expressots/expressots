@@ -1,7 +1,7 @@
-import { Scope } from "../constants/literal_types";
-import type { interfaces } from "../interfaces/interfaces";
-import { isPromise } from "../utils/async";
-import { globalScopeRegistry } from "./scope-registry";
+import { Scope } from "../constants/literal_types.js";
+import type { interfaces } from "../interfaces/interfaces.js";
+import { isPromise } from "../utils/async.js";
+import { globalScopeRegistry } from "./scope-registry.js";
 
 /**
  * Check if a scope name is a built-in scope.

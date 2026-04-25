@@ -6,8 +6,8 @@
  * @public API
  */
 
-export { AutoDetection } from "./auto-detection";
-export { HotReload } from "./hot-reload";
-export { StreamingRenderer } from "./streaming";
-export { TypeGenerator } from "./type-generator";
-export { ViewDebugger } from "./view-debugger";
+export { AutoDetection } from "./auto-detection.js";
+export { HotReload } from "./hot-reload.js";
+export { StreamingRenderer } from "./streaming.js";
+export { TypeGenerator } from "./type-generator.js";
+export { ViewDebugger } from "./view-debugger.js";

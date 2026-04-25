@@ -1,4 +1,4 @@
-import { colorCodes, Color } from "../console/color-codes";
+import { colorCodes, Color } from "../console/color-codes.js";
 
 // ANSI escape codes for text formatting
 const RESET = "\x1b[0m";

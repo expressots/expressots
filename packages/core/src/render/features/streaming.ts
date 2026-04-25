@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Response } from "express";
-import type { EngineAdapter } from "../render-interface";
-import { Logger } from "../../provider/logger/logger.provider";
+import type { EngineAdapter } from "../render-interface.js";
+import { Logger } from "../../provider/logger/logger.provider.js";
 
 /**
  * Streaming Renderer

@@ -26,7 +26,7 @@
  * ```
  */
 
-import { SecretValue, SecretFieldOptions } from "./config.interfaces";
+import { SecretValue, SecretFieldOptions } from "./config.interfaces.js";
 import * as nodeCrypto from "crypto";
 
 /**

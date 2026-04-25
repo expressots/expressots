@@ -6,13 +6,13 @@
  * @module lazy-loading
  */
 
-import { injectable, inject } from "../di/inversify";
+import { injectable, inject } from "../di/inversify.js";
 import {
   ILazyModuleWarmup,
   WarmupConfig,
   PreloadHint,
-} from "./lazy.interfaces";
-import { LazyModuleLoader } from "./lazy-module-loader";
+} from "./lazy.interfaces.js";
+import { LazyModuleLoader } from "./lazy-module-loader.js";
 
 // ============================================================================
 // Default Configuration

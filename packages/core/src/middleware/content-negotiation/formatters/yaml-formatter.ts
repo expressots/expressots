@@ -1,7 +1,7 @@
 import {
   IContentFormatter,
   YamlFormatOptions,
-} from "../../interfaces/content-negotiation.interface";
+} from "../../interfaces/content-negotiation.interface.js";
 
 /**
  * YAML formatter for content negotiation.

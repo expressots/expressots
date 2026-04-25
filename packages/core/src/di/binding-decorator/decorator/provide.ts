@@ -5,10 +5,10 @@ import {
   decorate,
   injectable,
   METADATA_KEY as inversify_METADATA_KEY,
-} from "../../inversify";
-import { interfaces as inversifyInterfaces } from "../../../di/inversify";
-import interfaces from "../interfaces/interfaces";
-import { METADATA_KEY } from "../constants";
+} from "../../inversify.js";
+import { interfaces as inversifyInterfaces } from "../../../di/inversify.js";
+import interfaces from "../interfaces/interfaces.js";
+import { METADATA_KEY } from "../constants.js";
 
 function provide(
   serviceIdentifier: inversifyInterfaces.ServiceIdentifier<any>,

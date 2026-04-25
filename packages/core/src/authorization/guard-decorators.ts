@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { GUARD_METADATA_KEY } from "./guard-constants";
-import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface";
+import { GUARD_METADATA_KEY } from "./guard-constants.js";
+import type { IGuard, GuardClass, GuardMetadata } from "./guard.interface.js";
 
 /**
  * Decorator to mark a class as a guard (for auto-discovery).

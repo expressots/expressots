@@ -7,7 +7,7 @@ export {
   IEntity,
   ITimestampedEntity,
   ISoftDeleteEntity,
-} from "./entity.interface";
+} from "./entity.interface.js";
 
 export {
   Entity,
@@ -29,4 +29,4 @@ export {
   RelationMetadata,
   SchemaRegistry,
   DB_METADATA_KEYS,
-} from "./decorators";
+} from "./decorators.js";

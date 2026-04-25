@@ -1,4 +1,4 @@
-import type { GuardResult } from "../guard.interface";
+import type { GuardResult } from "../guard.interface.js";
 
 /**
  * Interface for guard result caching

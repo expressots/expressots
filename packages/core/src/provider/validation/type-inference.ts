@@ -7,6 +7,7 @@
  */
 
 import "reflect-metadata";
+import { nodeRequire } from "../../utils/node-require.js";
 
 /**
  * Inferred type information from TypeScript metadata
@@ -192,8 +193,10 @@ export function hasClassValidatorDecorators(
 
   try {
     // Check for class-validator metadata storage
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const cv = require("class-validator");
+    const cv = nodeRequire<{
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getMetadataStorage?: () => any;
+    }>("class-validator");
     const metadataStorage = cv.getMetadataStorage?.();
 
     if (metadataStorage) {
@@ -236,8 +239,8 @@ export function isZodSchema(value: unknown): boolean {
 
   // Check for ZodType inheritance
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const z = require("zod");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const z = nodeRequire<{ ZodType: any }>("zod");
     return value instanceof z.ZodType;
   } catch {
     // Zod not installed

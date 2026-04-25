@@ -6,8 +6,8 @@
  * @public API
  */
 
-export { BaseEngineAdapter } from "./base-adapter";
-export { EjsAdapter } from "./ejs-adapter";
-export { PugAdapter } from "./pug-adapter";
-export { HandlebarsAdapter } from "./handlebars-adapter";
-export { ReactAdapter } from "./react-adapter";
+export { BaseEngineAdapter } from "./base-adapter.js";
+export { EjsAdapter } from "./ejs-adapter.js";
+export { PugAdapter } from "./pug-adapter.js";
+export { HandlebarsAdapter } from "./handlebars-adapter.js";
+export { ReactAdapter } from "./react-adapter.js";

@@ -1,8 +1,8 @@
-import { ILogTransport } from "./transport.interface";
-import { LogEntry } from "../utils/log-entry";
-import { LogLevel, shouldLog } from "../utils/log-levels";
-import { formatDev, formatProd, FormatOptions } from "../logger.formatter";
-import { Redactor } from "../logger.redaction";
+import { ILogTransport } from "./transport.interface.js";
+import { LogEntry } from "../utils/log-entry.js";
+import { LogLevel, shouldLog } from "../utils/log-levels.js";
+import { formatDev, formatProd, FormatOptions } from "../logger.formatter.js";
+import { Redactor } from "../logger.redaction.js";
 
 /**
  * Console transport for logging to stdout/stderr.

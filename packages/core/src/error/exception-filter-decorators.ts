@@ -1,10 +1,10 @@
 import "reflect-metadata";
-import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants";
+import { EXCEPTION_FILTER_METADATA_KEY } from "./exception-filter-constants.js";
 import type {
   IExceptionFilter,
   ExceptionFilterMetadata,
   ErrorConstructor,
-} from "./exception-filter.interface";
+} from "./exception-filter.interface.js";
 
 /**
  * Decorator to mark a class as an exception filter for specific exception types.

@@ -43,7 +43,7 @@ import {
   OnEventOptions,
   EVENT_METADATA,
   WhenOptions,
-} from "./event.interfaces";
+} from "./event.interfaces.js";
 
 // ============================================================================
 // @OnEvent Decorator

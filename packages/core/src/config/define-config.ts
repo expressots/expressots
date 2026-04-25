@@ -44,7 +44,7 @@
  * ```
  */
 
-import { resolveSchema } from "./config-resolver";
+import { resolveSchema } from "./config-resolver.js";
 import {
   ConfigField,
   ConfigValidationError,
@@ -52,8 +52,8 @@ import {
   DefineConfigOptions,
   IConfigInstance,
   ResolvedConfig,
-} from "./config.interfaces";
-import { isSecretValue } from "./secret-value";
+} from "./config.interfaces.js";
+import { isSecretValue } from "./secret-value.js";
 
 // ============================================================================
 // Error Formatter
@@ -635,4 +635,4 @@ export function defineConfig<T extends Record<string, unknown>>(
 // Re-exports for convenience
 // ============================================================================
 
-export { Env } from "./env-field-builders";
+export { Env } from "./env-field-builders.js";

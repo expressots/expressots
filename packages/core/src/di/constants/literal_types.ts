@@ -1,4 +1,4 @@
-import { interfaces } from "../interfaces/interfaces";
+import { interfaces } from "../interfaces/interfaces.js";
 
 const Scope: interfaces.Scope = {
   Request: "Request",

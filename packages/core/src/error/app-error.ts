@@ -1,4 +1,4 @@
-import { StatusCode } from "./status-code";
+import { StatusCode } from "./status-code.js";
 
 /**
  * Validation error structure for detailed validation failures

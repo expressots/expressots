@@ -7,9 +7,9 @@
  * @module provider
  */
 
-import { interfaces } from "../di/inversify";
-import { METADATA_KEY } from "../di/binding-decorator/constants";
-import { Scope } from "../di/inversify";
+import { interfaces } from "../di/inversify.js";
+import { METADATA_KEY } from "../di/binding-decorator/constants.js";
+import { Scope } from "../di/inversify.js";
 import {
   ProviderInfo,
   ProviderCapabilities,
@@ -21,8 +21,8 @@ import {
   ProviderSource,
   isHealthCheck,
   isMetrics,
-} from "./provider.interface";
-import { ProviderOptions } from "../decorator/scope-binding";
+} from "./provider.interface.js";
+import { ProviderOptions } from "../decorator/scope-binding.js";
 
 /**
  * Registry for auto-discovering and managing providers.

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Logger } from "../provider/logger/logger.provider";
-import type { ExpressHandler } from "./middleware-service";
+import { Logger } from "../provider/logger/logger.provider.js";
+import type { ExpressHandler } from "./middleware-service.js";
 
 /**
  * Registry mapping middleware names to their npm package names.
