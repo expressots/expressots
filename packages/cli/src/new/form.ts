@@ -430,8 +430,9 @@ const projectForm = async (
 				progressBar.update(30, { doing: "Template copied" });
 			} else {
 				// GITHUB MODE (production)
-				// Download latest from feature/v4.0 branch
-				const repo: string = `expressots/templates/${templateFolder}#feature/v4.0`;
+				// Pinned to the v4.0.0 GA tag of the templates repo so a
+				// CLI shipped at v4.0.0 keeps working even if `main` moves.
+				const repo: string = `expressots/templates/${templateFolder}#v4.0.0`;
 				const emitter = degit(repo);
 				await emitter.clone(answer.name);
 				progressBar.update(30, { doing: "Template cloned" });

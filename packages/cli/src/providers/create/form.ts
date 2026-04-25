@@ -57,7 +57,8 @@ export const createExternalProvider = async (
 		}
 
 		try {
-			const emitter = degit(`expressots/templates/provider`);
+			// Pinned to the v4.0.0 GA tag, same policy as `expressots new`.
+			const emitter = degit(`expressots/templates/provider#v4.0.0`);
 			await emitter.clone(providerInfo.providerName);
 
 			changePackageName({

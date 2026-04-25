@@ -23,6 +23,7 @@ import { addProviderCMD, removeProviderCMD } from "./providers";
 import { createExternalProviderCMD } from "./providers/create/cli";
 import { printError, printHeader } from "./utils/cli-ui";
 import { scriptsCommand } from "./scripts";
+import { studioCommand } from "./studio";
 
 /**
  * The current version of the ExpressoTS Bundle.
@@ -50,6 +51,7 @@ yargs(hideBin(process.argv))
 	.command(costsCommand())
 	.command(templatesCommand())
 	.command(scriptsCommand())
+	.command(studioCommand())
 	.command(infoProject())
 	.command(helpCommand())
 	.demandCommand(1, "You need at least one command before moving on")
