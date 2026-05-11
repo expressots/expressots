@@ -669,9 +669,9 @@ export const runCommand = async ({
 
 	try {
 		switch (command) {
-		case "dev":
-			await execCmd("tsx", await buildDevArgs(opinionated));
-			break;
+			case "dev":
+				await execCmd("tsx", await buildDevArgs(opinionated));
+				break;
 			case "build":
 				if (!outDir) {
 					printError(

@@ -121,28 +121,9 @@ async function launchStudio(options: StudioOptions): Promise<void> {
  */
 function printPreviewBanner(): void {
 	console.log("");
-	console.log(chalk.cyan("  ⚡ ExpressoTS Studio"));
-	console.log(chalk.gray("     Developer Experience Platform"));
-	console.log("");
+	console.log(chalk.cyan("  ExpressoTS Studio") + chalk.gray("  (preview)"));
 	console.log(
-		chalk.yellow(
-			"  ⚠  PREVIEW: Studio is in technical preview for v4.0.0.",
-		),
-	);
-	console.log(
-		chalk.gray(
-			"     Replay, Architecture Map and AI Fix Generator are still being",
-		),
-	);
-	console.log(
-		chalk.gray(
-			"     finalized. The full release ships with v4.1.0. Roadmap:",
-		),
-	);
-	console.log(
-		chalk.gray(
-			"     https://github.com/expressots/expressots/blob/main/ROADMAP_v4.1.md",
-		),
+		chalk.gray("  Some features are still being finalized for v4.1.0 GA."),
 	);
 	console.log("");
 }
