@@ -14,7 +14,6 @@ import {
   ValidationResult,
   ValidationFieldError,
   ValidationConfig,
-  provideSingleton,
   getParameterType,
   hasClassValidatorDecorators,
   detectSchemaType,
@@ -29,7 +28,6 @@ import type { NewableFunction } from "./interfaces.js";
  * Handles validation of request parameters (body, query, params, headers)
  * using the configured validation adapters and smart field detection.
  */
-@provideSingleton(ValidationService)
 export class ValidationService {
   private registry: ValidationRegistry;
   private smartDetector: SmartFieldDetector;
