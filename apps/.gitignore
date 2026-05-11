@@ -13,8 +13,8 @@ out/
 # npm pack output
 *.tgz
 
-# Vite / Studio UI
-packages/studio-ui/dist/
+# Vite UI build output (lives under packages/studio/dist/ui after the merge)
+packages/studio/dist/ui/
 
 # OS / editor
 .DS_Store

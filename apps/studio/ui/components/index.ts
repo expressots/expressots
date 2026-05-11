@@ -6,3 +6,4 @@ export { TraceDetail } from './TraceDetail';
 export { ArchitectureMap } from './ArchitectureMap';
 export { MetricsDashboard } from './MetricsDashboard';
 export { ReplayView } from './ReplayView';
+export { ApiClient } from './ApiClient';

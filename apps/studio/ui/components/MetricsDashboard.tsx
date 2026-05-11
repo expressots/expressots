@@ -91,7 +91,7 @@ export function MetricsDashboard() {
                 labelStyle={{ color: '#fff' }}
                 formatter={(value: number) => [`${value.toFixed(2)}ms`, 'Duration']}
               />
-              <Bar dataKey="value" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="#3de678" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -114,7 +114,7 @@ export function MetricsDashboard() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  <Cell fill="#0ea5e9" />
+                  <Cell fill="#3de678" />
                   <Cell fill="#374151" />
                 </Pie>
                 <Tooltip

@@ -8,10 +8,10 @@ import {
   GitBranch,
   BarChart3,
   Play,
+  Send,
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
@@ -25,6 +25,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'requests', label: 'Requests', icon: Activity },
+  { id: 'api-client', label: 'API Client', icon: Send },
   { id: 'architecture', label: 'Architecture', icon: GitBranch },
   { id: 'metrics', label: 'Metrics', icon: BarChart3 },
   { id: 'replay', label: 'Replay', icon: Play },
@@ -42,11 +43,19 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-gray-800">
-        <Zap className="w-8 h-8 text-primary-500 flex-shrink-0" />
+        <img
+          src="/expressots-icon.svg"
+          alt="ExpressoTS"
+          className="w-8 h-8 flex-shrink-0 rounded-full"
+        />
         {sidebarOpen && (
-          <div className="ml-3 overflow-hidden">
-            <h1 className="text-lg font-bold text-white whitespace-nowrap">ExpressoTS</h1>
-            <p className="text-xs text-gray-400 whitespace-nowrap">Studio</p>
+          <div className="ml-3 overflow-hidden flex items-center gap-2">
+            <span className="text-lg font-bold text-white whitespace-nowrap">
+              EXPRESSO
+            </span>
+            <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-primary-950 text-primary-500 shadow-sm whitespace-nowrap">
+              TS
+            </span>
           </div>
         )}
       </div>

@@ -45,8 +45,6 @@ program
   .option('--src <path>', 'Source directory to scan', './src')
   .option('--standalone', 'Run in standalone mode (starts own agent)', false)
   .action(async (options: StartOptions) => {
-    const spinner = ora('Starting ExpressoTS Studio...').start();
-
     try {
       const studio = new Studio({
         uiPort: parseInt(options.port, 10),
@@ -58,18 +56,17 @@ program
 
       await studio.start();
 
-      spinner.succeed(chalk.green('ExpressoTS Studio is running!'));
-      
+      const agentStatus = options.standalone
+        ? chalk.yellow('Standalone')
+        : studio.isAgentConnected()
+          ? chalk.green('Connected')
+          : chalk.gray('Waiting for app...');
+
       console.log('');
-      console.log(chalk.cyan('  ⚡ Studio UI:'), chalk.white(`http://localhost:${options.port}`));
-      if (options.standalone) {
-        console.log(chalk.yellow('  🔧 Mode:'), chalk.white('Standalone (agent runs here)'));
-      } else if (studio.isAgentConnected()) {
-        console.log(chalk.green('  ✅ Agent:'), chalk.white('Connected to your app'));
-      } else {
-        console.log(chalk.gray('  ⏳ Agent:'), chalk.white('Waiting for your app...'));
-      }
-      console.log(chalk.cyan('  📡 Agent URL:'), chalk.white(`ws://localhost:${options.agentPort}`));
+      console.log(chalk.green('  Studio is running'));
+      console.log('');
+      console.log(`  UI      ${chalk.cyan(`http://localhost:${options.port}`)}`);
+      console.log(`  Agent   ${agentStatus} ${chalk.gray(`ws://localhost:${options.agentPort}`)}`);
       console.log('');
       console.log(chalk.gray('  Press Ctrl+C to stop'));
       console.log('');
@@ -78,12 +75,10 @@ program
         await open(`http://localhost:${options.port}`);
       }
 
-      // Handle shutdown
       process.on('SIGINT', async () => {
         console.log('');
-        const stopSpinner = ora('Stopping ExpressoTS Studio...').start();
         await studio.stop();
-        stopSpinner.succeed(chalk.green('ExpressoTS Studio stopped'));
+        console.log(chalk.gray('  Studio stopped'));
         process.exit(0);
       });
 
@@ -93,8 +88,7 @@ program
       });
 
     } catch (error) {
-      spinner.fail(chalk.red('Failed to start ExpressoTS Studio'));
-      console.error(error instanceof Error ? error.message : error);
+      console.error(chalk.red('\n  Failed to start Studio:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
@@ -170,11 +164,5 @@ program
     const startCmd = program.commands.find((cmd: Command) => cmd.name() === 'start');
     startCmd?.parse();
   });
-
-// Show banner
-console.log('');
-console.log(chalk.cyan('  ⚡ ExpressoTS Studio'));
-console.log(chalk.gray('     Developer Experience Platform'));
-console.log('');
 
 program.parse();

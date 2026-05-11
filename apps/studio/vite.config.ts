@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, './ui'),
     },
   },
   server: {
@@ -14,7 +14,8 @@ export default defineConfig({
     host: true,
   },
   build: {
-    outDir: 'dist',
+    outDir: 'dist/ui',
+    emptyOutDir: true,
     sourcemap: true,
   },
 });

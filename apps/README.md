@@ -14,12 +14,11 @@ Generate → Run → Observe → Fix → Deploy
 
 ## Packages
 
-| Package                       | Description                                         |
-| ----------------------------- | --------------------------------------------------- |
-| `@expressots/studio`          | Main launcher and orchestrator                      |
-| `@expressots/studio-agent`    | Instrumentation, tracing, and route discovery       |
-| `@expressots/studio-ui`       | Web-based developer dashboard                       |
-| `@expressots/mcp-server`      | AI integration via Model Context Protocol (preview) |
+| Package                       | Description                                                     |
+| ----------------------------- | --------------------------------------------------------------- |
+| `@expressots/studio`          | CLI, orchestrator, and bundled web UI (everything dev-side)     |
+| `@expressots/studio-agent`    | Instrumentation, tracing, and route discovery (runs in the app) |
+| `@expressots/mcp-server`      | AI integration via Model Context Protocol (preview)             |
 
 ## Quick start
 
@@ -42,14 +41,13 @@ The CLI prints a preview banner on every launch.
 - **Trace Detail**: OpenTelemetry spans rendered per request.
 - **Metrics Dashboard**: P50/P95/P99 latency, error rates, request count.
 - **Architecture Map**: read-only XYFlow graph of detected components.
+- **Replay**: replays a recorded request against your running app and diffs status/duration/body.
+- **API Client**: built-in HTTP client (method/URL/headers/body/query) that fires requests at your app and shows live responses.
 
 ## Known limitations (v4.0.0-preview)
 
 These are tracked for v4.1.0 GA in [ROADMAP_v4.1.md](../ROADMAP_v4.1.md):
 
-- **Replay view is a placeholder.** It does not yet subscribe to `replay_result`; the displayed duration is simulated.
-- **Architecture Map can stay empty if structure arrives async**: a React Flow `useNodesState` initialization issue.
-- **Default agent URL** in the UI store is `ws://localhost:3334`; Socket.IO clients normally expect `http://`. Set the URL explicitly if the connection fails.
 - **`SocketContext` does not yet handle the `exchange` event** (single-exchange UI updates).
 - **Sidebar Settings panel is non-functional.**
 - **Studio agent does not yet consume `AppContainer.introspect()`**; the architecture graph is built from a regex source-scan only.
@@ -61,17 +59,17 @@ These are tracked for v4.1.0 GA in [ROADMAP_v4.1.md](../ROADMAP_v4.1.md):
 
 ```mermaid
 flowchart LR
-    studioCli["@expressots/studio CLI"]
+    studioCli["@expressots/studio (CLI + bundled UI)"]
     agent["@expressots/studio-agent (in your app)"]
-    ui["@expressots/studio-ui (browser)"]
     mcp["@expressots/mcp-server (separate stdio process)"]
     sqlite[(SQLite recording)]
+    browser["Browser (Studio UI)"]
 
-    studioCli --> agent
-    studioCli --> ui
+    studioCli --> browser
+    studioCli -. probe .-> agent
+    browser -. "Socket.IO" .-> agent
     agent --> sqlite
-    ui -. "Socket.IO" .-> agent
-    mcp -. "stdio" .-> editor[AI editor / IDE]
+    mcp -. "stdio" .-> editor["AI editor / IDE"]
 ```
 
 ## Requirements

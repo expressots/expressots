@@ -12,6 +12,7 @@ import {
   ArchitectureMap,
   MetricsDashboard,
   ReplayView,
+  ApiClient,
 } from './components';
 
 const queryClient = new QueryClient({
@@ -36,6 +37,8 @@ function AppContent() {
         return <MetricsDashboard />;
       case 'replay':
         return <ReplayView />;
+      case 'api-client':
+        return <ApiClient />;
       default:
         return <RequestList />;
     }

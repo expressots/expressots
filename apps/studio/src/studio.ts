@@ -46,8 +46,6 @@ export class Studio {
   /** Start the Studio */
   async start(): Promise<void> {
     if (this.config.standalone) {
-      // Standalone mode: Start our own agent
-      console.log('🔧 Starting in standalone mode...');
       await this.startAgent();
     } else {
       // UI-only mode: Try to connect to existing agent
@@ -84,43 +82,38 @@ export class Studio {
   /** Connect to an existing agent running in the user's app */
   private async connectToAgent(): Promise<void> {
     const agentUrl = `http://localhost:${this.config.agentPort}`;
-    
+
     return new Promise((resolve) => {
-      this.agentClient = SocketIOClient(agentUrl, {
+      const probe = SocketIOClient(agentUrl, {
         transports: ['websocket'],
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionAttempts: 5,
+        reconnection: false,
         timeout: 3000,
       });
+      this.agentClient = probe;
+
+      const cleanup = (connected: boolean) => {
+        this.agentConnected = connected;
+        probe.removeAllListeners();
+        probe.disconnect();
+        if (this.agentClient === probe) {
+          this.agentClient = null;
+        }
+        resolve();
+      };
 
       const timeout = setTimeout(() => {
         if (!this.agentConnected) {
-          console.log('\n⚠️  No agent detected on port ' + this.config.agentPort);
-          console.log('   Your app needs @expressots/studio-agent installed to capture requests.');
-          console.log('');
-          console.log('   Quick fix options:');
-          console.log('   1. Install in your app: npm install @expressots/studio-agent');
-          console.log('   2. Or run standalone:   expressots studio --standalone');
-          console.log('');
-          resolve();
+          cleanup(false);
         }
       }, 3000);
 
-      this.agentClient.on('connect', () => {
+      probe.on('connect', () => {
         clearTimeout(timeout);
-        this.agentConnected = true;
-        console.log('✅ Connected to Studio Agent in your app');
-        resolve();
+        cleanup(true);
       });
 
-      this.agentClient.on('disconnect', () => {
-        this.agentConnected = false;
-        console.log('⚠️  Disconnected from Studio Agent');
-      });
-
-      this.agentClient.on('connect_error', () => {
-        // Will retry automatically
+      probe.on('connect_error', () => {
+        // Wait for timeout fallback; reconnection is disabled.
       });
     });
   }
@@ -149,13 +142,13 @@ export class Studio {
       // Serve static files from the UI build
       this.uiApp.use(express.static(uiDistPath));
 
-      // SPA fallback - Express 5.x requires named wildcards
-      this.uiApp.get('/{*splat}', (_req: Request, res: Response) => {
+      // SPA fallback
+      this.uiApp.get('*', (_req: Request, res: Response) => {
         res.sendFile(path.join(uiDistPath, 'index.html'));
       });
     } else {
       // Development mode - show placeholder
-      this.uiApp.get('/{*splat}', (_req: Request, res: Response) => {
+      this.uiApp.get('*', (_req: Request, res: Response) => {
         res.send(this.getDevModeHTML());
       });
     }
@@ -173,30 +166,13 @@ export class Studio {
     });
   }
 
-  /** Find the UI dist path */
+  /** Find the bundled UI dist path */
   private findUIDistPath(): string | null {
-    const possiblePaths = [
-      // Monorepo development
-      path.resolve(process.cwd(), 'node_modules/@expressots/studio-ui/dist'),
-      // Installed as dependency
-      path.resolve(
-        path.dirname(fileURLToPath(import.meta.url)),
-        '../../studio-ui/dist'
-      ),
-      // Relative to this package
-      path.resolve(
-        path.dirname(fileURLToPath(import.meta.url)),
-        '../../../studio-ui/dist'
-      ),
-    ];
-
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        return p;
-      }
-    }
-
-    return null;
+    // The UI is bundled into this package at build time and lives at
+    // `<package>/dist/ui/` next to the orchestrator's compiled JS.
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const candidate = path.resolve(here, 'ui');
+    return fs.existsSync(candidate) ? candidate : null;
   }
 
   /** Get development mode HTML */
@@ -224,7 +200,7 @@ export class Studio {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0c1222 0%, #1a1a2e 100%);
+      background: #171717;
       color: #fff;
       min-height: 100vh;
       display: flex;
@@ -236,7 +212,7 @@ export class Studio {
     h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
-      background: linear-gradient(90deg, #0ea5e9, #d946ef);
+      background: linear-gradient(90deg, #3de678, #19ce59);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -304,7 +280,7 @@ export class Studio {
     ` : ''}
     
     <p class="instructions">
-      To see the full UI, ensure @expressots/studio-ui is installed
+      The Studio UI failed to load. Try reinstalling @expressots/studio.
     </p>
   </div>
 </body>

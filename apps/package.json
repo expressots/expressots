@@ -11,11 +11,10 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "build:agent": "npm run build -w @expressots/studio-agent",
-    "build:ui": "npm run build -w @expressots/studio-ui",
     "build:studio": "npm run build -w @expressots/studio",
     "build:mcp": "npm run build -w @expressots/mcp-server",
     "dev": "npm run dev -w @expressots/studio",
-    "dev:ui": "npm run dev -w @expressots/studio-ui",
+    "dev:ui": "npm run dev:ui -w @expressots/studio",
     "lint": "eslint \"packages/**/*.ts\" \"packages/**/*.tsx\"",
     "lint:fix": "eslint \"packages/**/*.ts\" \"packages/**/*.tsx\" --fix",
     "format": "prettier --write \"packages/**/*.{ts,tsx,json}\"",

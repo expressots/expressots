@@ -2,7 +2,7 @@
  * Architecture map component using React Flow
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Node,
@@ -38,8 +38,17 @@ export function ArchitectureMap() {
     return buildGraph(structure);
   }, [structure]);
 
-  const [nodesState, , onNodesChange] = useNodesState(nodes);
-  const [edgesState, , onEdgesChange] = useEdgesState(edges);
+  const [nodesState, setNodes, onNodesChange] = useNodesState(nodes);
+  const [edgesState, setEdges, onEdgesChange] = useEdgesState(edges);
+
+  // Sync graph when structure arrives asynchronously after mount
+  useEffect(() => {
+    setNodes(nodes);
+  }, [nodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(edges);
+  }, [edges, setEdges]);
 
   if (!structure) {
     return (

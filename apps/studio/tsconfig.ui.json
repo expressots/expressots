@@ -18,8 +18,8 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./ui/*"]
     }
   },
-  "include": ["src"]
+  "include": ["ui"]
 }

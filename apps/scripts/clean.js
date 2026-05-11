@@ -12,7 +12,6 @@ const rootDir = path.resolve(__dirname, '..');
 
 const dirsToClean = [
   'packages/studio-agent/dist',
-  'packages/studio-ui/dist',
   'packages/studio/dist',
   'packages/mcp-server/dist',
   '.studio',
@@ -20,7 +19,6 @@ const dirsToClean = [
 
 const filesToClean = [
   'packages/studio-agent/tsconfig.tsbuildinfo',
-  'packages/studio-ui/tsconfig.tsbuildinfo',
   'packages/studio/tsconfig.tsbuildinfo',
   'packages/mcp-server/tsconfig.tsbuildinfo',
 ];

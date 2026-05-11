@@ -74,6 +74,20 @@ export interface RecordedExchange {
   trace?: TraceInfo;
 }
 
+export interface ReplayResultPayload {
+  success: boolean;
+  original?: RecordedExchange;
+  replay?: {
+    statusCode: number;
+    statusMessage: string;
+    headers: Record<string, string>;
+    body: unknown;
+    duration?: number;
+  };
+  error?: string;
+  replayedAt: number;
+}
+
 export interface AppMetrics {
   uptime: number;
   requestCount: number;
@@ -155,4 +169,4 @@ export interface WSMessage<T = unknown> {
   data: T;
 }
 
-export type ViewMode = 'requests' | 'architecture' | 'metrics' | 'replay';
+export type ViewMode = 'requests' | 'architecture' | 'metrics' | 'replay' | 'api-client';

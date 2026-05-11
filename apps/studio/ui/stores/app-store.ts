@@ -10,6 +10,7 @@ import type {
   EndpointStats,
   AppStructure,
   RecordedExchange,
+  ReplayResultPayload,
   ViewMode,
 } from '../types';
 
@@ -30,6 +31,7 @@ interface AppState {
   endpointStats: EndpointStats[];
   structure: AppStructure | null;
   exchanges: RecordedExchange[];
+  replayResult: ReplayResultPayload | null;
 
   // UI state
   sidebarOpen: boolean;
@@ -51,6 +53,7 @@ interface AppState {
   setStructure: (structure: AppStructure) => void;
   setExchanges: (exchanges: RecordedExchange[]) => void;
   addExchange: (exchange: RecordedExchange) => void;
+  setReplayResult: (result: ReplayResultPayload | null) => void;
   setSidebarOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
   setFilterMethod: (method: string | null) => void;
@@ -70,6 +73,7 @@ const initialState = {
   endpointStats: [],
   structure: null,
   exchanges: [],
+  replayResult: null,
   sidebarOpen: true,
   searchQuery: '',
   filterMethod: null,
@@ -102,7 +106,9 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       exchanges: [exchange, ...state.exchanges].slice(0, 100),
     })),
-  
+
+  setReplayResult: (replayResult) => set({ replayResult }),
+
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setFilterMethod: (filterMethod) => set({ filterMethod }),

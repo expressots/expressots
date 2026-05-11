@@ -78,17 +78,13 @@ export class StudioAgent {
       return;
     }
 
-    console.log('🚀 Starting ExpressoTS Studio Agent...');
-
     // Initialize recorder
     if (this.config.enableRecording) {
       await this.recorder.initialize();
-      console.log('📝 Request recording enabled');
     }
 
     // Start tracer
     await this.tracer.start((trace) => this.handleTrace(trace));
-    console.log('🔍 OpenTelemetry tracing enabled');
 
     // Scan for routes
     await this.scanRoutes();
@@ -100,14 +96,11 @@ export class StudioAgent {
     this.startMetricsCollection();
 
     this.isRunning = true;
-    console.log(`✨ Studio Agent running on ws://localhost:${this.config.port}`);
   }
 
   /** Stop the Studio Agent */
   async stop(): Promise<void> {
     if (!this.isRunning) return;
-
-    console.log('Stopping ExpressoTS Studio Agent...');
 
     // Close WebSocket server
     if (this.io) {
@@ -127,7 +120,6 @@ export class StudioAgent {
     this.recorder.close();
 
     this.isRunning = false;
-    console.log('Studio Agent stopped');
   }
 
   /** Scan application for routes */
@@ -135,12 +127,12 @@ export class StudioAgent {
     try {
       this.appStructure = await this.scanner.scan();
       this.routes = this.scanner.getRoutes();
-      console.log(`📍 Discovered ${this.routes.length} routes`);
+      // Route counts available via getRoutes()
 
       // If Express app is provided, also scan runtime routes
       if (this.config.expressApp) {
         const runtimeRoutes = RouteScanner.scanExpressApp(this.config.expressApp);
-        console.log(`📍 Found ${runtimeRoutes.length} runtime routes`);
+        // Merge runtime routes with discovered routes
         
         // Merge with discovered routes
         for (const runtimeRoute of runtimeRoutes) {
@@ -205,7 +197,7 @@ export class StudioAgent {
     });
 
     this.io.on('connection', (socket) => {
-      console.log(`📡 Studio UI connected: ${socket.id}`);
+      // Client connected
       this.metrics.activeConnections++;
 
       // Send initial data
@@ -306,7 +298,6 @@ export class StudioAgent {
       });
 
       socket.on('disconnect', () => {
-        console.log(`📡 Studio UI disconnected: ${socket.id}`);
         this.metrics.activeConnections--;
       });
     });
@@ -428,16 +419,45 @@ export class StudioAgent {
     }
 
     try {
-      // Make the request
-      const response = await fetch(exchange.request.url, {
+      // The recorder stores only the request path (e.g. "/users/1"). To
+      // replay we need an absolute URL — reconstruct it from the original
+      // `host` header captured at record time.
+      const recordedHeaders = (exchange.request.headers || {}) as Record<string, string>;
+      const host = recordedHeaders['host'] || recordedHeaders['Host'] || 'localhost';
+      const recordedUrl = exchange.request.url || exchange.request.path || '/';
+      const targetUrl = /^https?:\/\//i.test(recordedUrl)
+        ? recordedUrl
+        : `http://${host}${recordedUrl.startsWith('/') ? '' : '/'}${recordedUrl}`;
+
+      // Strip hop-by-hop and content-length headers so fetch can compute its
+      // own. Also drop `host` (browsers/Node set it from the URL).
+      const replayHeaders: Record<string, string> = {};
+      for (const [k, v] of Object.entries(recordedHeaders)) {
+        const key = k.toLowerCase();
+        if (
+          key === 'host' ||
+          key === 'content-length' ||
+          key === 'connection' ||
+          key.startsWith('sec-') ||
+          key === 'origin' ||
+          key === 'referer'
+        ) {
+          continue;
+        }
+        replayHeaders[k] = String(v);
+      }
+
+      const replayStart = Date.now();
+      const response = await fetch(targetUrl, {
         method: exchange.request.method,
-        headers: exchange.request.headers,
+        headers: replayHeaders,
         body: exchange.request.body
           ? JSON.stringify(exchange.request.body)
           : undefined,
       });
 
       const responseBody = await response.text();
+      const replayDuration = Date.now() - replayStart;
       let parsedBody: unknown;
       try {
         parsedBody = JSON.parse(responseBody);
@@ -456,6 +476,7 @@ export class StudioAgent {
             statusMessage: response.statusText,
             headers: Object.fromEntries(response.headers.entries()),
             body: parsedBody,
+            duration: replayDuration,
           },
         },
       });
@@ -510,6 +531,35 @@ export class StudioAgent {
   /** Create Express middleware for request/response recording */
   createMiddleware() {
     return (req: any, res: any, next: any) => {
+      // CORS for Studio UI: allow any localhost origin in dev so the
+      // built-in API Client (served from a different localhost port)
+      // can read responses and send preflighted methods.
+      const origin = req.headers.origin as string | undefined;
+      if (
+        origin &&
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader(
+          'Access-Control-Allow-Methods',
+          'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS',
+        );
+        const reqHeaders = req.headers['access-control-request-headers'];
+        res.setHeader(
+          'Access-Control-Allow-Headers',
+          reqHeaders || 'Content-Type, Authorization, X-Trace-Id',
+        );
+        res.setHeader('Access-Control-Max-Age', '600');
+
+        // Short-circuit preflights so they don't pollute the request timeline
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204;
+          return res.end();
+        }
+      }
+
       if (!this.config.enableRecording) {
         return next();
       }

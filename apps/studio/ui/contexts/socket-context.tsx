@@ -5,7 +5,7 @@
 import { createContext, useContext, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAppStore } from '../stores/app-store';
-import type { WSMessage, TraceInfo, RouteInfo, AppMetrics, AppStructure, RecordedExchange, EndpointStats } from '../types';
+import type { WSMessage, TraceInfo, RouteInfo, AppMetrics, AppStructure, RecordedExchange, EndpointStats, ReplayResultPayload } from '../types';
 
 interface SocketContextValue {
   emit: (event: string, data?: unknown) => void;
@@ -36,6 +36,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setExchanges,
     setEndpointStats,
     addExchange,
+    setReplayResult,
   } = useAppStore();
 
   // Handle incoming messages
@@ -84,10 +85,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         }
         break;
       }
+      case 'replay_result': {
+        const payload = message.data as Omit<ReplayResultPayload, 'replayedAt'>;
+        setReplayResult({ ...payload, replayedAt: Date.now() });
+        break;
+      }
       default:
         console.log('Unknown message type:', message.type);
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -103,10 +109,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('Connected to Studio Agent');
       setConnected(true);
-      
-      // Request initial data
       socket.emit('get_routes');
       socket.emit('get_metrics');
       socket.emit('get_structure');
@@ -115,12 +118,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     });
 
     socket.on('disconnect', () => {
-      console.log('Disconnected from Studio Agent');
       setConnected(false);
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+    socket.on('connect_error', () => {
       setConnected(false);
     });
 
