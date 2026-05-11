@@ -7,6 +7,7 @@ import { Clock, ExternalLink } from 'lucide-react';
 import { cn, formatDuration, formatTimestamp, getMethodColor, getMethodBgColor, getStatusColor, getStatusBgColor, getDurationColor } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import type { RecordedExchange } from '../types';
+import { ExportMenu } from './ExportMenu';
 
 export function RequestList() {
   const { 
@@ -121,8 +122,13 @@ function RequestRow({ exchange, isSelected, onSelect }: RequestRowProps) {
         {formatDuration(response.duration)}
       </div>
 
+      {/* Export */}
+      <div className="ml-3" onClick={(e) => e.stopPropagation()}>
+        <ExportMenu exchange={exchange} compact />
+      </div>
+
       {/* Expand Icon */}
-      <ExternalLink className="w-4 h-4 ml-4 text-gray-600" />
+      <ExternalLink className="w-4 h-4 ml-3 text-gray-600" />
     </div>
   );
 }

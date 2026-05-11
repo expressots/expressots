@@ -110,6 +110,12 @@ export interface AgentConfig {
   serviceName: string;
   /** Express app instance (if available) */
   expressApp?: unknown;
+  /**
+   * ExpressoTS AppContainer instance (if available). When provided the agent
+   * will capture a DI snapshot (bindings + dependency graph) and track which
+   * bindings are resolved during each request.
+   */
+  appContainer?: unknown;
 }
 
 /** Default agent configuration */

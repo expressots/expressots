@@ -12,6 +12,8 @@ import type {
   RecordedExchange,
   ReplayResultPayload,
   ViewMode,
+  ContainerSnapshot,
+  ContainerResolutions,
 } from '../types';
 
 interface AppState {
@@ -32,6 +34,9 @@ interface AppState {
   structure: AppStructure | null;
   exchanges: RecordedExchange[];
   replayResult: ReplayResultPayload | null;
+  containerSnapshot: ContainerSnapshot | null;
+  /** Map from exchange id → list of resolved service identifiers for that request. */
+  containerResolutionsByExchange: Record<string, string[]>;
 
   // UI state
   sidebarOpen: boolean;
@@ -54,6 +59,8 @@ interface AppState {
   setExchanges: (exchanges: RecordedExchange[]) => void;
   addExchange: (exchange: RecordedExchange) => void;
   setReplayResult: (result: ReplayResultPayload | null) => void;
+  setContainerSnapshot: (snapshot: ContainerSnapshot | null) => void;
+  setContainerResolutions: (entry: ContainerResolutions) => void;
   setSidebarOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
   setFilterMethod: (method: string | null) => void;
@@ -74,6 +81,8 @@ const initialState = {
   structure: null,
   exchanges: [],
   replayResult: null,
+  containerSnapshot: null,
+  containerResolutionsByExchange: {},
   sidebarOpen: true,
   searchQuery: '',
   filterMethod: null,
@@ -108,6 +117,16 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   setReplayResult: (replayResult) => set({ replayResult }),
+
+  setContainerSnapshot: (containerSnapshot) => set({ containerSnapshot }),
+
+  setContainerResolutions: (entry) =>
+    set((state) => ({
+      containerResolutionsByExchange: {
+        ...state.containerResolutionsByExchange,
+        [entry.exchangeId]: entry.resolved,
+      },
+    })),
 
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),

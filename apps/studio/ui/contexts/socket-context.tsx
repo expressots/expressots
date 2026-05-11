@@ -5,7 +5,18 @@
 import { createContext, useContext, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAppStore } from '../stores/app-store';
-import type { WSMessage, TraceInfo, RouteInfo, AppMetrics, AppStructure, RecordedExchange, EndpointStats, ReplayResultPayload } from '../types';
+import type {
+  WSMessage,
+  TraceInfo,
+  RouteInfo,
+  AppMetrics,
+  AppStructure,
+  RecordedExchange,
+  EndpointStats,
+  ReplayResultPayload,
+  ContainerSnapshot,
+  ContainerResolutions,
+} from '../types';
 
 interface SocketContextValue {
   emit: (event: string, data?: unknown) => void;
@@ -20,6 +31,7 @@ interface SocketContextValue {
   clearRecordings: () => void;
   requestStats: () => void;
   requestEndpointStats: () => void;
+  requestContainer: () => void;
 }
 
 const SocketContext = createContext<SocketContextValue | null>(null);
@@ -37,6 +49,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setEndpointStats,
     addExchange,
     setReplayResult,
+    setContainerSnapshot,
+    setContainerResolutions,
   } = useAppStore();
 
   // Handle incoming messages
@@ -90,10 +104,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         setReplayResult({ ...payload, replayedAt: Date.now() });
         break;
       }
+      case 'container':
+        setContainerSnapshot(message.data as ContainerSnapshot | null);
+        break;
+      case 'container_resolutions':
+        setContainerResolutions(message.data as ContainerResolutions);
+        break;
       default:
         console.log('Unknown message type:', message.type);
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -115,6 +135,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_structure');
       socket.emit('get_exchanges', { limit: 100 });
       socket.emit('get_endpoint_stats');
+      socket.emit('get_container');
     });
 
     socket.on('disconnect', () => {
@@ -158,6 +179,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     clearRecordings: useCallback(() => emit('clear_recordings'), [emit]),
     requestStats: useCallback(() => emit('get_stats'), [emit]),
     requestEndpointStats: useCallback(() => emit('get_endpoint_stats'), [emit]),
+    requestContainer: useCallback(() => emit('get_container'), [emit]),
   };
 
   return (

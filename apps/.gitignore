@@ -10,6 +10,10 @@ lib/
 out/
 *.tsbuildinfo
 
+# Keep the UI source `lib/` (utility helpers), but ignore build outputs above.
+!packages/studio/ui/lib/
+!packages/studio/ui/lib/**
+
 # npm pack output
 *.tgz
 

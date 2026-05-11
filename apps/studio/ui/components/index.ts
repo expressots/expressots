@@ -7,3 +7,5 @@ export { ArchitectureMap } from './ArchitectureMap';
 export { MetricsDashboard } from './MetricsDashboard';
 export { ReplayView } from './ReplayView';
 export { ApiClient } from './ApiClient';
+export { ContainerInspector } from './ContainerInspector';
+export { ExportMenu } from './ExportMenu';

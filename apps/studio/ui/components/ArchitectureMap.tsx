@@ -17,8 +17,9 @@ import {
   Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Box, Cog, Database } from 'lucide-react';
+import { Box, Cog, Database, FileCode } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
+import { openInEditor } from '../lib/open-in-editor';
 import type { AppStructure } from '../types';
 
 // Custom node types
@@ -216,6 +217,23 @@ interface NodeData {
   filePath?: string;
 }
 
+function OpenInEditorButton({ filePath }: { filePath?: string }) {
+  if (!filePath) return null;
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        openInEditor({ filePath });
+      }}
+      className="mt-2 flex items-center gap-1 text-[10px] text-gray-400 hover:text-primary-400 transition-colors"
+      title={filePath}
+    >
+      <FileCode className="w-3 h-3" />
+      Open in editor
+    </button>
+  );
+}
+
 function ControllerNode({ data }: { data: NodeData }) {
   return (
     <div className="bg-blue-500/10 border-2 border-blue-500 rounded-lg p-4 min-w-[180px]">
@@ -228,6 +246,7 @@ function ControllerNode({ data }: { data: NodeData }) {
       {data.routes !== undefined && (
         <p className="text-xs text-gray-400 mt-1">{data.routes} routes</p>
       )}
+      <OpenInEditorButton filePath={data.filePath} />
       <Handle type="source" position={Position.Right} className="!bg-blue-500" />
     </div>
   );
@@ -245,6 +264,7 @@ function ServiceNode({ data }: { data: NodeData }) {
       {data.methods !== undefined && (
         <p className="text-xs text-gray-400 mt-1">{data.methods} methods</p>
       )}
+      <OpenInEditorButton filePath={data.filePath} />
       <Handle type="source" position={Position.Right} className="!bg-green-500" />
     </div>
   );
@@ -262,6 +282,7 @@ function ProviderNode({ data }: { data: NodeData }) {
       {data.methods !== undefined && (
         <p className="text-xs text-gray-400 mt-1">{data.methods} methods</p>
       )}
+      <OpenInEditorButton filePath={data.filePath} />
       <Handle type="source" position={Position.Right} className="!bg-purple-500" />
     </div>
   );

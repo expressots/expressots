@@ -13,6 +13,10 @@ import { createServer, Server as HttpServer } from 'http';
 import { StudioTracer } from './instrumentation/tracer.js';
 import { RouteScanner } from './discovery/route-scanner.js';
 import { RequestRecorder } from './recording/request-recorder.js';
+import {
+  ContainerIntrospector,
+  type ContainerSnapshot,
+} from './introspection/container-introspector.js';
 import type {
   AgentConfig,
   RouteInfo,
@@ -29,6 +33,8 @@ export class StudioAgent {
   private tracer: StudioTracer;
   private scanner: RouteScanner;
   private recorder: RequestRecorder;
+  private introspector: ContainerIntrospector | null = null;
+  private containerSnapshot: ContainerSnapshot | null = null;
   private io: SocketIOServer | null = null;
   private httpServer: HttpServer | null = null;
   private routes: RouteInfo[] = [];
@@ -49,7 +55,12 @@ export class StudioAgent {
       traceSampleRate: config.traceSampleRate ?? 1.0,
       serviceName: config.serviceName ?? 'expressots-app',
       expressApp: config.expressApp,
+      appContainer: config.appContainer,
     };
+
+    if (this.config.appContainer) {
+      this.introspector = new ContainerIntrospector(this.config.appContainer);
+    }
 
     this.tracer = new StudioTracer(this.config.serviceName);
     this.scanner = new RouteScanner();
@@ -89,6 +100,18 @@ export class StudioAgent {
     // Scan for routes
     await this.scanRoutes();
 
+    // Capture DI container snapshot (bindings + dependency graph). Best-effort:
+    // if the container is missing or not the expected Inversify shape we just
+    // get an empty snapshot back and the Container view in the UI stays empty.
+    if (this.introspector && this.introspector.isAvailable()) {
+      try {
+        this.containerSnapshot = this.introspector.capture();
+        this.introspector.installResolutionTracker();
+      } catch {
+        this.containerSnapshot = null;
+      }
+    }
+
     // Start WebSocket server
     await this.startWebSocketServer();
 
@@ -96,6 +119,11 @@ export class StudioAgent {
     this.startMetricsCollection();
 
     this.isRunning = true;
+  }
+
+  /** Get the captured container snapshot (or null if unavailable). */
+  getContainerSnapshot(): ContainerSnapshot | null {
+    return this.containerSnapshot;
   }
 
   /** Stop the Studio Agent */
@@ -203,12 +231,20 @@ export class StudioAgent {
       // Send initial data
       socket.emit('message', this.createMessage('routes', this.routes));
       socket.emit('message', this.createMessage('metrics', this.getMetrics()));
-      
+
       if (this.appStructure) {
         socket.emit('message', {
           type: 'structure',
           timestamp: Date.now(),
           data: this.appStructure,
+        });
+      }
+
+      if (this.containerSnapshot) {
+        socket.emit('message', {
+          type: 'container',
+          timestamp: Date.now(),
+          data: this.containerSnapshot,
         });
       }
 
@@ -294,6 +330,14 @@ export class StudioAgent {
           type: 'endpoint_stats',
           timestamp: Date.now(),
           data: this.getEndpointStats(),
+        });
+      });
+
+      socket.on('get_container', () => {
+        socket.emit('message', {
+          type: 'container',
+          timestamp: Date.now(),
+          data: this.containerSnapshot,
         });
       });
 
@@ -565,7 +609,7 @@ export class StudioAgent {
       }
 
       const startTime = Date.now();
-      const traceId = req.headers['x-trace-id'] || '';
+      const traceId = (req.headers['x-trace-id'] as string) || '';
 
       // Record request
       const recordedRequest = this.recorder.recordRequest(
@@ -576,7 +620,7 @@ export class StudioAgent {
         req.query || {},
         req.body,
         req.cookies,
-        traceId
+        traceId,
       );
 
       // Capture response
@@ -590,10 +634,15 @@ export class StudioAgent {
         return originalEnd.apply(res, [chunk, ...args]);
       };
 
+      // Track DI resolutions for this request (if the introspector is wired).
+      // We capture the live Set reference and read it on `finish`, which fires
+      // after the handler chain has fully drained.
+      let resolvedRef: Set<string> | undefined;
+
       res.on('finish', () => {
         const duration = Date.now() - startTime;
         const isError = res.statusCode >= 400;
-        
+
         try {
           let parsedBody: unknown;
           try {
@@ -609,33 +658,21 @@ export class StudioAgent {
             res.getHeaders() as Record<string, string>,
             parsedBody,
             duration,
-            traceId
+            traceId,
           );
 
-          // ========================================
-          // UPDATE METRICS FROM MIDDLEWARE
-          // ========================================
-          
-          // Update request count
+          // Update metrics
           this.metrics.requestCount++;
-          
-          // Update error count
-          if (isError) {
-            this.metrics.errorCount++;
-          }
-          
-          // Track response time for percentile calculation
+          if (isError) this.metrics.errorCount++;
           this.responseTimes.push(duration);
           if (this.responseTimes.length > 1000) {
             this.responseTimes = this.responseTimes.slice(-1000);
           }
-          
-          // Update endpoint stats
           this.updateEndpointStats(
             req.method as HttpMethod,
             req.path,
             duration,
-            isError
+            isError,
           );
 
           // Emit request to UI
@@ -646,17 +683,41 @@ export class StudioAgent {
               duration,
             },
           });
-          
+
+          // Per-request DI resolutions (if tracked)
+          if (resolvedRef && resolvedRef.size > 0) {
+            this.broadcast('container_resolutions', {
+              exchangeId: recordedRequest.id,
+              traceId,
+              method: req.method,
+              path: req.path,
+              resolved: Array.from(resolvedRef),
+              timestamp: Date.now(),
+            });
+          }
+
           // Broadcast updated metrics immediately for real-time updates
           this.broadcast('metrics', this.getMetrics());
           this.broadcast('endpoint_stats', this.getEndpointStats());
-          
         } catch (error) {
           console.error('[Studio] Error in middleware:', error);
         }
       });
 
-      next();
+      // Run the rest of the request chain inside the ALS scope so any
+      // `container.get(...)` resolutions during this request get recorded.
+      if (this.introspector) {
+        const { resolved } = this.introspector.runWithRequest(
+          String(traceId || recordedRequest.id),
+          () => {
+            next();
+            return undefined;
+          },
+        );
+        resolvedRef = resolved;
+      } else {
+        next();
+      }
     };
   }
 }

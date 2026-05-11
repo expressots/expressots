@@ -13,6 +13,7 @@ import {
   MetricsDashboard,
   ReplayView,
   ApiClient,
+  ContainerInspector,
 } from './components';
 
 const queryClient = new QueryClient({
@@ -39,6 +40,8 @@ function AppContent() {
         return <ReplayView />;
       case 'api-client':
         return <ApiClient />;
+      case 'container':
+        return <ContainerInspector />;
       default:
         return <RequestList />;
     }

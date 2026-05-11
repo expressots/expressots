@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Boxes,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
@@ -26,6 +27,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'requests', label: 'Requests', icon: Activity },
   { id: 'api-client', label: 'API Client', icon: Send },
+  { id: 'container', label: 'Container', icon: Boxes },
   { id: 'architecture', label: 'Architecture', icon: GitBranch },
   { id: 'metrics', label: 'Metrics', icon: BarChart3 },
   { id: 'replay', label: 'Replay', icon: Play },

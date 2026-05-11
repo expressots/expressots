@@ -161,7 +161,9 @@ export type WSMessageType =
   | 'exchange'
   | 'stats'
   | 'endpoint_stats'
-  | 'cleared';
+  | 'cleared'
+  | 'container'
+  | 'container_resolutions';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
@@ -169,4 +171,54 @@ export interface WSMessage<T = unknown> {
   data: T;
 }
 
-export type ViewMode = 'requests' | 'architecture' | 'metrics' | 'replay' | 'api-client';
+export type ViewMode =
+  | 'requests'
+  | 'architecture'
+  | 'metrics'
+  | 'replay'
+  | 'api-client'
+  | 'container';
+
+// ────────────────────────────────────────────────────────────────────────
+// DI Container introspection
+// ────────────────────────────────────────────────────────────────────────
+
+export interface ContainerBindingNode {
+  id: string;
+  serviceIdentifier: string;
+  className: string;
+  scope: string;
+  type: string;
+  activated: boolean;
+  cached: boolean;
+  moduleId?: number | string | null;
+}
+
+export interface ContainerBindingEdge {
+  source: string;
+  target: string;
+}
+
+export interface ContainerSnapshot {
+  bindings: ContainerBindingNode[];
+  edges: ContainerBindingEdge[];
+  summary: {
+    total: number;
+    byScope: Record<string, number>;
+    byType: Record<string, number>;
+    cached: number;
+    activated: number;
+  };
+  options?: Record<string, unknown>;
+  timestamp: string;
+  containerId: number;
+}
+
+export interface ContainerResolutions {
+  exchangeId: string;
+  traceId?: string;
+  method: string;
+  path: string;
+  resolved: string[];
+  timestamp: number;
+}

@@ -3,16 +3,47 @@
  */
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { X, Copy } from 'lucide-react';
+import { X, Copy, FileCode, Boxes } from 'lucide-react';
 import { cn, formatDuration, formatTimestamp, copyToClipboard } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
+import { openInEditor } from '../lib/open-in-editor';
+import { ExportMenu } from './ExportMenu';
 
 export function TraceDetail() {
-  const { exchanges, selectedExchangeId, setSelectedExchangeId } = useAppStore();
+  const {
+    exchanges,
+    selectedExchangeId,
+    setSelectedExchangeId,
+    routes,
+    containerResolutionsByExchange,
+  } = useAppStore();
 
   const exchange = useMemo(() => {
     return exchanges.find((e) => e.id === selectedExchangeId);
   }, [exchanges, selectedExchangeId]);
+
+  // Match the recorded request against a registered route so we can offer
+  // "Open in editor" for the controller that handled it. Tries an exact
+  // path match first then falls back to the deepest matching pattern
+  // (so /users/123 matches the /users/:id route).
+  const matchedRoute = useMemo(() => {
+    if (!exchange) return undefined;
+    const exact = routes.find(
+      (r) =>
+        r.method === exchange.request.method && r.path === exchange.request.path,
+    );
+    if (exact) return exact;
+    const candidates = routes.filter((r) => r.method === exchange.request.method);
+    return candidates
+      .map((r) => ({ r, score: routeMatchScore(r.path, exchange.request.path) }))
+      .filter((m) => m.score > 0)
+      .sort((a, b) => b.score - a.score)[0]?.r;
+  }, [exchange, routes]);
+
+  const resolvedBindings = useMemo(() => {
+    if (!exchange) return [];
+    return containerResolutionsByExchange[exchange.id] ?? [];
+  }, [exchange, containerResolutionsByExchange]);
 
   if (!exchange) {
     return null;
@@ -76,6 +107,62 @@ export function TraceDetail() {
           </div>
         </div>
 
+        {/* Source / DI panel */}
+        {(matchedRoute || resolvedBindings.length > 0) && (
+          <div className="p-4 border-b border-gray-800 space-y-3">
+            {matchedRoute && matchedRoute.filePath && (
+              <div className="flex items-center justify-between bg-gray-800/40 border border-gray-700 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileCode className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm text-white truncate">
+                      {matchedRoute.controller}
+                      <span className="text-gray-500">.</span>
+                      <span className="text-primary-300">{matchedRoute.controllerMethod}()</span>
+                    </div>
+                    <div className="text-[11px] text-gray-500 truncate font-mono">
+                      {matchedRoute.filePath}
+                      {matchedRoute.lineNumber ? `:${matchedRoute.lineNumber}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() =>
+                    openInEditor({
+                      filePath: matchedRoute.filePath,
+                      lineNumber: matchedRoute.lineNumber,
+                    })
+                  }
+                  className="ml-3 px-3 py-1.5 text-xs font-medium bg-primary-700 hover:bg-primary-600 text-white rounded"
+                >
+                  Open in editor
+                </button>
+              </div>
+            )}
+
+            {resolvedBindings.length > 0 && (
+              <div className="bg-gray-800/40 border border-gray-700 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Boxes className="w-4 h-4 text-primary-400" />
+                  <span className="text-sm font-medium text-white">
+                    Resolved bindings ({resolvedBindings.length})
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {resolvedBindings.map((b) => (
+                    <span
+                      key={b}
+                      className="px-2 py-0.5 text-[11px] font-mono bg-primary-950/60 border border-primary-700/40 text-primary-300 rounded"
+                    >
+                      {b}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <TraceWaterfall trace={trace} />
 
         <CollapsibleSection title="Request Headers" defaultOpen>
@@ -99,7 +186,7 @@ export function TraceDetail() {
         ) : null}
 
         {/* Actions */}
-        <div className="p-4 border-t border-gray-800 flex gap-2">
+        <div className="p-4 border-t border-gray-800 flex gap-2 items-center">
           <button
             onClick={() => copyToClipboard(JSON.stringify(exchange, null, 2))}
             className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
@@ -107,17 +194,35 @@ export function TraceDetail() {
             <Copy className="w-4 h-4" />
             Copy as JSON
           </button>
-          <button
-            onClick={() => copyToClipboard(`curl -X ${request.method} '${request.url}'`)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
-          >
-            <Copy className="w-4 h-4" />
-            Copy as cURL
-          </button>
+          <ExportMenu exchange={exchange} />
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * Heuristic scoring of route path patterns against a recorded URL path.
+ * `/users/:id` matches `/users/123` with score 2 (2 literal segments matched),
+ * `/users` against `/users/123` does not match → 0.
+ */
+function routeMatchScore(routePath: string, requestPath: string): number {
+  const rSegs = routePath.split('/').filter(Boolean);
+  const pSegs = requestPath.split('/').filter(Boolean);
+  if (rSegs.length !== pSegs.length) return 0;
+  let score = 0;
+  for (let i = 0; i < rSegs.length; i++) {
+    const r = rSegs[i];
+    const p = pSegs[i];
+    if (r.startsWith(':') || r === '*') {
+      score += 1; // wildcard match
+    } else if (r === p) {
+      score += 2; // literal match
+    } else {
+      return 0;
+    }
+  }
+  return score;
 }
 
 interface TraceWaterfallProps {
