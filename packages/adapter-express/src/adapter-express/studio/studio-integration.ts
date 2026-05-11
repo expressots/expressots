@@ -15,6 +15,9 @@ interface StudioAgentOptions {
   enableRecording?: boolean;
   enableProfiling?: boolean;
   expressApp?: Application;
+  // Forwarded to the agent as `unknown` so we don't tightly couple the
+  // adapter to a specific @expressots/core symbol.
+  appContainer?: unknown;
 }
 
 interface StudioAgentInstance {
@@ -62,6 +65,7 @@ async function isStudioAgentInstalled(): Promise<boolean> {
 export async function initializeStudio(
   app: Application,
   config: StudioIntegrationConfig = {},
+  appContainer?: unknown,
 ): Promise<boolean> {
   const debug = process.env.EXPRESSOTS_STUDIO_DEBUG === "true";
 
@@ -117,6 +121,7 @@ export async function initializeStudio(
       enableRecording: true,
       enableProfiling: true,
       expressApp: app, // Pass Express app for runtime route scanning
+      appContainer, // Pass AppContainer so the agent can build a DI snapshot
     };
 
     studioAgent = new StudioAgent(agentOptions);

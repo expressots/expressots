@@ -567,7 +567,7 @@ export class AppExpress implements Server.IWebServer {
     (this.Middleware as Middleware).setExpressApp(tempApp);
 
     // Initialize Studio Agent if available (adds middleware before user middlewares)
-    await initializeStudio(tempApp, this.studioConfig);
+    await initializeStudio(tempApp, this.studioConfig, this.appContainer);
 
     await this.handleSyncOrAsync(this.configureServices());
 
