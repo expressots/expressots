@@ -32,7 +32,6 @@
         "@typescript-eslint/parser": "8.51.0",
         "eslint": "9.39.2",
         "jest": "30.0.0",
-        "nodemon": "3.1.11",
         "prettier": "3.7.4",
         "ts-jest": "29.4.6",
         "tsconfig-paths": "4.2.0",
