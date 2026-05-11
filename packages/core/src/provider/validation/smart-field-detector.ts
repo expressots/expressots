@@ -6,7 +6,7 @@
  * This is one of ExpressoTS's jaw-dropping features - no other framework has this!
  */
 
-import { provideSingleton } from "../../decorator/scope-binding.js";
+
 import {
   SmartFieldPattern,
   ValidationFieldError,
@@ -32,7 +32,6 @@ import {
  * }
  * ```
  */
-@provideSingleton(SmartFieldDetector)
 export class SmartFieldDetector {
   private patterns: Array<SmartFieldPattern> = [];
   private enabled = true;

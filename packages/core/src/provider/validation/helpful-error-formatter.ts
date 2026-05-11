@@ -6,7 +6,7 @@
  * examples, hints, and received values - making debugging easier.
  */
 
-import { provideSingleton } from "../../decorator/scope-binding.js";
+
 import { ValidationFieldError } from "./validation.interface.js";
 
 /**
@@ -54,7 +54,6 @@ export interface FormattedErrorResponse {
  * // }
  * ```
  */
-@provideSingleton(HelpfulErrorFormatter)
 export class HelpfulErrorFormatter {
   private documentationBaseUrl?: string;
 

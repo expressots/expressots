@@ -5,7 +5,7 @@
  * Central registry for managing validation adapters
  */
 
-import { provideSingleton } from "../../decorator/scope-binding.js";
+
 import {
   IValidationAdapter,
   ValidationConfig,
@@ -31,7 +31,6 @@ import {
  * const result = await registry.validate(data, zodSchema, { adapter: "zod" });
  * ```
  */
-@provideSingleton(ValidationRegistry)
 export class ValidationRegistry {
   private adapters: Map<string, IValidationAdapter> = new Map();
   private sortedAdapters: Array<IValidationAdapter> = [];

@@ -1,4 +1,3 @@
-import { provide } from "../../di/binding-decorator/index.js";
 import { StatusCode } from "../status-code.js";
 import { BaseExceptionFilter } from "../base-exception-filter.js";
 import type { ExceptionContext } from "../exception-filter.interface.js";
@@ -6,10 +5,10 @@ import { Catch } from "../exception-filter-decorators.js";
 import { NotFoundError } from "../not-found.error.js";
 
 /**
- * Built-in exception filter for NotFoundError instances
+ * Built-in exception filter for NotFoundError instances.
+ * Not auto-registered. Bind it explicitly or use `setErrorHandler({ filters: [NotFoundFilter] })`.
  */
 @Catch(NotFoundError)
-@provide(NotFoundFilter)
 export class NotFoundFilter extends BaseExceptionFilter {
   catch(exception: NotFoundError, context: ExceptionContext): void {
     this.logError(exception, context);

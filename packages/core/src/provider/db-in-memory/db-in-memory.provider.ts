@@ -1,4 +1,3 @@
-import { provideSingleton } from "../../decorator/scope-binding.js";
 import {
   IDataProvider,
   IEntity,
@@ -10,10 +9,15 @@ import {
 } from "./db-in-memory.types.js";
 
 /**
- * In-memory data provider implementation.
+ * @deprecated Use {@link InMemoryDBProvider} (v4) instead.
+ *
+ * Kept for backward compatibility but no longer auto-registered via DI.
+ * Users who depend on the v3 API should bind it manually:
+ * ```ts
+ * container.bind(InMemoryDataProvider).toSelf().inSingletonScope();
+ * ```
  * @public API
  */
-@provideSingleton(InMemoryDataProvider, "builtin")
 export class InMemoryDataProvider implements IDataProvider {
   name: string = "In Memory DB Provider";
   version: string = "3.0.0";

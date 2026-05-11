@@ -8,7 +8,6 @@
  * @module db-in-memory
  */
 
-import { provideSingleton } from "../../decorator/scope-binding.js";
 import {
   IProvider,
   IHealthCheck,
@@ -80,7 +79,13 @@ export interface InMemoryDBConfig extends InMemoryDatabaseOptions {
  *
  * @public API
  */
-@provideSingleton(InMemoryDBProvider, "builtin")
+/**
+ * Not auto-registered. Bind explicitly when you need an in-memory store:
+ * ```ts
+ * import { InMemoryDBProvider } from "@expressots/core";
+ * container.bind(InMemoryDBProvider).toSelf().inSingletonScope();
+ * ```
+ */
 export class InMemoryDBProvider
   implements IProvider, IHealthCheck, IMetrics, IBootstrap, IShutdown
 {

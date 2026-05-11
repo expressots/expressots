@@ -1,4 +1,3 @@
-import { provide } from "../../di/binding-decorator/index.js";
 import { StatusCode } from "../status-code.js";
 import { BaseExceptionFilter } from "../base-exception-filter.js";
 import type { ExceptionContext } from "../exception-filter.interface.js";
@@ -6,11 +5,10 @@ import { Catch } from "../exception-filter-decorators.js";
 import { ValidationError } from "../validation.error.js";
 
 /**
- * Built-in exception filter for ValidationError instances
- * Handles validation failures with detailed error information
+ * Built-in exception filter for ValidationError instances.
+ * Not auto-registered. Bind it explicitly or use `setErrorHandler({ filters: [ValidationErrorFilter] })`.
  */
 @Catch(ValidationError)
-@provide(ValidationErrorFilter)
 export class ValidationErrorFilter extends BaseExceptionFilter {
   catch(exception: ValidationError, context: ExceptionContext): void {
     this.logError(exception, context);

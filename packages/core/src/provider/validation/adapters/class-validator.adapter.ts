@@ -5,7 +5,7 @@
  * Adapter for class-validator library - wraps existing ValidateDTO logic
  */
 
-import { provide } from "../../../decorator/scope-binding.js";
+
 import { packageResolver } from "../../dto-validator/package-resolver.js";
 import { nodeRequire } from "../../../utils/node-require.js";
 import {
@@ -38,7 +38,6 @@ import {
  * const result = await adapter.validate(data, CreateUserDTO);
  * ```
  */
-@provide(ClassValidatorAdapter)
 export class ClassValidatorAdapter
   implements IValidationAdapter<NewableFunction>
 {

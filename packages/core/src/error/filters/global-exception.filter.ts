@@ -1,15 +1,13 @@
-import { provide } from "../../di/binding-decorator/index.js";
 import { StatusCode } from "../status-code.js";
 import { BaseExceptionFilter } from "../base-exception-filter.js";
 import type { ExceptionContext } from "../exception-filter.interface.js";
 import { Catch } from "../exception-filter-decorators.js";
 
 /**
- * Global exception filter that catches all unhandled exceptions
- * This is a catch-all filter that handles any exception not handled by specific filters
+ * Global exception filter that catches all unhandled exceptions.
+ * Not auto-registered. Bind it explicitly or use `setErrorHandler({ filters: [GlobalExceptionFilter] })`.
  */
 @Catch()
-@provide(GlobalExceptionFilter)
 export class GlobalExceptionFilter extends BaseExceptionFilter {
   catch(exception: Error, context: ExceptionContext): void {
     this.logError(exception, context);
