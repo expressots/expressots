@@ -130,9 +130,7 @@ export async function initializeStudio(
 
     studioEnabled = true;
 
-    console.log(`\n🎬 ExpressoTS Studio Agent enabled`);
-    console.log(`   📡 WebSocket: ws://localhost:${agentOptions.port}`);
-    console.log(`   💡 Run 'expressots studio' to open the UI\n`);
+    console.log(`[ExpressoTS] Studio Agent listening on ws://localhost:${agentOptions.port}`);
 
     return true;
   } catch (error) {
