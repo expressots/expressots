@@ -47,66 +47,23 @@ function getOutDir(): string {
 }
 
 /**
- * Build the tsx arguments for running TypeScript files.
- * Used by nodemon to execute the TypeScript entry point.
- *
- * @param opinionated - Whether to use opinionated configuration (tsconfig-paths)
- * @returns The tsx arguments array
- */
-async function buildTsxArgs(opinionated: boolean): Promise<Array<string>> {
-	const { entryPoint } = await Compiler.loadConfig();
-
-	if (opinionated) {
-		return ["-r", "tsconfig-paths/register", `./src/${entryPoint}.ts`];
-	}
-
-	return [`./src/${entryPoint}.ts`];
-}
-
-/**
- * Build the nodemon arguments for development mode.
- * Uses nodemon for file watching and tsx for TypeScript execution.
- * This combination ensures proper signal handling for graceful shutdown.
- *
- * Options:
- * - --quiet: Suppress nodemon verbose output, show only ExpressoTS logs (default)
- * - --signal SIGTERM: Ensure proper signal forwarding for graceful shutdown
- * - --delay 500ms: Debounce file changes to avoid rapid restarts
+ * Build the tsx watch arguments for development mode.
+ * Uses tsx's built-in --watch flag for reliable cross-platform file watching
+ * (avoids nodemon + SIGTERM issues on Windows).
  *
  * @param opinionated - Whether to use opinionated configuration
- * @param verbose - Whether to show verbose nodemon output (for debugging)
- * @returns The nodemon arguments array
+ * @returns The tsx arguments array
  */
-async function buildDevArgs(
-	opinionated: boolean,
-	verbose: boolean = false,
-): Promise<Array<string>> {
-	const tsxArgs = await buildTsxArgs(opinionated);
+async function buildDevArgs(opinionated: boolean): Promise<Array<string>> {
+	const { entryPoint } = await Compiler.loadConfig();
 
-	const args: Array<string> = [];
+	const args: Array<string> = ["--watch"];
 
-	// Suppress nodemon output unless verbose mode is enabled
-	if (!verbose) {
-		args.push("--quiet");
+	if (opinionated) {
+		args.push("-r", "tsconfig-paths/register");
 	}
 
-	// Core nodemon configuration
-	args.push(
-		"--signal",
-		"SIGTERM", // Use SIGTERM for graceful shutdown
-		"--delay",
-		"1000ms", // Debounce rapid file changes (allow time for port release)
-		"--watch",
-		"src",
-		"--ext",
-		"ts,json",
-		"--ignore",
-		"src/**/*.spec.ts",
-		"--ignore",
-		"src/**/*.test.ts",
-		"--exec",
-		`tsx ${tsxArgs.join(" ")}`,
-	);
+	args.push(`./src/${entryPoint}.ts`);
 
 	return args;
 }
@@ -115,7 +72,6 @@ async function buildDevArgs(
  * Dev command options interface
  */
 interface DevCommandOptions {
-	verbose?: boolean;
 	container?: boolean;
 	build?: boolean;
 	detach?: boolean;
@@ -130,12 +86,6 @@ export const devCommand: CommandModule<object, DevCommandOptions> = {
 	command: "dev",
 	describe: "Start development server.",
 	builder: {
-		verbose: {
-			alias: "v",
-			type: "boolean",
-			default: false,
-			description: "Show verbose nodemon output for debugging",
-		},
 		container: {
 			alias: "c",
 			type: "boolean",
@@ -157,14 +107,12 @@ export const devCommand: CommandModule<object, DevCommandOptions> = {
 	},
 	handler: async (argv) => {
 		if (argv.container) {
-			// Use container-based development
 			await runContainerDev({
 				build: argv.build ?? false,
 				detach: argv.detach ?? false,
 			});
 		} else {
-			// Regular local development
-			await runCommand({ command: "dev", verbose: argv.verbose });
+			await runCommand({ command: "dev" });
 		}
 	},
 };
@@ -707,7 +655,6 @@ function runDockerComposeCommand(
  */
 interface RunCommandOptions {
 	command: string;
-	verbose?: boolean;
 }
 
 /**
@@ -716,19 +663,15 @@ interface RunCommandOptions {
  */
 export const runCommand = async ({
 	command,
-	verbose = false,
 }: RunCommandOptions): Promise<void> => {
 	const { opinionated, entryPoint } = await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
 		switch (command) {
-			case "dev":
-				await execCmd(
-					"nodemon",
-					await buildDevArgs(opinionated, verbose),
-				);
-				break;
+		case "dev":
+			await execCmd("tsx", await buildDevArgs(opinionated));
+			break;
 			case "build":
 				if (!outDir) {
 					printError(
