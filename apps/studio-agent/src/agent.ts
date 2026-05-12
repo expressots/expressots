@@ -210,14 +210,32 @@ export class StudioAgent {
   async stop(): Promise<void> {
     if (!this.isRunning) return;
 
-    // Close WebSocket server
+    // Close WebSocket server. We must actually wait for the underlying
+    // HTTP server to release the port — without this the next hot-reload
+    // start can hit `EADDRINUSE` because the previous process is still
+    // holding the socket while open WebSocket connections drain.
     if (this.io) {
-      this.io.close();
+      await new Promise<void>((resolve) => {
+        this.io!.close(() => resolve());
+      });
       this.io = null;
     }
 
     if (this.httpServer) {
-      this.httpServer.close();
+      const server = this.httpServer;
+      // Force-close any lingering keep-alive / WebSocket sockets so
+      // `server.close()` resolves promptly instead of waiting for the
+      // OS-level read timeout.
+      try {
+        // Available since Node 18.2 — older Node falls back to plain close.
+        (server as unknown as { closeAllConnections?: () => void })
+          .closeAllConnections?.();
+      } catch {
+        // best-effort
+      }
+      await new Promise<void>((resolve) => {
+        server.close(() => resolve());
+      });
       this.httpServer = null;
     }
 
@@ -418,6 +436,23 @@ export class StudioAgent {
       res.end();
     });
 
+    // Critical: handle server errors so EADDRINUSE doesn't crash the host
+    // process. Without this, an unhandled `'error'` event during `.listen()`
+    // emits an unhandled error and Node terminates the host app — which is
+    // exactly what users hit on hot-reload when the previous tsx-watched
+    // process hasn't yet released the port.
+    this.httpServer.on('error', (err) => {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'EADDRINUSE') {
+        // Surfaced so `start()` can retry / degrade gracefully.
+        return;
+      }
+      console.warn(
+        `[studio-agent] WebSocket server error (${code ?? 'unknown'}):`,
+        err.message,
+      );
+    });
+
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
         origin: '*',
@@ -607,10 +642,61 @@ export class StudioAgent {
       });
     });
 
-    return new Promise((resolve) => {
-      this.httpServer!.listen(this.config.port, () => {
+    await this.listenWithRetry(this.httpServer, this.config.port);
+  }
+
+  /**
+   * `httpServer.listen()` that survives transient `EADDRINUSE` from
+   * hot-reload races — when `tsx --watch` (or nodemon) restarts the host
+   * process before the previous run has released the agent port. We
+   * retry a few times with exponential-ish backoff before giving up.
+   *
+   * On final failure throws an `Error` whose `.code` is preserved so
+   * the integration layer (`@expressots/adapter-express`) can decide
+   * whether to surface it; today it just logs a warning and the host
+   * app keeps running (Studio is opt-in dev tooling).
+   */
+  private async listenWithRetry(
+    server: HttpServer,
+    port: number,
+    attempts = 5,
+    initialDelayMs = 250,
+  ): Promise<void> {
+    let delay = initialDelayMs;
+
+    for (let i = 1; i <= attempts; i++) {
+      try {
+        await this.listenOnce(server, port);
+        return;
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== 'EADDRINUSE' || i === attempts) {
+          throw err;
+        }
+        // Hot-reload race — port hasn't been released yet. Wait and retry.
+        console.warn(
+          `[studio-agent] Port ${port} busy (attempt ${i}/${attempts}); retrying in ${delay}ms…`,
+        );
+        await new Promise<void>((r) => setTimeout(r, delay));
+        delay = Math.min(delay * 2, 2000);
+      }
+    }
+  }
+
+  /** Single attempt — resolves on `listening`, rejects on `error`. */
+  private listenOnce(server: HttpServer, port: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const onError = (err: Error) => {
+        server.removeListener('listening', onListening);
+        reject(err);
+      };
+      const onListening = () => {
+        server.removeListener('error', onError);
         resolve();
-      });
+      };
+      server.once('error', onError);
+      server.once('listening', onListening);
+      server.listen(port);
     });
   }
 
