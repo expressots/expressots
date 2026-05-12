@@ -126,6 +126,19 @@ export async function initializeStudio(
     return false;
   }
 
+  // Defensive: if a previous agent instance from this same process is still
+  // around (e.g. App.init() called twice without a stop in between) shut it
+  // down first so we don't leak the WebSocket port.
+  if (studioAgent) {
+    try {
+      await studioAgent.stop();
+    } catch {
+      // best-effort cleanup
+    }
+    studioAgent = null;
+    studioEnabled = false;
+  }
+
   try {
     if (debug) console.log("[Studio] Attempting dynamic import...");
 
@@ -177,14 +190,44 @@ export async function initializeStudio(
 
     return true;
   } catch (error) {
-    // Only warn if it's not a "module not found" error (which is expected when not installed)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (
-      !errorMessage.includes("Cannot find module") &&
-      !errorMessage.includes("ERR_MODULE_NOT_FOUND")
-    ) {
-      console.warn("⚠️  Failed to initialize Studio Agent:", errorMessage);
+    // Best-effort cleanup so a half-initialised agent doesn't hold the
+    // WebSocket port across a retry.
+    if (studioAgent) {
+      try {
+        await studioAgent.stop();
+      } catch {
+        // ignore
+      }
+      studioAgent = null;
     }
+    studioEnabled = false;
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode =
+      error && typeof error === "object" && "code" in error
+        ? (error as { code?: string }).code
+        : undefined;
+
+    // Expected when @expressots/studio-agent isn't installed — silent.
+    if (
+      errorMessage.includes("Cannot find module") ||
+      errorMessage.includes("ERR_MODULE_NOT_FOUND")
+    ) {
+      return false;
+    }
+
+    // Friendlier message for the most common failure mode: hot-reload
+    // race left the port in TIME_WAIT.
+    if (errorCode === "EADDRINUSE") {
+      console.warn(
+        `⚠️  Studio Agent could not bind its WebSocket port ` +
+          `(${errorMessage}). The host app will continue without Studio. ` +
+          `If this happened during hot-reload, the next restart should recover.`,
+      );
+      return false;
+    }
+
+    console.warn("⚠️  Failed to initialize Studio Agent:", errorMessage);
     return false;
   }
 }
