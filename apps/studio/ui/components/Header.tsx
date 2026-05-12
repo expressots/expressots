@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   RefreshCw,
@@ -209,8 +210,10 @@ export function Header() {
         </button>
       </div>
 
-      {/* Clear confirmation dialog */}
-      {confirmClear && (
+      {/* Clear confirmation dialog — portaled to <body> so that the header's
+          `backdrop-filter` (which creates a containing block for position:
+          fixed children) doesn't pin the modal to the 64px header strip. */}
+      {confirmClear && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={() => setConfirmClear(false)}
@@ -293,7 +296,8 @@ export function Header() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </header>
   );
