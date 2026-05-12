@@ -16,6 +16,10 @@ import {
   Play,
   Radio,
   X,
+  AlertTriangle,
+  Activity,
+  BarChart3,
+  Terminal,
 } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
 import { useSocket } from '../contexts/socket-context';
@@ -44,12 +48,15 @@ export function Header() {
     recordingEnabled,
     lastEventAt,
     exchanges,
+    endpointStats,
+    logs,
   } = useAppStore();
   const {
     rescan,
     requestMetrics,
     requestExchanges,
     clearRecordings,
+    clearLogs,
     setRecording,
   } = useSocket();
 
@@ -71,7 +78,11 @@ export function Header() {
   };
 
   const handleClear = () => {
+    // The dialog promises a full wipe (exchanges + endpoint stats + logs),
+    // so we fire both events. The agent's `clear_recordings` resets the
+    // recorder + aggregates; `clear_logs` empties the log buffer.
     clearRecordings();
+    clearLogs();
     setConfirmClear(false);
   };
 
@@ -201,40 +212,83 @@ export function Header() {
       {/* Clear confirmation dialog */}
       {confirmClear && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={() => setConfirmClear(false)}
         >
           <div
-            className="bg-gray-900 border border-gray-800 rounded-lg shadow-2xl max-w-md w-full mx-4 p-6"
+            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up"
             onClick={(e) => e.stopPropagation()}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="clear-dialog-title"
           >
-            <div className="flex items-start justify-between mb-3">
-              <h3 className="text-lg font-semibold text-white">
-                Clear all recorded requests?
-              </h3>
+            {/* Header strip — destructive accent */}
+            <div className="flex items-start gap-3 px-5 pt-5 pb-4 border-b border-gray-800 bg-error-500/5">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-error-500/15 border border-error-500/30 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-error-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3
+                  id="clear-dialog-title"
+                  className="text-base font-semibold text-white leading-tight"
+                >
+                  Clear all recorded data?
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  This cannot be undone.
+                </p>
+              </div>
               <button
                 onClick={() => setConfirmClear(false)}
-                className="p-1 text-gray-500 hover:text-white rounded"
+                className="p-1 -mt-1 -mr-1 text-gray-500 hover:text-white rounded transition-colors"
+                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-sm text-gray-400 mb-6">
-              This deletes the {exchanges.length} captured request
-              {exchanges.length === 1 ? '' : 's'} and resets endpoint
-              statistics. The action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-2">
+
+            {/* Impact summary */}
+            <div className="px-5 py-4">
+              <p className="text-sm text-gray-300 mb-3">
+                You're about to discard everything Studio has captured for
+                this session:
+              </p>
+              <ul className="space-y-2">
+                <ImpactRow
+                  icon={Activity}
+                  count={exchanges.length}
+                  label={`captured request${exchanges.length === 1 ? '' : 's'}`}
+                  detail="including bodies, headers, and timings"
+                />
+                <ImpactRow
+                  icon={BarChart3}
+                  count={endpointStats.length}
+                  label={`endpoint stat row${endpointStats.length === 1 ? '' : 's'}`}
+                  detail="p50 / p95 / p99 will reset to zero"
+                />
+                <ImpactRow
+                  icon={Terminal}
+                  count={logs.length}
+                  label={`buffered log line${logs.length === 1 ? '' : 's'}`}
+                  detail="agent log buffer will be emptied"
+                />
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 pb-5 flex items-center gap-2 justify-end border-t border-gray-800 pt-4 bg-gray-900/40">
               <button
                 onClick={() => setConfirmClear(false)}
-                className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg"
+                className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleClear}
-                className="px-4 py-2 text-sm bg-error-500/20 hover:bg-error-500/30 border border-error-500/40 text-error-300 rounded-lg"
+                autoFocus
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-error-500 hover:bg-error-600 text-white rounded-lg transition-colors shadow-sm shadow-error-500/30"
               >
+                <Trash2 className="w-4 h-4" />
                 Clear everything
               </button>
             </div>
@@ -242,5 +296,38 @@ export function Header() {
         </div>
       )}
     </header>
+  );
+}
+
+/** Single impact row in the clear-confirmation dialog. */
+function ImpactRow({
+  icon: Icon,
+  count,
+  label,
+  detail,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  count: number;
+  label: string;
+  detail: string;
+}) {
+  const dim = count === 0;
+  return (
+    <li
+      className={`flex items-start gap-3 p-2.5 rounded-lg border ${
+        dim
+          ? 'border-gray-800/60 bg-gray-900/30 text-gray-500'
+          : 'border-gray-800 bg-gray-800/40 text-gray-200'
+      }`}
+    >
+      <Icon className={`w-4 h-4 mt-0.5 ${dim ? 'text-gray-600' : 'text-error-400'}`} />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm">
+          <span className="font-mono font-semibold tabular-nums">{count}</span>{' '}
+          <span>{label}</span>
+        </div>
+        <div className="text-[11px] text-gray-500">{detail}</div>
+      </div>
+    </li>
   );
 }
