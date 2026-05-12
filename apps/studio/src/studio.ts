@@ -175,6 +175,38 @@ export class Studio {
     return fs.existsSync(candidate) ? candidate : null;
   }
 
+  /**
+   * Resolve the brand icon SVG as a base64 data URI. Used by the dev-mode
+   * fallback HTML, which is served as a catch-all when the UI bundle is
+   * missing — so we can't rely on `/expressots-icon.svg` being reachable.
+   * Returns a tiny inline SVG placeholder if the asset is missing.
+   */
+  private getIconDataUri(): string {
+    try {
+      const here = path.dirname(fileURLToPath(import.meta.url));
+      const candidates = [
+        path.resolve(here, 'ui', 'expressots-icon.svg'),
+        path.resolve(here, '..', 'public', 'expressots-icon.svg'),
+        path.resolve(here, '..', '..', 'public', 'expressots-icon.svg'),
+      ];
+      for (const c of candidates) {
+        if (fs.existsSync(c)) {
+          const svg = fs.readFileSync(c, 'utf8');
+          return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+        }
+      }
+    } catch {
+      // fall through
+    }
+    // Minimal inline fallback (green circle) — matches the brand tone but
+    // ships zero external dependencies.
+    const fallback =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+      '<circle cx="32" cy="32" r="30" fill="#171717"/>' +
+      '<circle cx="32" cy="32" r="22" fill="#3de678"/></svg>';
+    return `data:image/svg+xml;base64,${Buffer.from(fallback).toString('base64')}`;
+  }
+
   /** Get development mode HTML */
   private getDevModeHTML(): string {
     const modeText = this.config.standalone 
@@ -189,12 +221,15 @@ export class Studio {
         ? '#22c55e'
         : '#6b7280';
 
+    const iconDataUri = this.getIconDataUri();
+
     return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="${iconDataUri}">
   <title>ExpressoTS Studio</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -208,7 +243,14 @@ export class Studio {
       justify-content: center;
     }
     .container { text-align: center; padding: 40px; max-width: 600px; }
-    .logo { font-size: 4rem; margin-bottom: 20px; }
+    .logo {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 20px;
+      display: block;
+      border-radius: 50%;
+      box-shadow: 0 8px 32px rgba(61, 230, 120, 0.2);
+    }
     h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
@@ -219,7 +261,7 @@ export class Studio {
     }
     .subtitle { color: #9ca3af; font-size: 1.1rem; margin-bottom: 30px; }
     .status {
-      background: rgba(14, 165, 233, 0.1);
+      background: rgba(61, 230, 120, 0.08);
       border: 1px solid ${modeColor}40;
       border-radius: 12px;
       padding: 20px 30px;
@@ -257,7 +299,7 @@ export class Studio {
 </head>
 <body>
   <div class="container">
-    <div class="logo">⚡</div>
+    <img class="logo" src="${iconDataUri}" alt="ExpressoTS" />
     <h1>ExpressoTS Studio</h1>
     <p class="subtitle">Developer Experience Platform</p>
     
