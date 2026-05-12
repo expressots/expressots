@@ -18,6 +18,10 @@ interface StudioAgentOptions {
   // Forwarded to the agent as `unknown` so we don't tightly couple the
   // adapter to a specific @expressots/core symbol.
   appContainer?: unknown;
+  /** HTTP port the host application is listening on. */
+  appPort?: number;
+  /** Global URL prefix (e.g. "/" or "/api/v1"). */
+  globalPrefix?: string;
 }
 
 interface StudioAgentInstance {
@@ -25,6 +29,34 @@ interface StudioAgentInstance {
   stop(): Promise<void>;
   createMiddleware(): RequestHandler;
   scanRoutes(): Promise<void>;
+  /**
+   * Optional — older agents may not implement this. Used to push the
+   * actual listening port + boot duration once the host server is up.
+   */
+  updateRuntimeInfo?(patch: {
+    appPort?: number;
+    globalPrefix?: string;
+    startupMs?: number;
+    interceptorCount?: number;
+    providerCount?: number;
+    middlewareCount?: number;
+    runtimeItems?: StudioRuntimeItems;
+  }): void;
+}
+
+/**
+ * Itemised runtime view forwarded to the Studio Agent. Populated from
+ * DI metadata at boot — surfaces framework-registered items the agent's
+ * static file scanner can't see (e.g. built-in providers, interceptors
+ * registered via `@Interceptor()` on framework classes).
+ *
+ * Mirrors `RuntimeItems` in `@expressots/studio-agent` deliberately so
+ * the adapter doesn't need to import from the studio package (which is
+ * an optional peer dependency).
+ */
+export interface StudioRuntimeItems {
+  providers?: Array<{ name: string; source?: string }>;
+  interceptors?: Array<{ name: string; priority?: number; source?: string }>;
 }
 
 interface StudioIntegrationConfig {
@@ -32,6 +64,10 @@ interface StudioIntegrationConfig {
   port?: number;
   dbPath?: string;
   serviceName?: string;
+  /** Forwarded to the agent so the Status page can show the app URL. */
+  appPort?: number;
+  /** Global URL prefix of the host application. */
+  globalPrefix?: string;
 }
 
 let studioAgent: StudioAgentInstance | null = null;
@@ -122,6 +158,8 @@ export async function initializeStudio(
       enableProfiling: true,
       expressApp: app, // Pass Express app for runtime route scanning
       appContainer, // Pass AppContainer so the agent can build a DI snapshot
+      appPort: config.appPort,
+      globalPrefix: config.globalPrefix,
     };
 
     studioAgent = new StudioAgent(agentOptions);
@@ -148,6 +186,32 @@ export async function initializeStudio(
       console.warn("⚠️  Failed to initialize Studio Agent:", errorMessage);
     }
     return false;
+  }
+}
+
+/**
+ * Push runtime details to the agent that the host only knows after the
+ * HTTP server has started — most importantly the actual listening port
+ * and total boot time. No-ops when:
+ *   - the agent isn't running, or
+ *   - the installed agent is from an older preview without
+ *     `updateRuntimeInfo()` (we feature-detect to stay forward-compatible).
+ */
+export function reportStudioRuntimeInfo(patch: {
+  appPort?: number;
+  globalPrefix?: string;
+  startupMs?: number;
+  interceptorCount?: number;
+  providerCount?: number;
+  middlewareCount?: number;
+  runtimeItems?: StudioRuntimeItems;
+}): void {
+  if (!studioAgent) return;
+  if (typeof studioAgent.updateRuntimeInfo !== "function") return;
+  try {
+    studioAgent.updateRuntimeInfo(patch);
+  } catch {
+    // Best-effort — never break the host on a status-page update.
   }
 }
 

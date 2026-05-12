@@ -8,10 +8,12 @@ import * as fs from "node:fs";
 
 import {
   AppContainer,
+  ApplicationMetrics,
   Console,
   ExpressoMiddleware,
   IConsoleMessage,
   IMiddleware,
+  INTERCEPTOR_METADATA_KEY,
   LifecycleRegistry,
   Logger,
   Middleware,
@@ -22,6 +24,15 @@ import {
   resolveBannerConfig,
   BannerData,
 } from "@expressots/core";
+
+/**
+ * Metadata key used by `@provide` (and friends) in `@expressots/core`'s
+ * binding-decorator module. The constant lives at an internal path
+ * (`di/binding-decorator/constants`) so we hardcode the string here —
+ * it's part of the framework's stable runtime contract and is what
+ * `MetricsCollector` reads for its own `providers` count.
+ */
+const PROVIDE_METADATA_KEY = "inversify-binding-decorators:provide";
 import { Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
 import { interfaces } from "@expressots/core";
@@ -36,7 +47,12 @@ import {
   getControllerMethodMetadata,
   getControllerMetadata,
 } from "./express-utils/utils.js";
-import { initializeStudio, stopStudio, isStudioEnabled } from "./studio/index.js";
+import {
+  initializeStudio,
+  stopStudio,
+  isStudioEnabled,
+  reportStudioRuntimeInfo,
+} from "./studio/index.js";
 
 /**
  * The AppExpress class provides methods for configuring and running an Express application.
@@ -73,6 +89,13 @@ export class AppExpress implements Server.IWebServer {
     dbPath?: string;
     serviceName?: string;
   } = {};
+  /**
+   * Latest snapshot of application metrics produced by `MetricsCollector`
+   * during banner display. We cache it so that `reportStudioRuntimeInfo`
+   * can forward the *runtime* provider/interceptor counts (which match
+   * what the CLI banner shows) to the Studio Agent without recomputing.
+   */
+  private lastApplicationMetrics: ApplicationMetrics | null = null;
   /** Track active connections for force-close during shutdown */
   private activeConnections: Set<import("net").Socket> = new Set();
   /** Timeout for force-closing connections during shutdown (ms) */
@@ -566,8 +589,20 @@ export class AppExpress implements Server.IWebServer {
     const tempApp = express();
     (this.Middleware as Middleware).setExpressApp(tempApp);
 
-    // Initialize Studio Agent if available (adds middleware before user middlewares)
-    await initializeStudio(tempApp, this.studioConfig, this.appContainer);
+    // Initialize Studio Agent if available (adds middleware before user
+    // middlewares). At this point we already know the port the user asked
+    // us to listen on (set in `listen()` before `init()` is invoked) and
+    // the configured global prefix, so forward both — the agent uses them
+    // to populate the Studio Status page.
+    await initializeStudio(
+      tempApp,
+      {
+        ...this.studioConfig,
+        appPort: this.port,
+        globalPrefix: this.globalPrefix,
+      },
+      this.appContainer,
+    );
 
     await this.handleSyncOrAsync(this.configureServices());
 
@@ -641,6 +676,9 @@ export class AppExpress implements Server.IWebServer {
    * @public API
    */
   public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic> {
+    // Capture wall-clock start so we can report total boot duration to the
+    // Studio Status page once `app.listen()` resolves with the actual port.
+    const listenStartedAt = Date.now();
     // Close existing server instance if it exists
     if (this.serverInstance) {
       this.logger.warn(
@@ -717,6 +755,25 @@ export class AppExpress implements Server.IWebServer {
 
         // Display startup banner AFTER server starts (so we have the correct port)
         this.displayStartupBanner(appInfo);
+
+        // Push live runtime details to the Studio Agent so the Status
+        // page swaps "—" for real values. We forward the same numbers
+        // `MetricsCollector` produced for the CLI banner (providers,
+        // interceptors, middleware) — they come from DI metadata at
+        // runtime and include framework-registered items that the
+        // agent's static file scan can't see. We also forward the
+        // *names* of those items so the Studio drill-down can list
+        // them. No-op when Studio is disabled or when the installed
+        // agent is too old to support it.
+        reportStudioRuntimeInfo({
+          appPort: this.port,
+          globalPrefix: this.globalPrefix,
+          startupMs: Date.now() - listenStartedAt,
+          providerCount: this.lastApplicationMetrics?.providers,
+          interceptorCount: this.lastApplicationMetrics?.interceptors,
+          middlewareCount: this.lastApplicationMetrics?.middleware,
+          runtimeItems: this.collectStudioRuntimeItems(),
+        });
 
         // Setup signal handlers for graceful shutdown
         // Supported signals:
@@ -1279,6 +1336,78 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Harvest provider + interceptor *names* from DI metadata so the
+   * Studio Status page can drill down into the items behind the
+   * "Providers" / "Interceptors" counters.
+   *
+   * Reads the same metadata that {@link MetricsCollector} uses for the
+   * CLI banner — so what shows up here is the source of truth, not the
+   * agent's static file scan (which can't see framework-registered
+   * items like `Logger` or `LifecycleRegistry`).
+   *
+   * Returns `undefined` instead of an empty object so {@link
+   * reportStudioRuntimeInfo} can skip forwarding when nothing was
+   * harvested (keeps the WS payload small).
+   */
+  private collectStudioRuntimeItems():
+    | {
+        providers: Array<{ name: string; source: string }>;
+        interceptors: Array<{
+          name: string;
+          priority?: number;
+          source: string;
+        }>;
+      }
+    | undefined {
+    try {
+      const providerMetadata =
+        (Reflect.getMetadata(PROVIDE_METADATA_KEY, Reflect) as
+          | Array<{ implementationType?: { name?: string } }>
+          | undefined) || [];
+
+      const providers: Array<{ name: string; source: string }> = [];
+      for (const entry of providerMetadata) {
+        const name = entry?.implementationType?.name;
+        if (typeof name === "string" && name.length > 0) {
+          providers.push({ name, source: "provide" });
+        }
+      }
+
+      const interceptorMetadata =
+        (Reflect.getMetadata(INTERCEPTOR_METADATA_KEY.interceptor, Reflect) as
+          | Array<{ interceptor?: { name?: string }; priority?: number }>
+          | undefined) || [];
+
+      const interceptors: Array<{
+        name: string;
+        priority?: number;
+        source: string;
+      }> = [];
+      for (const entry of interceptorMetadata) {
+        const name = entry?.interceptor?.name;
+        if (typeof name === "string" && name.length > 0) {
+          interceptors.push({
+            name,
+            priority: entry?.priority,
+            source: "metadata",
+          });
+        }
+      }
+
+      // Bail out if both lists are empty — nothing useful to forward.
+      if (providers.length === 0 && interceptors.length === 0) {
+        return undefined;
+      }
+
+      return { providers, interceptors };
+    } catch {
+      // Metadata reads should never break boot. Status page just falls
+      // back to its static-scan list.
+      return undefined;
+    }
+  }
+
+  /**
    * Display middleware startup logs after the banner.
    * This makes startup logging transparent to the user - no need for manual code in postServerInitialization().
    * @private
@@ -1338,7 +1467,12 @@ export class AppExpress implements Server.IWebServer {
       // Detect API versions from controllers
       const detectedApiVersions = finalAppInfo?.apiVersions || [];
 
-      // Collect metrics
+      // Collect metrics. Cache the result on the instance so the Studio
+      // integration can forward the *runtime* counts (providers /
+      // interceptors / middleware) to the agent — those values come from
+      // DI metadata and registries, which our static file scanner can't
+      // see, so without this the Studio Status page would disagree with
+      // the CLI banner.
       const { metrics, features } = MetricsCollector.collect(this.appContainer.Container, {
         getControllersFromMetadata: () => getControllersFromMetadata(),
         getControllersFromContainer: () =>
@@ -1362,6 +1496,10 @@ export class AppExpress implements Server.IWebServer {
           );
         },
       });
+
+      // Persist the metrics so `reportStudioRuntimeInfo` (called from the
+      // listen callback) can forward live provider/interceptor counts.
+      this.lastApplicationMetrics = metrics;
 
       // Discover providers for introspection
       this.Provider.discover();
