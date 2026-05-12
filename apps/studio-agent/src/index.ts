@@ -15,4 +15,5 @@ export {
   type BindingNode,
   type BindingEdge,
 } from './introspection/container-introspector.js';
+export { LogCapture, type LogEntry, type LogLevel } from './logging/log-capture.js';
 export * from './types/index.js';

@@ -17,6 +17,7 @@ import {
   ContainerIntrospector,
   type ContainerSnapshot,
 } from './introspection/container-introspector.js';
+import { LogCapture, type LogEntry } from './logging/log-capture.js';
 import type {
   AgentConfig,
   RouteInfo,
@@ -35,6 +36,7 @@ export class StudioAgent {
   private recorder: RequestRecorder;
   private introspector: ContainerIntrospector | null = null;
   private containerSnapshot: ContainerSnapshot | null = null;
+  private logCapture: LogCapture;
   private io: SocketIOServer | null = null;
   private httpServer: HttpServer | null = null;
   private routes: RouteInfo[] = [];
@@ -61,6 +63,8 @@ export class StudioAgent {
     if (this.config.appContainer) {
       this.introspector = new ContainerIntrospector(this.config.appContainer);
     }
+
+    this.logCapture = new LogCapture(1000);
 
     this.tracer = new StudioTracer(this.config.serviceName);
     this.scanner = new RouteScanner();
@@ -118,6 +122,12 @@ export class StudioAgent {
     // Start metrics collection
     this.startMetricsCollection();
 
+    // Capture console.* output and stream it to the UI. We install this
+    // last so the agent's own startup logs ("Studio Agent listening on …")
+    // still go through unmodified.
+    this.logCapture.install();
+    this.logCapture.onLog((entry) => this.broadcast('log', entry));
+
     this.isRunning = true;
   }
 
@@ -146,6 +156,9 @@ export class StudioAgent {
 
     // Close recorder
     this.recorder.close();
+
+    // Restore original console.* so the host process logs untouched.
+    this.logCapture.uninstall();
 
     this.isRunning = false;
   }
@@ -254,6 +267,16 @@ export class StudioAgent {
         data: { enabled: this.config.enableRecording },
       });
 
+      // Replay buffered logs so reconnecting clients catch up to the stream.
+      const buffered = this.logCapture.getBuffer();
+      if (buffered.length > 0) {
+        socket.emit('message', {
+          type: 'logs',
+          timestamp: Date.now(),
+          data: buffered,
+        });
+      }
+
       // Handle client requests
       socket.on('get_routes', () => {
         socket.emit('message', this.createMessage('routes', this.routes));
@@ -348,6 +371,19 @@ export class StudioAgent {
           timestamp: Date.now(),
           data: this.getEndpointStats(),
         });
+      });
+
+      socket.on('get_logs', () => {
+        socket.emit('message', {
+          type: 'logs',
+          timestamp: Date.now(),
+          data: this.logCapture.getBuffer(),
+        });
+      });
+
+      socket.on('clear_logs', () => {
+        this.logCapture.clear();
+        this.broadcast('logs_cleared', { success: true });
       });
 
       socket.on('get_container', () => {
@@ -721,20 +757,30 @@ export class StudioAgent {
         }
       });
 
-      // Run the rest of the request chain inside the ALS scope so any
-      // `container.get(...)` resolutions during this request get recorded.
+      // Run the rest of the request chain inside two nested ALS scopes:
+      //  - LogCapture's, so any `console.*` calls get tagged with the traceId.
+      //  - ContainerIntrospector's, so any `container.get(...)` resolutions
+      //    are recorded for the per-request "Resolved bindings" panel.
+      const scopedTraceId = String(traceId || recordedRequest.id);
+      const runner = (cb: () => void) =>
+        this.logCapture.runWith(scopedTraceId, cb);
+
       if (this.introspector) {
-        const { resolved } = this.introspector.runWithRequest(
-          String(traceId || recordedRequest.id),
-          () => {
-            next();
-            return undefined;
-          },
-        );
-        resolvedRef = resolved;
+        runner(() => {
+          const { resolved } = this.introspector!.runWithRequest(
+            scopedTraceId,
+            () => {
+              next();
+              return undefined;
+            },
+          );
+          resolvedRef = resolved;
+        });
       } else {
-        next();
+        runner(() => next());
       }
     };
   }
 }
+
+export type { LogEntry };

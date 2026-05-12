@@ -2,7 +2,7 @@
  * Metrics dashboard component
  */
 
-import type { ComponentType } from 'react';
+import { useMemo, useState, type ComponentType } from 'react';
 import {
   XAxis,
   YAxis,
@@ -15,9 +15,10 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Activity, Clock, AlertTriangle, Zap, HardDrive, Users } from 'lucide-react';
+import { Activity, Clock, AlertTriangle, Zap, HardDrive, Users, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn, formatDuration, formatBytes } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
+import type { EndpointStats } from '../types';
 
 export function MetricsDashboard() {
   const { metrics, endpointStats } = useAppStore();
@@ -141,59 +142,8 @@ export function MetricsDashboard() {
         </div>
       </div>
 
-      {/* Endpoint Stats */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Endpoint Performance</h3>
-        {endpointStats.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-sm text-gray-500 border-b border-gray-800">
-                  <th className="pb-3 font-medium">Endpoint</th>
-                  <th className="pb-3 font-medium text-right">Requests</th>
-                  <th className="pb-3 font-medium text-right">Errors</th>
-                  <th className="pb-3 font-medium text-right">Avg</th>
-                  <th className="pb-3 font-medium text-right">P95</th>
-                  <th className="pb-3 font-medium text-right">Max</th>
-                </tr>
-              </thead>
-              <tbody>
-                {endpointStats
-                  .sort((a, b) => b.requestCount - a.requestCount)
-                  .slice(0, 10)
-                  .map((stat) => (
-                    <tr key={`${stat.method}:${stat.path}`} className="border-b border-gray-800/50">
-                      <td className="py-3">
-                        <span className={cn(
-                          'inline-block w-16 text-xs font-mono px-2 py-0.5 rounded text-center',
-                          stat.method === 'GET' ? 'bg-green-500/10 text-green-400' :
-                          stat.method === 'POST' ? 'bg-blue-500/10 text-blue-400' :
-                          stat.method === 'PUT' ? 'bg-yellow-500/10 text-yellow-400' :
-                          stat.method === 'DELETE' ? 'bg-red-500/10 text-red-400' :
-                          'bg-gray-500/10 text-gray-400'
-                        )}>
-                          {stat.method}
-                        </span>
-                        <span className="ml-2 font-mono text-gray-300">{stat.path}</span>
-                      </td>
-                      <td className="py-3 text-right text-gray-300">{stat.requestCount}</td>
-                      <td className="py-3 text-right">
-                        <span className={stat.errorCount > 0 ? 'text-error-500' : 'text-gray-500'}>
-                          {stat.errorCount}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right text-gray-300">{formatDuration(stat.avgDuration)}</td>
-                      <td className="py-3 text-right text-gray-300">{formatDuration(stat.p95Duration)}</td>
-                      <td className="py-3 text-right text-gray-300">{formatDuration(stat.maxDuration)}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-8">No endpoint data available</p>
-        )}
-      </div>
+      {/* Per-route performance */}
+      <RoutePerformanceTable endpointStats={endpointStats} />
 
       {/* System Info */}
       <div className="grid grid-cols-3 gap-4">
@@ -226,6 +176,296 @@ export function MetricsDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Per-route performance table
+// ────────────────────────────────────────────────────────────────────────
+
+type SortKey =
+  | 'method'
+  | 'path'
+  | 'requestCount'
+  | 'errorRate'
+  | 'p50Duration'
+  | 'p95Duration'
+  | 'p99Duration'
+  | 'maxDuration';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  method: 'Method',
+  path: 'Route',
+  requestCount: 'Reqs',
+  errorRate: 'Err %',
+  p50Duration: 'p50',
+  p95Duration: 'p95',
+  p99Duration: 'p99',
+  maxDuration: 'Max',
+};
+
+function errorRate(stat: EndpointStats): number {
+  if (stat.requestCount === 0) return 0;
+  return (stat.errorCount / stat.requestCount) * 100;
+}
+
+/** Color-code latency cells so slow routes stand out at a glance. */
+function latencyClass(ms: number): string {
+  if (ms >= 500) return 'text-error-400';
+  if (ms >= 200) return 'text-warning-500';
+  return 'text-gray-300';
+}
+
+/** Color-code error rate the same way. */
+function errorRateClass(rate: number): string {
+  if (rate >= 5) return 'text-error-400';
+  if (rate >= 1) return 'text-warning-500';
+  if (rate > 0) return 'text-yellow-500';
+  return 'text-gray-500';
+}
+
+function methodBadgeClass(method: string): string {
+  switch (method) {
+    case 'GET':
+      return 'bg-green-500/10 text-green-400';
+    case 'POST':
+      return 'bg-blue-500/10 text-blue-400';
+    case 'PUT':
+    case 'PATCH':
+      return 'bg-yellow-500/10 text-yellow-400';
+    case 'DELETE':
+      return 'bg-red-500/10 text-red-400';
+    default:
+      return 'bg-gray-500/10 text-gray-400';
+  }
+}
+
+function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats[] }) {
+  const [sortBy, setSortBy] = useState<SortKey>('p95Duration');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [search, setSearch] = useState('');
+
+  const rows = useMemo(() => {
+    const filtered = search
+      ? endpointStats.filter((s) =>
+          `${s.method} ${s.path}`.toLowerCase().includes(search.toLowerCase()),
+        )
+      : endpointStats;
+
+    const getValue = (s: EndpointStats): number | string => {
+      switch (sortBy) {
+        case 'method':
+          return s.method;
+        case 'path':
+          return s.path;
+        case 'errorRate':
+          return errorRate(s);
+        default:
+          return s[sortBy] as number;
+      }
+    };
+
+    return [...filtered].sort((a, b) => {
+      const av = getValue(a);
+      const bv = getValue(b);
+      if (typeof av === 'string' && typeof bv === 'string') {
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === 'asc'
+        ? Number(av) - Number(bv)
+        : Number(bv) - Number(av);
+    });
+  }, [endpointStats, sortBy, sortDir, search]);
+
+  function toggleSort(key: SortKey) {
+    if (sortBy === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(key);
+      // Numeric columns make more sense desc by default; text asc.
+      setSortDir(key === 'method' || key === 'path' ? 'asc' : 'desc');
+    }
+  }
+
+  return (
+    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <div>
+          <h3 className="text-lg font-semibold text-white">Per-route performance</h3>
+          <p className="text-xs text-gray-500 mt-1">
+            Latency percentiles and error rate per endpoint, computed from the
+            last 100 requests per route.
+          </p>
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Filter routes…"
+          className="px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-primary-500 w-48"
+        />
+      </div>
+
+      {endpointStats.length === 0 ? (
+        <p className="text-gray-500 text-center py-8 text-sm">
+          No requests recorded yet — endpoint stats will populate as traffic flows.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-800">
+                <SortHeader
+                  label={SORT_LABELS.method}
+                  active={sortBy === 'method'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('method')}
+                  className="w-20"
+                />
+                <SortHeader
+                  label={SORT_LABELS.path}
+                  active={sortBy === 'path'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('path')}
+                />
+                <SortHeader
+                  label={SORT_LABELS.requestCount}
+                  active={sortBy === 'requestCount'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('requestCount')}
+                  align="right"
+                />
+                <SortHeader
+                  label={SORT_LABELS.errorRate}
+                  active={sortBy === 'errorRate'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('errorRate')}
+                  align="right"
+                />
+                <SortHeader
+                  label={SORT_LABELS.p50Duration}
+                  active={sortBy === 'p50Duration'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('p50Duration')}
+                  align="right"
+                />
+                <SortHeader
+                  label={SORT_LABELS.p95Duration}
+                  active={sortBy === 'p95Duration'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('p95Duration')}
+                  align="right"
+                />
+                <SortHeader
+                  label={SORT_LABELS.p99Duration}
+                  active={sortBy === 'p99Duration'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('p99Duration')}
+                  align="right"
+                />
+                <SortHeader
+                  label={SORT_LABELS.maxDuration}
+                  active={sortBy === 'maxDuration'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('maxDuration')}
+                  align="right"
+                />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800/60">
+              {rows.map((stat) => {
+                const rate = errorRate(stat);
+                return (
+                  <tr
+                    key={`${stat.method}:${stat.path}`}
+                    className="hover:bg-gray-800/30"
+                  >
+                    <td className="py-2.5">
+                      <span
+                        className={cn(
+                          'inline-block w-14 text-[11px] font-mono px-2 py-0.5 rounded text-center font-semibold',
+                          methodBadgeClass(stat.method),
+                        )}
+                      >
+                        {stat.method}
+                      </span>
+                    </td>
+                    <td className="py-2.5 font-mono text-gray-300 truncate max-w-[300px]">
+                      {stat.path}
+                    </td>
+                    <td className="py-2.5 text-right text-gray-300 tabular-nums">
+                      {stat.requestCount.toLocaleString()}
+                    </td>
+                    <td className={cn('py-2.5 text-right tabular-nums', errorRateClass(rate))}>
+                      {rate === 0 ? '—' : `${rate.toFixed(1)}%`}
+                      {stat.errorCount > 0 && (
+                        <span className="text-gray-500 ml-1 text-xs">
+                          ({stat.errorCount})
+                        </span>
+                      )}
+                    </td>
+                    <td className={cn('py-2.5 text-right tabular-nums', latencyClass(stat.p50Duration))}>
+                      {formatDuration(stat.p50Duration)}
+                    </td>
+                    <td className={cn('py-2.5 text-right tabular-nums font-medium', latencyClass(stat.p95Duration))}>
+                      {formatDuration(stat.p95Duration)}
+                    </td>
+                    <td className={cn('py-2.5 text-right tabular-nums', latencyClass(stat.p99Duration))}>
+                      {formatDuration(stat.p99Duration)}
+                    </td>
+                    <td className={cn('py-2.5 text-right tabular-nums', latencyClass(stat.maxDuration))}>
+                      {formatDuration(stat.maxDuration)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-gray-500 text-sm">
+                    No routes match the current filter.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SortHeaderProps {
+  label: string;
+  active: boolean;
+  dir: 'asc' | 'desc';
+  onClick: () => void;
+  align?: 'left' | 'right';
+  className?: string;
+}
+
+function SortHeader({ label, active, dir, onClick, align = 'left', className }: SortHeaderProps) {
+  return (
+    <th className={cn('pb-2 font-medium', className)}>
+      <button
+        onClick={onClick}
+        className={cn(
+          'flex items-center gap-1 hover:text-white transition-colors',
+          align === 'right' && 'ml-auto',
+          active ? 'text-primary-300' : 'text-gray-500',
+        )}
+      >
+        <span>{label}</span>
+        {active ? (
+          dir === 'asc' ? (
+            <ArrowUp className="w-3 h-3" />
+          ) : (
+            <ArrowDown className="w-3 h-3" />
+          )
+        ) : (
+          <ArrowUpDown className="w-3 h-3 opacity-50" />
+        )}
+      </button>
+    </th>
   );
 }
 

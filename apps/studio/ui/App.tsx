@@ -14,6 +14,7 @@ import {
   ReplayView,
   ApiClient,
   ContainerInspector,
+  LogsView,
 } from './components';
 
 const queryClient = new QueryClient({
@@ -42,6 +43,8 @@ function AppContent() {
         return <ApiClient />;
       case 'container':
         return <ContainerInspector />;
+      case 'logs':
+        return <LogsView />;
       default:
         return <RequestList />;
     }

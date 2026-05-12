@@ -14,7 +14,11 @@ import type {
   ViewMode,
   ContainerSnapshot,
   ContainerResolutions,
+  LogEntry,
+  LogLevel,
 } from '../types';
+
+const MAX_LOGS = 1000;
 
 interface AppState {
   // Connection
@@ -37,6 +41,12 @@ interface AppState {
   containerSnapshot: ContainerSnapshot | null;
   /** Map from exchange id → list of resolved service identifiers for that request. */
   containerResolutionsByExchange: Record<string, string[]>;
+  /** Live console.* stream from the host app (latest first). */
+  logs: LogEntry[];
+  /** Logs grouped by traceId, so TraceDetail can show "logs for this request". */
+  logsByTraceId: Record<string, LogEntry[]>;
+  /** Active level filters in the Logs view. */
+  logLevelFilter: Set<LogLevel>;
 
   // UI state
   sidebarOpen: boolean;
@@ -67,6 +77,10 @@ interface AppState {
   setReplayResult: (result: ReplayResultPayload | null) => void;
   setContainerSnapshot: (snapshot: ContainerSnapshot | null) => void;
   setContainerResolutions: (entry: ContainerResolutions) => void;
+  addLog: (entry: LogEntry) => void;
+  setLogs: (entries: LogEntry[]) => void;
+  clearLogs: () => void;
+  setLogLevelFilter: (levels: Set<LogLevel>) => void;
   setSidebarOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
   setFilterMethod: (method: string | null) => void;
@@ -93,6 +107,9 @@ const initialState = {
   replayResult: null,
   containerSnapshot: null,
   containerResolutionsByExchange: {},
+  logs: [],
+  logsByTraceId: {},
+  logLevelFilter: new Set<LogLevel>(['log', 'info', 'warn', 'error', 'debug']),
   sidebarOpen: true,
   searchQuery: '',
   filterMethod: null,
@@ -127,6 +144,7 @@ export const useAppStore = create<AppState>((set) => ({
   addExchange: (exchange) =>
     set((state) => ({
       exchanges: [exchange, ...state.exchanges].slice(0, 100),
+      lastEventAt: Date.now(),
     })),
 
   setReplayResult: (replayResult) => set({ replayResult }),
@@ -140,6 +158,50 @@ export const useAppStore = create<AppState>((set) => ({
         [entry.exchangeId]: entry.resolved,
       },
     })),
+
+  addLog: (entry) =>
+    set((state) => {
+      // Newest-first global stream, capped to MAX_LOGS.
+      const logs = [entry, ...state.logs].slice(0, MAX_LOGS);
+
+      // Per-traceId index (only when we have a traceId — anonymous logs
+      // still show up in the global stream).
+      let logsByTraceId = state.logsByTraceId;
+      if (entry.traceId) {
+        const existing = logsByTraceId[entry.traceId] ?? [];
+        logsByTraceId = {
+          ...logsByTraceId,
+          [entry.traceId]: [...existing, entry],
+        };
+      }
+
+      return { logs, logsByTraceId, lastEventAt: Date.now() };
+    }),
+
+  setLogs: (entries) =>
+    set(() => {
+      // Replace the buffer wholesale (used when the agent replays its
+      // ring buffer on connect). Preserve newest-first ordering.
+      const sorted = [...entries].sort((a, b) => b.timestamp - a.timestamp);
+      const byTrace: Record<string, LogEntry[]> = {};
+      for (const e of entries) {
+        if (!e.traceId) continue;
+        if (!byTrace[e.traceId]) byTrace[e.traceId] = [];
+        byTrace[e.traceId].push(e);
+      }
+      return {
+        logs: sorted.slice(0, MAX_LOGS),
+        logsByTraceId: byTrace,
+      };
+    }),
+
+  clearLogs: () =>
+    set({
+      logs: [],
+      logsByTraceId: {},
+    }),
+
+  setLogLevelFilter: (logLevelFilter) => set({ logLevelFilter }),
 
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),

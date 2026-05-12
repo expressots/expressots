@@ -9,3 +9,6 @@ export { ReplayView } from './ReplayView';
 export { ApiClient } from './ApiClient';
 export { ContainerInspector } from './ContainerInspector';
 export { ExportMenu } from './ExportMenu';
+export { LogsView } from './LogsView';
+export { TraceLogs } from './TraceLogs';
+export { ErrorInspector } from './ErrorInspector';

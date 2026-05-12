@@ -164,7 +164,10 @@ export type WSMessageType =
   | 'cleared'
   | 'container'
   | 'container_resolutions'
-  | 'recording_state';
+  | 'recording_state'
+  | 'log'
+  | 'logs'
+  | 'logs_cleared';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
@@ -178,7 +181,8 @@ export type ViewMode =
   | 'metrics'
   | 'replay'
   | 'api-client'
-  | 'container';
+  | 'container'
+  | 'logs';
 
 // ────────────────────────────────────────────────────────────────────────
 // DI Container introspection
@@ -222,4 +226,17 @@ export interface ContainerResolutions {
   path: string;
   resolved: string[];
   timestamp: number;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Live logs
+// ────────────────────────────────────────────────────────────────────────
+
+export type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
+
+export interface LogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: number;
+  traceId?: string;
 }

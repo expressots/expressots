@@ -8,6 +8,8 @@ import { cn, formatDuration, formatTimestamp, copyToClipboard } from '../lib/uti
 import { useAppStore } from '../stores/app-store';
 import { openInEditor } from '../lib/open-in-editor';
 import { ExportMenu } from './ExportMenu';
+import { ErrorInspector } from './ErrorInspector';
+import { TraceLogs } from './TraceLogs';
 
 export function TraceDetail() {
   const {
@@ -163,7 +165,11 @@ export function TraceDetail() {
           </div>
         )}
 
+        {response.statusCode >= 400 && <ErrorInspector exchange={exchange} />}
+
         <TraceWaterfall trace={trace} />
+
+        <TraceLogs traceId={exchange.request.traceId || exchange.id} />
 
         <CollapsibleSection title="Request Headers" defaultOpen>
           <HeaderTable headers={request.headers} />

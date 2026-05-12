@@ -16,6 +16,7 @@ import type {
   ReplayResultPayload,
   ContainerSnapshot,
   ContainerResolutions,
+  LogEntry,
 } from '../types';
 
 interface SocketContextValue {
@@ -33,6 +34,8 @@ interface SocketContextValue {
   requestStats: () => void;
   requestEndpointStats: () => void;
   requestContainer: () => void;
+  requestLogs: () => void;
+  clearLogs: () => void;
 }
 
 const SocketContext = createContext<SocketContextValue | null>(null);
@@ -55,6 +58,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setRecordingEnabled,
     markLiveEvent,
     clearExchanges,
+    addLog,
+    setLogs,
+    clearLogs: clearLogsLocal,
   } = useAppStore();
 
   // Handle incoming messages
@@ -124,10 +130,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'container_resolutions':
         setContainerResolutions(message.data as ContainerResolutions);
         break;
+      case 'log':
+        addLog(message.data as LogEntry);
+        break;
+      case 'logs':
+        // Bulk replay sent by the agent on (re)connect.
+        setLogs(message.data as LogEntry[]);
+        break;
+      case 'logs_cleared':
+        clearLogsLocal();
+        break;
       default:
-        console.log('Unknown message type:', message.type);
+        // Unknown event — ignored silently (a noisy `console.log` here
+        // would echo back through the agent's own log capture).
+        break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -150,6 +168,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_exchanges', { limit: 100 });
       socket.emit('get_endpoint_stats');
       socket.emit('get_container');
+      socket.emit('get_logs');
     });
 
     socket.on('disconnect', () => {
@@ -198,6 +217,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     requestStats: useCallback(() => emit('get_stats'), [emit]),
     requestEndpointStats: useCallback(() => emit('get_endpoint_stats'), [emit]),
     requestContainer: useCallback(() => emit('get_container'), [emit]),
+    requestLogs: useCallback(() => emit('get_logs'), [emit]),
+    clearLogs: useCallback(() => emit('clear_logs'), [emit]),
   };
 
   return (

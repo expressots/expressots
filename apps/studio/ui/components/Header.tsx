@@ -29,6 +29,7 @@ const viewTitles: Record<string, string> = {
   replay: 'Request Replay',
   'api-client': 'API Client',
   container: 'DI Container',
+  logs: 'Live Logs',
 };
 
 export function Header() {
