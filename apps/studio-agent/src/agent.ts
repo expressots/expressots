@@ -209,46 +209,76 @@ export class StudioAgent {
   /** Stop the Studio Agent */
   async stop(): Promise<void> {
     if (!this.isRunning) return;
+    // Mark stopped up-front so concurrent stop() calls bail and the
+    // host's shutdown hook isn't held waiting on a duplicate teardown.
+    this.isRunning = false;
 
-    // Close WebSocket server. We must actually wait for the underlying
-    // HTTP server to release the port — without this the next hot-reload
-    // start can hit `EADDRINUSE` because the previous process is still
-    // holding the socket while open WebSocket connections drain.
-    if (this.io) {
-      await new Promise<void>((resolve) => {
-        this.io!.close(() => resolve());
-      });
-      this.io = null;
+    await this.shutdownWebSocketServer();
+
+    try {
+      await this.tracer.stop();
+    } catch {
+      // best-effort
     }
 
-    if (this.httpServer) {
-      const server = this.httpServer;
-      // Force-close any lingering keep-alive / WebSocket sockets so
-      // `server.close()` resolves promptly instead of waiting for the
-      // OS-level read timeout.
+    try {
+      this.recorder.close();
+    } catch {
+      // best-effort
+    }
+
+    // Restore original console.* so the host process logs untouched.
+    this.logCapture.uninstall();
+  }
+
+  /**
+   * Tear down the WebSocket / HTTP server with a hard timeout so the
+   * host's graceful shutdown never hangs on a slow socket.io drain.
+   *
+   * If the close doesn't complete in time, we move on — the OS reclaims
+   * the port the moment the host process exits, so the next hot-reload
+   * start succeeds anyway. (`tsx --watch` / `nodemon` will SIGKILL us
+   * otherwise, which surfaces to the user as "Failed running ./src/main.ts".)
+   */
+  private async shutdownWebSocketServer(): Promise<void> {
+    const io = this.io;
+    const httpServer = this.httpServer;
+    this.io = null;
+    this.httpServer = null;
+
+    if (!io && !httpServer) return;
+
+    // Force-close any lingering keep-alive / WebSocket sockets so the
+    // underlying server can release the port immediately rather than
+    // waiting for the OS-level read timeout. (Node 18.2+; older Node
+    // silently no-ops via the optional-call.)
+    if (httpServer) {
       try {
-        // Available since Node 18.2 — older Node falls back to plain close.
-        (server as unknown as { closeAllConnections?: () => void })
+        (httpServer as unknown as { closeAllConnections?: () => void })
           .closeAllConnections?.();
       } catch {
         // best-effort
       }
-      await new Promise<void>((resolve) => {
-        server.close(() => resolve());
-      });
-      this.httpServer = null;
     }
 
-    // Stop tracer
-    await this.tracer.stop();
+    const drained = new Promise<void>((resolve) => {
+      const finish = () => resolve();
+      if (io) {
+        // socket.io closes the underlying http server itself.
+        io.close(finish);
+      } else if (httpServer) {
+        httpServer.close(() => finish());
+      } else {
+        finish();
+      }
+    });
 
-    // Close recorder
-    this.recorder.close();
+    // Hard cap: 500ms is plenty for a clean drain after
+    // closeAllConnections; anything slower is a stuck client and we
+    // don't want that to hold up the host's shutdown.
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 500));
 
-    // Restore original console.* so the host process logs untouched.
-    this.logCapture.uninstall();
-
-    this.isRunning = false;
+    await Promise.race([drained, timeout]);
   }
 
   /** Scan application for routes */
