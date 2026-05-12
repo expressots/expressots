@@ -43,6 +43,12 @@ interface AppState {
   searchQuery: string;
   filterMethod: string | null;
   filterStatus: 'all' | 'success' | 'error';
+  /** Agent-side recording toggle (`set_recording` event). */
+  recordingEnabled: boolean;
+  /** Auto-scroll the request list to the newest entry. */
+  autoScroll: boolean;
+  /** Timestamp (ms) of the last live event — used to flash the "Live" badge. */
+  lastEventAt: number | null;
 
   // Actions
   setConnected: (connected: boolean) => void;
@@ -65,6 +71,10 @@ interface AppState {
   setSearchQuery: (query: string) => void;
   setFilterMethod: (method: string | null) => void;
   setFilterStatus: (status: 'all' | 'success' | 'error') => void;
+  setRecordingEnabled: (enabled: boolean) => void;
+  setAutoScroll: (enabled: boolean) => void;
+  markLiveEvent: () => void;
+  clearExchanges: () => void;
   reset: () => void;
 }
 
@@ -87,6 +97,9 @@ const initialState = {
   searchQuery: '',
   filterMethod: null,
   filterStatus: 'all' as const,
+  recordingEnabled: true,
+  autoScroll: true,
+  lastEventAt: null,
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -132,6 +145,19 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setFilterMethod: (filterMethod) => set({ filterMethod }),
   setFilterStatus: (filterStatus) => set({ filterStatus }),
-  
+
+  setRecordingEnabled: (recordingEnabled) => set({ recordingEnabled }),
+  setAutoScroll: (autoScroll) => set({ autoScroll }),
+  markLiveEvent: () => set({ lastEventAt: Date.now() }),
+
+  clearExchanges: () =>
+    set({
+      exchanges: [],
+      traces: [],
+      selectedExchangeId: null,
+      replayResult: null,
+      containerResolutionsByExchange: {},
+    }),
+
   reset: () => set(initialState),
 }));

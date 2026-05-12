@@ -2,22 +2,35 @@
  * Request list component showing recent requests
  */
 
-import { useMemo } from 'react';
-import { Clock, ExternalLink } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
+import { Clock, ExternalLink, ArrowDownToLine } from 'lucide-react';
 import { cn, formatDuration, formatTimestamp, getMethodColor, getMethodBgColor, getStatusColor, getStatusBgColor, getDurationColor } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import type { RecordedExchange } from '../types';
 import { ExportMenu } from './ExportMenu';
 
 export function RequestList() {
-  const { 
-    exchanges, 
-    searchQuery, 
-    filterMethod, 
+  const {
+    exchanges,
+    searchQuery,
+    filterMethod,
     filterStatus,
     selectedExchangeId,
     setSelectedExchangeId,
+    autoScroll,
+    setAutoScroll,
   } = useAppStore();
+
+  const topSentinelRef = useRef<HTMLDivElement>(null);
+  const newestId = exchanges[0]?.id;
+
+  // Auto-scroll keeps the newest entry visible. We anchor on the very top
+  // of the list (entries are prepended) and scroll into view whenever the
+  // newest id changes and the user has the toggle enabled.
+  useEffect(() => {
+    if (!autoScroll || !newestId) return;
+    topSentinelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [newestId, autoScroll]);
 
   const filteredExchanges = useMemo(() => {
     return exchanges.filter((exchange) => {
@@ -48,25 +61,73 @@ export function RequestList() {
   }, [exchanges, searchQuery, filterMethod, filterStatus]);
 
   if (exchanges.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-        <Clock className="w-12 h-12 mb-4 opacity-50" />
-        <p className="text-lg">No requests recorded yet</p>
-        <p className="text-sm mt-2">Requests will appear here as they happen</p>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   return (
-    <div className="space-y-2">
-      {filteredExchanges.map((exchange) => (
-        <RequestRow
-          key={exchange.id}
-          exchange={exchange}
-          isSelected={selectedExchangeId === exchange.id}
-          onSelect={() => setSelectedExchangeId(exchange.id)}
-        />
-      ))}
+    <div>
+      {/* Per-list toolbar — auto-scroll + filtered count. */}
+      <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
+        <span>
+          Showing {filteredExchanges.length} of {exchanges.length}
+          {filteredExchanges.length !== exchanges.length && (
+            <span className="text-gray-600"> (filtered)</span>
+          )}
+        </span>
+        <button
+          onClick={() => setAutoScroll(!autoScroll)}
+          className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded border transition-colors',
+            autoScroll
+              ? 'bg-primary-500/10 border-primary-500/30 text-primary-300'
+              : 'bg-gray-800/60 border-gray-700 text-gray-400 hover:text-gray-200',
+          )}
+          title={autoScroll ? 'Auto-scroll on' : 'Auto-scroll off'}
+        >
+          <ArrowDownToLine className="w-3 h-3" />
+          Auto-scroll
+        </button>
+      </div>
+
+      <div ref={topSentinelRef} />
+      <div className="space-y-2">
+        {filteredExchanges.map((exchange) => (
+          <RequestRow
+            key={exchange.id}
+            exchange={exchange}
+            isSelected={selectedExchangeId === exchange.id}
+            onSelect={() => setSelectedExchangeId(exchange.id)}
+          />
+        ))}
+        {filteredExchanges.length === 0 && (
+          <div className="text-center py-12 text-gray-500 text-sm">
+            No requests match the current filters.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+      <div className="w-16 h-16 mb-4 rounded-full bg-primary-500/10 flex items-center justify-center">
+        <Clock className="w-8 h-8 text-primary-400 opacity-70" />
+      </div>
+      <p className="text-lg text-white font-medium">No requests recorded yet</p>
+      <p className="text-sm mt-2 text-center max-w-md">
+        Send a request to your running app (default{' '}
+        <code className="px-1.5 py-0.5 bg-gray-800 rounded text-primary-300 text-xs">
+          localhost:3000
+        </code>
+        ) and it will stream in here in real time.
+      </p>
+      <p className="text-xs mt-4 text-gray-500">
+        Tip: use the{' '}
+        <span className="text-primary-300 font-medium">API Client</span> tab to
+        send one from inside Studio.
+      </p>
     </div>
   );
 }

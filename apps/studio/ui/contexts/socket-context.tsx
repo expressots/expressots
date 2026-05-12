@@ -29,6 +29,7 @@ interface SocketContextValue {
   replayRequest: (exchangeId: string) => void;
   rescan: () => void;
   clearRecordings: () => void;
+  setRecording: (enabled: boolean) => void;
   requestStats: () => void;
   requestEndpointStats: () => void;
   requestContainer: () => void;
@@ -51,6 +52,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setReplayResult,
     setContainerSnapshot,
     setContainerResolutions,
+    setRecordingEnabled,
+    markLiveEvent,
+    clearExchanges,
   } = useAppStore();
 
   // Handle incoming messages
@@ -96,9 +100,19 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             },
           };
           addExchange(exchange);
+          markLiveEvent();
         }
         break;
       }
+      case 'recording_state':
+        setRecordingEnabled(
+          Boolean((message.data as { enabled: boolean })?.enabled),
+        );
+        break;
+      case 'cleared':
+        // Server confirmed recordings were wiped — reset local mirror.
+        clearExchanges();
+        break;
       case 'replay_result': {
         const payload = message.data as Omit<ReplayResultPayload, 'replayedAt'>;
         setReplayResult({ ...payload, replayedAt: Date.now() });
@@ -113,7 +127,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       default:
         console.log('Unknown message type:', message.type);
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -177,6 +191,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       emit('replay', { exchangeId }), [emit]),
     rescan: useCallback(() => emit('rescan'), [emit]),
     clearRecordings: useCallback(() => emit('clear_recordings'), [emit]),
+    setRecording: useCallback(
+      (enabled: boolean) => emit('set_recording', { enabled }),
+      [emit],
+    ),
     requestStats: useCallback(() => emit('get_stats'), [emit]),
     requestEndpointStats: useCallback(() => emit('get_endpoint_stats'), [emit]),
     requestContainer: useCallback(() => emit('get_container'), [emit]),

@@ -248,6 +248,12 @@ export class StudioAgent {
         });
       }
 
+      socket.emit('message', {
+        type: 'recording_state',
+        timestamp: Date.now(),
+        data: { enabled: this.config.enableRecording },
+      });
+
       // Handle client requests
       socket.on('get_routes', () => {
         socket.emit('message', this.createMessage('routes', this.routes));
@@ -309,10 +315,21 @@ export class StudioAgent {
 
       socket.on('clear_recordings', () => {
         this.recorder.clearAll();
-        socket.emit('message', {
-          type: 'cleared',
-          timestamp: Date.now(),
-          data: { success: true },
+        // Reset in-memory aggregates so the Metrics / Endpoint tabs reflect
+        // the cleared timeline instead of showing pre-clear totals.
+        this.endpointStats.clear();
+        this.responseTimes = [];
+        this.metrics.requestCount = 0;
+        this.metrics.errorCount = 0;
+        this.broadcast('cleared', { success: true });
+        this.broadcast('metrics', this.getMetrics());
+        this.broadcast('endpoint_stats', this.getEndpointStats());
+      });
+
+      socket.on('set_recording', (params: { enabled: boolean }) => {
+        this.config.enableRecording = Boolean(params?.enabled);
+        this.broadcast('recording_state', {
+          enabled: this.config.enableRecording,
         });
       });
 

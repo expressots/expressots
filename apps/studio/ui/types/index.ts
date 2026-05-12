@@ -163,7 +163,8 @@ export type WSMessageType =
   | 'endpoint_stats'
   | 'cleared'
   | 'container'
-  | 'container_resolutions';
+  | 'container_resolutions'
+  | 'recording_state';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
