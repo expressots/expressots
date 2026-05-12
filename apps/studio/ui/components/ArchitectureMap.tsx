@@ -20,7 +20,39 @@ import '@xyflow/react/dist/style.css';
 import { Box, Cog, Database, FileCode } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
 import { openInEditor } from '../lib/open-in-editor';
-import type { AppStructure } from '../types';
+import type { AppStructure, ContainerSnapshot } from '../types';
+
+/**
+ * Tailwind classes for the inline scope badge on each architecture node.
+ * Mirrors the palette used by `ContainerInspector.ScopeBadge` so the two
+ * views stay visually consistent.
+ */
+const SCOPE_BADGE_CLASSES: Record<string, string> = {
+  Singleton: 'text-primary-300 bg-primary-950/60 border-primary-700/50',
+  Request: 'text-amber-300 bg-amber-950/50 border-amber-700/50',
+  Transient: 'text-purple-300 bg-purple-950/50 border-purple-700/50',
+};
+
+/**
+ * Build a className → scope lookup so each architecture node can show
+ * the binding scope it resolves to at runtime. Falls back to undefined
+ * when the container snapshot isn't available yet (e.g. UI-only mode).
+ */
+function buildScopeIndex(
+  snapshot: ContainerSnapshot | null,
+): Map<string, string> {
+  const index = new Map<string, string>();
+  if (!snapshot) return index;
+  for (const binding of snapshot.bindings) {
+    if (!index.has(binding.className)) {
+      index.set(binding.className, binding.scope);
+    }
+    if (!index.has(binding.serviceIdentifier)) {
+      index.set(binding.serviceIdentifier, binding.scope);
+    }
+  }
+  return index;
+}
 
 // Custom node types
 const nodeTypes = {
@@ -36,12 +68,18 @@ export function ArchitectureMap() {
     exchanges,
     routes,
     containerResolutionsByExchange,
+    containerSnapshot,
   } = useAppStore();
+
+  const scopeIndex = useMemo(
+    () => buildScopeIndex(containerSnapshot),
+    [containerSnapshot],
+  );
 
   const baseGraph = useMemo(() => {
     if (!structure) return { nodes: [] as Node[], edges: [] as Edge[] };
-    return buildGraph(structure);
-  }, [structure]);
+    return buildGraph(structure, scopeIndex);
+  }, [structure, scopeIndex]);
 
   // Compute the active set whenever an exchange is selected. We highlight:
   //   - The controller that handled the request (via matchedRoute)
@@ -238,7 +276,10 @@ function routeMatchScore(routePath: string, requestPath: string): number {
 }
 
 // Build graph from structure
-function buildGraph(structure: AppStructure): { nodes: Node[]; edges: Edge[] } {
+function buildGraph(
+  structure: AppStructure,
+  scopeIndex: Map<string, string>,
+): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const nodeMap = new Map<string, string>();
@@ -262,6 +303,7 @@ function buildGraph(structure: AppStructure): { nodes: Node[]; edges: Edge[] } {
         label: controller.name,
         routes: controller.routes.length,
         filePath: controller.filePath,
+        scope: scopeIndex.get(controller.name),
       },
     });
   });
@@ -279,6 +321,7 @@ function buildGraph(structure: AppStructure): { nodes: Node[]; edges: Edge[] } {
         label: service.name,
         methods: service.methods.length,
         filePath: service.filePath,
+        scope: scopeIndex.get(service.name),
       },
     });
   });
@@ -296,6 +339,7 @@ function buildGraph(structure: AppStructure): { nodes: Node[]; edges: Edge[] } {
         label: provider.name,
         methods: provider.methods.length,
         filePath: provider.filePath,
+        scope: scopeIndex.get(provider.name),
       },
     });
   });
@@ -326,6 +370,8 @@ interface NodeData {
   filePath?: string;
   /** True when this node is part of the active request path. */
   active?: boolean;
+  /** Resolved binding scope (Singleton/Request/Transient/custom), if known. */
+  scope?: string;
 }
 
 /** Adds a green ring + glow to nodes that participated in the active request. */
@@ -348,13 +394,31 @@ function OpenInEditorButton({ filePath }: { filePath?: string }) {
   );
 }
 
+function ScopeBadge({ scope }: { scope?: string }) {
+  if (!scope) return null;
+  const cls =
+    SCOPE_BADGE_CLASSES[scope] ??
+    'text-gray-300 bg-gray-800 border-gray-700';
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${cls}`}
+      title={`Binding scope: ${scope}`}
+    >
+      {scope}
+    </span>
+  );
+}
+
 function ControllerNode({ data }: { data: NodeData }) {
   return (
     <div className={`bg-blue-500/10 border-2 border-blue-500 rounded-lg p-4 min-w-[180px] ${data.active ? ACTIVE_RING : ''}`}>
       <Handle type="target" position={Position.Left} className="!bg-blue-500" />
-      <div className="flex items-center gap-2 mb-2">
-        <Box className="w-4 h-4 text-blue-400" />
-        <span className="text-sm font-semibold text-blue-300">Controller</span>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <Box className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-semibold text-blue-300">Controller</span>
+        </div>
+        <ScopeBadge scope={data.scope} />
       </div>
       <p className="text-sm text-white font-mono">{data.label}</p>
       {data.routes !== undefined && (
@@ -370,9 +434,12 @@ function ServiceNode({ data }: { data: NodeData }) {
   return (
     <div className={`bg-green-500/10 border-2 border-green-500 rounded-lg p-4 min-w-[180px] ${data.active ? ACTIVE_RING : ''}`}>
       <Handle type="target" position={Position.Left} className="!bg-green-500" />
-      <div className="flex items-center gap-2 mb-2">
-        <Cog className="w-4 h-4 text-green-400" />
-        <span className="text-sm font-semibold text-green-300">Service</span>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <Cog className="w-4 h-4 text-green-400" />
+          <span className="text-sm font-semibold text-green-300">Service</span>
+        </div>
+        <ScopeBadge scope={data.scope} />
       </div>
       <p className="text-sm text-white font-mono">{data.label}</p>
       {data.methods !== undefined && (
@@ -388,9 +455,12 @@ function ProviderNode({ data }: { data: NodeData }) {
   return (
     <div className={`bg-purple-500/10 border-2 border-purple-500 rounded-lg p-4 min-w-[180px] ${data.active ? ACTIVE_RING : ''}`}>
       <Handle type="target" position={Position.Left} className="!bg-purple-500" />
-      <div className="flex items-center gap-2 mb-2">
-        <Database className="w-4 h-4 text-purple-400" />
-        <span className="text-sm font-semibold text-purple-300">Provider</span>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <Database className="w-4 h-4 text-purple-400" />
+          <span className="text-sm font-semibold text-purple-300">Provider</span>
+        </div>
+        <ScopeBadge scope={data.scope} />
       </div>
       <p className="text-sm text-white font-mono">{data.label}</p>
       {data.methods !== undefined && (
