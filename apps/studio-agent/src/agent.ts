@@ -18,6 +18,9 @@ import {
   type ContainerSnapshot,
 } from './introspection/container-introspector.js';
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type {
   AgentConfig,
   RouteInfo,
@@ -27,7 +30,70 @@ import type {
   EndpointStats,
   WSMessage,
   HttpMethod,
+  RuntimeInfo,
 } from './types/index.js';
+
+/**
+ * Best-effort version lookup for a package installed in the host's
+ * `node_modules`. We read `package.json` straight from disk instead of
+ * going through `require()` — most modern packages don't expose
+ * `./package.json` in their `exports` map, which made the `require`
+ * approach silently return `undefined`.
+ */
+function safePackageVersion(pkgName: string): string | undefined {
+  const candidates = [
+    // Standard layout: <cwd>/node_modules/<pkg>/package.json
+    path.resolve(process.cwd(), 'node_modules', ...pkgName.split('/'), 'package.json'),
+    // Walk up from this module's location for nested / hoisted layouts.
+    ...walkParentNodeModules(pkgName),
+  ];
+  for (const file of candidates) {
+    try {
+      const raw = fs.readFileSync(file, 'utf-8');
+      const parsed = JSON.parse(raw) as { version?: string };
+      if (parsed?.version) return parsed.version;
+    } catch {
+      // try the next candidate
+    }
+  }
+  return undefined;
+}
+
+/** Yield candidate `node_modules/<pkg>/package.json` paths walking up from this file. */
+function walkParentNodeModules(pkgName: string): string[] {
+  const out: string[] = [];
+  try {
+    let dir = path.dirname(fileURLToPath(import.meta.url));
+    for (let i = 0; i < 8; i++) {
+      out.push(path.resolve(dir, 'node_modules', ...pkgName.split('/'), 'package.json'));
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  } catch {
+    // import.meta.url may be unavailable in some bundles — fine.
+  }
+  return out;
+}
+
+/**
+ * Resolve our own package version from the agent's bundled `package.json`.
+ * Reads the manifest sitting two levels up from the compiled `agent.js`
+ * (i.e. `dist/agent.js` → `package.json`). Falls back to the host lookup,
+ * then to "unknown".
+ */
+function resolveOwnVersion(): string {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const candidate = path.resolve(here, '..', 'package.json');
+    const raw = fs.readFileSync(candidate, 'utf-8');
+    const parsed = JSON.parse(raw) as { version?: string };
+    if (parsed?.version) return parsed.version;
+  } catch {
+    // fall through
+  }
+  return safePackageVersion('@expressots/studio-agent') ?? 'unknown';
+}
 
 export class StudioAgent {
   private config: AgentConfig;
@@ -58,6 +124,10 @@ export class StudioAgent {
       serviceName: config.serviceName ?? 'expressots-app',
       expressApp: config.expressApp,
       appContainer: config.appContainer,
+      appPort: config.appPort,
+      globalPrefix: config.globalPrefix,
+      startupMs: config.startupMs,
+      interceptorCount: config.interceptorCount,
     };
 
     if (this.config.appContainer) {
@@ -217,6 +287,124 @@ export class StudioAgent {
     return Array.from(this.endpointStats.values()).map(({ durations, ...stats }) => stats);
   }
 
+  /**
+   * Apply runtime details that the host application only knows after
+   * boot (e.g. the actual port returned by `app.listen()`, total startup
+   * duration, count of registered interceptors).
+   *
+   * Called by the adapter integration once the HTTP server is listening.
+   * Re-broadcasts the updated runtime info so connected Studio clients
+   * see fresh values without waiting for the next metrics tick.
+   */
+  updateRuntimeInfo(patch: {
+    appPort?: number;
+    globalPrefix?: string;
+    startupMs?: number;
+    interceptorCount?: number;
+    providerCount?: number;
+    middlewareCount?: number;
+    runtimeItems?: import('./types/index.js').RuntimeItems;
+  }): void {
+    if (patch.appPort !== undefined) this.config.appPort = patch.appPort;
+    if (patch.globalPrefix !== undefined) this.config.globalPrefix = patch.globalPrefix;
+    if (patch.startupMs !== undefined) this.config.startupMs = patch.startupMs;
+    if (patch.interceptorCount !== undefined) {
+      this.config.interceptorCount = patch.interceptorCount;
+    }
+    if (patch.providerCount !== undefined) {
+      this.config.providerCount = patch.providerCount;
+    }
+    if (patch.middlewareCount !== undefined) {
+      this.config.middlewareCount = patch.middlewareCount;
+    }
+    if (patch.runtimeItems !== undefined) {
+      // Merge so partial updates (e.g. providers only) don't wipe the
+      // other categories.
+      this.config.runtimeItems = {
+        ...this.config.runtimeItems,
+        ...patch.runtimeItems,
+      };
+    }
+    if (this.io) {
+      this.broadcast('runtime', this.getRuntimeInfo());
+    }
+  }
+
+  /**
+   * Build a snapshot of runtime information for the Status dashboard.
+   *
+   * Pulls together:
+   *   - host process info (`pid`, `nodeVersion`, `platform`, etc.)
+   *   - explicit values passed via `AgentConfig` (port, prefix, startupMs)
+   *   - counts derived from the latest discovery scan
+   *   - best-effort framework versions from the host's `node_modules`
+   *
+   * Designed to be cheap to call on every WebSocket connection.
+   */
+  getRuntimeInfo(): RuntimeInfo {
+    // Resolve the host application's HTTP port. Order of preference:
+    //   1) Explicit value passed via AgentConfig (most accurate; the
+    //      adapter-express integration forwards the listening port here).
+    //   2) `PORT` environment variable, which a lot of hosting platforms
+    //      (and `expressots dev`) set.
+    //   3) ExpressoTS default port (3000).
+    const envPort = process.env.PORT ? parseInt(process.env.PORT, 10) : undefined;
+    const appPort =
+      this.config.appPort ?? (Number.isFinite(envPort) ? envPort : 3000);
+    const appUrl = appPort ? `http://localhost:${appPort}` : undefined;
+
+    // Prefer counts reported by the adapter (which uses the same
+    // `MetricsCollector` as the CLI banner — so Studio always agrees with
+    // the terminal) and fall back to whatever the static scan turned up.
+    //
+    // This matters for things our static scanner can't see:
+    //   - framework-registered providers (lifecycle, logger, etc.)
+    //   - interceptors registered via decorators on classes the agent
+    //     hasn't reached during file traversal
+    const interceptorCount =
+      this.config.interceptorCount ??
+      this.appStructure?.middleware.length;
+    const providerCount =
+      this.config.providerCount ??
+      this.appStructure?.providers.length ??
+      0;
+    const middlewareCount =
+      this.config.middlewareCount ??
+      this.appStructure?.middleware.length ??
+      0;
+
+    return {
+      serviceName: this.config.serviceName,
+      pid: process.pid,
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      env: process.env.NODE_ENV || 'development',
+      agentPort: this.config.port,
+      appPort,
+      appUrl,
+      globalPrefix: this.config.globalPrefix ?? '/',
+      startedAt: this.startTime,
+      uptimeMs: Date.now() - this.startTime,
+      startupMs: this.config.startupMs,
+      versions: {
+        agent: resolveOwnVersion(),
+        core: safePackageVersion('@expressots/core'),
+        adapterExpress: safePackageVersion('@expressots/adapter-express'),
+      },
+      counts: {
+        controllers: this.appStructure?.controllers.length ?? 0,
+        services: this.appStructure?.services.length ?? 0,
+        providers: providerCount,
+        routes: this.routes.length,
+        middleware: middlewareCount,
+        interceptors: interceptorCount,
+      },
+      runtimeItems: this.config.runtimeItems,
+      recordingEnabled: this.config.enableRecording,
+    };
+  }
+
   /** Start WebSocket server */
   private async startWebSocketServer(): Promise<void> {
     this.httpServer = createServer((req, res) => {
@@ -244,6 +432,7 @@ export class StudioAgent {
       // Send initial data
       socket.emit('message', this.createMessage('routes', this.routes));
       socket.emit('message', this.createMessage('metrics', this.getMetrics()));
+      socket.emit('message', this.createMessage('runtime', this.getRuntimeInfo()));
 
       if (this.appStructure) {
         socket.emit('message', {
@@ -292,6 +481,13 @@ export class StudioAgent {
           timestamp: Date.now(),
           data: this.appStructure,
         });
+      });
+
+      socket.on('get_runtime', () => {
+        socket.emit(
+          'message',
+          this.createMessage('runtime', this.getRuntimeInfo()),
+        );
       });
 
       socket.on('get_exchanges', (params: { limit?: number; offset?: number }) => {
@@ -354,6 +550,7 @@ export class StudioAgent {
         this.broadcast('recording_state', {
           enabled: this.config.enableRecording,
         });
+        this.broadcast('runtime', this.getRuntimeInfo());
       });
 
       socket.on('get_stats', () => {
@@ -633,6 +830,11 @@ export class StudioAgent {
 
       // Broadcast metrics
       this.broadcast('metrics', this.getMetrics());
+      // Piggyback runtime info on the metrics tick so the Status page's
+      // uptime counter and memory chip stay in sync without a separate
+      // timer. The payload is small (~600 B JSON) so the extra traffic is
+      // negligible.
+      this.broadcast('runtime', this.getRuntimeInfo());
     }, 5000);
   }
 

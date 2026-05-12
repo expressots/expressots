@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Boxes,
   Terminal,
+  LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
@@ -27,6 +28,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { id: 'status', label: 'Status', icon: LayoutDashboard },
   { id: 'requests', label: 'Requests', icon: Activity },
   { id: 'logs', label: 'Logs', icon: Terminal },
   { id: 'api-client', label: 'API Client', icon: Send },

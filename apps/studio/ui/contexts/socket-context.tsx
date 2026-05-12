@@ -17,6 +17,7 @@ import type {
   ContainerSnapshot,
   ContainerResolutions,
   LogEntry,
+  RuntimeInfo,
 } from '../types';
 
 interface SocketContextValue {
@@ -36,6 +37,7 @@ interface SocketContextValue {
   requestContainer: () => void;
   requestLogs: () => void;
   clearLogs: () => void;
+  requestRuntime: () => void;
 }
 
 const SocketContext = createContext<SocketContextValue | null>(null);
@@ -63,6 +65,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     clearLogs: clearLogsLocal,
     setAgentLatency,
     incrementEventCount,
+    setRuntime,
   } = useAppStore();
 
   // Handle incoming messages
@@ -151,12 +154,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         }
         break;
       }
+      case 'runtime':
+        setRuntime(message.data as RuntimeInfo);
+        break;
       default:
         // Unknown event — ignored silently (a noisy `console.log` here
         // would echo back through the agent's own log capture).
         break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -184,6 +190,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_endpoint_stats');
       socket.emit('get_container');
       socket.emit('get_logs');
+      socket.emit('get_runtime');
 
       // Kick off an immediate ping then settle into a 5s cadence.
       const sendPing = () => socket.emit('ping_studio', { sentAt: Date.now() });
@@ -245,6 +252,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     requestContainer: useCallback(() => emit('get_container'), [emit]),
     requestLogs: useCallback(() => emit('get_logs'), [emit]),
     clearLogs: useCallback(() => emit('clear_logs'), [emit]),
+    requestRuntime: useCallback(() => emit('get_runtime'), [emit]),
   };
 
   return (

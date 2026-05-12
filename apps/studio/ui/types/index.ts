@@ -168,7 +168,8 @@ export type WSMessageType =
   | 'log'
   | 'logs'
   | 'logs_cleared'
-  | 'pong_studio';
+  | 'pong_studio'
+  | 'runtime';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
@@ -177,6 +178,7 @@ export interface WSMessage<T = unknown> {
 }
 
 export type ViewMode =
+  | 'status'
   | 'requests'
   | 'architecture'
   | 'metrics'
@@ -240,4 +242,61 @@ export interface LogEntry {
   message: string;
   timestamp: number;
   traceId?: string;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Runtime / Status dashboard
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Browser-side mirror of `RuntimeInfo` from the Studio Agent.
+ * See `packages/studio-agent/src/types/index.ts` for field semantics.
+ */
+export interface RuntimeInfo {
+  serviceName: string;
+  pid: number;
+  nodeVersion: string;
+  platform: string;
+  arch: string;
+  env: string;
+  agentPort: number;
+  appPort?: number;
+  appUrl?: string;
+  globalPrefix?: string;
+  startedAt: number;
+  uptimeMs: number;
+  startupMs?: number;
+  versions: {
+    agent: string;
+    core?: string;
+    adapterExpress?: string;
+  };
+  counts: {
+    controllers: number;
+    services: number;
+    providers: number;
+    routes: number;
+    middleware: number;
+    interceptors?: number;
+  };
+  /**
+   * Itemised runtime lists. Used by the Status page drill-down to show
+   * actual class names for items the static file scanner can't see
+   * (framework providers, container-resolved interceptors).
+   */
+  runtimeItems?: RuntimeItems;
+  recordingEnabled: boolean;
+}
+
+/** Mirror of `RuntimeItems` from the Studio Agent. */
+export interface RuntimeItems {
+  providers?: RuntimeItem[];
+  interceptors?: RuntimeItem[];
+}
+
+/** A single runtime-discovered item (provider, interceptor, etc.). */
+export interface RuntimeItem {
+  name: string;
+  priority?: number;
+  source?: string;
 }

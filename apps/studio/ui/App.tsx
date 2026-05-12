@@ -17,6 +17,7 @@ import {
   ApiClient,
   ContainerInspector,
   LogsView,
+  StatusDashboard,
 } from './components';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
 
@@ -47,6 +48,8 @@ function AppContent() {
 
   const renderView = () => {
     switch (currentView) {
+      case 'status':
+        return <StatusDashboard />;
       case 'requests':
         return <RequestList />;
       case 'architecture':

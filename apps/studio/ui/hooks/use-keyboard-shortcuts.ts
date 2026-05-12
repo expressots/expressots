@@ -27,6 +27,7 @@ export const SHORTCUTS: ShortcutDescriptor[] = [
   { combo: 'K',          description: 'Select previous request',            category: 'Lists' },
   { combo: 'Enter',      description: 'Open the selected request',          category: 'Lists' },
   { combo: 'Cmd/Ctrl+R', description: 'Rescan routes / refresh',            category: 'Navigation' },
+  { combo: 'G then S',   description: 'Go to Status',                       category: 'Navigation' },
   { combo: 'G then R',   description: 'Go to Requests',                     category: 'Navigation' },
   { combo: 'G then L',   description: 'Go to Logs',                         category: 'Navigation' },
   { combo: 'G then A',   description: 'Go to API Client',                   category: 'Navigation' },
@@ -136,6 +137,7 @@ export function useKeyboardShortcuts({ onToggleHelp, onCloseAll }: Options) {
       }
       if (leader === 'g') {
         const mapping: Record<string, () => void> = {
+          s: () => setCurrentView('status'),
           r: () => setCurrentView('requests'),
           l: () => setCurrentView('logs'),
           a: () => setCurrentView('api-client'),

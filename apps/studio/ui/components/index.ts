@@ -16,3 +16,4 @@ export { SettingsPanel } from './SettingsPanel';
 export { ShortcutsOverlay } from './ShortcutsOverlay';
 export { ReplayDiff } from './ReplayDiff';
 export { HealthFooter } from './HealthFooter';
+export { StatusDashboard } from './StatusDashboard';

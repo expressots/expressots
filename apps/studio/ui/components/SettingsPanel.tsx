@@ -31,6 +31,7 @@ import type { LogLevel, ViewMode } from '../types';
 
 const LOG_LEVELS: LogLevel[] = ['log', 'info', 'warn', 'error', 'debug'];
 const VIEWS: { id: ViewMode; label: string }[] = [
+  { id: 'status', label: 'Status' },
   { id: 'requests', label: 'Requests' },
   { id: 'logs', label: 'Logs' },
   { id: 'api-client', label: 'API Client' },

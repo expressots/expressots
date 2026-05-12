@@ -28,6 +28,7 @@ import { useSocket } from '../contexts/socket-context';
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 const viewTitles: Record<string, string> = {
+  status: 'App Status',
   requests: 'Request Timeline',
   architecture: 'Architecture Map',
   metrics: 'Performance Metrics',

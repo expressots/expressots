@@ -116,6 +116,74 @@ export interface AgentConfig {
    * bindings are resolved during each request.
    */
   appContainer?: unknown;
+  /**
+   * HTTP port the host application is listening on. Used by the Studio
+   * Status page to display the app URL. Optional — when omitted the
+   * Status page falls back to "—".
+   */
+  appPort?: number;
+  /**
+   * Global URL prefix of the host application (e.g. "/" or "/api/v1").
+   * Used for display purposes only.
+   */
+  globalPrefix?: string;
+  /**
+   * How long the host application took to start (ms). Reported by
+   * `@expressots/adapter-express` after `app.listen()` resolves.
+   */
+  startupMs?: number;
+  /**
+   * Number of registered interceptors (middleware applied via the adapter
+   * configuration). Reported by the adapter; falls back to scanned
+   * `@middleware` decorators when unavailable.
+   */
+  interceptorCount?: number;
+  /**
+   * Number of providers registered with the DI container at runtime.
+   * Includes framework-registered providers (e.g. lifecycle hooks),
+   * which static file scanning misses. Reported by the adapter via
+   * `MetricsCollector` so the Status page agrees with the CLI banner.
+   */
+  providerCount?: number;
+  /**
+   * Number of HTTP middleware registered in the adapter's pipeline
+   * (distinct from `interceptorCount`). Reported by the adapter for
+   * the Status page.
+   */
+  middlewareCount?: number;
+  /**
+   * Itemised runtime lists for the Status page drill-down. Class names
+   * harvested from DI metadata at boot, including framework items the
+   * static scanner can't see.
+   */
+  runtimeItems?: RuntimeItems;
+}
+
+/**
+ * Itemised runtime view used by the Studio Status page drill-down.
+ *
+ * Each entry is just a display name (typically `Class.name`). The UI
+ * cross-references against the static `AppStructure` to enrich entries
+ * with file paths / "Open in editor" links when a name matches.
+ */
+export interface RuntimeItems {
+  /** Provider class names registered via `@provide` family decorators. */
+  providers?: RuntimeItem[];
+  /** Interceptor class names registered via `@Interceptor()`. */
+  interceptors?: RuntimeItem[];
+}
+
+/** A single runtime-discovered item (provider, interceptor, etc.). */
+export interface RuntimeItem {
+  /** Display name (typically the class constructor name). */
+  name: string;
+  /**
+   * Optional priority — surfaced for interceptors so the dashboard can
+   * mirror the execution order shown in the CLI.
+   */
+  priority?: number;
+  /** Optional source — purely informational ("metadata", "registry", …). */
+  source?: string;
 }
 
 /** Default agent configuration */
@@ -144,7 +212,8 @@ export type WSMessageType =
   | 'exchange'
   | 'stats'
   | 'endpoint_stats'
-  | 'cleared';
+  | 'cleared'
+  | 'runtime';
 
 /** WebSocket message structure */
 export interface WSMessage<T = unknown> {
@@ -213,4 +282,70 @@ export interface AppStructure {
   providers: ServiceInfo[];
   middleware: string[];
   dependencies: DependencyInfo[];
+}
+
+/**
+ * Runtime information about the host application + the agent itself.
+ *
+ * Surfaced on the Studio "Status" page so users get a browser-side view
+ * of the same information the CLI prints in its boot banner — but live
+ * and refreshable, instead of frozen at startup.
+ */
+export interface RuntimeInfo {
+  /** Service name passed to the agent (e.g. "expressots-app"). */
+  serviceName: string;
+  /** Process id of the host app (the agent runs in-process). */
+  pid: number;
+  /** Node.js version, e.g. "v22.15.1". */
+  nodeVersion: string;
+  /** Platform string, e.g. "win32" / "linux" / "darwin". */
+  platform: NodeJS.Platform;
+  /** CPU architecture, e.g. "x64" / "arm64". */
+  arch: string;
+  /** NODE_ENV, defaulting to "development" if unset. */
+  env: string;
+  /** Port the WebSocket agent itself is listening on. */
+  agentPort: number;
+  /**
+   * Application HTTP port (best-effort). The agent doesn't bind the user's
+   * server, so this is provided via config and may be undefined.
+   */
+  appPort?: number;
+  /** App base URL, e.g. "http://localhost:3000" — also best-effort. */
+  appUrl?: string;
+  /**
+   * Global path prefix for the app, e.g. "/" or "/api/v1". Best-effort
+   * because we can only know it when the host passes it via config.
+   */
+  globalPrefix?: string;
+  /** Wall-clock timestamp of when the agent started (ms since epoch). */
+  startedAt: number;
+  /** How long the host has been up (ms). */
+  uptimeMs: number;
+  /** How long the host took to boot (ms), if the user app reports it. */
+  startupMs?: number;
+  /** Versions of the framework and adapter, when discoverable. */
+  versions: {
+    agent: string;
+    core?: string;
+    adapterExpress?: string;
+  };
+  /** Counts derived from the latest scan, for the dashboard. */
+  counts: {
+    controllers: number;
+    services: number;
+    providers: number;
+    routes: number;
+    middleware: number;
+    interceptors?: number;
+  };
+  /**
+   * Itemised runtime lists. Powers the Status page drill-down for items
+   * the static file scanner can't see (framework providers, container-
+   * resolved interceptors). When omitted, the UI falls back to the
+   * static `AppStructure` lists.
+   */
+  runtimeItems?: RuntimeItems;
+  /** Whether request/response recording is currently enabled. */
+  recordingEnabled: boolean;
 }

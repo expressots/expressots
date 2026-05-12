@@ -16,6 +16,7 @@ import type {
   ContainerResolutions,
   LogEntry,
   LogLevel,
+  RuntimeInfo,
 } from '../types';
 
 import { useSettings } from './settings-store';
@@ -43,6 +44,8 @@ interface AppState {
   containerSnapshot: ContainerSnapshot | null;
   /** Map from exchange id → list of resolved service identifiers for that request. */
   containerResolutionsByExchange: Record<string, string[]>;
+  /** Runtime / app boot info for the Status dashboard. */
+  runtime: RuntimeInfo | null;
   /** Live console.* stream from the host app (latest first). */
   logs: LogEntry[];
   /** Logs grouped by traceId, so TraceDetail can show "logs for this request". */
@@ -83,6 +86,7 @@ interface AppState {
   setReplayResult: (result: ReplayResultPayload | null) => void;
   setContainerSnapshot: (snapshot: ContainerSnapshot | null) => void;
   setContainerResolutions: (entry: ContainerResolutions) => void;
+  setRuntime: (runtime: RuntimeInfo) => void;
   addLog: (entry: LogEntry) => void;
   setLogs: (entries: LogEntry[]) => void;
   clearLogs: () => void;
@@ -119,6 +123,7 @@ function buildInitialState() {
     replayResult: null,
     containerSnapshot: null,
     containerResolutionsByExchange: {},
+    runtime: null,
     logs: [],
     logsByTraceId: {},
     logLevelFilter: new Set<LogLevel>(s.defaultLogLevels),
@@ -175,6 +180,8 @@ export const useAppStore = create<AppState>((set) => ({
         [entry.exchangeId]: entry.resolved,
       },
     })),
+
+  setRuntime: (runtime) => set({ runtime }),
 
   addLog: (entry) =>
     set((state) => {
