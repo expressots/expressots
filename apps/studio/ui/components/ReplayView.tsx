@@ -3,19 +3,16 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Play, RotateCcw, Clock, Check, X } from 'lucide-react';
-import { cn, formatDuration, formatTimestamp, getMethodColor, getMethodBgColor, getStatusColor } from '../lib/utils';
+import { Play, RotateCcw, Clock, X } from 'lucide-react';
+import { cn, formatTimestamp, getMethodColor, getMethodBgColor } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import { useSocket } from '../contexts/socket-context';
+import { ReplayDiff, type ReplayDiffPayload } from './ReplayDiff';
 import type { RecordedExchange } from '../types';
 
 interface ReplayDisplay {
   success: boolean;
-  originalStatus: number;
-  originalDuration: number;
-  replayStatus?: number;
-  replayDuration?: number;
-  replayBody?: unknown;
+  diff?: ReplayDiffPayload;
   error?: string;
 }
 
@@ -51,13 +48,28 @@ export function ReplayView() {
 
     setReplays((prev) => {
       const next = new Map(prev);
+      const r = replayResult.replay;
       next.set(targetId, {
         success: replayResult.success,
-        originalStatus: original?.response.statusCode ?? 0,
-        originalDuration: original?.response.duration ?? 0,
-        replayStatus: replayResult.replay?.statusCode,
-        replayDuration: replayResult.replay?.duration,
-        replayBody: replayResult.replay?.body,
+        diff:
+          replayResult.success && r && original
+            ? {
+                original: {
+                  statusCode: original.response.statusCode,
+                  statusMessage: original.response.statusMessage,
+                  headers: original.response.headers,
+                  body: original.response.body,
+                  duration: original.response.duration,
+                },
+                replay: {
+                  statusCode: r.statusCode,
+                  statusMessage: r.statusMessage,
+                  headers: r.headers,
+                  body: r.body,
+                  duration: r.duration ?? 0,
+                },
+              }
+            : undefined,
         error: replayResult.error,
       });
       return next;
@@ -152,99 +164,8 @@ export function ReplayView() {
 
               {result && (
                 <div className="mt-4 pt-4 border-t border-gray-800">
-                  {result.success && result.replayStatus !== undefined ? (
-                    <>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-800/50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-                            Original
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={cn(
-                                'text-lg font-semibold',
-                                getStatusColor(result.originalStatus),
-                              )}
-                            >
-                              {result.originalStatus}
-                            </span>
-                            <span className="text-sm text-gray-400">
-                              {formatDuration(result.originalDuration)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="bg-gray-800/50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-                            Replay
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={cn(
-                                'text-lg font-semibold',
-                                getStatusColor(result.replayStatus),
-                              )}
-                            >
-                              {result.replayStatus}
-                            </span>
-                            <span className="text-sm text-gray-400">
-                              {result.replayDuration !== undefined
-                                ? formatDuration(result.replayDuration)
-                                : '—'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-2 flex-wrap">
-                        {result.originalStatus === result.replayStatus ? (
-                          <div className="flex items-center gap-2 text-success-500 text-sm">
-                            <Check className="w-4 h-4" />
-                            Same status code
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-error-500 text-sm">
-                            <X className="w-4 h-4" />
-                            Status changed from {result.originalStatus} to {result.replayStatus}
-                          </div>
-                        )}
-
-                        {result.replayDuration !== undefined && result.originalDuration > 0 && (
-                          <>
-                            <span className="text-gray-600">•</span>
-                            <span
-                              className={cn(
-                                'text-sm',
-                                result.replayDuration < result.originalDuration
-                                  ? 'text-success-500'
-                                  : 'text-warning-500',
-                              )}
-                            >
-                              {result.replayDuration < result.originalDuration ? '↓' : '↑'}
-                              {Math.abs(
-                                ((result.replayDuration - result.originalDuration) /
-                                  result.originalDuration) *
-                                  100,
-                              ).toFixed(0)}
-                              % duration
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      {result.replayBody !== undefined && result.replayBody !== null && (
-                        <details className="mt-3">
-                          <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-300">
-                            Show replay response body
-                          </summary>
-                          <pre className="mt-2 text-xs bg-gray-950 border border-gray-800 rounded p-3 overflow-auto max-h-64 text-gray-300">
-                            {typeof result.replayBody === 'string'
-                              ? result.replayBody
-                              : JSON.stringify(result.replayBody, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-                    </>
+                  {result.success && result.diff ? (
+                    <ReplayDiff payload={result.diff} />
                   ) : (
                     <div className="bg-error-500/10 border border-error-500/30 rounded-lg p-3">
                       <div className="flex items-center gap-2 text-error-400 text-sm">

@@ -3,13 +3,14 @@
  */
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { X, Copy, FileCode, Boxes } from 'lucide-react';
+import { X, Copy, FileCode, Boxes, Download, FileText, ChevronDown } from 'lucide-react';
 import { cn, formatDuration, formatTimestamp, copyToClipboard } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import { openInEditor } from '../lib/open-in-editor';
 import { ExportMenu } from './ExportMenu';
 import { ErrorInspector } from './ErrorInspector';
 import { TraceLogs } from './TraceLogs';
+import { exportSnapshot } from '../lib/snapshot';
 
 export function TraceDetail() {
   const {
@@ -18,6 +19,8 @@ export function TraceDetail() {
     setSelectedExchangeId,
     routes,
     containerResolutionsByExchange,
+    logsByTraceId,
+    agentUrl,
   } = useAppStore();
 
   const exchange = useMemo(() => {
@@ -192,7 +195,7 @@ export function TraceDetail() {
         ) : null}
 
         {/* Actions */}
-        <div className="p-4 border-t border-gray-800 flex gap-2 items-center">
+        <div className="p-4 border-t border-gray-800 flex gap-2 items-center flex-wrap">
           <button
             onClick={() => copyToClipboard(JSON.stringify(exchange, null, 2))}
             className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
@@ -201,9 +204,102 @@ export function TraceDetail() {
             Copy as JSON
           </button>
           <ExportMenu exchange={exchange} />
+          <SnapshotButton
+            onExport={(format) =>
+              exportSnapshot(
+                {
+                  exchange,
+                  route: matchedRoute,
+                  logs:
+                    logsByTraceId[exchange.request.traceId || exchange.id] ?? [],
+                  resolvedBindings,
+                  agentUrl,
+                },
+                format,
+              )
+            }
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Snapshot export button — dropdown with JSON and Markdown options.
+ * Closes on outside click via a small effect on a parent dropdown ref.
+ */
+function SnapshotButton({
+  onExport,
+}: {
+  onExport: (format: 'json' | 'markdown') => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
+      >
+        <Download className="w-4 h-4" />
+        Export snapshot
+        <ChevronDown className={cn('w-3 h-3 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div className="absolute bottom-full mb-2 right-0 z-20 min-w-[200px] bg-gray-900 border border-gray-800 rounded-lg shadow-xl overflow-hidden">
+            <SnapshotOption
+              icon={Download}
+              label="Download as JSON"
+              hint="Machine-readable, full fidelity"
+              onClick={() => {
+                onExport('json');
+                setOpen(false);
+              }}
+            />
+            <SnapshotOption
+              icon={FileText}
+              label="Download as Markdown"
+              hint="Bug-report draft, ready to paste"
+              onClick={() => {
+                onExport('markdown');
+                setOpen(false);
+              }}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SnapshotOption({
+  icon: Icon,
+  label,
+  hint,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  hint?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-800 flex items-start gap-2"
+    >
+      <Icon className="w-4 h-4 text-primary-400 mt-0.5 flex-shrink-0" />
+      <div>
+        <div className="text-gray-200">{label}</div>
+        {hint && <div className="text-[11px] text-gray-500">{hint}</div>}
+      </div>
+    </button>
   );
 }
 

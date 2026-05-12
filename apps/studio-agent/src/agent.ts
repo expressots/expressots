@@ -373,6 +373,17 @@ export class StudioAgent {
         });
       });
 
+      // Lightweight round-trip used by the UI to compute agent latency.
+      // We echo the client's timestamp so the round-trip can be measured
+      // without depending on agent vs. client clock drift.
+      socket.on('ping_studio', (payload: { sentAt?: number } | undefined) => {
+        socket.emit('message', {
+          type: 'pong_studio',
+          timestamp: Date.now(),
+          data: { sentAt: payload?.sentAt ?? 0, agentNow: Date.now() },
+        });
+      });
+
       socket.on('get_logs', () => {
         socket.emit('message', {
           type: 'logs',

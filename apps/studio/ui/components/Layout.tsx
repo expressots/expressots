@@ -7,6 +7,7 @@ import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { HealthFooter } from './HealthFooter';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -28,6 +29,7 @@ export function Layout({ children }: LayoutProps) {
         <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
+        <HealthFooter />
       </div>
     </div>
   );

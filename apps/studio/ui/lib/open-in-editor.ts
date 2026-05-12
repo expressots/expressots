@@ -1,13 +1,15 @@
 /**
  * Open a file at a specific line in the user's editor.
  *
- * Uses the `vscode://file/<absolute-path>:<line>:<col>` URL scheme which
- * is registered by both VS Code and Cursor on every supported OS. If the
- * editor is not installed nothing happens (the OS shows a "no app" dialog).
+ * Each supported editor registers its own URL scheme. The selected scheme
+ * is read from the persisted settings store, so a user on Cursor doesn't
+ * keep launching VS Code (and vice versa).
  *
- * Paths must be absolute. On Windows, vscode:// expects forward slashes
- * (the protocol handler converts them back to backslashes internally).
+ * Paths must be absolute. All schemes accept forward slashes on every OS
+ * — Windows drive letters are kept intact (`/C:/Users/...`).
  */
+
+import { useSettings, type EditorScheme } from '../stores/settings-store';
 
 export interface OpenInEditorTarget {
   filePath?: string;
@@ -15,20 +17,46 @@ export interface OpenInEditorTarget {
   column?: number;
 }
 
-/** Build the vscode:// URL for a target (returns null if the path is missing). */
+/**
+ * Prefix used for each scheme. The path is appended verbatim followed by
+ * `:line:col`. WebStorm / IDEA use the JetBrains "Toolbox" protocol which
+ * understands a different shape; we fall back to a vscode-compatible URL
+ * if Toolbox isn't installed (it's harmless — the OS just shows "no app").
+ */
+const SCHEME_PREFIX: Record<Exclude<EditorScheme, 'custom'>, string> = {
+  vscode: 'vscode://file',
+  cursor: 'cursor://file',
+  webstorm: 'webstorm://open?file=',
+  idea: 'idea://open?file=',
+  sublime: 'subl://open?url=file://',
+};
+
+function getActivePrefix(): string {
+  const s = useSettings.getState();
+  if (s.editorScheme === 'custom') return s.customEditorPrefix || 'vscode://file';
+  return SCHEME_PREFIX[s.editorScheme] ?? 'vscode://file';
+}
+
+/** Build the editor URL for a target (returns null if the path is missing). */
 export function buildEditorUrl(target: OpenInEditorTarget): string | null {
   if (!target.filePath) return null;
+
   let p = target.filePath.replace(/\\/g, '/');
-  // Strip Windows drive letter colon? No — vscode:// expects "C:/path".
-  // But the URI needs an authority: vscode://file/C:/path  → strip leading "/" on Windows.
-  // Both forms work in practice; we keep the leading "/" only for POSIX paths.
-  if (!p.startsWith('/')) {
-    // Windows path like "C:/Users/..." — vscode:// expects /C:/Users/... so add it
-    p = '/' + p;
-  }
+  if (!p.startsWith('/')) p = '/' + p; // ensures /C:/… on Windows
+
   const line = target.lineNumber ?? 1;
   const col = target.column ?? 1;
-  return `vscode://file${p}:${line}:${col}`;
+  const prefix = getActivePrefix();
+
+  // The JetBrains schemes (webstorm/idea) use `?file=PATH&line=N` instead of
+  // a colon-separated tail. Detect and adapt.
+  if (prefix.endsWith('?file=')) {
+    return `${prefix}${encodeURIComponent(p)}&line=${line}&column=${col}`;
+  }
+  if (prefix.endsWith('?url=file://')) {
+    return `${prefix}${encodeURIComponent(p)}:${line}:${col}`;
+  }
+  return `${prefix}${p}:${line}:${col}`;
 }
 
 /** Trigger the editor to open the target. No-op if the target lacks a path. */

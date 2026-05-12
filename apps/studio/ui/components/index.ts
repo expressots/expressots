@@ -12,3 +12,7 @@ export { ExportMenu } from './ExportMenu';
 export { LogsView } from './LogsView';
 export { TraceLogs } from './TraceLogs';
 export { ErrorInspector } from './ErrorInspector';
+export { SettingsPanel } from './SettingsPanel';
+export { ShortcutsOverlay } from './ShortcutsOverlay';
+export { ReplayDiff } from './ReplayDiff';
+export { HealthFooter } from './HealthFooter';

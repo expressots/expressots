@@ -18,6 +18,8 @@ import type {
   LogLevel,
 } from '../types';
 
+import { useSettings } from './settings-store';
+
 const MAX_LOGS = 1000;
 
 interface AppState {
@@ -59,6 +61,10 @@ interface AppState {
   autoScroll: boolean;
   /** Timestamp (ms) of the last live event — used to flash the "Live" badge. */
   lastEventAt: number | null;
+  /** Round-trip latency to the agent in ms (most recent ping_studio sample). */
+  agentLatencyMs: number | null;
+  /** Total WebSocket messages received since the page loaded. */
+  eventsReceived: number;
 
   // Actions
   setConnected: (connected: boolean) => void;
@@ -88,36 +94,47 @@ interface AppState {
   setRecordingEnabled: (enabled: boolean) => void;
   setAutoScroll: (enabled: boolean) => void;
   markLiveEvent: () => void;
+  setAgentLatency: (ms: number) => void;
+  incrementEventCount: () => void;
   clearExchanges: () => void;
   reset: () => void;
 }
 
-const initialState = {
-  connected: false,
-  agentUrl: 'ws://localhost:3334',
-  currentView: 'requests' as ViewMode,
-  selectedTraceId: null,
-  selectedExchangeId: null,
-  routes: [],
-  traces: [],
-  metrics: null,
-  endpointStats: [],
-  structure: null,
-  exchanges: [],
-  replayResult: null,
-  containerSnapshot: null,
-  containerResolutionsByExchange: {},
-  logs: [],
-  logsByTraceId: {},
-  logLevelFilter: new Set<LogLevel>(['log', 'info', 'warn', 'error', 'debug']),
-  sidebarOpen: true,
-  searchQuery: '',
-  filterMethod: null,
-  filterStatus: 'all' as const,
-  recordingEnabled: true,
-  autoScroll: true,
-  lastEventAt: null,
-};
+function buildInitialState() {
+  // Seed from persisted user settings so that page-load preferences feel
+  // sticky. Live data (exchanges, logs, etc.) intentionally stays empty.
+  const s = useSettings.getState();
+  return {
+    connected: false,
+    agentUrl: s.agentUrl,
+    currentView: s.defaultView,
+    selectedTraceId: null,
+    selectedExchangeId: null,
+    routes: [],
+    traces: [],
+    metrics: null,
+    endpointStats: [],
+    structure: null,
+    exchanges: [],
+    replayResult: null,
+    containerSnapshot: null,
+    containerResolutionsByExchange: {},
+    logs: [],
+    logsByTraceId: {},
+    logLevelFilter: new Set<LogLevel>(s.defaultLogLevels),
+    sidebarOpen: s.defaultSidebarOpen,
+    searchQuery: '',
+    filterMethod: null,
+    filterStatus: 'all' as const,
+    recordingEnabled: true,
+    autoScroll: s.defaultAutoScroll,
+    lastEventAt: null,
+    agentLatencyMs: null,
+    eventsReceived: 0,
+  };
+}
+
+const initialState = buildInitialState();
 
 export const useAppStore = create<AppState>((set) => ({
   ...initialState,
@@ -211,6 +228,9 @@ export const useAppStore = create<AppState>((set) => ({
   setRecordingEnabled: (recordingEnabled) => set({ recordingEnabled }),
   setAutoScroll: (autoScroll) => set({ autoScroll }),
   markLiveEvent: () => set({ lastEventAt: Date.now() }),
+  setAgentLatency: (ms) => set({ agentLatencyMs: ms }),
+  incrementEventCount: () =>
+    set((state) => ({ eventsReceived: state.eventsReceived + 1 })),
 
   clearExchanges: () =>
     set({
@@ -221,5 +241,5 @@ export const useAppStore = create<AppState>((set) => ({
       containerResolutionsByExchange: {},
     }),
 
-  reset: () => set(initialState),
+  reset: () => set(buildInitialState()),
 }));

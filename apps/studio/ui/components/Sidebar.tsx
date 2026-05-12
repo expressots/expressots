@@ -2,7 +2,7 @@
  * Sidebar navigation component
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Activity,
   GitBranch,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
+import { SettingsPanel } from './SettingsPanel';
 import type { ViewMode } from '../types';
 
 interface NavItem {
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const { sidebarOpen, setSidebarOpen, currentView, setCurrentView, connected } = useAppStore();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <aside
@@ -109,6 +111,7 @@ export function Sidebar() {
       {/* Settings */}
       <div className="border-t border-gray-800 p-4">
         <button
+          onClick={() => setSettingsOpen(true)}
           className="flex items-center w-full text-gray-400 hover:text-gray-200 transition-colors"
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
@@ -117,6 +120,8 @@ export function Sidebar() {
           )}
         </button>
       </div>
+
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
 
       {/* Toggle Button */}
       <button

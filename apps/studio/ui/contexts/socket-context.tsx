@@ -61,10 +61,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     addLog,
     setLogs,
     clearLogs: clearLogsLocal,
+    setAgentLatency,
+    incrementEventCount,
   } = useAppStore();
 
   // Handle incoming messages
   const handleMessage = useCallback((message: WSMessage) => {
+    incrementEventCount();
     switch (message.type) {
       case 'routes':
         setRoutes(message.data as RouteInfo[]);
@@ -140,12 +143,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'logs_cleared':
         clearLogsLocal();
         break;
+      case 'pong_studio': {
+        const data = message.data as { sentAt?: number };
+        if (data?.sentAt) {
+          const rtt = Date.now() - data.sentAt;
+          if (rtt >= 0 && rtt < 60000) setAgentLatency(rtt);
+        }
+        break;
+      }
       default:
         // Unknown event — ignored silently (a noisy `console.log` here
         // would echo back through the agent's own log capture).
         break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -160,6 +171,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     socketRef.current = socket;
 
+    // Periodically ping the agent to measure RTT. The interval is started
+    // on connect and torn down on disconnect / unmount.
+    let pingTimer: ReturnType<typeof setInterval> | null = null;
+
     socket.on('connect', () => {
       setConnected(true);
       socket.emit('get_routes');
@@ -169,10 +184,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_endpoint_stats');
       socket.emit('get_container');
       socket.emit('get_logs');
+
+      // Kick off an immediate ping then settle into a 5s cadence.
+      const sendPing = () => socket.emit('ping_studio', { sentAt: Date.now() });
+      sendPing();
+      if (pingTimer) clearInterval(pingTimer);
+      pingTimer = setInterval(sendPing, 5000);
     });
 
     socket.on('disconnect', () => {
       setConnected(false);
+      if (pingTimer) {
+        clearInterval(pingTimer);
+        pingTimer = null;
+      }
     });
 
     socket.on('connect_error', () => {
@@ -182,6 +207,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socket.on('message', handleMessage);
 
     return () => {
+      if (pingTimer) clearInterval(pingTimer);
       socket.disconnect();
       socketRef.current = null;
     };

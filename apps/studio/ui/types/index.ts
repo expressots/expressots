@@ -167,7 +167,8 @@ export type WSMessageType =
   | 'recording_state'
   | 'log'
   | 'logs'
-  | 'logs_cleared';
+  | 'logs_cleared'
+  | 'pong_studio';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
