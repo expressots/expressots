@@ -112,28 +112,9 @@ async function launchStudio(options: StudioOptions): Promise<void> {
 }
 
 /**
- * Print the v4.0.0 GA preview banner so users understand Studio's status.
- *
- * Studio ships at v4.1.0 GA. In v4.0.0 it is published under the npm
- * `preview` dist-tag (4.0.0-preview.1) and several flagship features
- * (Replay, Architecture Map async sync, AI Fix Generator) are intentionally
- * incomplete. We surface this every launch.
- */
-function printPreviewBanner(): void {
-	console.log("");
-	console.log(chalk.cyan("  ExpressoTS Studio") + chalk.gray("  (preview)"));
-	console.log(
-		chalk.gray("  Some features are still being finalized for v4.1.0 GA."),
-	);
-	console.log("");
-}
-
-/**
  * Studio command handler
  */
 async function studioHandler(options: StudioOptions): Promise<void> {
-	printPreviewBanner();
-
 	// Check if Studio is installed
 	if (!isStudioInstalled()) {
 		console.log(
