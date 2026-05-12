@@ -30,18 +30,54 @@ export class HttpStatusCodeMiddleware extends ExpressoMiddleware {
     path = `${path || "/"}/-${formattedMethod}`;
 
     const statusCode = statusCodeMapping[path];
+    let explicitStatus: number | null = null;
 
     if (statusCode) {
       res.status(statusCode);
+      explicitStatus = statusCode;
     } else {
       const patternMatchStatusCode = this.findMatchingParameterPath(path, statusCodeMapping);
 
       if (patternMatchStatusCode) {
         res.status(patternMatchStatusCode);
+        explicitStatus = patternMatchStatusCode;
       } else {
         this.setDefaultStatusCode(req, res);
       }
     }
+
+    /**
+     * When @Http(...) declares an explicit status, honor it even when the
+     * client sent conditional headers (If-None-Match / If-Modified-Since).
+     *
+     * Without this, Express's `res.send()` evaluates `req.fresh` (which is
+     * `true` for any 2xx status whose ETag matches the request's
+     * If-None-Match) and silently rewrites our 201/202/206/etc. into 304
+     * Not Modified. That makes @Http() unreliable in any caching
+     * environment — including a developer hitting refresh in their
+     * browser. We override `req.fresh` to always return `false` for this
+     * one response so the explicit status wins.
+     *
+     * For the 200 default we leave Express's freshness behavior alone, so
+     * normal GET caching still works as expected.
+     */
+    if (explicitStatus !== null && explicitStatus !== 200) {
+      try {
+        Object.defineProperty(req, "fresh", {
+          configurable: true,
+          enumerable: true,
+          get: () => false,
+        });
+      } catch {
+        // Some proxied / decorated request objects make this property
+        // non-configurable. In that case we fall back to stripping the
+        // conditional headers entirely, which has the same effect on
+        // Express's freshness check.
+        delete req.headers["if-none-match"];
+        delete req.headers["if-modified-since"];
+      }
+    }
+
     next();
   }
 
