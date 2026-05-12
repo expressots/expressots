@@ -45,6 +45,101 @@ const PATTERNS = {
   scope: /@scope\s*\(\s*(\w+)\s*\)/gi,
 };
 
+/**
+ * Type names that look like dependencies syntactically but aren't ones we
+ * want to plot on the architecture graph. Lowercased for cheap comparison.
+ */
+const PRIMITIVE_TYPES = new Set([
+  'string',
+  'number',
+  'boolean',
+  'bigint',
+  'symbol',
+  'any',
+  'unknown',
+  'void',
+  'never',
+  'object',
+  'null',
+  'undefined',
+  'date',
+  'array',
+  'map',
+  'set',
+  'promise',
+  'function',
+  'buffer',
+]);
+
+/**
+ * Locate the constructor parameter list in `content`, honouring balanced
+ * parentheses inside parameter decorators like `@inject(MyService)`.
+ *
+ * A naive `constructor\s*\(([^)]*)\)` regex breaks the moment a parameter
+ * carries any decorator with arguments — it stops at the *inner* close
+ * paren, leaving the parameter list truncated. That used to silently kill
+ * the architecture graph for any class using `@inject(...)`.
+ *
+ * Returns `null` when no constructor is found.
+ */
+function findConstructorParams(content: string): string | null {
+  const ctorIdx = content.search(/\bconstructor\s*\(/);
+  if (ctorIdx < 0) return null;
+  // Position the cursor at the `(` that opens the parameter list.
+  const openIdx = content.indexOf('(', ctorIdx);
+  if (openIdx < 0) return null;
+
+  let depth = 0;
+  for (let i = openIdx; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === '(') depth++;
+    else if (ch === ')') {
+      depth--;
+      if (depth === 0) {
+        return content.slice(openIdx + 1, i);
+      }
+    }
+  }
+  // Unbalanced — bail out rather than produce garbage.
+  return null;
+}
+
+/**
+ * Extract injected dependency types from a constructor parameter list.
+ *
+ * Handles every shape ExpressoTS users hit in practice:
+ *
+ *   - parameter properties:        `private foo: Foo`
+ *   - readonly properties:         `private readonly foo: Foo`
+ *   - bare params:                 `foo: Foo`
+ *   - explicit @inject decorators: `@inject(SYM) private foo: Foo`
+ *   - multi-modifier combos:       `@inject(SYM) private readonly foo: Foo`
+ *   - multiple params separated by commas
+ *
+ * The previous implementation captured the access modifier (`private`)
+ * instead of the type, so the architecture graph never drew a dependency
+ * edge from a controller to its use case.
+ */
+function extractParamTypes(params: string): string[] {
+  const out: string[] = [];
+  // Anchor each iteration to consume exactly one parameter:
+  //   1) Optional `@decorator(...)` prefix(es) — args may contain commas
+  //   2) Optional access modifier
+  //   3) Optional `readonly`
+  //   4) Parameter name
+  //   5) `:` then the captured Type (allow `Foo`, `Ns.Foo`, `Foo<...>`)
+  const PARAM_RE =
+    /(?:@\w+\s*\([^)]*\)\s*)*(?:(?:public|private|protected)\s+)?(?:readonly\s+)?(\w+)\s*:\s*([A-Za-z_$][\w.$]*)/g;
+  for (const match of params.matchAll(PARAM_RE)) {
+    const typeName = match[2];
+    if (!typeName) continue;
+    const head = typeName.split('.').pop() || typeName;
+    if (PRIMITIVE_TYPES.has(head.toLowerCase())) continue;
+    out.push(head);
+  }
+  return out;
+}
+
 export class RouteScanner {
   private srcPath: string;
   private controllers: ControllerInfo[] = [];
@@ -163,21 +258,13 @@ export class RouteScanner {
     const routes: RouteInfo[] = [];
     const dependencies: string[] = [];
 
-    // Extract constructor dependencies
-    const constructorMatch = content.match(
-      /constructor\s*\(([^)]*)\)/
-    );
-    if (constructorMatch) {
-      const params = constructorMatch[1];
-      const injectMatches = params.matchAll(
-        /(?:@inject\s*\(\s*)?(\w+)(?:\s*\))?\s*(?:private|public|protected)?\s*(?:readonly)?\s*(\w+)\s*:/g
-      );
-      for (const match of injectMatches) {
-        const typeName = match[1];
-        if (typeName && !['string', 'number', 'boolean', 'any', 'unknown', 'void'].includes(typeName.toLowerCase())) {
-          dependencies.push(typeName);
-        }
-      }
+    // Extract constructor dependencies. We use a balanced-paren scanner
+    // here because parameter decorators (@inject(MyService)) contain
+    // their own parentheses and a naive `[^)]*` regex would truncate
+    // the parameter list at the wrong `)`.
+    const params = findConstructorParams(content);
+    if (params) {
+      dependencies.push(...extractParamTypes(params));
     }
 
     // Find HTTP method decorators
@@ -224,17 +311,12 @@ export class RouteScanner {
     const dependencies: string[] = [];
     const methods: string[] = [];
 
-    // Extract constructor dependencies
-    const constructorMatch = content.match(/constructor\s*\(([^)]*)\)/);
-    if (constructorMatch) {
-      const params = constructorMatch[1];
-      const typeMatches = params.matchAll(/(\w+)\s*:/g);
-      for (const match of typeMatches) {
-        const typeName = match[1];
-        if (!['string', 'number', 'boolean', 'any', 'unknown', 'void'].includes(typeName.toLowerCase())) {
-          dependencies.push(typeName);
-        }
-      }
+    // Extract constructor dependencies (same parser as controllers so the
+    // service-to-service / service-to-provider edges in the architecture map
+    // match the actual TypeScript types instead of parameter names).
+    const params = findConstructorParams(content);
+    if (params) {
+      dependencies.push(...extractParamTypes(params));
     }
 
     // Extract public methods (simplified)
