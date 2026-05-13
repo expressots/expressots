@@ -1,8 +1,12 @@
 import chalk from "chalk";
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { exit } from "node:process";
 import { printError } from "../../utils/cli-ui";
+import {
+	isValidPackageName,
+	isValidVersion,
+} from "../../utils/input-validation";
+import { safeSpawn } from "../../utils/safe-spawn";
 
 type PackageManagerConfig = {
 	install: string;
@@ -56,12 +60,14 @@ async function execProcess({
 	directory: string;
 }): Promise<void> {
 	return new Promise((resolve, reject) => {
-		const isWindows = process.platform === "win32";
-		const execCommand = isWindows ? `${command}.cmd` : command;
-
-		const processRunner = spawn(execCommand, args, {
+		// `safeSpawn` (cross-spawn) resolves the Windows `.cmd` shim and
+		// applies cmd.exe-aware escaping for every argv entry. Combined
+		// with the `isValidPackageName` / `isValidVersion` guards on the
+		// caller side, this prevents command injection via the package
+		// name or version specifier (which can legitimately contain
+		// `>`, `<`, `|`, etc. in a semver range).
+		const processRunner = safeSpawn(command, args, {
 			cwd: directory,
-			shell: true,
 		});
 
 		console.log(chalk.bold.blue(`Executing: ${command} ${args.join(" ")}`));
@@ -96,9 +102,31 @@ async function execProcess({
 
 export async function addProvider(
 	packageName: string,
-	version?: string,
+	version?: string | false,
 	isDevDependency = false,
 ): Promise<void> {
+	if (!isValidPackageName(packageName)) {
+		printError(
+			`Invalid package name: ${JSON.stringify(packageName)}`,
+			"add-package",
+		);
+		return;
+	}
+
+	// yargs assigns `false` for the version flag when the user omits
+	// it (see add/cli.ts). Treat that and "latest" as "no suffix".
+	let versionSuffix = "";
+	if (typeof version === "string" && version !== "latest") {
+		if (!isValidVersion(version)) {
+			printError(
+				`Invalid version specifier: ${JSON.stringify(version)}`,
+				"add-package",
+			);
+			return;
+		}
+		versionSuffix = `@${version}`;
+	}
+
 	const packageManager = detectPackageManager();
 
 	if (!packageManager) {
@@ -112,7 +140,6 @@ export async function addProvider(
 	const command = isDevDependency
 		? pkgManagerConfig.addDev
 		: pkgManagerConfig.install;
-	const versionSuffix = version && version !== "latest" ? `@${version}` : "";
 
 	console.log(
 		`${isDevDependency ? "Adding devDependency" : "Installing"} ${packageName}...`,
@@ -125,6 +152,14 @@ export async function addProvider(
 }
 
 export async function removeProvider(packageName: string): Promise<void> {
+	if (!isValidPackageName(packageName)) {
+		printError(
+			`Invalid package name: ${JSON.stringify(packageName)}`,
+			"remove-package",
+		);
+		return;
+	}
+
 	const packageManager = detectPackageManager();
 
 	if (!packageManager) {

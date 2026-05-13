@@ -6,6 +6,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { printWarning } from "../utils/cli-ui";
 
 const CONFIG_DIR = path.join(os.homedir(), ".expressots");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
@@ -42,6 +43,24 @@ const DEFAULT_CONFIG: GlobalConfig = {
 	offline: false,
 };
 
+/**
+ * Returns a deep clone of the default config so callers can mutate
+ * their copy without poisoning the module-level constant. A previous
+ * implementation used `{ ...DEFAULT_CONFIG }` which kept the inner
+ * `templates`/`pricing` objects shared, so `setTemplateRepository`
+ * mutated the defaults and broke `reset()`.
+ */
+function freshDefaults(): GlobalConfig {
+	return {
+		templates: { ...DEFAULT_CONFIG.templates },
+		pricing: {
+			...DEFAULT_CONFIG.pricing,
+			sources: [...DEFAULT_CONFIG.pricing.sources],
+		},
+		offline: DEFAULT_CONFIG.offline,
+	};
+}
+
 export class ConfigManager {
 	private config: GlobalConfig;
 	private configPath: string;
@@ -64,17 +83,42 @@ export class ConfigManager {
 	 * Load configuration from file
 	 */
 	private load(): GlobalConfig {
-		try {
-			if (fs.existsSync(this.configPath)) {
-				const content = fs.readFileSync(this.configPath, "utf-8");
-				const loaded = JSON.parse(content);
-				// Merge with defaults to handle missing keys
-				return this.mergeWithDefaults(loaded);
-			}
-		} catch {
-			// Return defaults if file is invalid
+		if (!fs.existsSync(this.configPath)) {
+			return freshDefaults();
 		}
-		return { ...DEFAULT_CONFIG };
+
+		let content: string;
+		try {
+			content = fs.readFileSync(this.configPath, "utf-8");
+		} catch (err) {
+			printWarning(
+				`Could not read ${this.configPath}: ${(err as Error).message}. Falling back to defaults.`,
+				"config",
+			);
+			return freshDefaults();
+		}
+
+		try {
+			const loaded = JSON.parse(content);
+			if (
+				loaded === null ||
+				typeof loaded !== "object" ||
+				Array.isArray(loaded)
+			) {
+				printWarning(
+					`${this.configPath} is not a JSON object. Falling back to defaults.`,
+					"config",
+				);
+				return freshDefaults();
+			}
+			return this.mergeWithDefaults(loaded);
+		} catch (err) {
+			printWarning(
+				`${this.configPath} is not valid JSON: ${(err as Error).message}. Falling back to defaults.`,
+				"config",
+			);
+			return freshDefaults();
+		}
 	}
 
 	/**
@@ -197,7 +241,7 @@ export class ConfigManager {
 	 * Reset all configuration to defaults
 	 */
 	reset(): void {
-		this.config = { ...DEFAULT_CONFIG };
+		this.config = freshDefaults();
 		this.save();
 	}
 

@@ -12,7 +12,46 @@ import { printError } from "../../utils/cli-ui";
 import { verifyIfFileExists } from "../../utils/verify-file-exists";
 import Compiler from "../../utils/compiler";
 import { updateTsconfigPaths } from "../../utils/update-tsconfig-paths";
+import { safeResolveWithin } from "../../utils/input-validation";
 import { ExpressoConfig, Pattern } from "@expressots/shared";
+
+/**
+ * Reject generate targets that would resolve outside the project's
+ * source root. We only inspect the user-supplied `rawTarget` for
+ * absolute-path escape (`/etc/...`, `C:\Windows\...`); the
+ * `relativePath` is built internally and may legitimately start with
+ * a leading `/` when the schematic doesn't introduce its own folder.
+ *
+ * Aborts via `process.exit(1)` after `printError` so the caller
+ * surfaces a friendly message and writes nothing.
+ */
+function ensureWithinSourceRoot(
+	folderToScaffold: string,
+	relativePath: string,
+	rawTarget: string,
+): void {
+	if (nodePath.isAbsolute(rawTarget)) {
+		printError(
+			"Absolute paths are not allowed for generate targets",
+			rawTarget,
+		);
+		process.exit(1);
+	}
+
+	// Strip leading slashes from the synthesized relative path before
+	// resolution; the leading slash is a benign artifact of empty
+	// `path` segments, not an escape attempt.
+	const stripped = relativePath.replace(/^[\\/]+/, "");
+	const baseAbs = nodePath.resolve(process.cwd(), folderToScaffold);
+	const safe = safeResolveWithin(baseAbs, stripped);
+	if (safe === null) {
+		printError(
+			`Path traversal detected. Targets must stay inside ${folderToScaffold}`,
+			rawTarget,
+		);
+		process.exit(1);
+	}
+}
 
 export const enum PathStyle {
 	None = "none",
@@ -87,6 +126,8 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 				schematic: fp.schematic,
 			});
 
+		ensureWithinSourceRoot(folderToScaffold, `${path}/${file}`, fp.target);
+
 		const outputPath = `${folderToScaffold}/${path}/${file}`;
 		await verifyIfFileExists(outputPath, fp.schematic);
 		mkdirSync(`${folderToScaffold}/${path}`, { recursive: true });
@@ -125,6 +166,12 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 		fileBaseSchema !== undefined
 			? file.replace(fp.schematic, fileBaseSchema)
 			: file;
+
+	ensureWithinSourceRoot(
+		folderToScaffold,
+		`${path}/${validateFileSchema}`,
+		fp.target,
+	);
 
 	const outputPath = `${folderToScaffold}/${path}/${validateFileSchema}`;
 	await verifyIfFileExists(outputPath, fp.schematic);

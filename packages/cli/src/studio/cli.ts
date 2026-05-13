@@ -4,10 +4,10 @@
 
 import chalk from "chalk";
 import type { Argv, CommandModule } from "yargs";
-import { execSync, spawn } from "child_process";
 import ora from "ora";
 import { existsSync } from "fs";
 import { resolve } from "path";
+import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 
 interface StudioOptions {
 	port: number;
@@ -39,20 +39,34 @@ async function installStudio(): Promise<boolean> {
 	const spinner = ora("Installing @expressots/studio...").start();
 
 	try {
-		// Detect package manager
 		const hasYarn = existsSync(resolve(process.cwd(), "yarn.lock"));
 		const hasPnpm = existsSync(resolve(process.cwd(), "pnpm-lock.yaml"));
 
-		let command: string;
+		let pkgManager: "npm" | "yarn" | "pnpm";
+		let args: string[];
 		if (hasPnpm) {
-			command = "pnpm add -D @expressots/studio";
+			pkgManager = "pnpm";
+			args = ["add", "-D", "@expressots/studio"];
 		} else if (hasYarn) {
-			command = "yarn add -D @expressots/studio";
+			pkgManager = "yarn";
+			args = ["add", "-D", "@expressots/studio"];
 		} else {
-			command = "npm install -D @expressots/studio";
+			pkgManager = "npm";
+			args = ["install", "-D", "@expressots/studio"];
 		}
 
-		execSync(command, { stdio: "pipe" });
+		// `safeSpawnSync` (cross-spawn) resolves the Windows `.cmd` shim
+		// and properly escapes argv for cmd.exe. The argv here is a
+		// fixed list of literal strings, so it is safe by construction.
+		const result = safeSpawnSync(pkgManager, args, {
+			stdio: "pipe",
+		});
+
+		if (result.error) throw result.error;
+		if (typeof result.status === "number" && result.status !== 0) {
+			throw new Error(`exited with code ${result.status}`);
+		}
+
 		spinner.succeed(
 			chalk.green("@expressots/studio installed successfully"),
 		);
@@ -90,14 +104,22 @@ async function launchStudio(options: StudioOptions): Promise<void> {
 		args.push("--src", options.src);
 	}
 
+	const isWindows = process.platform === "win32";
+	const studioBinName = isWindows
+		? "expressots-studio.cmd"
+		: "expressots-studio";
 	const studioPath = resolve(
 		process.cwd(),
-		"node_modules/.bin/expressots-studio",
+		"node_modules/.bin",
+		studioBinName,
 	);
 
-	const child = spawn(studioPath, args, {
+	// `safeSpawn` (cross-spawn) handles Windows `.cmd` shim invocation
+	// and per-arg cmd.exe escaping, so user-controlled flags like
+	// `--src` or `--port` cannot break out into shell metacharacters
+	// even if the project path itself contains spaces.
+	const child = safeSpawn(studioPath, args, {
 		stdio: "inherit",
-		shell: true,
 		cwd: process.cwd(),
 	});
 

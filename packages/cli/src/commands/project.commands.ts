@@ -1,4 +1,4 @@
-import { spawn, execSync, spawnSync } from "child_process";
+import { spawn } from "child_process";
 import {
 	promises as fs,
 	readFileSync,
@@ -12,6 +12,7 @@ import chalk from "chalk";
 import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
+import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 
 /**
  * Helper function to load and extract outDir from tsconfig.build.json
@@ -27,8 +28,18 @@ function getOutDir(): string {
 		process.exit(1);
 	}
 
-	const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
-	const outDir = tsconfig.compilerOptions.outDir;
+	let tsconfig: { compilerOptions?: { outDir?: string } };
+	try {
+		tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
+	} catch (err) {
+		printError(
+			`Failed to parse tsconfig.build.json: ${(err as Error).message}`,
+			"tsconfig-build-path",
+		);
+		process.exit(1);
+	}
+
+	const outDir = tsconfig.compilerOptions?.outDir;
 
 	if (!outDir) {
 		printError(
@@ -156,12 +167,16 @@ function execCmd(
 	cwd: string = process.cwd(),
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
-		const proc = spawn(command, args, {
+		// `safeSpawn` (cross-spawn) resolves Windows `.cmd` shims (npx,
+		// tsx, tsc, etc.) via PATHEXT and applies cmd.exe-aware escaping
+		// for every argv entry, while falling through to plain `spawn`
+		// with `shell: false` on Unix.
+		const proc = safeSpawn(command, args, {
 			stdio: "inherit",
-			shell: true,
 			cwd,
 		});
 
+		proc.on("error", (err) => reject(err));
 		proc.on("close", (code) => {
 			if (code === 0) {
 				resolve();
@@ -202,7 +217,21 @@ const transformPathAliases = async (outDir: string): Promise<void> => {
 		return; // No tsconfig.build.json, skip transformation
 	}
 
-	const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf-8"));
+	let tsconfig: {
+		compilerOptions?: {
+			paths?: Record<string, string[]>;
+			baseUrl?: string;
+		};
+	};
+	try {
+		tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf-8"));
+	} catch (err) {
+		printError(
+			`Failed to parse tsconfig.build.json for path-alias transform: ${(err as Error).message}`,
+			"transform-paths",
+		);
+		return;
+	}
 	const paths = tsconfig.compilerOptions?.paths;
 	const baseUrl = tsconfig.compilerOptions?.baseUrl;
 
@@ -326,9 +355,13 @@ const copyFiles = async (outDir: string) => {
  * Helper function to clear the screen
  */
 const clearScreen = () => {
+	// `cls` and `clear` are built-ins / well-known executables.
+	// Invoking them via `shell: true` is safe here because there are no
+	// user-controlled args, but we keep `windowsHide: true` to suppress
+	// the Windows console flash.
 	const platform = os.platform();
 	const command = platform === "win32" ? "cls" : "clear";
-	spawn(command, { stdio: "inherit", shell: true });
+	spawn(command, [], { stdio: "inherit", shell: true, windowsHide: true });
 };
 
 /**
@@ -487,11 +520,22 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
 		if (needsSetup) {
 			console.log(chalk.yellow("📦 Setting up local dependencies..."));
 			try {
-				execSync("node docker-setup.js", {
-					cwd,
-					stdio: "inherit",
-					encoding: "utf-8",
-				});
+				const setupResult = safeSpawnSync(
+					process.execPath,
+					["docker-setup.js"],
+					{
+						cwd,
+						stdio: "inherit",
+						encoding: "utf-8",
+					},
+				);
+				if (setupResult.error) throw setupResult.error;
+				if (
+					typeof setupResult.status === "number" &&
+					setupResult.status !== 0
+				) {
+					throw new Error(`exited with code ${setupResult.status}`);
+				}
 				console.log();
 			} catch (error) {
 				console.log(
@@ -565,12 +609,10 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
  * Check if Docker is running
  */
 function isDockerRunning(): boolean {
-	try {
-		execSync("docker info", { stdio: ["pipe", "pipe", "pipe"] });
-		return true;
-	} catch {
-		return false;
-	}
+	const result = safeSpawnSync("docker", ["info"], {
+		stdio: ["pipe", "pipe", "pipe"],
+	});
+	return !result.error && result.status === 0;
 }
 
 /**
@@ -616,38 +658,32 @@ function runDockerComposeCommand(
 	cwd: string,
 	detach: boolean,
 ): void {
-	// Try docker compose (v2) first, fall back to docker-compose (v1)
-	try {
-		if (detach) {
-			execSync(`docker compose ${args.join(" ")}`, {
-				cwd,
-				stdio: "inherit",
-			});
-		} else {
-			spawnSync("docker", ["compose", ...args], {
-				cwd,
-				stdio: "inherit",
-				shell: true,
-			});
-		}
-	} catch {
-		try {
-			if (detach) {
-				execSync(`docker-compose ${args.join(" ")}`, {
-					cwd,
-					stdio: "inherit",
-				});
-			} else {
-				spawnSync("docker-compose", args, {
-					cwd,
-					stdio: "inherit",
-					shell: true,
-				});
-			}
-		} catch (error) {
+	// Try docker compose (v2) first, fall back to docker-compose (v1).
+	// `safeSpawnSync` (cross-spawn) handles platform-specific binary
+	// resolution and cmd.exe-aware argv escaping, so compose file paths
+	// and service names are forwarded as discrete arguments rather than
+	// re-interpreted by the OS shell.
+	const v2 = safeSpawnSync("docker", ["compose", ...args], {
+		cwd,
+		stdio: "inherit",
+	});
+
+	if (v2.error || (typeof v2.status === "number" && v2.status !== 0)) {
+		const v1 = safeSpawnSync("docker-compose", args, {
+			cwd,
+			stdio: "inherit",
+		});
+
+		if (v1.error || (typeof v1.status === "number" && v1.status !== 0)) {
 			console.log(chalk.red("Error running docker-compose"));
 		}
 	}
+
+	// `detach` is honored implicitly by docker compose itself when "-d"
+	// is present in `args`. The previous branch tried to switch between
+	// execSync and spawnSync for that case, which served no real
+	// purpose and made shell injection harder to reason about.
+	void detach;
 }
 
 /**

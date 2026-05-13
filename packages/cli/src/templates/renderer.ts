@@ -128,12 +128,18 @@ export class TemplateRenderer {
 	}
 
 	/**
-	 * Get nested value from object using dot notation
+	 * Get nested value from object using dot notation. Falls back to a
+	 * flat-key lookup so callers can provide either
+	 * `{ app: { version: "1.0.0" } }` or `{ "app.version": "1.0.0" }`.
 	 */
 	private getNestedValue(
 		obj: Record<string, unknown>,
 		path: string,
 	): unknown {
+		if (Object.prototype.hasOwnProperty.call(obj, path)) {
+			return obj[path];
+		}
+
 		const parts = path.split(".");
 		let current: unknown = obj;
 

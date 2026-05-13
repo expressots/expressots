@@ -1,8 +1,10 @@
-import { ExecSyncOptions, execSync } from "child_process";
+import { SpawnSyncOptions } from "child_process";
 import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
 import { printError, printWarning } from "../utils/cli-ui";
+import { isValidScriptName } from "../utils/input-validation";
+import { safeSpawnSync } from "../utils/safe-spawn";
 
 const cwd = process.cwd();
 const packageJsonPath = path.join(cwd, "package.json");
@@ -12,10 +14,24 @@ interface PackageJson {
 }
 
 function readPackageJson(): PackageJson {
+	let raw: string;
 	try {
-		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		raw = fs.readFileSync(packageJsonPath, "utf8");
 	} catch (e) {
-		printError(`Error reading package.json`, "scripts-command");
+		printError(
+			`Error reading package.json: ${(e as Error).message}`,
+			"scripts-command",
+		);
+		process.exit(1);
+	}
+
+	try {
+		return JSON.parse(raw);
+	} catch (e) {
+		printError(
+			`package.json is not valid JSON: ${(e as Error).message}`,
+			"scripts-command",
+		);
 		process.exit(1);
 	}
 }
@@ -62,15 +78,32 @@ function executeScripts(
 	runner: string,
 ): void {
 	selectedScripts.forEach((script) => {
+		if (!isValidScriptName(script)) {
+			printWarning(
+				`Skipping script with invalid name: ${JSON.stringify(script)}`,
+				"scripts-command",
+			);
+			return;
+		}
+
 		console.log(`Running ${script}...`);
 		try {
-			const command = `${runner} run ${script}`;
-			const options: ExecSyncOptions = {
+			// `safeSpawnSync` (cross-spawn) handles Windows `.cmd` shim
+			// resolution and cmd.exe-aware argv escaping. Script names
+			// are also constrained to a strict alphanumeric/dash/dot
+			// charset by `isValidScriptName` above for defense in depth.
+			const options: SpawnSyncOptions = {
 				stdio: "inherit",
 				env: { ...process.env },
 			};
 
-			execSync(command, options);
+			const result = safeSpawnSync(runner, ["run", script], options);
+			if (result.error) {
+				throw result.error;
+			}
+			if (typeof result.status === "number" && result.status !== 0) {
+				throw new Error(`exited with code ${result.status}`);
+			}
 		} catch (e) {
 			printWarning(
 				`Command ${script} cancelled or failed - ${e}`,

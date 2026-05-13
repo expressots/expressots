@@ -2,13 +2,14 @@ import chalk from "chalk";
 import { Presets, SingleBar } from "cli-progress";
 import degit from "degit";
 import inquirer from "inquirer";
-import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { BUNDLE_VERSION } from "../cli";
 import { centerText } from "../utils/center-text";
 import { changePackageName } from "../utils/change-package-info";
 import { printError } from "../utils/cli-ui";
+import { isValidPackageManager } from "../utils/input-validation";
+import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 
 /**
  * Install dependencies using the selected package manager
@@ -22,59 +23,76 @@ async function packageManagerInstall({
 	directory: string;
 	progressBar: SingleBar;
 }) {
-	const command: string =
-		process.platform === "win32" ? `${packageManager}.cmd` : packageManager;
+	if (!isValidPackageManager(packageManager)) {
+		throw new Error(`Invalid package manager: ${packageManager}`);
+	}
 
-	const args = ["install", "--silent"];
+	// npm's `--silent` swallows errors too (loglevel=silent), which
+	// makes failures impossible to diagnose. `--loglevel=error` keeps
+	// the install quiet on the happy path but lets real failures
+	// stream to stderr so we can capture and surface them below.
+	const args =
+		packageManager === "npm"
+			? ["install", "--loglevel=error"]
+			: ["install", "--silent"];
 	if (packageManager === "yarn") {
 		args.push("--ignore-engines");
-		args.splice(args.indexOf("--prefer-offline"), 1);
 	}
 	return new Promise((resolve, reject) => {
-		const installProcess = spawn(command, args, {
+		// `safeSpawn` (cross-spawn) handles the Windows `.cmd` shim
+		// resolution and properly escapes argv even when the shell is
+		// involved on Windows. The `directory` value is only used as
+		// cwd; it is never interpolated into a command string.
+		const installProcess = safeSpawn(packageManager, args, {
 			cwd: directory,
-			shell: true,
 			timeout: 600000,
 		});
 
-		// Simulate incremental progress
-		// Start from 50% (where we left off) and go up to 88% max
-		// This leaves room for the actual completion and final steps
-		// On Windows, npm can be slow, so we continue updating to show activity
 		let progress = 50;
 		let lastProgressUpdate = Date.now();
 		const interval = setInterval(() => {
 			const now = Date.now();
-			// If we haven't received real progress updates in a while, continue incrementing
-			// This prevents the progress bar from appearing stuck on slow Windows systems
 			if (progress < 88) {
-				// Increment slower as we approach the limit to avoid hitting it too quickly
 				const increment = progress < 70 ? 3 : 1;
 				progress = Math.min(progress + increment, 88);
 				progressBar.update(progress, {
 					doing: "Installing dependencies...",
 				});
 			} else if (now - lastProgressUpdate > 3000) {
-				// Even at max, update the "doing" text to show it's still working
 				progressBar.update(progress, {
 					doing: "Installing dependencies...",
 				});
 			}
 		}, 1000);
 
-		// Handle stdout for meaningful output or progress feedback
+		// Keep a rolling tail of stderr/stdout so we can surface a
+		// meaningful diagnostic when the install exits non-zero (npm's
+		// real error is otherwise hidden behind `--silent`).
+		const diagnosticBuffer: string[] = [];
+		const MAX_DIAGNOSTIC_LINES = 20;
+		const recordDiagnostic = (chunk: string) => {
+			for (const line of chunk.split(/\r?\n/)) {
+				const trimmed = line.trim();
+				if (!trimmed) continue;
+				diagnosticBuffer.push(trimmed);
+				if (diagnosticBuffer.length > MAX_DIAGNOSTIC_LINES) {
+					diagnosticBuffer.shift();
+				}
+			}
+		};
+
 		installProcess.stdout?.on("data", (data: Buffer) => {
-			const output = data.toString().trim();
-			const cleanedOutput = output.replace(/\|\|.*$/g, "");
+			const output = data.toString();
+			recordDiagnostic(output);
+			const cleanedOutput = output.trim().replace(/\|\|.*$/g, "");
 			const npmProgressMatch = cleanedOutput.match(
 				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
 			);
 
 			if (npmProgressMatch) {
 				const [, current, total, task] = npmProgressMatch;
-				// Map npm progress (0-100%) to our range (50-90%)
 				const npmProgress = (parseInt(current) / parseInt(total)) * 100;
-				progress = Math.round(50 + npmProgress * 0.4); // 50% + (0-100% * 0.4) = 50-90%
+				progress = Math.round(50 + npmProgress * 0.4);
 				lastProgressUpdate = Date.now();
 				progressBar.update(progress, { doing: task });
 			} else if (cleanedOutput) {
@@ -83,19 +101,18 @@ async function packageManagerInstall({
 			}
 		});
 
-		// On Windows, npm may output progress to stderr
 		installProcess.stderr?.on("data", (data: Buffer) => {
-			const output = data.toString().trim();
-			const cleanedOutput = output.replace(/\|\|.*$/g, "");
+			const output = data.toString();
+			recordDiagnostic(output);
+			const cleanedOutput = output.trim().replace(/\|\|.*$/g, "");
 			const npmProgressMatch = cleanedOutput.match(
 				/\[(\d+)\/(\d+)\] (?:npm )?([\w\s]+)\.{3}/,
 			);
 
 			if (npmProgressMatch) {
 				const [, current, total, task] = npmProgressMatch;
-				// Map npm progress (0-100%) to our range (50-90%)
 				const npmProgress = (parseInt(current) / parseInt(total)) * 100;
-				progress = Math.round(50 + npmProgress * 0.4); // 50% + (0-100% * 0.4) = 50-90%
+				progress = Math.round(50 + npmProgress * 0.4);
 				lastProgressUpdate = Date.now();
 				progressBar.update(progress, { doing: task });
 			}
@@ -110,11 +127,22 @@ async function packageManagerInstall({
 		installProcess.on("close", (code) => {
 			clearInterval(interval);
 			if (code === 0) {
-				// Update to 90% to leave room for final steps (package name change)
 				progressBar.update(90, { doing: "Dependencies installed" });
 				resolve("Installation Done!");
 			} else {
 				progressBar.stop();
+				if (diagnosticBuffer.length > 0) {
+					console.log("\n");
+					console.log(
+						chalk.bold.red(
+							`${packageManager} install failed with exit code ${code}:`,
+						),
+					);
+					for (const line of diagnosticBuffer) {
+						console.log(chalk.gray(`  ${line}`));
+					}
+					console.log("");
+				}
 				reject(
 					new Error(
 						`${packageManager} install exited with code ${code}`,
@@ -129,13 +157,21 @@ async function packageManagerInstall({
  * Check if the package manager is installed
  */
 async function checkIfPackageManagerExists(packageManager: string) {
-	try {
-		execSync(`${packageManager} --version`);
-		return true;
-	} catch (error) {
+	if (!isValidPackageManager(packageManager)) {
 		printError("Package manager not found!", packageManager);
 		process.exit(1);
 	}
+
+	const result = safeSpawnSync(packageManager, ["--version"], {
+		stdio: "ignore",
+	});
+
+	if (result.error || result.status !== 0) {
+		printError("Package manager not found!", packageManager);
+		process.exit(1);
+	}
+
+	return true;
 }
 
 /**
@@ -247,16 +283,23 @@ function applyMiddlewarePreset(directory: string, preset: string): void {
 }
 
 /**
- * Enable local template mode for testing
- * Set to true to use local templates instead of GitHub
+ * Enable local template mode for testing.
+ * Opt-in via `EXPRESSOTS_DEV=1` and `EXPRESSOTS_USE_LOCAL_TEMPLATES=1`.
+ * Both must be set so a stray env var alone cannot redirect a user's
+ * `expressots new` to local files.
  */
-const USE_LOCAL_TEMPLATES = false;
+const USE_LOCAL_TEMPLATES =
+	process.env.EXPRESSOTS_DEV === "1" &&
+	process.env.EXPRESSOTS_USE_LOCAL_TEMPLATES === "1";
 
 /**
- * Skip npm install for testing (useful when templates have unpublished dependencies)
- * Set to true when testing with unpublished package versions
+ * Skip the package-manager install step. Useful when iterating on
+ * templates that depend on unpublished package versions. Same dual
+ * env-var guard as `USE_LOCAL_TEMPLATES`.
  */
-const SKIP_INSTALL_FOR_TESTING = false;
+const SKIP_INSTALL_FOR_TESTING =
+	process.env.EXPRESSOTS_DEV === "1" &&
+	process.env.EXPRESSOTS_SKIP_INSTALL === "1";
 
 /**
  * Local templates path (relative to CLI installation)
@@ -399,10 +442,26 @@ const projectForm = async (
 		});
 
 		// Extract template name from selection
-		const [_, templateName] = answer.template.match(
-			/(.*) ::/,
-		) as Array<string>;
+		const templateMatch = answer.template.match(/(.*) ::/);
+		if (!templateMatch || !templateMatch[1]) {
+			progressBar.stop();
+			printError(
+				`Could not parse selected template: ${answer.template}`,
+				"new",
+			);
+			process.exit(1);
+		}
+		const templateName = templateMatch[1];
 		const templateFolder = TEMPLATE_FOLDERS[templateName];
+
+		if (!templateFolder) {
+			progressBar.stop();
+			printError(
+				`Unknown template: ${templateName}`,
+				"new",
+			);
+			process.exit(1);
+		}
 
 		try {
 			if (USE_LOCAL_TEMPLATES) {

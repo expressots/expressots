@@ -523,7 +523,7 @@ async function generateModuleServiceSugarPath(
 		.normalize();
 	const newModuleName = `${newModuleFile}.module.ts`;
 	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
-		"\\",
+		/\\/g,
 		"/",
 	);
 
@@ -588,7 +588,7 @@ async function generateModuleServiceSinglePath(
 	const newModulePath = nodePath.join(folderToScaffold, path).normalize();
 	const newModuleName = `${newModuleFile}.module.ts`;
 	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
-		"\\",
+		/\\/g,
 		"/",
 	);
 
@@ -655,7 +655,7 @@ async function generateModuleServiceNestedPath(
 
 	const newModuleName = `${moduleFileName}.module.ts`;
 	const newModuleOutputPath = `${newModulePath}/${newModuleName}`.replace(
-		"\\",
+		/\\/g,
 		"/",
 	);
 
