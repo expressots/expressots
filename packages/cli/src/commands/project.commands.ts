@@ -697,15 +697,7 @@ export const runCommand = async ({
 					process.exit(1);
 				}
 
-				let config: Array<string> = [];
-
-				// ✅ NEW: Simplified - no more register-path.js
-				// Path resolution is now built-in to @expressots/core
-				if (opinionated) {
-					config = [`./${outDir}/src/${entryPoint}.js`];
-				} else {
-					config = [`./${outDir}/${entryPoint}.js`];
-				}
+				const config = [`./${outDir}/src/${entryPoint}.js`];
 				clearScreen();
 				await execCmd("node", config);
 				break;
