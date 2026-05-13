@@ -1,4 +1,21 @@
+## [4.0.0](https://github.com/expressots/shared/compare/3.0.0...4.0.0) (2026-05-12)
 
+Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
+
+### Features
+
+* extend `ExpressoConfig` with `scaffoldSchematics` covering all v4 schematics (`controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`).
+* add type-safe `Pattern` enum for the CLI `scaffoldPattern` option.
+* expose shared content-negotiation primitives consumed by `@expressots/core` formatters.
+* publish dual ESM + CJS builds with subpath exports for both module systems.
+
+### Bug Fixes
+
+* tighten the `IWebServer` / `IWebServerBuilder` typings so v4 adapters can declare their server contract without leaking Express types.
+
+### Build System
+
+* bump dev toolchain to TypeScript 5.5, ESLint 8.57, Jest 29.7, Prettier 3.5.
 
 ## [3.0.0](https://github.com/expressots/shared/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 
