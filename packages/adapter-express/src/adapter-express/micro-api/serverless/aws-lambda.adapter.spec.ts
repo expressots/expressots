@@ -80,9 +80,7 @@ describe("awsLambdaAdapter", () => {
     };
     const wrapper = { getExpressApp: () => expressApp };
 
-    const handler = awsLambdaAdapter(
-      wrapper as unknown as { getExpressApp?: () => Application },
-    );
+    const handler = awsLambdaAdapter(wrapper as unknown as { getExpressApp?: () => Application });
     const response = await handler({ httpMethod: "GET", path: "/" }, makeContext());
 
     expect(response.statusCode).toBe(200);
