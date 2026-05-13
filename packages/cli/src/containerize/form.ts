@@ -26,7 +26,6 @@ type ContainerizeOptions = {
 	ciStrategy?: CIStrategy;
 	includeSecurityScans?: boolean;
 	includeE2E?: boolean;
-	deploymentStrategy?: string;
 };
 
 export const containerizeProject = async (
@@ -94,6 +93,12 @@ export const containerizeProject = async (
 				break;
 
 			case "compose":
+				// Compose `build:` blocks reference Dockerfiles by
+				// path (Dockerfile or Dockerfile.development), so the
+				// compose-only target must also emit them — otherwise
+				// `docker compose up --build` fails with "no such file
+				// or directory".
+				await generateDockerfiles(options, analysis);
 				await generateDockerCompose(options, analysis);
 				break;
 

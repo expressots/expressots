@@ -66,7 +66,7 @@ function getOutDir(): string {
  * @returns The tsx arguments array
  */
 async function buildDevArgs(opinionated: boolean): Promise<Array<string>> {
-	const { entryPoint } = await Compiler.loadConfig();
+	const { entryPoint, sourceRoot } = await Compiler.loadConfig();
 
 	const args: Array<string> = ["--watch"];
 
@@ -74,7 +74,10 @@ async function buildDevArgs(opinionated: boolean): Promise<Array<string>> {
 		args.push("-r", "tsconfig-paths/register");
 	}
 
-	args.push(`./src/${entryPoint}.ts`);
+	// Honor `sourceRoot` from expressots.config.ts so projects whose
+	// source lives under a non-default folder (e.g. `api/` or
+	// `services/`) still resolve their entry point correctly.
+	args.push(`./${sourceRoot}/${entryPoint}.ts`);
 
 	return args;
 }
@@ -700,7 +703,8 @@ interface RunCommandOptions {
 export const runCommand = async ({
 	command,
 }: RunCommandOptions): Promise<void> => {
-	const { opinionated, entryPoint } = await Compiler.loadConfig();
+	const { opinionated, entryPoint, sourceRoot } =
+		await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
@@ -733,7 +737,12 @@ export const runCommand = async ({
 					process.exit(1);
 				}
 
-				const config = [`./${outDir}/src/${entryPoint}.js`];
+				// Honor `sourceRoot` so the compiled entry-point path
+				// matches whatever folder the user configured (the TS
+				// compiler preserves the source tree under `outDir`).
+				const config = [
+					`./${outDir}/${sourceRoot}/${entryPoint}.js`,
+				];
 				clearScreen();
 				await execCmd("node", config);
 				break;

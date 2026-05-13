@@ -98,11 +98,15 @@ export async function generateDockerfiles(
 				: [options.environment];
 
 	for (const env of environments) {
-		const templateType =
-			env === "production" ? "production" : "development";
+		// `staging` is a production-like environment (multi-stage
+		// build, prune dev deps, no source-mount expected) but with a
+		// distinct `NODE_ENV`, so it picks the production template.
+		// Anything not explicitly production-like falls through to dev.
+		const templateType = isProductionLikeEnv(env)
+			? "production"
+			: "development";
 		const vars = buildDockerVars(analysis, entryPoint);
 
-		// Try remote template, fall back to embedded
 		const result = await loadDockerTemplate(templateType, vars, () =>
 			generateDockerfileContent(env, preset, analysis, entryPoint),
 		);
@@ -137,8 +141,13 @@ export async function generateDockerfiles(
 			chalk.green(`  ✓ Created docker-setup.js (for local dependencies)`),
 		);
 
-		// Also update package.json with docker:setup script
-		updatePackageJsonWithDockerScript(cwd);
+		// Also update package.json with docker:setup script using the
+		// detected package manager so the generated `docker:build`
+		// composite script works for pnpm/yarn/bun users too.
+		updatePackageJsonWithDockerScript(
+			cwd,
+			analysis?.packageManager ?? "npm",
+		);
 		console.log(
 			chalk.green(`  ✓ Updated package.json with docker:setup script`),
 		);
@@ -161,6 +170,15 @@ export async function generateDockerfiles(
 	}
 }
 
+/**
+ * Production-like environments share the multi-stage / prune /
+ * baked-image Dockerfile shape. The only thing that differs is
+ * `NODE_ENV` (which apps may inspect for behavior switches).
+ */
+function isProductionLikeEnv(env: string): boolean {
+	return env === "production" || env === "staging";
+}
+
 function generateDockerfileContent(
 	environment: string,
 	preset: any,
@@ -171,7 +189,7 @@ function generateDockerfileContent(
 	const packageManager = analysis?.packageManager || "npm";
 	const port = analysis?.port || 3000;
 
-	if (environment === "development") {
+	if (!isProductionLikeEnv(environment)) {
 		return generateDevelopmentDockerfile(
 			nodeVersion,
 			packageManager,
@@ -188,6 +206,7 @@ function generateDockerfileContent(
 		preset,
 		analysis,
 		entryPoint,
+		environment,
 	);
 }
 
@@ -201,7 +220,10 @@ function generateDevelopmentDockerfile(
 	const baseImage = preset.baseImage || `node:${nodeVersion}-alpine`;
 	const hasLocalDeps = analysis?.hasLocalDependencies ?? false;
 	const localDepCopies = hasLocalDeps
-		? generateLocalDependencyCopies(analysis!.localDependencyPaths)
+		? generateLocalDependencyCopies(
+				analysis!.localDependencyPaths,
+				packageManager,
+			)
 		: "";
 
 	// Bootstrap config analysis for env files
@@ -221,10 +243,12 @@ COPY package.docker.json ./package.json`
 		: `# Copy package files
 COPY package*.json ./`;
 
-	// Install command - use npm install for local deps (npm ci can't resolve local paths)
+	// Install command - lockfile-based installs can't resolve `file:`
+	// paths recorded by the host, so for local deps we drop down to the
+	// loose install for whichever PM is in use.
 	const installCommand = hasLocalDeps
-		? `# Install dependencies (using npm install for local file dependencies)
-RUN npm install`
+		? `# Install dependencies (lockfile-free install for local file dependencies)
+${getLocalDepsInstallCommand(packageManager)}`
 		: getInstallCommand(packageManager, false);
 
 	return `# Development Dockerfile
@@ -255,7 +279,7 @@ ENV NODE_ENV=development
 ENV PORT=${port}
 
 # Start with hot reload
-CMD ["npm", "run", "dev"]
+${getCmdScript(packageManager, "dev")}
 `;
 }
 
@@ -293,6 +317,7 @@ function generateProductionDockerfile(
 	preset: any,
 	analysis: ProjectAnalysis | undefined,
 	entryPoint: string,
+	environment: string = "production",
 ): string {
 	const baseImage = preset.baseImage || `node:${nodeVersion}-alpine`;
 	const isMultiStage = preset.multiStage !== false;
@@ -306,12 +331,16 @@ function generateProductionDockerfile(
 			preset,
 			analysis,
 			entryPoint,
+			environment,
 		);
 	}
 
 	// Generate local dependency copy commands (only if using local file: deps)
 	const localDepCopies = hasLocalDeps
-		? generateLocalDependencyCopies(analysis!.localDependencyPaths)
+		? generateLocalDependencyCopies(
+				analysis!.localDependencyPaths,
+				packageManager,
+			)
 		: "";
 
 	// Package file handling - only use package.docker.json for local deps
@@ -323,12 +352,13 @@ COPY package-lock.json* ./`
 COPY package*.json ./
 COPY package-lock.json* ./`;
 
-	// Skip npm prune for local dependencies as package-lock.json paths won't resolve
+	// Skip prune for local dependencies as lockfile paths won't resolve.
+	// Otherwise use the package-manager-specific prune equivalent.
 	const pruneCommand = hasLocalDeps
-		? `# Skip npm prune for local file dependencies (paths in package-lock.json are from host)
-# Once packages are published to npm, you can add: RUN npm prune --production`
+		? `# Skip prune for local file dependencies (lockfile paths are from host)
+# Once packages are published, you can re-enable the prune step.`
 		: `# Prune devDependencies after build
-RUN npm prune --production`;
+${getPruneCommand(packageManager)}`;
 
 	// Multi-stage build (default for production)
 	return `# Production Dockerfile (Multi-stage)
@@ -354,7 +384,7 @@ ${getInstallCommand(packageManager, false)}
 COPY . .
 
 # Build application
-RUN npm run build
+${getRunScriptCommand(packageManager, "build")}
 
 ${pruneCommand}
 
@@ -399,7 +429,7 @@ COPY --from=builder /app/package*.json ./
 EXPOSE ${port}
 
 # Set environment variables
-ENV NODE_ENV=production
+ENV NODE_ENV=${environment}
 ENV PORT=${port}
 
 ${
@@ -438,10 +468,14 @@ function generateSingleStageDockerfile(
 	preset: any,
 	analysis: ProjectAnalysis | undefined,
 	entryPoint: string,
+	environment: string = "production",
 ): string {
 	const hasLocalDeps = analysis?.hasLocalDependencies ?? false;
 	const localDepCopies = hasLocalDeps
-		? generateLocalDependencyCopies(analysis!.localDependencyPaths)
+		? generateLocalDependencyCopies(
+				analysis!.localDependencyPaths,
+				packageManager,
+			)
 		: "";
 
 	// Package file handling
@@ -468,13 +502,13 @@ ${getInstallCommand(packageManager, true)}
 COPY . .
 
 # Build application
-RUN npm run build
+${getRunScriptCommand(packageManager, "build")}
 
 # Expose port
 EXPOSE ${port}
 
 # Set environment
-ENV NODE_ENV=production
+ENV NODE_ENV=${environment}
 ENV PORT=${port}
 
 # Start application
@@ -500,17 +534,95 @@ function getInstallCommand(
 	}
 }
 
-function generateLocalDependencyCopies(localDependencyPaths: string[]): string {
+/**
+ * Install dependencies in dev mode for a project that uses local
+ * `file:` deps. We can't use the lockfile-based commands (`npm ci`,
+ * `pnpm install --frozen-lockfile`) because the lockfile pins paths
+ * from the host that don't exist inside the container, so we fall
+ * back to the looser install command for whichever PM is detected.
+ */
+function getLocalDepsInstallCommand(packageManager: string): string {
+	switch (packageManager) {
+		case "pnpm":
+			return `RUN pnpm install --no-frozen-lockfile`;
+		case "yarn":
+			return `RUN yarn install --no-immutable`;
+		case "bun":
+			return `RUN bun install --no-save`;
+		default:
+			return `RUN npm install`;
+	}
+}
+
+/**
+ * Returns the Dockerfile RUN command that runs an npm-style script
+ * (e.g. `build`) using the detected package manager.
+ */
+function getRunScriptCommand(
+	packageManager: string,
+	scriptName: string,
+): string {
+	switch (packageManager) {
+		case "pnpm":
+			return `RUN pnpm run ${scriptName}`;
+		case "yarn":
+			return `RUN yarn ${scriptName}`;
+		case "bun":
+			return `RUN bun run ${scriptName}`;
+		default:
+			return `RUN npm run ${scriptName}`;
+	}
+}
+
+/**
+ * Returns the Dockerfile CMD instruction that runs an npm-style
+ * script (e.g. `dev`) using the detected package manager.
+ */
+function getCmdScript(packageManager: string, scriptName: string): string {
+	switch (packageManager) {
+		case "pnpm":
+			return `CMD ["pnpm", "run", "${scriptName}"]`;
+		case "yarn":
+			return `CMD ["yarn", "${scriptName}"]`;
+		case "bun":
+			return `CMD ["bun", "run", "${scriptName}"]`;
+		default:
+			return `CMD ["npm", "run", "${scriptName}"]`;
+	}
+}
+
+/**
+ * Returns the Dockerfile RUN command for pruning devDependencies in
+ * a multi-stage build. Only npm and yarn ship a built-in prune; for
+ * pnpm and bun we re-install with the production flag instead.
+ */
+function getPruneCommand(packageManager: string): string {
+	switch (packageManager) {
+		case "pnpm":
+			return `RUN pnpm install --prod --no-frozen-lockfile`;
+		case "yarn":
+			return `RUN yarn install --production --ignore-scripts --prefer-offline`;
+		case "bun":
+			return `RUN bun install --production`;
+		default:
+			return `RUN npm prune --production`;
+	}
+}
+
+function generateLocalDependencyCopies(
+	localDependencyPaths: string[],
+	packageManager: string = "npm",
+): string {
 	if (!localDependencyPaths || localDependencyPaths.length === 0) {
 		return "";
 	}
 
-	// Generate COPY commands for local dependencies
-	// We need to copy them to a local location that's within the build context
+	const setupHint = getRunScriptShellInvocation(packageManager, "docker:setup");
+
 	return (
 		`
 # Copy local dependencies (these should be in the project directory)
-# Run the setup script first: npm run docker:setup` +
+# Run the setup script first: ${setupHint}` +
 		"\n" +
 		localDependencyPaths
 			.map((depPath) => {
@@ -519,6 +631,27 @@ function generateLocalDependencyCopies(localDependencyPaths: string[]): string {
 			})
 			.join("\n")
 	);
+}
+
+/**
+ * Returns the shell invocation a developer would type to run an
+ * npm-style script (used in informational comments / generated
+ * package.json scripts, NOT inside Dockerfile RUN/CMD).
+ */
+function getRunScriptShellInvocation(
+	packageManager: string,
+	scriptName: string,
+): string {
+	switch (packageManager) {
+		case "pnpm":
+			return `pnpm run ${scriptName}`;
+		case "yarn":
+			return `yarn ${scriptName}`;
+		case "bun":
+			return `bun run ${scriptName}`;
+		default:
+			return `npm run ${scriptName}`;
+	}
 }
 
 function generateDockerignoreContent(analysis?: ProjectAnalysis): string {
@@ -667,7 +800,10 @@ console.log('   You can now run: docker build -t myapp .');
 `;
 }
 
-function updatePackageJsonWithDockerScript(cwd: string): void {
+function updatePackageJsonWithDockerScript(
+	cwd: string,
+	packageManager: string = "npm",
+): void {
 	const packageJsonPath = path.join(cwd, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
@@ -675,14 +811,16 @@ function updatePackageJsonWithDockerScript(cwd: string): void {
 		packageJson.scripts = {};
 	}
 
-	// Use node script for cross-platform compatibility
-	// Use project name from package.json for image name
 	const imageName =
 		packageJson.name?.replace(/[^a-z0-9-]/gi, "-").toLowerCase() ||
 		"expressots-app";
+	const setupInvocation = getRunScriptShellInvocation(
+		packageManager,
+		"docker:setup",
+	);
 	packageJson.scripts["docker:setup"] = "node docker-setup.js";
 	packageJson.scripts["docker:build"] =
-		`npm run docker:setup && docker build -t ${imageName} .`;
+		`${setupInvocation} && docker build -t ${imageName} .`;
 	packageJson.scripts["docker:run"] = `docker run -p 3000:3000 ${imageName}`;
 
 	fs.writeFileSync(

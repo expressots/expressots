@@ -297,14 +297,16 @@ function printDevInfo(options: DevOptions): void {
 	console.log();
 	console.log(chalk.bold("Available Commands:"));
 	console.log(
-		`  ${chalk.gray("expressots dev status")}      Show container status`,
-	);
-	console.log(`  ${chalk.gray("expressots dev logs")}        View logs`);
-	console.log(
-		`  ${chalk.gray("expressots dev shell")}       Open shell in container`,
+		`  ${chalk.gray("expressots container-dev status")}   Show container status`,
 	);
 	console.log(
-		`  ${chalk.gray("expressots dev stop")}        Stop containers`,
+		`  ${chalk.gray("expressots container-dev logs")}     View logs`,
+	);
+	console.log(
+		`  ${chalk.gray("expressots container-dev shell")}    Open shell in container`,
+	);
+	console.log(
+		`  ${chalk.gray("expressots container-dev stop")}     Stop containers`,
 	);
 	console.log();
 

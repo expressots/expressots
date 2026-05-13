@@ -101,17 +101,10 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 				default: false,
 			});
 
-			yargs.option("deployment-strategy", {
-				choices: [
-					"rolling",
-					"blue-green",
-					"canary",
-					"recreate",
-				] as const,
-				describe: "Kubernetes deployment strategy",
-				type: "string",
-				default: "rolling",
-			});
+			// `--deployment-strategy` was previously exposed here but
+			// the value was never read by the K8s generator. The dead
+			// flag was removed; re-introduce it together with a real
+			// implementation in `kubernetes-generator.ts`.
 
 			return yargs;
 		},
@@ -126,7 +119,6 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 			ciStrategy,
 			includeSecurityScans,
 			includeE2e,
-			deploymentStrategy,
 		}) => {
 			await containerizeProject({
 				target,
@@ -139,7 +131,6 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 				ciStrategy,
 				includeSecurityScans,
 				includeE2E: includeE2e,
-				deploymentStrategy,
 			});
 		},
 	};
