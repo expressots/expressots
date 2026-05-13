@@ -456,10 +456,7 @@ const projectForm = async (
 
 		if (!templateFolder) {
 			progressBar.stop();
-			printError(
-				`Unknown template: ${templateName}`,
-				"new",
-			);
+			printError(`Unknown template: ${templateName}`, "new");
 			process.exit(1);
 		}
 

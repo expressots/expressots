@@ -20,8 +20,7 @@ const SHELL_METACHARACTERS = /[;&|`$()<>\n\r\\"'*?{}[\]!#~]/;
  * but stricter than npm itself to remove ambiguity (no leading dots,
  * no uppercase to keep it portable across registries).
  */
-const PACKAGE_NAME_RE =
-	/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
+const PACKAGE_NAME_RE = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 
 /**
  * Semver-ish range validator. Accepts the common syntactic shapes
@@ -87,12 +86,7 @@ export function isValidScriptName(name: unknown): name is string {
 /**
  * Validate a package manager identifier.
  */
-const ALLOWED_PACKAGE_MANAGERS = new Set([
-	"npm",
-	"yarn",
-	"pnpm",
-	"bun",
-]);
+const ALLOWED_PACKAGE_MANAGERS = new Set(["npm", "yarn", "pnpm", "bun"]);
 
 export function isValidPackageManager(
 	pm: unknown,
@@ -106,10 +100,7 @@ export function isValidPackageManager(
  * `null` when the resolved path escapes the base directory (path
  * traversal attempt).
  */
-export function safeResolveWithin(
-	base: string,
-	target: string,
-): string | null {
+export function safeResolveWithin(base: string, target: string): string | null {
 	const absoluteBase = path.resolve(base);
 	const absoluteTarget = path.resolve(absoluteBase, target);
 
@@ -141,7 +132,9 @@ export function assertValidPackageName(name: unknown): asserts name is string {
 /**
  * Throws a generic `Error` if the value is not a safe version range.
  */
-export function assertValidVersion(version: unknown): asserts version is string {
+export function assertValidVersion(
+	version: unknown,
+): asserts version is string {
 	if (!isValidVersion(version)) {
 		throw new Error(
 			`Invalid version specifier: ${JSON.stringify(version)}.`,
