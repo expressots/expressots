@@ -1,3 +1,32 @@
+## [4.0.0](https://github.com/expressots/expressots-cli/compare/3.0.0...4.0.0) (2026-05-12)
+
+Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [CLI reference](https://expresso-ts.com/docs/4.0.0/cli/overview) for the full picture.
+
+### Features
+
+* **new templates + presets:** `expressots new` accepts `--template application | micro` and `--preset api | web | graphql | microservice | minimal`. The `application` and `micro` templates have been modernised end-to-end.
+* **v4 schematic set:** `generate` now scaffolds `controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`. Supports folder/subfolder/resource paths, shorthand, trailing-slash semantics, and the `opinionated` vs. non-opinionated layout switch.
+* **provider management:** `expressots add`, `remove`, `create` with lockfile-aware package-manager detection (npm, yarn, pnpm).
+* **scripts runner:** `expressots scripts` for interactive (and direct) script execution with package-manager detection.
+* **studio integration:** `expressots studio` auto-installs `@expressots/studio` on first use, launches the UI, opens the browser, and probes the studio-agent.
+* **containerize:** `expressots containerize` for Docker / Compose / Kubernetes outputs with presets, project analyser, and `--include-ci`.
+* **profile:** `expressots profile` with `container` / `image` / `optimize` / `report` actions; Trivy integration for image security scans.
+* **cicd:** `expressots cicd` with `init` / `generate` / `list` / `validate` actions targeting GitHub Actions, GitLab CI, CircleCI, Jenkins, Bitbucket, Azure DevOps; `basic` / `comprehensive` / `security-focused` strategies.
+* **migrate:** `expressots migrate` with `init` / `generate` / `list` / `analyze` actions and supported paths Heroku → Railway, Docker Compose → Kubernetes (more on the roadmap).
+* **costs:** `expressots costs` with `estimate` / `compare` / `optimize` / `pricing` / `update` / `info` actions for cloud cost forecasting.
+* **container-dev:** `expressots container-dev` (`start` / `stop` / `attach` / `shell` / `status` / `logs`) for a docker-compose-based development workflow.
+* **info + resources:** `expressots info` (project, OS, Node, CLI versions) and `expressots resources` (cheat sheet for every command + schematic).
+* **dev / build / prod:** `dev` runs `tsx --watch`, `build` rewrites path aliases during emit, `prod` runs the built output via plain `node`.
+
+### Bug Fixes
+
+* `expressots new` no longer ships `nodemon` in template devDependencies (v4 uses `tsx --watch`).
+* `expressots scripts` correctly detects bun's absence and falls back to npm / yarn / pnpm based on the lockfile.
+
+### Build System
+
+* `expressots-cli` now requires Node.js 20.18.0+.
+
 ## [3.0.0](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 
 ### Bug Fixes
