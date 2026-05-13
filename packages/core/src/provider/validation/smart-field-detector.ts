@@ -6,7 +6,6 @@
  * This is one of ExpressoTS's jaw-dropping features - no other framework has this!
  */
 
-
 import {
   SmartFieldPattern,
   ValidationFieldError,

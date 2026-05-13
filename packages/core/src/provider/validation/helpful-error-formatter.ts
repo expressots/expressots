@@ -6,7 +6,6 @@
  * examples, hints, and received values - making debugging easier.
  */
 
-
 import { ValidationFieldError } from "./validation.interface.js";
 
 /**

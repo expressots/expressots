@@ -5,7 +5,6 @@
  * Central registry for managing validation adapters
  */
 
-
 import {
   IValidationAdapter,
   ValidationConfig,
