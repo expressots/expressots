@@ -14,7 +14,13 @@
         "baseUrl": ".",
         "paths": {
             "@useCases/*": ["./src/useCases/*"],
-            "@controllers/*": ["./src/controllers/*"]
+            "@providers/*": ["./src/providers/*"],
+            "@entities/*": ["./src/entities/*"],
+            "@middleware/*": ["./src/middleware/*"],
+            "@interceptors/*": ["./src/interceptors/*"],
+            "@events/*": ["./src/events/*"],
+            "@guards/*": ["./src/guards/*"],
+            "@config/*": ["./src/config/*"]
         }
     },
     "include": ["src/**/*.ts"],

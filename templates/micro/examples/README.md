@@ -1,133 +1,91 @@
-# ExpressoTS Micro Examples
+# ExpressoTS Micro examples
 
-This folder contains examples demonstrating the advanced features available in ExpressoTS Micro.
+Self-contained reference scripts that show off the v4 features available in the `micro` template. Each example can be run independently.
 
-## Running Examples
-
-Each example can be run independently using the provided npm scripts:
+## Run an example
 
 ```bash
-# Circuit Breaker - Fault tolerance pattern
 npm run example:circuit-breaker
-
-# Service Discovery - Service registration and load balancing
 npm run example:service-discovery
-
-# Service Client - HTTP client with retries
 npm run example:service-client
-
-# Full DI API - Upgrade path with dependency injection
 npm run example:full-di-api
 ```
 
-For the serverless example, see the deployment instructions in the file.
+The serverless example deploys to AWS Lambda — see the bottom of `serverless-lambda.example.ts` for the full SAM template and deployment steps.
 
-## Examples Overview
+## What each example covers
 
-### 1. Circuit Breaker (`circuit-breaker.example.ts`)
+### `circuit-breaker.example.ts`
 
-Demonstrates the Circuit Breaker pattern for protecting your service from cascading failures:
+Demonstrates the [Circuit Breaker](https://expresso-ts.com/docs/guides/microservices-architecture#circuit-breaker) pattern to protect downstream services from cascading failures.
 
-- **CLOSED**: Normal operation, requests pass through
-- **OPEN**: Requests fail immediately (service unavailable)
-- **HALF_OPEN**: Testing if service has recovered
+- CLOSED → OPEN → HALF_OPEN state machine.
+- Configurable failure / success thresholds, timeouts, monitoring windows.
+- `getStats()` for telemetry, `reset()` / `open()` for manual control.
 
-Key features:
-- Configurable failure and success thresholds
-- Automatic recovery after timeout
-- Manual reset and open controls
-- Statistics and monitoring
+### `service-discovery.example.ts`
 
-### 2. Service Discovery (`service-discovery.example.ts`)
+Static and dynamic service registration with round-robin load balancing.
 
-Shows how to implement service discovery for microservices:
+- `ServiceDiscovery({ type: "static" })` plus `registerService` / `deregisterService`.
+- Health tracking with `updateHealth` and listing with `listServices`.
+- Endpoints that demonstrate self-registration and health updates.
 
-- Static service registration
-- Round-robin load balancing
-- Health status tracking
-- Dynamic service registration/deregistration
+### `service-client.example.ts`
 
-Use cases:
-- Microservice architecture
-- Multiple service instances
-- Blue/green deployments
+HTTP client for service-to-service communication.
 
-### 3. Service Client (`service-client.example.ts`)
+- `ServiceClient` with timeouts, retries, headers, and circuit breaker integration.
+- Per-request headers, query parameters, and typed responses.
+- A "fan-out" example that calls user + order + analytics services from a single endpoint.
 
-Demonstrates HTTP client for service-to-service communication:
+### `serverless-lambda.example.ts`
 
-- Automatic retries with exponential backoff
-- Request timeouts
-- Circuit breaker integration
-- Custom headers per request
-- Query parameter handling
+Same `micro()` app, deployable to AWS Lambda.
 
-Use cases:
-- API Gateway pattern
-- Service composition
-- External API calls
+- Conditionally suppresses the banner when running inside Lambda.
+- Wires `awsLambdaAdapter(app.getApp(), { binaryContentTypes, debug })`.
+- Local development still works via `app.listen(3000, ...)`.
+- Inline SAM template + deployment notes.
 
-### 4. Serverless Lambda (`serverless-lambda.example.ts`)
+For Vercel and Cloudflare Workers, swap `awsLambdaAdapter` for `vercelAdapter` / `cloudflareAdapter` — same shape, same handler export pattern. See the [Micro API guide](https://expresso-ts.com/docs/guides/micro-api).
 
-Shows how to deploy to AWS Lambda:
+### `full-di-api.example.ts`
 
-- Same code works locally and on Lambda
-- AWS SAM template example
-- Environment-aware configuration
-- Binary content handling
+The upgrade path when you want DI but still want a single-file footprint. Uses `createMicroAPI()` to attach a container, a structured Logger, middleware and an error handler.
 
-Deployment steps included in the file.
+If your app keeps growing past this point, graduate to the `application` template:
 
-### 5. Full DI API (`full-di-api.example.ts`)
+```bash
+expressots new my-app --template application
+```
 
-Upgrade path from simple `micro()` to full `createMicroAPI()`:
+## API decision matrix
 
-- Dependency injection container
-- Provider registration (singleton, transient)
-- Middleware pipeline
-- Route management
+| Feature                       | `micro()` | `createMicroAPI()` | `application` template |
+| ----------------------------- | :-------: | :----------------: | :--------------------: |
+| Simple routing                |     ✅    |          ✅        |           ✅           |
+| Return-value auto-response    |     ✅    |          ❌        |           ✅           |
+| Middleware                    |   basic   |       pipeline     |        pipeline        |
+| DI container                  |     ❌    |          ✅        |           ✅           |
+| Provider registration         |     ❌    |          ✅        |           ✅           |
+| Lifecycle hooks               |     ❌    |          ❌        |           ✅           |
+| Interceptors / Guards / Events|     ❌    |       partial      |           ✅           |
+| Auto-discovery via modules    |     ❌    |          ❌        |           ✅           |
+| Best fit                      |  Serverless / single-file | Single-file + DI | Real apps & APIs |
 
-## Feature Comparison
+## Use the right tool
 
-| Feature | micro() | createMicroAPI() |
-|---------|---------|------------------|
-| Simple routing | ✅ | ✅ |
-| Auto-response | ✅ | ❌ |
-| Middleware | ✅ basic | ✅ pipeline |
-| DI Container | ❌ | ✅ |
-| Provider registration | ❌ | ✅ |
+- **Use `micro()`** for serverless functions, prototypes, and small APIs that don't need DI.
+- **Use `createMicroAPI()`** when you want a container in a single file (this example).
+- **Use the `application` template** when you want modules, lifecycle hooks, interceptors, guards, events, and auto-discovery.
+- **Use the Circuit Breaker** whenever you call something that can fail and is not under your control.
+- **Use Service Discovery** when you run more than one instance of a service and need round-robin or health-aware routing.
+- **Use Service Client** when you need typed, resilient HTTP calls between services.
 
-## When to Use What
+## Learn more
 
-### Use `micro()` when:
-- Building simple APIs or serverless functions
-- Prototyping quickly
-- Don't need dependency injection
-- Want minimal boilerplate
-
-### Use `createMicroAPI()` when:
-- Building larger microservices
-- Need dependency injection
-- Need advanced middleware pipeline
-- Building with provider pattern
-
-### Use Circuit Breaker when:
-- Calling external/unreliable services
-- Need fault tolerance
-- Want to prevent cascading failures
-
-### Use Service Discovery when:
-- Running multiple service instances
-- Need load balancing
-- Building microservice mesh
-
-### Use Service Client when:
-- Service-to-service communication
-- Need automatic retries
-- Want circuit breaker on HTTP calls
-
-## Learn More
-
-- [ExpressoTS Documentation](https://expresso-ts.com)
-- [Advanced Features Guide](../ADVANCED.md)
-- [Upgrading Guide](../UPGRADING.md)
+- [Micro API guide](https://expresso-ts.com/docs/guides/micro-api)
+- [Microservices architecture](https://expresso-ts.com/docs/guides/microservices-architecture)
+- [Application template README](../README.md)
+- [ExpressoTS docs](https://expresso-ts.com/docs/)

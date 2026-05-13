@@ -1,31 +1,40 @@
 /**
- * Full DI API Example
+ * Graduating from `micro()` to the full `application` template
  *
- * Demonstrates how to upgrade from the simple micro() API to the full
- * createMicroAPI() with dependency injection container.
+ * The `micro` template ships with the lightweight `micro()` fluent API. Once
+ * you start needing real dependency injection, lifecycle hooks, interceptors,
+ * guards, events and auto-discovered modules, the right move is to graduate to
+ * the `application` template:
  *
- * Use this when you need:
- * - Dependency injection
- * - Middleware pipeline
- * - Route management with prefixes
- * - Provider registration
+ *     expressots new my-app --template application
+ *
+ * For projects that want a single-file footprint but still need an IoC
+ * container, you can use the intermediate `createMicroAPI()` API shown below.
+ * This example keeps a single file but wires up:
+ *  - a DI container
+ *  - a structured Logger
+ *  - JSON parsing + a custom logging middleware
+ *  - a typed singleton service
+ *  - a 404 + error handler
  *
  * Run with: npm run example:full-di-api
  */
 
-import { createMicroAPI } from "@expressots/adapter-express";
+import {
+    createMicroAPI,
+    type ICreateMicroAPI,
+} from "@expressots/adapter-express";
+import { Logger } from "@expressots/core";
 
-// Create a micro API with DI container
-const microAPI = createMicroAPI();
+const microAPI: ICreateMicroAPI = createMicroAPI({
+    showBanner: true,
+});
 
-// Set global route prefix (all routes will be prefixed with /api/v1)
 microAPI.setGlobalRoutePrefix("/api/v1");
 
-// Access the container for dependency injection
 const container = microAPI.Container;
+const logger = new Logger().withContext("FullDiApi");
 
-// Register services in the container
-// Example: Register a singleton service
 class UserRepository {
     private users = [
         { id: "1", name: "Alice", email: "alice@example.com" },
@@ -47,40 +56,32 @@ class UserRepository {
     }
 }
 
-// Register as singleton (same instance throughout app lifecycle)
 container.addSingleton(UserRepository);
 
-// Build the web server
 const app = microAPI.build();
 
-// Configure middleware
-app.Middleware.parse(); // Enable JSON body parsing
+app.Middleware.parse();
 
-// Add custom middleware
 app.Middleware.addMiddleware((req, _res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    logger.info(`${req.method} ${req.url}`);
     next();
 });
 
-// Define routes using the Route interface
-// Note: Routes are prefixed with /api/v1
-
-app.Route.get("/", (req, res) => {
+app.Route.get("/", (_req, res) => {
     res.json({
         message: "Welcome to ExpressoTS Micro API with DI",
         version: "1.0.0",
     });
 });
 
-app.Route.get("/users", (req, res) => {
-    // Get the repository from the container
-    const userRepo = container.get(UserRepository);
-    res.json(userRepo.findAll());
+app.Route.get("/users", (_req, res) => {
+    const repo = container.get(UserRepository);
+    res.json(repo.findAll());
 });
 
 app.Route.get("/users/:id", (req, res) => {
-    const userRepo = container.get(UserRepository);
-    const user = userRepo.findById(req.params.id);
+    const repo = container.get(UserRepository);
+    const user = repo.findById(req.params.id);
 
     if (!user) {
         res.status(404).json({ error: "User not found" });
@@ -91,49 +92,42 @@ app.Route.get("/users/:id", (req, res) => {
 });
 
 app.Route.post("/users", (req, res) => {
-    const userRepo = container.get(UserRepository);
-    const user = userRepo.create(req.body);
+    const repo = container.get(UserRepository);
+    const user = repo.create(req.body);
     res.status(201).json(user);
 });
 
-app.Route.get("/health", (req, res) => {
+app.Route.get("/health", (_req, res) => {
     res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
     });
 });
 
-// Set custom error handler
-app.Middleware.setErrorHandler((err, req, res, next) => {
-    console.error("Error:", err);
+app.Middleware.setErrorHandler((err, req, res, _next) => {
+    logger.error(`Unhandled error on ${req.method} ${req.path}`, err);
     res.status(500).json({
         error: err.message,
         path: req.path,
     });
 });
 
-// Start the server
 app.listen(3000, {
     appName: "Full DI API Example",
     appVersion: "1.0.0",
 });
 
 /**
- * Feature Comparison: micro() vs createMicroAPI()
+ * Choosing the right API:
  *
- * | Feature                | micro()         | createMicroAPI() |
- * |------------------------|-----------------|------------------|
- * | Simple routing         | ✅              | ✅               |
- * | Auto-response          | ✅              | ❌               |
- * | Middleware             | ✅ (basic)      | ✅ (pipeline)    |
- * | DI Container           | ❌              | ✅               |
- * | Route prefix           | ✅ (config)     | ✅               |
- * | Provider registration  | ❌              | ✅               |
- * | Middleware presets     | ❌              | ✅               |
+ * | API                  | When to use                                          |
+ * |----------------------|------------------------------------------------------|
+ * | micro()              | Single-file APIs, serverless, sub-100ms cold start   |
+ * | createMicroAPI()     | Single-file APIs + DI / providers (this example)     |
+ * | `application` tpl    | Modules, lifecycle hooks, interceptors, guards,      |
+ * |                      | events, auto-discovery, large codebases              |
  *
- * When to upgrade:
- * - Need dependency injection
- * - Need advanced middleware pipeline
- * - Need provider registration (singletons, etc.)
- * - Building a larger microservice
+ * Going further:
+ *  - https://expresso-ts.com/docs/guides/micro-api
+ *  - https://expresso-ts.com/docs/core/first-steps
  */

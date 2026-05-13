@@ -1,116 +1,177 @@
 # ExpressoTS Application
 
-A modern, type-safe Node.js backend powered by ExpressoTS v4.0.
+A modern, type-safe Node.js backend powered by ExpressoTS v4.
 
-## Features
+This template is the **gold path** v4 starter. It ships with the full v4 wiring already configured:
 
-- 🔧 **Type-Safe Configuration** - Full TypeScript inference for config values
-- 🚀 **Zero-Config Bootstrap** - Just run and go
-- 📦 **Build-Time Path Resolution** - No runtime overhead
-- 🧪 **Testing Ready** - Jest configured out of the box
+- `bootstrap()` entry that loads env files with `loadEnvSync`.
+- Typed configuration via `defineConfig` + `Env.*`.
+- All four `AppExpress` lifecycle hooks implemented meaningfully (`globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown`).
+- A sample **interceptor** (`@interceptors/logging.interceptor.ts`) wired through `setupInterceptorsForExpress`.
+- A sample **type-safe event** + **handler** (`@events/user-created.event.ts` + `@events/welcome-email.handler.ts`) wired through `setupEventSystemForExpress`.
+- Tests using `createTestApp` + `setupExpressoTSMatchers` with the fluent request DSL.
+- TypeScript path aliases for every v4 scaffold folder (`@useCases/*`, `@providers/*`, `@entities/*`, `@middleware/*`, `@interceptors/*`, `@events/*`, `@guards/*`, `@config/*`).
 
-## Quick Start
+## Quick start
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
 npm install
 
-# Start development server
+# 2. Copy the env template
+cp .env.example .env
+
+# 3. Run the dev server (tsx --watch under the hood)
 npm run dev
-
-# Build for production
-npm run build
-
-# Run in production
-npm run prod
 ```
 
-## Project Structure
+Open <http://localhost:3000/api/> for the welcome payload, and <http://localhost:3000/api/health> for a basic health check.
+
+## Project structure
 
 ```
 src/
-├── main.ts          # Application entry point
-├── app.ts           # Application class (middleware, lifecycle)
-├── config.ts        # Type-safe configuration
-└── app.controller.ts # Example controller
+├── main.ts                            # Entry point: loadEnvSync + bootstrap(App, { port })
+├── app.ts                             # AppExpress class — middleware + lifecycle + setup helpers
+├── app.controller.ts                  # Welcome + /health controller
+├── config/
+│   └── app.config.ts                  # defineConfig + Env.* (typed, validated env vars)
+├── interceptors/
+│   └── logging.interceptor.ts         # Structured request/response logging interceptor
+├── events/
+│   ├── user-created.event.ts          # Sample domain event class
+│   └── welcome-email.handler.ts       # @OnEvent handler with full type inference
+test/
+└── app.controller.spec.ts             # createTestApp + fluent request + ExpressoTS matchers
+expressots.config.ts                   # CLI configuration: opinionated layout, full scaffoldSchematics
+tsconfig.json / tsconfig.build.json    # TypeScript + opinionated path aliases
+jest.config.ts                         # Jest + alias mapping
 ```
+
+## Scripts
+
+| Script           | What it does                                                            |
+| ---------------- | ----------------------------------------------------------------------- |
+| `npm run dev`    | `tsx --watch` dev server with hot reload.                                |
+| `npm run build`  | Compiles to `dist/`; rewrites `@alias/*` imports to relative paths.      |
+| `npm run prod`   | Runs the compiled output with `node`.                                   |
+| `npm test`       | Jest tests, one worker.                                                  |
+| `npm run test:watch` | Jest in watch mode.                                                  |
+| `npm run test:cov`   | Jest with coverage; same as `npm run coverage`.                      |
+| `npm run lint`   | ESLint with auto-fix.                                                    |
+| `npm run format` | Prettier write.                                                          |
+| `npm run studio` | Launch [ExpressoTS Studio](https://expresso-ts.com/docs/studio/overview). |
 
 ## Configuration
 
-Configuration is managed through `src/config.ts` using the `defineConfig` helper:
+Configuration lives in `src/config/app.config.ts` and is read at boot through `loadEnvSync` + `Env.*`:
 
-```typescript
+```ts
+import { defineConfig, Env } from "@expressots/core";
+
 export const appConfig = defineConfig({
     app: {
-        name: Env.string("APP_NAME").default("My App"),
-        version: Env.string("APP_VERSION").default("1.0.0"),
+        name: Env.string("APP_NAME").default("expressots-app"),
+        port: Env.port("PORT").default(3000),
+        env: Env.enum("NODE_ENV", ["development", "production", "test"] as const)
+            .default("development"),
     },
-    server: {
-        port: Env.number("PORT").default(3000),
+    logger: {
+        level: Env.enum("LOG_LEVEL", ["trace", "debug", "info", "warn", "error", "fatal"] as const)
+            .default("info"),
     },
 });
+
+export type AppConfig = typeof appConfig;
 ```
 
-### Environment Files
+Access values anywhere:
 
-- `.env.local` - Development environment (default)
-- `.env.staging` - Staging environment  
-- `.env.prod` - Production environment
+```ts
+import { appConfig } from "@config/app.config";
+
+const port: number = appConfig.values.app.port;
+```
+
+Use `Env.url`, `Env.secret`, `Env.array`, `Env.json`, `Env.boolean`, `Env.number` for the rest. See the [Configuration reference](https://expresso-ts.com/docs/features/configuration).
+
+## Environment files
+
+`main.ts` calls `loadEnvSync` with a per-environment file map. The default mapping is:
+
+| `NODE_ENV`    | File loaded     |
+| ------------- | --------------- |
+| `development` | `.env`          |
+| `production`  | `.env.prod`     |
+| `test`        | `.env.test`     |
+
+`.env.example` lists every variable the template reads — copy it to `.env` and adjust.
 
 ## Scaffolding
 
-Use the CLI to generate new resources:
+Generate every v4 resource type from the CLI. The template's `expressots.config.ts` already declares the full `scaffoldSchematics` map, so each command knows where to place files.
 
 ```bash
-# Generate a controller
-npx expressots generate controller user
+# Full vertical slice (controller + usecase + DTO + module wiring)
+npx expressots g service users/create post
 
-# Generate a use case
-npx expressots generate usecase user/create-user
-
-# Generate a module with controller and use case
-npx expressots generate module user
+# Individual schematics
+npx expressots g controller users
+npx expressots g usecase users/find
+npx expressots g dto users/create
+npx expressots g interceptor Caching --priority 5
+npx expressots g event UserUpdated
+npx expressots g handler EmailNotifier --event UserUpdated
+npx expressots g guard Admin
+npx expressots g config feature-flags
 ```
 
-### Scaffold Configuration
-
-Customize scaffolding in `expressots.config.ts`:
-
-```typescript
-const config: ExpressoConfig = {
-    opinionated: true,  // Enable structured folders
-    scaffoldPattern: Pattern.KEBAB_CASE,
-    scaffoldSchematics: {
-        controller: "controllers",
-        usecase: "useCases",
-        entity: "entities",
-    },
-};
-```
+See [`expressots generate`](https://expresso-ts.com/docs/cli/generate) for every schematic.
 
 ## Testing
 
-```bash
-# Run tests
-npm test
+Tests use `@expressots/core`'s built-in testing module — no separate `@expressots/testing` package:
 
-# Run tests with coverage
-npm run test:cov
+```ts
+import { createTestApp, setupExpressoTSMatchers } from "@expressots/core";
 
-# Watch mode
-npm run test:watch
+setupExpressoTSMatchers();
+
+const testApp = await createTestApp(App, { env: { NODE_ENV: "test" } });
+
+await testApp.request
+    .get("/api/health")
+    .expectStatus(200)
+    .expectBodyContains({ status: "ok" })
+    .execute();
+
+await testApp.cleanup();
 ```
 
-## API Endpoints
+See [Testing](https://expresso-ts.com/docs/features/testing) for `mockProvider`, `loadTest`, `createTestDatabase`, `snapshotRequest`, and matchers.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /api/ | Application info |
-| GET | /api/health | Health check |
+## Studio
 
-## Learn More
+ExpressoTS Studio is enabled in development. Run:
 
-- [ExpressoTS Documentation](https://expresso-ts.com)
-- [GitHub Repository](https://github.com/expressots)
-- [Discord Community](https://discord.gg/PyPJfGK)
+```bash
+npm run studio
+```
 
+The Studio UI opens at <http://localhost:3333> with the Status Dashboard, Architecture Map, Request Timeline, Live Logs, Error Inspector, Security view (supply-chain advisories with reachability scoring and one-click fixes), and API client. See [Studio Overview](https://expresso-ts.com/docs/studio/overview).
+
+## Endpoints
+
+| Method | Path           | Description           |
+| ------ | -------------- | --------------------- |
+| `GET`  | `/api/`        | Welcome payload       |
+| `GET`  | `/api/health`  | Liveness + uptime + env |
+
+## Learn more
+
+- [ExpressoTS Documentation](https://expresso-ts.com/docs/)
+- [CLI reference](https://expresso-ts.com/docs/cli/overview)
+- [Interceptors](https://expresso-ts.com/docs/features/interceptors) · [Events](https://expresso-ts.com/docs/features/events) · [Lazy loading](https://expresso-ts.com/docs/features/lazy-loading) · [Lifecycle](https://expresso-ts.com/docs/core/lifecycle)
+- [Studio](https://expresso-ts.com/docs/studio/overview)
+- [GitHub](https://github.com/expressots)
+- [Discord](https://discord.gg/PyPJfGK)

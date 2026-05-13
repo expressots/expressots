@@ -3,10 +3,9 @@ import {
     setupExpressoTSMatchers,
     TestAppResult,
 } from "@expressots/core";
-import { afterAll, beforeAll, describe, it } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { App } from "../src/app";
 
-// Setup ExpressoTS custom matchers
 setupExpressoTSMatchers();
 
 describe("AppController", () => {
@@ -14,9 +13,7 @@ describe("AppController", () => {
 
     beforeAll(async () => {
         testApp = await createTestApp(App, {
-            env: {
-                NODE_ENV: "test",
-            },
+            env: { NODE_ENV: "test" },
             autoCleanup: false,
         });
     });
@@ -25,13 +22,28 @@ describe("AppController", () => {
         await testApp.cleanup();
     });
 
-    describe("GET /", () => {
-        it("should return welcome message", async () => {
+    describe("GET /api/", () => {
+        it("returns the welcome payload", async () => {
             await testApp.request
-                .get("/")
+                .get("/api/")
                 .expectStatus(200)
-                .expectBody("Hello from ExpressoTS!")
+                .expectBody({ message: "Hello from ExpressoTS v4!" })
                 .execute();
+        });
+    });
+
+    describe("GET /api/health", () => {
+        it("returns ok with the runtime env", async () => {
+            const response = await testApp.request
+                .get("/api/health")
+                .expectStatus(200)
+                .execute();
+
+            expect(response.body).toMatchObject({
+                status: "ok",
+                env: "test",
+            });
+            expect(typeof response.body.uptime).toBe("number");
         });
     });
 });

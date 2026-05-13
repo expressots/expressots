@@ -1,9 +1,23 @@
 import { controller, Get } from "@expressots/adapter-express";
+import { appConfig } from "@config/app.config";
 
 @controller("/")
 export class AppController {
     @Get("/")
-    execute() {
-        return "Hello from ExpressoTS!";
+    welcome() {
+        return {
+            name: appConfig.values.app.name,
+            message: "Hello from ExpressoTS v4!",
+            docs: "https://expresso-ts.com/docs/",
+        };
+    }
+
+    @Get("/health")
+    health() {
+        return {
+            status: "ok",
+            uptime: process.uptime(),
+            env: appConfig.values.app.env,
+        };
     }
 }
