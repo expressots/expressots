@@ -1,3 +1,38 @@
+## [4.0.0](https://github.com/expressots/expressots/compare/3.0.0...4.0.0) (2026-05-12)
+
+Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
+
+### Features
+
+* **interceptors:** new AOP system (`@Interceptor`, `IInterceptor`, `ExecutionContext`, `CallHandler`) with composition helpers `whenInterceptor`, `unlessInterceptor`, `pipeInterceptors`, `combineInterceptors`, and built-ins `LoggingInterceptor`, `PerformanceInterceptor`, `TimeoutInterceptor`. Companion `setupInterceptorsForExpress()` for one-line wiring.
+* **events:** type-safe event bus (`EventEmitter`, `@OnEvent`, `@OnEvents`, `@When`, `IEventHandler`) with auto-discovery, priority-based execution, `EventRecorder`, and `EventFlowTracker`. Companion `setupEventSystemForExpress()`.
+* **lazy loading:** `CreateLazyModule`, `withPreloadHint`, `withLazyConfig` and `setupLazyLoadingForExpress()` with `idle` / `immediate` / `manual` warmup strategies and zero-config route detection from `@controller()` decorators.
+* **configuration:** type-safe `defineConfig` + `Env.{string,number,boolean,enum,port,url,secret,array,json}` field builders with inline multi-environment defaults, `SecretValue` auto-redaction, helpful validation errors, and `when()` helper for environment-specific resolution.
+* **logging:** 11-phase production logger with `Logger.configure`, `withContext`, `child`, transports (`ConsoleTransport`, `FileTransport`, `HttpTransport`), redaction, suggestions, flow tracker, performance metrics, grouping, query/export API, and health monitor.
+* **content negotiation:** `@Accept`, `@Consumes`, `@Produces` decorators, built-in JSON / XML / CSV / YAML / Text formatters, `StreamResponse` for large payloads, quality-value support, custom formatter registration.
+* **authorization:** guard system with `@RequireAuthentication`, `@RequireRoles`, `@RequirePermissions`, built-in `AuthenticatedGuard` / `RoleGuard` / `PermissionGuard` / `ResourceOwnerGuard`, ABAC via `@RequirePolicy`, composition helpers `combineGuards` / `sequenceGuards` / `whenGuard`, permission hierarchy, multi-tenant support, request-scoped caching.
+* **middleware:** named registry (`getMiddlewareRegistry`, `use`, `compose`, `when`, `parallel`, `timeout`), preset API (`MIDDLEWARE_PRESETS`, `getPreset`, `createPreset`, `mergePresets`), `MiddlewareProfiler`, optional-package resolver.
+* **smart validation:** auto-detected `class-validator` integration with helpful errors and plugin support for Zod / Yup / Joi.
+* **error handling:** RFC 7807 compliant `AppError` with helpers (`badRequest`, `notFound`, `validationFailed`, etc.), auto-discovered exception filters via `@Catch`, route-level `@UseFilters`, and inherited filter matching.
+* **lifecycle hooks:** `IBootstrap`, `IShutdown`, `@postConstruct`, `@preDestroy` on DI-managed classes; `globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown` on `AppExpress`.
+* **DI scopes:** `Scope.Singleton` / `Transient` / `Request` plus custom scopes (`tenant`, `transaction`, `workflow`, `session`) via `provideInScope`.
+* **testing module:** `createTestApp`, `request` fluent API, `mockProvider`, `setupExpressoTSMatchers`, `expectStatus`, `expectBody` (with partial matching), snapshot testing, load testing, database fixtures.
+* **micro API:** new `micro()` fluent API for single-file apps and serverless deployments alongside the existing `createMicroAPI()` (kept for DI in a single file).
+* **route constraints + API versioning:** URL / header / query versioning, UUID / integer / pattern constraints with custom validators.
+
+### Breaking Changes
+
+* `.env` files are **opt-in** — `bootstrap()` now requires `envFileConfig` to load `.env`. Containerised deployments no longer trip "missing .env" alarms. See ADR-001.
+* `AppFactory.create()` replaced by `bootstrap()` from `@expressots/core`.
+* Node.js 20.18.0+ is now the minimum supported runtime.
+
+### Build System
+
+* dual ESM + CJS publication with subpath `exports` for both module systems.
+* migrated from Vitest to Jest 29.
+* embedded our customised DI implementation (replaces `inversify`).
+* embedded `reflect-metadata` so consumers don't have to install it explicitly.
+
 ## [3.0.0](https://github.com/expressots/expressots/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 
 ### Tests
