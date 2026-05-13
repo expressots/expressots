@@ -1,32 +1,28 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
-[![Codecov][codecov-shield]][codecov-url]
 [![NPM][npm-shield]][npm-url]
 ![Build][build-shield]
 [![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://expresso-ts.com/">
     <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="Logo" width="120">
   </a>
 
-  <h3 align="center">ExpressoTS Framework</h3>
+  <h3 align="center">ExpressoTS Provider Template</h3>
 
   <p align="center">
-    Everything you need to know to build applications with ExpressoTS
+    Scaffold for building reusable, DI-friendly providers for the ExpressoTS v4 ecosystem.
     <br />
-    <a href="https://doc.expresso-ts.com/"><strong>Explore the docs »</strong></a>
+    <a href="https://expresso-ts.com/docs/4.0.0/cli/providers"><strong>Provider CLI docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/expressots/expressots/discussions">Let's discuss</a>
+    <a href="https://github.com/expressots/expressots/discussions">Discuss</a>
     ·
     <a href="https://github.com/expressots/expressots/issues">Report Bug</a>
     ·
@@ -34,83 +30,160 @@
   </p>
 </div>
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li><a href="#about-the-project">About The Project</a></li>
-    <li><a href="#getting-started">Getting Started</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#support-the-project">Support the project</a></li>
-    <li><a href="#license">License</a></li>
-  </ol>
-</details>
+---
 
-<!-- ABOUT THE PROJECT -->
-# About The Project
+## About
 
-ExpressoTS is a [Typescript](https://www.typescriptlang.org/) + [Node.js](https://nodejs.org/en/) lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🐎
+A provider is a reusable building block that other ExpressoTS applications can install with `expressots add` and then `@inject()` from the DI container. This template gives you:
 
-## Getting Started
+- **Dual ESM + CJS build** out of `lib/esm` and `lib/cjs`, with subpath `exports` for both module systems.
+- **Decorated sample provider** (`GreeterProvider`) with a passing Jest suite.
+- **release-it** + conventional commits + a GitHub release flow.
+- **husky** + commitlint pre-configured.
+- A peer-friendly dependency on `@expressots/core` `^4.0.0`.
 
-- Here is our [Site](https://expresso-ts.com/)
-- You can find our [Documentation here](https://doc.expresso-ts.com/)
-- Checkout our [First Steps documentation](https://doc.expresso-ts.com/docs/overview/first-steps)
-- Our [CLI Documentation](https://doc.expresso-ts.com/docs/cli/overview)
+## Quick start
+
+```bash
+npx degit expressots/templates/provider my-provider
+cd my-provider
+npm install
+npm test
+```
+
+Rename `name`, `description`, `repository`, `bugs`, and `homepage` in `package.json` before publishing.
+
+## Project layout
+
+```
+src/
+├── greeter.provider.ts     # Sample @provide() class — replace with your own
+└── index.ts                # Public surface
+
+test/
+└── greeter.provider.spec.ts
+
+scripts/                    # Build helpers (rm, copy) used by the npm scripts
+tsconfig.json               # Base TypeScript config
+tsconfig.cjs.json           # CommonJS build (outputs lib/cjs)
+tsconfig.esm.json           # ESM build (outputs lib/esm)
+```
+
+## Building a provider
+
+Providers are plain TypeScript classes decorated with `@provide()`. Consumers `@inject()` them from the container, so anything you can express with constructor parameters is fair game.
+
+```ts
+import { provide, inject } from "@expressots/core";
+
+@provide(MyProvider)
+export class MyProvider {
+    constructor(@inject(SomeDependency) private readonly dep: SomeDependency) {}
+
+    doWork() {
+        return this.dep.run();
+    }
+}
+```
+
+Common provider shapes:
+
+| Shape                          | Example                                                        |
+| ------------------------------ | -------------------------------------------------------------- |
+| Plain helper / SDK wrapper     | The sample `GreeterProvider` in this template.                 |
+| Adapter to an external service | Database client, queue client, SDK wrapper.                    |
+| Cross-cutting concern          | Logger transport, cache, feature-flag provider.                |
+| Configuration                  | A wrapper around `defineConfig` exposing a typed values bag.   |
+
+Lifecycle is supported via the core decorators when you need it:
+
+```ts
+import { provide, postConstruct, preDestroy } from "@expressots/core";
+
+@provide(DbClient)
+export class DbClient {
+    @postConstruct()
+    async connect() {
+        // open the connection once the container resolves the instance
+    }
+
+    @preDestroy()
+    async disconnect() {
+        // close when the container disposes
+    }
+}
+```
+
+## Scripts
+
+| Script               | What it does                                                 |
+| -------------------- | ------------------------------------------------------------ |
+| `npm run build`      | Cleans `lib/`, builds the CJS bundle, copies `package.json` + `README.md` + `CHANGELOG.md`. |
+| `npm run build:cjs`  | CJS build only.                                              |
+| `npm run build:esm`  | ESM build only.                                              |
+| `npm run release`    | release-it release flow (tag, GitHub release, CHANGELOG bump). |
+| `npm run prepublish` | `build` + `npm pack` — produces the `.tgz` you can publish.  |
+| `npm test`           | Jest test suite.                                             |
+| `npm run coverage`   | Jest with `--coverage`.                                      |
+| `npm run lint:fix`   | ESLint with `--fix`.                                         |
+| `npm run format`     | Prettier formatting for `src/`.                              |
+
+## Publishing
+
+```bash
+npm run build
+npm publish --access public
+```
+
+If you want release-it to automate this, run `npm run release` and follow the prompts. The GitHub release step requires `GITHUB_TOKEN` in your environment.
+
+## Installing in an app
+
+In a consuming v4 app, run:
+
+```bash
+expressots add @your-scope/my-provider
+```
+
+Then bind it inside a module or inject it directly:
+
+```ts
+import { CreateModule } from "@expressots/core";
+import { MyProvider } from "@your-scope/my-provider";
+
+const MyModule = CreateModule([MyProvider]);
+```
 
 ## Contributing
 
-Welcome to the ExpressoTS community, a place bustling with innovative minds just like yours. We're absolutely thrilled to have you here!
-ExpressoTS is more than just a TypeScript framework; it's a collective effort by developers who are passionate about creating a more efficient, secure, and robust web ecosystem. We firmly believe that the best ideas come from a diversity of perspectives, backgrounds, and skills.
+PRs against this template repo are welcome. For changes inside a published provider, follow that provider's `CONTRIBUTING.md`.
 
-Why Contribute to Documentation?
-
-- **Share Knowledge**: If you've figured out something cool, why keep it to yourself?
-- **Build Your Portfolio**: Contributing to an open-source project like ExpressoTS is a great way to showcase your skills.
-- **Join a Network**: Get to know a community of like-minded developers.
-- **Improve the Product**: Help us fill in the gaps, correct errors, or make complex topics easier to understand.
-
-Ready to contribute?
-
-- [Contributing Guidelines](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md)
-- [How to Contribute](https://github.com/expressots/expressots/blob/main/CONTRIBUTING_HOWTO.md)
+- [ExpressoTS Contributing Guidelines](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md)
 - [Coding Guidelines](https://github.com/rsaz/TypescriptCodingGuidelines)
 
 ## Support the project
 
-ExpressoTS is an independent open source project with ongoing development made possible thanks to your support. If you'd like to help, please consider:
+ExpressoTS is an independent open-source project. If this template helps you, please consider:
 
-- Become a **[sponsor on GitHub](https://github.com/sponsors/expressots)**
-- Follow the **[organization](https://github.com/expressots)** on GitHub and Star ⭐ the project
-- Subscribe to the Twitch channel: **[Richard Zampieri](https://www.twitch.tv/richardzampieri)**
-- Join our **[Discord](https://discord.com/invite/PyPJfGK)**
-- Contribute submitting **[issues and pull requests](https://github.com/expressots/expressots/issues)**
-- Share the project with your friends and colleagues
+- Sponsoring us on **[GitHub Sponsors](https://github.com/sponsors/expressots)**
+- Starring the **[organization repos](https://github.com/expressots)**
+- Joining our **[Discord](https://discord.com/invite/PyPJfGK)**
+- Contributing **[issues and pull requests](https://github.com/expressots/expressots/issues)**
+- Sharing the project with your team
 
 ## License
 
-Distributed under the MIT License. See [`LICENSE.txt`](https://github.com/expressots/expressots/blob/main/LICENSE) for more information.
+MIT — see [LICENSE](./LICENSE.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
-[codecov-url]: https://codecov.io/gh/expressots/expressots-project-template
-[codecov-shield]: https://img.shields.io/codecov/c/gh/expressots/expressots-project-template/main?style=for-the-badge&logo=codecov&labelColor=FB9AD1
 [npm-url]: https://www.npmjs.com/package/@expressots/expressots-project-template
 [npm-shield]: https://img.shields.io/npm/v/@expressots/expressots-project-template?style=for-the-badge&logo=npm&color=9B3922
-[build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/adapter-express/build.yaml?branch=main&style=for-the-badge&logo=github
-[contributors-shield]: https://img.shields.io/github/contributors/expressots/expressots-project-template?style=for-the-badge
-[contributors-url]: https://github.com/expressots/expressots-project-template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/expressots/expressots-project-template?style=for-the-badge
-[forks-url]: https://github.com/expressots/expressots-project-template/forks
-[stars-shield]: https://img.shields.io/github/stars/expressots/expressots-project-template?style=for-the-badge
-[stars-url]: https://github.com/expressots/expressots-project-template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/expressots/expressots-project-template?style=for-the-badge
-[issues-url]: https://github.com/expressots/expressots-project-template/issues
-[license-shield]: https://img.shields.io/github/license/expressots/expressots-project-template?style=for-the-badge
-[license-url]: https://github.com/expressots/expressots-project-template/blob/main/LICENSE
+[build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/templates/build.yaml?branch=main&style=for-the-badge&logo=github
+[contributors-shield]: https://img.shields.io/github/contributors/expressots/templates?style=for-the-badge
+[contributors-url]: https://github.com/expressots/templates/graphs/contributors
+[license-shield]: https://img.shields.io/github/license/expressots/templates?style=for-the-badge
+[license-url]: https://github.com/expressots/templates/blob/main/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/expresso-ts/
-[product-screenshot]: images/screenshot.png

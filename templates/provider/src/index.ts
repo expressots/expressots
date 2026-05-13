@@ -1,1 +1,1 @@
-//export * from "./your-provider";
+export * from "./greeter.provider";
