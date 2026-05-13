@@ -169,7 +169,11 @@ export type WSMessageType =
   | 'logs'
   | 'logs_cleared'
   | 'pong_studio'
-  | 'runtime';
+  | 'runtime'
+  | 'security'
+  | 'security_scan_state'
+  | 'fix_progress'
+  | 'fix_result';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
@@ -185,7 +189,8 @@ export type ViewMode =
   | 'replay'
   | 'api-client'
   | 'container'
-  | 'logs';
+  | 'logs'
+  | 'security';
 
 // ────────────────────────────────────────────────────────────────────────
 // DI Container introspection
@@ -299,4 +304,143 @@ export interface RuntimeItem {
   name: string;
   priority?: number;
   source?: string;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Security — supply-chain + runtime posture
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Browser-side mirror of `Severity` from the Studio Agent. See
+ * `packages/studio-agent/src/types/index.ts` for the canonical
+ * definition + the rationale around `INFO`.
+ */
+export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+
+/**
+ * Mirror of the agent's `Reachability` enum. Combines static (imports
+ * in `src/`) and runtime (recorded HTTP exchanges) signals to weight
+ * findings by actual exposure.
+ */
+export type Reachability = 'confirmed' | 'likely' | 'unreachable' | 'unknown';
+
+/** Reasoning + evidence for the `Reachability` label on a finding. */
+export interface ReachabilityInfo {
+  level: Reachability;
+  importedBy: string[];
+  routes: { method: string; path: string }[];
+  runtimeHits: number;
+  reason: string;
+}
+
+/** Concrete remediation a user can paste or one-click apply. */
+export interface FixSpec {
+  kind: 'install' | 'audit-fix' | 'audit-fix-force' | 'override' | 'none';
+  command: string;
+  breaking: boolean;
+  label: string;
+  note?: string;
+}
+
+/** Transitive root-cause analysis for a vulnerability. */
+export interface RootCause {
+  rootPackage: string;
+  rootInstalledVersion: string;
+  chain: string[];
+  isDirect: boolean;
+  rootFixedVersion?: string;
+}
+
+/** Single supply-chain vulnerability — output of npm audit + OSV reconciliation. */
+export interface DependencyFinding {
+  id: string;
+  package: string;
+  installedVersion: string;
+  fixedVersion?: string;
+  severity: Severity;
+  cvss?: number;
+  title: string;
+  summary: string;
+  references: string[];
+  /** Resolution chain from root dependency to the vulnerable package. */
+  path: string[];
+  fix?: FixSpec;
+  rootCause?: RootCause;
+  reachability?: ReachabilityInfo;
+}
+
+/**
+ * Collapsed group of findings that share a single fix command. The UI
+ * renders these as the headline "what to actually change" cards.
+ */
+export interface FixGroup {
+  id: string;
+  package: string;
+  fromVersion: string;
+  toVersion: string;
+  breaking: boolean;
+  severity: Severity;
+  findingIds: string[];
+  fix: FixSpec;
+  reachability?: Reachability;
+}
+
+/** Streaming line from an in-flight Apply-fix job. */
+export interface FixProgressMessage {
+  targetId: string;
+  stream: 'stdout' | 'stderr';
+  line: string;
+  timestamp: number;
+}
+
+/** Final outcome of an Apply-fix job. */
+export interface FixResultMessage {
+  targetId: string;
+  success: boolean;
+  exitCode: number | null;
+  durationMs: number;
+  command: string;
+  summary: string;
+  errorTail?: string;
+}
+
+/** Where a posture finding came from. Drives "Open evidence" deep-links. */
+export type PostureEvidence =
+  | { kind: 'exchange'; exchangeId: string }
+  | { kind: 'route'; method: string; path: string }
+  | { kind: 'log'; logIndex: number }
+  | { kind: 'file'; filePath: string; lineNumber?: number };
+
+/** Runtime posture finding produced by the agent's rule-based analyzer. */
+export interface PostureFinding {
+  id: string;
+  rule: string;
+  owasp?: string;
+  severity: Severity;
+  title: string;
+  description: string;
+  evidence: PostureEvidence;
+  fixHint?: string;
+}
+
+/** Top-level security report broadcast on the `security` WS message. */
+export interface SecurityReport {
+  generatedAt: number;
+  score: 'A' | 'B' | 'C' | 'D' | 'F';
+  counts: Record<Severity, number>;
+  dependencies: DependencyFinding[];
+  posture: PostureFinding[];
+  fixGroups: FixGroup[];
+  scanState: {
+    audit: 'idle' | 'running' | 'error';
+    postureLastRunAt: number;
+    auditError?: string;
+    missingLockfile?: boolean;
+    fix?: {
+      state: 'running' | 'success' | 'error';
+      targetId: string;
+      command: string;
+      error?: string;
+    };
+  };
 }

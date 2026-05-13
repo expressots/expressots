@@ -79,6 +79,8 @@ export function StatusDashboard() {
     recordingEnabled,
     agentLatencyMs,
     eventsReceived,
+    securityReport,
+    setCurrentView,
   } = useAppStore();
   const { requestRuntime, requestMetrics, rescan } = useSocket();
   const [drill, setDrill] = useState<DrillKey | null>(null);
@@ -274,8 +276,12 @@ export function StatusDashboard() {
           />
         </Card>
 
-        {/* Security & Scope — clickable */}
+        {/* Security & Scope — clickable, opens the Security view */}
         <Card icon={ShieldCheck} title="Security & Scope" accent="text-purple-400">
+          <SecurityScoreRow
+            report={securityReport}
+            onOpen={() => setCurrentView('security')}
+          />
           <ClickRow
             label="Interceptors"
             value={String(interceptors)}
@@ -293,11 +299,6 @@ export function StatusDashboard() {
             value={scopeSummary || '—'}
             mono
             valueClass="text-xs"
-          />
-          <Row
-            label="Cached"
-            value={String(containerSnapshot?.summary.cached ?? 0)}
-            mono
           />
         </Card>
 
@@ -774,6 +775,84 @@ function ConnectionPill({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="text-xs text-gray-500 italic">{children}</div>;
+}
+
+/**
+ * Compact security score row — letter grade plus the highest-severity
+ * counts that aren't zero. The whole row is a button that takes the
+ * user to the Security view, where the full report lives.
+ *
+ * Kept deliberately tight (single row of pills + grade) so the card
+ * still fits the four-row rhythm of the rest of the dashboard.
+ */
+function SecurityScoreRow({
+  report,
+  onOpen,
+}: {
+  report: import('../types').SecurityReport | null;
+  onOpen: () => void;
+}) {
+  // Decide the badge tone — green when we have no findings, yellow if
+  // we have data but the scan failed, red for grade F.
+  const grade = report?.score ?? 'A';
+  const tone =
+    grade === 'A'
+      ? 'bg-success-500/10 text-success-500 border-success-500/30'
+      : grade === 'B'
+        ? 'bg-primary-500/10 text-primary-400 border-primary-500/30'
+        : grade === 'C'
+          ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+          : grade === 'D'
+            ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+            : 'bg-red-500/10 text-red-400 border-red-500/30';
+
+  const counts = report?.counts;
+  const summaryParts: string[] = [];
+  if (counts) {
+    if (counts.CRITICAL) summaryParts.push(`${counts.CRITICAL} critical`);
+    if (counts.HIGH) summaryParts.push(`${counts.HIGH} high`);
+    if (counts.MEDIUM) summaryParts.push(`${counts.MEDIUM} med`);
+  }
+  const summary = summaryParts.join(' · ') || 'no findings';
+
+  return (
+    <button
+      onClick={onOpen}
+      className="w-full -mx-2 px-2 py-1.5 rounded border border-transparent hover:bg-gray-800/60 transition-colors text-left"
+      title="Open the Security view"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] uppercase tracking-wide text-gray-500">
+          Score
+        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs text-gray-400 font-mono truncate" title={summary}>
+            {summary}
+          </span>
+          <span
+            className={cn(
+              'inline-flex items-center justify-center w-7 h-7 rounded-md border text-sm font-bold',
+              tone,
+            )}
+            aria-label={`Security grade: ${grade}`}
+          >
+            {grade}
+          </span>
+        </div>
+      </div>
+      {report?.scanState.audit === 'running' && (
+        <div className="text-[10px] text-gray-500 mt-1 italic">Scanning…</div>
+      )}
+      {report?.scanState.audit === 'error' && (
+        <div className="text-[10px] text-red-400/80 mt-1 truncate">
+          {report.scanState.auditError ?? 'Scan failed'}
+        </div>
+      )}
+      {report?.scanState.missingLockfile && (
+        <div className="text-[10px] text-gray-500 mt-1 italic">No lockfile</div>
+      )}
+    </button>
+  );
 }
 
 /** Pretty-print uptime — picks the most granular unit that still fits in two parts. */

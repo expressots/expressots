@@ -213,7 +213,11 @@ export type WSMessageType =
   | 'stats'
   | 'endpoint_stats'
   | 'cleared'
-  | 'runtime';
+  | 'runtime'
+  | 'security'
+  | 'security_scan_state'
+  | 'fix_progress'
+  | 'fix_result';
 
 /** WebSocket message structure */
 export interface WSMessage<T = unknown> {
@@ -348,4 +352,291 @@ export interface RuntimeInfo {
   runtimeItems?: RuntimeItems;
   /** Whether request/response recording is currently enabled. */
   recordingEnabled: boolean;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Security — supply-chain + runtime posture
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Severity classes used across both supply-chain (CVE) and runtime
+ * posture findings. Mirrors the npm-audit / OSV / CVSS vocabulary, plus
+ * an `INFO` bucket for advisory-grade hints (e.g. heuristic secret
+ * detections) that aren't strictly vulnerabilities.
+ */
+export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+
+/**
+ * How likely is it that the vulnerable code is actually executed in the
+ * running app? Computed from imports in `src/`, the DI/route graph, and
+ * recorded HTTP exchanges. Drives risk-weighted prioritisation: a
+ * `confirmed` MEDIUM finding usually deserves attention before an
+ * `unreachable` CRITICAL one.
+ */
+export type Reachability = 'confirmed' | 'likely' | 'unreachable' | 'unknown';
+
+/** Why a finding got the reachability label it did, plus the evidence trail. */
+export interface ReachabilityInfo {
+  level: Reachability;
+  /** Files under `src/` that import (or `require`) the vulnerable package. */
+  importedBy: string[];
+  /**
+   * Routes whose controller (or transitively a service it depends on)
+   * imports the vulnerable package. Drives the "exercised X times in
+   * the last Y exchanges" chip in the UI.
+   */
+  routes: { method: string; path: string }[];
+  /** How many recorded exchanges hit one of `routes`. */
+  runtimeHits: number;
+  /** Short human reason — feeds the tooltip on the reachability chip. */
+  reason: string;
+}
+
+/**
+ * Concrete, runnable remediation for a finding. The agent computes this
+ * server-side so the UI never has to assemble shell commands. Two flavours:
+ *
+ *   - `install`  → `npm install <pkg>@<ver>` (direct dep, exact target).
+ *   - `audit-fix` → `npm audit fix` (npm can resolve a non-major upgrade).
+ *   - `audit-fix-force` → `npm audit fix --force` (semver-major; warn).
+ *   - `override` → user has to edit `package.json` `overrides` themselves.
+ *   - `none` → no upstream fix exists yet; advisory-only.
+ */
+export interface FixSpec {
+  kind: 'install' | 'audit-fix' | 'audit-fix-force' | 'override' | 'none';
+  /** Verbatim command the agent will run if "Apply fix" is clicked. */
+  command: string;
+  /** True when the upgrade crosses a semver-major boundary on the root. */
+  breaking: boolean;
+  /** Short button label, e.g. "Upgrade lodash 4.17.10 → 4.17.21". */
+  label: string;
+  /** Optional human note (e.g. "requires `npm audit fix --force`"). */
+  note?: string;
+}
+
+/**
+ * For transitive vulnerabilities, the *real* package the user needs to
+ * upgrade to fix the issue. npm audit's stock output buries this — we
+ * reconstruct it from the lockfile so the UI can show
+ * "Vulnerable lodash@4.17.10 reached via express-session → fix by
+ *  upgrading express-session 1.17.0 → 1.17.3".
+ */
+export interface RootCause {
+  /** Top-level package (direct dep) the user actually owns. */
+  rootPackage: string;
+  /** Version currently installed for the root. */
+  rootInstalledVersion: string;
+  /** Shortest path through node_modules from root → vulnerable pkg. */
+  chain: string[];
+  /** True when the vulnerable package *is* the root (direct dep). */
+  isDirect: boolean;
+  /**
+   * Optional version of the root that ships a fixed transitive. Set when
+   * npm audit / OSV can tell us; absent means user has to bump manually
+   * or wait for upstream.
+   */
+  rootFixedVersion?: string;
+}
+
+/**
+ * A single supply-chain vulnerability finding. Produced by reconciling
+ * `npm audit --json` output with the OSV.dev advisory database — the
+ * agent dedupes by `id` (CVE / GHSA) across both sources, then enriches
+ * each finding with a concrete `fix`, the transitive `rootCause`, and a
+ * runtime `reachability` assessment.
+ */
+export interface DependencyFinding {
+  /** Canonical advisory id (CVE-… or GHSA-…). Stable across rescans. */
+  id: string;
+  /** npm package name. */
+  package: string;
+  /** Version currently installed in the host's lockfile. */
+  installedVersion: string;
+  /** Minimum version that includes the fix, when known. */
+  fixedVersion?: string;
+  severity: Severity;
+  /** CVSS v3.x base score, when published. */
+  cvss?: number;
+  title: string;
+  summary: string;
+  /** External links (advisory pages, blog posts, commits). */
+  references: string[];
+  /**
+   * Transitive resolution chain from a root dependency to the vulnerable
+   * package. First entry is the root, last entry is the vulnerable
+   * package itself. Empty when the agent can't resolve a path.
+   */
+  path: string[];
+  /**
+   * Concrete remediation. Always populated, even if `kind: 'none'` — UI
+   * can branch on `kind` instead of doing existence checks.
+   */
+  fix?: FixSpec;
+  /**
+   * Root-cause analysis for transitive vulnerabilities. Absent when the
+   * finding *is* a direct dependency (in which case `fix` already targets
+   * the right package).
+   */
+  rootCause?: RootCause;
+  /** Runtime reachability assessment. Studio's unique contribution. */
+  reachability?: ReachabilityInfo;
+}
+
+/**
+ * A grouping of findings that all share a single fix command.
+ *
+ * Most real-world `npm audit` reports list one upgrade resolving many
+ * advisories (a single lodash bump kills four CVEs). Grouping flips the
+ * UI from "look at every advisory" to "make this one change to fix N
+ * issues" — same data, dramatically less noise.
+ */
+export interface FixGroup {
+  /** Stable id (hash of package@version + finding ids). */
+  id: string;
+  /** Package being upgraded (typically a direct dep / root cause). */
+  package: string;
+  /** Current installed version of that package. */
+  fromVersion: string;
+  /** Target version that fixes every finding in this group. */
+  toVersion: string;
+  /** True when this is a semver-major upgrade. */
+  breaking: boolean;
+  /** Top severity across the findings in the group. */
+  severity: Severity;
+  /** IDs of every finding this group resolves (look up in `dependencies`). */
+  findingIds: string[];
+  /** The actual fix command — same shape as `DependencyFinding.fix`. */
+  fix: FixSpec;
+  /** "confirmed" if any member finding is confirmed-reachable. */
+  reachability?: Reachability;
+}
+
+/**
+ * Where a posture finding came from. Each kind gives the UI just enough
+ * context to deep-link the user to the offending route / exchange / log
+ * / file so they can fix the issue without leaving Studio.
+ */
+export type PostureEvidence =
+  | { kind: 'exchange'; exchangeId: string }
+  | { kind: 'route'; method: string; path: string }
+  | { kind: 'log'; logIndex: number }
+  | { kind: 'file'; filePath: string; lineNumber?: number };
+
+/**
+ * A runtime posture finding — a check that the posture analyzer
+ * performed over the agent's in-memory exchanges/routes/structure/logs
+ * and flagged as risky.
+ *
+ * Distinct from `DependencyFinding` (which is supply-chain only). The
+ * runtime posture is Studio's unique contribution: Snyk-style scanners
+ * never see the running app.
+ */
+export interface PostureFinding {
+  /** Stable hash so the UI can dedupe across re-runs of the analyzer. */
+  id: string;
+  /**
+   * Slug identifying the check that produced this finding
+   * (e.g. `missing-csp`, `permissive-cors`, `verbose-error`).
+   */
+  rule: string;
+  /** OWASP API Security Top 10 category (e.g. `API1:2023`), when applicable. */
+  owasp?: string;
+  severity: Severity;
+  /** Short, user-facing one-liner. */
+  title: string;
+  /** Longer explanation — used as the body of the finding card. */
+  description: string;
+  /** Where to look to verify the finding (deep-link target). */
+  evidence: PostureEvidence;
+  /** Suggested remediation, when we can be concrete. */
+  fixHint?: string;
+}
+
+/**
+ * The whole security view, debounced and broadcast as one envelope so
+ * the UI can render with a single state transition. Includes both
+ * supply-chain CVEs and runtime posture findings, plus an aggregate
+ * letter grade and a `scanState` describing the current scan lifecycle.
+ */
+export interface SecurityReport {
+  /** When the agent finished assembling this report (ms epoch). */
+  generatedAt: number;
+  /** Aggregate posture score. F = critical issues; A = no findings. */
+  score: 'A' | 'B' | 'C' | 'D' | 'F';
+  /** Counts by severity across both dependencies and posture. */
+  counts: Record<Severity, number>;
+  dependencies: DependencyFinding[];
+  posture: PostureFinding[];
+  /**
+   * Findings grouped by their shared fix command. A single upgrade can
+   * resolve many advisories — surfacing those groups lets users act on
+   * the *change*, not on every individual CVE.
+   */
+  fixGroups: FixGroup[];
+  /**
+   * Lifecycle of the on-demand scan. Use this to drive UI affordances
+   * (spinner, error banner) instead of inferring from finding counts.
+   */
+  scanState: {
+    audit: 'idle' | 'running' | 'error';
+    /** When the posture analyzer last produced findings. 0 = never. */
+    postureLastRunAt: number;
+    /** Short reason when `audit === 'error'`. Surfaced to the user. */
+    auditError?: string;
+    /**
+     * True when the host project has no `package-lock.json`, so `npm
+     * audit` is skipped entirely. The UI should show an empty state
+     * with instructions, not "no vulnerabilities".
+     */
+    missingLockfile?: boolean;
+    /**
+     * Lifecycle of the currently-running "Apply fix" job, if any. The
+     * agent streams `fix_progress` messages while this is `running`.
+     */
+    fix?: {
+      state: 'running' | 'success' | 'error';
+      /** The `FixGroup.id` or `DependencyFinding.id` being applied. */
+      targetId: string;
+      /** Concrete command being executed. */
+      command: string;
+      /** Short error reason when `state === 'error'`. */
+      error?: string;
+    };
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Apply-fix workflow — WS payloads
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Streaming line from an in-flight `apply_security_fix` job. The UI
+ * appends these to a terminal-style transcript so users can watch
+ * `npm install` progress live without leaving Studio.
+ */
+export interface FixProgressMessage {
+  /** Matches the `FixGroup.id` / `DependencyFinding.id` that was clicked. */
+  targetId: string;
+  stream: 'stdout' | 'stderr';
+  line: string;
+  /** Wall-clock at which the agent observed this line. */
+  timestamp: number;
+}
+
+/**
+ * Final outcome of an `apply_security_fix` job. After this fires the
+ * agent always re-runs `npm audit` + OSV; the resulting `security`
+ * frame is the user's "did it actually work?" confirmation.
+ */
+export interface FixResultMessage {
+  targetId: string;
+  success: boolean;
+  exitCode: number | null;
+  durationMs: number;
+  /** Final command that ran (echoed for the transcript footer). */
+  command: string;
+  /** Short message for the toast — "Upgrade succeeded" / "npm install failed". */
+  summary: string;
+  /** Captured stderr tail when `success === false` (truncated to 4 KB). */
+  errorTail?: string;
 }

@@ -18,6 +18,9 @@ import type {
   ContainerResolutions,
   LogEntry,
   RuntimeInfo,
+  SecurityReport,
+  FixProgressMessage,
+  FixResultMessage,
 } from '../types';
 
 interface SocketContextValue {
@@ -38,6 +41,22 @@ interface SocketContextValue {
   requestLogs: () => void;
   clearLogs: () => void;
   requestRuntime: () => void;
+  /** Re-run the supply-chain scan (`npm audit` + OSV) on the agent. */
+  requestSecurityScan: () => void;
+  /** Ask the agent to (re)broadcast its current cached security report. */
+  requestSecurityReport: () => void;
+  /**
+   * Ask the agent to spawn an Apply-fix run for either a single finding
+   * (`targetKind: 'finding'`) or a fix group (`targetKind: 'fix-group'`).
+   * Progress streams over `fix_progress`; the final state arrives via
+   * `fix_result` and the engine triggers a full rescan automatically.
+   */
+  applyFix: (input: {
+    targetKind: 'finding' | 'fix-group';
+    targetId: string;
+    command: string;
+    allowMajor?: boolean;
+  }) => void;
 }
 
 const SocketContext = createContext<SocketContextValue | null>(null);
@@ -66,6 +85,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setAgentLatency,
     incrementEventCount,
     setRuntime,
+    setSecurityReport,
+    startFixRun,
+    appendFixProgress,
+    completeFixRun,
   } = useAppStore();
 
   // Handle incoming messages
@@ -157,12 +180,26 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'runtime':
         setRuntime(message.data as RuntimeInfo);
         break;
+      case 'security':
+        setSecurityReport(message.data as SecurityReport);
+        break;
+      case 'security_scan_state':
+        // Scan-state-only updates are folded into the report broadcast
+        // upstream; we keep the case to avoid the "unknown event"
+        // fallthrough warning surfacing for future agent versions.
+        break;
+      case 'fix_progress':
+        appendFixProgress(message.data as FixProgressMessage);
+        break;
+      case 'fix_result':
+        completeFixRun(message.data as FixResultMessage);
+        break;
       default:
         // Unknown event — ignored silently (a noisy `console.log` here
         // would echo back through the agent's own log capture).
         break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, appendFixProgress, completeFixRun]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -191,6 +228,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_container');
       socket.emit('get_logs');
       socket.emit('get_runtime');
+      socket.emit('get_security_report');
 
       // Kick off an immediate ping then settle into a 5s cadence.
       const sendPing = () => socket.emit('ping_studio', { sentAt: Date.now() });
@@ -253,6 +291,26 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     requestLogs: useCallback(() => emit('get_logs'), [emit]),
     clearLogs: useCallback(() => emit('clear_logs'), [emit]),
     requestRuntime: useCallback(() => emit('get_runtime'), [emit]),
+    requestSecurityScan: useCallback(() => emit('request_security_scan'), [emit]),
+    requestSecurityReport: useCallback(() => emit('get_security_report'), [emit]),
+    applyFix: useCallback(
+      (input: {
+        targetKind: 'finding' | 'fix-group';
+        targetId: string;
+        command: string;
+        allowMajor?: boolean;
+      }) => {
+        // Seed the local transcript before the agent sends its first
+        // line so the UI flips into the "running" banner immediately.
+        startFixRun(input.targetId, input.command);
+        emit('apply_security_fix', {
+          targetKind: input.targetKind,
+          targetId: input.targetId,
+          allowMajor: Boolean(input.allowMajor),
+        });
+      },
+      [emit, startFixRun],
+    ),
   };
 
   return (

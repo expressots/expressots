@@ -16,4 +16,21 @@ export {
   type BindingEdge,
 } from './introspection/container-introspector.js';
 export { LogCapture, type LogEntry, type LogLevel } from './logging/log-capture.js';
+export {
+  SecurityEngine,
+  OsvCache,
+  OsvClient,
+  runNpmAudit,
+  analyzePosture,
+  buildSecurityReport,
+  hashFindingIds,
+  emptyReport,
+  LockfileGraph,
+  enrichFindingsWithFixes,
+  buildFixGroups,
+  buildReachabilitySnapshot,
+  enrichWithReachability,
+  runFix,
+  buildFixArgs,
+} from './security/index.js';
 export * from './types/index.js';

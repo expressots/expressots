@@ -18,6 +18,7 @@ import {
   ContainerInspector,
   LogsView,
   StatusDashboard,
+  SecurityView,
 } from './components';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
 
@@ -64,6 +65,8 @@ function AppContent() {
         return <ContainerInspector />;
       case 'logs':
         return <LogsView />;
+      case 'security':
+        return <SecurityView />;
       default:
         return <RequestList />;
     }

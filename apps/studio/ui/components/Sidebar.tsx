@@ -15,6 +15,7 @@ import {
   Boxes,
   Terminal,
   LayoutDashboard,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { id: 'architecture', label: 'Architecture', icon: GitBranch },
   { id: 'metrics', label: 'Metrics', icon: BarChart3 },
   { id: 'replay', label: 'Replay', icon: Play },
+  { id: 'security', label: 'Security', icon: ShieldCheck },
 ];
 
 export function Sidebar() {

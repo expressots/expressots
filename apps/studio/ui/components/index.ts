@@ -17,3 +17,4 @@ export { ShortcutsOverlay } from './ShortcutsOverlay';
 export { ReplayDiff } from './ReplayDiff';
 export { HealthFooter } from './HealthFooter';
 export { StatusDashboard } from './StatusDashboard';
+export { SecurityView } from './SecurityView';

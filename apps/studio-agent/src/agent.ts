@@ -18,6 +18,7 @@ import {
   type ContainerSnapshot,
 } from './introspection/container-introspector.js';
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
+import { SecurityEngine } from './security/index.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -103,6 +104,7 @@ export class StudioAgent {
   private introspector: ContainerIntrospector | null = null;
   private containerSnapshot: ContainerSnapshot | null = null;
   private logCapture: LogCapture;
+  private securityEngine: SecurityEngine | null = null;
   private io: SocketIOServer | null = null;
   private httpServer: HttpServer | null = null;
   private routes: RouteInfo[] = [];
@@ -196,9 +198,50 @@ export class StudioAgent {
     // last so the agent's own startup logs ("Studio Agent listening on …")
     // still go through unmodified.
     this.logCapture.install();
-    this.logCapture.onLog((entry) => this.broadcast('log', entry));
+    this.logCapture.onLog((entry) => {
+      this.broadcast('log', entry);
+      // Each new log line is a potential signal for the posture
+      // analyzer (e.g. it may reveal a leaked secret). Cheap to
+      // debounce; the engine collapses bursts.
+      this.securityEngine?.scheduleRefresh();
+    });
+
+    this.startSecurityEngine();
 
     this.isRunning = true;
+  }
+
+  /**
+   * Stand up the SecurityEngine and kick off the first scan. The
+   * engine reuses the existing Socket.IO server — every transition in
+   * its report goes out as a `WSMessage<'security'>` envelope, gated
+   * on at least one connected client.
+   */
+  private startSecurityEngine(): void {
+    this.securityEngine = new SecurityEngine({
+      cwd: process.cwd(),
+      dbPath: this.config.dbPath,
+      getRoutes: () => this.routes,
+      getStructure: () => this.appStructure,
+      getExchanges: () =>
+        this.config.enableRecording
+          ? this.recorder.getRecentExchanges(this.config.maxRecordedExchanges, 0)
+          : [],
+      getLogs: () => this.logCapture.getBuffer(),
+    });
+
+    this.securityEngine.onReport((report) => {
+      // Gate on clientsCount > 0 — no point queueing 100 KB frames
+      // against a backgrounded tab. The next reconnecting client gets
+      // the latest report from the initial-data replay anyway.
+      if (!this.io || this.io.engine.clientsCount === 0) return;
+      this.broadcast('security', report);
+    });
+
+    // Kick off the first full scan in the background — never blocks
+    // start(). Failures are absorbed by the engine and surface in
+    // `scanState.audit === 'error'`.
+    void this.securityEngine.runFullScan();
   }
 
   /** Get the captured container snapshot (or null if unavailable). */
@@ -229,6 +272,11 @@ export class StudioAgent {
 
     // Restore original console.* so the host process logs untouched.
     this.logCapture.uninstall();
+
+    if (this.securityEngine) {
+      this.securityEngine.stop();
+      this.securityEngine = null;
+    }
   }
 
   /**
@@ -531,6 +579,17 @@ export class StudioAgent {
         });
       }
 
+      // Replay the latest security report so the Security view doesn't
+      // sit empty until the next analyzer tick. The engine always has
+      // a report (it initialises to an empty A-grade one).
+      if (this.securityEngine) {
+        socket.emit('message', {
+          type: 'security',
+          timestamp: Date.now(),
+          data: this.securityEngine.getReport(),
+        });
+      }
+
       // Handle client requests
       socket.on('get_routes', () => {
         socket.emit('message', this.createMessage('routes', this.routes));
@@ -666,6 +725,61 @@ export class StudioAgent {
           data: this.containerSnapshot,
         });
       });
+
+      // Push the latest cached report on demand. Useful when the UI
+      // explicitly navigates to the Security view and wants a fresh
+      // copy even if nothing has changed.
+      socket.on('get_security_report', () => {
+        if (!this.securityEngine) return;
+        socket.emit('message', {
+          type: 'security',
+          timestamp: Date.now(),
+          data: this.securityEngine.getReport(),
+        });
+      });
+
+      // User-initiated rescan: re-run `npm audit` + OSV. The engine
+      // coalesces concurrent calls, so spamming this button is safe.
+      socket.on('request_security_scan', () => {
+        if (!this.securityEngine) return;
+        void this.securityEngine.runFullScan();
+      });
+
+      // User clicked "Apply fix" on a finding or fix group. The engine
+      // spawns the npm command and streams each output line through
+      // `fix_progress` so the UI can render a live transcript. When the
+      // command exits the agent emits a single `fix_result`; the engine
+      // also kicks off a full rescan, so the next `security` frame
+      // reflects whatever actually changed.
+      socket.on(
+        'apply_security_fix',
+        async (params: {
+          targetKind?: 'finding' | 'fix-group';
+          targetId?: string;
+          allowMajor?: boolean;
+        }) => {
+          if (!this.securityEngine) return;
+          if (
+            !params ||
+            (params.targetKind !== 'finding' && params.targetKind !== 'fix-group') ||
+            typeof params.targetId !== 'string' ||
+            params.targetId.length === 0
+          ) {
+            return;
+          }
+          const result = await this.securityEngine.applyFix(
+            {
+              targetKind: params.targetKind,
+              targetId: params.targetId,
+              allowMajor: Boolean(params.allowMajor),
+            },
+            (msg) => {
+              this.broadcast('fix_progress', msg);
+            },
+          );
+          this.broadcast('fix_result', result);
+        },
+      );
 
       socket.on('disconnect', () => {
         this.metrics.activeConnections--;
@@ -1081,6 +1195,11 @@ export class StudioAgent {
           // Broadcast updated metrics immediately for real-time updates
           this.broadcast('metrics', this.getMetrics());
           this.broadcast('endpoint_stats', this.getEndpointStats());
+
+          // New exchange = potential signal for the posture analyzer
+          // (new route, new header pattern, error leakage, …). Cheap
+          // to debounce; the engine collapses bursts.
+          this.securityEngine?.scheduleRefresh();
         } catch (error) {
           console.error('[Studio] Error in middleware:', error);
         }

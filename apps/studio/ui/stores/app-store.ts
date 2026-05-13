@@ -17,7 +17,23 @@ import type {
   LogEntry,
   LogLevel,
   RuntimeInfo,
+  SecurityReport,
+  FixProgressMessage,
+  FixResultMessage,
 } from '../types';
+
+/**
+ * Live transcript for an in-flight Apply-fix job. Lines accumulate as
+ * the agent streams `fix_progress` frames; once `result` lands the
+ * banner switches into final state and the rescan kicks in.
+ */
+export interface FixRunState {
+  targetId: string;
+  command: string;
+  startedAt: number;
+  lines: { stream: 'stdout' | 'stderr'; text: string; timestamp: number }[];
+  result?: FixResultMessage;
+}
 
 import { useSettings } from './settings-store';
 
@@ -46,6 +62,16 @@ interface AppState {
   containerResolutionsByExchange: Record<string, string[]>;
   /** Runtime / app boot info for the Status dashboard. */
   runtime: RuntimeInfo | null;
+  /**
+   * Latest security report from the agent (supply-chain + runtime
+   * posture). `null` until the first `security` WS message arrives.
+   */
+  securityReport: SecurityReport | null;
+  /**
+   * Live transcript of the currently-running (or just-finished)
+   * Apply-fix job. Cleared on next user-initiated run.
+   */
+  fixRun: FixRunState | null;
   /** Live console.* stream from the host app (latest first). */
   logs: LogEntry[];
   /** Logs grouped by traceId, so TraceDetail can show "logs for this request". */
@@ -87,6 +113,11 @@ interface AppState {
   setContainerSnapshot: (snapshot: ContainerSnapshot | null) => void;
   setContainerResolutions: (entry: ContainerResolutions) => void;
   setRuntime: (runtime: RuntimeInfo) => void;
+  setSecurityReport: (report: SecurityReport) => void;
+  startFixRun: (targetId: string, command: string) => void;
+  appendFixProgress: (msg: FixProgressMessage) => void;
+  completeFixRun: (msg: FixResultMessage) => void;
+  clearFixRun: () => void;
   addLog: (entry: LogEntry) => void;
   setLogs: (entries: LogEntry[]) => void;
   clearLogs: () => void;
@@ -124,6 +155,8 @@ function buildInitialState() {
     containerSnapshot: null,
     containerResolutionsByExchange: {},
     runtime: null,
+    securityReport: null,
+    fixRun: null,
     logs: [],
     logsByTraceId: {},
     logLevelFilter: new Set<LogLevel>(s.defaultLogLevels),
@@ -182,6 +215,51 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   setRuntime: (runtime) => set({ runtime }),
+
+  setSecurityReport: (securityReport) => set({ securityReport }),
+
+  startFixRun: (targetId, command) =>
+    set({
+      fixRun: {
+        targetId,
+        command,
+        startedAt: Date.now(),
+        lines: [],
+        result: undefined,
+      },
+    }),
+
+  appendFixProgress: (msg) =>
+    set((state) => {
+      // Drop progress for stale targets (a previous run that's still
+      // draining after the user kicked off a new one).
+      if (!state.fixRun || state.fixRun.targetId !== msg.targetId) {
+        return {};
+      }
+      // Cap the transcript so a runaway `npm install` can't grow the
+      // store unbounded. The agent already truncates on its side, but
+      // belt-and-braces.
+      const next = [
+        ...state.fixRun.lines,
+        { stream: msg.stream, text: msg.line, timestamp: msg.timestamp },
+      ];
+      const trimmed = next.length > 2000 ? next.slice(-2000) : next;
+      return {
+        fixRun: { ...state.fixRun, lines: trimmed },
+      };
+    }),
+
+  completeFixRun: (msg) =>
+    set((state) => {
+      if (!state.fixRun || state.fixRun.targetId !== msg.targetId) {
+        return {};
+      }
+      return {
+        fixRun: { ...state.fixRun, result: msg },
+      };
+    }),
+
+  clearFixRun: () => set({ fixRun: null }),
 
   addLog: (entry) =>
     set((state) => {
