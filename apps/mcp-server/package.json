@@ -1,9 +1,8 @@
 {
   "name": "@expressots/mcp-server",
-  "version": "4.0.0-preview.1",
+  "version": "4.0.0",
   "publishConfig": {
-    "access": "public",
-    "tag": "preview"
+    "access": "public"
   },
   "description": "MCP Server for ExpressoTS Studio - AI-powered code generation and optimization tools",
   "main": "dist/index.js",

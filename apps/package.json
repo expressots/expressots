@@ -1,6 +1,6 @@
 {
   "name": "@expressots/studio-monorepo",
-  "version": "4.0.0-preview.1",
+  "version": "4.0.0",
   "private": true,
   "description": "ExpressoTS Studio - Developer Experience Platform",
   "author": "Richard Zampieri",
