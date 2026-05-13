@@ -1,86 +1,44 @@
-# ExpressoTS Templates Repository
+<div align="center">
+  <a href="https://expresso-ts.com">
+    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+  </a>
 
-Community-maintained templates and pricing data for the [ExpressoTS CLI](https://github.com/expressots/expressots-cli).
+  <h1>@expressots/templates</h1>
 
-## What's This?
+  <p>Community-maintained templates for CI/CD, Docker, Kubernetes, and cloud migrations — consumed by the ExpressoTS CLI.</p>
 
-This repository contains all the templates used by ExpressoTS CLI to generate:
-- **CI/CD Pipelines** (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.)
-- **Docker Configurations** (Dockerfiles, docker-compose)
-- **Kubernetes Manifests** (deployments, services, ingress)
-- **Migration Guides** (Heroku → Railway/Render/Fly, Compose → K8s)
-- **Cloud Provider Pricing** (for cost estimation)
+  <p>
+    <a href="https://www.npmjs.com/package/@expressots/templates"><img src="https://img.shields.io/npm/v/@expressots/templates?style=flat&color=0d0d0d" alt="npm"></a>
+    <a href="https://github.com/expressots/templates/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/templates?style=flat&color=0d0d0d" alt="License"></a>
+    <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-0d0d0d?logo=discord&logoColor=white" alt="Discord"></a>
+  </p>
 
-## Why a Separate Repository?
+  <p>
+    <a href="https://doc.expresso-ts.com">Documentation</a> ·
+    <a href="https://doc.expresso-ts.com/docs/cli/overview">CLI Reference</a> ·
+    <a href="https://discord.com/invite/PyPJfGK">Community</a>
+  </p>
+</div>
 
-**Fast Updates:** Templates can be updated without releasing a new CLI version. Users get updates within 24 hours.
+---
 
-**Community Contributions:** Anyone can contribute templates or update pricing - no CLI expertise needed.
+## What This Repo Does
 
-**Offline Support:** CLI has embedded fallbacks, so it works without internet.
+This repository holds every template the ExpressoTS CLI uses to generate CI/CD pipelines (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.), Docker configurations, Kubernetes manifests, and cloud migration guides. Templates are versioned independently from the CLI so updates ship without a new CLI release.
 
-**Version Control:** Templates are versioned independently from the CLI.
-
-## Repository Structure
-
-```
-cli-templates/
-├── manifest.json              # Template registry with versions
-├── pricing.json               # Cloud provider pricing data
-├── README.md                  # This file
-├── cicd/                      # CI/CD pipeline templates
-│   ├── github/
-│   │   ├── basic.yml
-│   │   ├── comprehensive.yml
-│   │   └── security-focused.yml
-│   ├── gitlab/
-│   ├── circleci/
-│   ├── jenkins/
-│   ├── bitbucket/
-│   └── azure/
-├── docker/                    # Docker templates
-│   ├── Dockerfile.production.tpl
-│   ├── Dockerfile.development.tpl
-│   ├── docker-compose.yml.tpl
-│   └── docker-compose.development.yml.tpl
-├── kubernetes/                # Kubernetes manifest templates
-│   ├── deployment.yml.tpl
-│   ├── service.yml.tpl
-│   ├── configmap.yml.tpl
-│   └── ingress.yml.tpl
-└── migrations/                # Migration templates
-    ├── heroku-to-railway/
-    ├── heroku-to-render/
-    ├── heroku-to-fly/
-    └── compose-to-kubernetes/
-```
-
-## How to Use
-
-### For Users
-
-Users don't need to interact with this repository directly. The ExpressoTS CLI automatically fetches templates:
+Users don't interact with this repo directly — the CLI fetches templates automatically:
 
 ```bash
-# List available templates
 expressots templates list
-
-# Update to latest versions
 expressots templates update
-
-# Generate CI/CD pipeline
 expressots cicd generate github --strategy comprehensive
 ```
 
-### For Contributors
-
-Want to improve templates or update pricing? See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed instructions.
-
-**Quick start:**
+## For Contributors
 
 1. Fork this repository
-2. Edit a template file (e.g., `cicd/github/basic.yml`)
-3. Update `manifest.json` with new version
+2. Edit or add a template under the appropriate directory
+3. Update `manifest.json` with the new version
 4. Test locally:
    ```bash
    expressots templates repo set YOUR_USERNAME/templates
@@ -89,123 +47,30 @@ Want to improve templates or update pricing? See [CONTRIBUTING.md](./CONTRIBUTIN
    ```
 5. Submit a pull request
 
-### For Organizations
-
-Use custom templates for your organization:
+## For Organizations
 
 ```bash
-# Fork this repo, customize, then:
+# Point the CLI at your own fork
 expressots templates repo set mycompany/expressots-templates
 
 # Team members automatically get company templates
 expressots cicd generate github
 ```
 
-## Template Syntax
+## Documentation
 
-Templates use Mustache-like syntax:
-
-```yaml
-name: {{projectName}}
-
-{{#includeSecurity}}
-security:
-  scan: enabled
-{{/includeSecurity}}
-
-{{^isProduction}}
-dev-tools:
-  - nodemon
-{{/isProduction}}
-```
-
-**Supported:**
-- Variables: `{{name}}`
-- Conditionals: `{{#cond}}...{{/cond}}`
-- Negative conditionals: `{{^cond}}...{{/cond}}`
-- Loops: `{{#each items}}...{{/each}}`
+For the full template syntax, directory structure, and contribution guide visit **[doc.expresso-ts.com](https://doc.expresso-ts.com)**.
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
-- How to add new templates
-- How to update pricing data
-- Testing guidelines
-- Review process
-- Best practices
-
-**Common contributions:**
-- Add new CI/CD strategies
-- Update cloud provider pricing
-- Improve security scanning
-- Add new platform support
-- Fix bugs in templates
-
-## Pricing Data
-
-Cloud provider pricing is stored in `cli-templates/pricing.json` and used by the CLI's cost estimation features.
-
-**Updating pricing:**
-
-1. Visit official pricing pages (links in `pricing.json`)
-2. Update prices for a provider
-3. Update `lastVerified` date
-4. Submit PR with source URLs
-
-**Example:**
-```json
-{
-  "providers": {
-    "aws": {
-      "cpuPerHour": 0.04048,
-      "source": "https://aws.amazon.com/fargate/pricing/",
-      "lastVerified": "2026-01-15"
-    }
-  }
-}
-```
-
-## Versioning
-
-### Template Versions
-
-Each template has its own version:
-- **Patch (1.0.1):** Bug fixes, typos
-- **Minor (1.1.0):** New features, backward compatible
-- **Major (2.0.0):** Breaking changes
-
-### Manifest Version
-
-The manifest version tracks overall structure changes:
-```json
-{
-  "version": "1.0.0",
-  "updated": "2026-01-07T00:00:00Z"
-}
-```
-
-## Release Process
-
-1. PRs merged to `main` branch
-2. CI validates manifest and templates
-3. Changes immediately available to CLI users
-4. Users' local cache updates within 24 hours
-5. Or manually: `expressots templates update`
+See the [Contributing Guide](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md) for how to get involved.
 
 ## Support
 
-- **Documentation:** https://expresso-ts.com/docs/cli/templates
-- **Issues:** https://github.com/expressots/expressots-cli/issues
-- **Discord:** https://discord.gg/expressots
+- [GitHub Sponsors](https://github.com/sponsors/expressots)
+- [Discord](https://discord.com/invite/PyPJfGK)
+- [Report an Issue](https://github.com/expressots/expressots-cli/issues)
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details.
-
-## Acknowledgments
-
-This repository is maintained by the ExpressoTS community. Special thanks to all contributors who help keep templates and pricing data up-to-date!
-
----
-
-**Built with ❤️ by the ExpressoTS community**
+MIT — see [LICENSE](./LICENSE.md).
