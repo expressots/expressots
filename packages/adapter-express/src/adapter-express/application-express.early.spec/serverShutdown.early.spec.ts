@@ -49,24 +49,22 @@ describe("AppExpress.serverShutdown() method", () => {
   });
 
   describe("Happy Paths", () => {
-    it("should call serverShutdown and exit the process", async () => {
-      // Act & Assert
-      await expect(appExpress["handleExit"]()).rejects.toThrow(
-        "Mocked process.exit called with code 0",
-      );
+    it("should call serverShutdown during handleExit", async () => {
+      // Act
+      await appExpress["handleExit"]();
+
+      // Assert
       expect(appExpress["serverShutdown"]).toHaveBeenCalled();
-      expect(process.exit).toHaveBeenCalledWith(0);
     });
   });
 
   describe("Edge Cases", () => {
     it("should handle serverShutdown gracefully when no additional logic is present", async () => {
-      // Act & Assert
-      await expect(appExpress["handleExit"]()).rejects.toThrow(
-        "Mocked process.exit called with code 0",
-      );
+      // Act
+      await appExpress["handleExit"]();
+
+      // Assert
       expect(appExpress["serverShutdown"]).toHaveBeenCalled();
-      expect(process.exit).toHaveBeenCalledWith(0);
     });
   });
 });

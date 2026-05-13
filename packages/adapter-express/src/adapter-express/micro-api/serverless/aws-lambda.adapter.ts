@@ -162,7 +162,6 @@ export function awsLambdaAdapter(
       // Create mock Express-compatible response object
       const chunks: Array<Buffer> = [];
       const responseHeaders: Record<string, string> = {};
-      let statusCode = 200;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = {
@@ -189,7 +188,7 @@ export function awsLambdaAdapter(
           });
 
           const response: LambdaResponse = {
-            statusCode,
+            statusCode: res.statusCode,
             headers: responseHeaders,
             body: isBinary ? bodyBuffer.toString("base64") : bodyBuffer.toString("utf8"),
             isBase64Encoded: isBinary,
@@ -206,7 +205,7 @@ export function awsLambdaAdapter(
           resolve(response);
         },
         status: (code: number) => {
-          statusCode = code;
+          res.statusCode = code;
           return res;
         },
         json: (data: unknown) => {

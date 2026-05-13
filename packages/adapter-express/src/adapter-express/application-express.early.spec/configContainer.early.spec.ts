@@ -3,16 +3,20 @@
 import { interfaces } from "@expressots/core";
 import { AppExpress } from "../application-express";
 
-jest.mock("@expressots/core", () => ({
-  ExpressoMiddleware: class {},
-  AppContainer: jest.fn().mockImplementation(() => new MockAppContainer() as any),
-  Logger: jest.fn().mockImplementation(() => new MockLogger() as any),
-  ProviderManager: jest.fn().mockImplementation(() => new MockProviderManager() as any),
-  Middleware: jest.fn().mockImplementation(() => new MockMiddleware() as any),
-  Console: jest.fn().mockImplementation(() => new MockConsole() as any),
-  injectable: () => (target: any) => target,
-  inject: jest.fn(() => jest.fn()),
-}));
+jest.mock("@expressots/core", () => {
+  const actual = jest.requireActual("@expressots/core");
+  return {
+    ...actual,
+    ExpressoMiddleware: class {},
+    AppContainer: jest.fn().mockImplementation(() => new MockAppContainer() as any),
+    Logger: jest.fn().mockImplementation(() => new MockLogger() as any),
+    ProviderManager: jest.fn().mockImplementation(() => new MockProviderManager() as any),
+    Middleware: jest.fn().mockImplementation(() => new MockMiddleware() as any),
+    Console: jest.fn().mockImplementation(() => new MockConsole() as any),
+    injectable: () => (target: any) => target,
+    inject: jest.fn(() => jest.fn()),
+  };
+});
 
 class MockLogger {
   error = jest.fn();

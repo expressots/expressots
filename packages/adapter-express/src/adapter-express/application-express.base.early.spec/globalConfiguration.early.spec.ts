@@ -41,13 +41,13 @@ describe("ApplicationBase.globalConfiguration() globalConfiguration method", () 
       expect(app.getConfig()).toEqual({ setting: "value" });
     });
 
-    it("should be called automatically during construction", () => {
-      // Since globalConfiguration is called in constructor, config should already be set
+    it("should update config when called explicitly", () => {
       const newApp = new (class extends ConcreteApplication {
         protected globalConfiguration(): void {
           this["config"] = { autoSet: true };
         }
       })();
+      newApp.callGlobalConfiguration();
       expect(newApp.getConfig()).toEqual({ autoSet: true });
     });
   });

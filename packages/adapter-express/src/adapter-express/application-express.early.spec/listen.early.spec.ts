@@ -1,14 +1,7 @@
 // Updated Unit tests for: listen
 
 import express from "express";
-import process from "process";
 import { AppExpress } from "../application-express";
-
-jest.mock("process", () => ({
-  ...jest.requireActual("process"),
-  exit: jest.fn(),
-  on: jest.fn(),
-}));
 
 jest.mock("../express-utils/inversify-express-server", () => {
   return {
@@ -33,6 +26,7 @@ jest.mock("../express-utils/inversify-express-server", () => {
 class MockLogger {
   error = jest.fn();
   info = jest.fn();
+  warn = jest.fn();
 }
 
 class MockConsole {
@@ -48,7 +42,15 @@ class MockProviderManager {}
 
 class MockMiddleware {
   getMiddlewarePipeline = jest.fn().mockReturnValue([]);
-  getErrorHandler = jest.fn();
+  getErrorHandler = jest.fn().mockReturnValue(null);
+  setExpressApp = jest.fn();
+  getContentNegotiationService = jest.fn().mockReturnValue(null);
+  getValidationConfig = jest.fn().mockReturnValue(null);
+  getStartupLogs = jest.fn().mockReturnValue([]);
+  clearStartupLogs = jest.fn();
+  getPipelineInfo = jest.fn().mockReturnValue([]);
+  getFormattedView = jest.fn().mockReturnValue("");
+  render = jest.fn();
 }
 
 describe("AppExpress.listen() method", () => {
@@ -59,6 +61,8 @@ describe("AppExpress.listen() method", () => {
   let mockProviderManager: MockProviderManager;
   let mockMiddlewareManager: MockMiddleware;
   let mockApp: express.Application;
+  let processExitSpy: jest.SpyInstance;
+  let processOnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockLogger = new MockLogger();
@@ -66,6 +70,9 @@ describe("AppExpress.listen() method", () => {
     mockAppContainer = new MockAppContainer();
     mockProviderManager = new MockProviderManager();
     mockMiddlewareManager = new MockMiddleware();
+
+    processExitSpy = jest.spyOn(process, "exit").mockImplementation((() => {}) as any);
+    processOnSpy = jest.spyOn(process, "on");
 
     appExpress = new AppExpress();
 
@@ -79,9 +86,14 @@ describe("AppExpress.listen() method", () => {
     // Mock the express application
     mockApp = {
       set: jest.fn(),
-      listen: jest.fn().mockImplementation((port, callback) => {
-        callback();
-        return { on: jest.fn(), close: jest.fn() };
+      listen: jest.fn().mockImplementation((port: number, callback: () => void) => {
+        const server = {
+          on: jest.fn(),
+          close: jest.fn(),
+          address: jest.fn().mockReturnValue({ port }),
+        };
+        process.nextTick(callback);
+        return server;
       }),
     } as unknown as express.Application;
 
@@ -92,6 +104,11 @@ describe("AppExpress.listen() method", () => {
       setErrorConfig: jest.fn(),
       build: jest.fn().mockReturnValue(mockApp),
     }));
+  });
+
+  afterEach(() => {
+    processExitSpy.mockRestore();
+    processOnSpy.mockRestore();
   });
 
   describe("Happy paths", () => {
@@ -123,7 +140,7 @@ describe("AppExpress.listen() method", () => {
 
       const signals = ["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"];
       signals.forEach((signal) => {
-        expect(process.on).toHaveBeenCalledWith(signal, expect.any(Function));
+        expect(processOnSpy).toHaveBeenCalledWith(signal, expect.any(Function));
       });
     });
 
@@ -138,7 +155,7 @@ describe("AppExpress.listen() method", () => {
         "No container provided for application configuration",
         "adapter-express",
       );
-      expect(process.exit).toHaveBeenCalledWith(1);
+      expect(processExitSpy).toHaveBeenCalledWith(1);
     });
   });
 });

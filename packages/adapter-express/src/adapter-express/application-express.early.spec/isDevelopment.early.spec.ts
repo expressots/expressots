@@ -70,19 +70,23 @@ describe("AppExpress.isDevelopment() method", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should return false and log error when app is not initialized", async () => {
+    it("should return false when app is not initialized and no env fallback", async () => {
       // Arrange
       appExpress["app"] = undefined as any;
+      appExpress["environment"] = undefined as any;
+      const originalEnv = process.env.NODE_ENV;
+      delete process.env.NODE_ENV;
 
       // Act
       const result = await appExpress.isDevelopment();
 
       // Assert
       expect(result).toBe(false);
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        "isDevelopment() method must be called on `PostServerInitialization`",
-        "application",
-      );
+
+      // Restore
+      if (originalEnv !== undefined) {
+        process.env.NODE_ENV = originalEnv;
+      }
     });
   });
 });

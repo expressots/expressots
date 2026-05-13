@@ -33,7 +33,7 @@ describe("Post() Post method", () => {
 
       // Act
       const decorator: HandlerDecorator = Post(path, mockMiddleware as any);
-      const target: DecoratorTarget = {};
+      const target = {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 
@@ -61,7 +61,7 @@ describe("Post() Post method", () => {
 
       // Act
       const decorator: HandlerDecorator = Post(path);
-      const target: DecoratorTarget = {};
+      const target = {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 
@@ -95,7 +95,7 @@ describe("Post() Post method", () => {
 
       // Act
       const decorator: HandlerDecorator = Post(path, mockMiddleware as any);
-      const target: DecoratorTarget = {};
+      const target = {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 

@@ -1,3 +1,4 @@
+import type { Application } from "express";
 import { awsLambdaAdapter, LambdaContext, LambdaEvent } from "./aws-lambda.adapter";
 
 function makeContext(): LambdaContext {
@@ -21,7 +22,7 @@ describe("awsLambdaAdapter", () => {
       res.json({ hello: req.path });
     };
 
-    const handler = awsLambdaAdapter(expressApp);
+    const handler = awsLambdaAdapter(expressApp as unknown as Application);
     const event: LambdaEvent = {
       httpMethod: "GET",
       path: "/users",
@@ -44,7 +45,7 @@ describe("awsLambdaAdapter", () => {
       res.end();
     };
 
-    const handler = awsLambdaAdapter(expressApp);
+    const handler = awsLambdaAdapter(expressApp as unknown as Application);
     const event: LambdaEvent = {
       httpMethod: "POST",
       path: "/items",
@@ -64,7 +65,7 @@ describe("awsLambdaAdapter", () => {
       throw new Error("kaboom");
     };
 
-    const handler = awsLambdaAdapter(expressApp);
+    const handler = awsLambdaAdapter(expressApp as unknown as Application);
     const response = await handler({ httpMethod: "GET", path: "/" }, makeContext());
 
     expect(response.statusCode).toBe(500);
@@ -80,7 +81,7 @@ describe("awsLambdaAdapter", () => {
     const wrapper = { getExpressApp: () => expressApp };
 
     const handler = awsLambdaAdapter(
-      wrapper as unknown as { getExpressApp?: () => typeof expressApp },
+      wrapper as unknown as { getExpressApp?: () => Application },
     );
     const response = await handler({ httpMethod: "GET", path: "/" }, makeContext());
 

@@ -32,7 +32,7 @@ describe("Head() Head method", () => {
 
       // Act
       const decorator: HandlerDecorator = Head(path, mockMiddleware as any);
-      const target: DecoratorTarget = {};
+      const target = {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, {});
 
@@ -61,7 +61,7 @@ describe("Head() Head method", () => {
 
       // Act
       const decorator: HandlerDecorator = Head(path, mockMiddleware as any);
-      const target: DecoratorTarget = {};
+      const target = {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, {});
 
@@ -87,7 +87,7 @@ describe("Head() Head method", () => {
         mockMiddleware1 as any,
         mockMiddleware2 as any,
       );
-      const target: DecoratorTarget = {};
+      const target = {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, {});
 
