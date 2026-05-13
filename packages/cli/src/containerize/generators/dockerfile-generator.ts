@@ -617,7 +617,10 @@ function generateLocalDependencyCopies(
 		return "";
 	}
 
-	const setupHint = getRunScriptShellInvocation(packageManager, "docker:setup");
+	const setupHint = getRunScriptShellInvocation(
+		packageManager,
+		"docker:setup",
+	);
 
 	return (
 		`

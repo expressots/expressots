@@ -703,8 +703,7 @@ interface RunCommandOptions {
 export const runCommand = async ({
 	command,
 }: RunCommandOptions): Promise<void> => {
-	const { opinionated, entryPoint, sourceRoot } =
-		await Compiler.loadConfig();
+	const { opinionated, entryPoint, sourceRoot } = await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
@@ -740,9 +739,7 @@ export const runCommand = async ({
 				// Honor `sourceRoot` so the compiled entry-point path
 				// matches whatever folder the user configured (the TS
 				// compiler preserves the source tree under `outDir`).
-				const config = [
-					`./${outDir}/${sourceRoot}/${entryPoint}.js`,
-				];
+				const config = [`./${outDir}/${sourceRoot}/${entryPoint}.js`];
 				clearScreen();
 				await execCmd("node", config);
 				break;
