@@ -20,6 +20,7 @@ const config: JestConfigWithTsJest = {
     "^@src/(.*)$": "<rootDir>/packages/core/src/$1",
     "^express$":
       "<rootDir>/packages/core/src/middleware/middleware-service.early.spec/__mocks__/express.js",
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   setupFiles: ["reflect-metadata"],
   transform: {
