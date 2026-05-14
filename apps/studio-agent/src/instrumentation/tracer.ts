@@ -4,7 +4,7 @@
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -104,7 +104,7 @@ export class StudioSpanProcessor implements SpanProcessor {
     return {
       traceId: span.spanContext().traceId,
       spanId: span.spanContext().spanId,
-      parentSpanId: span.parentSpanId,
+      parentSpanId: span.parentSpanContext?.spanId,
       name: span.name,
       kind: this.getSpanKindName(span.kind),
       startTime: span.startTime[0] * 1000 + span.startTime[1] / 1e6,
@@ -180,7 +180,7 @@ export class StudioTracer {
     this.spanProcessor = new StudioSpanProcessor(onTraceComplete);
 
     this.sdk = new NodeSDK({
-      resource: new Resource({
+      resource: resourceFromAttributes({
         [ATTR_SERVICE_NAME]: this.serviceName,
         [ATTR_SERVICE_VERSION]: this.serviceVersion,
       }),
