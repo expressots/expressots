@@ -26,7 +26,7 @@
     },
     "devDependencies": {
         "@eslint/js": "9.39.2",
-        "@expressots/cli": "4.0.0-preview.1",
+        "@expressots/cli": "4.0.0-preview.2",
         "@expressots/studio": "4.0.0-preview.1",
         "@expressots/studio-agent": "4.0.0-preview.1",
         "@types/express": "5.0.6",
