@@ -44,7 +44,6 @@
         "build:cjs": "tsc -p tsconfig.cjs.json",
         "release": "release-it",
         "prepublish": "npm run build && npm pack",
-        "publish": "npm publish --tag latest",
         "test": "jest",
         "test:watch": "jest --watch",
         "coverage": "jest --coverage",
