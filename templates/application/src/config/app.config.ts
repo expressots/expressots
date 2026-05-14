@@ -12,15 +12,16 @@ import { defineConfig, Env } from "@expressots/core";
  */
 export const appConfig = defineConfig({
     app: {
-        name: Env.string("APP_NAME").default("expressots-app"),
-        port: Env.port("PORT").default(3000),
-        env: Env.enum("NODE_ENV", ["development", "production", "test"] as const).default(
-            "development",
-        ),
+        name: Env.string("APP_NAME", { default: "expressots-app" }),
+        port: Env.port("PORT", { default: 3000 }),
+        env: Env.enum("NODE_ENV", ["development", "production", "test"] as const, {
+            default: "development",
+        }),
     },
     logger: {
-        level: Env.enum("LOG_LEVEL", ["trace", "debug", "info", "warn", "error", "fatal"] as const)
-            .default("info"),
+        level: Env.enum("LOG_LEVEL", ["trace", "debug", "info", "warn", "error", "fatal"] as const, {
+            default: "info",
+        }),
     },
 });
 

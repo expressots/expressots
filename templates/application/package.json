@@ -21,8 +21,7 @@
         "@expressots/adapter-express": "4.0.0-preview.1",
         "@expressots/core": "4.0.0-preview.1",
         "@expressots/shared": "4.0.0-preview.1",
-        "express": "5.2.1",
-        "reflect-metadata": "^0.2.2"
+        "express": "5.2.1"
     },
     "devDependencies": {
         "@eslint/js": "9.39.2",

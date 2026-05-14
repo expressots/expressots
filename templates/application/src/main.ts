@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import { bootstrap, loadEnvSync } from "@expressots/core";
 import { App } from "./app";
 import { appConfig } from "@config/app.config";
