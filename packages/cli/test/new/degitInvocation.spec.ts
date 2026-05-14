@@ -1,6 +1,6 @@
 /**
  * Smoke test for the `expressots new` template fetcher. We mock `degit`
- * so no network call happens and assert that the v4.0.0 GA tag is the
+ * so no network call happens and assert that the correct tag is the
  * exact ref requested. This catches accidental drift back to a branch
  * pin (e.g. `#feature/v4.0`) or to an unpinned `main` reference.
  */
@@ -21,8 +21,8 @@ describe("new: template repo pinning", () => {
 		cloneMock.mockClear();
 	});
 
-	it("pins template clone to the v4.0.0 GA tag", async () => {
-		const repo = "expressots/templates/application#v4.0.0";
+	it("pins template clone to the v4.0.0-preview.1 tag", async () => {
+		const repo = "expressots/templates/application#v4.0.0-preview.1";
 		const emitter = degit(repo);
 		await emitter.clone("my-app");
 

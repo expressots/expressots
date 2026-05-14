@@ -29,7 +29,7 @@ import { studioCommand } from "./studio";
  * The current version of the ExpressoTS Bundle.
  * core, adapters, and cli.
  */
-export const BUNDLE_VERSION = "4.0.0-beta.1";
+export const BUNDLE_VERSION = "4.0.0-preview.1";
 
 printHeader();
 
