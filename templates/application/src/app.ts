@@ -3,7 +3,7 @@ import {
     setupInterceptorsForExpress,
     setupEventSystemForExpress,
 } from "@expressots/adapter-express";
-import { AppContainer, CreateModule, Logger } from "@expressots/core";
+import { AppContainer, CreateModule } from "@expressots/core";
 import { AppController } from "./app.controller";
 import { LoggingInterceptor } from "@interceptors/logging.interceptor";
 import { WelcomeEmailHandler } from "@events/welcome-email.handler";
@@ -24,8 +24,6 @@ export class App extends AppExpress {
     private readonly container: AppContainer = this.configContainer([
         CreateModule([AppController, LoggingInterceptor, WelcomeEmailHandler]),
     ]);
-
-    private readonly logger = new Logger();
 
     globalConfiguration(): void {
         this.setGlobalRoutePrefix("/api");

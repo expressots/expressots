@@ -1,4 +1,5 @@
 import {
+    injectable,
     Interceptor,
     IInterceptor,
     ExecutionContext,
@@ -19,6 +20,7 @@ import {
  * See https://expresso-ts.com/docs/features/interceptors for the full reference.
  */
 @Interceptor({ priority: 10 })
+@injectable()
 export class LoggingInterceptor implements IInterceptor {
     private readonly logger = new Logger().withContext("HTTP");
 
