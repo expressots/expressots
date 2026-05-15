@@ -19,8 +19,8 @@ export const appConfig = defineConfig({
         }),
     },
     logger: {
-        level: Env.enum("LOG_LEVEL", ["trace", "debug", "info", "warn", "error", "fatal"] as const, {
-            default: "info",
+        level: Env.enum("LOG_LEVEL", ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"] as const, {
+            default: "INFO",
         }),
     },
 });
