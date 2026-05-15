@@ -66,7 +66,7 @@ import {
  * @method isDevelopment - Verifies if the current environment is development.
  */
 export class AppExpress implements Server.IWebServer {
-  private logger: Logger = new Logger();
+  protected logger: Logger = new Logger();
   private console: Console = new Console();
   private app: express.Application;
   private serverInstance: HTTPServer | null = null;
