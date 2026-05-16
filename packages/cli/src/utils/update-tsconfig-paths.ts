@@ -134,18 +134,16 @@ function addPathAliasTextBased(
 	// Find compilerOptions to add paths object
 	const compilerOptionsMatch = content.match(/"compilerOptions"\s*:\s*\{/);
 	if (compilerOptionsMatch && compilerOptionsMatch.index !== undefined) {
-		// Check if baseUrl exists
-		const hasBaseUrl = /"baseUrl"\s*:/.test(content);
-
-		// Find the end of compilerOptions opening brace
+		// Find the end of compilerOptions opening brace.
+		// We don't inject `baseUrl` here on purpose — `paths` resolve
+		// relative to the tsconfig file when `baseUrl` is absent (TS 5+),
+		// which matches the v4 template convention.
 		const insertPos =
 			compilerOptionsMatch.index + compilerOptionsMatch[0].length;
 
-		let insertion = "\n";
-		if (!hasBaseUrl) {
-			insertion += '\t\t"baseUrl": ".",\n';
-		}
-		insertion += `\t\t"paths": {\n\t\t\t"${aliasKey}": ${JSON.stringify(aliasValue)}\n\t\t},`;
+		const insertion =
+			"\n" +
+			`\t\t"paths": {\n\t\t\t"${aliasKey}": ${JSON.stringify(aliasValue)}\n\t\t},`;
 
 		return (
 			content.slice(0, insertPos) + insertion + content.slice(insertPos)
@@ -205,14 +203,12 @@ export async function updateTsconfigPaths(
 					unknown
 				>;
 
-				// Ensure baseUrl is set (required for paths to work)
-				if (!compilerOptions.baseUrl) {
-					compilerOptions.baseUrl = ".";
-				}
-
-				// Determine the correct path value based on baseUrl
-				// If baseUrl is "./src" or "src", paths should be relative to src
-				// If baseUrl is ".", paths should include the full path from root
+				// Determine the correct path value based on baseUrl. When
+				// `baseUrl` is absent (the TS 7-friendly default the v4
+				// templates ship) `paths` resolve relative to the tsconfig
+				// file itself — same effective behaviour as `baseUrl: "."`.
+				// We deliberately do NOT inject `baseUrl` here; doing so
+				// would silently undo the template's intentional removal.
 				const baseUrl = (compilerOptions.baseUrl as string) || ".";
 				const isBaseUrlSrc =
 					baseUrl === `./${sourceRoot}` || baseUrl === sourceRoot;

@@ -236,9 +236,12 @@ const transformPathAliases = async (outDir: string): Promise<void> => {
 		return;
 	}
 	const paths = tsconfig.compilerOptions?.paths;
-	const baseUrl = tsconfig.compilerOptions?.baseUrl;
+	// `baseUrl` is deprecated in TypeScript 7. When it's omitted the path
+	// targets are resolved relative to the tsconfig file itself, which is
+	// the project root in our generated templates — so default to ".".
+	const baseUrl = tsconfig.compilerOptions?.baseUrl ?? ".";
 
-	if (!paths || !baseUrl) {
+	if (!paths) {
 		return; // No path aliases defined, skip
 	}
 

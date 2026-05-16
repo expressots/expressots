@@ -1,6 +1,6 @@
 {
   "name": "@expressots/cli",
-  "version": "4.0.0-preview.2",
+  "version": "4.0.0-preview.1",
   "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
   "author": "Richard Zampieri",
   "license": "MIT",
@@ -55,8 +55,8 @@
     "degit": "2.8.4",
     "glob": "13.0.6",
     "inquirer": "8.2.6",
-		"mustache": "4.2.0",
-		"ora": "5.4.1",
+    "mustache": "4.2.0",
+    "ora": "5.4.1",
     "semver": "7.6.3",
     "ts-node": "10.9.2",
     "yargs": "17.7.2"
@@ -90,7 +90,7 @@
     "tsx": "^4.19.2",
     "typescript": "5.2.2"
   },
-	"release-it": {
+  "release-it": {
     "git": {
       "commitMessage": "chore: release ${version}"
     },

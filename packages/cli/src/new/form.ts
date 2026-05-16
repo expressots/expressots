@@ -206,6 +206,7 @@ function copyDirectorySync(src: string, dest: string): void {
  */
 enum Template {
 	application = "Application :: Full-featured ExpressoTS application. (Recommended)",
+	applicationWithEvents = "Application with Events :: Application template pre-wired with the type-safe Event Bus example.",
 	micro = "Micro :: A minimalistic template for building micro APIs and serverless functions.",
 }
 
@@ -241,17 +242,23 @@ type ProjectFormArgs = [
  */
 const TEMPLATE_FOLDERS: Record<string, string> = {
 	Application: "application",
+	"Application with Events": "application-with-events",
 	Micro: "micro",
 };
 
 /**
  * Middleware preset mapping to code
  */
+// Note: each preset disables the built-in middleware auto-logger
+// (`logger: false`) because the templates ship a sample
+// `LoggingInterceptor` already wired through `setupInterceptorsForExpress`.
+// Stacking both produces duplicate request logs; the interceptor is the
+// canonical, customisable example and stays enabled.
 const PRESET_CODE: Record<string, string> = {
-	API: `this.Middleware.applyPreset("api");`,
-	Web: `this.Middleware.applyPreset("web");`,
-	GraphQL: `this.Middleware.applyPreset("graphql");`,
-	Microservice: `this.Middleware.applyPreset("microservice");`,
+	API: `this.Middleware.applyPreset("api", { logger: false });`,
+	Web: `this.Middleware.applyPreset("web", { logger: false });`,
+	GraphQL: `this.Middleware.applyPreset("graphql", { logger: false });`,
+	Microservice: `this.Middleware.applyPreset("microservice", { logger: false });`,
 	Minimal: `this.Middleware.parse();`,
 };
 
@@ -363,6 +370,7 @@ const projectForm = async (
 					`Application :: Full-featured ExpressoTS application. (${chalk.yellow(
 						"Recommended",
 					)})`,
+					"Application with Events :: Application template pre-wired with the type-safe Event Bus example.",
 					"Micro :: A minimalistic template for building micro APIs and serverless functions.",
 				],
 			},
@@ -524,8 +532,12 @@ const projectForm = async (
 			progressBar.update(90, { doing: "Finalizing project" });
 		}
 
-		// Apply middleware preset for Application template
-		if (answer.preset && templateFolder === "application") {
+		// Apply middleware preset for any Application template variant
+		if (
+			answer.preset &&
+			(templateFolder === "application" ||
+				templateFolder === "application-with-events")
+		) {
 			applyMiddlewarePreset(answer.name, answer.preset);
 		}
 
