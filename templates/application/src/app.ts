@@ -34,9 +34,6 @@ export class App extends AppExpress {
     async configureServices(): Promise<void> {
         // __MIDDLEWARE_PRESET_PLACEHOLDER__
 
-        // Wire up the v4 interceptor system. Add additional interceptor classes
-        // to `customInterceptors` to apply them globally; per-route attachment
-        // works via `@UseInterceptors(...)` on a controller method.
         setupInterceptorsForExpress(this.container.Container, {
             builtIn: { performance: appConfig.values.app.env !== "test" },
             customInterceptors: [LoggingInterceptor],
@@ -47,12 +44,7 @@ export class App extends AppExpress {
         });
     }
 
-    async postServerInitialization(): Promise<void> {
-        // The startup dashboard already prints the listening URL. Use this
-        // hook to warm caches, prime connections, or run readiness probes.
-    }
+    async postServerInitialization(): Promise<void> {}
 
-    async serverShutdown(): Promise<void> {
-        // Close DB pools, flush queues, etc. on graceful shutdown.
-    }
+    async serverShutdown(): Promise<void> {}
 }

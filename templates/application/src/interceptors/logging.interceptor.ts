@@ -24,8 +24,11 @@ import {
 export class LoggingInterceptor implements IInterceptor {
     private readonly logger = new Logger().withContext("HTTP");
 
-    async intercept(context: ExecutionContext, next: CallHandler): Promise<unknown> {
-        const req = context.request;
+    async intercept(
+        context: ExecutionContext,
+        next: CallHandler,
+    ): Promise<unknown> {
+        const req = context.getRequest();
         const start = process.hrtime.bigint();
 
         this.logger.info(`-> ${req.method} ${req.originalUrl}`);
@@ -37,7 +40,11 @@ export class LoggingInterceptor implements IInterceptor {
             return result;
         } catch (err) {
             const ms = Number((process.hrtime.bigint() - start) / 1_000_000n);
-            this.logger.error(`<- ${req.method} ${req.originalUrl} failed after ${ms}ms`, err as Error);
+            this.logger.error(
+                `<- ${req.method} ${req.originalUrl} failed after ${ms}ms`,
+                "logging-interceptor",
+                err as Error,
+            );
             throw err;
         }
     }
