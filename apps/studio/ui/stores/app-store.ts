@@ -20,6 +20,7 @@ import type {
   SecurityReport,
   FixProgressMessage,
   FixResultMessage,
+  HttpMethod,
 } from '../types';
 
 /**
@@ -84,6 +85,17 @@ interface AppState {
   searchQuery: string;
   filterMethod: string | null;
   filterStatus: 'all' | 'success' | 'error';
+  /**
+   * Cross-view handoff: when set, the API Client picks this request up
+   * on next mount, applies it to its inputs, and clears the slot. Used
+   * by the Architecture Map's "Try in API Client" button so users go
+   * straight from the diagram to a populated request.
+   */
+  pendingApiClientRequest: {
+    method: HttpMethod;
+    path: string;
+    body?: Record<string, unknown>;
+  } | null;
   /** Agent-side recording toggle (`set_recording` event). */
   recordingEnabled: boolean;
   /** Auto-scroll the request list to the newest entry. */
@@ -126,6 +138,9 @@ interface AppState {
   setSearchQuery: (query: string) => void;
   setFilterMethod: (method: string | null) => void;
   setFilterStatus: (status: 'all' | 'success' | 'error') => void;
+  setPendingApiClientRequest: (
+    req: { method: HttpMethod; path: string; body?: Record<string, unknown> } | null,
+  ) => void;
   setRecordingEnabled: (enabled: boolean) => void;
   setAutoScroll: (enabled: boolean) => void;
   markLiveEvent: () => void;
@@ -164,6 +179,7 @@ function buildInitialState() {
     searchQuery: '',
     filterMethod: null,
     filterStatus: 'all' as const,
+    pendingApiClientRequest: null,
     recordingEnabled: true,
     autoScroll: s.defaultAutoScroll,
     lastEventAt: null,
@@ -309,6 +325,9 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setFilterMethod: (filterMethod) => set({ filterMethod }),
   setFilterStatus: (filterStatus) => set({ filterStatus }),
+
+  setPendingApiClientRequest: (pendingApiClientRequest) =>
+    set({ pendingApiClientRequest }),
 
   setRecordingEnabled: (recordingEnabled) => set({ recordingEnabled }),
   setAutoScroll: (autoScroll) => set({ autoScroll }),

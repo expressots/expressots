@@ -20,6 +20,7 @@ import {
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
 import { SecurityEngine } from './security/index.js';
 import * as fs from 'node:fs';
+import type { FSWatcher } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type {
@@ -114,6 +115,8 @@ export class StudioAgent {
   private responseTimes: number[] = [];
   private startTime: number = Date.now();
   private isRunning: boolean = false;
+  private srcWatcher: FSWatcher | null = null;
+  private rescanTimer: NodeJS.Timeout | null = null;
 
   constructor(config: Partial<AgentConfig> = {}) {
     this.config = {
@@ -208,7 +211,60 @@ export class StudioAgent {
 
     this.startSecurityEngine();
 
+    // Watch the project's `src/` for controller / module / DTO changes so
+    // the Routes, Architecture and API client tabs stay live without the
+    // user reloading Studio. Disabled in production and silently no-ops
+    // when the directory is missing or `fs.watch(recursive)` isn't
+    // supported on this platform/Node version.
+    this.startSrcWatcher();
+
     this.isRunning = true;
+  }
+
+  /**
+   * Start a debounced filesystem watcher over `./src` (relative to the
+   * host's CWD) that triggers a route + structure rescan whenever a
+   * `*.ts` / `*.js` file changes. Uses `fs.watch({ recursive: true })`
+   * to avoid taking a chokidar dependency. Failures are non-fatal.
+   */
+  private startSrcWatcher(): void {
+    if (process.env.NODE_ENV === 'production') return;
+    if (process.env.EXPRESSOTS_STUDIO_FS_WATCH === 'false') return;
+
+    const srcDir = path.resolve(process.cwd(), 'src');
+    if (!fs.existsSync(srcDir)) return;
+
+    const debounceMs = 300;
+    const onChange = (_event: string, filename: string | Buffer | null) => {
+      if (!filename) return;
+      const name = filename.toString();
+      // Only react to source file changes; skip editor swap files and the
+      // compiled output to avoid feedback loops.
+      if (!/\.(ts|js)$/i.test(name)) return;
+      if (name.includes('node_modules')) return;
+      if (name.includes('dist' + path.sep) || name.startsWith('dist')) return;
+
+      if (this.rescanTimer) clearTimeout(this.rescanTimer);
+      this.rescanTimer = setTimeout(() => {
+        this.rescanTimer = null;
+        void this.scanRoutes();
+      }, debounceMs);
+    };
+
+    try {
+      this.srcWatcher = fs.watch(srcDir, { recursive: true }, onChange);
+      this.srcWatcher.on('error', () => {
+        // Best-effort: a closed handle / inotify exhaustion shouldn't take
+        // down the agent. Disable further reactions until next start().
+        this.srcWatcher?.close();
+        this.srcWatcher = null;
+      });
+    } catch {
+      // Recursive watch is unsupported on some Linux setups (Node < 20).
+      // Live updates simply degrade to "rescan on next request"; users
+      // running tsx/nodemon will still get a fresh agent on each restart.
+      this.srcWatcher = null;
+    }
   }
 
   /**
@@ -277,6 +333,19 @@ export class StudioAgent {
       this.securityEngine.stop();
       this.securityEngine = null;
     }
+
+    if (this.rescanTimer) {
+      clearTimeout(this.rescanTimer);
+      this.rescanTimer = null;
+    }
+    if (this.srcWatcher) {
+      try {
+        this.srcWatcher.close();
+      } catch {
+        // best-effort
+      }
+      this.srcWatcher = null;
+    }
   }
 
   /**
@@ -336,24 +405,53 @@ export class StudioAgent {
       this.routes = this.scanner.getRoutes();
       // Route counts available via getRoutes()
 
-      // If Express app is provided, also scan runtime routes
+      // If Express app is provided, also scan runtime routes and use
+      // them to (a) backfill the global URL prefix on static-discovered
+      // routes (which don't see `setGlobalRoutePrefix("/api")`) and
+      // (b) add anything registered without a `@Controller()` decorator.
+      // Runtime routes have no controller metadata, so we never let them
+      // *replace* a static route — only annotate or add.
       if (this.config.expressApp) {
         const runtimeRoutes = RouteScanner.scanExpressApp(this.config.expressApp);
-        // Merge runtime routes with discovered routes
-        
-        // Merge with discovered routes
+
         for (const runtimeRoute of runtimeRoutes) {
-          const exists = this.routes.some(
-            (r) => r.path === runtimeRoute.path && r.method === runtimeRoute.method
+          const exact = this.routes.find(
+            (r) => r.path === runtimeRoute.path && r.method === runtimeRoute.method,
           );
-          if (!exists) {
-            this.routes.push(runtimeRoute);
+          if (exact) continue;
+
+          // Look for a static route whose path is the suffix of the
+          // runtime route (i.e. the same handler bound under a global
+          // prefix). If found, upgrade its `path` to the prefixed form
+          // so the API client's quick-pick produces a working URL.
+          const suffixMatch = this.routes.find(
+            (r) =>
+              r.method === runtimeRoute.method &&
+              r.controller !== 'Unknown' &&
+              (runtimeRoute.path === r.path ||
+                runtimeRoute.path.endsWith(r.path === '/' ? '/' : `/${r.path.replace(/^\//, '')}`)),
+          );
+          if (suffixMatch) {
+            suffixMatch.path = runtimeRoute.path;
+            continue;
           }
+
+          // Truly new route (e.g. ad-hoc `app.get(...)` outside any
+          // controller). Keep it but mark the source so the UI can
+          // visually distinguish it.
+          this.routes.push(runtimeRoute);
         }
       }
 
-      // Broadcast to connected clients
+      // Broadcast to connected clients. The routes payload is small,
+      // but the architecture map needs the full `appStructure` (controllers,
+      // services, providers, middleware, dependencies) to redraw nodes
+      // and edges for newly added classes — without this second emit the
+      // map keeps showing the boot-time graph even after a rescan.
       this.broadcast('routes', this.routes);
+      if (this.appStructure) {
+        this.broadcast('structure', this.appStructure);
+      }
     } catch (error) {
       console.error('Failed to scan routes:', error);
     }

@@ -15,6 +15,18 @@ export interface RouteInfo {
   lineNumber?: number;
   middleware?: string[];
   parameters?: ParameterInfo[];
+  /**
+   * Class name of the `@Body()` DTO declared on the controller method,
+   * when one is present. Powers the API client's auto-fill feature so
+   * users get a working JSON body without typing it by hand.
+   */
+  bodyDto?: string;
+  /**
+   * Example JSON body inferred from the DTO class fields (string → "",
+   * number → 0, boolean → false, etc.). Best-effort: complex / generic
+   * types fall back to `null` so the JSON stays parseable.
+   */
+  bodySample?: Record<string, unknown>;
 }
 
 /** Parameter information for a route */
@@ -279,6 +291,30 @@ export interface ServiceInfo {
   methods: string[];
 }
 
+/**
+ * A `CreateModule(...)` grouping discovered in the host source.
+ *
+ * Modules are first-class organisational units in ExpressoTS — the
+ * Architecture Map renders one bounded box per module so that a 50-
+ * controller app reads as a small set of feature areas rather than a
+ * flat soup. Anonymous inline modules (e.g. the root one passed to
+ * `configContainer([CreateModule([...])])`) are skipped — only named
+ * exports are surfaced because they're the ones users reason about.
+ */
+export interface ModuleInfo {
+  /** Variable name the module is exported under (e.g. "UserModule"). */
+  name: string;
+  /** File where the `CreateModule(...)` declaration was found. */
+  filePath: string;
+  /**
+   * Class names listed in the module array, recursively expanded
+   * through nested module references. So `RootModule = CreateModule(
+   * [AppController, UserModule])` resolves to
+   * `["AppController", "UserCreateController"]`.
+   */
+  members: string[];
+}
+
 /** Application structure for architecture visualization */
 export interface AppStructure {
   controllers: ControllerInfo[];
@@ -286,6 +322,8 @@ export interface AppStructure {
   providers: ServiceInfo[];
   middleware: string[];
   dependencies: DependencyInfo[];
+  /** Discovered `CreateModule(...)` groupings — empty when the project is module-less. */
+  modules: ModuleInfo[];
 }
 
 /**

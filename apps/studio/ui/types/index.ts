@@ -12,6 +12,10 @@ export interface RouteInfo {
   filePath?: string;
   lineNumber?: number;
   middleware?: string[];
+  /** DTO class declared on the `@Body()` parameter, when present. */
+  bodyDto?: string;
+  /** Sample JSON body inferred from the DTO fields (auto-fill seed). */
+  bodySample?: Record<string, unknown>;
 }
 
 export interface SpanInfo {
@@ -139,12 +143,26 @@ export interface ServiceInfo {
   methods: string[];
 }
 
+/**
+ * A `CreateModule(...)` grouping discovered in the host source.
+ * Mirrors the shape produced by the Studio Agent — see
+ * `packages/studio-agent/src/types/index.ts` for full semantics.
+ */
+export interface ModuleInfo {
+  name: string;
+  filePath: string;
+  /** Class names — recursively flattened across nested module refs. */
+  members: string[];
+}
+
 export interface AppStructure {
   controllers: ControllerInfo[];
   services: ServiceInfo[];
   providers: ServiceInfo[];
   middleware: string[];
   dependencies: DependencyInfo[];
+  /** Discovered modules. May be omitted by older agents. */
+  modules?: ModuleInfo[];
 }
 
 export type WSMessageType =

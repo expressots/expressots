@@ -65,11 +65,26 @@ const DEFAULTS: Omit<SettingsState, 'update' | 'reset'> = {
   recordOnLaunch: true,
   maxExchanges: 100,
   maxLogBuffer: 1000,
-  defaultView: 'requests',
+  defaultView: 'status',
   defaultSidebarOpen: true,
   defaultAutoScroll: true,
   defaultLogLevels: ['log', 'info', 'warn', 'error', 'debug'],
 };
+
+/**
+ * Marker for one-shot settings migrations. Each entry below uses its
+ * own key so a migration only ever runs once per browser, even if the
+ * user opens Studio dozens of times after upgrading.
+ */
+const MIGRATION_KEYS = {
+  /**
+   * v4-preview.2: the launch view changed from `'requests'` to `'status'`.
+   * Users who still have the legacy stored value should be bumped once;
+   * users who explicitly chose `'requests'` *after* the migration are
+   * left alone (the marker prevents a re-bump).
+   */
+  defaultViewStatus: 'expressots.studio.settings.migrated.defaultViewStatus',
+} as const;
 
 function loadSettings(): Omit<SettingsState, 'update' | 'reset'> {
   if (typeof window === 'undefined' || !window.localStorage) return DEFAULTS;
@@ -79,7 +94,19 @@ function loadSettings(): Omit<SettingsState, 'update' | 'reset'> {
     const parsed = JSON.parse(raw) as Partial<typeof DEFAULTS>;
     // Defensive merge — discard unknown keys, fall back to defaults for
     // missing ones. Treat anything non-string/number/array as missing.
-    return { ...DEFAULTS, ...parsed };
+    const merged = { ...DEFAULTS, ...parsed };
+
+    // One-shot: bump the legacy `'requests'` launch default once.
+    const alreadyMigrated =
+      window.localStorage.getItem(MIGRATION_KEYS.defaultViewStatus) === '1';
+    if (!alreadyMigrated) {
+      if (merged.defaultView === 'requests') {
+        merged.defaultView = 'status';
+      }
+      window.localStorage.setItem(MIGRATION_KEYS.defaultViewStatus, '1');
+    }
+
+    return merged;
   } catch {
     return DEFAULTS;
   }
