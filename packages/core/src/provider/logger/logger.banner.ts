@@ -7,6 +7,7 @@ import {
   formatMemory,
 } from "./logger.metrics.js";
 import { MiddlewareCategory } from "../../middleware/middleware-service.js";
+import { FRAMEWORK_VERSION } from "../../framework-version.js";
 
 // eslint-disable-next-line no-control-regex
 const ANSI_STRIP_REGEX = /\x1b\[[0-9;]*m/g;
@@ -264,7 +265,7 @@ export class BannerGenerator {
     // ══════════════════════════════════════════════════════════════════════
     // Version info line (matches banner width)
     // ══════════════════════════════════════════════════════════════════════
-    const frameworkVersion = "4.0.0-beta.1";
+    const frameworkVersion = FRAMEWORK_VERSION;
     const nodeVersion = process.version;
     const platform = process.platform;
     const appName = appInfo?.appName || "App";
@@ -589,7 +590,7 @@ export class BannerGenerator {
     const appVersion = appInfo?.appVersion || "not provided";
 
     writeStdout(
-      colorText(`ExpressoTS v4.0.0-beta.1`, "green") +
+      colorText(`ExpressoTS v${FRAMEWORK_VERSION}`, "green") +
         colorText(` | ${appName} v${appVersion}`, "blue") +
         colorText(` | Node ${process.version}`, "blue") +
         "\n",

@@ -1,4 +1,4 @@
-import { LogLevel, LogLevelString } from "./utils/log-levels.js";
+import { LogLevel, LogLevelString, parseLogLevel } from "./utils/log-levels.js";
 import { ILogTransport } from "./transports/transport.interface.js";
 import { RedactionConfig } from "./logger.redaction.js";
 import { GroupingConfig } from "./logger.grouping.js";
@@ -53,13 +53,24 @@ export interface LoggerConfig {
 
 /**
  * Default logger configuration.
+ *
+ * Honours `process.env.LOG_LEVEL` when set so that any logs emitted
+ * BEFORE the application's `globalConfiguration()` runs (e.g. interceptor
+ * registration during container construction) are gated by the user's
+ * desired log level instead of the development default of `DEBUG`.
+ * Falls back to `DEBUG` in development and `INFO` in production.
+ *
  * @public API
  */
 export function getDefaultLoggerConfig(): LoggerConfig {
   const isDevelopment = process.env.NODE_ENV !== "production";
 
+  const envLevel = process.env.LOG_LEVEL;
+  const defaultLevel = isDevelopment ? LogLevel.DEBUG : LogLevel.INFO;
+  const level = envLevel ? parseLogLevel(envLevel) : defaultLevel;
+
   return {
-    level: isDevelopment ? LogLevel.DEBUG : LogLevel.INFO,
+    level,
     transports: [], // Will be populated with ConsoleTransport by default
     filters: {},
     structured: !isDevelopment, // JSON in production, pretty in dev

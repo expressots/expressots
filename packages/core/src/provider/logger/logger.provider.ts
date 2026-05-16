@@ -67,14 +67,18 @@ class Logger implements IProvider {
   constructor() {
     this.pid = process.pid;
     this.config = getDefaultLoggerConfig();
-    // Initialize with default console transport if none provided
+    // Initialize with default console transport if none provided.
+    // Aligning the transport's level with the resolved logger level
+    // (which already honours `process.env.LOG_LEVEL`) keeps both
+    // filters consistent for messages emitted before any explicit
+    // `logger.configure({ level })` call.
     if (this.config.transports.length === 0) {
       const isDevelopment = process.env.NODE_ENV !== "production";
-      this.config.transports = [
-        isDevelopment
-          ? ConsoleTransport.forDevelopment()
-          : ConsoleTransport.forProduction(),
-      ];
+      const transport = isDevelopment
+        ? ConsoleTransport.forDevelopment()
+        : ConsoleTransport.forProduction();
+      transport.level = parseLogLevel(this.config.level);
+      this.config.transports = [transport];
     }
     this.transports = this.config.transports;
     // Initialize grouping manager with default config
