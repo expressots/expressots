@@ -15,7 +15,106 @@ import Compiler from "../utils/compiler";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 
 /**
- * Helper function to load and extract outDir from tsconfig.build.json
+ * Resolve a tsconfig.json file with full `extends` chain support.
+ * Recursively loads the base config(s) and merges `compilerOptions`
+ * (child wins), producing the same flattened result that `tsc` sees.
+ */
+function resolveTsConfig(configPath: string): Record<string, unknown> {
+	if (!existsSync(configPath)) {
+		return {};
+	}
+
+	let raw: string;
+	try {
+		raw = readFileSync(configPath, "utf-8");
+	} catch {
+		return {};
+	}
+
+	// tsconfig.json allows JS-style comments but JSON.parse does not.
+	// We strip them character-by-character so we never touch `//` or
+	// `/*` sequences that appear inside quoted strings (e.g. paths).
+	const stripped = stripJsonComments(raw);
+
+	let config: Record<string, unknown>;
+	try {
+		config = JSON.parse(stripped);
+	} catch {
+		return {};
+	}
+
+	if (typeof config.extends === "string") {
+		const baseRelative = config.extends as string;
+		const basePath = path.resolve(path.dirname(configPath), baseRelative);
+		const baseConfig = resolveTsConfig(basePath);
+
+		const baseOpts =
+			(baseConfig.compilerOptions as Record<string, unknown>) ?? {};
+		const childOpts =
+			(config.compilerOptions as Record<string, unknown>) ?? {};
+
+		config.compilerOptions = { ...baseOpts, ...childOpts };
+		delete config.extends;
+	}
+
+	return config;
+}
+
+// Strip JS-style comments (single-line and block) from a JSON string
+// without corrupting quoted content. Walks the input character by
+// character, tracking whether we are inside a string literal.
+function stripJsonComments(text: string): string {
+	let result = "";
+	let i = 0;
+	const len = text.length;
+
+	while (i < len) {
+		const ch = text[i];
+
+		// String literal — copy verbatim until the closing quote.
+		if (ch === '"') {
+			let j = i + 1;
+			while (j < len) {
+				if (text[j] === "\\") {
+					j += 2; // skip escaped character
+				} else if (text[j] === '"') {
+					j++;
+					break;
+				} else {
+					j++;
+				}
+			}
+			result += text.slice(i, j);
+			i = j;
+			continue;
+		}
+
+		// Single-line comment
+		if (ch === "/" && text[i + 1] === "/") {
+			// Skip until end of line.
+			i += 2;
+			while (i < len && text[i] !== "\n") i++;
+			continue;
+		}
+
+		// Multi-line comment
+		if (ch === "/" && text[i + 1] === "*") {
+			i += 2;
+			while (i < len && !(text[i] === "*" && text[i + 1] === "/")) i++;
+			i += 2; // skip closing */
+			continue;
+		}
+
+		result += ch;
+		i++;
+	}
+
+	return result;
+}
+
+/**
+ * Helper function to load and extract outDir from tsconfig.build.json,
+ * resolving the `extends` chain so the value can live in the base config.
  */
 function getOutDir(): string {
 	const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
@@ -28,22 +127,15 @@ function getOutDir(): string {
 		process.exit(1);
 	}
 
-	let tsconfig: { compilerOptions?: { outDir?: string } };
-	try {
-		tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
-	} catch (err) {
-		printError(
-			`Failed to parse tsconfig.build.json: ${(err as Error).message}`,
-			"tsconfig-build-path",
-		);
-		process.exit(1);
-	}
-
-	const outDir = tsconfig.compilerOptions?.outDir;
+	const tsconfig = resolveTsConfig(tsconfigBuildPath);
+	const opts = tsconfig.compilerOptions as
+		| Record<string, unknown>
+		| undefined;
+	const outDir = opts?.outDir as string | undefined;
 
 	if (!outDir) {
 		printError(
-			"Cannot find outDir in tsconfig.build.json. Please provide an outDir.",
+			"Cannot find outDir in tsconfig.build.json (or its extended config). Please provide an outDir.",
 			"tsconfig-build-path",
 		);
 		process.exit(1);
@@ -220,26 +312,15 @@ const transformPathAliases = async (outDir: string): Promise<void> => {
 		return; // No tsconfig.build.json, skip transformation
 	}
 
-	let tsconfig: {
-		compilerOptions?: {
-			paths?: Record<string, string[]>;
-			baseUrl?: string;
-		};
-	};
-	try {
-		tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf-8"));
-	} catch (err) {
-		printError(
-			`Failed to parse tsconfig.build.json for path-alias transform: ${(err as Error).message}`,
-			"transform-paths",
-		);
-		return;
-	}
-	const paths = tsconfig.compilerOptions?.paths;
+	const tsconfig = resolveTsConfig(tsconfigPath);
+	const opts = tsconfig.compilerOptions as
+		| Record<string, unknown>
+		| undefined;
+	const paths = opts?.paths as Record<string, string[]> | undefined;
 	// `baseUrl` is deprecated in TypeScript 7. When it's omitted the path
 	// targets are resolved relative to the tsconfig file itself, which is
 	// the project root in our generated templates — so default to ".".
-	const baseUrl = tsconfig.compilerOptions?.baseUrl ?? ".";
+	const baseUrl = (opts?.baseUrl as string | undefined) ?? ".";
 
 	if (!paths) {
 		return; // No path aliases defined, skip
