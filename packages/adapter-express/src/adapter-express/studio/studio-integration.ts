@@ -173,10 +173,7 @@ export async function initializeStudio(
 
     if (!StudioAgent) {
       logger().warn("Studio Agent module found but StudioAgent class not exported");
-      if (debug)
-        logger().debug(
-          `Module contents: ${Object.keys(studioAgentModule).join(", ")}`,
-        );
+      if (debug) logger().debug(`Module contents: ${Object.keys(studioAgentModule).join(", ")}`);
       return false;
     }
 
@@ -205,9 +202,7 @@ export async function initializeStudio(
 
     studioEnabled = true;
 
-    logger().info(
-      `Studio Agent listening on ws://localhost:${agentOptions.port}`,
-    );
+    logger().info(`Studio Agent listening on ws://localhost:${agentOptions.port}`);
 
     return true;
   } catch (error) {
