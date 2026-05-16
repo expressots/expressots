@@ -11,7 +11,7 @@ import { appConfig } from "@config/app.config";
  * Application class.
  *
  * Lifecycle order:
- *   globalConfiguration       → pre-DI knobs (banner, route prefix, log level).
+ *   globalConfiguration       → pre-DI knobs (banner, route prefix).
  *   configureServices         → register middleware, interceptors, error handler.
  *   postServerInitialization  → HTTP server is listening; warm caches, run probes.
  *   serverShutdown            → graceful drain on SIGTERM / SIGINT.
@@ -20,22 +20,18 @@ import { appConfig } from "@config/app.config";
  */
 export class App extends AppExpress {
     private readonly container: AppContainer = this.configContainer([
-        CreateModule([AppController, LoggingInterceptor]),
+        CreateModule([AppController]),
     ]);
 
     globalConfiguration(): void {
         this.setGlobalRoutePrefix("/api");
-
-        this.logger.configure({
-            level: appConfig.values.logger.level,
-        });
     }
 
     async configureServices(): Promise<void> {
         // __MIDDLEWARE_PRESET_PLACEHOLDER__
 
         setupInterceptorsForExpress(this.container.Container, {
-            builtIn: { performance: appConfig.values.app.env !== "test" },
+            builtIn: { performance: true },
             customInterceptors: [LoggingInterceptor],
         });
 

@@ -10,12 +10,13 @@ import {
 /**
  * LoggingInterceptor — structured request/response logging with timing.
  *
- * Registered globally in `app.ts` via `setupInterceptorsForExpress({ customInterceptors: [LoggingInterceptor] })`.
- * Apply per-route instead via `@UseInterceptors(LoggingInterceptor)` on a controller method.
+ * Two steps are required to activate an interceptor:
+ *  1. **Register** — `setupInterceptorsForExpress({ customInterceptors: [LoggingInterceptor] })`
+ *     in `app.ts` binds it in the DI container and the InterceptorRegistry.
+ *  2. **Apply** — `@UseInterceptors(LoggingInterceptor)` on a controller (all routes)
+ *     or on a single method (one route).
  *
- * Composition helpers (whenInterceptor, unlessInterceptor, pipeInterceptors,
- * combineInterceptors) live in `@expressots/core` and let you conditionally
- * stack interceptors without writing wrapper classes.
+ * Log level is driven by the `LOG_LEVEL` env var at construction time.
  *
  * See https://expresso-ts.com/docs/features/interceptors for the full reference.
  */

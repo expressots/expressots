@@ -18,11 +18,6 @@ export const appConfig = defineConfig({
             default: "development",
         }),
     },
-    logger: {
-        level: Env.enum("LOG_LEVEL", ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"] as const, {
-            default: "INFO",
-        }),
-    },
 });
 
 export type AppConfig = typeof appConfig;

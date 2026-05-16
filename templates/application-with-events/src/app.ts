@@ -22,15 +22,11 @@ import { appConfig } from "@config/app.config";
  */
 export class App extends AppExpress {
     private readonly container: AppContainer = this.configContainer([
-        CreateModule([AppController, LoggingInterceptor, WelcomeEmailHandler]),
+        CreateModule([AppController, WelcomeEmailHandler]),
     ]);
 
     globalConfiguration(): void {
         this.setGlobalRoutePrefix("/api");
-
-        this.logger.configure({
-            level: appConfig.values.logger.level,
-        });
     }
 
     async configureServices(): Promise<void> {
