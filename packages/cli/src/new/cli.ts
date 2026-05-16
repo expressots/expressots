@@ -45,6 +45,12 @@ const commandOptions = (yargs: Argv): Argv => {
 			choices: middlewarePresets,
 			alias: "s",
 		})
+		.option("events", {
+			describe:
+				"Include the type-safe Event Bus example (Application template only)",
+			type: "boolean",
+			alias: "e",
+		})
 		.option("directory", {
 			describe: "The directory for new project",
 			type: "string",
@@ -52,7 +58,8 @@ const commandOptions = (yargs: Argv): Argv => {
 		})
 		.implies("package-manager", "template")
 		.implies("template", "package-manager")
-		.implies("preset", "template");
+		.implies("preset", "template")
+		.implies("events", "template");
 };
 
 const checkNodeVersion = (): void => {
@@ -77,6 +84,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 			template,
 			directory,
 			preset,
+			events,
 		}) => {
 			checkNodeVersion();
 			return await projectForm(projectName, [
@@ -84,6 +92,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 				template,
 				directory,
 				preset,
+				events,
 			]);
 		},
 	};

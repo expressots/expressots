@@ -235,6 +235,7 @@ type ProjectFormArgs = [
 	TemplateKeys,
 	string,
 	MiddlewarePresetKeys,
+	boolean | undefined,
 ];
 
 /**
@@ -327,10 +328,11 @@ const projectForm = async (
 		packageManager: string;
 		template: Template;
 		preset?: MiddlewarePreset;
+		events?: boolean;
 		confirm: boolean;
 	};
 
-	const [packageManager, template, directory, preset] = args;
+	const [packageManager, template, directory, preset, events] = args;
 
 	if (packageManager && template) {
 		answer = {
@@ -338,6 +340,7 @@ const projectForm = async (
 			packageManager: packageManager,
 			template: Template[template],
 			preset: preset ? MiddlewarePreset[preset] : undefined,
+			events: events,
 			confirm: true,
 		};
 	} else {
@@ -370,7 +373,6 @@ const projectForm = async (
 					`Application :: Full-featured ExpressoTS application. (${chalk.yellow(
 						"Recommended",
 					)})`,
-					"Application with Events :: Application template pre-wired with the type-safe Event Bus example.",
 					"Micro :: A minimalistic template for building micro APIs and serverless functions.",
 				],
 			},
@@ -378,6 +380,7 @@ const projectForm = async (
 
 		// Only show preset selection for Application template
 		let presetAnswer: { preset?: MiddlewarePreset } = {};
+		let eventsAnswer: { events?: boolean } = {};
 		if (baseAnswers.template.startsWith("Application")) {
 			presetAnswer = await inquirer.prompt([
 				{
@@ -395,6 +398,21 @@ const projectForm = async (
 					],
 				},
 			]);
+
+			// Opt-in to the type-safe Event Bus example. Defaults to No
+			// so the API/Web/GraphQL/etc. presets stay focused on what
+			// the user actually asked for. Picking Yes swaps the
+			// scaffold to `application-with-events` (extra event class
+			// + handler + `setupEventSystemForExpress` wiring).
+			eventsAnswer = await inquirer.prompt([
+				{
+					type: "confirm",
+					name: "events",
+					message:
+						"Include the type-safe Event Bus example? (adds a sample event + handler)",
+					default: false,
+				},
+			]);
 		}
 
 		const confirmAnswer = await inquirer.prompt([
@@ -409,6 +427,7 @@ const projectForm = async (
 		answer = {
 			...baseAnswers,
 			...presetAnswer,
+			...eventsAnswer,
 			...confirmAnswer,
 		};
 	}
@@ -460,7 +479,15 @@ const projectForm = async (
 			process.exit(1);
 		}
 		const templateName = templateMatch[1];
-		const templateFolder = TEMPLATE_FOLDERS[templateName];
+		// The "Application with Events" template is no longer a top-level
+		// choice. When the user opts into events on the Application track
+		// (or passes `--events`), swap the folder so we still pull from
+		// `application-with-events`. The folder split is preserved on disk
+		// for now so we keep two minimal sources of truth.
+		let templateFolder = TEMPLATE_FOLDERS[templateName];
+		if (templateName === "Application" && answer.events) {
+			templateFolder = TEMPLATE_FOLDERS["Application with Events"];
+		}
 
 		if (!templateFolder) {
 			progressBar.stop();
