@@ -263,8 +263,7 @@ function insertIntoArray(
 	// entry on its own line just before the closing bracket.
 	const itemIndent = getLineIndent(source, lastChar);
 	const insertAt = lastChar + 1;
-	const insertion =
-		(hasTrailingComma ? "" : ",") + `\n${itemIndent}${name},`;
+	const insertion = (hasTrailingComma ? "" : ",") + `\n${itemIndent}${name},`;
 	return source.slice(0, insertAt) + insertion + source.slice(insertAt);
 }
 
@@ -299,10 +298,7 @@ function insertImport(source: string, importLine: string): string {
  * so it participates in the same module group as the existing controllers and
  * providers.
  */
-function addModuleToContainerSource(
-	source: string,
-	className: string,
-): string {
+function addModuleToContainerSource(source: string, className: string): string {
 	const configCall = findCallRange(source, "this.configContainer");
 	if (!configCall) {
 		printError(
@@ -323,7 +319,11 @@ function addModuleToContainerSource(
 
 	// Prefer the inner CreateModule([...]) when present; otherwise fall back to
 	// the outer array.
-	const createModuleCall = findCallRange(source, "CreateModule", outerArray.open);
+	const createModuleCall = findCallRange(
+		source,
+		"CreateModule",
+		outerArray.open,
+	);
 	if (
 		createModuleCall &&
 		createModuleCall.open > outerArray.open &&
@@ -335,11 +335,21 @@ function addModuleToContainerSource(
 			innerArray.open > createModuleCall.open &&
 			innerArray.close < createModuleCall.close
 		) {
-			return insertIntoArray(source, innerArray.open, innerArray.close, className);
+			return insertIntoArray(
+				source,
+				innerArray.open,
+				innerArray.close,
+				className,
+			);
 		}
 	}
 
-	return insertIntoArray(source, outerArray.open, outerArray.close, className);
+	return insertIntoArray(
+		source,
+		outerArray.open,
+		outerArray.close,
+		className,
+	);
 }
 
 async function resolveUseCaseDir(folderName?: string): Promise<string> {
