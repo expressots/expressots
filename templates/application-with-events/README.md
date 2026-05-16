@@ -1,17 +1,18 @@
-# ExpressoTS Application
+# ExpressoTS Application — with Events
 
-A modern, type-safe Node.js backend powered by ExpressoTS v4.
+A modern, type-safe Node.js backend powered by ExpressoTS v4, pre-wired with the v4 **type-safe Event Bus** as a working example.
 
-This template is the **gold path** v4 starter. It ships with the full v4 wiring already configured:
+This template is the events-flavored variant of the gold-path starter. Pick this one when you want to start from a project that already shows you how event publication and handler discovery work end-to-end. It ships with the full v4 wiring already configured:
 
 - `bootstrap()` entry that loads env files with `loadEnvSync`.
 - Typed configuration via `defineConfig` + `Env.*`.
 - All four `AppExpress` lifecycle hooks implemented meaningfully (`globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown`).
 - A sample **interceptor** (`@interceptors/logging.interceptor.ts`) wired through `setupInterceptorsForExpress`.
+- A sample **type-safe event** + **handler** (`@events/user-created.event.ts` + `@events/welcome-email.handler.ts`) wired through `setupEventSystemForExpress`.
 - Tests using `createTestApp` + `setupExpressoTSMatchers` with the fluent request DSL.
-
-> Want a starter that already shows the type-safe Event Bus end-to-end? Pick the **Application (with Events)** template (`expressots new` → Application with Events).
 - TypeScript path aliases for every v4 scaffold folder (`@useCases/*`, `@providers/*`, `@entities/*`, `@middleware/*`, `@interceptors/*`, `@events/*`, `@guards/*`, `@config/*`).
+
+> Looking for a leaner starter without the events example? Pick the **Application** template (`expressots new` → Application).
 
 ## Quick start
 
@@ -39,6 +40,9 @@ src/
 │   └── app.config.ts                  # defineConfig + Env.* (typed, validated env vars)
 ├── interceptors/
 │   └── logging.interceptor.ts         # Structured request/response logging interceptor
+├── events/
+│   ├── user-created.event.ts          # Sample domain event class
+│   └── welcome-email.handler.ts       # @OnEvent handler with full type inference
 test/
 └── app.controller.spec.ts             # createTestApp + fluent request + ExpressoTS matchers
 expressots.config.ts                   # CLI configuration: opinionated layout, full scaffoldSchematics

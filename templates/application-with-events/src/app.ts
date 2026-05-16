@@ -1,26 +1,28 @@
 import {
     AppExpress,
     setupInterceptorsForExpress,
+    setupEventSystemForExpress,
 } from "@expressots/adapter-express";
 import { AppContainer, CreateModule } from "@expressots/core";
 import { AppController } from "./app.controller";
 import { LoggingInterceptor } from "@interceptors/logging.interceptor";
+import { WelcomeEmailHandler } from "@events/welcome-email.handler";
 import { appConfig } from "@config/app.config";
 
 /**
  * Application class.
  *
  * Lifecycle order:
- *   globalConfiguration       → pre-DI knobs (banner, route prefix, log level).
- *   configureServices         → register middleware, interceptors, error handler.
- *   postServerInitialization  → HTTP server is listening; warm caches, run probes.
- *   serverShutdown            → graceful drain on SIGTERM / SIGINT.
+ *   globalConfiguration  → runs first; configure pre-DI knobs (banner, prefix).
+ *   configureServices    → register middleware, interceptors, events, error handler.
+ *   postServerInitialization → HTTP server is listening; warm caches, log readiness.
+ *   serverShutdown       → graceful drain on SIGTERM / SIGINT.
  *
- * See https://expresso-ts.com/docs/core/lifecycle for the full reference.
+ * See https://expresso-ts.com/docs/core/lifecycle for the full lifecycle reference.
  */
 export class App extends AppExpress {
     private readonly container: AppContainer = this.configContainer([
-        CreateModule([AppController, LoggingInterceptor]),
+        CreateModule([AppController, LoggingInterceptor, WelcomeEmailHandler]),
     ]);
 
     globalConfiguration(): void {
@@ -42,6 +44,13 @@ export class App extends AppExpress {
             customInterceptors: [LoggingInterceptor],
         });
 
+        // Wire up the v4 type-safe event bus. Handlers in `@events/*` annotated
+        // with `@OnEvent(EventClass)` are auto-discovered from the container.
+        setupEventSystemForExpress(this.container.Container, {
+            enableRecording: appConfig.values.app.env !== "production",
+            enableFlowTracking: appConfig.values.app.env === "development",
+        });
+
         this.Middleware.setErrorHandler({
             showStackTrace: await this.isDevelopment(),
         });
@@ -53,6 +62,8 @@ export class App extends AppExpress {
     }
 
     async serverShutdown(): Promise<void> {
-        // Close DB pools, flush queues, etc. on graceful shutdown.
+        this.logger
+            .withContext(appConfig.values.app.name)
+            .info("Shutting down gracefully...");
     }
 }
