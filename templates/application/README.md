@@ -2,16 +2,17 @@
 
 A modern, type-safe Node.js backend powered by ExpressoTS v4.
 
-This template is the **gold path** v4 starter. It ships with the full v4 wiring already configured:
+This template is the **gold path** v4 starter for REST APIs. It ships with the focused v4 wiring already configured:
 
 - `bootstrap()` entry that loads env files with `loadEnvSync`.
 - Typed configuration via `defineConfig` + `Env.*`.
 - All four `AppExpress` lifecycle hooks implemented meaningfully (`globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown`).
 - A sample **interceptor** (`@interceptors/logging.interceptor.ts`) wired through `setupInterceptorsForExpress`.
+- A middleware preset (API / Web / GraphQL / Microservice / Minimal) applied at scaffold time based on the preset you picked.
 - Tests using `createTestApp` + `setupExpressoTSMatchers` with the fluent request DSL.
-
-> Want a starter that already shows the type-safe Event Bus end-to-end? Pick the **Application (with Events)** template (`expressots new` → Application with Events).
 - TypeScript path aliases for every v4 scaffold folder (`@useCases/*`, `@providers/*`, `@entities/*`, `@middleware/*`, `@interceptors/*`, `@events/*`, `@guards/*`, `@config/*`).
+
+> Want the type-safe Event Bus example wired in too? Answer **Yes** to the "Include the type-safe Event Bus example?" prompt during `expressots new`, or pass `--events` (`-e`) on the command line. The scaffold then adds a sample `UserCreatedEvent` + `WelcomeEmailHandler` and wires `setupEventSystemForExpress` for you.
 
 ## Quick start
 
