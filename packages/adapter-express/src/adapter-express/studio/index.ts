@@ -4,4 +4,5 @@ export {
   isStudioEnabled,
   getStudioAgent,
   reportStudioRuntimeInfo,
+  rescanStudioRoutes,
 } from "./studio-integration.js";

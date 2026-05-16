@@ -6,7 +6,23 @@
  * and real-time monitoring without requiring manual setup.
  */
 
+import { Logger } from "@expressots/core";
 import type { Application, RequestHandler } from "express";
+
+// Lazy logger accessor so `new Logger()` only fires the first time we
+// actually emit a Studio message. Routing through Logger means the
+// framework's log-level configuration (e.g. `LOG_LEVEL=WARN`) silences
+// the "listening" line as expected, instead of `console.log` always
+// printing it. Lazy construction also keeps consumers that mock
+// `@expressots/core` (test environments) from blowing up at module
+// load when their Logger mock omits `.withContext`.
+let _studioLogger: Logger | null = null;
+function logger(): Logger {
+  if (!_studioLogger) {
+    _studioLogger = new Logger().withContext("studio");
+  }
+  return _studioLogger;
+}
 
 interface StudioAgentOptions {
   port?: number;
@@ -156,8 +172,11 @@ export async function initializeStudio(
       studioAgentModuleAny.StudioAgent || studioAgentModuleAny.default?.StudioAgent;
 
     if (!StudioAgent) {
-      console.warn("⚠️  Studio Agent module found but StudioAgent class not exported");
-      if (debug) console.log("[Studio] Module contents:", studioAgentModule);
+      logger().warn("Studio Agent module found but StudioAgent class not exported");
+      if (debug)
+        logger().debug(
+          `Module contents: ${Object.keys(studioAgentModule).join(", ")}`,
+        );
       return false;
     }
 
@@ -186,7 +205,9 @@ export async function initializeStudio(
 
     studioEnabled = true;
 
-    console.log(`[ExpressoTS] Studio Agent listening on ws://localhost:${agentOptions.port}`);
+    logger().info(
+      `Studio Agent listening on ws://localhost:${agentOptions.port}`,
+    );
 
     return true;
   } catch (error) {
@@ -219,15 +240,15 @@ export async function initializeStudio(
     // Friendlier message for the most common failure mode: hot-reload
     // race left the port in TIME_WAIT.
     if (errorCode === "EADDRINUSE") {
-      console.warn(
-        `⚠️  Studio Agent could not bind its WebSocket port ` +
+      logger().warn(
+        `Studio Agent could not bind its WebSocket port ` +
           `(${errorMessage}). The host app will continue without Studio. ` +
           `If this happened during hot-reload, the next restart should recover.`,
       );
       return false;
     }
 
-    console.warn("⚠️  Failed to initialize Studio Agent:", errorMessage);
+    logger().warn(`Failed to initialize Studio Agent: ${errorMessage}`);
     return false;
   }
 }
@@ -255,6 +276,30 @@ export function reportStudioRuntimeInfo(patch: {
     studioAgent.updateRuntimeInfo(patch);
   } catch {
     // Best-effort — never break the host on a status-page update.
+  }
+}
+
+/**
+ * Re-trigger the Studio Agent's route discovery. Used by the host
+ * after `app.listen()` so that the agent's runtime route scanner sees
+ * the fully-populated Express `_router` stack (controllers are bound
+ * by `InversifyExpressServer.build()` AFTER `initializeStudio()` runs,
+ * so the agent's first scan only catches static-source routes).
+ *
+ * No-ops when:
+ *   - Studio isn't enabled, or
+ *   - the installed agent is too old to expose `scanRoutes()`.
+ */
+export async function rescanStudioRoutes(): Promise<void> {
+  if (!studioAgent) return;
+  if (typeof studioAgent.scanRoutes !== "function") return;
+  try {
+    await studioAgent.scanRoutes();
+  } catch (error) {
+    // Best-effort — never break the host on a Studio rescan.
+    logger().warn(
+      `Studio route rescan failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 

@@ -52,6 +52,7 @@ import {
   stopStudio,
   isStudioEnabled,
   reportStudioRuntimeInfo,
+  rescanStudioRoutes,
 } from "./studio/index.js";
 
 /**
@@ -775,6 +776,15 @@ export class AppExpress implements Server.IWebServer {
           runtimeItems: this.collectStudioRuntimeItems(),
         });
 
+        // Re-scan routes now that `InversifyExpressServer.build()` has
+        // populated the Express `_router` stack. The agent's first scan
+        // happens before controllers are bound (Studio middleware ships
+        // ahead of route registration so it can capture every request),
+        // so without this rescan newly-added or never-bound controllers
+        // never appear in the Studio Routes / Architecture views.
+        // Fire-and-forget; the Studio Agent broadcasts the result over WS.
+        void rescanStudioRoutes();
+
         // Setup signal handlers for graceful shutdown
         // Supported signals:
         // - SIGTERM: Standard termination (Kubernetes, Docker, process managers)
@@ -1409,7 +1419,12 @@ export class AppExpress implements Server.IWebServer {
 
   /**
    * Display middleware startup logs after the banner.
-   * This makes startup logging transparent to the user - no need for manual code in postServerInitialization().
+   *
+   * Warnings (e.g. missing optional packages like `helmet`) are always surfaced
+   * so the developer can act on them. Informational entries (e.g. "Security
+   * configured", "Applied preset: api") are demoted to `debug` since the
+   * dashboard already shows the active middleware count; set `LOG_LEVEL=DEBUG`
+   * to see the full breakdown.
    * @private
    */
   private displayMiddlewareStartupLogs(): void {
@@ -1423,7 +1438,7 @@ export class AppExpress implements Server.IWebServer {
       if (log.type === "warn") {
         this.logger.warn(log.message, "middleware");
       } else {
-        this.logger.info(log.message, "middleware");
+        this.logger.withContext("middleware").debug(log.message);
       }
     });
 
@@ -1525,7 +1540,7 @@ export class AppExpress implements Server.IWebServer {
         metrics,
         features,
         {
-          "Global Prefix": this.globalPrefix || "/",
+          Prefix: this.globalPrefix || "/",
           "Node Version": process.version,
           Platform: process.platform,
         },
