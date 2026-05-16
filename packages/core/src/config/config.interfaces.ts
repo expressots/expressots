@@ -531,7 +531,13 @@ export interface DefineConfigOptions {
 
   /**
    * Log validation results.
-   * @default "info"
+   *
+   * - `"warn"` (default): only warnings and errors are printed.
+   * - `"info"` / `"debug"`: prints the "CONFIGURATION LOADED" success banner
+   *   plus warnings and errors.
+   * - `"error"`: only errors.
+   * - `"none"`: completely silent.
+   * @default "warn"
    */
   logLevel?: ConfigLogLevel;
 

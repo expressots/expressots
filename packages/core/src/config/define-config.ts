@@ -164,7 +164,7 @@ class ConfigInstance<T extends Record<string, unknown>>
     this._options = {
       validateOnAccess: true,
       throwOnError: process.env.NODE_ENV === "production",
-      logLevel: "info",
+      logLevel: "warn",
       ...options,
     };
 

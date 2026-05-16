@@ -4,8 +4,8 @@
  * @public API
  */
 export enum LogLevel {
-  /** Ultra-detailed diagnostic information (function entry/exit) */
-  TRACE = 0,
+  /** Show all logs (ultra-detailed diagnostic information, function entry/exit) */
+  ALL = 0,
   /** Detailed diagnostic information for debugging */
   DEBUG = 1,
   /** General informational messages */
@@ -25,6 +25,7 @@ export enum LogLevel {
  * @public API
  */
 export type LogLevelString =
+  | "ALL"
   | "TRACE"
   | "DEBUG"
   | "INFO"
@@ -61,8 +62,9 @@ export function parseLogLevel(
   }
 
   switch (upperLevel) {
+    case "ALL":
     case "TRACE":
-      return LogLevel.TRACE;
+      return LogLevel.ALL;
     case "DEBUG":
       return LogLevel.DEBUG;
     case "INFO":
@@ -88,8 +90,8 @@ export function parseLogLevel(
  */
 export function logLevelToString(level: LogLevel): string {
   switch (level) {
-    case LogLevel.TRACE:
-      return "TRACE";
+    case LogLevel.ALL:
+      return "ALL";
     case LogLevel.DEBUG:
       return "DEBUG";
     case LogLevel.INFO:

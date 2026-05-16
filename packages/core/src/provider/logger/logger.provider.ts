@@ -43,7 +43,7 @@ import {
  * - Automatic context detection (class/method names)
  * - Request-scoped context via AsyncLocalStorage
  * - Child logger creation with inherited context
- * - Multiple log levels (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)
+ * - Multiple log levels (ALL, DEBUG, INFO, WARN, ERROR, FATAL, SILENT)
  * - Pluggable transports (console, file, HTTP)
  * @public API
  */
@@ -164,7 +164,7 @@ class Logger implements IProvider {
    * @public API
    */
   trace(message: string, data?: unknown): void {
-    this.log(LogLevel.TRACE, message, { data });
+    this.log(LogLevel.ALL, message, { data });
   }
 
   /**

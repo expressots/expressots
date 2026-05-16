@@ -143,7 +143,7 @@ function formatTimestamp(date: Date): string {
  */
 function getLevelColor(level: LogLevel): Color {
   switch (level) {
-    case LogLevel.TRACE:
+    case LogLevel.ALL:
       return "white";
     case LogLevel.DEBUG:
       return "blue";

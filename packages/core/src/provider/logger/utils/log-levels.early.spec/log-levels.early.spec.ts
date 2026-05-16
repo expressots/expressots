@@ -15,10 +15,16 @@ describe("LogLevel", () => {
       expect(parseLogLevel(LogLevel.ERROR)).toBe(LogLevel.ERROR);
     });
 
-    it("should parse TRACE string", () => {
-      expect(parseLogLevel("TRACE")).toBe(LogLevel.TRACE);
-      expect(parseLogLevel("trace")).toBe(LogLevel.TRACE);
-      expect(parseLogLevel("Trace")).toBe(LogLevel.TRACE);
+    it("should parse ALL string", () => {
+      expect(parseLogLevel("ALL")).toBe(LogLevel.ALL);
+      expect(parseLogLevel("all")).toBe(LogLevel.ALL);
+      expect(parseLogLevel("All")).toBe(LogLevel.ALL);
+    });
+
+    it("should parse TRACE string as alias for ALL", () => {
+      expect(parseLogLevel("TRACE")).toBe(LogLevel.ALL);
+      expect(parseLogLevel("trace")).toBe(LogLevel.ALL);
+      expect(parseLogLevel("Trace")).toBe(LogLevel.ALL);
     });
 
     it("should parse DEBUG string", () => {
@@ -64,8 +70,8 @@ describe("LogLevel", () => {
   });
 
   describe("logLevelToString", () => {
-    it("should convert TRACE to string", () => {
-      expect(logLevelToString(LogLevel.TRACE)).toBe("TRACE");
+    it("should convert ALL to string", () => {
+      expect(logLevelToString(LogLevel.ALL)).toBe("ALL");
     });
 
     it("should convert DEBUG to string", () => {
@@ -100,7 +106,7 @@ describe("LogLevel", () => {
 
   describe("shouldLog", () => {
     it("should return false when configured level is SILENT", () => {
-      expect(shouldLog(LogLevel.TRACE, LogLevel.SILENT)).toBe(false);
+      expect(shouldLog(LogLevel.ALL, LogLevel.SILENT)).toBe(false);
       expect(shouldLog(LogLevel.INFO, LogLevel.SILENT)).toBe(false);
       expect(shouldLog(LogLevel.ERROR, LogLevel.SILENT)).toBe(false);
     });
@@ -113,20 +119,20 @@ describe("LogLevel", () => {
 
     it("should not log when message level < configured level", () => {
       expect(shouldLog(LogLevel.DEBUG, LogLevel.INFO)).toBe(false);
-      expect(shouldLog(LogLevel.TRACE, LogLevel.INFO)).toBe(false);
+      expect(shouldLog(LogLevel.ALL, LogLevel.INFO)).toBe(false);
     });
 
     it("should handle all level combinations", () => {
-      // TRACE level - logs everything except SILENT
-      expect(shouldLog(LogLevel.TRACE, LogLevel.TRACE)).toBe(true);
-      expect(shouldLog(LogLevel.DEBUG, LogLevel.TRACE)).toBe(true);
-      expect(shouldLog(LogLevel.INFO, LogLevel.TRACE)).toBe(true);
-      expect(shouldLog(LogLevel.WARN, LogLevel.TRACE)).toBe(true);
-      expect(shouldLog(LogLevel.ERROR, LogLevel.TRACE)).toBe(true);
-      expect(shouldLog(LogLevel.FATAL, LogLevel.TRACE)).toBe(true);
+      // ALL level - logs everything except SILENT
+      expect(shouldLog(LogLevel.ALL, LogLevel.ALL)).toBe(true);
+      expect(shouldLog(LogLevel.DEBUG, LogLevel.ALL)).toBe(true);
+      expect(shouldLog(LogLevel.INFO, LogLevel.ALL)).toBe(true);
+      expect(shouldLog(LogLevel.WARN, LogLevel.ALL)).toBe(true);
+      expect(shouldLog(LogLevel.ERROR, LogLevel.ALL)).toBe(true);
+      expect(shouldLog(LogLevel.FATAL, LogLevel.ALL)).toBe(true);
 
       // DEBUG level
-      expect(shouldLog(LogLevel.TRACE, LogLevel.DEBUG)).toBe(false);
+      expect(shouldLog(LogLevel.ALL, LogLevel.DEBUG)).toBe(false);
       expect(shouldLog(LogLevel.DEBUG, LogLevel.DEBUG)).toBe(true);
       expect(shouldLog(LogLevel.INFO, LogLevel.DEBUG)).toBe(true);
 
