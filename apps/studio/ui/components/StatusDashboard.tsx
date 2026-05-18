@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   BarChart3,
   Rocket,
+  Layers,
   Wifi,
   WifiOff,
   RefreshCw,
@@ -206,6 +207,31 @@ export function StatusDashboard() {
           />
         </Card>
 
+        {/* Startup */}
+        <Card icon={Rocket} title="Startup" accent="text-pink-400">
+          <Row
+            label="Boot Time"
+            value={runtime?.startupMs ? `${runtime.startupMs}ms` : '—'}
+            mono
+          />
+          <Row
+            label="Started At"
+            value={
+              runtime ? new Date(runtime.startedAt).toLocaleString() : '—'
+            }
+          />
+          <Row
+            label="Uptime"
+            value={runtime ? formatUptime(runtime.uptimeMs) : '—'}
+            mono
+          />
+          <Row
+            label="Events"
+            value={`${eventsReceived.toLocaleString()} from agent`}
+            mono
+          />
+        </Card>
+
         {/* Health */}
         <Card icon={Activity} title="Health" accent="text-success-500">
           {metrics ? (
@@ -301,37 +327,133 @@ export function StatusDashboard() {
             valueClass="text-xs"
           />
         </Card>
-
-        {/* Startup */}
-        <Card icon={Rocket} title="Startup" accent="text-pink-400">
-          <Row
-            label="Boot Time"
-            value={runtime?.startupMs ? `${runtime.startupMs}ms` : '—'}
-            mono
-          />
-          <Row
-            label="Started At"
-            value={
-              runtime ? new Date(runtime.startedAt).toLocaleString() : '—'
-            }
-          />
-          <Row
-            label="Uptime"
-            value={runtime ? formatUptime(runtime.uptimeMs) : '—'}
-            mono
-          />
-          <Row
-            label="Events"
-            value={`${eventsReceived.toLocaleString()} from agent`}
-            mono
-          />
-        </Card>
       </div>
+
+      {/* Middleware Preset — full width */}
+      <MiddlewarePresetCard preset={runtime?.middlewarePreset ?? null} />
 
       {/* Inline drill-down panel — appears under the grid when a metric is clicked */}
       {drill && (
         <DrillPanel drill={drill} onClose={() => setDrill(null)} />
       )}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Middleware Preset card
+// ────────────────────────────────────────────────────────────────────────
+
+function MiddlewarePresetCard({
+  preset,
+}: {
+  preset: import('../types').MiddlewarePresetInfo | null;
+}) {
+  if (!preset) {
+    return (
+      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/40">
+          <Layers className="w-4 h-4 text-teal-400" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
+            Middleware
+          </span>
+        </div>
+        <div className="px-4 py-3">
+          <Empty>No preset info available</Empty>
+        </div>
+      </div>
+    );
+  }
+
+  const corsDisplay = preset.security?.cors
+    ? typeof preset.security.cors.origin === 'string'
+      ? preset.security.cors.origin
+      : preset.security.cors.origin
+        ? 'permissive'
+        : 'restricted'
+    : '—';
+
+  const rateLimitDisplay = preset.security?.rateLimit
+    ? `${preset.security.rateLimit.max}/${Math.round((preset.security.rateLimit.windowMs ?? 60000) / 1000)}s`
+    : 'off';
+
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/40">
+        <Layers className="w-4 h-4 text-teal-400" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
+          Middleware
+        </span>
+        <span className="ml-auto text-xs font-mono text-gray-400">
+          {preset.name}{preset.hasOverrides ? ' (custom)' : ''}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 px-4 py-3">
+        <MiniStat label="Preset" value={preset.name} highlight />
+        <MiniStat
+          label="Parse"
+          value={
+            preset.parse?.json?.limit
+              ? `JSON ${preset.parse.json.limit}${preset.parse?.cookies ? ' + cookies' : ''}`
+              : 'defaults'
+          }
+        />
+        <MiniStat label="CORS" value={corsDisplay} />
+        <MiniStat
+          label="Rate Limit"
+          value={rateLimitDisplay}
+          muted={rateLimitDisplay === 'off'}
+        />
+        <MiniStat
+          label="Helmet"
+          value={preset.security?.helmet !== false ? 'on' : 'off'}
+          muted={preset.security?.helmet === false}
+        />
+        <MiniStat
+          label="Compression"
+          value={
+            preset.compress?.enabled
+              ? preset.compress.level
+                ? `level ${preset.compress.level}`
+                : 'default'
+              : 'off'
+          }
+          muted={!preset.compress?.enabled}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  highlight,
+  muted,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+        {label}
+      </span>
+      <span
+        className={cn(
+          'text-sm font-mono truncate',
+          highlight
+            ? 'text-teal-300 font-semibold'
+            : muted
+              ? 'text-gray-500'
+              : 'text-gray-100',
+        )}
+        title={value}
+      >
+        {value}
+      </span>
     </div>
   );
 }

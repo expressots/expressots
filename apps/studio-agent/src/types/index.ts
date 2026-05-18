@@ -169,6 +169,12 @@ export interface AgentConfig {
    * static scanner can't see.
    */
   runtimeItems?: RuntimeItems;
+  /**
+   * Active middleware preset and effective configuration. Populated by
+   * the adapter after `applyPreset()` runs, so Studio can display what
+   * middleware is active without reading framework internals.
+   */
+  middlewarePreset?: MiddlewarePresetInfo;
 }
 
 /**
@@ -196,6 +202,49 @@ export interface RuntimeItem {
   priority?: number;
   /** Optional source — purely informational ("metadata", "registry", …). */
   source?: string;
+}
+
+/**
+ * Middleware preset information surfaced on the Studio Status dashboard.
+ * Populated by the adapter after `applyPreset()` resolves and passed to
+ * the agent via `AgentConfig.middlewarePreset`.
+ */
+export interface MiddlewarePresetInfo {
+  /** Name of the active preset (e.g. "api", "web", "production"). */
+  name: string;
+  /** Whether custom overrides were applied on top of the preset. */
+  hasOverrides: boolean;
+  /** Effective parse configuration. */
+  parse?: {
+    json?: { limit?: string };
+    urlencoded?: { limit?: string; extended?: boolean };
+    cookies?: boolean;
+  };
+  /** Effective security configuration. */
+  security?: {
+    tier?: string;
+    helmet?: boolean;
+    cors?: {
+      origin?: boolean | string;
+      credentials?: boolean;
+      methods?: string[];
+      allowedHeaders?: string[];
+    };
+    rateLimit?: {
+      windowMs?: number;
+      max?: number;
+    } | false;
+  };
+  /** Effective compression configuration. */
+  compress?: {
+    enabled: boolean;
+    level?: number;
+  };
+  /** Effective logger configuration. */
+  logger?: {
+    enabled: boolean;
+    implementation?: string;
+  };
 }
 
 /** Default agent configuration */
@@ -390,6 +439,11 @@ export interface RuntimeInfo {
   runtimeItems?: RuntimeItems;
   /** Whether request/response recording is currently enabled. */
   recordingEnabled: boolean;
+  /**
+   * Active middleware preset and effective configuration. Reported by the
+   * adapter after `applyPreset()` runs so Studio can display what's active.
+   */
+  middlewarePreset?: MiddlewarePresetInfo;
 }
 
 // ────────────────────────────────────────────────────────────────────────

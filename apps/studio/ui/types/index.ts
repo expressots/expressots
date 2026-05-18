@@ -309,6 +309,41 @@ export interface RuntimeInfo {
    */
   runtimeItems?: RuntimeItems;
   recordingEnabled: boolean;
+  /** Active middleware preset info for the Status dashboard card. */
+  middlewarePreset?: MiddlewarePresetInfo;
+}
+
+/** Mirror of `MiddlewarePresetInfo` from the Studio Agent. */
+export interface MiddlewarePresetInfo {
+  name: string;
+  hasOverrides: boolean;
+  parse?: {
+    json?: { limit?: string };
+    urlencoded?: { limit?: string; extended?: boolean };
+    cookies?: boolean;
+  };
+  security?: {
+    tier?: string;
+    helmet?: boolean;
+    cors?: {
+      origin?: boolean | string;
+      credentials?: boolean;
+      methods?: string[];
+      allowedHeaders?: string[];
+    };
+    rateLimit?: {
+      windowMs?: number;
+      max?: number;
+    } | false;
+  };
+  compress?: {
+    enabled: boolean;
+    level?: number;
+  };
+  logger?: {
+    enabled: boolean;
+    implementation?: string;
+  };
 }
 
 /** Mirror of `RuntimeItems` from the Studio Agent. */

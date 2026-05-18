@@ -498,6 +498,7 @@ export class StudioAgent {
     providerCount?: number;
     middlewareCount?: number;
     runtimeItems?: import('./types/index.js').RuntimeItems;
+    middlewarePreset?: import('./types/index.js').MiddlewarePresetInfo;
   }): void {
     if (patch.appPort !== undefined) this.config.appPort = patch.appPort;
     if (patch.globalPrefix !== undefined) this.config.globalPrefix = patch.globalPrefix;
@@ -512,12 +513,13 @@ export class StudioAgent {
       this.config.middlewareCount = patch.middlewareCount;
     }
     if (patch.runtimeItems !== undefined) {
-      // Merge so partial updates (e.g. providers only) don't wipe the
-      // other categories.
       this.config.runtimeItems = {
         ...this.config.runtimeItems,
         ...patch.runtimeItems,
       };
+    }
+    if (patch.middlewarePreset !== undefined) {
+      this.config.middlewarePreset = patch.middlewarePreset;
     }
     if (this.io) {
       this.broadcast('runtime', this.getRuntimeInfo());
@@ -596,6 +598,7 @@ export class StudioAgent {
       },
       runtimeItems: this.config.runtimeItems,
       recordingEnabled: this.config.enableRecording,
+      middlewarePreset: this.config.middlewarePreset,
     };
   }
 
