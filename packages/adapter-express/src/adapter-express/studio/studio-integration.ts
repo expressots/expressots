@@ -57,6 +57,7 @@ interface StudioAgentInstance {
     providerCount?: number;
     middlewareCount?: number;
     runtimeItems?: StudioRuntimeItems;
+    middlewarePreset?: StudioMiddlewarePresetInfo;
   }): void;
 }
 
@@ -73,6 +74,34 @@ interface StudioAgentInstance {
 export interface StudioRuntimeItems {
   providers?: Array<{ name: string; source?: string }>;
   interceptors?: Array<{ name: string; priority?: number; source?: string }>;
+}
+
+/**
+ * Middleware preset info forwarded to the Studio Agent. Mirrors
+ * `MiddlewarePresetInfo` in `@expressots/studio-agent` so the adapter
+ * doesn't need to import from the studio package.
+ */
+export interface StudioMiddlewarePresetInfo {
+  name: string;
+  hasOverrides: boolean;
+  parse?: {
+    json?: { limit?: string };
+    urlencoded?: { limit?: string; extended?: boolean };
+    cookies?: boolean;
+  };
+  security?: {
+    tier?: string;
+    helmet?: boolean;
+    cors?: {
+      origin?: boolean | string;
+      credentials?: boolean;
+      methods?: string[];
+      allowedHeaders?: string[];
+    };
+    rateLimit?: { windowMs?: number; max?: number } | false;
+  };
+  compress?: { enabled: boolean; level?: number };
+  logger?: { enabled: boolean; implementation?: string };
 }
 
 interface StudioIntegrationConfig {
@@ -264,6 +293,7 @@ export function reportStudioRuntimeInfo(patch: {
   providerCount?: number;
   middlewareCount?: number;
   runtimeItems?: StudioRuntimeItems;
+  middlewarePreset?: StudioMiddlewarePresetInfo;
 }): void {
   if (!studioAgent) return;
   if (typeof studioAgent.updateRuntimeInfo !== "function") return;

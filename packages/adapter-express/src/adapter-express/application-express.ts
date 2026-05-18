@@ -774,6 +774,7 @@ export class AppExpress implements Server.IWebServer {
           interceptorCount: this.lastApplicationMetrics?.interceptors,
           middlewareCount: this.lastApplicationMetrics?.middleware,
           runtimeItems: this.collectStudioRuntimeItems(),
+          middlewarePreset: this.collectMiddlewarePresetInfo(),
         });
 
         // Re-scan routes now that `InversifyExpressServer.build()` has
@@ -1418,6 +1419,146 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
+   * Build the middleware preset info snapshot for Studio. Reads the
+   * last applied preset from the Middleware service and transforms it
+   * into the shape Studio expects.
+   */
+  private collectMiddlewarePresetInfo():
+    | {
+        name: string;
+        hasOverrides: boolean;
+        parse?: {
+          json?: { limit?: string };
+          urlencoded?: { limit?: string; extended?: boolean };
+          cookies?: boolean;
+        };
+        security?: {
+          tier?: string;
+          helmet?: boolean;
+          cors?: {
+            origin?: boolean | string;
+            credentials?: boolean;
+            methods?: string[];
+            allowedHeaders?: string[];
+          };
+          rateLimit?: { windowMs?: number; max?: number } | false;
+        };
+        compress?: { enabled: boolean; level?: number };
+        logger?: { enabled: boolean; implementation?: string };
+      }
+    | undefined {
+    try {
+      const mw = this.Middleware as Middleware;
+      const getPreset = (mw as unknown as { getLastAppliedPreset?: () => { name: string; hasOverrides: boolean; config: Record<string, unknown> } | null }).getLastAppliedPreset;
+      if (typeof getPreset !== "function") return undefined;
+
+      const preset = getPreset.call(mw);
+      if (!preset) return undefined;
+
+      const cfg = preset.config as {
+        parse?: boolean | {
+          json?: boolean | { limit?: string };
+          urlencoded?: boolean | { limit?: string; extended?: boolean };
+          cookies?: boolean | object;
+        };
+        security?: string | {
+          headers?: string | boolean | object;
+          cors?: boolean | { origin?: boolean | string; credentials?: boolean; methods?: string[]; allowedHeaders?: string[] };
+          rateLimit?: boolean | { windowMs?: number; max?: number };
+        };
+        compress?: boolean | { level?: number; implementation?: string };
+        logger?: boolean | { implementation?: string; disableInTest?: boolean };
+      };
+
+      const parse =
+        cfg.parse && typeof cfg.parse === "object"
+          ? {
+              json:
+                cfg.parse.json && typeof cfg.parse.json === "object"
+                  ? { limit: cfg.parse.json.limit }
+                  : undefined,
+              urlencoded:
+                cfg.parse.urlencoded && typeof cfg.parse.urlencoded === "object"
+                  ? {
+                      limit: cfg.parse.urlencoded.limit,
+                      extended: cfg.parse.urlencoded.extended,
+                    }
+                  : undefined,
+              cookies: !!cfg.parse.cookies,
+            }
+          : cfg.parse
+            ? { json: { limit: "100kb" }, cookies: false }
+            : undefined;
+
+      let security:
+        | {
+            tier?: string;
+            helmet?: boolean;
+            cors?: {
+              origin?: boolean | string;
+              credentials?: boolean;
+              methods?: string[];
+              allowedHeaders?: string[];
+            };
+            rateLimit?: { windowMs?: number; max?: number } | false;
+          }
+        | undefined;
+
+      if (typeof cfg.security === "string") {
+        security = resolveSecurityTierForStudio(cfg.security);
+      } else if (cfg.security && typeof cfg.security === "object") {
+        const sec = cfg.security;
+        security = {
+          helmet: sec.headers !== false,
+          cors:
+            sec.cors && typeof sec.cors === "object"
+              ? sec.cors
+              : sec.cors !== false
+                ? { origin: true }
+                : undefined,
+          rateLimit:
+            sec.rateLimit && typeof sec.rateLimit === "object"
+              ? sec.rateLimit
+              : sec.rateLimit
+                ? { windowMs: 60000, max: 100 }
+                : false,
+        };
+      }
+
+      const compress = cfg.compress
+        ? {
+            enabled: true,
+            level:
+              typeof cfg.compress === "object"
+                ? cfg.compress.level
+                : undefined,
+          }
+        : { enabled: false };
+
+      const logger = cfg.logger
+        ? {
+            enabled: true,
+            implementation:
+              typeof cfg.logger === "object"
+                ? cfg.logger.implementation
+                : "auto",
+          }
+        : { enabled: false };
+
+      return {
+        name: preset.name,
+        hasOverrides: preset.hasOverrides,
+        parse,
+        security,
+        compress,
+        logger,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
    * Display middleware startup logs after the banner.
    *
    * Warnings (e.g. missing optional packages like `helmet`) are always surfaced
@@ -1577,5 +1718,65 @@ export class AppExpress implements Server.IWebServer {
       this.logger.info(`🔍 CI environment detected: ${appInfo.ciDetection.platform}`, "bootstrap");
       this.logger.info(`✅ Skipping .env file loading (using process.env)`, "bootstrap");
     }
+  }
+}
+
+/**
+ * Resolve a named security tier string into the display-friendly shape
+ * expected by the Studio Middleware card. Mirrors the defaults applied
+ * by `Middleware.getSecurityPreset()` in `@expressots/core`.
+ */
+function resolveSecurityTierForStudio(tier: string): {
+  tier: string;
+  helmet: boolean;
+  cors?: {
+    origin?: boolean | string;
+    credentials?: boolean;
+    methods?: string[];
+    allowedHeaders?: string[];
+  };
+  rateLimit?: { windowMs?: number; max?: number } | false;
+} {
+  switch (tier) {
+    case "api":
+      return {
+        tier,
+        helmet: true,
+        cors: {
+          origin: true,
+          credentials: true,
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+          allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+        },
+        rateLimit: { windowMs: 60000, max: 100 },
+      };
+    case "strict":
+      return {
+        tier,
+        helmet: true,
+        cors: { origin: false },
+        rateLimit: { windowMs: 60000, max: 50 },
+      };
+    case "relaxed":
+      return {
+        tier,
+        helmet: true,
+        cors: { origin: true },
+        rateLimit: false,
+      };
+    case "minimal":
+      return {
+        tier,
+        helmet: false,
+        rateLimit: false,
+      };
+    case "standard":
+    default:
+      return {
+        tier,
+        helmet: true,
+        cors: { origin: true },
+        rateLimit: false,
+      };
   }
 }
