@@ -38,20 +38,6 @@ export {
   ProfilerStats,
 } from "./middleware-profiler.js";
 
-// Middleware presets
-export {
-  MiddlewarePresetName,
-  MiddlewarePreset,
-  PresetMiddlewareConfig,
-  ApplyPresetOptions,
-  MIDDLEWARE_PRESETS,
-  getPreset,
-  getPresetNames,
-  getPresetsByTag,
-  createPreset,
-  mergePresets,
-} from "./middleware-presets.js";
-
 // Interface exports - all type-only. Use `export type` so ESM link
 // validation doesn't reject these re-exports (the source files have
 // no runtime values; the CJS build silently emitted lazy `undefined`

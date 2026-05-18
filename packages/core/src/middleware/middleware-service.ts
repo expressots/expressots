@@ -397,6 +397,12 @@ export class Middleware implements IMiddleware {
   private profilingEnabled = false;
   // v4: Custom presets storage
   private customPresets = new Map<string, V4MiddlewareConfig>();
+  // v4: Last applied preset info (for Studio integration)
+  private _lastPreset: {
+    name: string;
+    hasOverrides: boolean;
+    config: V4MiddlewareConfig;
+  } | null = null;
   // v4: Middleware registry reference
   private registry = getMiddlewareRegistry();
   // v4: Buffered startup logs (displayed after banner)
@@ -1630,6 +1636,11 @@ export class Middleware implements IMiddleware {
           origin: true,
           credentials: true,
           methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+          allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+          ],
         },
         rateLimit: { windowMs: 60000, max: 100 },
       },
@@ -1928,6 +1939,12 @@ export class Middleware implements IMiddleware {
       ? this.mergeConfigs(config, overrides)
       : config;
 
+    this._lastPreset = {
+      name: preset,
+      hasOverrides: !!overrides,
+      config: finalConfig,
+    };
+
     // Apply each category
     if (finalConfig.parse) {
       if (typeof finalConfig.parse === "boolean") {
@@ -1982,30 +1999,66 @@ export class Middleware implements IMiddleware {
   }
 
   /**
+   * Returns info about the last applied preset (name, whether overrides
+   * were used, and the effective merged config). Used by the adapter to
+   * forward preset metadata to Studio.
+   */
+  public getLastAppliedPreset(): {
+    name: string;
+    hasOverrides: boolean;
+    config: V4MiddlewareConfig;
+  } | null {
+    return this._lastPreset;
+  }
+
+  /**
    * Get built-in presets.
+   *
+   * Each preset is tuned for a specific workload:
+   * - api: REST APIs (large payloads, rate-limited, strict CORS)
+   * - web: traditional server-rendered apps (cookies, sessions, relaxed CORS)
+   * - spa: single-page apps served with static fallback
+   * - microservice: internal service-to-service (minimal surface, no security)
+   * - graphql: single endpoint with large JSON payloads
+   * - minimal: parsing only, no security or compression
+   * - development: relaxed for local iteration, verbose logging
+   * - production: hardened defaults for shipped deployments
    */
   private getBuiltInPresets(): Record<string, V4MiddlewareConfig> {
     return {
       api: {
-        parse: true,
+        parse: {
+          json: { limit: "10mb" },
+          urlencoded: { extended: true, limit: "10mb" },
+        },
         logger: { implementation: "auto" },
         security: "api",
-        compress: true,
+        compress: { level: 6 },
       },
       web: {
-        parse: { json: true, urlencoded: true, cookies: true },
+        parse: {
+          json: { limit: "5mb" },
+          urlencoded: { extended: true, limit: "5mb" },
+          cookies: true,
+        },
         logger: { implementation: "auto" },
         security: "standard",
         compress: true,
       },
       spa: {
-        parse: { json: true, urlencoded: true },
+        parse: {
+          json: { limit: "5mb" },
+          urlencoded: { extended: true, limit: "5mb" },
+        },
         security: "standard",
         compress: true,
       },
       microservice: {
-        parse: { json: { limit: "1mb" } },
-        compress: true,
+        parse: {
+          json: { limit: "1mb" },
+          urlencoded: { extended: false, limit: "1mb" },
+        },
+        compress: { level: 6 },
       },
       graphql: {
         parse: { json: { limit: "50mb" } },
@@ -2019,15 +2072,21 @@ export class Middleware implements IMiddleware {
         parse: true,
       },
       development: {
-        parse: true,
+        parse: {
+          json: { limit: "50mb" },
+          urlencoded: { extended: true, limit: "50mb" },
+        },
         logger: { implementation: "morgan", options: { format: "dev" } },
         security: "relaxed",
       },
       production: {
-        parse: true,
+        parse: {
+          json: { limit: "10mb" },
+          urlencoded: { extended: true, limit: "10mb" },
+        },
         logger: { implementation: "auto", disableInTest: true },
         security: "strict",
-        compress: true,
+        compress: { level: 6 },
       },
     };
   }

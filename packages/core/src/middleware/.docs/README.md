@@ -64,14 +64,12 @@ services.Middleware.addMiddleware(new AuthMiddleware());
 ### Middleware Presets
 
 ```typescript
-// Apply API preset
-services.Middleware.usePreset("api");
+services.Middleware.applyPreset("api");
 
-// Apply with overrides
-services.Middleware.usePreset("api", {
-  overrides: {
-    Cors: { origin: "https://myapp.com" }
-  }
+services.Middleware.applyPreset("api", {
+  security: {
+    cors: { origin: "https://myapp.com", credentials: true },
+  },
 });
 ```
 
@@ -84,8 +82,7 @@ services.Middleware.usePreset("api", {
 ├── architecture.md              # Framework architecture
 ├── examples/                    # Runnable examples
 │   ├── basic-middleware.example.ts
-│   ├── custom-middleware.example.ts
-│   └── middleware-presets.example.ts
+│   └── custom-middleware.example.ts
 └── diagrams/                    # Visual diagrams
     └── middleware-pipeline.mermaid
 ```

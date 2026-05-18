@@ -224,44 +224,55 @@ services.Middleware.addMiddleware({
 
 ### Available Presets
 
-- **api**: Optimized for REST APIs
-- **web**: Optimized for web applications
-- **microservice**: Optimized for microservices
-- **graphql**: Optimized for GraphQL APIs
-- **minimal**: Minimal middleware set
-- **secure**: Maximum security configuration
-- **development**: Development-friendly configuration
-- **production**: Production-optimized configuration
+- **api**: REST APIs with 10mb body limits, strict CORS, rate limiting, compression
+- **web**: Server-rendered apps with cookies, 5mb body limits, permissive CORS
+- **spa**: SPA backends with static fallback
+- **microservice**: Lightweight internal services (1mb body, no security)
+- **graphql**: GraphQL servers with 50mb JSON limit, POST-only CORS
+- **minimal**: Body parsing only, no security or compression
+- **development**: Relaxed security, morgan logging, large body limit
+- **production**: Hardened defaults with strict security and rate limiting
 
 ### Using Presets
 
 **Basic Usage:**
 ```typescript
-services.Middleware.usePreset("api");
+services.Middleware.applyPreset("api");
 ```
 
 **With Overrides:**
+
+`applyPreset()` accepts a `Partial<MiddlewareConfig>` that deep-merges with the
+preset defaults. Override a category by passing an object, or pass `false` to
+disable it entirely.
+
 ```typescript
-services.Middleware.usePreset("api", {
-  overrides: {
-    Cors: { origin: "https://myapp.com" },
-    RateLimiter: { limit: 200 }
-  }
+services.Middleware.applyPreset("api", {
+  security: {
+    cors: { origin: "https://myapp.com", credentials: true },
+    rateLimit: { windowMs: 60_000, max: 200 },
+  },
+  compress: { level: 9 },
 });
 ```
 
-**Skip Middleware:**
+**Disable a Category:**
 ```typescript
-services.Middleware.usePreset("api", {
-  skip: ["RateLimiter"]
+services.Middleware.applyPreset("api", {
+  logger: false,
+  compress: false,
 });
 ```
 
-**Only Installed:**
+**Define a Custom Preset:**
 ```typescript
-services.Middleware.usePreset("api", {
-  onlyInstalled: true
+services.Middleware.definePreset("edge", {
+  parse: { json: { limit: "1mb" } },
+  security: { headers: "helmet", cors: { origin: true } },
+  compress: { level: 6 },
 });
+
+services.Middleware.applyPreset("edge");
 ```
 
 ## Conditional Middleware
@@ -386,11 +397,10 @@ services.Middleware.setErrorHandler({});
 Use presets for common configurations:
 
 ```typescript
-// Instead of adding each middleware individually
-services.Middleware.usePreset("api", {
-  overrides: {
-    Cors: { origin: process.env.ALLOWED_ORIGIN }
-  }
+services.Middleware.applyPreset("api", {
+  security: {
+    cors: { origin: process.env.ALLOWED_ORIGIN },
+  },
 });
 ```
 

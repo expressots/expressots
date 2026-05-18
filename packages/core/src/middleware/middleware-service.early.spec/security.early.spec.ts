@@ -42,6 +42,7 @@ describe("Middleware.security() security method", () => {
         origin: true,
         credentials: true,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
       });
       expect(middlewareResolver).toHaveBeenCalledWith("rateLimit", {
         windowMs: 60000,

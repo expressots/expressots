@@ -267,56 +267,51 @@ function resolveModule<T>(packageName: string): T | null {
 
 ### Preset Structure
 
-```typescript
-interface MiddlewarePreset {
-  name: MiddlewarePresetName;
-  description: string;
-  middleware: Array<PresetMiddlewareConfig>;
-  tags?: Array<string>;
-}
+Presets are category-based `MiddlewareConfig` records (not flat middleware
+arrays). Each top-level key maps to a category method on the middleware
+service.
 
-interface PresetMiddlewareConfig {
-  name: string;        // Middleware name (e.g., "Cors")
-  options?: unknown;  // Configuration options
-  optional?: boolean; // Won't fail if not installed
+```typescript
+interface MiddlewareConfig {
+  parse?: ParseOptions | boolean;
+  logger?: MiddlewareLoggerConfig | boolean;
+  security?: SecurityConfig | SecurityPreset | boolean;
+  compress?: CompressConfig | boolean;
+  session?: SessionConfig;
+  static?: StaticConfig | string | Array<StaticConfig | string>;
 }
 ```
+
+Built-in presets live in `getBuiltInPresets()` inside
+[`middleware-service.ts`](../middleware-service.ts). Available names: `api`,
+`web`, `spa`, `microservice`, `graphql`, `minimal`, `development`,
+`production`.
 
 ### Applying Presets
 
 ```typescript
-usePreset(
-  preset: MiddlewarePresetName | MiddlewarePreset,
-  options?: ApplyPresetOptions
+applyPreset(
+  preset: string,
+  overrides?: Partial<MiddlewareConfig>
 ): void {
-  const presetConfig = typeof preset === "string"
-    ? getPreset(preset)
-    : preset;
+  const config = this.getPresetConfig(preset);
+  if (!config) return;
 
-  if (!presetConfig) {
-    return;
-  }
+  const finalConfig = overrides
+    ? this.mergeConfigs(config, overrides)
+    : config;
 
-  for (const config of presetConfig.middleware) {
-    // Skip if in skip list
-    if (options?.skip?.includes(config.name)) {
-      continue;
-    }
-
-    // Check if optional and not installed
-    if (config.optional && options?.onlyInstalled) {
-      const middlewareName = config.name.toLowerCase();
-      if (!isMiddlewareAvailable(middlewareName)) {
-        continue;
-      }
-    }
-
-    // Apply middleware with overrides
-    const finalOptions = options?.overrides?.[config.name] ?? config.options;
-    this.applyMiddlewareConfig(config.name, finalOptions);
-  }
+  if (finalConfig.parse)    this.parse(typeof finalConfig.parse === "object" ? finalConfig.parse : undefined);
+  if (finalConfig.logger)   this.logger(typeof finalConfig.logger === "object" ? finalConfig.logger : undefined);
+  if (finalConfig.security) this.security(typeof finalConfig.security === "object" || typeof finalConfig.security === "string" ? finalConfig.security : undefined);
+  if (finalConfig.compress) this.compress(typeof finalConfig.compress === "object" ? finalConfig.compress : undefined);
+  if (finalConfig.session)  this.session(finalConfig.session);
+  if (finalConfig.static)   this.static(finalConfig.static);
 }
 ```
+
+Overrides deep-merge with the preset defaults per category, so callers only
+need to specify the keys they want to change.
 
 ## Performance Profiling
 
@@ -438,8 +433,7 @@ getStats(): ProfilerStats {
 
 ## Related Code
 
-- [MiddlewareService](../middleware-service.ts) - Main service implementation
+- [MiddlewareService](../middleware-service.ts) - Main service implementation (includes built-in presets)
 - [MiddlewareResolver](../middleware-resolver.ts) - Package resolution
-- [MiddlewarePresets](../middleware-presets.ts) - Preset definitions
 - [MiddlewareProfiler](../middleware-profiler.ts) - Performance profiling
 

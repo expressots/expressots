@@ -61,8 +61,10 @@ describe("Middleware.applyPreset() applyPreset method", () => {
         "cors",
         expect.anything(),
       );
-      // Compression is also part of api preset
-      expect(middlewareResolver).toHaveBeenCalledWith("compression", undefined);
+      // Compression is also part of api preset, tuned to level 6
+      expect(middlewareResolver).toHaveBeenCalledWith("compression", {
+        level: 6,
+      });
     });
 
     it("should apply 'web' preset with cookies enabled", () => {
@@ -91,8 +93,10 @@ describe("Middleware.applyPreset() applyPreset method", () => {
       middleware.applyPreset("microservice");
 
       expect(json).toHaveBeenCalledWith({ limit: "1mb" });
-      // Compression is called with undefined options
-      expect(middlewareResolver).toHaveBeenCalledWith("compression", undefined);
+      // Compression is tuned to level 6 for service-to-service throughput
+      expect(middlewareResolver).toHaveBeenCalledWith("compression", {
+        level: 6,
+      });
     });
 
     it("should apply 'graphql' preset with large JSON limit", () => {
