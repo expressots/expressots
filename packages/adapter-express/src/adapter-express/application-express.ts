@@ -1438,8 +1438,8 @@ export class AppExpress implements Server.IWebServer {
           cors?: {
             origin?: boolean | string;
             credentials?: boolean;
-            methods?: string[];
-            allowedHeaders?: string[];
+            methods?: Array<string>;
+            allowedHeaders?: Array<string>;
           };
           rateLimit?: { windowMs?: number; max?: number } | false;
         };
@@ -1449,23 +1449,42 @@ export class AppExpress implements Server.IWebServer {
     | undefined {
     try {
       const mw = this.Middleware as Middleware;
-      const getPreset = (mw as unknown as { getLastAppliedPreset?: () => { name: string; hasOverrides: boolean; config: Record<string, unknown> } | null }).getLastAppliedPreset;
+      const getPreset = (
+        mw as unknown as {
+          getLastAppliedPreset?: () => {
+            name: string;
+            hasOverrides: boolean;
+            config: Record<string, unknown>;
+          } | null;
+        }
+      ).getLastAppliedPreset;
       if (typeof getPreset !== "function") return undefined;
 
       const preset = getPreset.call(mw);
       if (!preset) return undefined;
 
       const cfg = preset.config as {
-        parse?: boolean | {
-          json?: boolean | { limit?: string };
-          urlencoded?: boolean | { limit?: string; extended?: boolean };
-          cookies?: boolean | object;
-        };
-        security?: string | {
-          headers?: string | boolean | object;
-          cors?: boolean | { origin?: boolean | string; credentials?: boolean; methods?: string[]; allowedHeaders?: string[] };
-          rateLimit?: boolean | { windowMs?: number; max?: number };
-        };
+        parse?:
+          | boolean
+          | {
+              json?: boolean | { limit?: string };
+              urlencoded?: boolean | { limit?: string; extended?: boolean };
+              cookies?: boolean | object;
+            };
+        security?:
+          | string
+          | {
+              headers?: string | boolean | object;
+              cors?:
+                | boolean
+                | {
+                    origin?: boolean | string;
+                    credentials?: boolean;
+                    methods?: Array<string>;
+                    allowedHeaders?: Array<string>;
+                  };
+              rateLimit?: boolean | { windowMs?: number; max?: number };
+            };
         compress?: boolean | { level?: number; implementation?: string };
         logger?: boolean | { implementation?: string; disableInTest?: boolean };
       };
@@ -1497,8 +1516,8 @@ export class AppExpress implements Server.IWebServer {
             cors?: {
               origin?: boolean | string;
               credentials?: boolean;
-              methods?: string[];
-              allowedHeaders?: string[];
+              methods?: Array<string>;
+              allowedHeaders?: Array<string>;
             };
             rateLimit?: { windowMs?: number; max?: number } | false;
           }
@@ -1528,20 +1547,14 @@ export class AppExpress implements Server.IWebServer {
       const compress = cfg.compress
         ? {
             enabled: true,
-            level:
-              typeof cfg.compress === "object"
-                ? cfg.compress.level
-                : undefined,
+            level: typeof cfg.compress === "object" ? cfg.compress.level : undefined,
           }
         : { enabled: false };
 
       const logger = cfg.logger
         ? {
             enabled: true,
-            implementation:
-              typeof cfg.logger === "object"
-                ? cfg.logger.implementation
-                : "auto",
+            implementation: typeof cfg.logger === "object" ? cfg.logger.implementation : "auto",
           }
         : { enabled: false };
 
@@ -1732,8 +1745,8 @@ function resolveSecurityTierForStudio(tier: string): {
   cors?: {
     origin?: boolean | string;
     credentials?: boolean;
-    methods?: string[];
-    allowedHeaders?: string[];
+    methods?: Array<string>;
+    allowedHeaders?: Array<string>;
   };
   rateLimit?: { windowMs?: number; max?: number } | false;
 } {

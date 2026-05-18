@@ -95,8 +95,8 @@ export interface StudioMiddlewarePresetInfo {
     cors?: {
       origin?: boolean | string;
       credentials?: boolean;
-      methods?: string[];
-      allowedHeaders?: string[];
+      methods?: Array<string>;
+      allowedHeaders?: Array<string>;
     };
     rateLimit?: { windowMs?: number; max?: number } | false;
   };
