@@ -240,8 +240,14 @@ export function StatusDashboard() {
                 label="Memory"
                 value={`${formatBytes(metrics.memoryUsage.heapUsed)} / ${formatBytes(metrics.memoryUsage.heapTotal)}`}
                 mono
+                tooltip="V8 heap memory: used / reserved. This is where JS objects, closures, and scoped data live. Differs from the terminal banner which shows a one-time boot snapshot."
               />
-              <Row label="Heap" value={`${heapPct}%`} mono>
+              <Row
+                label="Heap"
+                value={`${heapPct}%`}
+                mono
+                tooltip="Heap pressure: heapUsed / heapTotal. High values (>85%) mean V8 may trigger frequent garbage collection pauses or expand its heap."
+              >
                 <div className="mt-1 w-full h-1.5 rounded-full bg-gray-800 overflow-hidden">
                   <div
                     className={cn(
@@ -256,12 +262,21 @@ export function StatusDashboard() {
                   />
                 </div>
               </Row>
-              <Row label="RSS" value={formatBytes(metrics.memoryUsage.rss)} mono />
+              <Row
+                label="RSS"
+                value={formatBytes(metrics.memoryUsage.rss)}
+                mono
+                tooltip="Resident Set Size: total physical memory used by the entire process, including the V8 heap, native C++ bindings, buffers, and shared libraries. Always larger than heap."
+              />
               <Row
                 label="Connections"
                 value={String(metrics.activeConnections)}
                 mono
+                tooltip="Number of active WebSocket clients connected to the Studio Agent (e.g. this browser tab). Not the HTTP connections to your app server."
               />
+              <div className="mt-1 text-[10px] text-gray-600 italic text-right">
+                Live — refreshed every 5s
+              </div>
             </>
           ) : (
             <Empty>Waiting for metrics…</Empty>
@@ -830,16 +845,18 @@ function Row({
   value,
   mono,
   valueClass,
+  tooltip,
   children,
 }: {
   label: string;
   value: string;
   mono?: boolean;
   valueClass?: string;
+  tooltip?: string;
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
+    <div className="flex items-baseline justify-between gap-3" title={tooltip}>
       <span className="text-[11px] uppercase tracking-wide text-gray-500">
         {label}
       </span>
@@ -850,7 +867,7 @@ function Row({
             mono && 'font-mono',
             valueClass ?? 'text-gray-100',
           )}
-          title={value}
+          title={tooltip ?? value}
         >
           {value}
         </span>
