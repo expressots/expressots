@@ -1368,6 +1368,13 @@ export class AppExpress implements Server.IWebServer {
           priority?: number;
           source: string;
         }>;
+        middleware?: Array<{
+          name: string;
+          category: string;
+          type: "built-in" | "custom";
+          order: number;
+          path?: string;
+        }>;
       }
     | undefined {
     try {
@@ -1405,15 +1412,61 @@ export class AppExpress implements Server.IWebServer {
         }
       }
 
-      // Bail out if both lists are empty — nothing useful to forward.
-      if (providers.length === 0 && interceptors.length === 0) {
+      const middleware = this.collectMiddlewarePipelineItems();
+
+      if (providers.length === 0 && interceptors.length === 0 && !middleware) {
         return undefined;
       }
 
-      return { providers, interceptors };
+      return { providers, interceptors, middleware };
     } catch {
-      // Metadata reads should never break boot. Status page just falls
-      // back to its static-scan list.
+      return undefined;
+    }
+  }
+
+  /**
+   * Collect the ordered middleware pipeline from the Middleware service
+   * for forwarding to Studio. Uses feature-detection so older core
+   * versions that lack `getPipelineInfo()` won't break.
+   */
+  private collectMiddlewarePipelineItems():
+    | Array<{
+        name: string;
+        category: string;
+        type: "built-in" | "custom";
+        order: number;
+        path?: string;
+      }>
+    | undefined {
+    try {
+      const mw = this.Middleware as Middleware;
+      const getPipelineInfo = (
+        mw as unknown as {
+          getPipelineInfo?: () => {
+            entries: Array<{
+              name: string;
+              category: string;
+              type: "built-in" | "custom";
+              order: number;
+              path: string;
+            }>;
+          };
+        }
+      ).getPipelineInfo;
+
+      if (typeof getPipelineInfo !== "function") return undefined;
+
+      const info = getPipelineInfo.call(mw);
+      if (!info || !info.entries || info.entries.length === 0) return undefined;
+
+      return info.entries.map((e) => ({
+        name: e.name,
+        category: e.category,
+        type: e.type,
+        order: e.order,
+        path: e.path !== "Global" ? e.path : undefined,
+      }));
+    } catch {
       return undefined;
     }
   }

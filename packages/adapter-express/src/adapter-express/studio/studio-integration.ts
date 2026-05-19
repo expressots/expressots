@@ -74,6 +74,13 @@ interface StudioAgentInstance {
 export interface StudioRuntimeItems {
   providers?: Array<{ name: string; source?: string }>;
   interceptors?: Array<{ name: string; priority?: number; source?: string }>;
+  middleware?: Array<{
+    name: string;
+    category: string;
+    type: "built-in" | "custom";
+    order: number;
+    path?: string;
+  }>;
 }
 
 /**
