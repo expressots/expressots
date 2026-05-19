@@ -264,6 +264,68 @@ const PRESET_CODE: Record<string, string> = {
 };
 
 /**
+ * Per-preset runtime dependencies. The base application template ships only
+ * express + framework packages; each preset declares exactly which optional
+ * middleware packages it needs so scaffolded projects stay lean.
+ *
+ * Versions are pinned with `^` ranges matching the middleware-resolver
+ * registry expectations in `@expressots/core`.
+ */
+const PRESET_DEPENDENCIES: Record<
+	string,
+	{
+		dependencies?: Record<string, string>;
+		devDependencies?: Record<string, string>;
+	}
+> = {
+	API: {
+		dependencies: {
+			compression: "^1.8.1",
+			cors: "^2.8.6",
+			"express-rate-limit": "^8.5.1",
+			helmet: "^8.1.0",
+		},
+		devDependencies: {
+			"@types/compression": "^1.7.5",
+			"@types/cors": "^2.8.17",
+		},
+	},
+	Web: {
+		dependencies: {
+			compression: "^1.8.1",
+			"cookie-parser": "^1.4.7",
+			cors: "^2.8.6",
+			helmet: "^8.1.0",
+		},
+		devDependencies: {
+			"@types/compression": "^1.7.5",
+			"@types/cookie-parser": "^1.4.8",
+			"@types/cors": "^2.8.17",
+		},
+	},
+	GraphQL: {
+		dependencies: {
+			compression: "^1.8.1",
+			cors: "^2.8.6",
+			helmet: "^8.1.0",
+		},
+		devDependencies: {
+			"@types/compression": "^1.7.5",
+			"@types/cors": "^2.8.17",
+		},
+	},
+	Microservice: {
+		dependencies: {
+			compression: "^1.8.1",
+		},
+		devDependencies: {
+			"@types/compression": "^1.7.5",
+		},
+	},
+	Minimal: {},
+};
+
+/**
  * Apply the selected middleware preset to the generated app.ts
  */
 function applyMiddlewarePreset(directory: string, preset: string): void {
@@ -288,6 +350,36 @@ function applyMiddlewarePreset(directory: string, preset: string): void {
 	);
 
 	fs.writeFileSync(appTsPath, content, "utf-8");
+}
+
+/**
+ * Inject preset-specific dependencies into the scaffolded project's
+ * package.json **before** `npm install` runs, so everything resolves
+ * in a single install step.
+ */
+function injectPresetDependencies(directory: string, preset: string): void {
+	const pkgPath = path.join(directory, "package.json");
+	if (!fs.existsSync(pkgPath)) return;
+
+	const presetMatch = preset.match(/^(\w+) ::/);
+	const presetName = presetMatch ? presetMatch[1] : "API";
+
+	const presetDeps = PRESET_DEPENDENCIES[presetName];
+	if (!presetDeps) return;
+
+	const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+
+	if (presetDeps.dependencies) {
+		pkg.dependencies = { ...pkg.dependencies, ...presetDeps.dependencies };
+	}
+	if (presetDeps.devDependencies) {
+		pkg.devDependencies = {
+			...pkg.devDependencies,
+			...presetDeps.devDependencies,
+		};
+	}
+
+	fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4) + "\n", "utf-8");
 }
 
 /**
@@ -535,6 +627,14 @@ const projectForm = async (
 				answer.name,
 			);
 			process.exit(1);
+		}
+
+		if (
+			answer.preset &&
+			(templateFolder === "application" ||
+				templateFolder === "application-with-events")
+		) {
+			injectPresetDependencies(answer.name, answer.preset);
 		}
 
 		if (SKIP_INSTALL_FOR_TESTING) {
