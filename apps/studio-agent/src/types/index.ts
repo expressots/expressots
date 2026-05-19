@@ -189,6 +189,8 @@ export interface RuntimeItems {
   providers?: RuntimeItem[];
   /** Interceptor class names registered via `@Interceptor()`. */
   interceptors?: RuntimeItem[];
+  /** Middleware pipeline entries from the Middleware service. */
+  middleware?: MiddlewarePipelineItem[];
 }
 
 /** A single runtime-discovered item (provider, interceptor, etc.). */
@@ -202,6 +204,20 @@ export interface RuntimeItem {
   priority?: number;
   /** Optional source — purely informational ("metadata", "registry", …). */
   source?: string;
+}
+
+/** A middleware entry from the runtime pipeline. */
+export interface MiddlewarePipelineItem {
+  /** Display name of the middleware function/class. */
+  name: string;
+  /** Category: parser, security, logging, session, static, error, validation, other. */
+  category: string;
+  /** Whether this is a built-in (preset) or custom (user-added) middleware. */
+  type: 'built-in' | 'custom';
+  /** Execution order (0-based). */
+  order: number;
+  /** Route path if scoped, or "Global" for global middleware. */
+  path?: string;
 }
 
 /**

@@ -300,6 +300,14 @@ export function StatusDashboard() {
             active={drill === 'providers'}
             onClick={() => toggleDrill('providers')}
           />
+          <ClickRow
+            label="Middleware"
+            value={String(
+              runtime?.counts.middleware ?? structure?.middleware.length ?? 0,
+            )}
+            active={drill === 'middleware'}
+            onClick={() => toggleDrill('middleware')}
+          />
         </Card>
 
         {/* Security & Scope — clickable, opens the Security view */}
@@ -505,11 +513,10 @@ function DrillPanel({
           containerSnapshot?.bindings,
         );
       case 'middleware':
-        return (structure?.middleware ?? []).map((m, i) => ({
-          key: `${m}-${i}`,
-          primary: m,
-          secondary: 'Class-based middleware',
-        }));
+        return mergeMiddleware(
+          runtime?.runtimeItems?.middleware,
+          structure?.middleware,
+        );
       case 'interceptors':
         return mergeInterceptors(
           runtime?.runtimeItems?.interceptors,
@@ -587,6 +594,18 @@ function DrillRow({
                 )}
               >
                 {item.method}
+              </span>
+            )}
+            {drill === 'middleware' && item.middlewareType && (
+              <span
+                className={cn(
+                  'text-[10px] font-mono px-1.5 py-0.5 rounded border',
+                  item.middlewareType === 'built-in'
+                    ? 'text-primary-300 bg-primary-950/60 border-primary-700/50'
+                    : 'text-amber-300 bg-amber-950/50 border-amber-700/50',
+                )}
+              >
+                {item.middlewareType === 'built-in' ? 'preset' : 'custom'}
               </span>
             )}
             <span className="text-sm text-white font-mono truncate" title={item.primary}>
@@ -711,6 +730,31 @@ function mergeInterceptors(
         it.priority !== undefined
           ? `priority ${it.priority}`
           : 'Registered via @Interceptor()',
+    }));
+  }
+  return (staticMiddleware ?? []).map((m, i) => ({
+    key: `${m}-${i}`,
+    primary: m,
+    secondary: 'Class-based middleware',
+  }));
+}
+
+/**
+ * Merge runtime middleware pipeline items (from `Middleware.getPipelineInfo()`)
+ * with the static-scan middleware list. Prefers runtime data because it shows
+ * the full ordered pipeline including preset-applied and user-added middleware.
+ */
+function mergeMiddleware(
+  runtimeMiddleware: import('../types').MiddlewarePipelineItem[] | undefined,
+  staticMiddleware: string[] | undefined,
+): Array<Record<string, unknown>> {
+  if (runtimeMiddleware && runtimeMiddleware.length > 0) {
+    return runtimeMiddleware.map((m, i) => ({
+      key: `${m.name}-${i}`,
+      primary: m.name,
+      secondary: `${m.category} · ${m.type}${m.path ? ` · ${m.path}` : ''}`,
+      category: m.category,
+      middlewareType: m.type,
     }));
   }
   return (staticMiddleware ?? []).map((m, i) => ({

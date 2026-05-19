@@ -350,6 +350,7 @@ export interface MiddlewarePresetInfo {
 export interface RuntimeItems {
   providers?: RuntimeItem[];
   interceptors?: RuntimeItem[];
+  middleware?: MiddlewarePipelineItem[];
 }
 
 /** A single runtime-discovered item (provider, interceptor, etc.). */
@@ -357,6 +358,15 @@ export interface RuntimeItem {
   name: string;
   priority?: number;
   source?: string;
+}
+
+/** A middleware entry from the runtime pipeline. */
+export interface MiddlewarePipelineItem {
+  name: string;
+  category: string;
+  type: 'built-in' | 'custom';
+  order: number;
+  path?: string;
 }
 
 // ────────────────────────────────────────────────────────────────────────
