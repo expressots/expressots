@@ -552,7 +552,9 @@ export class Middleware implements IMiddleware {
       const config = m.middleware as MiddlewareConfig;
       if (config.path) return config.path;
       const names = config.middlewares
-        .map((fn) => (typeof fn === "function" ? fn.name : fn?.constructor?.name))
+        .map((fn) =>
+          typeof fn === "function" ? fn.name : fn?.constructor?.name,
+        )
         .filter((n) => n && n !== "anonymous" && n !== "");
       return names.length > 0 ? names.join(", ") : "ConfigMiddleware";
     } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
