@@ -466,7 +466,11 @@ export class Middleware implements IMiddleware {
    * @returns The type of the middleware.
    */
   private getMiddlewareType(middleware: MiddlewareOptions): MiddlewareType {
-    if (middleware && typeof middleware === "object" && "path" in middleware) {
+    if (
+      middleware &&
+      typeof middleware === "object" &&
+      ("path" in middleware || "middlewares" in middleware)
+    ) {
       return MiddlewareType.Config;
     }
     if (typeof middleware === "function") {
@@ -546,7 +550,11 @@ export class Middleware implements IMiddleware {
 
     if (middlewareType === MiddlewareType.Config) {
       const config = m.middleware as MiddlewareConfig;
-      return config.path || "ConfigMiddleware";
+      if (config.path) return config.path;
+      const names = config.middlewares
+        .map((fn) => (typeof fn === "function" ? fn.name : fn?.constructor?.name))
+        .filter((n) => n && n !== "anonymous" && n !== "");
+      return names.length > 0 ? names.join(", ") : "ConfigMiddleware";
     } else if (middlewareType === MiddlewareType.IExpressoMiddleware) {
       return (m.middleware as IExpressoMiddleware).constructor.name;
     } else {
@@ -667,7 +675,13 @@ export class Middleware implements IMiddleware {
       return;
     }
 
-    const configKey = config.path || `config_${this.insertionOrder}`;
+    const inferredName = config.middlewares
+      .map((fn) => (typeof fn === "function" ? fn.name : fn?.constructor?.name))
+      .filter((n) => n && n !== "anonymous" && n !== "")
+      .join(", ");
+
+    const configKey =
+      config.path || inferredName || `custom_${this.insertionOrder}`;
 
     if (this.middlewareExists(configKey)) {
       this._logger.warn(
