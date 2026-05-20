@@ -81,6 +81,22 @@ export interface StudioRuntimeItems {
     order: number;
     path?: string;
   }>;
+  /**
+   * Controller- and route-scoped middleware bindings, harvested from
+   * `ControllerMetadata.middleware` Reflect entries after
+   * `app.listen()`. Used by the agent to draw scope-aware
+   * "middleware → controller / route" edges on the architecture map.
+   *
+   * Mirrors `MiddlewareBinding` in `@expressots/studio-agent`.
+   */
+  middlewareBindings?: Array<{
+    middlewareName: string;
+    scope: "controller" | "route";
+    controllerName: string;
+    controllerMethod?: string;
+    httpMethod?: string;
+    routePath?: string;
+  }>;
 }
 
 /**

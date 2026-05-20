@@ -1375,6 +1375,14 @@ export class AppExpress implements Server.IWebServer {
           order: number;
           path?: string;
         }>;
+        middlewareBindings?: Array<{
+          middlewareName: string;
+          scope: "controller" | "route";
+          controllerName: string;
+          controllerMethod?: string;
+          httpMethod?: string;
+          routePath?: string;
+        }>;
       }
     | undefined {
     try {
@@ -1413,15 +1421,150 @@ export class AppExpress implements Server.IWebServer {
       }
 
       const middleware = this.collectMiddlewarePipelineItems();
+      const middlewareBindings = this.collectMiddlewareBindings();
 
-      if (providers.length === 0 && interceptors.length === 0 && !middleware) {
+      if (
+        providers.length === 0 &&
+        interceptors.length === 0 &&
+        !middleware &&
+        !middlewareBindings
+      ) {
         return undefined;
       }
 
-      return { providers, interceptors, middleware };
+      return { providers, interceptors, middleware, middlewareBindings };
     } catch {
       return undefined;
     }
+  }
+
+  /**
+   * Harvest controller- and route-scoped middleware bindings from
+   * Reflect metadata. Each entry describes a single edge the Studio
+   * architecture map should draw, e.g. "AuthMiddleware → UserController
+   * (route POST /users/:id)".
+   *
+   * The middleware values stored on `ControllerMetadata.middleware` are
+   * a polymorphic union (class, function, registered name, conditional
+   * config, …). We normalise each to a display name; entries we can't
+   * name (anonymous arrow functions, plain object configs without a
+   * `name` field) are omitted. The agent's static scan picks up the
+   * remaining named cases via decorator parsing — between the two
+   * sources Studio sees a complete graph for the common patterns.
+   */
+  private collectMiddlewareBindings():
+    | Array<{
+        middlewareName: string;
+        scope: "controller" | "route";
+        controllerName: string;
+        controllerMethod?: string;
+        httpMethod?: string;
+        routePath?: string;
+      }>
+    | undefined {
+    try {
+      const controllers = getControllersFromMetadata();
+      if (!controllers || controllers.length === 0) return undefined;
+
+      const out: Array<{
+        middlewareName: string;
+        scope: "controller" | "route";
+        controllerName: string;
+        controllerMethod?: string;
+        httpMethod?: string;
+        routePath?: string;
+      }> = [];
+
+      const nameOf = (value: unknown): string | null => {
+        if (value == null) return null;
+        if (typeof value === "string") return value;
+        if (typeof value === "symbol") {
+          const desc = value.description;
+          return desc && desc.length > 0 ? desc : null;
+        }
+        if (typeof value === "function") {
+          const fnName = (value as { name?: string }).name;
+          return typeof fnName === "string" && fnName.length > 0 ? fnName : null;
+        }
+        if (typeof value === "object") {
+          const candidate = (value as { name?: unknown }).name;
+          if (typeof candidate === "string" && candidate.length > 0) {
+            return candidate;
+          }
+          const ctorName = (value as { constructor?: { name?: string } })
+            .constructor?.name;
+          if (
+            typeof ctorName === "string" &&
+            ctorName.length > 0 &&
+            ctorName !== "Object"
+          ) {
+            return ctorName;
+          }
+        }
+        return null;
+      };
+
+      for (const controllerTarget of controllers) {
+        const controllerCtor = controllerTarget as unknown as NewableFunction;
+        const controllerName = (controllerCtor as { name?: string }).name;
+        if (typeof controllerName !== "string" || controllerName.length === 0) {
+          continue;
+        }
+
+        const ctrlMeta = getControllerMetadata(controllerCtor);
+        if (ctrlMeta?.middleware && Array.isArray(ctrlMeta.middleware)) {
+          for (const mw of ctrlMeta.middleware) {
+            const middlewareName = nameOf(mw);
+            if (!middlewareName) continue;
+            out.push({
+              middlewareName,
+              scope: "controller",
+              controllerName,
+            });
+          }
+        }
+
+        const methodMeta = getControllerMethodMetadata(controllerCtor);
+        if (Array.isArray(methodMeta)) {
+          const basePath = ctrlMeta?.path ?? "";
+          for (const route of methodMeta) {
+            if (!route?.middleware || !Array.isArray(route.middleware)) continue;
+            const httpMethod =
+              typeof route.method === "string" ? route.method.toUpperCase() : undefined;
+            const fullPath = this.joinRoutePath(basePath, route.path);
+            for (const mw of route.middleware) {
+              const middlewareName = nameOf(mw);
+              if (!middlewareName) continue;
+              out.push({
+                middlewareName,
+                scope: "route",
+                controllerName,
+                controllerMethod:
+                  typeof route.key === "string" ? route.key : undefined,
+                httpMethod,
+                routePath: fullPath,
+              });
+            }
+          }
+        }
+      }
+
+      return out.length > 0 ? out : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Combine a controller's base path with a route path, normalising
+   * leading/trailing slashes. Mirrors the simpler logic Studio uses to
+   * build `RouteInfo.path` so the bindings line up with route entries.
+   */
+  private joinRoutePath(basePath: string, routePath: string | undefined): string {
+    const base = basePath?.startsWith("/") ? basePath : `/${basePath ?? ""}`;
+    if (!routePath || routePath === "/" || routePath === "") return base || "/";
+    const tail = routePath.startsWith("/") ? routePath : `/${routePath}`;
+    return (base + tail).replace(/\/+/g, "/");
   }
 
   /**
