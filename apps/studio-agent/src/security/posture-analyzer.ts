@@ -185,7 +185,9 @@ function checkAuthGaps(input: PostureInputs): PostureFinding[] {
   const lastByRoute = mostRecentSuccessByRoute(input.exchanges);
   const allByRoute = groupByRoute(input.exchanges);
 
-  const middlewareNames = (input.structure?.middleware ?? []).map((m) => m.toLowerCase());
+  const middlewareNames = (input.structure?.middleware ?? []).map((m) =>
+    m.name.toLowerCase(),
+  );
   const hasGlobalAuth = middlewareNames.some((n) => /auth|jwt|session|guard/.test(n));
 
   for (const [routeKey, exchange] of lastByRoute) {

@@ -14,37 +14,14 @@ import type {
   HttpMethod,
   DependencyInfo,
   ModuleInfo,
+  MiddlewareInfo,
 } from '../types/index.js';
 
-/** Regular expressions for parsing TypeScript/JavaScript files */
-const PATTERNS = {
-  // Match @controller decorator with path
-  controller: /@controller\s*\(\s*['"`]([^'"`]+)['"`]/gi,
-  // Match HTTP method decorators
-  httpMethods: {
-    get: /@Get\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-    post: /@Post\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-    put: /@Put\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-    patch: /@Patch\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-    delete: /@Delete\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-    head: /@Head\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-    options: /@Options\s*\(\s*['"`]?([^'"`\)]*)?['"`]?\s*\)/gi,
-  },
-  // Match class declaration
-  classDeclaration: /class\s+(\w+)/g,
-  // Match constructor injection
-  constructorInjection: /constructor\s*\([^)]*\)/g,
-  // Match @inject decorator
-  inject: /@inject\s*\(\s*(\w+)\s*\)/gi,
-  // Match method declaration
-  methodDeclaration: /(?:async\s+)?(\w+)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g,
-  // Match service/provider decorators
-  injectable: /@provide\s*\(\s*(\w+)?\s*\)/gi,
-  // Match middleware decorator
-  middleware: /@middleware\s*\(/gi,
-  // Match scope decorator  
-  scope: /@scope\s*\(\s*(\w+)\s*\)/gi,
-};
+// NOTE: HTTP method decorators, controller decorators, and the
+// `extends ExpressoMiddleware` pattern are matched inline below — the
+// scanner uses balanced-paren walks rather than fragile capture-group
+// regexes so it can handle decorator arguments like
+// `@Get('/x', AuthMw, RoleGuard("admin"))`.
 
 /**
  * Type names that look like dependencies syntactically but aren't ones we
@@ -297,6 +274,125 @@ function extractFieldInjectionTypes(classBody: string): string[] {
   return out;
 }
 
+/**
+ * Capture the full balanced argument list of a decorator call.
+ *
+ * Given `content` and the index of the opening `(` (immediately after
+ * the decorator name), returns the substring between `(` and the
+ * matching `)`. Handles strings, template literals, and nested call
+ * expressions so decorators like
+ *
+ *   @controller("/x", isAuthenticated, RoleGuard("admin"))
+ *
+ * round-trip cleanly. Returns `null` when the parens are unbalanced.
+ */
+function extractBalancedArgs(
+  content: string,
+  openParenIdx: number,
+): string | null {
+  if (content[openParenIdx] !== '(') return null;
+  let depth = 1;
+  let i = openParenIdx + 1;
+  while (i < content.length && depth > 0) {
+    const ch = content[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const close = ch;
+      i++;
+      while (i < content.length) {
+        if (content[i] === '\\') {
+          i += 2;
+          continue;
+        }
+        if (content[i] === close) {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    i++;
+  }
+  if (depth !== 0) return null;
+  return content.slice(openParenIdx + 1, i - 1);
+}
+
+/**
+ * Split a decorator argument list on top-level commas, respecting
+ * strings and bracket / paren nesting. Used to peel off the path arg
+ * (always the first entry) from the trailing middleware identifiers.
+ */
+function splitTopLevelArgs(args: string): string[] {
+  const out: string[] = [];
+  let buf = '';
+  let paren = 0;
+  let bracket = 0;
+  let brace = 0;
+  for (let i = 0; i < args.length; i++) {
+    const ch = args[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const close = ch;
+      buf += ch;
+      i++;
+      while (i < args.length) {
+        buf += args[i];
+        if (args[i] === '\\' && i + 1 < args.length) {
+          buf += args[i + 1];
+          i += 2;
+          continue;
+        }
+        if (args[i] === close) break;
+        i++;
+      }
+      continue;
+    }
+    if (ch === '(') paren++;
+    else if (ch === ')') paren--;
+    else if (ch === '[') bracket++;
+    else if (ch === ']') bracket--;
+    else if (ch === '{') brace++;
+    else if (ch === '}') brace--;
+    if (ch === ',' && paren === 0 && bracket === 0 && brace === 0) {
+      out.push(buf.trim());
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+  const tail = buf.trim();
+  if (tail.length > 0) out.push(tail);
+  return out;
+}
+
+/**
+ * Extract identifier references from a decorator argument that is
+ * supposed to be a middleware reference. Accepts plain identifiers
+ * (`MyMiddleware`), dotted access (`Mw.User`), and call expressions
+ * (`RoleGuard("admin")`) — the latter still resolves to a single
+ * identifier ("RoleGuard"). Returns `null` when the arg is not an
+ * identifier reference (e.g. a string token, an arrow function, an
+ * object literal). Those forms are real but can't be plotted as an
+ * architecture node from the static scan alone.
+ */
+function middlewareIdentifierFromArg(arg: string): string | null {
+  const trimmed = arg.trim();
+  if (!trimmed) return null;
+  // Strip a trailing `(...)` so `RoleGuard("admin")` → `RoleGuard`.
+  const match = trimmed.match(/^([A-Za-z_$][\w.$]*)/);
+  if (!match) return null;
+  const head = match[1].split('.').pop();
+  if (!head) return null;
+  // Skip JS reserved words and the path-style identifiers that aren't
+  // class references (e.g. `'/path'` would already have failed the
+  // regex; this catches `null`, `undefined`, `true`, `false`).
+  if (head === 'null' || head === 'undefined' || head === 'true' || head === 'false') {
+    return null;
+  }
+  return head;
+}
+
 function extractParamTypes(params: string): string[] {
   const out: string[] = [];
   // Anchor each iteration to consume exactly one parameter:
@@ -328,8 +424,27 @@ export class RouteScanner {
   private controllers: ControllerInfo[] = [];
   private services: ServiceInfo[] = [];
   private providers: ServiceInfo[] = [];
-  private middleware: string[] = [];
+  private middleware: MiddlewareInfo[] = [];
   private dependencies: DependencyInfo[] = [];
+  /**
+   * Class names of middleware discovered statically. Used to:
+   *   1. Suppress the same class from being added to `services[]`
+   *      (the legacy heuristic promoted any `@provide`-decorated class).
+   *   2. Resolve middleware identifiers parsed out of `@controller`/
+   *      `@Get` arguments to the matching scanner record.
+   */
+  private middlewareClassNames: Set<string> = new Set();
+  /**
+   * Bindings extracted from `@controller(path, ...mw)` and route
+   * decorators (`@Get(path, ...mw)`). Each entry is the source of a
+   * future `middleware → controller` edge.
+   */
+  private staticMiddlewareBindings: Array<{
+    middlewareName: string;
+    controllerName: string;
+    scope: 'controller' | 'route';
+    controllerMethod?: string;
+  }> = [];
   /**
    * Interface → implementation lookup populated from `class X implements IY`.
    * Used by `buildDependencyGraph` to redirect edges that target an
@@ -367,6 +482,8 @@ export class RouteScanner {
     this.services = [];
     this.providers = [];
     this.middleware = [];
+    this.middlewareClassNames.clear();
+    this.staticMiddlewareBindings = [];
     this.dependencies = [];
     this.implementsMap.clear();
     this.dtoSamples.clear();
@@ -375,6 +492,17 @@ export class RouteScanner {
 
     // Find all TypeScript files
     const files = await this.findTypeScriptFiles();
+
+    // First pass: harvest middleware class names so the main parse can
+    // suppress them from the generic `@provide` → service bucket. This
+    // matters because middleware classes are typically also decorated
+    // with `@provide(...)` so they can be DI-resolved when added via
+    // `Middleware.add(new MyMiddleware())`. Without this pre-pass the
+    // architecture map would render every middleware as a "Service"
+    // node and then flag it as orphan because nothing `@inject`s it.
+    for (const file of files) {
+      this.preScanForMiddlewareClasses(file);
+    }
 
     // Parse each file
     for (const file of files) {
@@ -396,6 +524,32 @@ export class RouteScanner {
       dependencies: this.dependencies,
       modules: this.modules,
     };
+  }
+
+  /**
+   * Cheap regex scan to find every class that extends `ExpressoMiddleware`.
+   * Records the class name and creates a `MiddlewareInfo` placeholder
+   * with `scope: 'unknown'`. The scope is upgraded later by
+   * `buildDependencyGraph()` (when the class shows up in a controller
+   * decorator) and by the agent's runtime merge step (for global
+   * middleware added via `Middleware.add()`).
+   */
+  private preScanForMiddlewareClasses(filePath: string): void {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const re = /class\s+(\w+)(?:\s*<[^>]*>)?\s+extends\s+ExpressoMiddleware\b/g;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(content)) !== null) {
+      const name = match[1];
+      if (this.middlewareClassNames.has(name)) continue;
+      this.middlewareClassNames.add(name);
+      this.middleware.push({
+        name,
+        filePath,
+        dependencies: [],
+        methods: [],
+        scope: 'unknown',
+      });
+    }
   }
 
   /**
@@ -572,11 +726,32 @@ export class RouteScanner {
     // doc-comments, mock objects in tests) don't get promoted to ghost
     // services. The pair is matched with a lookahead that allows the
     // typical `@provide(Foo) @scope(...) export class Foo` formatting.
+    //
+    // Classes we already classified as middleware (in the pre-pass) are
+    // skipped so they don't end up as both a "Service" and a
+    // "Middleware" node — `Middleware.add(new MyMw())` requires the
+    // class to be DI-bound, so middleware is almost always also
+    // `@provide`-decorated.
     const provideClassRe =
       /@provide\s*\(\s*([\w.$]+)?\s*\)[\s\S]{0,400}?\bclass\s+(\w+)/g;
     const provideMatches = [...content.matchAll(provideClassRe)];
     for (const match of provideMatches) {
       const declaredClass = match[2];
+      if (this.middlewareClassNames.has(declaredClass)) {
+        // Hydrate the middleware record with constructor / field
+        // dependencies and method names. We piggy-back on
+        // `parseService` because the extraction logic is identical
+        // (DI deps come from the same decorators).
+        const enriched = this.parseService(content, filePath, declaredClass);
+        if (enriched) {
+          const target = this.middleware.find((m) => m.name === declaredClass);
+          if (target) {
+            target.dependencies = enriched.dependencies;
+            target.methods = enriched.methods;
+          }
+        }
+        continue;
+      }
       const service = this.parseService(content, filePath, declaredClass);
       if (!service) continue;
       // Determine if it's a service or provider based on naming
@@ -587,15 +762,6 @@ export class RouteScanner {
         this.providers.push(service);
       } else {
         this.services.push(service);
-      }
-    }
-
-    // Check for middleware
-    const middlewareMatch = content.match(/@middleware\s*\(/i);
-    if (middlewareMatch) {
-      const classMatch = content.match(/class\s+(\w+)/);
-      if (classMatch) {
-        this.middleware.push(classMatch[1]);
       }
     }
 
@@ -664,6 +830,28 @@ export class RouteScanner {
     const routes: RouteInfo[] = [];
     const dependencies: string[] = [];
 
+    // Extract controller-level middleware from `@controller(path, ...mw)`.
+    // Walk the full balanced arg list so call-expression middleware
+    // (`RoleGuard("admin")`) and multi-line decorators are handled.
+    const ctrlDecoratorIdx = content.search(/@controller\s*\(/i);
+    if (ctrlDecoratorIdx >= 0) {
+      const openParen = content.indexOf('(', ctrlDecoratorIdx);
+      const args = openParen >= 0 ? extractBalancedArgs(content, openParen) : null;
+      if (args) {
+        const parts = splitTopLevelArgs(args);
+        // First entry is always the path string — skip it.
+        for (const part of parts.slice(1)) {
+          const ident = middlewareIdentifierFromArg(part);
+          if (!ident) continue;
+          this.staticMiddlewareBindings.push({
+            middlewareName: ident,
+            controllerName: className,
+            scope: 'controller',
+          });
+        }
+      }
+    }
+
     // Extract constructor-style dependencies. Balanced-paren aware so
     // parameter decorators (@inject(MyService)) don't truncate the
     // parameter list at the wrong `)`.
@@ -688,53 +876,84 @@ export class RouteScanner {
 
     // Find HTTP method decorators. Each match advances a balanced-paren
     // method-signature scanner so handlers with parameter decorators
-    // (`@body()`, `@param()`, `@inject()`, …) are still detected.
-    for (const [method, regex] of Object.entries(PATTERNS.httpMethods)) {
-      regex.lastIndex = 0;
-      let match;
-      while ((match = regex.exec(content)) !== null) {
-        const routePath = match[1] || '/';
-        const lineNumber = this.getLineNumber(content, match.index, lines);
+    // (`@body()`, `@param()`, `@inject()`, …) are still detected. We
+    // ignore the original regex's captured path because it stops at
+    // the first `)` — fine for `@Get('/x')` but breaks for
+    // `@Get('/x', AuthMw, RoleGuard("admin"))`. Instead we walk the
+    // full balanced arg list ourselves and split on top-level commas.
+    const httpDecoratorRe =
+      /@(Get|Post|Put|Patch|Delete|Head|Options)\s*\(/gi;
+    let match: RegExpExecArray | null;
+    while ((match = httpDecoratorRe.exec(content)) !== null) {
+      const method = match[1].toLowerCase();
+      const openParen = match.index + match[0].length - 1;
+      const args = extractBalancedArgs(content, openParen);
+      const parts = args !== null ? splitTopLevelArgs(args) : [];
 
-        const sig = findNextMethodSignature(content, match.index);
-        if (!sig) continue;
-
-        const route: RouteInfo = {
-          path: this.normalizePath(basePath, routePath),
-          method: method.toUpperCase() as HttpMethod,
-          controller: className,
-          controllerMethod: sig.name,
-          filePath,
-          lineNumber,
-        };
-
-        // Detect `@Body() name: DtoType` (case-insensitive — the
-        // decorator is exported as both `Body` and `body` from
-        // adapter-express). Captured groups:
-        //   1 = parameter name (informational)
-        //   2 = parameter type (the DTO class / interface name)
-        const bodyParamRe =
-          /@body\s*\(\s*\)\s*(\w+)\s*\??\s*:\s*([A-Za-z_$][\w.$]*)/i;
-        const bodyMatch = sig.params.match(bodyParamRe);
-        if (bodyMatch) {
-          const rawDtoName = bodyMatch[2].split('.').pop() || bodyMatch[2];
-          route.bodyDto = rawDtoName;
-          // Look up the inferred sample. Try the literal name first, then
-          // strip a leading `I` (the common interface-prefix convention,
-          // e.g. `IUserCreateRequestDTO` → `UserCreateRequestDTO`) so a
-          // sample harvested from the implementing class still applies.
-          const sample =
-            this.dtoSamples.get(rawDtoName) ??
-            (rawDtoName.startsWith('I')
-              ? this.dtoSamples.get(rawDtoName.slice(1))
-              : undefined);
-          if (sample) {
-            route.bodySample = sample;
-          }
-        }
-
-        routes.push(route);
+      // First arg is the path. May be quoted; strip the quotes.
+      let routePath = '/';
+      if (parts.length > 0) {
+        const raw = parts[0].trim();
+        const m = raw.match(/^['"`]([^'"`]*)['"`]$/);
+        if (m) routePath = m[1] || '/';
       }
+      const lineNumber = this.getLineNumber(content, match.index, lines);
+
+      const sig = findNextMethodSignature(content, match.index);
+      if (!sig) continue;
+
+      const route: RouteInfo = {
+        path: this.normalizePath(basePath, routePath),
+        method: method.toUpperCase() as HttpMethod,
+        controller: className,
+        controllerMethod: sig.name,
+        filePath,
+        lineNumber,
+      };
+
+      // Trailing decorator args after the path are middleware refs.
+      // We record bindings for every identifier-shaped arg so the
+      // architecture map can draw a `middleware → controller` edge
+      // labelled with the route. Non-identifier args (string registry
+      // names, inline arrow functions) are silently skipped — the
+      // adapter's runtime collector picks those up later.
+      for (const part of parts.slice(1)) {
+        const ident = middlewareIdentifierFromArg(part);
+        if (!ident) continue;
+        this.staticMiddlewareBindings.push({
+          middlewareName: ident,
+          controllerName: className,
+          scope: 'route',
+          controllerMethod: sig.name,
+        });
+      }
+
+      // Detect `@Body() name: DtoType` (case-insensitive — the
+      // decorator is exported as both `Body` and `body` from
+      // adapter-express). Captured groups:
+      //   1 = parameter name (informational)
+      //   2 = parameter type (the DTO class / interface name)
+      const bodyParamRe =
+        /@body\s*\(\s*\)\s*(\w+)\s*\??\s*:\s*([A-Za-z_$][\w.$]*)/i;
+      const bodyMatch = sig.params.match(bodyParamRe);
+      if (bodyMatch) {
+        const rawDtoName = bodyMatch[2].split('.').pop() || bodyMatch[2];
+        route.bodyDto = rawDtoName;
+        // Look up the inferred sample. Try the literal name first, then
+        // strip a leading `I` (the common interface-prefix convention,
+        // e.g. `IUserCreateRequestDTO` → `UserCreateRequestDTO`) so a
+        // sample harvested from the implementing class still applies.
+        const sample =
+          this.dtoSamples.get(rawDtoName) ??
+          (rawDtoName.startsWith('I')
+            ? this.dtoSamples.get(rawDtoName.slice(1))
+            : undefined);
+        if (sample) {
+          route.bodySample = sample;
+        }
+      }
+
+      routes.push(route);
     }
 
     return {
@@ -868,6 +1087,7 @@ export class RouteScanner {
     for (const c of this.controllers) nodeNames.add(c.name);
     for (const s of this.services) nodeNames.add(s.name);
     for (const p of this.providers) nodeNames.add(p.name);
+    for (const m of this.middleware) nodeNames.add(m.name);
 
     // Resolve a raw dependency identifier (an @inject token or declared
     // type name) to the concrete class node when possible. This restores
@@ -902,6 +1122,45 @@ export class RouteScanner {
             ? 'provider'
             : 'service',
         });
+      }
+    }
+
+    // Add middleware -> controller edges from the static decorator
+    // scan. Direction is middleware → controller because the
+    // architecture map reads them as "this middleware protects /
+    // wraps that controller", which matches the request flow.
+    //
+    // Bindings whose middleware identifier doesn't resolve to a known
+    // class node are skipped silently. Common reasons:
+    //   - imported from a third-party package the scanner doesn't
+    //     reach (e.g. `helmet`, `cors`)
+    //   - bound by string registry name (`use('auth')`) — the runtime
+    //     collector will surface those instead.
+    const seenMiddlewareEdge = new Set<string>();
+    for (const binding of this.staticMiddlewareBindings) {
+      const sourceName = binding.middlewareName;
+      if (!nodeNames.has(sourceName)) continue;
+      if (!nodeNames.has(binding.controllerName)) continue;
+      const key = `${sourceName}->${binding.controllerName}@${binding.scope}`;
+      if (seenMiddlewareEdge.has(key)) continue;
+      seenMiddlewareEdge.add(key);
+
+      this.dependencies.push({
+        source: sourceName,
+        target: binding.controllerName,
+        type: 'middleware',
+      });
+
+      // Promote the middleware's scope based on how it's wired.
+      // `controller` overrides `route` because a middleware applied at
+      // both levels is most usefully described as controller-scoped.
+      const mw = this.middleware.find((m) => m.name === sourceName);
+      if (mw) {
+        if (binding.scope === 'controller') {
+          mw.scope = 'controller';
+        } else if (mw.scope !== 'controller') {
+          mw.scope = 'route';
+        }
       }
     }
   }

@@ -104,9 +104,33 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'metrics':
         setMetrics(message.data as AppMetrics);
         break;
-      case 'structure':
-        setStructure(message.data as AppStructure);
+      case 'structure': {
+        // Older Studio Agents (pre-middleware-nodes) emit `middleware`
+        // as `string[]`. Coerce to the new `MiddlewareInfo[]` shape so
+        // the architecture map and other consumers see a consistent
+        // type regardless of agent version.
+        const raw = message.data as AppStructure & {
+          middleware: AppStructure['middleware'] | string[];
+        };
+        const normalised: AppStructure = {
+          ...raw,
+          middleware: Array.isArray(raw.middleware)
+            ? raw.middleware.map((entry) =>
+                typeof entry === 'string'
+                  ? {
+                      name: entry,
+                      filePath: '',
+                      dependencies: [],
+                      methods: [],
+                      scope: 'unknown' as const,
+                    }
+                  : entry,
+              )
+            : [],
+        };
+        setStructure(normalised);
         break;
+      }
       case 'exchanges':
         setExchanges(message.data as RecordedExchange[]);
         break;

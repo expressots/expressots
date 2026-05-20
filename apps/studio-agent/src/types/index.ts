@@ -191,6 +191,12 @@ export interface RuntimeItems {
   interceptors?: RuntimeItem[];
   /** Middleware pipeline entries from the Middleware service. */
   middleware?: MiddlewarePipelineItem[];
+  /**
+   * Controller- and route-scoped middleware bindings, harvested from
+   * Reflect metadata after `app.listen()`. Used to draw scoped
+   * "middleware → controller / route" edges in the architecture map.
+   */
+  middlewareBindings?: MiddlewareBinding[];
 }
 
 /** A single runtime-discovered item (provider, interceptor, etc.). */
@@ -218,6 +224,32 @@ export interface MiddlewarePipelineItem {
   order: number;
   /** Route path if scoped, or "Global" for global middleware. */
   path?: string;
+}
+
+/**
+ * A controller- or route-scoped middleware binding harvested from
+ * `ControllerMetadata.middleware` / `ControllerMethodMetadata.middleware`
+ * Reflect metadata. Reported by the adapter once the HTTP server is
+ * listening so the agent can draw "middleware → controller / route"
+ * edges on the architecture map.
+ *
+ * The static source scanner can find most of these from the decorator
+ * arguments; runtime data is the source of truth because it survives
+ * dynamic registration patterns (e.g. classes assembled via composition).
+ */
+export interface MiddlewareBinding {
+  /** Display name of the middleware (class / function / registered name). */
+  middlewareName: string;
+  /** Pipeline scope — see `MiddlewareScope`. Always `controller` or `route` here. */
+  scope: 'controller' | 'route';
+  /** Class name of the controller this middleware is attached to. */
+  controllerName: string;
+  /** HTTP method handler (when `scope === 'route'`). */
+  controllerMethod?: string;
+  /** HTTP verb (when `scope === 'route'`). */
+  httpMethod?: string;
+  /** Resolved route path including the controller base path. */
+  routePath?: string;
 }
 
 /**
@@ -357,6 +389,48 @@ export interface ServiceInfo {
 }
 
 /**
+ * How a middleware participates in the HTTP pipeline.
+ *
+ *   - `global`     — added in `app.ts` via `Middleware.add()` / preset.
+ *                    Runs for every request that reaches the app.
+ *   - `controller` — passed to `@controller(path, ...mw)`. Runs for every
+ *                    route the controller exposes.
+ *   - `route`      — passed to a route decorator like `@Get(path, ...mw)`.
+ *                    Runs only for that specific route.
+ *
+ * Middleware that we discovered statically but cannot tie to a binding
+ * yet defaults to `unknown` and is rendered without an edge.
+ */
+export type MiddlewareScope =
+  | 'global'
+  | 'controller'
+  | 'route'
+  | 'unknown';
+
+/**
+ * Middleware metadata — a first-class node type in the architecture
+ * map, distinct from services and providers.
+ *
+ * Middleware participates in the HTTP pipeline rather than the DI
+ * injection graph: nothing `@inject`s it, so the orphan heuristic that
+ * works for services would falsely flag every middleware. The map
+ * therefore needs the explicit `scope` to position the node and draw
+ * the right edge style (dashed for global, solid for scoped).
+ */
+export interface MiddlewareInfo {
+  name: string;
+  filePath: string;
+  dependencies: string[];
+  methods: string[];
+  /**
+   * Pipeline scope. May be `unknown` for the brief window between the
+   * static scan and the adapter's runtime report — the agent's merge
+   * step upgrades it once Reflect metadata is available.
+   */
+  scope: MiddlewareScope;
+}
+
+/**
  * A `CreateModule(...)` grouping discovered in the host source.
  *
  * Modules are first-class organisational units in ExpressoTS — the
@@ -385,7 +459,13 @@ export interface AppStructure {
   controllers: ControllerInfo[];
   services: ServiceInfo[];
   providers: ServiceInfo[];
-  middleware: string[];
+  /**
+   * Middleware nodes. Promoted from a flat name list to rich
+   * `MiddlewareInfo` records so the Architecture Map can render them as
+   * a distinct node type with scope-aware edges. Pre-existing consumers
+   * that only need the count can still read `middleware.length`.
+   */
+  middleware: MiddlewareInfo[];
   dependencies: DependencyInfo[];
   /** Discovered `CreateModule(...)` groupings — empty when the project is module-less. */
   modules: ModuleInfo[];

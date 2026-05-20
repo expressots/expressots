@@ -41,6 +41,7 @@ import {
   Layers,
   Map as MapIcon,
   Send,
+  Shield,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -75,6 +76,12 @@ const SCOPE_BADGE_CLASSES: Record<string, string> = {
   Singleton: 'text-primary-300 bg-primary-950/60 border-primary-700/50',
   Request: 'text-amber-300 bg-amber-950/50 border-amber-700/50',
   Transient: 'text-purple-300 bg-purple-950/50 border-purple-700/50',
+  // Middleware-scope badges. Distinct palette from DI-scope badges
+  // (above) so the same chip slot can render either kind without
+  // confusing the user — middleware nodes never have a DI scope.
+  Global: 'text-orange-300 bg-orange-950/50 border-orange-700/50',
+  Controller: 'text-amber-300 bg-amber-950/50 border-amber-700/50',
+  Route: 'text-yellow-300 bg-yellow-950/50 border-yellow-700/50',
 };
 
 /** Adds a green ring + glow to nodes that participated in the active request. */
@@ -144,6 +151,7 @@ export function ArchitectureMap() {
   const [hideEntities, setHideEntities] = useState<boolean>(false);
   const [hideOrphans, setHideOrphans] = useState<boolean>(false);
   const [hideLeaves, setHideLeaves] = useState<boolean>(false);
+  const [hideMiddleware, setHideMiddleware] = useState<boolean>(false);
   const [showModules, setShowModules] = useState<boolean>(true);
   const [layoutDir, setLayoutDir] = useState<LayoutDirection>('LR');
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
@@ -260,9 +268,10 @@ export function ArchitectureMap() {
       hideEntities,
       hideOrphans,
       hideLeaves,
+      hideMiddleware,
       warnings,
     });
-  }, [baseGraph, search, hideEntities, hideOrphans, hideLeaves, warnings]);
+  }, [baseGraph, search, hideEntities, hideOrphans, hideLeaves, hideMiddleware, warnings]);
 
   const overlayed = useMemo(() => {
     return applyOverlays(filteredGraph, {
@@ -341,6 +350,8 @@ export function ArchitectureMap() {
         setHideOrphans={setHideOrphans}
         hideLeaves={hideLeaves}
         setHideLeaves={setHideLeaves}
+        hideMiddleware={hideMiddleware}
+        setHideMiddleware={setHideMiddleware}
         showModules={showModules}
         setShowModules={setShowModules}
         layoutDir={layoutDir}
@@ -374,6 +385,17 @@ export function ArchitectureMap() {
             if (node.type === 'module') return;
             setSelectedNodeId(node.id);
             setFocusedNodeId(node.id);
+          }}
+          onEdgeClick={(_e, edge) => {
+            // Clicking a DTO-labelled edge (or any edge) selects the
+            // source node so the detail drawer opens with context about
+            // the relationship. For middleware→controller edges, select
+            // the target (the controller); otherwise the source.
+            const nodeId = edge.source.startsWith('middleware-')
+              ? edge.target
+              : edge.source;
+            setSelectedNodeId(nodeId);
+            setFocusedNodeId(nodeId);
           }}
           onPaneClick={() => {
             setFocusedNodeId(null);
@@ -462,7 +484,8 @@ export function ArchitectureMap() {
             <Legend dot="bg-blue-500" label="Controller" />
             <Legend dot="bg-green-500" label="Service / Use Case" />
             <Legend dot="bg-purple-500" label="Provider" />
-            <Legend dot="bg-amber-500" label="Warning" />
+            <Legend dot="bg-amber-500" label="Middleware" />
+            <Legend dot="bg-orange-500" label="Warning" />
           </div>
         </div>
 
@@ -491,6 +514,8 @@ function Toolbar(props: {
   setHideOrphans: (v: boolean) => void;
   hideLeaves: boolean;
   setHideLeaves: (v: boolean) => void;
+  hideMiddleware: boolean;
+  setHideMiddleware: (v: boolean) => void;
   showModules: boolean;
   setShowModules: (v: boolean) => void;
   layoutDir: LayoutDirection;
@@ -524,6 +549,13 @@ function Toolbar(props: {
       </ToggleChip>
       <ToggleChip on={props.hideLeaves} onClick={() => props.setHideLeaves(!props.hideLeaves)}>
         Hide leaves
+      </ToggleChip>
+      <ToggleChip
+        on={props.hideMiddleware}
+        onClick={() => props.setHideMiddleware(!props.hideMiddleware)}
+      >
+        <Shield className="w-3 h-3 mr-1" />
+        Hide middleware
       </ToggleChip>
       <ToggleChip on={props.showModules} onClick={() => props.setShowModules(!props.showModules)}>
         <Layers className="w-3 h-3 mr-1" />
@@ -658,13 +690,15 @@ function Legend({ dot, label }: { dot: string; label: string }) {
 // ────────────────────────────────────────────────────────────────────────
 
 interface SelectedNode {
-  kind: 'controller' | 'service' | 'provider';
+  kind: 'controller' | 'service' | 'provider' | 'middleware';
   name: string;
   filePath?: string;
   routes: RouteInfo[];
   methods: string[];
   dependencies: string[];
   stats?: NodeStats;
+  /** Pipeline scope when `kind === 'middleware'`. */
+  middlewareScope?: 'global' | 'controller' | 'route' | 'unknown';
 }
 
 function resolveSelectedNode(
@@ -713,6 +747,21 @@ function resolveSelectedNode(
       methods: p.methods,
       dependencies: p.dependencies,
       stats,
+    };
+  }
+  if (nodeId.startsWith('middleware-')) {
+    const name = nodeId.slice('middleware-'.length);
+    const m = structure.middleware.find((x) => x.name === name);
+    if (!m) return null;
+    return {
+      kind: 'middleware',
+      name,
+      filePath: m.filePath || undefined,
+      routes: [],
+      methods: m.methods,
+      dependencies: m.dependencies,
+      stats,
+      middlewareScope: m.scope,
     };
   }
   return null;
@@ -772,23 +821,44 @@ function NodeDetailDrawer({
             {node.routes.map((r, i) => (
               <div
                 key={`${r.method}-${r.path}-${i}`}
-                className="flex items-center gap-2 p-1.5 rounded bg-gray-900/40 border border-gray-800"
+                className="p-1.5 rounded bg-gray-900/40 border border-gray-800"
               >
-                <span
-                  className={`text-[10px] font-mono font-semibold w-12 text-center ${getMethodColor(
-                    r.method,
-                  )}`}
-                >
-                  {r.method}
-                </span>
-                <span className="text-xs font-mono text-gray-200 flex-1 truncate">{r.path}</span>
-                <button
-                  onClick={() => onTryInApiClient(r)}
-                  title="Send via API Client"
-                  className="text-primary-300 hover:text-primary-200 p-1 rounded hover:bg-primary-500/10"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-[10px] font-mono font-semibold w-12 text-center ${getMethodColor(
+                      r.method,
+                    )}`}
+                  >
+                    {r.method}
+                  </span>
+                  <span className="text-xs font-mono text-gray-200 flex-1 truncate">{r.path}</span>
+                  <button
+                    onClick={() => onTryInApiClient(r)}
+                    title="Send via API Client"
+                    className="text-primary-300 hover:text-primary-200 p-1 rounded hover:bg-primary-500/10"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {r.bodyDto && (
+                  <div className="mt-1 ml-14">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-sky-400/70">body:</span>
+                      <span className="text-[10px] font-mono text-sky-300">{r.bodyDto}</span>
+                    </div>
+                    {r.bodySample && Object.keys(r.bodySample).length > 0 && (
+                      <div className="mt-0.5 ml-2 space-y-px">
+                        {Object.entries(r.bodySample).map(([field, value]) => (
+                          <div key={field} className="flex items-center gap-1.5 text-[9px]">
+                            <span className="font-mono text-gray-400">{field}</span>
+                            <span className="text-gray-600">:</span>
+                            <span className="font-mono text-gray-500">{typeof value === 'object' && value !== null ? 'object' : typeof value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -850,6 +920,7 @@ const nodeTypes = {
   controller: ControllerNode,
   service: ServiceNode,
   provider: ProviderNode,
+  middleware: MiddlewareNode,
   module: ModuleGroupNode,
 };
 
@@ -870,14 +941,28 @@ function buildGraph(
   const edges: Edge[] = [];
   const nodeMap = new Map<string, string>();
 
-  type NodeKind = 'controller' | 'service' | 'provider';
+  type NodeKind = 'controller' | 'service' | 'provider' | 'middleware';
   interface Entry {
     name: string;
     kind: NodeKind;
     routes?: number;
     methods?: number;
     filePath?: string;
+    /**
+     * Pipeline scope for `kind === 'middleware'` entries. Used both as
+     * the badge text on the node and as a layout hint (global lives at
+     * the leftmost column, scoped middleware sits adjacent to its
+     * controllers).
+     */
+    middlewareScope?: 'global' | 'controller' | 'route' | 'unknown';
   }
+
+  const middlewareScopeLabel: Record<NonNullable<Entry['middlewareScope']>, string> = {
+    global: 'Global',
+    controller: 'Controller',
+    route: 'Route',
+    unknown: '',
+  };
 
   const allEntries: Entry[] = [
     ...structure.controllers.map<Entry>((c) => ({
@@ -897,6 +982,12 @@ function buildGraph(
       kind: 'provider',
       methods: p.methods.length,
       filePath: p.filePath,
+    })),
+    ...structure.middleware.map<Entry>((m) => ({
+      name: m.name,
+      kind: 'middleware',
+      filePath: m.filePath || undefined,
+      middlewareScope: m.scope,
     })),
   ];
 
@@ -924,8 +1015,28 @@ function buildGraph(
   // BFS depth.
   const depth = new Map<string, number>();
   const queue: string[] = [];
+  // Middleware always sits at depth 0 (the leftmost column in LR
+  // layout). Controllers go at depth 1 so the request-flow reads
+  // left → right as "middleware → controller → service → provider".
+  // Other entries inherit depth from BFS over the dependency graph.
   for (const entry of allEntries) {
-    if ((incoming.get(entry.name) ?? []).length === 0) {
+    if (entry.kind === 'middleware') {
+      depth.set(entry.name, 0);
+      queue.push(entry.name);
+    }
+  }
+  for (const entry of allEntries) {
+    if (entry.kind === 'controller') {
+      // Controllers want depth 1 unless something earlier already
+      // pushed them there; this is just a seed.
+      if (!depth.has(entry.name)) {
+        depth.set(entry.name, 1);
+        queue.push(entry.name);
+      }
+    }
+  }
+  for (const entry of allEntries) {
+    if ((incoming.get(entry.name) ?? []).length === 0 && !depth.has(entry.name)) {
       depth.set(entry.name, 0);
       queue.push(entry.name);
     }
@@ -972,7 +1083,12 @@ function buildGraph(
   const positions = new Map<string, { x: number; y: number }>();
   for (const [layerDepth, entries] of layers) {
     entries.sort((a, b) => {
-      const order: Record<NodeKind, number> = { controller: 0, service: 1, provider: 2 };
+      const order: Record<NodeKind, number> = {
+        middleware: 0,
+        controller: 1,
+        service: 2,
+        provider: 3,
+      };
       if (order[a.kind] !== order[b.kind]) return order[a.kind] - order[b.kind];
       return a.name.localeCompare(b.name);
     });
@@ -1004,6 +1120,15 @@ function buildGraph(
   for (const entry of allEntries) {
     const pos = positions.get(entry.name)!;
     const moduleName = moduleByMember.get(entry.name);
+    // Middleware uses the same `scope` slot as DI nodes, but the value
+    // comes from the pipeline scope (Global / Controller / Route)
+    // rather than from the container snapshot.
+    const scope =
+      entry.kind === 'middleware'
+        ? entry.middlewareScope && entry.middlewareScope !== 'unknown'
+          ? middlewareScopeLabel[entry.middlewareScope]
+          : undefined
+        : opts.scopeIndex.get(entry.name);
     nodes.push({
       id: nodeMap.get(entry.name)!,
       type: entry.kind,
@@ -1014,7 +1139,7 @@ function buildGraph(
         routes: entry.routes,
         methods: entry.methods,
         filePath: entry.filePath,
-        scope: opts.scopeIndex.get(entry.name),
+        scope,
         stats: opts.stats.get(entry.name),
         warnings: opts.warnings.get(entry.name),
       } satisfies NodeData,
@@ -1076,7 +1201,18 @@ function buildGraph(
     nodes.unshift(...modulesToRender);
   }
 
-  // Edges. Dedup + DTO labels when available.
+  // Edges. Dedup + DTO labels when available. Middleware edges are
+  // styled distinctly: dashed for global pipeline (one source fanning
+  // out across many controllers), solid for scoped (decorator-applied
+  // to a specific controller / route). Both use an amber stroke so
+  // they read as "middleware" at a glance, matching the node colour.
+  const middlewareScopeByName = new Map<string, Entry['middlewareScope']>();
+  for (const entry of allEntries) {
+    if (entry.kind === 'middleware') {
+      middlewareScopeByName.set(entry.name, entry.middlewareScope);
+    }
+  }
+
   const emittedEdges = new Set<string>();
   structure.dependencies.forEach((dep, index) => {
     const sourceId = nodeMap.get(dep.source);
@@ -1086,8 +1222,27 @@ function buildGraph(
     if (emittedEdges.has(key)) return;
     emittedEdges.add(key);
 
-    const dtoLabel = opts.dtoEdgeLabels.get(`${dep.source}->${dep.target}`);
-    const label = dtoLabel ? `↳ ${dtoLabel}` : 'depends on';
+    const isMiddleware = dep.type === 'middleware';
+    const sourceScope = middlewareScopeByName.get(dep.source);
+
+    let label: string;
+    let stroke: string;
+    let dashed = false;
+    if (isMiddleware) {
+      stroke = '#f59e0b'; // amber-500
+      if (sourceScope === 'global') {
+        label = 'global';
+        dashed = true;
+      } else if (sourceScope === 'route') {
+        label = 'route';
+      } else {
+        label = 'protects';
+      }
+    } else {
+      const dtoLabel = opts.dtoEdgeLabels.get(`${dep.source}->${dep.target}`);
+      label = dtoLabel ? `↳ ${dtoLabel}` : 'depends on';
+      stroke = '#475569';
+    }
 
     edges.push({
       id: `edge-${index}-${dep.source}-${dep.target}`,
@@ -1097,15 +1252,21 @@ function buildGraph(
       animated: false,
       label,
       labelStyle: {
-        fill: dtoLabel ? '#7dd3fc' : '#9ca3af',
+        fill: isMiddleware ? '#fbbf24' : opts.dtoEdgeLabels.has(`${dep.source}->${dep.target}`)
+          ? '#7dd3fc'
+          : '#9ca3af',
         fontSize: 10,
         fontFamily: 'ui-monospace, SFMono-Regular, monospace',
       },
       labelBgStyle: { fill: '#0f172a', fillOpacity: 0.85 },
       labelBgPadding: [4, 2],
       labelBgBorderRadius: 4,
-      style: { stroke: '#475569', strokeWidth: 1.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' },
+      style: {
+        stroke,
+        strokeWidth: 1.5,
+        ...(dashed ? { strokeDasharray: '4 4' } : {}),
+      },
+      markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
     });
   });
 
@@ -1123,12 +1284,16 @@ function applyFilters(
     hideEntities: boolean;
     hideOrphans: boolean;
     hideLeaves: boolean;
+    hideMiddleware: boolean;
     warnings: Map<string, NodeWarnings>;
   },
 ): { nodes: Node[]; edges: Edge[] } {
   const q = opts.search.trim().toLowerCase();
 
   // Build outgoing/incoming counts from the edges to detect leaves/orphans.
+  // Middleware nodes are excluded from the leaf calculation because
+  // they're naturally a "leaf" in the DI sense (no DI deps) but very
+  // much active participants in the HTTP graph.
   const outDeg = new Map<string, number>();
   const inDeg = new Map<string, number>();
   for (const e of graph.edges) {
@@ -1138,12 +1303,19 @@ function applyFilters(
 
   const keep = (n: Node): boolean => {
     if (n.type === 'module') return true; // re-evaluated below
+    if (opts.hideMiddleware && n.type === 'middleware') return false;
     const label = (asNodeData(n.data)?.label ?? '').toString();
     if (q && !label.toLowerCase().includes(q)) return false;
     if (opts.hideEntities && ENTITY_HINT.test(label)) return false;
     const w = opts.warnings.get(label);
     if (opts.hideOrphans && w?.orphan) return false;
-    if (opts.hideLeaves && (outDeg.get(n.id) ?? 0) === 0 && n.type !== 'controller') return false;
+    if (
+      opts.hideLeaves &&
+      (outDeg.get(n.id) ?? 0) === 0 &&
+      n.type !== 'controller' &&
+      n.type !== 'middleware'
+    )
+      return false;
     return true;
   };
 
@@ -1292,6 +1464,7 @@ function buildWarnings(structure: AppStructure): Map<string, NodeWarnings> {
     ...structure.controllers.map((c) => c.name),
     ...structure.services.map((s) => s.name),
     ...structure.providers.map((p) => p.name),
+    ...structure.middleware.map((m) => m.name),
   ]);
 
   // Build adjacency
@@ -1333,13 +1506,23 @@ function buildWarnings(structure: AppStructure): Map<string, NodeWarnings> {
   }
   for (const name of allNames) if ((color.get(name) ?? 0) === 0) dfs(name);
 
-  // Orphans: providers/services nobody depends on (controllers are
-  // intentionally entry points so we never flag them as orphans).
+  // Orphans: providers/services nobody depends on. Controllers are
+  // entry points so they're never orphans. Middleware participates in
+  // the HTTP pipeline rather than the DI graph — nothing `@inject`s
+  // it, so the heuristic would always misfire. Treat middleware the
+  // same way as controllers and skip the orphan check entirely.
   const controllerSet = new Set(structure.controllers.map((c) => c.name));
+  const middlewareSet = new Set(structure.middleware.map((m) => m.name));
   for (const name of allNames) {
     const w: NodeWarnings = {};
     if (cycleSet.has(name)) w.cycle = true;
-    if (!controllerSet.has(name) && (inDeg.get(name) ?? 0) === 0) w.orphan = true;
+    if (
+      !controllerSet.has(name) &&
+      !middlewareSet.has(name) &&
+      (inDeg.get(name) ?? 0) === 0
+    ) {
+      w.orphan = true;
+    }
     const fan = inDeg.get(name) ?? 0;
     if (fan >= FAN_IN_WARN) w.fanIn = fan;
     if (Object.keys(w).length > 0) out.set(name, w);
@@ -1583,6 +1766,40 @@ function ProviderNode({ data }: { data: NodeData }) {
   );
 }
 
+/**
+ * Middleware participates in the HTTP pipeline rather than the DI
+ * graph, so it gets its own visual treatment: amber palette (distinct
+ * from controllers/services/providers) and an HTTP-themed icon. The
+ * pipeline scope ("Global" / "Controller" / "Route") rides in the
+ * standard scope-badge slot — this is the same chip used by DI scopes
+ * elsewhere, deliberately, because middleware never has a DI scope to
+ * conflict with.
+ */
+function MiddlewareNode({ data }: { data: NodeData }) {
+  return (
+    <div
+      className={nodeBoxClass(
+        data.active,
+        data.pulse,
+        'bg-amber-500/10 border-2 border-amber-500 rounded-lg p-3 min-w-[200px]',
+      )}
+    >
+      <Handle type="target" position={Position.Left} className="!bg-amber-500" />
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-xs font-semibold text-amber-300">Middleware</span>
+        </div>
+        <ScopeBadge scope={data.scope} />
+      </div>
+      <p className="text-sm text-white font-mono truncate">{data.label}</p>
+      <StatsRow stats={data.stats} />
+      <WarningBadges warnings={data.warnings} />
+      <Handle type="source" position={Position.Right} className="!bg-amber-500" />
+    </div>
+  );
+}
+
 function ModuleGroupNode({ data }: { data: ModuleNodeData }) {
   return (
     <div className="w-full h-full rounded-xl border-2 border-dashed border-gray-700 bg-gray-900/20">
@@ -1600,7 +1817,7 @@ function ModuleGroupNode({ data }: { data: ModuleNodeData }) {
 // ────────────────────────────────────────────────────────────────────────
 
 function stripPrefix(nodeId: string): string {
-  return nodeId.replace(/^(controller|service|provider|module)-/, '');
+  return nodeId.replace(/^(controller|service|provider|middleware|module)-/, '');
 }
 
 function routeMatchScore(routePath: string, requestPath: string): number {
@@ -1630,11 +1847,13 @@ function toMermaid(structure: AppStructure, layoutDir: LayoutDirection): string 
   const controllers = new Set(structure.controllers.map((c) => c.name));
   const services = new Set(structure.services.map((s) => s.name));
   const providers = new Set(structure.providers.map((p) => p.name));
+  const middleware = new Set(structure.middleware.map((m) => m.name));
 
   const nameToShape = (name: string): string => {
     if (controllers.has(name)) return `${safe(name)}["${name}<br/><i>controller</i>"]`;
     if (providers.has(name)) return `${safe(name)}[(${name})]`;
     if (services.has(name)) return `${safe(name)}(["${name}"])`;
+    if (middleware.has(name)) return `${safe(name)}{{"${name}<br/><i>middleware</i>"}}`;
     return `${safe(name)}["${name}"]`;
   };
 
@@ -1658,14 +1877,27 @@ function toMermaid(structure: AppStructure, layoutDir: LayoutDirection): string 
   for (const p of structure.providers) {
     if (!inModule.has(p.name)) lines.push(`  ${nameToShape(p.name)}`);
   }
+  for (const m of structure.middleware) {
+    if (!inModule.has(m.name)) lines.push(`  ${nameToShape(m.name)}`);
+  }
 
-  // Edges
+  // Edges. Middleware edges read as "protects" (or "global" when the
+  // middleware fans out across the pipeline) — distinct from the
+  // generic "depends on" edge between DI nodes.
+  const middlewareScope = new Map(structure.middleware.map((m) => [m.name, m.scope]));
   const seen = new Set<string>();
   for (const dep of structure.dependencies) {
     const key = `${dep.source}->${dep.target}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    lines.push(`  ${safe(dep.source)} --> ${safe(dep.target)}`);
+    if (dep.type === 'middleware') {
+      const scope = middlewareScope.get(dep.source);
+      const arrow = scope === 'global' ? '-..->' : '-->';
+      const label = scope === 'global' ? 'global' : 'protects';
+      lines.push(`  ${safe(dep.source)} ${arrow}|${label}| ${safe(dep.target)}`);
+    } else {
+      lines.push(`  ${safe(dep.source)} --> ${safe(dep.target)}`);
+    }
   }
 
   // Class styling
@@ -1673,9 +1905,11 @@ function toMermaid(structure: AppStructure, layoutDir: LayoutDirection): string 
   lines.push('  classDef controller fill:#1e3a8a,stroke:#3b82f6,color:#dbeafe;');
   lines.push('  classDef service fill:#14532d,stroke:#22c55e,color:#dcfce7;');
   lines.push('  classDef provider fill:#581c87,stroke:#a855f7,color:#f3e8ff;');
+  lines.push('  classDef middleware fill:#78350f,stroke:#f59e0b,color:#fef3c7;');
   for (const c of structure.controllers) lines.push(`  class ${safe(c.name)} controller;`);
   for (const s of structure.services) lines.push(`  class ${safe(s.name)} service;`);
   for (const p of structure.providers) lines.push(`  class ${safe(p.name)} provider;`);
+  for (const m of structure.middleware) lines.push(`  class ${safe(m.name)} middleware;`);
 
   return lines.join('\n');
 }
@@ -1733,6 +1967,8 @@ function buildSvg(
         return { fill: '#14532d', stroke: '#22c55e', text: '#dcfce7' };
       case 'provider':
         return { fill: '#581c87', stroke: '#a855f7', text: '#f3e8ff' };
+      case 'middleware':
+        return { fill: '#78350f', stroke: '#f59e0b', text: '#fef3c7' };
       default:
         return { fill: '#1f2937', stroke: '#475569', text: '#cbd5e1' };
     }

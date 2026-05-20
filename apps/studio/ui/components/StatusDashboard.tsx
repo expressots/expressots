@@ -732,7 +732,7 @@ function mergeProviders(
  */
 function mergeInterceptors(
   runtimeInterceptors: { name: string; priority?: number; source?: string }[] | undefined,
-  staticMiddleware: string[] | undefined,
+  staticMiddleware: import('../types').MiddlewareInfo[] | undefined,
 ): Array<Record<string, unknown>> {
   if (runtimeInterceptors && runtimeInterceptors.length > 0) {
     const sorted = [...runtimeInterceptors].sort(
@@ -748,8 +748,8 @@ function mergeInterceptors(
     }));
   }
   return (staticMiddleware ?? []).map((m, i) => ({
-    key: `${m}-${i}`,
-    primary: m,
+    key: `${m.name}-${i}`,
+    primary: m.name,
     secondary: 'Class-based middleware',
   }));
 }
@@ -761,7 +761,7 @@ function mergeInterceptors(
  */
 function mergeMiddleware(
   runtimeMiddleware: import('../types').MiddlewarePipelineItem[] | undefined,
-  staticMiddleware: string[] | undefined,
+  staticMiddleware: import('../types').MiddlewareInfo[] | undefined,
 ): Array<Record<string, unknown>> {
   if (runtimeMiddleware && runtimeMiddleware.length > 0) {
     return runtimeMiddleware.map((m, i) => ({
@@ -773,9 +773,9 @@ function mergeMiddleware(
     }));
   }
   return (staticMiddleware ?? []).map((m, i) => ({
-    key: `${m}-${i}`,
-    primary: m,
-    secondary: 'Class-based middleware',
+    key: `${m.name}-${i}`,
+    primary: m.name,
+    secondary: `Class-based middleware${m.scope && m.scope !== 'unknown' ? ` · ${m.scope}` : ''}`,
   }));
 }
 

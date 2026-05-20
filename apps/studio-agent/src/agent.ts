@@ -403,6 +403,11 @@ export class StudioAgent {
     try {
       this.appStructure = await this.scanner.scan();
       this.routes = this.scanner.getRoutes();
+      // Re-fold any previously reported runtime middleware data into
+      // the fresh static structure. Without this, a hot-reload rescan
+      // would drop the global pipeline nodes and Reflect-derived edges
+      // until the next `updateRuntimeInfo()` callback.
+      this.mergeRuntimeMiddlewareIntoStructure();
       // Route counts available via getRoutes()
 
       // If Express app is provided, also scan runtime routes and use
@@ -521,9 +526,161 @@ export class StudioAgent {
     if (patch.middlewarePreset !== undefined) {
       this.config.middlewarePreset = patch.middlewarePreset;
     }
+
+    // Fold the latest runtime data into the cached `appStructure` so the
+    // architecture map sees:
+    //   1. Global pipeline middleware as nodes (even when nothing in
+    //      source extends ExpressoMiddleware — e.g. plain functions
+    //      added via `Middleware.add`).
+    //   2. Scoped middleware → controller / route edges from the
+    //      `middlewareBindings` payload.
+    //
+    // The merge is idempotent — calling `updateRuntimeInfo` repeatedly
+    // with the same payload yields the same structure.
+    const merged = this.mergeRuntimeMiddlewareIntoStructure();
+    if (merged && this.io) {
+      this.broadcast('structure', this.appStructure!);
+    }
+
     if (this.io) {
       this.broadcast('runtime', this.getRuntimeInfo());
     }
+  }
+
+  /**
+   * Merge global pipeline middleware and runtime middleware bindings
+   * into the static `appStructure` so the architecture map sees a
+   * single source of truth. Returns `true` when the structure changed.
+   *
+   * Rules:
+   *   - Each `runtimeItems.middleware` entry whose `type === 'custom'`
+   *     gets a `MiddlewareInfo` node with `scope: 'global'` (built-in
+   *     pipeline entries like `helmet` / `jsonParser` aren't worth
+   *     plotting — they would clutter every architecture map without
+   *     adding signal). Names are deduplicated against the existing
+   *     middleware list.
+   *   - Each `runtimeItems.middlewareBindings` entry contributes a
+   *     `middleware → controller` edge (deduplicated with the static
+   *     bindings produced by `RouteScanner`). The middleware node's
+   *     scope is upgraded to `controller` or `route`.
+   *   - Global middleware also gets synthetic edges to every
+   *     controller in the structure so the map shows the pipeline
+   *     fanning out across the app.
+   */
+  private mergeRuntimeMiddlewareIntoStructure(): boolean {
+    if (!this.appStructure) return false;
+    const runtime = this.config.runtimeItems;
+    if (!runtime) return false;
+
+    let changed = false;
+    const byName = new Map<string, AppStructure['middleware'][number]>();
+    for (const mw of this.appStructure.middleware) {
+      byName.set(mw.name, mw);
+    }
+
+    // Global pipeline middleware → upgrade or create a node.
+    for (const item of runtime.middleware ?? []) {
+      if (item.type === 'built-in') continue;
+      const existing = byName.get(item.name);
+      if (existing) {
+        if (existing.scope !== 'global') {
+          existing.scope = 'global';
+          changed = true;
+        }
+      } else {
+        const node = {
+          name: item.name,
+          filePath: '',
+          dependencies: [],
+          methods: [],
+          scope: 'global' as const,
+        };
+        this.appStructure.middleware.push(node);
+        byName.set(item.name, node);
+        changed = true;
+      }
+    }
+
+    const knownNodes = new Set<string>();
+    for (const c of this.appStructure.controllers) knownNodes.add(c.name);
+    for (const s of this.appStructure.services) knownNodes.add(s.name);
+    for (const p of this.appStructure.providers) knownNodes.add(p.name);
+    for (const m of this.appStructure.middleware) knownNodes.add(m.name);
+
+    const seenEdge = new Set<string>();
+    for (const dep of this.appStructure.dependencies) {
+      seenEdge.add(`${dep.source}->${dep.target}@${dep.type}`);
+    }
+
+    // Scoped bindings from Reflect metadata. If a binding references a
+    // middleware name we haven't seen before (common for plain-function
+    // middleware like `newMiddleware()` that doesn't extend
+    // ExpressoMiddleware), create a lightweight node on-the-fly so the
+    // architecture map can still render it.
+    for (const binding of runtime.middlewareBindings ?? []) {
+      if (!knownNodes.has(binding.controllerName)) continue;
+
+      if (!knownNodes.has(binding.middlewareName)) {
+        const node = {
+          name: binding.middlewareName,
+          filePath: '',
+          dependencies: [],
+          methods: [],
+          scope: binding.scope as 'controller' | 'route',
+        };
+        this.appStructure.middleware.push(node);
+        byName.set(binding.middlewareName, node);
+        knownNodes.add(binding.middlewareName);
+        changed = true;
+      }
+
+      const key = `${binding.middlewareName}->${binding.controllerName}@middleware`;
+      if (!seenEdge.has(key)) {
+        this.appStructure.dependencies.push({
+          source: binding.middlewareName,
+          target: binding.controllerName,
+          type: 'middleware',
+        });
+        seenEdge.add(key);
+        changed = true;
+      }
+
+      const mw = byName.get(binding.middlewareName);
+      if (mw) {
+        if (binding.scope === 'controller' && mw.scope !== 'controller') {
+          mw.scope = 'controller';
+          changed = true;
+        } else if (
+          binding.scope === 'route' &&
+          mw.scope !== 'controller' &&
+          mw.scope !== 'route'
+        ) {
+          mw.scope = 'route';
+          changed = true;
+        }
+      }
+    }
+
+    // Global middleware fans out to every controller. We only emit
+    // edges for nodes that already exist; the list is short (typically
+    // a handful of custom middleware × a handful of controllers) so
+    // duplication is cheap and produces a readable layered layout.
+    for (const mw of this.appStructure.middleware) {
+      if (mw.scope !== 'global') continue;
+      for (const ctrl of this.appStructure.controllers) {
+        const key = `${mw.name}->${ctrl.name}@middleware`;
+        if (seenEdge.has(key)) continue;
+        this.appStructure.dependencies.push({
+          source: mw.name,
+          target: ctrl.name,
+          type: 'middleware',
+        });
+        seenEdge.add(key);
+        changed = true;
+      }
+    }
+
+    return changed;
   }
 
   /**

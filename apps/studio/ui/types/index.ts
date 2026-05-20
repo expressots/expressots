@@ -144,6 +144,25 @@ export interface ServiceInfo {
 }
 
 /**
+ * Pipeline scope for a middleware node. See the agent-side type for
+ * full semantics; mirrored here so the UI can render scope-aware
+ * badges/edges without depending on the agent package.
+ */
+export type MiddlewareScope =
+  | 'global'
+  | 'controller'
+  | 'route'
+  | 'unknown';
+
+export interface MiddlewareInfo {
+  name: string;
+  filePath: string;
+  dependencies: string[];
+  methods: string[];
+  scope: MiddlewareScope;
+}
+
+/**
  * A `CreateModule(...)` grouping discovered in the host source.
  * Mirrors the shape produced by the Studio Agent — see
  * `packages/studio-agent/src/types/index.ts` for full semantics.
@@ -159,7 +178,13 @@ export interface AppStructure {
   controllers: ControllerInfo[];
   services: ServiceInfo[];
   providers: ServiceInfo[];
-  middleware: string[];
+  /**
+   * Middleware nodes — promoted to first-class records carrying a
+   * pipeline scope (global vs controller vs route). Older agents that
+   * still emit `string[]` are normalised to this shape on the UI side
+   * by `socket-context`.
+   */
+  middleware: MiddlewareInfo[];
   dependencies: DependencyInfo[];
   /** Discovered modules. May be omitted by older agents. */
   modules?: ModuleInfo[];
