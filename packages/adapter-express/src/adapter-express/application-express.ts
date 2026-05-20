@@ -1491,13 +1491,8 @@ export class AppExpress implements Server.IWebServer {
           if (typeof candidate === "string" && candidate.length > 0) {
             return candidate;
           }
-          const ctorName = (value as { constructor?: { name?: string } })
-            .constructor?.name;
-          if (
-            typeof ctorName === "string" &&
-            ctorName.length > 0 &&
-            ctorName !== "Object"
-          ) {
+          const ctorName = (value as { constructor?: { name?: string } }).constructor?.name;
+          if (typeof ctorName === "string" && ctorName.length > 0 && ctorName !== "Object") {
             return ctorName;
           }
         }
@@ -1539,8 +1534,7 @@ export class AppExpress implements Server.IWebServer {
                 middlewareName,
                 scope: "route",
                 controllerName,
-                controllerMethod:
-                  typeof route.key === "string" ? route.key : undefined,
+                controllerMethod: typeof route.key === "string" ? route.key : undefined,
                 httpMethod,
                 routePath: fullPath,
               });
