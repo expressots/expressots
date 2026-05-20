@@ -291,12 +291,13 @@ function insertImport(source: string, importLine: string): string {
  * Add `${moduleName}Module` to the container declaration in `app.ts`.
  *
  * Handles both layouts:
- *   - v4 wrapper:  this.configContainer([CreateModule([...])])
+ *   - v4 wrapper:  this.configContainer([CreateModule([...]), ModuleA, ModuleB])
  *   - legacy flat: this.configContainer([ModuleA, ModuleB])
  *
- * For v4, the new module is appended to the inner `CreateModule([...])` array
- * so it participates in the same module group as the existing controllers and
- * providers.
+ * Scaffolded modules are always inserted into the outer `configContainer([...])`
+ * array as peer entries alongside `CreateModule([...])`. The inner
+ * `CreateModule([...])` is reserved for orphan controllers that don't have
+ * their own module file.
  */
 function addModuleToContainerSource(source: string, className: string): string {
 	const configCall = findCallRange(source, "this.configContainer");
@@ -315,33 +316,6 @@ function addModuleToContainerSource(source: string, className: string): string {
 			APP_CONTAINER,
 		);
 		process.exit(1);
-	}
-
-	// Prefer the inner CreateModule([...]) when present; otherwise fall back to
-	// the outer array.
-	const createModuleCall = findCallRange(
-		source,
-		"CreateModule",
-		outerArray.open,
-	);
-	if (
-		createModuleCall &&
-		createModuleCall.open > outerArray.open &&
-		createModuleCall.close < outerArray.close
-	) {
-		const innerArray = findArrayRange(source, createModuleCall.open + 1);
-		if (
-			innerArray &&
-			innerArray.open > createModuleCall.open &&
-			innerArray.close < createModuleCall.close
-		) {
-			return insertIntoArray(
-				source,
-				innerArray.open,
-				innerArray.close,
-				className,
-			);
-		}
 	}
 
 	return insertIntoArray(
