@@ -352,7 +352,7 @@ export function StatusDashboard() {
         </Card>
       </div>
 
-      {/* Middleware Preset — full width */}
+      {/* Preset card — full width, hidden when no preset is applied */}
       <MiddlewarePresetCard preset={runtime?.middlewarePreset ?? null} />
 
       {/* Inline drill-down panel — appears under the grid when a metric is clicked */}
@@ -373,19 +373,7 @@ function MiddlewarePresetCard({
   preset: import('../types').MiddlewarePresetInfo | null;
 }) {
   if (!preset) {
-    return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors">
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/40">
-          <Layers className="w-4 h-4 text-teal-400" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
-            Middleware
-          </span>
-        </div>
-        <div className="px-4 py-3">
-          <Empty>No preset info available</Empty>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const corsDisplay = preset.security?.cors
@@ -405,7 +393,7 @@ function MiddlewarePresetCard({
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/40">
         <Layers className="w-4 h-4 text-teal-400" />
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
-          Middleware
+          Preset
         </span>
         <span className="ml-auto text-xs font-mono text-gray-400">
           {preset.name}{preset.hasOverrides ? ' (custom)' : ''}
