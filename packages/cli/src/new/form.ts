@@ -250,17 +250,32 @@ const TEMPLATE_FOLDERS: Record<string, string> = {
 /**
  * Middleware preset mapping to code
  */
-// Note: each preset disables the built-in middleware auto-logger
-// (`logger: false`) because the templates ship a sample
-// `LoggingInterceptor` already wired through `setupInterceptorsForExpress`.
-// Stacking both produces duplicate request logs; the interceptor is the
-// canonical, customisable example and stays enabled.
 const PRESET_CODE: Record<string, string> = {
-	API: `this.Middleware.applyPreset("api", { logger: false });`,
-	Web: `this.Middleware.applyPreset("web", { logger: false });`,
-	GraphQL: `this.Middleware.applyPreset("graphql", { logger: false });`,
-	Microservice: `this.Middleware.applyPreset("microservice", { logger: false });`,
+	API: `this.Middleware.applyPreset("api");`,
+	Web: `this.Middleware.applyPreset("web");`,
+	GraphQL: [
+		`this.Middleware.applyPreset("graphql");`,
+		``,
+		`        const apolloServer = new ApolloServer({ typeDefs, resolvers });`,
+		`        await apolloServer.start();`,
+		`        this.Middleware.add({`,
+		`            path: "/graphql",`,
+		`            middlewares: [expressMiddleware(apolloServer)],`,
+		`        });`,
+	].join("\n"),
+	Microservice: `this.Middleware.applyPreset("microservice");`,
 	Minimal: `this.Middleware.parse();`,
+};
+
+/**
+ * Extra imports that specific presets need appended to app.ts.
+ */
+const PRESET_IMPORTS: Record<string, string> = {
+	GraphQL: [
+		`import { ApolloServer } from "@apollo/server";`,
+		`import { expressMiddleware } from "@as-integrations/express5";`,
+		`import { typeDefs, resolvers } from "./graphql/schema";`,
+	].join("\n"),
 };
 
 /**
@@ -305,8 +320,11 @@ const PRESET_DEPENDENCIES: Record<
 	},
 	GraphQL: {
 		dependencies: {
+			"@apollo/server": "^5.5.1",
+			"@as-integrations/express5": "^1.1.2",
 			compression: "^1.8.1",
 			cors: "^2.8.6",
+			graphql: "^16.14.0",
 			helmet: "^8.1.0",
 		},
 		devDependencies: {
@@ -343,6 +361,17 @@ function applyMiddlewarePreset(directory: string, preset: string): void {
 
 	let content = fs.readFileSync(appTsPath, "utf-8");
 
+	// Inject preset-specific imports after the existing import block.
+	// Match the first blank line (handles both LF and CRLF endings).
+	const extraImports = PRESET_IMPORTS[presetName];
+	if (extraImports) {
+		const eol = content.includes("\r\n") ? "\r\n" : "\n";
+		content = content.replace(
+			new RegExp(`${eol}${eol}`),
+			`${eol}${extraImports}${eol}${eol}`,
+		);
+	}
+
 	// Replace the placeholder with the preset code
 	content = content.replace(
 		/\/\/ __MIDDLEWARE_PRESET_PLACEHOLDER__/,
@@ -350,6 +379,71 @@ function applyMiddlewarePreset(directory: string, preset: string): void {
 	);
 
 	fs.writeFileSync(appTsPath, content, "utf-8");
+}
+
+/**
+ * GraphQL schema scaffold content. Provides sample typeDefs and resolvers
+ * so the generated project has a working `/graphql` endpoint out of the box.
+ */
+const GRAPHQL_SCHEMA_CONTENT = `export const typeDefs = \`#graphql
+    type Query {
+        hello: String!
+        health: HealthStatus!
+    }
+
+    type Mutation {
+        echo(message: String!): EchoResponse!
+    }
+
+    type HealthStatus {
+        status: String!
+        timestamp: String!
+        uptime: Float!
+    }
+
+    type EchoResponse {
+        message: String!
+        receivedAt: String!
+    }
+\`;
+
+export const resolvers = {
+    Query: {
+        hello: () => "Hello from ExpressoTS GraphQL!",
+        health: () => ({
+            status: "ok",
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+        }),
+    },
+    Mutation: {
+        echo: (_: unknown, { message }: { message: string }) => ({
+            message,
+            receivedAt: new Date().toISOString(),
+        }),
+    },
+};
+`;
+
+/**
+ * Create additional source files required by specific presets.
+ * For example, the GraphQL preset ships a starter schema + resolvers.
+ */
+function createPresetFiles(directory: string, preset: string): void {
+	const presetMatch = preset.match(/^(\w+) ::/);
+	const presetName = presetMatch ? presetMatch[1] : "API";
+
+	if (presetName === "GraphQL") {
+		const graphqlDir = path.join(directory, "src", "graphql");
+		if (!fs.existsSync(graphqlDir)) {
+			fs.mkdirSync(graphqlDir, { recursive: true });
+		}
+		fs.writeFileSync(
+			path.join(graphqlDir, "schema.ts"),
+			GRAPHQL_SCHEMA_CONTENT,
+			"utf-8",
+		);
+	}
 }
 
 /**
@@ -665,6 +759,7 @@ const projectForm = async (
 			(templateFolder === "application" ||
 				templateFolder === "application-with-events")
 		) {
+			createPresetFiles(answer.name, answer.preset);
 			applyMiddlewarePreset(answer.name, answer.preset);
 		}
 
