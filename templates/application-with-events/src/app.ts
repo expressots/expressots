@@ -1,13 +1,10 @@
 import {
     AppExpress,
-    setupInterceptorsForExpress,
     setupEventSystemForExpress,
 } from "@expressots/adapter-express";
 import { AppContainer, CreateModule } from "@expressots/core";
 import { AppController } from "./app.controller";
-import { LoggingInterceptor } from "@interceptors/logging.interceptor";
 import { WelcomeEmailHandler } from "@events/welcome-email.handler";
-import { appConfig } from "@config/app.config";
 
 /**
  * Application class.
@@ -32,34 +29,10 @@ export class App extends AppExpress {
     async configureServices(): Promise<void> {
         // __MIDDLEWARE_PRESET_PLACEHOLDER__
 
-        // Wire up the v4 interceptor system. Add additional interceptor classes
-        // to `customInterceptors` to apply them globally; per-route attachment
-        // works via `@UseInterceptors(...)` on a controller method.
-        setupInterceptorsForExpress(this.container.Container, {
-            builtIn: { performance: appConfig.values.app.env !== "test" },
-            customInterceptors: [LoggingInterceptor],
-        });
-
-        // Wire up the v4 type-safe event bus. Handlers in `@events/*` annotated
-        // with `@OnEvent(EventClass)` are auto-discovered from the container.
-        setupEventSystemForExpress(this.container.Container, {
-            enableRecording: appConfig.values.app.env !== "production",
-            enableFlowTracking: appConfig.values.app.env === "development",
-        });
-
-        this.Middleware.setErrorHandler({
-            showStackTrace: await this.isDevelopment(),
-        });
+        setupEventSystemForExpress(this.container.Container);
     }
 
-    async postServerInitialization(): Promise<void> {
-        // The startup dashboard already prints the listening URL. Use this
-        // hook to warm caches, prime connections, or run readiness probes.
-    }
+    async postServerInitialization(): Promise<void> {}
 
-    async serverShutdown(): Promise<void> {
-        this.logger
-            .withContext(appConfig.values.app.name)
-            .info("Shutting down gracefully...");
-    }
+    async serverShutdown(): Promise<void> {}
 }

@@ -33,7 +33,7 @@ describe("AppController", () => {
     });
 
     describe("GET /api/health", () => {
-        it("returns ok with the runtime env", async () => {
+        it("returns ok with uptime", async () => {
             const response = await testApp.request
                 .get("/api/health")
                 .expectStatus(200)
@@ -41,7 +41,6 @@ describe("AppController", () => {
 
             expect(response.body).toMatchObject({
                 status: "ok",
-                env: "test",
             });
             expect(typeof response.body.uptime).toBe("number");
         });

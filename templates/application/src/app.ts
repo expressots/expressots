@@ -1,11 +1,6 @@
-import {
-    AppExpress,
-    setupInterceptorsForExpress,
-} from "@expressots/adapter-express";
+import { AppExpress } from "@expressots/adapter-express";
 import { AppContainer, CreateModule } from "@expressots/core";
 import { AppController } from "./app.controller";
-import { LoggingInterceptor } from "@interceptors/logging.interceptor";
-import { appConfig } from "@config/app.config";
 
 /**
  * Application class.
@@ -29,15 +24,6 @@ export class App extends AppExpress {
 
     async configureServices(): Promise<void> {
         // __MIDDLEWARE_PRESET_PLACEHOLDER__
-
-        setupInterceptorsForExpress(this.container.Container, {
-            builtIn: { performance: true },
-            customInterceptors: [LoggingInterceptor],
-        });
-
-        this.Middleware.setErrorHandler({
-            showStackTrace: await this.isDevelopment(),
-        });
     }
 
     async postServerInitialization(): Promise<void> {}
