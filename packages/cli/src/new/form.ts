@@ -709,7 +709,7 @@ const projectForm = async (
 				// GITHUB MODE (production)
 				// Pinned to the v4.0.0 GA tag of the templates repo so a
 				// CLI shipped at v4.0.0 keeps working even if `main` moves.
-				const repo: string = `expressots/templates/${templateFolder}#v4.0.0-preview.1`;
+				const repo: string = `expressots/templates/${templateFolder}#feature/v4.0`;
 				const emitter = degit(repo);
 				await emitter.clone(answer.name);
 				progressBar.update(30, { doing: "Template cloned" });
