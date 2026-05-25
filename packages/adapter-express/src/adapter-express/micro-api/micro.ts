@@ -10,6 +10,14 @@ import { IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import { Server } from "http";
 import { AppExpress } from "../application-express.js";
+import {
+  initializeStudio,
+  stopStudio,
+  isStudioEnabled as checkStudioEnabled,
+  getStudioAgent,
+  reportStudioRuntimeInfo,
+  rescanStudioRoutes,
+} from "../studio/index.js";
 
 /**
  * Minimal configuration for micro API
@@ -22,6 +30,17 @@ export interface MicroConfig {
   globalPrefix?: string;
   /** Show startup banner (default: true) */
   showBanner?: boolean;
+  /** Studio Agent configuration. Auto-enabled in development when the package is installed. */
+  studio?: {
+    /** Explicitly enable/disable Studio (default: auto-detect in development) */
+    enabled?: boolean;
+    /** WebSocket port for the Studio Agent (default: 3334) */
+    port?: number;
+    /** Path to the SQLite database (default: ".studio/studio.db") */
+    dbPath?: string;
+    /** Service name shown in Studio (default: "expressots-micro") */
+    serviceName?: string;
+  };
 }
 
 /**
@@ -73,6 +92,12 @@ export interface MicroApp {
 
   /** Get the Express app instance (for advanced use) */
   getApp(): express.Application;
+
+  /** Configure Studio integration (call before listen) */
+  setStudio(config: NonNullable<MicroConfig["studio"]>): this;
+
+  /** Check if Studio Agent is currently enabled */
+  isStudioEnabled(): boolean;
 }
 
 /**
@@ -100,6 +125,19 @@ export function micro(config?: MicroConfig): MicroApp {
   const globalPrefix = config?.globalPrefix?.replace(/\/$/, "") || "";
   let httpServer: Server;
   let errorHandler: express.ErrorRequestHandler | null = null;
+  let studioConfig: NonNullable<MicroConfig["studio"]> = config?.studio ?? {};
+
+  // Lazy proxy for the Studio Agent middleware. Installed at position 0 so
+  // it always runs before route handlers — even though initializeStudio()
+  // is only called in listen(). Once the agent starts, it sets the real
+  // handler; until then the proxy is a no-op pass-through.
+  let studioMiddlewareDelegate: express.RequestHandler | null = null;
+  app.use((req, res, next) => {
+    if (studioMiddlewareDelegate) {
+      return studioMiddlewareDelegate(req, res, next);
+    }
+    next();
+  });
 
   // Auto-enable JSON parsing by default
   if (config?.autoParseJson !== false) {
@@ -237,7 +275,7 @@ export function micro(config?: MicroConfig): MicroApp {
    */
   const handleExit = (): void => {
     logger.info("Server shutting down", "micro");
-    process.exit(0);
+    void stopStudio().finally(() => process.exit(0));
   };
 
   const microApp: MicroApp = {
@@ -263,6 +301,29 @@ export function micro(config?: MicroConfig): MicroApp {
 
     async listen(port, appInfo) {
       const normalizedPort = typeof port === "string" ? parseInt(port, 10) : port;
+      const listenStartedAt = Date.now();
+
+      // Initialize Studio Agent. The agent's middleware is registered via
+      // app.use() inside initializeStudio, but that lands AFTER the user's
+      // routes in the Express stack. Our lazy proxy (installed at position 0
+      // during micro() creation) ensures CORS headers are injected before
+      // any route handler sends a response.
+      const studioStarted = await initializeStudio(
+        app,
+        {
+          ...studioConfig,
+          serviceName: studioConfig.serviceName ?? "expressots-micro",
+          appPort: normalizedPort,
+          globalPrefix: globalPrefix || undefined,
+        },
+      );
+
+      if (studioStarted) {
+        const agent = getStudioAgent();
+        if (agent) {
+          studioMiddlewareDelegate = agent.createMiddleware();
+        }
+      }
 
       // Install the 404 fallback before the user error handler so unmatched
       // routes get suggestions instead of falling through to the default
@@ -297,6 +358,16 @@ export function micro(config?: MicroConfig): MicroApp {
             });
           }
 
+          // Push runtime info to Studio Agent now that we know the actual port
+          reportStudioRuntimeInfo({
+            appPort: actualPort,
+            globalPrefix: globalPrefix || undefined,
+            startupMs: Date.now() - listenStartedAt,
+          });
+
+          // Re-scan routes so Studio sees the fully-populated Express router
+          void rescanStudioRoutes();
+
           // Handle graceful shutdown
           (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
             (signal) => {
@@ -320,6 +391,15 @@ export function micro(config?: MicroConfig): MicroApp {
 
     getApp() {
       return app;
+    },
+
+    setStudio(cfg) {
+      studioConfig = cfg;
+      return microApp;
+    },
+
+    isStudioEnabled() {
+      return checkStudioEnabled();
     },
   };
 
