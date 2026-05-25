@@ -1,4 +1,4 @@
-import { Console, IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
+import { IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
 import { Env, IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import { Server } from "http";
@@ -90,7 +90,6 @@ class AppExpressMicro {
    * @private
    */
   private handleExit(): void {
-    this.logger.info("Server shutting down.", "MicroAPI");
     process.exit(0);
   }
 
@@ -198,7 +197,6 @@ class AppExpressMicro {
    */
   public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
     const logger: Logger = new Logger();
-    const console: Console = new Console();
     const normalizedPort = typeof port === "string" ? parseInt(port, 10) : port;
 
     this.configureMiddleware();
@@ -210,7 +208,7 @@ class AppExpressMicro {
     }
 
     return new Promise((resolve, reject) => {
-      this.httpServer = this.app.listen(normalizedPort, async () => {
+      this.httpServer = this.app.listen(normalizedPort, () => {
         const address = this.httpServer.address();
 
         if (typeof address === "object" && address?.port) {
@@ -219,11 +217,12 @@ class AppExpressMicro {
           this.port = normalizedPort;
         }
 
-        // Display startup message using Console class
-        await console.messageServer(this.port, this.environment, {
-          appName: appInfo?.appName || "ExpressoTS Micro",
-          appVersion: appInfo?.appVersion || "1.0.0",
-        });
+        const name = appInfo?.appName || "ExpressoTS Micro";
+        const version = appInfo?.appVersion || "1.0.0";
+        logger.info(
+          `${name} version ${version} is running on port ${this.port} - Environment: ${this.environment}`,
+          "micro",
+        );
 
         (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
           (signal) => {
@@ -234,7 +233,7 @@ class AppExpressMicro {
       });
 
       this.httpServer.on("error", (error) => {
-        logger.error(`Error starting server: ${error.message}`, "MicroAPI");
+        logger.error(`Error starting server: ${error.message}`, "micro");
         reject(error);
       });
     });

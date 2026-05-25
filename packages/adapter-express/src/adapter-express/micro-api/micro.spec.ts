@@ -3,9 +3,6 @@ import { AppExpress } from "../application-express";
 
 jest.mock("@expressots/core", () => {
   return {
-    Console: class {
-      messageServer = jest.fn().mockResolvedValue(undefined);
-    },
     Logger: class {
       info = jest.fn();
       warn = jest.fn();

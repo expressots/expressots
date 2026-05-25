@@ -1,5 +1,4 @@
 import {
-  Console,
   Logger,
   getRouteRegistry,
   getErrorHints,
@@ -30,6 +29,8 @@ export interface MicroConfig {
   globalPrefix?: string;
   /** Show startup banner (default: true) */
   showBanner?: boolean;
+  /** Application environment. Auto-detected from NODE_ENV if not provided. */
+  environment?: string;
   /** Studio Agent configuration. Auto-enabled in development when the package is installed. */
   studio?: {
     /** Explicitly enable/disable Studio (default: auto-detect in development) */
@@ -87,8 +88,8 @@ export interface MicroApp {
   /** Start listening for requests */
   listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
 
-  /** Get the underlying HTTP server (available after listen) */
-  getHttpServer(): Server;
+  /** Get the underlying HTTP server (null before listen resolves) */
+  getHttpServer(): Server | null;
 
   /** Get the Express app instance (for advanced use) */
   getApp(): express.Application;
@@ -121,7 +122,6 @@ export function micro(config?: MicroConfig): MicroApp {
 
   const app = express();
   const logger = new Logger();
-  const console = new Console();
   const globalPrefix = config?.globalPrefix?.replace(/\/$/, "") || "";
   let httpServer: Server;
   let errorHandler: express.ErrorRequestHandler | null = null;
@@ -211,40 +211,8 @@ export function micro(config?: MicroConfig): MicroApp {
         return next();
       }
 
-      const suggestionsConfig = getDefaultSuggestionsConfig();
-      if (!suggestionsConfig.enabled) {
-        return next();
-      }
-
       const requestedPath = req.originalUrl || req.url;
       const requestedMethod = req.method;
-
-      const hints = getErrorHints(
-        new Error(`Route '${requestedMethod} ${requestedPath}' not found`),
-        {
-          path: requestedPath,
-          method: requestedMethod,
-          statusCode: 404,
-        },
-        suggestionsConfig,
-      );
-
-      if (hints.length > 0) {
-        try {
-          const formatted = formatSuggestions(hints);
-          if (formatted) {
-            logger.warn(
-              `Route not found: ${requestedMethod} ${requestedPath}${formatted}`,
-              "router-404",
-            );
-          }
-        } catch {
-          // best-effort logging
-        }
-      }
-
-      const routeSuggestion = hints.find((hint) => hint.type === "route");
-      const actionHint = hints.find((hint) => hint.type === "hint");
 
       const body: Record<string, unknown> = {
         type: "https://expressots.dev/errors/not-found",
@@ -255,15 +223,45 @@ export function micro(config?: MicroConfig): MicroApp {
         timestamp: new Date().toISOString(),
       };
 
-      if (routeSuggestion?.routes && routeSuggestion.routes.length > 0) {
-        body.suggestions = routeSuggestion.routes.map((suggestion) => ({
-          method: suggestion.route.method,
-          path: suggestion.route.fullPath || suggestion.route.path,
-          similarity: Math.round(suggestion.similarity * 100),
-          reason: suggestion.reason,
-        }));
-      } else if (actionHint?.actions && actionHint.actions.length > 0) {
-        body.actions = actionHint.actions;
+      const suggestionsConfig = getDefaultSuggestionsConfig();
+      if (suggestionsConfig.enabled) {
+        const hints = getErrorHints(
+          new Error(`Route '${requestedMethod} ${requestedPath}' not found`),
+          {
+            path: requestedPath,
+            method: requestedMethod,
+            statusCode: 404,
+          },
+          suggestionsConfig,
+        );
+
+        if (hints.length > 0) {
+          try {
+            const formatted = formatSuggestions(hints);
+            if (formatted) {
+              logger.warn(
+                `Route not found: ${requestedMethod} ${requestedPath}${formatted}`,
+                "router-404",
+              );
+            }
+          } catch {
+            // best-effort logging
+          }
+
+          const routeSuggestion = hints.find((hint) => hint.type === "route");
+          const actionHint = hints.find((hint) => hint.type === "hint");
+
+          if (routeSuggestion?.routes && routeSuggestion.routes.length > 0) {
+            body.suggestions = routeSuggestion.routes.map((suggestion) => ({
+              method: suggestion.route.method,
+              path: suggestion.route.fullPath || suggestion.route.path,
+              similarity: Math.round(suggestion.similarity * 100),
+              reason: suggestion.reason,
+            }));
+          } else if (actionHint?.actions && actionHint.actions.length > 0) {
+            body.actions = actionHint.actions;
+          }
+        }
       }
 
       res.status(404).type("application/json").send(JSON.stringify(body));
@@ -271,11 +269,24 @@ export function micro(config?: MicroConfig): MicroApp {
   };
 
   /**
-   * Handle server shutdown gracefully
+   * Handle server shutdown. In development, exit immediately for fast
+   * hot-reload. In production, drain connections before exiting.
    */
   const handleExit = (): void => {
-    logger.info("Server shutting down", "micro");
-    void stopStudio().finally(() => process.exit(0));
+    const environment = config?.environment || process.env.NODE_ENV || "development";
+
+    void stopStudio();
+
+    if (environment === "development") {
+      process.exit(0);
+    }
+
+    if (httpServer) {
+      httpServer.close(() => process.exit(0));
+      setTimeout(() => process.exit(0), 5000).unref();
+    } else {
+      process.exit(0);
+    }
   };
 
   const microApp: MicroApp = {
@@ -308,15 +319,12 @@ export function micro(config?: MicroConfig): MicroApp {
       // routes in the Express stack. Our lazy proxy (installed at position 0
       // during micro() creation) ensures CORS headers are injected before
       // any route handler sends a response.
-      const studioStarted = await initializeStudio(
-        app,
-        {
-          ...studioConfig,
-          serviceName: studioConfig.serviceName ?? "expressots-micro",
-          appPort: normalizedPort,
-          globalPrefix: globalPrefix || undefined,
-        },
-      );
+      const studioStarted = await initializeStudio(app, {
+        ...studioConfig,
+        serviceName: studioConfig.serviceName ?? "expressots-micro",
+        appPort: normalizedPort,
+        globalPrefix: globalPrefix || undefined,
+      });
 
       if (studioStarted) {
         const agent = getStudioAgent();
@@ -352,10 +360,13 @@ export function micro(config?: MicroConfig): MicroApp {
             typeof address === "object" && address?.port ? address.port : normalizedPort;
 
           if (config?.showBanner !== false) {
-            await console.messageServer(actualPort, "development", {
-              appName: appInfo?.appName || "ExpressoTS Micro",
-              appVersion: appInfo?.appVersion || "1.0.0",
-            });
+            const name = appInfo?.appName || "ExpressoTS Micro";
+            const version = appInfo?.appVersion || "1.0.0";
+            const environment = config?.environment || process.env.NODE_ENV || "development";
+            logger.info(
+              `${name} version ${version} is running on port ${actualPort} - Environment: ${environment}`,
+              "micro",
+            );
           }
 
           // Push runtime info to Studio Agent now that we know the actual port
@@ -386,7 +397,7 @@ export function micro(config?: MicroConfig): MicroApp {
     },
 
     getHttpServer() {
-      return httpServer;
+      return httpServer ?? null;
     },
 
     getApp() {
