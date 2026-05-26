@@ -1,17 +1,20 @@
-## [4.0.0](https://github.com/expressots/shared/compare/3.0.0...4.0.0) (2026-05-12)
+## [4.0.0-preview.3](https://github.com/expressots/shared/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
-Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
+Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
 
 ### Features
 
 * extend `ExpressoConfig` with `scaffoldSchematics` covering all v4 schematics (`controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`).
-* add type-safe `Pattern` enum for the CLI `scaffoldPattern` option.
+* add type-safe `Pattern` enum (regular `enum`, not `const enum`, so consumers compiling with `isolatedModules: true` such as Vite/Vitest/esbuild/SWC can import it).
 * expose shared content-negotiation primitives consumed by `@expressots/core` formatters.
+* add `Env.when(condition, value, fallback)` helper for environment-specific config resolution.
 * publish dual ESM + CJS builds with subpath exports for both module systems.
+* declare `engines.node: ">=20.18.0"`.
 
 ### Bug Fixes
 
 * tighten the `IWebServer` / `IWebServerBuilder` typings so v4 adapters can declare their server contract without leaking Express types.
+* `configDotenv()` is now safe to call with no arguments — null-guard added on `options.encoding` / `options.debug` (previously threw `TypeError: Cannot read properties of undefined`).
 
 ### Build System
 

@@ -203,12 +203,13 @@ export function config(options?: IConfigOptions): IConfigOutput {
  * @public API
  */
 export function configDotenv(options?: IConfigOptions): IConfigOutput {
-  const dotenvPath = path.resolve(process.cwd(), String(options?.path ?? ".env"));
+  const opts: IConfigOptions = options ?? {};
+  const dotenvPath = path.resolve(process.cwd(), String(opts.path ?? ".env"));
 
-  const encoding: BufferEncoding = (options.encoding ?? "utf8") as BufferEncoding;
-  const debug = !!options.debug;
-  const paths = Array.isArray(options.path)
-    ? options.path.map(_resolveHome)
+  const encoding: BufferEncoding = (opts.encoding ?? "utf8") as BufferEncoding;
+  const debug = !!opts.debug;
+  const paths = Array.isArray(opts.path)
+    ? opts.path.map(_resolveHome)
     : [_resolveHome(dotenvPath)];
 
   const parsed: IEnvObject = {};
@@ -218,7 +219,8 @@ export function configDotenv(options?: IConfigOptions): IConfigOutput {
     try {
       const fileContent = fs.readFileSync(envPath, { encoding });
       const parsedContent = parse(fileContent);
-      populate(process.env, parsedContent, options);
+      Object.assign(parsed, parsedContent);
+      populate(process.env, parsedContent, opts);
     } catch (error: any) {
       lastError = error;
       if (debug) {

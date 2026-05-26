@@ -1,6 +1,6 @@
 {
   "name": "@expressots/shared",
-  "version": "4.0.0-preview.1",
+  "version": "4.0.0-preview.3",
   "description": "Shared library for ExpressoTS modules 🐎",
   "author": "Richard Zampieri <richard.zampieri@expresso-ts.com>",
   "main": "./lib/cjs/index.js",
@@ -36,6 +36,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "engines": {
+    "node": ">=20.18.0"
+  },
   "keywords": [
     "expressots",
     "nodejs",
@@ -55,6 +58,9 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "node scripts/build-esm.js",
     "release": "release-it",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
     "prepublish": "npm run build && npm pack",
     "test": "jest",
     "test:watch": "jest --watch",

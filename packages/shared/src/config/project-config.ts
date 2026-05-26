@@ -7,7 +7,7 @@
  * - CAMEL_CASE: Represents strings where the first letter of the first word is lowercase and the first letter of subsequent words are capitalized. E.g. "helloWorld"
  * @public API
  */
-export const enum Pattern {
+export enum Pattern {
   LOWER_CASE = "lowercase",
   KEBAB_CASE = "kebab-case",
   PASCAL_CASE = "PascalCase",
