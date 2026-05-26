@@ -830,7 +830,10 @@ const projectForm = async (
 					answer.name,
 				);
 			} else {
-				printError(`Failed to scaffold project${code}: ${msg}`, answer.name);
+				printError(
+					`Failed to scaffold project${code}: ${msg}`,
+					answer.name,
+				);
 			}
 			process.exit(1);
 		}

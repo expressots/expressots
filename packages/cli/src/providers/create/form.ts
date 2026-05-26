@@ -11,8 +11,7 @@ import { printError } from "../../utils/cli-ui";
  * `new` command. Lets users target a branch (e.g. `feature/v4.0`) before the
  * matching version tag has been pushed.
  */
-const TEMPLATE_REF_OVERRIDE =
-	process.env.EXPRESSOTS_TEMPLATE_REF?.trim() || "";
+const TEMPLATE_REF_OVERRIDE = process.env.EXPRESSOTS_TEMPLATE_REF?.trim() || "";
 const PREVIEW_FALLBACK_REF = "feature/v4.0";
 
 function isPreviewBuild(): boolean {
@@ -44,10 +43,9 @@ async function cloneProviderTemplate(targetDir: string): Promise<void> {
 					`Set EXPRESSOTS_TEMPLATE_REF=<branch-or-tag> to override.`,
 			),
 		);
-		await degit(
-			`expressots/templates/provider#${PREVIEW_FALLBACK_REF}`,
-			{ force: false },
-		).clone(targetDir);
+		await degit(`expressots/templates/provider#${PREVIEW_FALLBACK_REF}`, {
+			force: false,
+		}).clone(targetDir);
 	}
 }
 
