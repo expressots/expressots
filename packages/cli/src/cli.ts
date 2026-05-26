@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import chalk from "chalk";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -27,9 +29,27 @@ import { studioCommand } from "./studio";
 
 /**
  * The current version of the ExpressoTS Bundle.
- * core, adapters, and cli.
+ * Derived from this CLI package's own package.json — single source of truth.
+ * The compiled binary lives at `bin/cli.js`, so the package.json is one
+ * directory above `__dirname`. When running from source via tsx the layout
+ * is `src/cli.ts` -> `../package.json`, which still resolves correctly.
  */
-export const BUNDLE_VERSION = "4.0.0-preview.2";
+function readBundleVersion(): string {
+	try {
+		const pkgPath = resolve(__dirname, "..", "package.json");
+		const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+			version?: string;
+		};
+		if (typeof pkg.version === "string" && pkg.version.length > 0) {
+			return pkg.version;
+		}
+	} catch {
+		// fall through to the safe default below
+	}
+	return "0.0.0";
+}
+
+export const BUNDLE_VERSION = readBundleVersion();
 
 printHeader();
 

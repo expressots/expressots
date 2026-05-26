@@ -1,9 +1,55 @@
 import chalk from "chalk";
 import degit from "degit";
 import inquirer from "inquirer";
+import { BUNDLE_VERSION } from "../../cli";
 import { centerText } from "../../utils/center-text";
 import { changePackageName } from "../../utils/change-package-info";
 import { printError } from "../../utils/cli-ui";
+
+/**
+ * Override the templates ref/tag, mirroring `EXPRESSOTS_TEMPLATE_REF` in the
+ * `new` command. Lets users target a branch (e.g. `feature/v4.0`) before the
+ * matching version tag has been pushed.
+ */
+const TEMPLATE_REF_OVERRIDE =
+	process.env.EXPRESSOTS_TEMPLATE_REF?.trim() || "";
+const PREVIEW_FALLBACK_REF = "feature/v4.0";
+
+function isPreviewBuild(): boolean {
+	return /-(?:preview|alpha|beta|rc)\b/i.test(BUNDLE_VERSION);
+}
+
+function resolveProviderRef(): string {
+	if (TEMPLATE_REF_OVERRIDE) return TEMPLATE_REF_OVERRIDE;
+	return `v${BUNDLE_VERSION}`;
+}
+
+async function cloneProviderTemplate(targetDir: string): Promise<void> {
+	const primaryRef = resolveProviderRef();
+	const primaryRepo = `expressots/templates/provider#${primaryRef}`;
+
+	try {
+		await degit(primaryRepo, { force: false }).clone(targetDir);
+		return;
+	} catch (err: any) {
+		const isMissingRef = err?.code === "MISSING_REF";
+		const canFallback =
+			isMissingRef && !TEMPLATE_REF_OVERRIDE && isPreviewBuild();
+
+		if (!canFallback) throw err;
+
+		console.log(
+			chalk.yellow(
+				`\n⚠  Templates tag "${primaryRef}" not found on GitHub yet — falling back to "${PREVIEW_FALLBACK_REF}". ` +
+					`Set EXPRESSOTS_TEMPLATE_REF=<branch-or-tag> to override.`,
+			),
+		);
+		await degit(
+			`expressots/templates/provider#${PREVIEW_FALLBACK_REF}`,
+			{ force: false },
+		).clone(targetDir);
+	}
+}
 
 async function printInfo(providerName: string): Promise<void> {
 	console.log("\n");
@@ -57,11 +103,15 @@ export const createExternalProvider = async (
 		}
 
 		try {
-			// Pinned to the v4.0.0 GA tag, same policy as `expressots new`.
-			const emitter = degit(
-				`expressots/templates/provider#v4.0.0-preview.1`,
-			);
-			await emitter.clone(providerInfo.providerName);
+			// Pinned to the templates tag matching this CLI's published version,
+			// same policy as `expressots new`. BUNDLE_VERSION reads from the
+			// CLI's own package.json so the ref always tracks the release.
+			//
+			// Mirrors the preview-fallback logic in `new/form.ts`: during the
+			// preview window the matching `vX.Y.Z` tag may not yet be on
+			// `expressots/templates`, so we soft-fall back to the active
+			// release branch and warn rather than failing opaquely.
+			await cloneProviderTemplate(providerInfo.providerName);
 
 			changePackageName({
 				directory: providerInfo.providerName,
@@ -73,7 +123,19 @@ export const createExternalProvider = async (
 			resolve();
 		} catch (err: any) {
 			console.log("\n");
-			printError("Project already exists or Folder is not empty", "");
+			const msg = err?.message ? String(err.message) : String(err);
+			const code = err?.code ? ` [${err.code}]` : "";
+			if (
+				err?.code === "DEST_NOT_EMPTY" ||
+				/already exists|not empty/i.test(msg)
+			) {
+				printError(
+					`Target folder "${providerInfo.providerName}" already exists or is not empty`,
+					"",
+				);
+			} else {
+				printError(`Failed to scaffold provider${code}: ${msg}`, "");
+			}
 			reject(err);
 		}
 	});

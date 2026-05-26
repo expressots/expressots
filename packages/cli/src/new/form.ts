@@ -503,6 +503,104 @@ const SKIP_INSTALL_FOR_TESTING =
 const LOCAL_TEMPLATES_PATH = path.resolve(__dirname, "../../../templates");
 
 /**
+ * Optional override for the templates ref/tag.
+ *
+ * Useful during the preview window before the matching `vX.Y.Z` tag exists
+ * on `expressots/templates`. Setting `EXPRESSOTS_TEMPLATE_REF=feature/v4.0`
+ * makes `expressots new` clone from that branch instead of the version tag.
+ *
+ * This is intentionally NOT gated by `EXPRESSOTS_DEV`: even an installed
+ * CLI consumer can opt into a custom ref to test pre-release scaffolds.
+ */
+const TEMPLATE_REF_OVERRIDE = process.env.EXPRESSOTS_TEMPLATE_REF?.trim() || "";
+
+/**
+ * Resolve the degit ref to use when fetching a template.
+ *
+ * Priority:
+ *  1. Explicit override via `EXPRESSOTS_TEMPLATE_REF`
+ *  2. The version-pinned tag matching this CLI build (`v${BUNDLE_VERSION}`)
+ */
+function resolveTemplateRef(): string {
+	if (TEMPLATE_REF_OVERRIDE) return TEMPLATE_REF_OVERRIDE;
+	return `v${BUNDLE_VERSION}`;
+}
+
+/**
+ * Build the full degit URL for a given template folder.
+ */
+function buildTemplateRepo(templateFolder: string, ref: string): string {
+	return `expressots/templates/${templateFolder}#${ref}`;
+}
+
+/**
+ * Detect whether the running CLI is a preview build (e.g.
+ * `4.0.0-preview.3`). During the preview window the matching templates tag
+ * may not yet exist on GitHub, so we allow a soft fallback to the active
+ * release branch.
+ */
+function isPreviewBuild(): boolean {
+	return /-(?:preview|alpha|beta|rc)\b/i.test(BUNDLE_VERSION);
+}
+
+/**
+ * Fallback ref used when the primary ref is missing AND we are running a
+ * preview build. Matches the framework's working branch.
+ */
+const PREVIEW_FALLBACK_REF = "feature/v4.0";
+
+/**
+ * Clone a template from the public `expressots/templates` repo via degit.
+ *
+ * On `MISSING_REF` we attempt one graceful retry against the preview
+ * fallback branch — this keeps `npx @expressots/cli@next new` usable during
+ * the window between a CLI publish and the matching templates-tag push.
+ * For non-preview builds we let the error propagate so the user gets a
+ * loud, accurate diagnostic.
+ */
+async function cloneFromGitHub({
+	templateFolder,
+	targetDir,
+	progressBar,
+}: {
+	templateFolder: string;
+	targetDir: string;
+	progressBar: SingleBar;
+}): Promise<void> {
+	const primaryRef = resolveTemplateRef();
+	const primaryRepo = buildTemplateRepo(templateFolder, primaryRef);
+
+	try {
+		await degit(primaryRepo, { force: false }).clone(targetDir);
+		progressBar.update(30, { doing: "Template cloned" });
+		return;
+	} catch (err: any) {
+		const isMissingRef = err?.code === "MISSING_REF";
+		const canFallback =
+			isMissingRef && !TEMPLATE_REF_OVERRIDE && isPreviewBuild();
+
+		if (!canFallback) throw err;
+
+		// Tag for this preview hasn't been pushed yet; transparently retry
+		// against the working branch and surface a one-line warning so the
+		// user knows what they actually got.
+		console.log(
+			chalk.yellow(
+				`\n⚠  Templates tag "${primaryRef}" not found on GitHub yet — falling back to "${PREVIEW_FALLBACK_REF}". ` +
+					`Set EXPRESSOTS_TEMPLATE_REF=<branch-or-tag> to override.`,
+			),
+		);
+
+		const fallbackRepo = buildTemplateRepo(
+			templateFolder,
+			PREVIEW_FALLBACK_REF,
+		);
+		await degit(fallbackRepo, { force: false }).clone(targetDir);
+		progressBar.update(30, { doing: "Template cloned (fallback ref)" });
+	}
+}
+
+/**
  * Main project creation form
  */
 const projectForm = async (
@@ -707,19 +805,33 @@ const projectForm = async (
 				progressBar.update(30, { doing: "Template copied" });
 			} else {
 				// GITHUB MODE (production)
-				// Pinned to the v4.0.0 GA tag of the templates repo so a
-				// CLI shipped at v4.0.0 keeps working even if `main` moves.
-				const repo: string = `expressots/templates/${templateFolder}#feature/v4.0`;
-				const emitter = degit(repo);
-				await emitter.clone(answer.name);
-				progressBar.update(30, { doing: "Template cloned" });
+				// Pinned to the templates tag matching this CLI's published
+				// version (e.g. CLI 4.0.0-preview.3 -> templates/v4.0.0-preview.3).
+				// BUNDLE_VERSION reads from this package's package.json, so a
+				// CLI release and its templates tag move together.
+				await cloneFromGitHub({
+					templateFolder,
+					targetDir: answer.name,
+					progressBar,
+				});
 			}
 		} catch (err: any) {
 			console.log("\n");
-			printError(
-				"Project already exists or Folder is not empty",
-				answer.name,
-			);
+			// Surface the real failure cause so users can self-diagnose
+			// instead of guessing at "folder not empty" every time.
+			const msg = err?.message ? String(err.message) : String(err);
+			const code = err?.code ? ` [${err.code}]` : "";
+			if (
+				err?.code === "DEST_NOT_EMPTY" ||
+				/already exists|not empty/i.test(msg)
+			) {
+				printError(
+					`Target folder "${answer.name}" already exists or is not empty`,
+					answer.name,
+				);
+			} else {
+				printError(`Failed to scaffold project${code}: ${msg}`, answer.name);
+			}
 			process.exit(1);
 		}
 
