@@ -1248,13 +1248,27 @@ export class RouteScanner {
             });
           }
         } else if (layer.name === 'router' && layer.handle?.stack) {
-          // This is a nested router
-          const routerPath = layer.regexp.source
-            .replace('\\/?(?=\\/|$)', '')
-            .replace(/\\\//g, '/')
-            .replace(/\^/g, '')
-            .replace(/\$/g, '')
-            .replace(/\(\?:\(\[\^\\\/\]\+\?\)\)/g, ':param');
+          // This is a nested router. Express 5 attaches the mount path
+          // directly as `layer.path` (a literal string like `/api`), so
+          // we prefer that. Older Express 4 layers only exposed
+          // `layer.regexp`, which we still parse as a fallback.
+          //
+          // Both fields can legitimately be missing — e.g. when the
+          // router is mounted at the root (`app.use(router)`), Express
+          // 5 omits `regexp` entirely. Treating that as an empty
+          // prefix is correct; trying to read `.source` blew up the
+          // whole scan with "Cannot read properties of undefined".
+          let routerPath = '';
+          if (typeof layer.path === 'string') {
+            routerPath = layer.path;
+          } else if (layer.regexp?.source) {
+            routerPath = layer.regexp.source
+              .replace('\\/?(?=\\/|$)', '')
+              .replace(/\\\//g, '/')
+              .replace(/\^/g, '')
+              .replace(/\$/g, '')
+              .replace(/\(\?:\(\[\^\\\/\]\+\?\)\)/g, ':param');
+          }
 
           extractRoutes(layer.handle.stack, basePath + routerPath);
         }

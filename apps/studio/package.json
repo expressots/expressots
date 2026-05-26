@@ -1,6 +1,6 @@
 {
   "name": "@expressots/studio",
-  "version": "4.0.0-preview.1",
+  "version": "4.0.0-preview.3",
   "publishConfig": {
     "access": "public"
   },
@@ -26,13 +26,16 @@
     "start": "node dist/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore"
   },
   "dependencies": {
-    "@expressots/studio-agent": "4.0.0-preview.1",
+    "@expressots/studio-agent": ">=4.0.0-preview.3 <5",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
-    "express": "^4.21.0",
+    "express": "^5.1.0",
     "open": "^10.1.0",
     "ora": "^8.1.0",
     "serve-static": "^1.16.0",

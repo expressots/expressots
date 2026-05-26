@@ -4,11 +4,22 @@
  * Main entry point for launching the Studio
  */
 
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import open from 'open';
 import { Studio } from './studio.js';
+
+// Read this package's own version from package.json so `--version` always
+// matches the published artifact. Compiled output lives at dist/cli.js, so
+// package.json is one directory up.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(
+  readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8'),
+) as { version: string };
 
 interface StartOptions {
   port: string;
@@ -32,7 +43,7 @@ const program = new Command();
 program
   .name('expressots-studio')
   .description('ExpressoTS Studio - Developer Experience Platform')
-  .version('0.1.0');
+  .version(pkg.version);
 
 program
   .command('start')

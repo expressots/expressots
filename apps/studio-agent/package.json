@@ -1,6 +1,6 @@
 {
   "name": "@expressots/studio-agent",
-  "version": "4.0.0-preview.1",
+  "version": "4.0.0-preview.3",
   "publishConfig": {
     "access": "public"
   },
@@ -12,7 +12,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
@@ -21,7 +20,10 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

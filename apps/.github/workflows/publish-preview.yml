@@ -1,0 +1,66 @@
+name: Publish Preview to npm (workspace)
+
+# Manual-dispatch only. The studio repo is an npm workspaces monorepo; this
+# workflow publishes ONE package at a time. Pick the package via the
+# `package` input, the dist-tag via `tag` (default: next).
+#
+# `mcp-server` is `private: true` and refuses to publish — leaving it out of
+# the dropdown defensively.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - studio
+          - studio-agent
+      tag:
+        description: 'npm dist-tag (default: next)'
+        required: false
+        default: 'next'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.0
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build target workspace
+        run: npm run build -w @expressots/${{ inputs.package }}
+
+      - name: Test target workspace
+        run: npm test -w @expressots/${{ inputs.package }}
+
+      - name: Prepare publish
+        working-directory: packages/${{ inputs.package }}
+        run: npm run release:prepare
+
+      - name: Publish to npm
+        working-directory: packages/${{ inputs.package }}
+        run: npm publish --tag ${{ inputs.tag }} --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Restore package.json
+        if: always()
+        working-directory: packages/${{ inputs.package }}
+        run: npm run release:restore

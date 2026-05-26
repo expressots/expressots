@@ -142,13 +142,17 @@ export class Studio {
       // Serve static files from the UI build
       this.uiApp.use(express.static(uiDistPath));
 
-      // SPA fallback
-      this.uiApp.get('*', (_req: Request, res: Response) => {
+      // SPA fallback. Express 5 / path-to-regexp v8 dropped the implicit
+      // `*` wildcard — bare `'*'` now throws `Missing parameter name at
+      // index 1`. Use the v8-compliant named-splat form `/*splat` (the
+      // `splat` identifier is conventional; the captured value is unused
+      // because we always serve the same `index.html`).
+      this.uiApp.get('/*splat', (_req: Request, res: Response) => {
         res.sendFile(path.join(uiDistPath, 'index.html'));
       });
     } else {
-      // Development mode - show placeholder
-      this.uiApp.get('*', (_req: Request, res: Response) => {
+      // Development mode - show placeholder. Same v8 wildcard rules apply.
+      this.uiApp.get('/*splat', (_req: Request, res: Response) => {
         res.send(this.getDevModeHTML());
       });
     }

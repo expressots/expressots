@@ -15,7 +15,41 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 import { glob } from 'glob';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const pkgVersion = (() => {
+  try {
+    const pkg = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8'),
+    ) as { version?: string };
+    return pkg.version ?? '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+})();
+
+/**
+ * Resolve `userPath` against `projectRoot` and refuse to leave the project
+ * sandbox. Without this guard a malicious caller could pass `../../etc/passwd`
+ * (or an absolute path) and the unmodified `path.resolve` would happily
+ * produce a path outside the workspace.
+ *
+ * Returns the validated absolute path, or throws when the resolved path
+ * escapes the project root.
+ */
+function assertWithinProjectRoot(projectRoot: string, userPath: string): string {
+  const root = path.resolve(projectRoot);
+  const candidate = path.resolve(root, userPath);
+  // Allow `root` itself; reject anything that doesn't have `root + sep` as a prefix.
+  if (candidate !== root && !candidate.startsWith(root + path.sep)) {
+    throw new Error(
+      `Path traversal blocked: '${userPath}' resolves outside of the project root (${root}).`,
+    );
+  }
+  return candidate;
+}
 
 import { generateCrud } from './tools/generate-crud.js';
 import { generateDto } from './tools/generate-dto.js';
@@ -325,7 +359,7 @@ export function createMCPServer(config: MCPServerConfig): Server {
 
         case 'analyze_code': {
           const filePath = (args as { filePath: string }).filePath;
-          const absolutePath = path.resolve(projectRoot, filePath);
+          const absolutePath = assertWithinProjectRoot(projectRoot, filePath);
           const result = analyzeCode(absolutePath);
           return {
             content: [
@@ -351,7 +385,7 @@ export function createMCPServer(config: MCPServerConfig): Server {
 
         case 'read_file': {
           const filePath = (args as { path: string }).path;
-          const absolutePath = path.resolve(projectRoot, filePath);
+          const absolutePath = assertWithinProjectRoot(projectRoot, filePath);
           const content = fs.readFileSync(absolutePath, 'utf-8');
           return {
             content: [
@@ -365,14 +399,14 @@ export function createMCPServer(config: MCPServerConfig): Server {
 
         case 'write_file': {
           const { path: filePath, content } = args as { path: string; content: string };
-          const absolutePath = path.resolve(projectRoot, filePath);
-          
+          const absolutePath = assertWithinProjectRoot(projectRoot, filePath);
+
           // Ensure directory exists
           const dir = path.dirname(absolutePath);
           if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
           }
-          
+
           fs.writeFileSync(absolutePath, content);
           return {
             content: [
@@ -561,7 +595,7 @@ async function getProjectContext(projectRoot: string): Promise<ProjectContext> {
 export async function runMCPServer(config?: Partial<MCPServerConfig>): Promise<void> {
   const server = createMCPServer({
     name: config?.name || 'expressots-mcp-server',
-    version: config?.version || '0.1.0',
+    version: config?.version || pkgVersion,
     projectRoot: config?.projectRoot,
   });
 

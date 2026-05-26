@@ -197,10 +197,21 @@ export class StudioTracer {
 
   /** Stop the OpenTelemetry SDK */
   async stop(): Promise<void> {
-    if (this.sdk) {
-      await this.sdk.shutdown();
-      this.sdk = null;
-    }
+    if (!this.sdk) return;
+    const sdk = this.sdk;
+    this.sdk = null;
+
+    // Hard cap the OpenTelemetry shutdown. NodeSDK.shutdown() awaits every
+    // span processor's `forceFlush` and `shutdown`, and the default span
+    // processor flush timeout is 30s — that's where the user-visible
+    // "press Ctrl+C, wait, then `Graceful shutdown completed`" lag comes
+    // from. The SDK keeps no persistent state worth blocking shutdown on,
+    // so we race the drain against a short timeout and move on.
+    const drained = sdk.shutdown().catch(() => {
+      // Best-effort: never hold the host shutdown on a stuck exporter.
+    });
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 500));
+    await Promise.race([drained, timeout]);
   }
 
   /** Get the current tracer */

@@ -59,10 +59,24 @@ const newKV = (): KeyValue => ({
 });
 
 export function ApiClient() {
-  const { routes, pendingApiClientRequest, setPendingApiClientRequest } = useAppStore();
+  const { routes, pendingApiClientRequest, setPendingApiClientRequest, runtime } = useAppStore();
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState<string>(`${DEFAULT_BASE_URL}/`);
   const [tab, setTab] = useState<Tab>('headers');
+
+  // Derive the actual base URL from the agent's runtime info once it
+  // arrives over WS. Incorporates both the real port (`appPort`) and the
+  // global route prefix so that newly-opened Studio shows
+  // `http://localhost:3000/api` instead of the generic `http://localhost:3000/`.
+  const baseUrl = runtime?.appUrl ?? DEFAULT_BASE_URL;
+  useEffect(() => {
+    const prefix =
+      runtime?.globalPrefix && runtime.globalPrefix !== '/'
+        ? runtime.globalPrefix
+        : '/';
+    setUrl(`${baseUrl}${prefix}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runtime?.appUrl, runtime?.globalPrefix]);
   const [headers, setHeaders] = useState<KeyValue[]>([]);
   const [query, setQuery] = useState<KeyValue[]>([]);
   const [body, setBody] = useState<string>('');
@@ -91,7 +105,7 @@ export function ApiClient() {
       next.search = '';
       setUrl(next.toString());
     } catch {
-      setUrl(`${DEFAULT_BASE_URL}${p.startsWith('/') ? p : `/${p}`}`);
+      setUrl(`${baseUrl}${p.startsWith('/') ? p : `/${p}`}`);
     }
     if (b && (m === 'POST' || m === 'PUT' || m === 'PATCH')) {
       setBody(JSON.stringify(b, null, 2));
@@ -199,7 +213,7 @@ export function ApiClient() {
       parsed.search = '';
       setUrl(parsed.toString());
     } catch {
-      setUrl(`${DEFAULT_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`);
+      setUrl(`${baseUrl}${path.startsWith('/') ? path : `/${path}`}`);
     }
 
     // Auto-fill the request body for body-bearing methods when the agent

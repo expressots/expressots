@@ -117,6 +117,12 @@ export class StudioAgent {
   private isRunning: boolean = false;
   private srcWatcher: FSWatcher | null = null;
   private rescanTimer: NodeJS.Timeout | null = null;
+  /**
+   * Periodic metrics-broadcast timer. Captured so `stop()` can clear it
+   * cleanly; `.unref()`'d so it never keeps the Node event loop alive in
+   * tests / serverless environments.
+   */
+  private metricsTimer: NodeJS.Timeout | null = null;
 
   constructor(config: Partial<AgentConfig> = {}) {
     this.config = {
@@ -334,6 +340,11 @@ export class StudioAgent {
       this.securityEngine = null;
     }
 
+    if (this.metricsTimer) {
+      clearInterval(this.metricsTimer);
+      this.metricsTimer = null;
+    }
+
     if (this.rescanTimer) {
       clearTimeout(this.rescanTimer);
       this.rescanTimer = null;
@@ -403,48 +414,63 @@ export class StudioAgent {
     try {
       this.appStructure = await this.scanner.scan();
       this.routes = this.scanner.getRoutes();
+      // Snapshot the un-prefixed path for every freshly scanned route.
+      // The static scanner only sees `@controller(...)` + `@Get(...)`
+      // metadata — the host mounts the whole router under
+      // `setGlobalRoutePrefix("/api")` later, so the source-of-truth
+      // path is kept on `originalPath` and the user-visible `path` is
+      // always recomputed from it. This lets `updateRuntimeInfo` swap
+      // the prefix later without compounding `/api/api/health`-style
+      // duplication on each call.
+      for (const r of this.routes) {
+        (r as RouteInfo & { originalPath?: string }).originalPath = r.path;
+      }
       // Re-fold any previously reported runtime middleware data into
       // the fresh static structure. Without this, a hot-reload rescan
       // would drop the global pipeline nodes and Reflect-derived edges
       // until the next `updateRuntimeInfo()` callback.
       this.mergeRuntimeMiddlewareIntoStructure();
-      // Route counts available via getRoutes()
 
-      // If Express app is provided, also scan runtime routes and use
-      // them to (a) backfill the global URL prefix on static-discovered
-      // routes (which don't see `setGlobalRoutePrefix("/api")`) and
-      // (b) add anything registered without a `@Controller()` decorator.
-      // Runtime routes have no controller metadata, so we never let them
-      // *replace* a static route — only annotate or add.
+      // Apply the host-supplied global URL prefix. Earlier versions
+      // tried to recover the prefix from `app.router.stack[i].regexp`
+      // at runtime, but Express 5 dropped that field in favour of
+      // opaque `matchers` closures, so the prefix is no longer
+      // recoverable from the layer alone. The host already passes it
+      // in via `agentOptions.globalPrefix` — use that as the source of
+      // truth.
+      this.applyGlobalPrefixToRoutes();
+
+      // If Express app is provided, also scan runtime routes and merge
+      // anything the static scan missed (handlers registered ad-hoc via
+      // `app.get(...)` outside a `@Controller()` class, e.g. health-check
+      // probes wired directly in `configureServices`). The static
+      // scanner is the source of truth for decorated routes; runtime
+      // routes only ever *add* — never replace.
       if (this.config.expressApp) {
         const runtimeRoutes = RouteScanner.scanExpressApp(this.config.expressApp);
+        const prefix = this.normaliseGlobalPrefix(this.config.globalPrefix);
 
         for (const runtimeRoute of runtimeRoutes) {
+          // Apply the same global prefix to runtime routes — Express 5
+          // strips it from `app.router.stack` (the prefix lives inside
+          // sub-router matcher closures), so `scanExpressApp` returns
+          // un-prefixed paths just like the static scanner.
+          const fullPath = prefix
+            ? this.joinPrefixWithRoute(prefix, runtimeRoute.path)
+            : runtimeRoute.path;
+
           const exact = this.routes.find(
-            (r) => r.path === runtimeRoute.path && r.method === runtimeRoute.method,
+            (r) => r.path === fullPath && r.method === runtimeRoute.method,
           );
           if (exact) continue;
 
-          // Look for a static route whose path is the suffix of the
-          // runtime route (i.e. the same handler bound under a global
-          // prefix). If found, upgrade its `path` to the prefixed form
-          // so the API client's quick-pick produces a working URL.
-          const suffixMatch = this.routes.find(
-            (r) =>
-              r.method === runtimeRoute.method &&
-              r.controller !== 'Unknown' &&
-              (runtimeRoute.path === r.path ||
-                runtimeRoute.path.endsWith(r.path === '/' ? '/' : `/${r.path.replace(/^\//, '')}`)),
-          );
-          if (suffixMatch) {
-            suffixMatch.path = runtimeRoute.path;
-            continue;
-          }
-
-          // Truly new route (e.g. ad-hoc `app.get(...)` outside any
-          // controller). Keep it but mark the source so the UI can
-          // visually distinguish it.
-          this.routes.push(runtimeRoute);
+          this.routes.push({
+            ...runtimeRoute,
+            path: fullPath,
+            // Keep the un-prefixed form so a later prefix change rewrites
+            // this route the same way it does decorator-discovered ones.
+            ...(({ originalPath: runtimeRoute.path }) as { originalPath: string }),
+          });
         }
       }
 
@@ -458,13 +484,54 @@ export class StudioAgent {
         this.broadcast('structure', this.appStructure);
       }
     } catch (error) {
-      console.error('Failed to scan routes:', error);
+      // `console.error('Failed to scan routes:', error)` prints `{}` for any
+      // thrown value that isn't a `Error` instance (because plain objects
+      // serialise as their enumerable keys, of which there are none on most
+      // exception shapes). Normalise to a useful one-liner so users can
+      // actually diagnose what the static scan tripped over.
+      const err = error as { message?: string; code?: string; stack?: string };
+      const message =
+        (err && (err.message || err.code)) ||
+        (typeof error === 'string' ? error : JSON.stringify(error)) ||
+        'unknown error';
+      console.error(`[StudioAgent] Failed to scan routes: ${message}`);
+      if (err?.stack && process.env.EXPRESSOTS_STUDIO_DEBUG === 'true') {
+        console.error(err.stack);
+      }
     }
   }
 
   /** Get discovered routes */
   getRoutes(): RouteInfo[] {
     return this.routes;
+  }
+
+  /**
+   * Normalise the host-supplied global URL prefix into the form we
+   * actually want to splice into route paths.
+   *
+   *   - Returns `''` for "no prefix" (so callers can fall through with a
+   *     simple truthy check).
+   *   - Strips trailing slashes (`/api/` → `/api`) so the join helper
+   *     never produces `/api//foo`.
+   *   - Defends against the host passing through a legitimate but
+   *     no-op `'/'` prefix.
+   */
+  private normaliseGlobalPrefix(value: string | undefined): string {
+    if (!value || typeof value !== 'string') return '';
+    if (value === '/' || value === '') return '';
+    return value.endsWith('/') ? value.slice(0, -1) : value;
+  }
+
+  /**
+   * Splice a normalised global prefix onto a controller-relative route
+   * path while preserving the leading slash and avoiding doubled
+   * separators. `/api` + `/` → `/api/`, `/api` + `users` → `/api/users`,
+   * `/api` + `/users` → `/api/users`.
+   */
+  private joinPrefixWithRoute(prefix: string, path: string): string {
+    if (!path || path === '/') return prefix + '/';
+    return prefix + (path.startsWith('/') ? path : `/${path}`);
   }
 
   /** Get application structure */
@@ -506,7 +573,18 @@ export class StudioAgent {
     middlewarePreset?: import('./types/index.js').MiddlewarePresetInfo;
   }): void {
     if (patch.appPort !== undefined) this.config.appPort = patch.appPort;
-    if (patch.globalPrefix !== undefined) this.config.globalPrefix = patch.globalPrefix;
+    // Track whether the prefix actually changed before assigning, so we
+    // know whether to re-prefix the cached `routes`. Without this, a
+    // late `updateRuntimeInfo({ globalPrefix: "/api" })` (e.g. fired
+    // from `app.listen()`'s callback after `setGlobalRoutePrefix("/api")`
+    // ran during configureServices) would update the config but leave
+    // the route list still showing un-prefixed paths until the next
+    // file-watcher rescan.
+    let prefixChanged = false;
+    if (patch.globalPrefix !== undefined && patch.globalPrefix !== this.config.globalPrefix) {
+      this.config.globalPrefix = patch.globalPrefix;
+      prefixChanged = true;
+    }
     if (patch.startupMs !== undefined) this.config.startupMs = patch.startupMs;
     if (patch.interceptorCount !== undefined) {
       this.config.interceptorCount = patch.interceptorCount;
@@ -542,8 +620,38 @@ export class StudioAgent {
       this.broadcast('structure', this.appStructure!);
     }
 
+    // If the global URL prefix changed, splice it onto every cached
+    // route so the Routes / API client tabs immediately reflect the
+    // mounted paths instead of the bare per-controller paths.
+    if (prefixChanged) {
+      this.applyGlobalPrefixToRoutes();
+      if (this.io) this.broadcast('routes', this.routes);
+    }
+
     if (this.io) {
       this.broadcast('runtime', this.getRuntimeInfo());
+    }
+  }
+
+  /**
+   * Recompute every route's `path` from its captured `originalPath` plus
+   * the current `config.globalPrefix`. Idempotent and prefix-change-safe
+   * — calling it twice with different prefixes never produces the
+   * `/api/api/health` doubling we'd see if we appended in place.
+   *
+   * Routes pushed by older code paths that don't carry an `originalPath`
+   * (defensive — hot-reload scans always set it now) are left alone, so
+   * we never silently strip a prefix the source of truth set
+   * intentionally.
+   */
+  private applyGlobalPrefixToRoutes(): void {
+    const prefix = this.normaliseGlobalPrefix(this.config.globalPrefix);
+    for (const route of this.routes) {
+      const original = (route as RouteInfo & { originalPath?: string }).originalPath;
+      if (typeof original !== 'string') continue;
+      route.path = prefix
+        ? this.joinPrefixWithRoute(prefix, original)
+        : original;
     }
   }
 
@@ -1303,12 +1411,18 @@ export class StudioAgent {
 
   /** Start metrics collection interval */
   private startMetricsCollection(): void {
-    setInterval(() => {
+    // Reuse an existing timer rather than stacking duplicates if the host
+    // re-invokes start(); also makes idempotent restarts safe.
+    if (this.metricsTimer) {
+      clearInterval(this.metricsTimer);
+      this.metricsTimer = null;
+    }
+    this.metricsTimer = setInterval(() => {
       // Calculate percentiles
       if (this.responseTimes.length > 0) {
         const sorted = [...this.responseTimes].sort((a, b) => a - b);
         const len = sorted.length;
-        
+
         this.metrics.avgResponseTime =
           sorted.reduce((a, b) => a + b, 0) / len;
         this.metrics.p50ResponseTime = sorted[Math.floor(len * 0.5)] || 0;
@@ -1324,6 +1438,9 @@ export class StudioAgent {
       // negligible.
       this.broadcast('runtime', this.getRuntimeInfo());
     }, 5000);
+    // Don't keep the event loop alive solely for metrics broadcasting;
+    // the agent is observability infrastructure, not application logic.
+    this.metricsTimer.unref?.();
   }
 
   /** Create Express middleware for request/response recording */
