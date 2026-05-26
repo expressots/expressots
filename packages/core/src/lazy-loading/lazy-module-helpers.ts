@@ -23,7 +23,11 @@
  * @public API
  */
 
-import type { ILazyModule, LazyModuleConfig, PreloadHint } from "./lazy.interfaces.js";
+import type {
+  ILazyModule,
+  LazyModuleConfig,
+  PreloadHint,
+} from "./lazy.interfaces.js";
 
 /**
  * Set a preload hint on the supplied lazy module and return it.

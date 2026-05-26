@@ -141,7 +141,9 @@ export class ZodValidatorAdapter implements IValidationAdapter<ZodLikeSchema> {
           {
             path: "",
             message:
-              error instanceof Error ? error.message : "Validation failed unexpectedly",
+              error instanceof Error
+                ? error.message
+                : "Validation failed unexpectedly",
             code: "validation_error",
           },
         ],

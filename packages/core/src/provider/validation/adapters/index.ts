@@ -10,11 +10,5 @@
  */
 
 export { ClassValidatorAdapter } from "./class-validator.adapter.js";
-export {
-  ZodValidatorAdapter,
-  createZodValidator,
-} from "./zod.adapter.js";
-export {
-  YupValidatorAdapter,
-  createYupValidator,
-} from "./yup.adapter.js";
+export { ZodValidatorAdapter, createZodValidator } from "./zod.adapter.js";
+export { YupValidatorAdapter, createYupValidator } from "./yup.adapter.js";
