@@ -23,6 +23,10 @@ import type {
 import { packageResolver } from "./resolver-multer.js";
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import { Report, StatusCode } from "@expressots/core";
+import {
+  splitPathConstraints,
+  createPathConstraintMiddleware,
+} from "./path-pattern-compat.js";
 
 // Explicit type annotation: without this, the inferred type pulls a
 // non-portable path from @expressots/core's internal decorator_utils,
@@ -43,9 +47,20 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
       | number
       | undefined;
 
+    // Translate any inline regex constraints in the controller-level
+    // prefix (`@controller("/users/:tenant(\\d+)")`) into a
+    // request-time validator. Keeps `@controller("/")` and the common
+    // case allocation-free.
+    const split = splitPathConstraints(path);
+    const constraintMiddleware = createPathConstraintMiddleware(split.constraints);
+    const effectivePath = split.path;
+    const effectiveMiddleware: Array<Middleware> = constraintMiddleware
+      ? [constraintMiddleware as Middleware, ...middleware]
+      : middleware;
+
     const currentMetadata: ControllerMetadata = {
-      middleware,
-      path,
+      middleware: effectiveMiddleware,
+      path: effectivePath,
       target: target as DecoratorTarget,
       version: controllerVersion,
     };
@@ -58,15 +73,18 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
     for (const key in pathMetadata) {
       if (statusCodeMetadata && statusCodeMetadata[key]) {
         const methodPath = pathMetadata[key]["path"];
-        // Properly join controller and method paths
+        // Properly join controller and method paths. The controller
+        // path is the v8-cleaned `effectivePath` so the mapping key is
+        // consistent with what gets registered on Express.
         let realPath: string;
         if (methodPath === "/" || methodPath === "") {
-          realPath = path;
-        } else if (path === "/" || path === "") {
+          realPath = effectivePath;
+        } else if (effectivePath === "/" || effectivePath === "") {
           realPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
         } else {
-          // Normalize: remove trailing slash from controller, ensure method has leading slash
-          const basePath = path.endsWith("/") ? path.slice(0, -1) : path;
+          const basePath = effectivePath.endsWith("/")
+            ? effectivePath.slice(0, -1)
+            : effectivePath;
           const subPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
           realPath = `${basePath}${subPath}`;
         }
@@ -267,11 +285,22 @@ function enhancedHttpMethod(
       | number
       | undefined;
 
+    // Express 5 / path-to-regexp v8 dropped inline regex constraints
+    // (`:id(\\d+)`). Split them out into a v8-compatible path + a
+    // request-time validator middleware so existing routes — and our
+    // {@link Patterns} / {@link pattern} public API — keep working.
+    const split = splitPathConstraints(path);
+    const constraintMiddleware = createPathConstraintMiddleware(split.constraints);
+    const effectivePath = split.path;
+    const effectiveMiddleware: Array<Middleware> = constraintMiddleware
+      ? [constraintMiddleware as Middleware, ...middleware]
+      : middleware;
+
     const metadata: ControllerMethodMetadata = {
       key: String(key),
       method,
-      middleware,
-      path,
+      middleware: effectiveMiddleware,
+      path: effectivePath,
       target: target as DecoratorTarget,
       version: methodVersion,
     };
@@ -281,13 +310,13 @@ function enhancedHttpMethod(
 
     if (pathMetadata) {
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     } else {
       pathMetadata = {};
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     }
@@ -337,11 +366,19 @@ export function Method(
       | number
       | undefined;
 
+    // Same path-to-regexp v8 compatibility shim as `enhancedHttpMethod`.
+    const split = splitPathConstraints(path);
+    const constraintMiddleware = createPathConstraintMiddleware(split.constraints);
+    const effectivePath = split.path;
+    const effectiveMiddleware: Array<Middleware> = constraintMiddleware
+      ? [constraintMiddleware as Middleware, ...middleware]
+      : middleware;
+
     const metadata: ControllerMethodMetadata = {
       key: String(key),
       method,
-      middleware,
-      path,
+      middleware: effectiveMiddleware,
+      path: effectivePath,
       target: target as DecoratorTarget,
       version: methodVersion,
     };
@@ -352,13 +389,13 @@ export function Method(
 
     if (pathMetadata) {
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     } else {
       pathMetadata = {};
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     }

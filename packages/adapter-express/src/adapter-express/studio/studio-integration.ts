@@ -142,23 +142,36 @@ let studioAgent: StudioAgentInstance | null = null;
 let studioEnabled = false;
 
 /**
- * Check if @expressots/studio-agent is installed
+ * Check if `@expressots/studio-agent` is installed and importable from the
+ * current process. Uses a dynamic `import()` rather than `require.resolve`
+ * because the latter is unavailable in pure-ESM consumers — adapter-express
+ * is published as a dual CJS/ESM build and this helper is exercised by both
+ * targets.
+ *
+ * The result is cached on first hit (success) so we avoid paying for the
+ * import twice. On failure we always retry, since the user may install the
+ * package mid-session in `expressots dev` workflows.
  */
+let _studioAgentModule: unknown = null;
 async function isStudioAgentInstalled(): Promise<boolean> {
   const debug = process.env.EXPRESSOTS_STUDIO_DEBUG === "true";
 
+  if (_studioAgentModule !== null) return true;
+
   try {
-    // Try to resolve the module first (works for both CJS and ESM)
-    const resolved = require.resolve("@expressots/studio-agent");
-    if (debug) console.log("[Studio] Resolved studio-agent at:", resolved);
+    // Dynamic import works for both CJS (returns module.exports) and ESM
+    // (returns the ESM namespace). If the package isn't installed, Node
+    // throws ERR_MODULE_NOT_FOUND / MODULE_NOT_FOUND, which we treat as
+    // "agent not present" — adapter-express continues without Studio.
+    _studioAgentModule = await import("@expressots/studio-agent");
+    if (debug) console.log("[Studio] Loaded studio-agent successfully");
     return true;
   } catch (error) {
     if (debug)
       console.log(
-        "[Studio] Cannot resolve studio-agent:",
+        "[Studio] Cannot load studio-agent:",
         error instanceof Error ? error.message : error,
       );
-    // Module not installed
     return false;
   }
 }

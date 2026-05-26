@@ -208,7 +208,12 @@ export class InversifyExpressServer {
     // request and attach it via a WeakMap (see ./http-context-store).
     // This is cheaper than the previous `Reflect.defineMetadata` call
     // because it bypasses reflect-metadata's string-keyed map.
-    this._app.all("*", (req: Request, res: Response, next: NextFunction) => {
+    //
+    // We use `app.use(handler)` (no path arg) which runs for every request
+    // regardless of method or path — the same behavior as the previous
+    // `app.all("*", ...)` registration but without a path-to-regexp pattern,
+    // so it is forward-compatible with Express 5 / path-to-regexp v8.
+    this._app.use((req: Request, res: Response, next: NextFunction) => {
       this._createHttpContext(req, res, next)
         .then((httpContext) => {
           setHttpContext(req, httpContext);
@@ -999,9 +1004,15 @@ export class InversifyExpressServer {
 
         // Execute guard middleware if guards exist
         if (guardMiddleware && allGuards.length > 0) {
-          return guardMiddleware(req, res, async (err?: unknown) => {
+          // Express 5 typings expect the handler to return `void`. We cannot
+          // `return` the call because the express handler signature is
+          // `(req, res, next) => void | Promise<void>` in v5; chaining the
+          // expression off `return` makes TS infer `unknown`. Invoke it
+          // for-effect and return.
+          guardMiddleware(req, res, async (err?: unknown) => {
             if (err) {
-              return next(err);
+              next(err);
+              return;
             }
             // Guards passed, continue to route handler
             await this.executeRouteHandler(
@@ -1014,6 +1025,7 @@ export class InversifyExpressServer {
               controllerConstructor,
             );
           });
+          return;
         }
 
         // No guards, execute route handler directly
@@ -1158,7 +1170,11 @@ export class InversifyExpressServer {
             // Extract resource info from path for helpful error message
             const pathParts = req.path.split("/").filter(Boolean);
             const resource = pathParts[pathParts.length - 2] || "Resource";
-            const id = req.params?.id || pathParts[pathParts.length - 1];
+            // Express 5's path-to-regexp v8 widens param values to
+            // `string | string[]` because array-style params are now first
+            // class. Coerce to string for the NotFoundError signature.
+            const rawId = req.params?.id ?? pathParts[pathParts.length - 1];
+            const id = Array.isArray(rawId) ? rawId.join("/") : rawId;
 
             throw new NotFoundError(resource, id);
           }

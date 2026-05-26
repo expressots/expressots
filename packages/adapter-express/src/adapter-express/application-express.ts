@@ -106,24 +106,26 @@ export class AppExpress implements Server.IWebServer {
   /** Delay between port retry attempts (ms) */
   private portRetryDelay: number = 500;
 
-  // Log buffering for banner-first display
-  // IMPORTANT: All these properties must be declared BEFORE initBuffering!
+  // Log buffering for banner-first display.
+  //
+  // Buffering is **opt-in** and is activated either by:
+  //   1. Constructing an `AppExpress` instance (the constructor calls
+  //      `startLogBuffering()`), or
+  //   2. The framework calling `AppExpress.startLogBuffering()` explicitly
+  //      from `bootstrap()` so logs emitted during container/module setup
+  //      are captured before the AppExpress instance even exists.
+  //
+  // Importing `@expressots/adapter-express` does NOT touch stdio. Test
+  // harnesses, type-only consumers, and tooling that imports the module
+  // without ever booting an app will see normal `process.stdout` /
+  // `console.*` behavior. `micro()` calls `disableBuffering()` on entry
+  // because it does not use the banner system.
   private static originalStdoutWrite: typeof process.stdout.write | null = null;
   private static originalStderrWrite: typeof process.stderr.write | null = null;
   private static logBuffer: Array<string> = [];
   private static isBuffering: boolean = false;
-  private static bufferingInitialized: boolean = false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static originalGlobalConsole: any = null;
-
-  // Initialize buffering when AppExpress class is loaded (before any instances are created)
-  // This ensures ALL logs are buffered from the very beginning for the full template.
-  // The micro() function explicitly disables this buffering since it doesn't use the banner system.
-  // This MUST be declared AFTER all the static properties it uses!
-  private static initBuffering = ((): boolean => {
-    AppExpress.startLogBuffering();
-    return true;
-  })();
 
   /**
    * Disable log buffering. Called by micro() to restore normal console output
@@ -137,11 +139,17 @@ export class AppExpress implements Server.IWebServer {
   }
 
   /**
-   * Start buffering all console output.
-   * This captures both console.log and direct process.stdout.write calls.
-   * @private
+   * Start buffering all console output for the banner-first display flow.
+   * Captures both `console.*` and direct `process.stdout.write` / `process.stderr.write`
+   * calls so they can be flushed in the correct order after the banner displays.
+   *
+   * Idempotent: calling this multiple times is safe.
+   *
+   * @public API — called by `bootstrap()` so logs emitted during container
+   * setup are captured before the `AppExpress` instance exists. Also called
+   * automatically inside the constructor as a safety net.
    */
-  private static startLogBuffering(): void {
+  public static startLogBuffering(): void {
     if (AppExpress.isBuffering) return;
 
     // Store original streams
@@ -262,8 +270,11 @@ export class AppExpress implements Server.IWebServer {
   }
 
   constructor() {
-    // Buffering is already started via static initialization (initBuffering)
-    // This ensures ALL logs are captured from the very beginning
+    // Activate banner-first log buffering on first AppExpress construction.
+    // Idempotent — bootstrap() typically called this earlier so logs emitted
+    // during container/module setup were already buffered. micro() never
+    // reaches this constructor; it explicitly disables buffering itself.
+    AppExpress.startLogBuffering();
     this.globalConfiguration();
   }
 
@@ -349,21 +360,47 @@ export class AppExpress implements Server.IWebServer {
    * @internal
    */
   private async handleExit(signal?: NodeJS.Signals): Promise<void> {
-    // 1. Stop Studio Agent if running
-    await stopStudio();
+    // Helper: race any drain against a hard cap. We never want a
+    // misbehaving cleanup hook (OTel exporter, slow DB driver, user
+    // shutdown promise that never resolves) to hold the whole exit
+    // chain. Each phase gets its own bound — total fits inside the
+    // outer `setShutdownTimeout` watchdog.
+    const withTimeout = async <T>(p: Promise<T> | T, ms: number): Promise<void> => {
+      const value = Promise.resolve(p).then(() => {});
+      const timer = new Promise<void>((resolve) => setTimeout(resolve, ms).unref());
+      await Promise.race([value, timer]);
+    };
 
-    // 2. Execute lifecycle shutdown hooks on all IShutdown providers
+    // 1. Stop Studio Agent if running. We cap this at 1.5s — the agent
+    //    itself caps its websocket drain at 500ms and OpenTelemetry at
+    //    500ms, but auto-instrumentations can leave handles around so
+    //    the wrapper close still occasionally drags. 1.5s is plenty.
+    await withTimeout(stopStudio(), 1500);
+
+    // 2. Execute lifecycle shutdown hooks on all IShutdown providers.
+    //    Capped at the user-configured shutdown timeout (default 5s).
     if (this.lifecycleRegistry) {
-      await this.lifecycleRegistry.executeShutdown(signal);
+      await withTimeout(
+        this.lifecycleRegistry.executeShutdown(signal),
+        this.shutdownTimeout,
+      );
     }
 
-    // 3. Call user's serverShutdown hook
-    await this.handleSyncOrAsync(this.serverShutdown(signal));
+    // 3. Call user's serverShutdown hook (also capped).
+    await withTimeout(
+      this.handleSyncOrAsync(this.serverShutdown(signal)),
+      this.shutdownTimeout,
+    );
 
-    // 4. Gracefully close the HTTP server with connection force-close
+    // 4. Gracefully close the HTTP server with aggressive connection
+    //    teardown. Order matters: we destroy *all* tracked connections
+    //    immediately (not just idle ones) before calling `close()`,
+    //    because otherwise an active keep-alive request would hold the
+    //    `close` callback open until either its keep-alive timer
+    //    expires (~5s) or the inner `forceCloseTimeout` fires. Killing
+    //    connections up-front lets `close` resolve in the next tick.
     if (this.serverInstance) {
       await new Promise<void>((resolve) => {
-        // Set a timeout to force-destroy connections if graceful shutdown takes too long
         const forceCloseTimeout = setTimeout(() => {
           console.log(
             `⚠️  Force-closing ${this.activeConnections.size} active connections after ${this.shutdownTimeout}ms timeout`,
@@ -371,8 +408,8 @@ export class AppExpress implements Server.IWebServer {
           this.destroyAllConnections();
           resolve();
         }, this.shutdownTimeout);
+        forceCloseTimeout.unref();
 
-        // Try graceful close first
         this.serverInstance!.close((err) => {
           clearTimeout(forceCloseTimeout);
           if (err) {
@@ -382,13 +419,17 @@ export class AppExpress implements Server.IWebServer {
           resolve();
         });
 
-        // Immediately destroy idle connections (keep-alive connections with no pending requests)
-        // This speeds up shutdown significantly
-        this.serverInstance!.closeIdleConnections?.();
+        // Aggressively kill keep-alive sockets so `close` actually
+        // resolves promptly. `closeAllConnections` is Node 18.2+; older
+        // versions silently no-op via the optional-call.
+        try {
+          (this.serverInstance as unknown as { closeAllConnections?: () => void })
+            .closeAllConnections?.();
+        } catch {
+          // best-effort — destroy our tracked set as a fallback
+        }
+        this.destroyAllConnections();
       });
-
-      // Clear all remaining connections
-      this.destroyAllConnections();
     }
   }
 
@@ -819,13 +860,49 @@ export class AppExpress implements Server.IWebServer {
             // Use console.log for shutdown messages - synchronous and guaranteed to write before exit
             console.log(`\n📡 Signal ${signal} received, initiating graceful shutdown...`);
 
-            // Execute shutdown hooks and exit
+            // Hard overall cap on the graceful shutdown. `handleExit` chains
+            // several `await`s — Studio agent stop, lifecycle shutdown
+            // hooks, the user's `serverShutdown`, and finally
+            // `serverInstance.close`. If any of those hang (an unresponsive
+            // OpenTelemetry exporter, a pending DB transaction, a slow
+            // user hook, an HTTP keep-alive socket the OS hasn't reaped
+            // yet), the host process otherwise sits in
+            // "📡 Signal SIGINT received, initiating graceful shutdown…"
+            // for minutes. Capping the whole pipeline keeps the developer
+            // ergonomics tight (Ctrl+C is interactive — they want their
+            // prompt back now) while still allowing fast hooks to run to
+            // completion.
+            //
+            // We expose the cap so apps with legitimately long drains
+            // (e.g. flushing a 50k-message queue) can opt into a longer
+            // timeout via `setShutdownTimeout`.
+            const overallCap = this.shutdownTimeout + 3000;
+            let forced = false;
+            const overallTimer = setTimeout(() => {
+              forced = true;
+              console.warn(
+                `⚠️  Graceful shutdown exceeded ${overallCap}ms; ` +
+                  `force-exiting. If this happens routinely, raise ` +
+                  `\`setShutdownTimeout\` or audit your IShutdown hooks.`,
+              );
+              this.destroyAllConnections();
+              process.exit(0);
+            }, overallCap);
+            // Don't let the watchdog timer keep the event loop alive on
+            // its own; if everything else releases the loop it's fine
+            // for `process.exit(0)` to fire from `handleExit` cleanly.
+            overallTimer.unref();
+
             this.handleExit(signal)
               .then(() => {
+                if (forced) return;
+                clearTimeout(overallTimer);
                 console.log("✅ Graceful shutdown completed");
                 process.exit(0);
               })
               .catch((error) => {
+                if (forced) return;
+                clearTimeout(overallTimer);
                 console.error(`❌ Error during shutdown: ${error.message}`);
                 process.exit(1);
               });

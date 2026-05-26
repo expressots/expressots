@@ -1,6 +1,15 @@
 /**
  * Route parameter patterns for common use cases.
- * These are Express regex patterns that can be used in route paths.
+ *
+ * Express 5 / path-to-regexp v8 dropped the inline-regex form
+ * (`:id(\\d+)`), so the framework no longer hands these patterns to
+ * the underlying matcher verbatim. Instead, the HTTP-method decorators
+ * (`@Get`, `@Post`, …) parse the constraint out of the path at decorator
+ * time, register the route under a plain `:id` placeholder, and inject
+ * a small validator middleware that 404s when the captured value
+ * doesn't match. The user-facing semantics are unchanged: a path that
+ * uses `Patterns.NUMERIC_ID` still rejects `/users/abc` and only
+ * dispatches the handler for matches like `/users/123`.
  *
  * @example
  * ```typescript
@@ -8,12 +17,12 @@
  *
  * @Get(`/users/${pattern("id", Patterns.NUMERIC_ID)}`)
  * getUserById(@param("id") id: number) {
- *   // Only matches numeric IDs like /users/123
+ *   // Only dispatches for numeric IDs like /users/123
  * }
  *
  * @Get(`/documents/${pattern("uuid", Patterns.UUID)}`)
  * getDocument(@param("uuid") uuid: string) {
- *   // Only matches valid UUIDs
+ *   // Only dispatches for valid UUIDs
  * }
  * ```
  *

@@ -32,16 +32,26 @@ describe("micro()", () => {
     expect(typeof (expressApp as unknown as { use: unknown }).use).toBe("function");
   });
 
+  // Express 5 renamed the lazily-built router from `app._router` to
+  // `app.router`. We access either to stay forward-compatible if Express
+  // exposes both during the v4->v5 transition window.
+  type ExpressLike = {
+    router?: { stack: Array<RouterLayer> };
+    _router?: { stack: Array<RouterLayer> };
+  };
+  type RouterLayer = {
+    route?: { path: string; methods?: Record<string, boolean> };
+  };
+  const getStack = (a: unknown): Array<RouterLayer> => {
+    const e = a as ExpressLike;
+    return e.router?.stack ?? e._router?.stack ?? [];
+  };
+
   it("registers GET routes on the underlying Express app", async () => {
     const fluent = app.get("/hello", () => "ok");
     expect(fluent).toBe(app);
 
-    const expressApp = app.getApp() as unknown as {
-      _router?: { stack: Array<{ route?: { path: string } }> };
-    };
-
-    // Express attaches the router lazily; trigger it by routing through stack
-    const stack = expressApp._router?.stack ?? [];
+    const stack = getStack(app.getApp());
     const hasHello = stack.some((layer) => layer.route?.path === "/hello");
     expect(hasHello).toBe(true);
   });
@@ -50,10 +60,7 @@ describe("micro()", () => {
     const prefixed = micro({ showBanner: false, globalPrefix: "/api" });
     prefixed.get("/users", () => []);
 
-    const expressApp = prefixed.getApp() as unknown as {
-      _router?: { stack: Array<{ route?: { path: string } }> };
-    };
-    const stack = expressApp._router?.stack ?? [];
+    const stack = getStack(prefixed.getApp());
     const hasPrefixed = stack.some((layer) => layer.route?.path === "/api/users");
     expect(hasPrefixed).toBe(true);
   });
@@ -65,14 +72,7 @@ describe("micro()", () => {
       .patch("/p", () => 3)
       .delete("/p", () => 4);
 
-    const expressApp = app.getApp() as unknown as {
-      _router?: {
-        stack: Array<{
-          route?: { path: string; methods: Record<string, boolean> };
-        }>;
-      };
-    };
-    const stack = expressApp._router?.stack ?? [];
+    const stack = getStack(app.getApp());
     const methods = new Set(
       stack
         .filter((l) => l.route?.path === "/p")
