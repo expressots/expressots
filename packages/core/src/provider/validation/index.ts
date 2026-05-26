@@ -48,4 +48,10 @@ export {
 } from "./type-inference.js";
 
 // Built-in adapters
-export { ClassValidatorAdapter } from "./adapters/index.js";
+export {
+  ClassValidatorAdapter,
+  ZodValidatorAdapter,
+  createZodValidator,
+  YupValidatorAdapter,
+  createYupValidator,
+} from "./adapters/index.js";

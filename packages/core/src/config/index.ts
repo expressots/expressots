@@ -73,6 +73,12 @@ export {
   envSecret,
   envJson,
   envArray,
+  // Environment-aware value selection helpers.
+  // The canonical user-facing API for `when` is `Env.when(...)` to avoid
+  // colliding with the middleware module's `when()` helper. We still expose
+  // the underlying functions under disambiguated names for advanced use.
+  envIs,
+  envWhen,
 } from "./env-field-builders.js";
 
 // ============================================================================

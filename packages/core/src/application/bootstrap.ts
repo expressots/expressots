@@ -1399,6 +1399,20 @@ export async function bootstrap(
     // STEP 5: Create app instance
     // App's globalConfiguration() will run in constructor
     // initEnvironment() can skip if .env already loaded
+    //
+    // Activate log buffering BEFORE constructing the app so any logs the
+    // application emits during construction (e.g. inside `globalConfiguration()`
+    // or `configureServices()`) are captured and replayed in the right order
+    // after the startup banner. AppClass extends AppExpress for the standard
+    // adapter, so the static method is inherited; we duck-type to avoid a
+    // hard dependency on adapter-express from core.
+    const appClassWithBuffering = AppClass as unknown as {
+      startLogBuffering?: () => void;
+    };
+    if (typeof appClassWithBuffering.startLogBuffering === "function") {
+      appClassWithBuffering.startLogBuffering();
+    }
+
     const app = await AppFactory.create(AppClass);
 
     // Set environment on app instance (for this.environment access)

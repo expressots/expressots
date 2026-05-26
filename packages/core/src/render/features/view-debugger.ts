@@ -36,13 +36,19 @@ export class ViewDebugger {
       this.handleViewsEndpoint(req, res);
     });
 
-    // Preview a view
-    app.get("/__views/preview/:view(*)", (req: Request, res: Response) => {
+    // Preview a view. The view name can contain slashes (e.g.
+    // `users/profile`), so we use a named splat (`*view`) — the
+    // path-to-regexp v6 form `:view(*)` shipped by Express 4 is not
+    // valid in path-to-regexp v8 (Express 5) and now throws
+    // `Missing parameter name`. Path-to-regexp v8 captures the splat
+    // segments as `req.params.view: string[]`; the helpers below
+    // normalise that to a slash-joined string for backward compat.
+    app.get("/__views/preview/*view", (req: Request, res: Response) => {
       this.handlePreviewEndpoint(req, res);
     });
 
-    // Get view info
-    app.get("/__views/info/:view(*)", (req: Request, res: Response) => {
+    // Get view info — same shape as preview.
+    app.get("/__views/info/*view", (req: Request, res: Response) => {
       this.handleInfoEndpoint(req, res);
     });
 
@@ -88,7 +94,7 @@ export class ViewDebugger {
     res: Response,
   ): Promise<void> {
     try {
-      const view = req.params.view;
+      const view = this.resolveViewParam(req.params.view);
       const data = req.query.data ? JSON.parse(req.query.data as string) : {};
 
       const html = await this.renderService.render(view, data);
@@ -98,9 +104,23 @@ export class ViewDebugger {
     } catch (error: any) {
       res.status(500).json({
         error: error.message,
-        view: req.params.view,
+        view: this.resolveViewParam(req.params.view),
       });
     }
+  }
+
+  /**
+   * Normalise the `view` route param across Express 4 and 5.
+   *
+   * Express 4 / path-to-regexp v6 captured `/__views/preview/:view(*)`
+   * as a single string. Express 5 / path-to-regexp v8 changed the
+   * named-splat capture to `string[]` (one entry per slash-separated
+   * segment). The view engine needs the slash-joined form, so we always
+   * collapse the array shape back to that.
+   */
+  private resolveViewParam(value: unknown): string {
+    if (Array.isArray(value)) return value.join("/");
+    return typeof value === "string" ? value : "";
   }
 
   /**
@@ -108,7 +128,7 @@ export class ViewDebugger {
    */
   private handleInfoEndpoint(req: Request, res: Response): void {
     try {
-      const view = req.params.view;
+      const view = this.resolveViewParam(req.params.view);
       const viewFiles = this.renderService.getViewFiles();
 
       // Find matching view

@@ -310,8 +310,14 @@ class FluentRequestImpl implements FluentRequest {
 
   /**
    * Execute the request and return the response.
+   *
+   * The generic defaults to `any` (see {@link FluentResponse} for the
+   * rationale) so test code can read `response.body.foo` directly. Pass
+   * an explicit type — `.execute<UserDto>()` — to opt into strict
+   * typing.
    */
-  async execute<T = unknown>(): Promise<FluentResponse<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async execute<T = any>(): Promise<FluentResponse<T>> {
     const startTime = Date.now();
 
     // Build URL with query parameters
@@ -406,7 +412,8 @@ class FluentRequestImpl implements FluentRequest {
   /**
    * Alias for execute().
    */
-  end<T = unknown>(): Promise<FluentResponse<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  end<T = any>(): Promise<FluentResponse<T>> {
     return this.execute<T>();
   }
 }

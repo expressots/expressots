@@ -134,11 +134,13 @@ class SnapshotRequestImpl implements SnapshotRequest {
     return this;
   }
 
-  execute<T = unknown>(): Promise<FluentResponse<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute<T = any>(): Promise<FluentResponse<T>> {
     return this.fluentRequest.execute<T>();
   }
 
-  end<T = unknown>(): Promise<FluentResponse<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  end<T = any>(): Promise<FluentResponse<T>> {
     return this.fluentRequest.end<T>();
   }
 

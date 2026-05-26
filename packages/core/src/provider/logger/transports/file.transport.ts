@@ -137,33 +137,38 @@ export class FileTransport implements ILogTransport {
       return;
     }
 
-    const filename = this.getFilename();
-    const shouldRotate = this.shouldRotate(filename);
-
-    if (shouldRotate) {
-      await this.rotateFile(filename);
-    }
-
-    if (filename !== this.currentFilename) {
-      this.currentFilename = filename;
-      this.currentFileSize = await this.getFileSize(filename);
-    }
-
-    await this.ensureDirectory();
-    const filePath = join(this.directory, this.currentFilename);
-    const formatted = formatProd(entry) + "\n";
-    const entrySize = Buffer.byteLength(formatted, "utf8");
-
+    // Wrap the entire write pipeline in a single try/catch.
+    //
+    // FileTransport must NEVER throw out of `log()` — a logger that crashes
+    // the request that just wrote to it would be worse than a silent drop.
+    // We log a single line to stderr and move on; this matches the
+    // ConsoleTransport contract and keeps the framework's "logging never
+    // takes down the app" invariant.
     try {
+      const filename = this.getFilename();
+      const shouldRotate = this.shouldRotate(filename);
+
+      if (shouldRotate) {
+        await this.rotateFile(filename);
+      }
+
+      if (filename !== this.currentFilename) {
+        this.currentFilename = filename;
+        this.currentFileSize = await this.getFileSize(filename);
+      }
+
+      await this.ensureDirectory();
+      const filePath = join(this.directory, this.currentFilename);
+      const formatted = formatProd(entry) + "\n";
+      const entrySize = Buffer.byteLength(formatted, "utf8");
+
       await fs.appendFile(filePath, formatted, "utf8");
       this.currentFileSize += entrySize;
 
-      // Check if we need to rotate after this write
       if (this.maxSize > 0 && this.currentFileSize >= this.maxSize) {
         await this.rotateFile(this.currentFilename);
       }
     } catch (error) {
-      // Silently fail to avoid log loops
       console.error(`[FileTransport] Failed to write log:`, error);
     }
   }
@@ -285,7 +290,6 @@ export class FileTransport implements ILogTransport {
   }
 
   private startCleanupInterval(): void {
-    // Run cleanup every hour
     this.cleanupInterval = setInterval(
       () => {
         this.cleanupOldFiles().catch((error) => {
@@ -293,9 +297,14 @@ export class FileTransport implements ILogTransport {
         });
       },
       60 * 60 * 1000,
-    ); // 1 hour
+    );
+    // unref() so the cleanup timer never keeps the event loop alive on its own.
+    // Without this a short-lived script that uses FileTransport would hang
+    // for an hour at exit waiting on the next tick.
+    if (typeof this.cleanupInterval.unref === "function") {
+      this.cleanupInterval.unref();
+    }
 
-    // Run initial cleanup
     this.cleanupOldFiles().catch((error) => {
       console.error(`[FileTransport] Initial cleanup failed:`, error);
     });

@@ -431,6 +431,55 @@ function array<T extends string | number>(
  *
  * @public API
  */
+/**
+ * Returns true when the current Node environment (`NODE_ENV`) matches the
+ * supplied name. Pass an array to match any of several names. The comparison
+ * is case-insensitive and falls back to `"development"` when `NODE_ENV` is
+ * unset, mirroring the convention used elsewhere in the framework.
+ *
+ * ```ts
+ * const config = defineConfig({
+ *   server: { port: when(Env.is("production"), 443, 3000) },
+ * });
+ * ```
+ *
+ * @public API
+ */
+function isEnvironment(name: string | Array<string>): boolean {
+  const current = (process.env.NODE_ENV ?? "development").toLowerCase();
+  const targets = Array.isArray(name) ? name : [name];
+  return targets.some((target) => target.toLowerCase() === current);
+}
+
+/**
+ * Conditional helper for environment-specific config values.
+ *
+ * `when(condition, value, fallback)` returns `value` when `condition` is
+ * truthy, otherwise `fallback`. The condition can be either a boolean
+ * (typically the result of `Env.is(...)`) or a callable that's evaluated
+ * lazily. The latter form lets you defer side-effectful checks until the
+ * config is actually resolved.
+ *
+ * ```ts
+ * const config = defineConfig({
+ *   logging: {
+ *     level: when(Env.is("production"), "info", "debug"),
+ *     pretty: when(() => process.env.NO_COLOR !== "1", true, false),
+ *   },
+ * });
+ * ```
+ *
+ * @public API
+ */
+function envWhen<TValue, TFallback>(
+  condition: boolean | (() => boolean),
+  value: TValue,
+  fallback: TFallback,
+): TValue | TFallback {
+  const ok = typeof condition === "function" ? condition() : condition;
+  return ok ? value : fallback;
+}
+
 export const Env = {
   string,
   number,
@@ -441,7 +490,13 @@ export const Env = {
   secret,
   json,
   array,
+  is: isEnvironment,
+  when: envWhen,
 } as const;
+
+// Re-export the conditional helpers as top-level free functions so users can
+// import them without going through the `Env` namespace if they prefer.
+export { isEnvironment as envIs, envWhen };
 
 // Re-export individual builders for tree-shaking
 export {

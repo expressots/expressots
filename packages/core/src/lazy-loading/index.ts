@@ -88,6 +88,12 @@ export {
   LAZY_MODULE_METADATA_KEY,
 } from "./lazy-module.js";
 
+// Free-function wrappers for the LazyModule chain methods.
+export {
+  withPreloadHint,
+  withLazyConfig,
+} from "./lazy-module-helpers.js";
+
 // ============================================================================
 // Lazy Module Loader
 // ============================================================================

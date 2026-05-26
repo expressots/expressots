@@ -1,33 +1,33 @@
-## [4.0.0](https://github.com/expressots/expressots/compare/3.0.0...4.0.0) (2026-05-12)
+## [4.0.0-preview.3](https://github.com/expressots/expressots/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
-Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
+Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
 
-### Features
+> The Express-specific surface (`@Accept`/`@Consumes`/`@Produces`, `StreamResponse`, the fluent `micro()` API, `setupInterceptorsForExpress`/`setupEventSystemForExpress`/`setupLazyLoadingForExpress`, `@Version` and the `Patterns` route-constraint catalogue) lives in **`@expressots/adapter-express`**. See its CHANGELOG for that surface.
 
-* **interceptors:** new AOP system (`@Interceptor`, `IInterceptor`, `ExecutionContext`, `CallHandler`) with composition helpers `whenInterceptor`, `unlessInterceptor`, `pipeInterceptors`, `combineInterceptors`, and built-ins `LoggingInterceptor`, `PerformanceInterceptor`, `TimeoutInterceptor`. Companion `setupInterceptorsForExpress()` for one-line wiring.
-* **events:** type-safe event bus (`EventEmitter`, `@OnEvent`, `@OnEvents`, `@When`, `IEventHandler`) with auto-discovery, priority-based execution, `EventRecorder`, and `EventFlowTracker`. Companion `setupEventSystemForExpress()`.
-* **lazy loading:** `CreateLazyModule`, `withPreloadHint`, `withLazyConfig` and `setupLazyLoadingForExpress()` with `idle` / `immediate` / `manual` warmup strategies and zero-config route detection from `@controller()` decorators.
-* **configuration:** type-safe `defineConfig` + `Env.{string,number,boolean,enum,port,url,secret,array,json}` field builders with inline multi-environment defaults, `SecretValue` auto-redaction, helpful validation errors, and `when()` helper for environment-specific resolution.
-* **logging:** 11-phase production logger with `Logger.configure`, `withContext`, `child`, transports (`ConsoleTransport`, `FileTransport`, `HttpTransport`), redaction, suggestions, flow tracker, performance metrics, grouping, query/export API, and health monitor.
-* **content negotiation:** `@Accept`, `@Consumes`, `@Produces` decorators, built-in JSON / XML / CSV / YAML / Text formatters, `StreamResponse` for large payloads, quality-value support, custom formatter registration.
+### Features (core)
+
+* **interceptors:** new AOP system (`@Interceptor`, `IInterceptor`, `ExecutionContext`, `CallHandler`) with composition helpers `whenInterceptor`, `unlessInterceptor`, `pipeInterceptors`, `combineInterceptors`, and built-ins `LoggingInterceptor`, `PerformanceInterceptor`, `TimeoutInterceptor`.
+* **events:** type-safe event bus (`EventEmitter`, `@OnEvent`, `@OnEvents`, `@When`, `IEventHandler`) with auto-discovery, priority-based execution, `EventRecorder`, and `EventFlowTracker`.
+* **lazy loading:** `LazyModule` with `withPreloadHint`, `withLazyConfig`, `CreateLazyModule`, plus standalone helper exports of the same names; `idle` / `immediate` / `manual` warmup strategies and zero-config route detection from `@controller()`.
+* **configuration:** type-safe `defineConfig` + `Env.{string,number,boolean,enum,port,url,secret,array,json}` field builders with inline multi-environment defaults, `SecretValue` auto-redaction, helpful validation errors, and `Env.when()` helper for environment-specific resolution.
+* **logging:** 11-phase production logger with `Logger.configure` (static + instance), `withContext`, `child`, transports (`ConsoleTransport`, `FileTransport`, `HttpTransport`), redaction, suggestions, flow tracker, performance metrics, grouping, query/export API, and health monitor.
 * **authorization:** guard system with `@RequireAuthentication`, `@RequireRoles`, `@RequirePermissions`, built-in `AuthenticatedGuard` / `RoleGuard` / `PermissionGuard` / `ResourceOwnerGuard`, ABAC via `@RequirePolicy`, composition helpers `combineGuards` / `sequenceGuards` / `whenGuard`, permission hierarchy, multi-tenant support, request-scoped caching.
-* **middleware:** named registry (`getMiddlewareRegistry`, `use`, `compose`, `when`, `parallel`, `timeout`), category-based preset API via `applyPreset()` / `definePreset()` with eight built-in presets (`api`, `web`, `spa`, `microservice`, `graphql`, `minimal`, `development`, `production`), `MiddlewareProfiler`, optional-package resolver.
-* **smart validation:** auto-detected `class-validator` integration with helpful errors and plugin support for Zod / Yup / Joi.
+* **middleware:** named registry (`getMiddlewareRegistry`, `use`, `compose`, `when`, `parallel`, `timeout`), category-based preset API via `applyPreset()` / `definePreset()` (available both as `Middleware` instance methods and as standalone exports) with eight built-in presets (`api`, `web`, `spa`, `microservice`, `graphql`, `minimal`, `development`, `production`), `MiddlewareProfiler`, optional-package resolver.
+* **smart validation:** auto-detected `class-validator` integration with helpful errors, plus built-in adapters for **Zod** (`createZodValidator`) and **Yup** (`createYupValidator`) with optional peer dependencies — install only the validator you actually use.
 * **error handling:** RFC 7807 compliant `AppError` with helpers (`badRequest`, `notFound`, `validationFailed`, etc.), auto-discovered exception filters via `@Catch`, route-level `@UseFilters`, and inherited filter matching.
-* **lifecycle hooks:** `IBootstrap`, `IShutdown`, `@postConstruct`, `@preDestroy` on DI-managed classes; `globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown` on `AppExpress`.
+* **lifecycle hooks:** `IBootstrap`, `IShutdown`, `@postConstruct`, `@preDestroy` on DI-managed classes.
 * **DI scopes:** `Scope.Singleton` / `Transient` / `Request` plus custom scopes (`tenant`, `transaction`, `workflow`, `session`) via `provideInScope`.
 * **testing module:** `createTestApp`, `request` fluent API, `mockProvider`, `setupExpressoTSMatchers`, `expectStatus`, `expectBody` (with partial matching), snapshot testing, load testing, database fixtures.
-* **micro API:** new `micro()` fluent API for single-file apps and serverless deployments alongside the existing `createMicroAPI()` (kept for DI in a single file).
-* **route constraints + API versioning:** URL / header / query versioning, UUID / integer / pattern constraints with custom validators.
 
 ### Breaking Changes
 
 * `.env` files are **opt-in** — `bootstrap()` now requires `envFileConfig` to load `.env`. Containerised deployments no longer trip "missing .env" alarms. See ADR-001.
-* `AppFactory.create()` replaced by `bootstrap()` from `@expressots/core`.
-* Node.js 20.18.0+ is now the minimum supported runtime.
+* `AppFactory.create()` is deprecated in favor of `bootstrap()` from `@expressots/core` (still exported for advanced use; will be removed in a future major).
+* Node.js 20.18.0+ is now the minimum supported runtime (now declared in `engines`).
 
 ### Build System
 
+* `@expressots/shared` is now a runtime `dependency` (previously misclassified as `devDependency`), so a fresh install of `@expressots/core` no longer crashes with `Cannot find module '@expressots/shared'`.
 * dual ESM + CJS publication with subpath `exports` for both module systems.
 * migrated from Vitest to Jest 29.
 * embedded our customised DI implementation (replaces `inversify`).

@@ -130,6 +130,12 @@ export class AppFactory {
    *
    * @throws {Error} If webServerType is not a valid constructor
    *
+   * @deprecated Use `bootstrap()` from `@expressots/core` instead. `bootstrap()`
+   * additionally handles environment file loading, port configuration,
+   * graceful shutdown, the startup banner, and configuration validation.
+   * `AppFactory.create()` will keep working for advanced use cases but is
+   * scheduled for removal in a future major release.
+   *
    * @public API
    */
   public static async create<T extends IWebServer>(

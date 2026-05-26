@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "4.0.0-preview.1",
+  "version": "4.0.0-preview.3",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -36,6 +36,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "engines": {
+    "node": ">=20.18.0"
+  },
   "keywords": [
     "expressots",
     "nodejs",
@@ -56,6 +59,9 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "prepublish": "npm run build && npm pack",
     "release": "release-it",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
     "test": "jest",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
@@ -66,13 +72,13 @@
     "docs:clean": "node scripts/rm.js docs"
   },
   "dependencies": {
+    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.tgz",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
     "@codecov/vite-plugin": "0.0.1-beta.5",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
-    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.1.tgz",
     "@release-it/conventional-changelog": "8.0.1",
     "@types/express": "4.17.21",
     "@types/jest": "^29.5.14",
@@ -86,6 +92,7 @@
     "prettier": "3.3.3",
     "release-it": "17.6.0",
     "ts-jest": "29.2.5",
+    "ts-node": "10.9.2",
     "typedoc": "^0.28.15",
     "typescript": "5.5.3"
   },

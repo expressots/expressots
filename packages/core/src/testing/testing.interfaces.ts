@@ -441,14 +441,18 @@ export interface FluentRequest {
   expect<T>(assertion: (response: FluentResponse<T>) => void): FluentRequest;
 
   /**
-   * Execute the request and return the response.
+   * Execute the request and return the response. Body type defaults to
+   * `any` for ergonomic test code — see {@link FluentResponse} for the
+   * rationale and how to opt into strict typing via `<T>`.
    */
-  execute<T = unknown>(): Promise<FluentResponse<T>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute<T = any>(): Promise<FluentResponse<T>>;
 
   /**
    * Alias for execute().
    */
-  end<T = unknown>(): Promise<FluentResponse<T>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  end<T = any>(): Promise<FluentResponse<T>>;
 }
 
 /**
@@ -473,8 +477,31 @@ export interface TimeAssertion {
 
 /**
  * Fluent response object.
+ *
+ * The body type defaults to `any` rather than `unknown` — this is a
+ * deliberate ergonomics call for a *test-time* HTTP client API.
+ *
+ * Tests written against ExpressoTS controllers usually look like:
+ *
+ *   const r = await testApp.request.get("/users/1").execute();
+ *   expect(r.body.id).toBe(1);
+ *
+ * With `body: unknown` (the type-safe default), every property access
+ * trips TS18046 and forces every test to either pass an inline generic
+ * (`.execute<{ id: number }>()`) or cast (`(r.body as { id: number })`).
+ * That's the right default for *production* code where you don't
+ * actually know the response shape — but in a test, the fixture _is_
+ * the type contract: the test file already encodes the expected shape
+ * in its assertions, so the type check is redundant noise.
+ *
+ * Users who want strict typing can still parameterise: the generic
+ * is preserved on `request.execute<T>()` and on `FluentResponse<T>`
+ * itself, so opting into a typed body remains a single keystroke
+ * (`.execute<UserDto>()`). This mirrors how `supertest` and `axios`
+ * default — both publish `body: any` for the same reason.
  */
-export interface FluentResponse<T = unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface FluentResponse<T = any> {
   /**
    * Response status code.
    */
@@ -491,7 +518,8 @@ export interface FluentResponse<T = unknown> {
   headers: Record<string, string>;
 
   /**
-   * Parsed response body.
+   * Parsed response body. Defaults to `any` — see the interface
+   * docstring for the rationale and how to opt into strict typing.
    */
   body: T;
 
@@ -613,8 +641,11 @@ export interface SnapshotRequest {
   expectBodyPath(path: string, expected: unknown): SnapshotRequest;
   expect<T>(assertion: (response: FluentResponse<T>) => void): SnapshotRequest;
 
-  // Execute
-  execute<T = unknown>(): Promise<FluentResponse<T>>;
+  // Execute. Body type defaults to `any` for ergonomic test code — see
+  // {@link FluentResponse} for the rationale and how to opt into strict
+  // typing via `<T>`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute<T = any>(): Promise<FluentResponse<T>>;
 
   // Snapshot-specific methods
   /**

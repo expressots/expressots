@@ -84,6 +84,15 @@ export type {
 // V4 Middleware utilities
 export { use, compose, when, parallel, timeout } from "./middleware-utils.js";
 
+// V4 Standalone preset helpers (free-function wrappers around
+// Middleware.definePreset / Middleware.applyPreset)
+export {
+  definePreset,
+  applyPreset,
+  getStandalonePresetNames,
+  clearStandalonePresets,
+} from "./presets-standalone.js";
+
 // V4 Middleware registry
 export {
   MiddlewareRegistry,

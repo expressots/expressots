@@ -59,6 +59,14 @@ class Logger implements IProvider {
   private healthMonitor: HealthMonitor | null = null;
   private queryManager: LogQueryManager | null = null;
 
+  /**
+   * Module-level overrides applied by `Logger.configure(...)` on top of the
+   * built-in defaults. Used by the constructor of every future `Logger`
+   * instance so application-wide config (e.g. log level, transports) can be
+   * set once before bootstrap, before any DI container exists.
+   */
+  private static defaultOverrides: Partial<LoggerConfig> = {};
+
   name: string = "Logger Provider";
   version: string = "4.1.0";
   author: string = "Richard Zampieri";
@@ -66,7 +74,15 @@ class Logger implements IProvider {
 
   constructor() {
     this.pid = process.pid;
-    this.config = getDefaultLoggerConfig();
+    // Merge module-level overrides on top of the built-in defaults so values
+    // set via Logger.configure(...) before container creation propagate to
+    // every instance. Caller-supplied transports replace the defaults, level
+    // is forwarded to the auto-installed console transport below.
+    const baseConfig = getDefaultLoggerConfig();
+    this.config = {
+      ...baseConfig,
+      ...Logger.defaultOverrides,
+    };
     // Initialize with default console transport if none provided.
     // Aligning the transport's level with the resolved logger level
     // (which already honours `process.env.LOG_LEVEL`) keeps both
@@ -85,6 +101,39 @@ class Logger implements IProvider {
     this.groupingManager = new LogGroupingManager(this.config.grouping);
     // Initialize query manager with default config
     this.queryManager = new LogQueryManager(this.config.query);
+  }
+
+  /**
+   * Configure the default LoggerConfig used by every future `Logger`
+   * instance constructed in this process.
+   *
+   * Use this from application config files **before** bootstrap so the DI
+   * container's Logger picks up the correct level / transports / grouping /
+   * health / redaction settings without needing to inject and reconfigure it.
+   * Calls are merged: later calls override earlier ones, but unspecified
+   * keys keep their previously-set values.
+   *
+   * Already-constructed Logger instances are NOT mutated by this call —
+   * use the instance method `logger.configure(...)` to update a live one.
+   *
+   * @param config - Partial configuration to merge with the defaults.
+   * @public API
+   */
+  static configure(config: Partial<LoggerConfig>): void {
+    Logger.defaultOverrides = {
+      ...Logger.defaultOverrides,
+      ...config,
+    };
+  }
+
+  /**
+   * Reset the module-level overrides set by `Logger.configure`. Useful in
+   * tests to undo cross-test pollution.
+   *
+   * @public API
+   */
+  static resetConfigure(): void {
+    Logger.defaultOverrides = {};
   }
 
   /**
