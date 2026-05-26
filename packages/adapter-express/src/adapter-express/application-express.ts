@@ -380,17 +380,11 @@ export class AppExpress implements Server.IWebServer {
     // 2. Execute lifecycle shutdown hooks on all IShutdown providers.
     //    Capped at the user-configured shutdown timeout (default 5s).
     if (this.lifecycleRegistry) {
-      await withTimeout(
-        this.lifecycleRegistry.executeShutdown(signal),
-        this.shutdownTimeout,
-      );
+      await withTimeout(this.lifecycleRegistry.executeShutdown(signal), this.shutdownTimeout);
     }
 
     // 3. Call user's serverShutdown hook (also capped).
-    await withTimeout(
-      this.handleSyncOrAsync(this.serverShutdown(signal)),
-      this.shutdownTimeout,
-    );
+    await withTimeout(this.handleSyncOrAsync(this.serverShutdown(signal)), this.shutdownTimeout);
 
     // 4. Gracefully close the HTTP server with aggressive connection
     //    teardown. Order matters: we destroy *all* tracked connections
@@ -423,8 +417,9 @@ export class AppExpress implements Server.IWebServer {
         // resolves promptly. `closeAllConnections` is Node 18.2+; older
         // versions silently no-op via the optional-call.
         try {
-          (this.serverInstance as unknown as { closeAllConnections?: () => void })
-            .closeAllConnections?.();
+          (
+            this.serverInstance as unknown as { closeAllConnections?: () => void }
+          ).closeAllConnections?.();
         } catch {
           // best-effort — destroy our tracked set as a fallback
         }

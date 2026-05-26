@@ -8,10 +8,7 @@
 // translation rules and the validator's pass/fail behaviour so a future
 // path-to-regexp upgrade can't silently regress the public API.
 
-import {
-  splitPathConstraints,
-  createPathConstraintMiddleware,
-} from "../path-pattern-compat";
+import { splitPathConstraints, createPathConstraintMiddleware } from "../path-pattern-compat";
 
 describe("splitPathConstraints", () => {
   it("returns the original path unchanged when no inline regex is present", () => {
@@ -30,9 +27,7 @@ describe("splitPathConstraints", () => {
   });
 
   it("captures multiple constraints across one path", () => {
-    const result = splitPathConstraints(
-      "/api/:tenant(\\d+)/users/:id([a-f0-9]+)",
-    );
+    const result = splitPathConstraints("/api/:tenant(\\d+)/users/:id([a-f0-9]+)");
     expect(result.path).toBe("/api/:tenant/users/:id");
     expect(result.constraints).toHaveLength(2);
     expect(result.constraints[0].paramName).toBe("tenant");
@@ -91,11 +86,10 @@ describe("splitPathConstraints", () => {
 });
 
 describe("createPathConstraintMiddleware", () => {
-  const makeReqRes = (params: Record<string, string | string[]> | null) =>
-    ({
-      req: { params } as unknown as import("express").Request,
-      res: {} as unknown as import("express").Response,
-    });
+  const makeReqRes = (params: Record<string, string | string[]> | null) => ({
+    req: { params } as unknown as import("express").Request,
+    res: {} as unknown as import("express").Response,
+  });
 
   it("returns null when there are no constraints", () => {
     expect(createPathConstraintMiddleware([])).toBeNull();

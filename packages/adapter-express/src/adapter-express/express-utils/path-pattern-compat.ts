@@ -81,10 +81,7 @@ export function splitPathConstraints(path: string): SplitPath {
     const start = i;
     i++;
     let nameEnd = i;
-    while (
-      nameEnd < path.length &&
-      /[A-Za-z0-9_]/.test(path[nameEnd] as string)
-    ) {
+    while (nameEnd < path.length && /[A-Za-z0-9_]/.test(path[nameEnd] as string)) {
       nameEnd++;
     }
     if (nameEnd === i) {

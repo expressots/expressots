@@ -23,10 +23,7 @@ import type {
 import { packageResolver } from "./resolver-multer.js";
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import { Report, StatusCode } from "@expressots/core";
-import {
-  splitPathConstraints,
-  createPathConstraintMiddleware,
-} from "./path-pattern-compat.js";
+import { splitPathConstraints, createPathConstraintMiddleware } from "./path-pattern-compat.js";
 
 // Explicit type annotation: without this, the inferred type pulls a
 // non-portable path from @expressots/core's internal decorator_utils,
@@ -82,9 +79,7 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
         } else if (effectivePath === "/" || effectivePath === "") {
           realPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
         } else {
-          const basePath = effectivePath.endsWith("/")
-            ? effectivePath.slice(0, -1)
-            : effectivePath;
+          const basePath = effectivePath.endsWith("/") ? effectivePath.slice(0, -1) : effectivePath;
           const subPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
           realPath = `${basePath}${subPath}`;
         }
