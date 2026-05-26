@@ -208,9 +208,7 @@ export function configDotenv(options?: IConfigOptions): IConfigOutput {
 
   const encoding: BufferEncoding = (opts.encoding ?? "utf8") as BufferEncoding;
   const debug = !!opts.debug;
-  const paths = Array.isArray(opts.path)
-    ? opts.path.map(_resolveHome)
-    : [_resolveHome(dotenvPath)];
+  const paths = Array.isArray(opts.path) ? opts.path.map(_resolveHome) : [_resolveHome(dotenvPath)];
 
   const parsed: IEnvObject = {};
   let lastError: Error | undefined;
