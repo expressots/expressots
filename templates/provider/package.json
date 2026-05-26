@@ -55,7 +55,6 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "release": "release-it",
     "prepublish": "npm run build && npm pack",
-    "publish": "npm publish --tag latest",
     "test": "jest",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
@@ -64,7 +63,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
-    "@expressots/core": "4.0.0-preview.1"
+    "@expressots/core": "4.0.0-preview.3"
   },
   "devDependencies": {
     "@commitlint/cli": "19.5.0",

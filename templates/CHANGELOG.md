@@ -1,3 +1,14 @@
+## [4.0.0-preview.3] (2026-05-25)
+
+Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release).
+
+### Bundle
+
+-   All scaffolds re-pin `@expressots/{core,adapter-express,shared,cli,studio,studio-agent}` to `4.0.0-preview.3` exact via the new `scripts/release/sync-template-deps.mjs` script. The root `package.json#version` is the single source of truth — `npm run release:sync-deps` rewrites every template before tagging.
+-   `provider` scaffold no longer ships its own `npm run publish` script (the script overrode npm's own `publish` and clobbered dist-tags).
+-   `application` and `application-with-events` and `micro` keep `express@5.2.1`, matching adapter-express's new `^5.1.0` requirement.
+-   Templates are now consumed via the `expressots/templates#v<cli-version>` git tag rather than the `feature/v4.0` moving branch, so `expressots new` is reproducible across CLI releases.
+
 ## [4.0.0] (2026-05-12)
 
 Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release).
