@@ -838,12 +838,18 @@ const projectForm = async (
 			process.exit(1);
 		}
 
+		// Apply preset files + placeholder substitution BEFORE install so
+		// that a failed/skipped install still leaves the user with a
+		// runnable scaffold (the middleware preset placeholder must not
+		// leak into src/app.ts as a literal comment).
 		if (
 			answer.preset &&
 			(templateFolder === "application" ||
 				templateFolder === "application-with-events")
 		) {
 			injectPresetDependencies(answer.name, answer.preset);
+			createPresetFiles(answer.name, answer.preset);
+			applyMiddlewarePreset(answer.name, answer.preset);
 		}
 
 		if (SKIP_INSTALL_FOR_TESTING) {
@@ -866,16 +872,6 @@ const projectForm = async (
 		// Only update if we skipped installation
 		if (!SKIP_INSTALL_FOR_TESTING) {
 			progressBar.update(90, { doing: "Finalizing project" });
-		}
-
-		// Apply middleware preset for any Application template variant
-		if (
-			answer.preset &&
-			(templateFolder === "application" ||
-				templateFolder === "application-with-events")
-		) {
-			createPresetFiles(answer.name, answer.preset);
-			applyMiddlewarePreset(answer.name, answer.preset);
 		}
 
 		changePackageName({
