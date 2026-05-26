@@ -1,8 +1,9 @@
 import { micro, MicroApp } from "@expressots/adapter-express";
-import { AddressInfo } from "net";
+import { AddressInfo, Server } from "net";
 
 describe("Micro API", () => {
     let api: MicroApp;
+    let server: Server;
     let baseUrl: string;
 
     beforeAll(async () => {
@@ -11,14 +12,13 @@ describe("Micro API", () => {
         api.get("/health", () => ({ status: "ok" }));
         await api.listen(0);
 
-        const { port } = api.getHttpServer().address() as AddressInfo;
+        server = api.getHttpServer()!;
+        const { port } = server.address() as AddressInfo;
         baseUrl = `http://localhost:${port}`;
     });
 
     afterAll(async () => {
-        await new Promise<void>((resolve) =>
-            api.getHttpServer().close(() => resolve()),
-        );
+        await new Promise<void>((resolve) => server.close(() => resolve()));
     });
 
     it("should return hello message on GET /", async () => {
