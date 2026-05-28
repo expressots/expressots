@@ -480,7 +480,7 @@ describe("bootstrap() environment loading edge cases", () => {
 
       // Assert
       expect(result).toBeDefined();
-      expect(config).toHaveBeenCalledWith({ path: ".env.dev" });
+      expect(config).toHaveBeenCalledWith({ path: ".env.dev", override: true });
     });
   });
 

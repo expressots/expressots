@@ -243,54 +243,149 @@ export interface EnvironmentFileConfig {
 }
 
 /**
- * Options for loadEnvSync().
- * @public API
+ * Options for {@link loadEnvSync}.
+ *
+ * `loadEnvSync()` is the recommended way to populate `process.env` before
+ * `bootstrap()` runs. Call it at the top of `src/main.ts` (or your config
+ * module) so every subsequent `Env.*` builder, `defineConfig()` call, and
+ * DI binding can read the loaded values.
+ *
+ * ### File-loading order (last wins)
+ *
+ * | Step | File | Purpose |
+ * |------|------|---------|
+ * | 1 | `.env` | Shared defaults (committed) |
+ * | 2 | `.env.local` | Local-only overrides (gitignored) |
+ * | 3 | `.env.{env}.local` | Per-environment local override |
+ * | 4 | `.env.{env}` | Per-environment values (highest priority) |
+ *
+ * `{env}` is resolved from `process.env.NODE_ENV` (defaults to `"development"`).
+ * If a `files` mapping is provided, the mapped filename replaces `.env.{env}`.
+ *
+ * @example
+ * ```typescript
+ * // 1. Zero-config (loads .env + .env.development by convention)
+ * loadEnvSync();
+ *
+ * // 2. Custom file names per environment
+ * loadEnvSync({
+ *   files: {
+ *     development: ".env",
+ *     production: ".env.prod",
+ *     staging: ".env.staging",
+ *   },
+ * });
+ *
+ * // 3. Force reload after hot-module replacement
+ * loadEnvSync({ force: true });
+ * ```
+ *
+ * @see {@link loadEnvSync} for the function itself
+ * @see {@link BootstrapOptions.envFileConfig} for the bootstrap()-level alternative
+ * @public
  */
 export interface LoadEnvSyncOptions {
   /**
-   * Custom mapping of environment names to .env file names.
-   * @default Uses convention: `.env.{currentEnvironment}`
+   * Map environment names to custom `.env` file paths.
+   *
+   * Only the entry matching the **current** `NODE_ENV` is used at runtime.
+   * Unmapped environments fall back to the convention `.env.{NODE_ENV}`.
+   *
+   * @default undefined (convention: `.env.{NODE_ENV}`)
+   *
+   * @example
+   * ```typescript
+   * files: {
+   *   development: ".env",         // NODE_ENV=development  -> loads .env
+   *   production:  ".env.prod",    // NODE_ENV=production   -> loads .env.prod
+   *   test:        ".env.test",    // NODE_ENV=test         -> loads .env.test
+   * }
+   * ```
    */
   files?: EnvironmentFileMap;
 
   /**
-   * Force reload even if already loaded.
-   * Useful for hot reload scenarios.
+   * Reload environment files even if they were already loaded in this process.
+   *
+   * By default `loadEnvSync()` is a no-op after the first successful call
+   * (tracked via `process.env._EXPRESSOTS_ENV_LOADED`). Set `force: true`
+   * to re-read all files, useful after a hot-module replacement cycle.
+   *
    * @default false
    */
   force?: boolean;
 }
 
 /**
- * Synchronously load .env files BEFORE defineConfig() resolves.
+ * Synchronously load `.env` files into `process.env`.
  *
- * Call this at the top of your config file to ensure environment variables
- * are available when defineConfig() runs.
+ * Call this **before** `bootstrap()` or `defineConfig()` so that every
+ * environment variable is available when the rest of the application
+ * resolves configuration, binds services, or reads `Env.*` builders.
  *
- * @param options - Environment file configuration
+ * ### How it works
  *
- * @example
+ * 1. Reads `process.env.NODE_ENV` (defaults to `"development"`).
+ * 2. Loads files in priority order (last file wins on conflicts):
+ *    `.env` → `.env.local` → `.env.{env}.local` → `.env.{env}`
+ * 3. If `options.files` maps the current environment to a custom name
+ *    (e.g. `{ production: ".env.prod" }`), that name replaces `.env.{env}`.
+ * 4. Missing files are silently skipped.
+ * 5. Sets `process.env._EXPRESSOTS_ENV_LOADED = "true"` so subsequent
+ *    calls are no-ops (unless `force: true`).
+ *
+ * ### Important
+ *
+ * `NODE_ENV` must already be set in the **shell** (or inherited from
+ * the process) before `loadEnvSync()` runs. The function reads
+ * `process.env.NODE_ENV` to decide which file to load; it does **not**
+ * derive the environment from file contents.
+ *
+ * @param options - See {@link LoadEnvSyncOptions} for all fields.
+ *
+ * @example Zero-config (recommended for most apps)
  * ```typescript
- * // config.ts
- * import { defineConfig, Env, loadEnvSync } from "@expressots/core";
+ * // src/main.ts
+ * import { bootstrap, loadEnvSync } from "@expressots/core";
+ * import { App } from "./app";
  *
- * // Load .env files first
+ * loadEnvSync();          // .env + .env.development (or .env.production, etc.)
+ * void bootstrap(App);
+ * ```
+ *
+ * @example Custom file mapping
+ * ```typescript
  * loadEnvSync({
  *   files: {
- *     development: ".env.dev",
- *     production: ".env.prod",
+ *     development: ".env",
+ *     production:  ".env.prod",
+ *     staging:     ".env.staging",
  *   },
  * });
+ * // With NODE_ENV=production  -> .env + .env.prod
+ * // With NODE_ENV=development -> .env  (mapped to itself, so loaded once)
+ * ```
  *
- * // Now defineConfig() will read from loaded .env files
+ * @example With defineConfig()
+ * ```typescript
+ * // src/config.ts
+ * import { defineConfig, Env, loadEnvSync } from "@expressots/core";
+ *
+ * loadEnvSync({ files: { production: ".env.prod" } });
+ *
  * export const appConfig = defineConfig({
- *   server: {
- *     port: Env.port("PORT", { default: 3000 }),
- *   },
+ *   server: { port: Env.port("PORT", { default: 3000 }) },
  * });
  * ```
  *
- * @public API
+ * @example Force reload (hot-module replacement)
+ * ```typescript
+ * loadEnvSync({ force: true });
+ * ```
+ *
+ * @see {@link LoadEnvSyncOptions} for option details
+ * @see {@link BootstrapOptions.envFileConfig} for the bootstrap()-level alternative
+ * @public
  */
 export function loadEnvSync(options?: LoadEnvSyncOptions): void {
   // Skip if already loaded (unless force reload)
@@ -966,11 +1061,11 @@ async function loadAndValidateEnvironment(
   const envFileName =
     envFileConfig.files?.[currentEnvironment] ?? `.env.${currentEnvironment}`;
 
-  // Load optional files silently
+  // Load optional files silently (override: true so later files win)
   const optionalFiles = [".env", ".env.local", `${envFileName}.local`];
   for (const file of optionalFiles) {
     try {
-      config({ path: file });
+      config({ path: file, override: true });
       result.loaded.push(file);
     } catch {
       // Silently skip optional files
@@ -1017,8 +1112,8 @@ async function loadAndValidateEnvironment(
       result.warnings.push(`⚠️  ${envFileName} not found (optional)`);
     }
   } else {
-    // Load the file
-    config({ path: envFileName });
+    // Load the environment-specific file (highest priority, overrides all previous)
+    config({ path: envFileName, override: true });
     result.loaded.push(envFileName);
   }
 
@@ -1096,152 +1191,6 @@ async function readPackageJson(): Promise<{ name?: string; version?: string }> {
 }
 
 /**
- * Bootstrap the ExpressoTS application with zero configuration.
- *
- * @layer public
- * @audience application-developers
- * @concept bootstrap
- * @difficulty beginner
- *
- * @summary Quick Start
- * The simplest way to start your application:
- * ```typescript
- * await bootstrap(App);
- * ```
- *
- * This function orchestrates 8 critical startup phases:
- * 1. Environment detection (CI/CD vs local)
- * 2. Smart .env loading with opt-in behavior
- * 3. Port determination (priority chain)
- * 4. Package.json metadata extraction
- * 5. DI container initialization via AppFactory
- * 6. Environment injection into app instance
- * 7. API version detection from decorators
- * 8. Server startup with graceful shutdown
- *
- * @param AppClass - Application class extending AppExpress
- * @param options - Optional bootstrap configuration
- * @returns Promise resolving to IWebServerPublic instance
- *
- * @example
- * ```typescript
- * // Simplest usage - zero config (no .env file loading)
- * await bootstrap(App);
- *
- * // With overrides (still no .env file loading)
- * await bootstrap(App, {
- *   port: 4000,
- *   appName: "My API",
- *   appVersion: "2.0.0"
- * });
- *
- * // Opt-in to .env file loading and auto-creation
- * await bootstrap(App, {
- *   currentEnvironment: "development",
- *   envFileConfig: {
- *     files: {
- *       development: ".env.dev",
- *       production: ".env.prod"
- *     },
- *     required: ["DATABASE_URL", "API_KEY"],
- *     autoCreateTemplate: true,  // Explicitly enable file creation
- *     validateValues: true
- *   }
- * });
- *
- * // Auto-assign port (useful for testing)
- * await bootstrap(App, { port: 0 });
- * ```
- *
- * @layer internal
- * @audience framework-developers
- *
- * **Internal Architecture**
- *
- * Bootstrap orchestrates 8 critical steps:
- * 1. Environment detection (CI/CD vs local)
- * 2. Smart .env loading with opt-in behavior
- * 3. Port determination (priority chain)
- * 4. Package.json metadata extraction
- * 5. DI container initialization via AppFactory
- * 6. Environment injection into app instance
- * 7. API version detection from decorators
- * 8. Server startup with graceful shutdown
- *
- * **Design Decisions**
- * - Opt-in .env loading prevents breaking changes for containerized deployments
- * - Port 0 support enables parallel testing without conflicts
- * - Early validation fails fast with actionable error messages
- * - CI/CD auto-detection provides zero-config for containerized environments
- *
- * **Performance Characteristics**
- * - Startup time: ~8-25ms typical (optimized)
- * - Environment loading: ~2-5ms (file I/O)
- * - Package.json read: ~1-2ms first call, cached thereafter
- * - CI detection: cached after first call
- * - App instantiation: ~5-10ms (DI container setup)
- * - Logger instances: lazy initialization (only created when needed)
- *
- * @see {@link loadAndValidateEnvironment} for environment loading logic
- * @see {@link AppFactory.create} for DI container initialization
- * @see {@link determinePort} for port resolution logic
- *
- * @layer advanced
- * @audience power-users
- *
- * **Advanced Patterns**
- *
- * Multi-environment setup with validation:
- * ```typescript
- * await bootstrap(App, {
- *   currentEnvironment: process.env.NODE_ENV || "development",
- *   envFileConfig: {
- *     files: {
- *       development: ".env.dev",
- *       staging: ".env.staging",
- *       production: ".env.prod"
- *     },
- *     required: ["DATABASE_URL", "JWT_SECRET"],
- *     autoCreateTemplate: true,
- *     validateValues: process.env.NODE_ENV === "production"
- *   }
- * });
- * ```
- *
- * Containerized deployment (Docker/K8s):
- * ```typescript
- * await bootstrap(App, {
- *   envFileConfig: {
- *     skipFileLoading: true,  // Use process.env only
- *     required: ["DATABASE_URL", "REDIS_URL"]
- *   }
- * });
- * ```
- *
- * Testing with dynamic ports:
- * ```typescript
- * const server = await bootstrap(App, { port: 0 });
- * const actualPort = server.port;  // Use in tests
- * ```
- *
- * @troubleshooting
- * **Common Issues**
- * - ❌ PORT not detected → Use options.port or envFileConfig
- * - ❌ CI validation fails → Check platform secrets configuration
- * - ❌ Template not created → Set autoCreateTemplate: true explicitly
- * - ❌ Port already in use → Use port: 0 for testing
- *
- * @performance
- * - Async initialization: ~5-15ms (typical)
- * - Package.json read: ~2ms first call, cached thereafter
- * - CI detection: cached after first call
- * - Port binding: varies by OS
- * - Total startup: ~8-25ms (optimized with caching)
- *
- * @public API
- */
-
-/**
  * Type guard to check if argument is BootstrapConfig.
  * Detects config objects by checking for the required structure.
  * @internal
@@ -1289,7 +1238,46 @@ function transformConfigToOptions(config: BootstrapConfig): BootstrapOptions {
 }
 
 /**
- * Bootstrap with BootstrapOptions (existing behavior).
+ * Start the application with explicit options.
+ *
+ * Use this overload when you need to control the port, app metadata,
+ * environment selection, or `.env` file loading/validation.
+ *
+ * @param AppClass - Your class that extends `AppExpress`.
+ * @param options  - See {@link BootstrapOptions} for every field.
+ * @returns The running server instance.
+ *
+ * @example Port + environment + validation
+ * ```typescript
+ * await bootstrap(App, {
+ *   port: 4000,
+ *   appName: "My API",
+ *   currentEnvironment: "production",
+ *   envFileConfig: {
+ *     files: { production: ".env.prod" },
+ *     required: ["DATABASE_URL", "JWT_SECRET"],
+ *     validateValues: true,
+ *   },
+ * });
+ * ```
+ *
+ * @example Dynamic port for testing
+ * ```typescript
+ * const server = await bootstrap(App, { port: 0 });
+ * const port = await server.getPort();
+ * ```
+ *
+ * @example Container / CI (no file I/O)
+ * ```typescript
+ * await bootstrap(App, {
+ *   envFileConfig: {
+ *     skipFileLoading: true,
+ *     required: ["DATABASE_URL"],
+ *   },
+ * });
+ * ```
+ *
+ * @public
  */
 export async function bootstrap(
   AppClass: new () => IWebServer,
@@ -1297,7 +1285,25 @@ export async function bootstrap(
 ): Promise<IWebServerPublic>;
 
 /**
- * Bootstrap with config object (new convenience overload).
+ * Start the application with a type-safe config object from `defineConfig()`.
+ *
+ * Pass the resolved config directly; `bootstrap()` extracts `app`, `server`,
+ * and `bootstrap.envFileConfig` automatically.
+ *
+ * @param AppClass - Your class that extends `AppExpress`.
+ * @param config   - Object returned by `defineConfig().values` (or matching
+ *                   the {@link BootstrapConfig} shape).
+ * @returns The running server instance.
+ *
+ * @example
+ * ```typescript
+ * import { appConfig } from "./config";
+ *
+ * await bootstrap(App, appConfig.values);
+ * // appConfig.values has { app, server, bootstrap } from defineConfig()
+ * ```
+ *
+ * @public
  */
 export async function bootstrap(
   AppClass: new () => IWebServer,
@@ -1305,15 +1311,33 @@ export async function bootstrap(
 ): Promise<IWebServerPublic>;
 
 /**
- * Bootstrap with no options (zero-config).
+ * Start the application with zero configuration.
+ *
+ * - Listens on `process.env.PORT` or **3000**.
+ * - Reads `appName` and `appVersion` from `package.json`.
+ * - Does **not** load any `.env` files (opt-in via {@link BootstrapOptions.envFileConfig}
+ *   or by calling {@link loadEnvSync} before this).
+ * - Sets up graceful shutdown on `SIGINT` / `SIGTERM`.
+ *
+ * @param AppClass - Your class that extends `AppExpress`.
+ * @returns The running server instance.
+ *
+ * @example
+ * ```typescript
+ * import { bootstrap, loadEnvSync } from "@expressots/core";
+ * import { App } from "./app";
+ *
+ * loadEnvSync();           // optional: load .env files first
+ * await bootstrap(App);    // starts on PORT from .env or 3000
+ * ```
+ *
+ * @public
  */
 export async function bootstrap(
   AppClass: new () => IWebServer,
 ): Promise<IWebServerPublic>;
 
-/**
- * Implementation.
- */
+/** @internal Implementation overload. */
 export async function bootstrap(
   AppClass: new () => IWebServer,
   optionsOrConfig?: BootstrapOptions | BootstrapConfig,
