@@ -626,7 +626,9 @@ export class BannerGenerator {
     }
 
     writeStdout(
-      logLine(`Startup: ${startupTime.toFixed(2)}ms | Memory: ${memoryFormatted}`),
+      logLine(
+        `Startup: ${startupTime.toFixed(2)}ms | Memory: ${memoryFormatted}`,
+      ),
     );
   }
 
