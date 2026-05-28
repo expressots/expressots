@@ -1,65 +1,113 @@
-import { Argv, CommandModule } from "yargs";
-import { projectForm } from "./form";
-import semver from "semver";
-import { printWarning } from "../utils/cli-ui";
 import chalk from "chalk";
+import { Argv, CommandModule } from "yargs";
+import semver from "semver";
+import { projectForm } from "./form";
+import { printWarning } from "../utils/cli-ui";
 
 type CommandModuleArgs = object;
 
-const packageManagers: Array<string> = [
+export const PACKAGE_MANAGER_CHOICES = [
 	"npm",
 	"yarn",
 	"pnpm",
 	...(process.platform !== "win32" ? ["bun"] : []),
-];
+] as const;
 
-const middlewarePresets: Array<string> = [
+export const TEMPLATE_CHOICES = ["application", "micro"] as const;
+
+export const MIDDLEWARE_PRESET_CHOICES = [
 	"api",
 	"web",
 	"graphql",
 	"microservice",
 	"minimal",
-];
+] as const;
+
+const formatInlineChoices = (choices: readonly string[]): string =>
+	choices.join(", ");
+
+const NEW_COMMAND_EPILOG = [
+	chalk.bold("Available choices"),
+	"",
+	chalk.bold("Templates") + ` (${formatInlineChoices(TEMPLATE_CHOICES)})`,
+	"  application   Full REST/GraphQL API (DI, controllers, lifecycle, presets)",
+	"  micro         Single-file HTTP service via micro(), no DI container",
+	chalk.dim(
+		"  Tip: add -e / --events with application to scaffold application-with-events",
+	),
+	"",
+	chalk.bold("Package managers") +
+		` (${formatInlineChoices(PACKAGE_MANAGER_CHOICES)})`,
+	...(process.platform === "win32"
+		? [chalk.dim("  bun is not available on Windows")]
+		: []),
+	"",
+	chalk.bold("Middleware presets") +
+		` (${formatInlineChoices(MIDDLEWARE_PRESET_CHOICES)})` +
+		chalk.dim(" (application template only)"),
+	"  api            REST API: security, compression, rate limit (default)",
+	"  web            api + cookies and session",
+	"  graphql        GraphQL stack + Apollo scaffold",
+	"  microservice   Minimal parsing + compression",
+	"  minimal        parse() only; wire the rest yourself",
+	"",
+	chalk.bold("Flags"),
+	"  -e, --events   boolean: use application-with-events (not a separate -t value)",
+	"",
+	chalk.bold("Provider packages") +
+		chalk.dim(" (not expressots new): expressots create --provider <name>"),
+	"",
+	chalk.bold("Silent vs interactive"),
+	"  Pass -t and -p together for non-interactive scaffold (CI-friendly).",
+	"  Omit both for prompts (template, package manager, preset, events).",
+].join("\n");
 
 const commandOptions = (yargs: Argv): Argv => {
+	const terminalWidth =
+		typeof process.stdout.columns === "number" && process.stdout.columns > 0
+			? Math.max(process.stdout.columns, 100)
+			: 120;
+
 	return yargs
+		.wrap(terminalWidth)
 		.positional("project-name", {
 			describe: "The name of the project",
 			type: "string",
 		})
 		.option("template", {
-			describe: "The project template to use",
+			describe: "Project template",
 			type: "string",
-			choices: ["application", "micro"],
+			choices: [...TEMPLATE_CHOICES],
 			alias: "t",
 		})
 		.option("package-manager", {
-			describe: "The package manager to use",
+			describe: "Package manager",
 			type: "string",
-			choices: packageManagers,
+			choices: [...PACKAGE_MANAGER_CHOICES],
 			alias: "p",
 		})
 		.option("preset", {
-			describe: "Middleware preset for Application template",
+			describe: "Middleware preset (application template only)",
 			type: "string",
-			choices: middlewarePresets,
+			choices: [...MIDDLEWARE_PRESET_CHOICES],
 			alias: "s",
 		})
 		.option("events", {
 			describe:
-				"Include the type-safe Event Bus example (Application template only)",
+				"Scaffold application-with-events (boolean flag; do not pass a value)",
 			type: "boolean",
 			alias: "e",
 		})
 		.option("directory", {
-			describe: "The directory for new project",
+			describe: "Parent directory for the new project",
 			type: "string",
 			alias: "d",
 		})
 		.implies("package-manager", "template")
 		.implies("template", "package-manager")
 		.implies("preset", "template")
-		.implies("events", "template");
+		.implies("events", "template")
+		.epilog(NEW_COMMAND_EPILOG);
 };
 
 const checkNodeVersion = (): void => {
@@ -98,4 +146,4 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 	};
 };
 
-export { createProject };
+export { createProject, NEW_COMMAND_EPILOG };
