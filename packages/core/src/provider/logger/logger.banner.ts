@@ -131,13 +131,35 @@ ${bottomBorder}
 }
 
 /**
- * Compact ASCII art logo.
+ * Format a timestamp for structured log output.
  */
-const EXPRESSOTS_LOGO_COMPACT = `
-╔════════════════════════════════════════════════════════════════╗
-║  ExpressoTS  -  Enterprise TypeScript Framework                ║
-╚════════════════════════════════════════════════════════════════╝
-`.trim();
+function formatBannerTimestamp(): string {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
+  return new Date().toLocaleString(undefined, options).replace(",", "");
+}
+
+/**
+ * Build a structured log line matching the standard ExpressoTS log format.
+ */
+function logLine(message: string): string {
+  const timestamp = formatBannerTimestamp();
+  const pid = process.pid;
+  return (
+    colorText("[ExpressoTS]", "green") +
+    ` ${timestamp}` +
+    ` ${colorText(`[PID:${pid}]`, "green")}` +
+    ` ${colorText("INFO ", "green")}` +
+    ` ${colorText("[app]", "green")}` +
+    ` ${message}\n`
+  );
+}
 
 // Removed unused EXPRESSOTS_LOGO_MINIMAL constant
 
@@ -201,8 +223,6 @@ export class BannerGenerator {
     const memoryUsage = process.memoryUsage().heapUsed;
     const memoryFormatted = formatMemory(memoryUsage);
 
-    writeStdout("\n");
-
     // Display logo based on style
     switch (this.config.style) {
       case "full":
@@ -233,8 +253,6 @@ export class BannerGenerator {
         this.displayMinimalBanner(port, environment, appInfo);
         break;
     }
-
-    writeStdout("\n");
   }
 
   /**
@@ -253,6 +271,8 @@ export class BannerGenerator {
     memoryFormatted: string,
     bannerData?: BannerData,
   ): void {
+    writeStdout("\n");
+
     // Banner box width is ~93 chars, calculate column widths for 3 columns
     const totalWidth = 93;
     const colWidth = 29;
@@ -572,52 +592,41 @@ export class BannerGenerator {
   }
 
   /**
-   * Display compact banner.
+   * Display compact banner using structured log format (cloud-friendly).
    */
   private displayCompactBanner(
     port: number,
     environment: string,
     appInfo: IConsoleMessage | undefined,
     metrics: ApplicationMetrics | undefined,
-    features: FeaturesStatus | undefined,
+    _features: FeaturesStatus | undefined,
     startupTime: number,
     memoryFormatted: string,
   ): void {
-    writeStdout(colorText(EXPRESSOTS_LOGO_COMPACT, "green"));
-    writeStdout("\n\n");
-
     const appName = appInfo?.appName || "App";
     const appVersion = appInfo?.appVersion || "not provided";
 
     writeStdout(
-      colorText(`ExpressoTS v${FRAMEWORK_VERSION}`, "green") +
-        colorText(` | ${appName} v${appVersion}`, "blue") +
-        colorText(` | Node ${process.version}`, "blue") +
-        "\n",
+      logLine(
+        `ExpressoTS v${FRAMEWORK_VERSION} | ${appName} v${appVersion} | Node ${process.version}`,
+      ),
     );
     writeStdout(
-      colorText(
-        `Environment: ${this.colorEnvironment(environment)}`,
-        "yellow",
-      ) +
-        colorText(` | Port: ${port}`, "blue") +
-        colorText(` | PID: ${process.pid}`, "blue") +
-        "\n",
+      logLine(
+        `Environment: ${environment} | Port: ${port} | PID: ${process.pid}`,
+      ),
     );
 
     if (metrics) {
       writeStdout(
-        colorText(
+        logLine(
           `Controllers: ${metrics.controllers} | Providers: ${metrics.providers} | Routes: ${metrics.routes}`,
-          "white",
-        ) + "\n",
+        ),
       );
     }
 
     writeStdout(
-      colorText(`Startup: ${startupTime.toFixed(2)}ms`, "yellow") +
-        colorText(` | Memory: ${memoryFormatted}`, "yellow") +
-        "\n",
+      logLine(`Startup: ${startupTime.toFixed(2)}ms | Memory: ${memoryFormatted}`),
     );
   }
 
