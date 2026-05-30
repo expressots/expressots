@@ -250,6 +250,92 @@ export const prodCommand: CommandModule<object, object> = {
 };
 
 /**
+ * Recursively collect the PIDs of every descendant of `rootPid`.
+ *
+ * `tsx --watch` exits immediately on SIGINT/SIGTERM and *abandons* the
+ * server process it spawned, so the server is still running its graceful
+ * shutdown after `tsx` is gone. To wait for it we snapshot the process
+ * tree (while it's still attached to `tsx`) and later poll those PIDs.
+ *
+ * Returns an empty list on Windows (no `ps`) or if the lookup fails, in
+ * which case the caller simply skips the wait.
+ */
+function getDescendantPids(rootPid: number): Array<number> {
+	if (process.platform === "win32" || !rootPid || rootPid < 0) {
+		return [];
+	}
+
+	try {
+		const res = safeSpawnSync("ps", ["-A", "-o", "pid=,ppid="], {
+			encoding: "utf-8",
+		});
+		const out = res.stdout ? String(res.stdout) : "";
+
+		const childrenByParent = new Map<number, Array<number>>();
+		for (const line of out.split("\n")) {
+			const match = line.trim().match(/^(\d+)\s+(\d+)$/);
+			if (!match) continue;
+			const pid = Number(match[1]);
+			const ppid = Number(match[2]);
+			const siblings = childrenByParent.get(ppid) ?? [];
+			siblings.push(pid);
+			childrenByParent.set(ppid, siblings);
+		}
+
+		const descendants: Array<number> = [];
+		const stack = [rootPid];
+		while (stack.length > 0) {
+			const current = stack.pop() as number;
+			for (const child of childrenByParent.get(current) ?? []) {
+				descendants.push(child);
+				stack.push(child);
+			}
+		}
+		return descendants;
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Check whether a process is still alive. `process.kill(pid, 0)` sends no
+ * signal but performs the permission/existence check: ESRCH means gone,
+ * EPERM means alive but owned by another user.
+ */
+function isPidAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (err) {
+		return (err as NodeJS.ErrnoException).code === "EPERM";
+	}
+}
+
+/**
+ * Resolve once every PID in `pids` has exited, or once `timeoutMs` elapses.
+ */
+function waitForPidsToExit(
+	pids: Array<number>,
+	timeoutMs: number,
+): Promise<void> {
+	return new Promise((resolve) => {
+		if (pids.length === 0) {
+			resolve();
+			return;
+		}
+		const deadline = Date.now() + timeoutMs;
+		const poll = (): void => {
+			if (Date.now() >= deadline || !pids.some(isPidAlive)) {
+				resolve();
+				return;
+			}
+			setTimeout(poll, 50);
+		};
+		poll();
+	});
+}
+
+/**
  * Helper function to execute a command
  * @param command The command to execute
  * @param args The arguments to pass to the command
@@ -271,11 +357,61 @@ function execCmd(
 			cwd,
 		});
 
-		proc.on("error", (err) => reject(err));
-		proc.on("close", (code) => {
-			if (code === 0) {
-				resolve();
+		// On Ctrl+C the SIGINT hits the whole foreground process group, so
+		// the spawned process (and the server it runs) already receive it.
+		// We keep *this* (parent) process alive — instead of dying from the
+		// default signal behavior — so the shell doesn't redraw its prompt
+		// until the server has finished shutting down. We also snapshot the
+		// child process tree on the first signal: `tsx --watch` exits right
+		// away and abandons the server, so we remember the server PID(s) to
+		// wait on them after `tsx` is gone.
+		let descendantPids: Array<number> = [];
+		let signalled = false;
+		const onSignal = (): void => {
+			if (signalled) return;
+			signalled = true;
+			descendantPids = getDescendantPids(proc.pid ?? -1);
+		};
+		process.on("SIGINT", onSignal);
+		process.on("SIGTERM", onSignal);
+
+		const cleanup = (): void => {
+			process.removeListener("SIGINT", onSignal);
+			process.removeListener("SIGTERM", onSignal);
+		};
+
+		proc.on("error", (err) => {
+			cleanup();
+			reject(err);
+		});
+		proc.on("close", (code, signal) => {
+			// Exit codes 130 (SIGINT) and 143 (SIGTERM) mean the user or
+			// orchestrator intentionally stopped the process — not a failure.
+			const isSignalExit =
+				signalled ||
+				code === 130 ||
+				code === 143 ||
+				signal === "SIGINT" ||
+				signal === "SIGTERM";
+
+			if (code === 0 || isSignalExit) {
+				if (isSignalExit) {
+					// The server (a `tsx --watch` grandchild) may still be
+					// finishing its graceful shutdown after `tsx` itself has
+					// exited. Wait for it to fully terminate so its final
+					// "Graceful shutdown completed" log lands before the shell
+					// prompt returns. The 9s cap matches the framework's own
+					// shutdown watchdog (default timeout + buffer).
+					void waitForPidsToExit(descendantPids, 9000).then(() => {
+						cleanup();
+						resolve();
+					});
+				} else {
+					cleanup();
+					resolve();
+				}
 			} else {
+				cleanup();
 				reject(new Error(`Command failed with code ${code}`));
 			}
 		});
