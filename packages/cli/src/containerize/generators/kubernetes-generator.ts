@@ -3,6 +3,7 @@ import path from "path";
 import chalk from "chalk";
 import type { ProjectAnalysis } from "../analyzers/project-analyzer";
 import { loadKubernetesTemplate, logTemplateSource } from "./template-loader";
+import { printBullet, printSection } from "../../utils/cli-ui";
 
 type GeneratorOptions = {
 	environment: string;
@@ -21,7 +22,7 @@ export async function generateKubernetesConfigs(
 		fs.mkdirSync(k8sDir, { recursive: true });
 	}
 
-	console.log(chalk.yellow(`📝 Generating Kubernetes configurations...`));
+	printSection(`📝 Generating Kubernetes configurations`);
 
 	const vars = {
 		port: analysis?.port || 3000,
@@ -45,7 +46,7 @@ export async function generateKubernetesConfigs(
 		deploymentResult.content,
 		"utf-8",
 	);
-	console.log(chalk.green(`  ✓ Created k8s/deployment.yaml`));
+	printBullet(chalk.green(`✓ Created k8s/deployment.yaml`));
 
 	// Generate service
 	const serviceResult = await loadKubernetesTemplate("service", vars, () =>
@@ -57,7 +58,7 @@ export async function generateKubernetesConfigs(
 		serviceResult.content,
 		"utf-8",
 	);
-	console.log(chalk.green(`  ✓ Created k8s/service.yaml`));
+	printBullet(chalk.green(`✓ Created k8s/service.yaml`));
 
 	// Generate config map
 	const configMapResult = await loadKubernetesTemplate(
@@ -71,7 +72,7 @@ export async function generateKubernetesConfigs(
 		configMapResult.content,
 		"utf-8",
 	);
-	console.log(chalk.green(`  ✓ Created k8s/configmap.yaml`));
+	printBullet(chalk.green(`✓ Created k8s/configmap.yaml`));
 }
 
 function generateDeployment(

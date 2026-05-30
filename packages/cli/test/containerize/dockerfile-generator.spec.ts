@@ -276,6 +276,127 @@ describe("generateDockerfiles — auxiliary outputs", () => {
 		expect(pkg.scripts["docker:build"]).toMatch(/^pnpm run docker:setup/);
 	});
 
+	test("production Dockerfile uses lockfile-free install when local deps exist", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({
+				hasLocalDependencies: true,
+				localDependencyPaths: ["./libs/core-1.0.0.tgz"],
+			}),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).toContain("RUN npm install");
+		expect(prod).not.toContain("RUN npm ci");
+	});
+
+	test("production Dockerfile does NOT copy host package-lock.json when local deps exist", async () => {
+		// Regression guard: the host lockfile pins `file:../...` paths
+		// that don't exist inside the container. Even with `npm install`
+		// (lockfile-free flag), npm still uses a present lockfile to
+		// resolve nested dependency locations, leading to ENOENT
+		// errors like `node_modules/@expressots/expressots/...tgz`.
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({
+				hasLocalDependencies: true,
+				localDependencyPaths: ["./libs/core-1.0.0.tgz"],
+			}),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).not.toMatch(/^COPY package-lock\.json\*?\s/m);
+	});
+
+	test("production Dockerfile DOES copy package-lock.json when no local deps", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis(),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).toMatch(/COPY package-lock\.json\*/);
+	});
+
+	test("docker-setup.js writes npm `overrides` for transitive file: deps", async () => {
+		// Regression guard: published tarballs of unpublished local
+		// packages bake in their own `file:../...` references (e.g.
+		// core's package.json depends on shared via a relative path).
+		// Without npm `overrides`, those transitive paths resolve from
+		// inside `node_modules/<pkg>/` and fail with ENOENT inside
+		// the container. The setup script must add overrides so npm
+		// uses the flattened `.docker-deps/` paths everywhere.
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({
+				hasLocalDependencies: true,
+				localDependencyPaths: ["./libs/core-1.0.0.tgz"],
+			}),
+		);
+
+		const setupScript = fs.readFileSync(
+			path.join(tmpDir, "docker-setup.js"),
+			"utf-8",
+		);
+		expect(setupScript).toContain("overrides[key] = newPath");
+		expect(setupScript).toContain("pkg.overrides");
+	});
+
+	test("docker-setup.js produces package.docker.json with overrides when run", async () => {
+		// Functional test: actually execute the generated script and
+		// verify the rewritten package.docker.json has both rewritten
+		// dependency paths AND a matching `overrides` block so npm
+		// will resolve transitive file: refs to .docker-deps/.
+		const { execFileSync } = await import("child_process");
+
+		// Pretend we have a tarball at libs/foo-1.0.0.tgz on the host.
+		fs.mkdirSync(path.join(tmpDir, "libs"), { recursive: true });
+		fs.writeFileSync(path.join(tmpDir, "libs/foo-1.0.0.tgz"), "");
+
+		// Override the minimal package.json with one that has a file:
+		// dep — the generator's beforeEach writes a stub without deps.
+		fs.writeFileSync(
+			path.join(tmpDir, "package.json"),
+			JSON.stringify(
+				{
+					name: "test-app",
+					version: "1.0.0",
+					dependencies: {
+						"@scope/foo": "file:./libs/foo-1.0.0.tgz",
+					},
+				},
+				null,
+				2,
+			),
+		);
+
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({
+				hasLocalDependencies: true,
+				localDependencyPaths: ["./libs/foo-1.0.0.tgz"],
+			}),
+		);
+
+		// Execute the generated script
+		execFileSync("node", ["docker-setup.js"], {
+			cwd: tmpDir,
+			stdio: "ignore",
+		});
+
+		const packageDocker = JSON.parse(
+			fs.readFileSync(path.join(tmpDir, "package.docker.json"), "utf-8"),
+		);
+
+		expect(packageDocker.dependencies["@scope/foo"]).toBe(
+			"file:.docker-deps/foo-1.0.0.tgz",
+		);
+		expect(packageDocker.overrides).toBeDefined();
+		expect(packageDocker.overrides["@scope/foo"]).toBe(
+			"file:.docker-deps/foo-1.0.0.tgz",
+		);
+	});
+
 	test("health check is included when preset enables it", async () => {
 		await generateDockerfiles(
 			{ environment: "production", preset: "secure" },

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { stdout } from "process";
 import chalk from "chalk";
 import type { ProjectAnalysis } from "../analyzers/project-analyzer";
 import { getPresetConfig } from "../presets/preset-registry";
@@ -8,6 +9,11 @@ import {
 	buildDockerVars,
 	logTemplateSource,
 } from "./template-loader";
+import {
+	printBullet,
+	printSection,
+	printWarning,
+} from "../../utils/cli-ui";
 import {
 	shouldCopyEnvFiles,
 	getEnvFileForEnvironment,
@@ -82,10 +88,8 @@ export async function generateDockerfiles(
 	const preset = getPresetConfig(options.preset);
 	const entryPoint = detectEntryPoint(cwd);
 
-	console.log(
-		chalk.yellow(
-			`📝 Generating Dockerfile${options.environment !== "all" ? `.${options.environment}` : "s"}...`,
-		),
+	printSection(
+		`📝 Generating Dockerfile${options.environment !== "all" ? `.${options.environment}` : "s"}`,
 	);
 
 	// Always generate production Dockerfile (as "Dockerfile")
@@ -118,13 +122,13 @@ export async function generateDockerfiles(
 		const filepath = path.join(cwd, filename);
 
 		fs.writeFileSync(filepath, result.content, "utf-8");
-		console.log(chalk.green(`  ✓ Created ${filename}`));
+		printBullet(chalk.green(`✓ Created ${filename}`));
 	}
 
 	// Generate .dockerignore
 	const dockerignore = generateDockerignoreContent(analysis);
 	fs.writeFileSync(path.join(cwd, ".dockerignore"), dockerignore, "utf-8");
-	console.log(chalk.green(`  ✓ Created .dockerignore`));
+	printBullet(chalk.green(`✓ Created .dockerignore`));
 
 	// Generate helper script for local dependencies ONLY if needed
 	// This is a temporary solution for unpublished packages
@@ -137,8 +141,8 @@ export async function generateDockerfiles(
 			setupScriptNode,
 			"utf-8",
 		);
-		console.log(
-			chalk.green(`  ✓ Created docker-setup.js (for local dependencies)`),
+		printBullet(
+			chalk.green(`✓ Created docker-setup.js (for local dependencies)`),
 		);
 
 		// Also update package.json with docker:setup script using the
@@ -148,24 +152,14 @@ export async function generateDockerfiles(
 			cwd,
 			analysis?.packageManager ?? "npm",
 		);
-		console.log(
-			chalk.green(`  ✓ Updated package.json with docker:setup script`),
+		printBullet(
+			chalk.green(`✓ Updated package.json with docker:setup script`),
 		);
 
-		console.log(
-			chalk.yellow(
-				`\n⚠️  Note: .docker-deps/ and package.docker.json are temporary solutions`,
-			),
-		);
-		console.log(
-			chalk.yellow(
-				`   for local file dependencies. Once packages are published to npm,`,
-			),
-		);
-		console.log(
-			chalk.yellow(
-				`   you can remove these and use a simpler Dockerfile.\n`,
-			),
+		stdout.write("\n");
+		printWarning(
+			".docker-deps/ and package.docker.json are temporary solutions for local file dependencies. Once packages are published to npm, you can remove these and use a simpler Dockerfile.",
+			"containerize",
 		);
 	}
 }
@@ -343,11 +337,17 @@ function generateProductionDockerfile(
 			)
 		: "";
 
-	// Package file handling - only use package.docker.json for local deps
+	// Package file handling - only use package.docker.json for local deps.
+	// When local deps are present we deliberately do NOT copy the host
+	// lockfile: it still references the original `file:` paths from the
+	// host (e.g. `file:../expressots/...tgz`) which won't resolve inside
+	// the container. npm install will recreate the lockfile from the
+	// rewritten package.docker.json.
 	const packageCopySection = hasLocalDeps
 		? `# Copy package files (use Docker-modified version for local dependencies)
-COPY package.docker.json ./package.json
-COPY package-lock.json* ./`
+# Lockfile is intentionally omitted: the host lockfile references file:../
+# paths that don't exist inside the container.
+COPY package.docker.json ./package.json`
 		: `# Copy package files
 COPY package*.json ./
 COPY package-lock.json* ./`;
@@ -378,7 +378,7 @@ ${packageManager === "pnpm" ? "COPY pnpm-lock.yaml ./" : ""}
 ${packageManager === "yarn" ? "COPY yarn.lock ./" : ""}
 
 # Install ALL dependencies (including devDependencies for build)
-${getInstallCommand(packageManager, false)}
+${hasLocalDeps ? getLocalDepsInstallCommand(packageManager) : getInstallCommand(packageManager, false)}
 
 # Copy source code
 COPY . .
@@ -496,7 +496,7 @@ ${localDepCopies}
 ${packageCopySection}
 
 # Install dependencies
-${getInstallCommand(packageManager, true)}
+${hasLocalDeps ? getLocalDepsInstallCommand(packageManager) : getInstallCommand(packageManager, true)}
 
 # Copy source code
 COPY . .
@@ -775,25 +775,40 @@ try {
 
 console.log('  Creating Docker-compatible package.json...');
 
-// Update file: paths to use .docker-deps
+// Read the user's package.json
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
-if (pkg.dependencies) {
-  Object.keys(pkg.dependencies).forEach(key => {
-    if (pkg.dependencies[key].startsWith('file:')) {
-      const filename = pkg.dependencies[key].split('/').pop();
-      pkg.dependencies[key] = 'file:.docker-deps/' + filename;
-    }
-  });
-}
+// Track all rewritten file: deps so we can force npm to use the
+// flattened .docker-deps/ paths for any TRANSITIVE references too.
+// This is critical: published tarballs of local packages bake in
+// their own \`file:../...\` paths (e.g. core's package.json depends
+// on shared via \`file:../shared/...tgz\`). Without overrides, npm
+// would try to resolve those original host paths from inside
+// node_modules and fail with ENOENT in the container.
+const overrides = {};
 
-if (pkg.devDependencies) {
-  Object.keys(pkg.devDependencies).forEach(key => {
-    if (pkg.devDependencies[key].startsWith('file:')) {
-      const filename = pkg.devDependencies[key].split('/').pop();
-      pkg.devDependencies[key] = 'file:.docker-deps/' + filename;
-    }
+const rewriteFileDeps = (depGroup) => {
+  if (!depGroup) return;
+  Object.keys(depGroup).forEach((key) => {
+    const value = depGroup[key];
+    if (typeof value !== 'string' || !value.startsWith('file:')) return;
+    const filename = value.split('/').pop();
+    // Only rewrite tarball references; directory file: refs are
+    // intentionally left as-is and will surface as a build failure
+    // the user can address (publish or replace with a tarball).
+    if (!filename.endsWith('.tgz')) return;
+    const newPath = 'file:.docker-deps/' + filename;
+    depGroup[key] = newPath;
+    overrides[key] = newPath;
   });
+};
+
+rewriteFileDeps(pkg.dependencies);
+rewriteFileDeps(pkg.devDependencies);
+
+if (Object.keys(overrides).length > 0) {
+  pkg.overrides = Object.assign({}, pkg.overrides || {}, overrides);
+  console.log('  Added overrides for ' + Object.keys(overrides).length + ' transitive file: deps');
 }
 
 fs.writeFileSync('package.docker.json', JSON.stringify(pkg, null, 2) + '\\n', 'utf-8');

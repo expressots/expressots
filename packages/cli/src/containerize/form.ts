@@ -1,6 +1,13 @@
+import { stdout } from "process";
 import chalk from "chalk";
-import Compiler from "../utils/compiler";
-import { printError, printSection, printSuccess } from "../utils/cli-ui";
+import {
+	printBullet,
+	printError,
+	printKeyValue,
+	printSection,
+	printSuccess,
+	printWarning,
+} from "../utils/cli-ui";
 import {
 	analyzeProject,
 	type ProjectAnalysis,
@@ -32,49 +39,39 @@ export const containerizeProject = async (
 	options: ContainerizeOptions,
 ): Promise<void> => {
 	try {
-		console.log(chalk.bold.cyan("\n🐳 ExpressoTS Containerization\n"));
+		printSection("🐳 ExpressoTS Containerization");
 
 		// Step 1: Analyze project (if enabled)
 		let analysis: ProjectAnalysis | undefined;
 		if (options.analyze) {
-			console.log(chalk.yellow("📊 Analyzing your project...\n"));
+			printSection("📊 Project Analysis");
 			analysis = await analyzeProject();
 
-			console.log(chalk.white("Project Analysis:"));
-			console.log(chalk.gray(`  Node version: ${analysis.nodeVersion}`));
-			console.log(
-				chalk.gray(`  Package manager: ${analysis.packageManager}`),
+			printKeyValue("Node version", analysis.nodeVersion);
+			printKeyValue("Package manager", analysis.packageManager);
+			printKeyValue(
+				"Dependencies",
+				String(analysis.dependencies.length),
 			);
-			console.log(
-				chalk.gray(`  Dependencies: ${analysis.dependencies.length}`),
-			);
-			console.log(
-				chalk.gray(`  Controllers: ${analysis.controllers.length}`),
-			);
+			printKeyValue("Controllers", String(analysis.controllers.length));
 
-			// Warn about local dependencies
 			if (analysis.hasLocalDependencies) {
-				console.log(
-					chalk.yellow(
-						`\n⚠️  Warning: Detected ${analysis.localDependencyPaths.length} local file dependencies`,
+				stdout.write("\n");
+				printWarning(
+					`Detected ${analysis.localDependencyPaths.length} local file dependencies`,
+					"containerize",
+				);
+				printBullet(
+					chalk.gray(
+						"These will be copied into the Docker image. For production,",
 					),
 				);
-				console.log(
-					chalk.gray(
-						"  These will be copied into the Docker image. For production,",
-					),
-				);
-				console.log(
-					chalk.gray(
-						"  consider publishing to npm registry instead.",
-					),
+				printBullet(
+					chalk.gray("consider publishing to npm registry instead."),
 				);
 			}
 
-			// Bootstrap configuration analysis
 			printBootstrapAnalysis(analysis);
-
-			console.log("");
 		}
 
 		// Step 2: Generate based on target
@@ -113,44 +110,41 @@ export const containerizeProject = async (
 		}
 
 		// Step 4: Success message
-		console.log(
-			chalk.bold.green(
-				"\n✅ Container configuration generated successfully!\n",
-			),
+		stdout.write("\n");
+		printSuccess(
+			"Container configuration generated successfully",
+			"containerize",
 		);
 
-		console.log(chalk.white("📋 Summary:"));
-		console.log(chalk.gray("  • Generated files are fully customizable"));
-		console.log(chalk.gray("  • Edit them to fit your specific needs"));
-		console.log(
-			chalk.gray("  • Run 'expressots container profile' to optimize"),
+		printSection("📋 Summary");
+		printBullet("Generated files are fully customizable");
+		printBullet("Edit them to fit your specific needs");
+		printBullet(
+			`Run ${chalk.cyan("expressots container profile")} to optimize`,
 		);
 
-		printSection("📖 Next steps:");
+		printSection("📖 Next steps");
 
 		if (analysis?.hasLocalDependencies) {
-			console.log(chalk.white("  1. Review generated files"));
-			console.log(chalk.white("  2. Run setup: npm run docker:setup"));
-			console.log(chalk.white("  3. Build: docker build -t myapp ."));
-			console.log(chalk.white("  4. Run: docker-compose up"));
-			console.log(
-				chalk.yellow(
-					"\n💡 Tip: The docker-setup.sh script copies local dependencies",
-				),
-			);
-			console.log(
-				chalk.yellow(
-					"   to .docker-deps/ for the Docker build context.",
-				),
+			const pm = analysis.packageManager;
+			printBullet(`Review generated files`);
+			printBullet(`Run setup: ${chalk.cyan(`${pm} run docker:setup`)}`);
+			printBullet(`Build: ${chalk.cyan("docker build -t myapp .")}`);
+			printBullet(`Run: ${chalk.cyan("docker compose up")}`);
+
+			stdout.write("\n");
+			printWarning(
+				"docker-setup.js copies local dependencies to .docker-deps/ for the Docker build context.",
+				"containerize",
 			);
 		} else {
-			console.log(chalk.white("  1. Review generated files"));
-			console.log(chalk.white("  2. Customize as needed"));
-			console.log(chalk.white("  3. Build: docker build -t myapp ."));
-			console.log(chalk.white("  4. Run: docker-compose up"));
+			printBullet("Review generated files");
+			printBullet("Customize as needed");
+			printBullet(`Build: ${chalk.cyan("docker build -t myapp .")}`);
+			printBullet(`Run: ${chalk.cyan("docker compose up")}`);
 		}
 
-		console.log("");
+		stdout.write("\n");
 	} catch (error) {
 		printError(
 			`Containerization failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -170,14 +164,17 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 		return; // No env file config, nothing to warn about
 	}
 
-	printSection("📋 Bootstrap Configuration:");
+	printSection("📋 Bootstrap Configuration");
 
 	// Show detected env file config
 	if (bootstrapConfig.skipFileLoading || bootstrapConfig.ciMode) {
-		console.log(chalk.green("  ✓ Container-ready configuration detected"));
-		console.log(
+		printSuccess(
+			"Container-ready configuration detected",
+			"bootstrap",
+		);
+		printBullet(
 			chalk.gray(
-				`    Using ${bootstrapConfig.skipFileLoading ? "skipFileLoading" : "ciMode"} mode`,
+				`Using ${bootstrapConfig.skipFileLoading ? "skipFileLoading" : "ciMode"} mode`,
 			),
 		);
 		return;
@@ -187,62 +184,59 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 	const copyEnvFiles = shouldCopyEnvFiles(bootstrapConfig);
 
 	if (copyEnvFiles) {
-		console.log(
-			chalk.yellow("  ⚠️  Environment file configuration detected"),
+		printWarning(
+			"Environment file configuration detected",
+			"bootstrap",
 		);
 
-		// Show existing env files
 		if (bootstrapConfig.existingEnvFiles.length > 0) {
-			console.log(chalk.gray("  Existing env files:"));
+			printBullet(chalk.bold("Existing env files:"));
 			bootstrapConfig.existingEnvFiles.forEach((file) => {
-				console.log(chalk.green(`    ✓ ${file}`));
+				printBullet(chalk.green(`  ✓ ${file}`));
 			});
 		}
 
-		// Show missing env files
 		if (bootstrapConfig.missingEnvFiles.length > 0) {
-			console.log(chalk.gray("  Missing env files:"));
+			printBullet(chalk.bold("Missing env files:"));
 			bootstrapConfig.missingEnvFiles.forEach((file) => {
-				console.log(chalk.red(`    ✗ ${file}`));
+				printBullet(chalk.red(`  ✗ ${file}`));
 			});
 		}
 
-		// Show required variables
 		if (bootstrapConfig.requiredVariables.length > 0) {
-			console.log(chalk.gray("  Required variables:"));
+			printBullet(chalk.bold("Required variables:"));
 			bootstrapConfig.requiredVariables.forEach((varName) => {
-				console.log(chalk.yellow(`    • ${varName}`));
+				printBullet(chalk.yellow(`  • ${varName}`));
 			});
 		}
 	}
 
 	// Show recommendations
 	if (bootstrapConfig.recommendations.length > 0) {
-		printSection("💡 Recommendations:");
+		printSection("💡 Recommendations");
 		bootstrapConfig.recommendations.forEach((rec) => {
-			console.log(chalk.gray(`  • ${rec}`));
+			printBullet(rec);
 		});
 	}
 
 	// Special warning for missing required env files
 	if (!bootstrapConfig.isContainerReady) {
-		console.log(chalk.red("\n⚠️  Container may fail to start!"));
-		console.log(
+		stdout.write("\n");
+		printError("Container may fail to start!", "bootstrap");
+		printBullet(
 			chalk.gray(
-				"  The bootstrap configuration requires env files that are missing.",
+				"The bootstrap configuration requires env files that are missing.",
 			),
 		);
-		console.log(chalk.gray("  Options:"));
-		console.log(
-			chalk.gray("    1. Create the missing env files before building"),
+		printBullet(chalk.gray("Options:"));
+		printBullet(
+			chalk.gray("  1. Create the missing env files before building"),
 		);
-		console.log(
-			chalk.gray("    2. Update bootstrap to use skipFileLoading: true"),
+		printBullet(
+			chalk.gray("  2. Update bootstrap to use skipFileLoading: true"),
 		);
-		console.log(
-			chalk.gray(
-				"    3. Set environment variables in docker-compose.yml",
-			),
+		printBullet(
+			chalk.gray("  3. Set environment variables in docker-compose.yml"),
 		);
 	}
 }

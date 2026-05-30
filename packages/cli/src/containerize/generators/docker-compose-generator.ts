@@ -12,6 +12,7 @@ import {
 	getEnvFileForEnvironment,
 	type BootstrapConfig,
 } from "../analyzers/bootstrap-analyzer";
+import { printBullet, printSection } from "../../utils/cli-ui";
 
 type GeneratorOptions = {
 	environment: string;
@@ -25,7 +26,7 @@ export async function generateDockerCompose(
 ): Promise<void> {
 	const cwd = process.cwd();
 
-	console.log(chalk.yellow(`📝 Generating docker-compose.yml...`));
+	printSection(`📝 Generating docker-compose.yml`);
 
 	// Always generate production docker-compose.yml plus environment-specific if needed
 	const environments =
@@ -64,7 +65,7 @@ export async function generateDockerCompose(
 		const filepath = path.join(cwd, filename);
 
 		fs.writeFileSync(filepath, result.content, "utf-8");
-		console.log(chalk.green(`  ✓ Created ${filename}`));
+		printBullet(chalk.green(`✓ Created ${filename}`));
 	}
 }
 

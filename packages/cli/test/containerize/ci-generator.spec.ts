@@ -17,16 +17,21 @@ import type { ProjectAnalysis } from "../../src/containerize/analyzers/project-a
 let tmpDir: string;
 let originalCwd: string;
 let logSpy: jest.SpyInstance;
+let stdoutSpy: jest.SpyInstance;
 
 beforeEach(() => {
 	originalCwd = process.cwd();
 	tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ex-cli-cd-"));
 	process.chdir(tmpDir);
 	logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+	stdoutSpy = jest
+		.spyOn(process.stdout, "write")
+		.mockImplementation(() => true);
 });
 
 afterEach(() => {
 	logSpy.mockRestore();
+	stdoutSpy.mockRestore();
 	process.chdir(originalCwd);
 	fs.rmSync(tmpDir, { recursive: true, force: true });
 });
@@ -196,9 +201,12 @@ describe("generateCIConfig — non-GitHub platforms", () => {
 			},
 			makeAnalysis(),
 		);
-		const messages = logSpy.mock.calls
-			.map((c) => c.join(" "))
-			.join("\n");
+		const messages = [
+			...logSpy.mock.calls.map((c) => c.join(" ")),
+			...stdoutSpy.mock.calls.map((c) =>
+				typeof c[0] === "string" ? c[0] : "",
+			),
+		].join("\n");
 		expect(messages).toMatch(/single canonical pipeline config/);
 	});
 });
