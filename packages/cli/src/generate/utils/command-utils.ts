@@ -124,6 +124,7 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 			await splitTarget({
 				target: fp.target,
 				schematic: fp.schematic,
+				opinionated: true,
 			});
 
 		ensureWithinSourceRoot(folderToScaffold, `${path}/${file}`, fp.target);
@@ -208,9 +209,11 @@ export function getFileNameWithoutExtension(filePath: string) {
 export const splitTarget = async ({
 	target,
 	schematic,
+	opinionated = false,
 }: {
 	target: string;
 	schematic: string;
+	opinionated?: boolean;
 }): Promise<{
 	path: string;
 	file: string;
@@ -295,6 +298,33 @@ export const splitTarget = async ({
 			const firstWord = name
 				.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)[0]
 				.toLowerCase();
+
+			// Opinionated "syntactic sugar": decompose a compound name into a
+			// nested feature/use-case layout so every use-case of a feature is
+			// grouped under one module at the feature root. For example
+			// `userLogin` -> `user/login/login.{controller,usecase,dto}.ts` with
+			// the shared module at `user/user.module.ts`. A later `userLogout`
+			// adds `user/logout/...` and joins the same `UserModule`.
+			//
+			// Only applies to grouped schematics in opinionated mode; standalone
+			// schematics and non-opinionated mode keep the flat kebab folder so
+			// the developer retains full control over structure.
+			if (opinionated && shouldCreateFolder) {
+				const words = folderName.split("-").filter(Boolean);
+				if (words.length > 1) {
+					const feature = words[0];
+					const useCase = words.slice(1).join("-");
+					return {
+						path: `${feature}/${useCase}`,
+						file: `${await getNameWithScaffoldPattern(
+							useCase,
+						)}.${schematic}.ts`,
+						className: anyCaseToPascalCase(useCase),
+						moduleName: feature,
+						modulePath: feature,
+					};
+				}
+			}
 
 			// For standalone schematics (entity, provider, middleware, etc.),
 			// only create folder if explicit path is provided
@@ -467,19 +497,30 @@ export async function extractFirstWord(file: string) {
 }
 
 /**
- * Check if the path is a nested path, a single path or a sugar path
+ * Determine the path style for a generate target.
+ *
+ * - `Nested`: contains an explicit separator (`billing/invoice`) → grouped
+ *   under the parent folder.
+ * - `Sugar`: a single segment that normalizes to more than one word
+ *   (`userCreate`, `user-create`, `user_create`, `UserCreate`) → grouped under
+ *   its first word as a shared module (e.g. `UserModule`). camelCase and
+ *   kebab-case forms of the same name therefore produce identical output.
+ * - `Single`: a true single-word target (`user`) → self-contained module in its
+ *   own folder.
+ *
  * @param path
  * @returns the path style
  */
 export const checkPathStyle = (path: string): PathStyle => {
-	const singleOrNestedPathRegex = /\/|\\/;
-	const sugarPathRegex = /^\w+-\w+$/;
+	const nestedPathRegex = /\/|\\/;
 
-	if (singleOrNestedPathRegex.test(path)) {
+	if (nestedPathRegex.test(path)) {
 		return PathStyle.Nested;
-	} else if (sugarPathRegex.test(path)) {
-		return PathStyle.Sugar;
-	} else {
-		return PathStyle.Single;
 	}
+
+	if (anyCaseToKebabCase(path).includes("-")) {
+		return PathStyle.Sugar;
+	}
+
+	return PathStyle.Single;
 };

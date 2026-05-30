@@ -1,63 +1,132 @@
 import chalk from "chalk";
-import CliTable3 from "cli-table3";
+import { stdout } from "process";
+import { type HelpGroup, renderHelpGroups } from "./render";
+
+/**
+ * The full command + schematics reference. Shares the exact visual
+ * language of the top-level help screen (see `main-help.ts`) via the
+ * common `renderHelpGroups` helper, but goes deeper: it enumerates every
+ * `generate` schematic and provider sub-command.
+ */
+const RESOURCE_GROUPS: HelpGroup[] = [
+	{
+		title: "Project",
+		entries: [
+			{ name: "new", desc: "Generate a new project (application or micro)" },
+			{ name: "dev", desc: "Start the development server" },
+			{ name: "build", desc: "Build the project for production" },
+			{ name: "prod", desc: "Run in production mode" },
+			{ name: "info", alias: "i", desc: "Display project information" },
+			{ name: "scripts", desc: "Run scripts list or specific scripts" },
+			{ name: "help", alias: "h", desc: "Show command help" },
+		],
+	},
+	{
+		title: "Generate",
+		entries: [
+			{
+				name: "service",
+				alias: "g s",
+				desc: "Service [controller, usecase, dto, module]",
+			},
+			{ name: "controller", alias: "g c", desc: "Controller" },
+			{ name: "usecase", alias: "g u", desc: "Use case" },
+			{ name: "dto", alias: "g d", desc: "DTO" },
+			{ name: "entity", alias: "g e", desc: "Entity" },
+			{ name: "module", alias: "g mo", desc: "Module" },
+			{ name: "middleware", alias: "g mi", desc: "Middleware" },
+			{
+				name: "interceptor",
+				alias: "g i",
+				desc: "Interceptor (--priority)",
+			},
+			{ name: "event", alias: "g ev", desc: "Type-safe event" },
+			{
+				name: "handler",
+				alias: "g h",
+				desc: "Event handler (--event, --priority)",
+			},
+			{ name: "guard", alias: "g gu", desc: "Authorization guard" },
+			{ name: "config", alias: "g cfg", desc: "Config module" },
+		],
+	},
+	{
+		title: "Providers",
+		entries: [
+			{ name: "provider", alias: "g p", desc: "Generate internal provider" },
+			{
+				name: "add",
+				desc: "Add provider to the project (-d for devDependency)",
+			},
+			{ name: "remove", desc: "Remove provider from the project" },
+			{ name: "create", desc: "Create external provider" },
+		],
+	},
+	{
+		title: "DevOps",
+		entries: [
+			{
+				name: "containerize",
+				alias: "ctr",
+				desc: "Generate Docker / Kubernetes / Compose configs",
+			},
+			{
+				name: "cicd",
+				alias: "ci",
+				desc: "Generate and manage CI/CD pipelines",
+			},
+			{
+				name: "migrate",
+				alias: "mig",
+				desc: "Generate migration scripts between platforms",
+			},
+			{
+				name: "profile",
+				alias: "prof",
+				desc: "Analyze and optimize container configs",
+			},
+			{
+				name: "container-dev",
+				alias: "cdev",
+				desc: "Develop inside Docker with hot reload",
+			},
+			{
+				name: "costs",
+				alias: "cost",
+				desc: "Estimate and compare cloud deployment costs",
+			},
+			{
+				name: "templates",
+				alias: "tpl",
+				desc: "Manage CI/CD, Docker, and Kubernetes templates",
+			},
+		],
+	},
+	{
+		title: "Studio & Help",
+		entries: [
+			{ name: "studio", desc: "Launch ExpressoTS Studio" },
+			{ name: "resources", alias: "r", desc: "Show this reference" },
+			{ name: "completion", desc: "Generate a shell completion script" },
+		],
+	},
+];
 
 const helpForm = async (): Promise<void> => {
-	const table = new CliTable3({
-		head: [
-			chalk.green("Name"),
-			chalk.green("Alias"),
-			chalk.green("Description"),
-		],
-		colWidths: [15, 15, 60],
-	});
+	const lines: string[] = [
+		"",
+		`${chalk.bold.green("🐎 ExpressoTS CLI")}  ${chalk.dim(
+			"·  Command Reference",
+		)}`,
+		...renderHelpGroups(RESOURCE_GROUPS),
+		"",
+		`📝  ${chalk.dim("Docs:")} ${chalk.green(
+			"https://doc.expresso-ts.com/docs/category/cli",
+		)}`,
+		"",
+	];
 
-	table.push(
-		// Project commands
-		["new project", "new", "Generate a new project (application or micro)"],
-		["info", "i", "Provides project information"],
-		["resources", "r", "Displays cli commands and resources"],
-		["scripts", "scripts", "Run scripts list or specific scripts"],
-		["help", "h", "Show command help"],
-		// Core schematics
-		[
-			"service",
-			"g s",
-			"Generate a service [controller, usecase, dto, module]",
-		],
-		["controller", "g c", "Generate a controller"],
-		["usecase", "g u", "Generate a usecase"],
-		["dto", "g d", "Generate a dto"],
-		["entity", "g e", "Generate an entity"],
-		["module", "g mo", "Generate a module"],
-		["middleware", "g mi", "Generate a middleware"],
-		// v4.0 schematics
-		["interceptor", "g i", "Generate an interceptor (--priority)"],
-		["event", "g ev", "Generate a type-safe event"],
-		["handler", "g h", "Generate an event handler (--event, --priority)"],
-		["guard", "g gu", "Generate an authorization guard"],
-		["config", "g cfg", "Generate a config module"],
-		// Provider commands
-		["provider", "g p", "Generate internal provider"],
-		[
-			"provider",
-			"add",
-			"Add provider to the project. Use -d to add as dev dependency",
-		],
-		["provider", "remove", "Remove provider from the project"],
-		["provider", "create", "Create external provider"],
-	);
-	console.log(
-		chalk.bold.white("ExpressoTS:", `${chalk.green("Resources List")}`),
-	);
-	console.log(chalk.whiteBright(table.toString()));
-	console.log(
-		chalk.bold.white(
-			`📝 More info: ${chalk.green(
-				"https://doc.expresso-ts.com/docs/category/cli",
-			)}`,
-		),
-	);
-	console.log("\n");
+	stdout.write(`${lines.join("\n")}\n`);
 };
 
 export { helpForm };

@@ -7,6 +7,7 @@ import { Argv, CommandModule } from "yargs";
 import chalk from "chalk";
 import { getTemplateManager } from "./manager";
 import { getConfigManager } from "../config";
+import { printError, printSection } from "../utils/cli-ui";
 
 type CommandModuleArgs = Record<string, never>;
 
@@ -98,12 +99,13 @@ const templatesCommand = (): CommandModule<CommandModuleArgs, any> => {
 					await showStatus();
 					break;
 				default:
-					console.log(chalk.red(`Unknown action: ${action}`));
+					printError(`Unknown action: ${action}`, "templates");
 					console.log(
 						chalk.gray(
 							"Run 'expressots templates --help' for usage.",
 						),
 					);
+					process.exit(1);
 			}
 		},
 	};
@@ -116,7 +118,7 @@ async function listTemplates(
 	category?: string,
 	platform?: string,
 ): Promise<void> {
-	console.log(chalk.cyan("\n📋 Available Templates\n"));
+	printSection("📋 Available Templates");
 
 	const manager = getTemplateManager();
 	const templates = await manager.listTemplates();
@@ -202,7 +204,7 @@ async function listTemplates(
  * Update template cache
  */
 async function updateTemplates(): Promise<void> {
-	console.log(chalk.cyan("\n🔄 Updating Templates...\n"));
+	printSection("🔄 Updating Templates...");
 
 	const manager = getTemplateManager();
 	const result = await manager.updateCache();
@@ -235,7 +237,7 @@ async function updateTemplates(): Promise<void> {
  * Clear template cache
  */
 async function clearCache(): Promise<void> {
-	console.log(chalk.cyan("\n🗑️  Clearing Template Cache...\n"));
+	printSection("🗑️  Clearing Template Cache...");
 
 	const manager = getTemplateManager();
 	const stats = manager.getCacheStats();
@@ -332,7 +334,7 @@ async function manageRepository(args: string[]): Promise<void> {
 
 	if (!subAction) {
 		const config = configManager.getTemplateConfig();
-		console.log(chalk.cyan("\n📦 Template Repository Configuration\n"));
+		printSection("📦 Template Repository Configuration");
 		console.log(`  Repository: ${chalk.yellow(config.repository)}`);
 		console.log(`  Branch:     ${chalk.cyan(config.branch)}`);
 		console.log(`  Cache TTL:  ${config.cacheTTL} seconds`);

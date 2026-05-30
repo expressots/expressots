@@ -7,9 +7,9 @@ import {
 	showPricing,
 } from "./form";
 import { getPricingManager } from "./pricing-manager";
+import { printError, printSection } from "../utils/cli-ui";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = Record<string, never>;
 
 export type CloudProvider =
 	| "aws"
@@ -184,7 +184,8 @@ const costsCommand = (): CommandModule<CommandModuleArgs, any> => {
 					await showPricingInfo();
 					break;
 				default:
-					console.log(`Unknown action: ${action}`);
+					printError(`Unknown action: ${action}`, "costs");
+					process.exit(1);
 			}
 		},
 	};
@@ -194,7 +195,7 @@ const costsCommand = (): CommandModule<CommandModuleArgs, any> => {
  * Update pricing data from remote sources
  */
 async function updatePricingData(): Promise<void> {
-	console.log(chalk.cyan("\n🔄 Updating Pricing Data...\n"));
+	printSection("🔄 Updating Pricing Data...");
 
 	const manager = getPricingManager();
 	manager.clearCache();

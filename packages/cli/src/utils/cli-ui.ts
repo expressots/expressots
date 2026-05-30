@@ -121,8 +121,51 @@ export async function printGenerateSuccess(
 }
 
 /**
+ * Print a section title. Intended for interactive/listing output (e.g.
+ * `templates list`, `costs compare`) where the structured logger format
+ * (`[ExpressoTS] timestamp LEVEL`) would be noisy. Leading newline keeps
+ * sections visually separated.
+ */
+export function printSection(title: string): void {
+	stdout.write(`\n${chalk.bold.cyan(title)}\n`);
+}
+
+/**
+ * Print an indented bullet point under a section.
+ */
+export function printBullet(text: string): void {
+	stdout.write(`  ${chalk.gray("-")} ${text}\n`);
+}
+
+/**
+ * Print a dim horizontal divider sized to the terminal width (capped).
+ */
+export function printDivider(): void {
+	const cols =
+		typeof process.stdout.columns === "number" && process.stdout.columns > 0
+			? process.stdout.columns
+			: 80;
+	const width = Math.min(Math.max(cols, 20), 80);
+	stdout.write(`${chalk.dim("\u2500".repeat(width))}\n`);
+}
+
+/**
+ * Print an aligned key/value pair (e.g. `Source:  remote`).
+ */
+export function printKeyValue(
+	key: string,
+	value: string,
+	padding = 12,
+): void {
+	stdout.write(`  ${chalk.bold(`${key}:`.padEnd(padding))} ${value}\n`);
+}
+
+/**
  * Print the ExpressoTS CLI header
  */
-export function printHeader(): void {
-	stdout.write(`\n${chalk.bold.green("🐎 ExpressoTS CLI")}\n\n`);
+export function printHeader(version?: string): void {
+	const title = version
+		? `🐎 ExpressoTS CLI v${version}`
+		: "🐎 ExpressoTS CLI";
+	stdout.write(`\n${chalk.bold.green(title)}\n\n`);
 }

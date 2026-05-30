@@ -5,9 +5,9 @@ import {
 	optimizeContainer,
 	showProfileReport,
 } from "./form";
+import { printError } from "../utils/cli-ui";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = Record<string, never>;
 
 const profileCommand = (): CommandModule<CommandModuleArgs, any> => {
 	return {
@@ -112,7 +112,8 @@ const profileCommand = (): CommandModule<CommandModuleArgs, any> => {
 					await showProfileReport(options);
 					break;
 				default:
-					console.log(`Unknown action: ${action}`);
+					printError(`Unknown action: ${action}`, "profile");
+					process.exit(1);
 			}
 		},
 	};

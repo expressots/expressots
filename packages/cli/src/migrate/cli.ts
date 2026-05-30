@@ -5,9 +5,9 @@ import {
 	listMigrations,
 	analyzeMigration,
 } from "./form";
+import { printError } from "../utils/cli-ui";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = Record<string, never>;
 
 export type MigrationSource =
 	| "heroku"
@@ -128,7 +128,8 @@ const migrateCommand = (): CommandModule<CommandModuleArgs, any> => {
 					await analyzeMigration(options);
 					break;
 				default:
-					console.log(`Unknown action: ${action}`);
+					printError(`Unknown action: ${action}`, "migrate");
+					process.exit(1);
 			}
 		},
 	};

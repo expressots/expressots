@@ -12,6 +12,7 @@ import {
 	generateBitbucketPipelines,
 	generateAzureDevOps,
 } from "./generators";
+import { printSection } from "../utils/cli-ui";
 
 export interface CICDOptions {
 	platform?: CIPlatform | "all";
@@ -63,7 +64,7 @@ const PLATFORMS: { id: CIPlatform; name: string; description: string }[] = [
  * Interactive CI/CD setup wizard
  */
 export async function initCICD(options: CICDOptions): Promise<void> {
-	console.log(chalk.cyan("\n🔧 ExpressoTS CI/CD Setup Wizard\n"));
+	printSection("🔧 ExpressoTS CI/CD Setup Wizard");
 
 	// Analyze project first
 	const analysis = await analyzeProject();
@@ -172,7 +173,7 @@ export async function initCICD(options: CICDOptions): Promise<void> {
  * Generate CI/CD configuration for specific platform(s)
  */
 export async function generateCICD(options: CICDOptions): Promise<void> {
-	console.log(chalk.cyan("\n🔧 ExpressoTS CI/CD Generator\n"));
+	printSection("🔧 ExpressoTS CI/CD Generator");
 
 	if (!options.platform) {
 		console.log(
@@ -208,7 +209,7 @@ export async function generateCICD(options: CICDOptions): Promise<void> {
  * List available CI/CD platforms
  */
 export async function listPlatforms(): Promise<void> {
-	console.log(chalk.cyan("\n📋 Available CI/CD Platforms\n"));
+	printSection("📋 Available CI/CD Platforms");
 
 	console.log(
 		chalk.bold("Platform".padEnd(20) + "Description".padEnd(45) + "Status"),
@@ -235,7 +236,7 @@ export async function listPlatforms(): Promise<void> {
  * Validate existing CI/CD configurations
  */
 export async function validatePipelines(): Promise<void> {
-	console.log(chalk.cyan("\n🔍 Validating CI/CD Configurations\n"));
+	printSection("🔍 Validating CI/CD Configurations");
 
 	const cwd = process.cwd();
 	const validations: {

@@ -12,15 +12,13 @@ import {
 	FileOutput,
 	getFileNameWithoutExtension,
 	getHttpMethod,
+	getNameWithScaffoldPattern,
 	PathStyle,
 	validateAndPrepareFile,
 	writeTemplate,
 } from "./command-utils";
 import { addControllerToModule } from "../../utils/add-controller-to-module";
-import {
-	addModuleToContainer,
-	addModuleToContainerNestedPath,
-} from "../../utils/add-module-to-container";
+import { addModuleToContainerByPath } from "../../utils/add-module-to-container";
 import { ExpressoConfig } from "@expressots/shared";
 
 /**
@@ -95,24 +93,24 @@ export async function opinionatedProcess(
 				expressoConfig,
 			});
 
+			let moduleFile = m.file;
 			if (pathStyle === PathStyle.Sugar) {
-				await generateModuleServiceSugarPath(
+				moduleFile = await generateModuleServiceSugarPath(
 					f.outputPath,
 					m.className,
 					m.moduleName,
 					m.path,
-					m.file,
 					m.folderToScaffold,
 				);
 			} else if (pathStyle === PathStyle.Nested) {
-				await generateModuleServiceNestedPath(
+				moduleFile = await generateModuleServiceNestedPath(
 					f.outputPath,
 					m.className,
 					m.path,
 					m.folderToScaffold,
 				);
 			} else if (pathStyle === PathStyle.Single) {
-				await generateModuleServiceSinglePath(
+				moduleFile = await generateModuleServiceSinglePath(
 					f.outputPath,
 					m.className,
 					m.moduleName,
@@ -125,7 +123,7 @@ export async function opinionatedProcess(
 			await printGenerateSuccess("controller", f.file);
 			await printGenerateSuccess("usecase", f.file);
 			await printGenerateSuccess("dto", f.file);
-			await printGenerateSuccess("module", f.file);
+			await printGenerateSuccess("module", moduleFile);
 			break;
 		}
 		case "usecase":
@@ -514,10 +512,12 @@ async function generateModuleServiceSugarPath(
 	className: string,
 	moduleName: string,
 	path: string,
-	file: string,
 	folderToScaffold: string,
-): Promise<void> {
-	const newModuleFile = await extractFirstWord(file);
+): Promise<string> {
+	// The module file is named after the feature (first word), e.g. `user`, and
+	// lives at the feature root (`useCases/user/user.module.ts`), grouping all of
+	// the feature's use-cases. `moduleName` already carries the feature word.
+	const newModuleFile = await getNameWithScaffoldPattern(moduleName);
 	const newModulePath = nodePath
 		.join(folderToScaffold, path, "..")
 		.normalize();
@@ -544,7 +544,7 @@ async function generateModuleServiceSugarPath(
 			`${className}Controller`,
 			controllerToModule,
 		);
-		return;
+		return newModuleName;
 	}
 
 	writeTemplate({
@@ -561,12 +561,14 @@ async function generateModuleServiceSugarPath(
 
 	// Extract folder name from folderToScaffold (e.g., "src/useCases" -> "useCases")
 	const folderName = nodePath.basename(folderToScaffold);
-	await addModuleToContainer(
-		anyCaseToPascalCase(moduleName),
-		`${moduleName}/${file.replace(".ts", "")}`,
-		path,
+	await addModuleToContainerByPath(
+		`${anyCaseToPascalCase(moduleName)}Module`,
+		newModuleOutputPath,
+		folderToScaffold,
 		folderName,
 	);
+
+	return newModuleName;
 }
 
 /**
@@ -583,7 +585,7 @@ async function generateModuleServiceSinglePath(
 	path: string,
 	file: string,
 	folderToScaffold: string,
-): Promise<void> {
+): Promise<string> {
 	const newModuleFile = await extractFirstWord(file);
 	const newModulePath = nodePath.join(folderToScaffold, path).normalize();
 	const newModuleName = `${newModuleFile}.module.ts`;
@@ -609,7 +611,7 @@ async function generateModuleServiceSinglePath(
 			`${className}Controller`,
 			controllerToModule,
 		);
-		return;
+		return newModuleName;
 	}
 
 	writeTemplate({
@@ -626,12 +628,14 @@ async function generateModuleServiceSinglePath(
 
 	// Extract folder name from folderToScaffold (e.g., "src/useCases" -> "useCases")
 	const folderName = nodePath.basename(folderToScaffold);
-	await addModuleToContainer(
-		anyCaseToPascalCase(moduleName),
-		`${moduleName}/${file.replace(".ts", "")}`,
-		path,
+	await addModuleToContainerByPath(
+		`${anyCaseToPascalCase(moduleName)}Module`,
+		newModuleOutputPath,
+		folderToScaffold,
 		folderName,
 	);
+
+	return newModuleName;
 }
 
 /**
@@ -647,7 +651,7 @@ async function generateModuleServiceNestedPath(
 	className: string,
 	path: string,
 	folderToScaffold: string,
-): Promise<void> {
+): Promise<string> {
 	const moduleFileName = nodePath.basename(path, "/");
 	const newModulePath = nodePath
 		.join(folderToScaffold, path, "..")
@@ -676,7 +680,7 @@ async function generateModuleServiceNestedPath(
 			`${className}Controller`,
 			controllerToModule,
 		);
-		return;
+		return newModuleName;
 	}
 
 	writeTemplate({
@@ -693,11 +697,14 @@ async function generateModuleServiceNestedPath(
 
 	// Extract folder name from folderToScaffold (e.g., "src/useCases" -> "useCases")
 	const folderName = nodePath.basename(folderToScaffold);
-	await addModuleToContainerNestedPath(
-		anyCaseToPascalCase(moduleFileName),
-		path,
+	await addModuleToContainerByPath(
+		`${anyCaseToPascalCase(moduleFileName)}Module`,
+		newModuleOutputPath,
+		folderToScaffold,
 		folderName,
 	);
+
+	return newModuleName;
 }
 
 /**

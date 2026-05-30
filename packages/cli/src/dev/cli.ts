@@ -7,9 +7,9 @@ import {
 	showStatus,
 	showLogs,
 } from "./form";
+import { printError } from "../utils/cli-ui";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = Record<string, never>;
 
 const devContainerCommand = (): CommandModule<CommandModuleArgs, any> => {
 	return {
@@ -162,7 +162,8 @@ const devContainerCommand = (): CommandModule<CommandModuleArgs, any> => {
 					await showLogs(options);
 					break;
 				default:
-					console.log(`Unknown action: ${action}`);
+					printError(`Unknown action: ${action}`, "container-dev");
+					process.exit(1);
 			}
 		},
 	};

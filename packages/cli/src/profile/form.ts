@@ -7,6 +7,7 @@ import {
 } from "./analyzers/dockerfile-analyzer";
 import { analyzeImage } from "./analyzers/image-analyzer";
 import { generateOptimizations, applyOptimizations } from "./optimizers";
+import { printSection } from "../utils/cli-ui";
 
 export interface ProfileOptions {
 	target?: string;
@@ -57,7 +58,7 @@ export interface Metrics {
  * Profile a Dockerfile for issues and recommendations
  */
 export async function profileContainer(options: ProfileOptions): Promise<void> {
-	console.log(chalk.cyan("\n🔍 ExpressoTS Container Profiler\n"));
+	printSection("🔍 ExpressoTS Container Profiler");
 
 	const cwd = process.cwd();
 	const dockerfilePath = path.join(cwd, options.dockerfile);
@@ -86,7 +87,7 @@ export async function profileContainer(options: ProfileOptions): Promise<void> {
  * Profile a built Docker image
  */
 export async function profileImage(options: ProfileOptions): Promise<void> {
-	console.log(chalk.cyan("\n🔍 ExpressoTS Image Profiler\n"));
+	printSection("🔍 ExpressoTS Image Profiler");
 
 	if (!options.target) {
 		console.log(chalk.red("Error: Please specify an image name."));
@@ -135,7 +136,7 @@ export async function profileImage(options: ProfileOptions): Promise<void> {
 export async function optimizeContainer(
 	options: ProfileOptions,
 ): Promise<void> {
-	console.log(chalk.cyan("\n⚡ ExpressoTS Container Optimizer\n"));
+	printSection("⚡ ExpressoTS Container Optimizer");
 
 	const cwd = process.cwd();
 	const dockerfilePath = path.join(cwd, options.dockerfile);
@@ -195,7 +196,7 @@ export async function optimizeContainer(
 export async function showProfileReport(
 	options: ProfileOptions,
 ): Promise<void> {
-	console.log(chalk.cyan("\n📊 ExpressoTS Container Profile Report\n"));
+	printSection("📊 ExpressoTS Container Profile Report");
 
 	const cwd = process.cwd();
 	const dockerfilePath = path.join(cwd, options.dockerfile);

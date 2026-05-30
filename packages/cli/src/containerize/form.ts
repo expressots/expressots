@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import Compiler from "../utils/compiler";
-import { printError, printSuccess } from "../utils/cli-ui";
+import { printError, printSection, printSuccess } from "../utils/cli-ui";
 import {
 	analyzeProject,
 	type ProjectAnalysis,
@@ -126,7 +126,7 @@ export const containerizeProject = async (
 			chalk.gray("  • Run 'expressots container profile' to optimize"),
 		);
 
-		console.log(chalk.cyan("\n📖 Next steps:"));
+		printSection("📖 Next steps:");
 
 		if (analysis?.hasLocalDependencies) {
 			console.log(chalk.white("  1. Review generated files"));
@@ -170,7 +170,7 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 		return; // No env file config, nothing to warn about
 	}
 
-	console.log(chalk.cyan("\n📋 Bootstrap Configuration:"));
+	printSection("📋 Bootstrap Configuration:");
 
 	// Show detected env file config
 	if (bootstrapConfig.skipFileLoading || bootstrapConfig.ciMode) {
@@ -218,7 +218,7 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 
 	// Show recommendations
 	if (bootstrapConfig.recommendations.length > 0) {
-		console.log(chalk.cyan("\n💡 Recommendations:"));
+		printSection("💡 Recommendations:");
 		bootstrapConfig.recommendations.forEach((rec) => {
 			console.log(chalk.gray(`  • ${rec}`));
 		});

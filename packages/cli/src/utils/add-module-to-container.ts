@@ -1,7 +1,7 @@
-import chalk from "chalk";
 import { globSync } from "glob";
 import fs from "node:fs";
-import { printError } from "./cli-ui";
+import * as nodePath from "node:path";
+import { printError, printSuccess } from "./cli-ui";
 import Compiler from "./compiler";
 import { getPathAliasForFolder } from "./update-tsconfig-paths";
 
@@ -326,15 +326,32 @@ function addModuleToContainerSource(source: string, className: string): string {
 	);
 }
 
-async function resolveUseCaseDir(folderName?: string): Promise<string> {
-	const { opinionated } = await Compiler.loadConfig();
-	return opinionated
-		? `${folderName ? getPathAliasForFolder(folderName) : "@useCases"}/`
-		: `./`;
-}
+/**
+ * Build the import specifier for a scaffolded module from its real on-disk
+ * location. In opinionated mode the path alias for the destination folder is
+ * used (e.g. `@useCases/user-create/user.module`); otherwise a relative import
+ * from the source root is produced. Deriving the specifier from the actual file
+ * path guarantees the generated import always matches where the module was
+ * written, independent of the path style (sugar/single/nested).
+ */
+async function buildModuleImportSpec(
+	moduleOutputPath: string,
+	folderToScaffold: string,
+	folderName: string,
+): Promise<string> {
+	const { opinionated, sourceRoot } = await Compiler.loadConfig();
+	const normalize = (p: string): string =>
+		p.replace(/\\/g, "/").replace(/\.ts$/, "");
 
-function pascalCase(name: string): string {
-	return (name[0].toUpperCase() + name.slice(1)).trimStart();
+	if (opinionated) {
+		const rel = normalize(
+			nodePath.relative(folderToScaffold, moduleOutputPath),
+		);
+		return `${getPathAliasForFolder(folderName)}/${rel}`;
+	}
+
+	const rel = normalize(nodePath.relative(sourceRoot, moduleOutputPath));
+	return `./${rel}`;
 }
 
 async function applyContainerEdit(
@@ -348,52 +365,35 @@ async function applyContainerEdit(
 	if (next === info.content) return;
 
 	await fs.promises.writeFile(info.path, next, "utf8");
-	console.log(
-		" ",
-		chalk.greenBright(`[container]`.padEnd(14)),
-		chalk.bold.white(`${className} added to ${APP_CONTAINER}! ✔️`),
+	printSuccess(`${className} registered in ${APP_CONTAINER}`, "container");
+}
+
+/**
+ * Register a scaffolded module in `app.ts`.
+ *
+ * The import specifier is derived from the module file's real location
+ * (`moduleOutputPath`) so it always resolves to the file on disk, regardless of
+ * the path style used to scaffold it.
+ *
+ * @param moduleClassName - Exported module symbol, e.g. `UserModule`.
+ * @param moduleOutputPath - Path to the generated `*.module.ts` file.
+ * @param folderToScaffold - Destination root, e.g. `src/useCases`.
+ * @param folderName - Folder basename used to resolve the path alias, e.g. `useCases`.
+ */
+async function addModuleToContainerByPath(
+	moduleClassName: string,
+	moduleOutputPath: string,
+	folderToScaffold: string,
+	folderName: string,
+): Promise<void> {
+	const importSpec = await buildModuleImportSpec(
+		moduleOutputPath,
+		folderToScaffold,
+		folderName,
 	);
+	const importLine = `import { ${moduleClassName} } from "${importSpec}";`;
+
+	await applyContainerEdit(moduleClassName, importLine);
 }
 
-async function addModuleToContainer(
-	name: string,
-	modulePath?: string,
-	path?: string,
-	folderName?: string,
-) {
-	// Preserve the original 3-way path layout: explicit `${name}` subfolder,
-	// lowercase subfolder when the path has nested segments, or a flat file.
-	const explicitSubFolderRegex = /^[^/]=$/;
-	const useExplicitSubFolder = explicitSubFolderRegex.test(modulePath ?? "");
-	const useLowercaseSubFolder =
-		!useExplicitSubFolder && (path?.split("/").length ?? 0) > 1;
-
-	const moduleName = pascalCase(name);
-	const usecaseDir = await resolveUseCaseDir(folderName);
-
-	let importLine: string;
-	if (useExplicitSubFolder) {
-		importLine = `import { ${moduleName}Module } from "${usecaseDir}${name}/${name.toLowerCase()}.module";`;
-	} else if (useLowercaseSubFolder) {
-		importLine = `import { ${moduleName}Module } from "${usecaseDir}${name.toLowerCase()}/${name.toLowerCase()}.module";`;
-	} else {
-		importLine = `import { ${moduleName}Module } from "${usecaseDir}${name.toLowerCase()}.module";`;
-	}
-
-	await applyContainerEdit(`${moduleName}Module`, importLine);
-}
-
-async function addModuleToContainerNestedPath(
-	name: string,
-	path?: string,
-	folderName?: string,
-) {
-	const moduleName = pascalCase(name);
-	const usecaseDir = await resolveUseCaseDir(folderName);
-	const trimmed = path?.endsWith("/") ? path.slice(0, -1) : path ?? "";
-	const importLine = `import { ${moduleName}Module } from "${usecaseDir}${trimmed}.module";`;
-
-	await applyContainerEdit(`${moduleName}Module`, importLine);
-}
-
-export { addModuleToContainer, addModuleToContainerNestedPath };
+export { addModuleToContainerByPath };

@@ -5,9 +5,9 @@ import {
 	listPlatforms,
 	validatePipelines,
 } from "./form";
+import { printError } from "../utils/cli-ui";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = Record<string, never>;
 
 export type CIPlatform =
 	| "github"
@@ -159,7 +159,8 @@ const cicdCommand = (): CommandModule<CommandModuleArgs, any> => {
 					await validatePipelines();
 					break;
 				default:
-					console.log(`Unknown action: ${action}`);
+					printError(`Unknown action: ${action}`, "cicd");
+					process.exit(1);
 			}
 		},
 	};

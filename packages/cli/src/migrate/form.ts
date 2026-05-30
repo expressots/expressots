@@ -13,6 +13,7 @@ import {
 	generateComposeToRender,
 	generateGenericMigration,
 } from "./generators";
+import { printSection } from "../utils/cli-ui";
 
 export interface MigrationOptions {
 	from?: MigrationSource;
@@ -115,7 +116,7 @@ const SUPPORTED_MIGRATIONS: MigrationPath[] = [
  * Interactive migration setup wizard
  */
 export async function initMigration(options: MigrationOptions): Promise<void> {
-	console.log(chalk.cyan("\n🚀 ExpressoTS Migration Wizard\n"));
+	printSection("🚀 ExpressoTS Migration Wizard");
 
 	// Detect current platform
 	const detected = await detectCurrentPlatform();
@@ -257,7 +258,7 @@ export async function generateMigration(
  * List available migrations
  */
 export async function listMigrations(): Promise<void> {
-	console.log(chalk.cyan("\n📋 Available Migration Paths\n"));
+	printSection("📋 Available Migration Paths");
 
 	// Group by source
 	const bySource = SUPPORTED_MIGRATIONS.reduce(
@@ -300,7 +301,7 @@ export async function listMigrations(): Promise<void> {
 export async function analyzeMigration(
 	options: MigrationOptions,
 ): Promise<void> {
-	console.log(chalk.cyan("\n🔍 Migration Analysis\n"));
+	printSection("🔍 Migration Analysis");
 
 	const detected = await detectCurrentPlatform();
 	const cwd = process.cwd();

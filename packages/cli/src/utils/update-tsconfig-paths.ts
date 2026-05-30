@@ -49,35 +49,79 @@ export function generatePathAlias(folderName: string): string {
 }
 
 /**
- * Parse JSONC (JSON with Comments) by stripping comments and trailing commas
+ * Parse JSONC (JSON with Comments) by stripping comments and trailing commas.
+ *
+ * Implemented as a small character scanner so we are correctly string-aware:
+ * comment-delimiter sequences (slash-star and star-slash) inside a JSON
+ * string literal — e.g. the very common "src" double-star slash "*.ts"
+ * include glob — must NOT be treated as comments. The previous regex-based
+ * stripper silently corrupted such globs into `src*.ts`, which then got
+ * persisted to disk by the structured rewriter.
+ *
  * Handles:
- * - Single-line comments (//)
- * - Multi-line comments
- * - Trailing commas (common in tsconfig.json)
+ * - Line comments (`//` to end of line)
+ * - Block comments (may span lines, may also be empty)
+ * - Trailing commas before `}` / `]`
+ * - JSON string escapes (`\"`, `\\`, etc.)
  *
  * @param content - The JSONC content
  * @returns Cleaned JSON string that can be parsed by JSON.parse
  */
 function stripJsonComments(content: string): string {
-	let result = content;
+	let out = "";
+	let inString = false;
+	let escape = false;
 
-	// Remove multi-line comments first (they can span multiple lines)
-	result = result.replace(/\/\*[\s\S]*?\*\//g, "");
+	for (let i = 0; i < content.length; i++) {
+		const ch = content[i];
+		const next = content[i + 1];
 
-	// Remove single-line comments (but not inside strings)
-	// This regex looks for // that are not inside strings
-	result = result.replace(/^(\s*)\/\/.*$/gm, "$1");
+		if (inString) {
+			out += ch;
+			if (escape) {
+				escape = false;
+			} else if (ch === "\\") {
+				escape = true;
+			} else if (ch === '"') {
+				inString = false;
+			}
+			continue;
+		}
 
-	// Also handle inline comments after values
-	// Match: value, // comment or value // comment
-	result = result.replace(/,\s*\/\/.*$/gm, ",");
-	result = result.replace(/(["\d\w\]}\s])\s*\/\/.*$/gm, "$1");
+		if (ch === '"') {
+			inString = true;
+			out += ch;
+			continue;
+		}
 
-	// Remove trailing commas before } or ]
-	// This handles cases like: { "key": "value", }
-	result = result.replace(/,(\s*[}\]])/g, "$1");
+		if (ch === "/" && next === "/") {
+			// Line comment — skip until newline (newline is preserved).
+			i += 2;
+			while (i < content.length && content[i] !== "\n") i++;
+			i--; // Loop will increment past this position.
+			continue;
+		}
 
-	return result;
+		if (ch === "/" && next === "*") {
+			// Block comment — skip until closing */. Replace with a single
+			// space so adjacent tokens don't fuse (e.g. `a/*x*/b` -> `a b`).
+			i += 2;
+			while (
+				i < content.length &&
+				!(content[i] === "*" && content[i + 1] === "/")
+			) {
+				i++;
+			}
+			i++; // Consume the closing '*' (loop increments past '/').
+			out += " ";
+			continue;
+		}
+
+		out += ch;
+	}
+
+	// Strip trailing commas before `}` / `]` (legal in JSONC, not in JSON).
+	return out.replace(/,(\s*[}\]])/g, "$1");
 }
 
 /**

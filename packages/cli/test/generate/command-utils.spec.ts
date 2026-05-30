@@ -75,6 +75,14 @@ describe("checkPathStyle", () => {
 		expect(checkPathStyle("user-profile")).toBe(PathStyle.Sugar);
 	});
 
+	it("classifies camelCase/PascalCase/snake_case compound names as Sugar", () => {
+		// Same name in different cases must resolve to the same (Sugar) style so
+		// they group under a shared first-word module.
+		expect(checkPathStyle("userCreate")).toBe(PathStyle.Sugar);
+		expect(checkPathStyle("UserCreate")).toBe(PathStyle.Sugar);
+		expect(checkPathStyle("user_create")).toBe(PathStyle.Sugar);
+	});
+
 	it("classifies forward-slash paths as Nested", () => {
 		expect(checkPathStyle("auth/login")).toBe(PathStyle.Nested);
 	});
@@ -179,5 +187,51 @@ describe("splitTarget", () => {
 		});
 		expect(result.path).toBe("");
 		expect(result.file).toBe("user.provider.ts");
+	});
+
+	describe("opinionated sugar decomposition", () => {
+		it("expands compound camelCase into nested feature/use-case path", async () => {
+			const result = await splitTarget({
+				target: "userLogin",
+				schematic: "controller",
+				opinionated: true,
+			});
+			expect(result.path).toBe("user/login");
+			expect(result.file).toBe("login.controller.ts");
+			expect(result.className).toBe("Login");
+			expect(result.moduleName).toBe("user");
+		});
+
+		it("keeps remaining words for the use-case (userConfirmLogin)", async () => {
+			const result = await splitTarget({
+				target: "userConfirmLogin",
+				schematic: "controller",
+				opinionated: true,
+			});
+			expect(result.path).toBe("user/confirm-login");
+			expect(result.file).toBe("confirm-login.controller.ts");
+			expect(result.className).toBe("ConfirmLogin");
+			expect(result.moduleName).toBe("user");
+		});
+
+		it("does not nest a true single-word target", async () => {
+			const result = await splitTarget({
+				target: "user",
+				schematic: "controller",
+				opinionated: true,
+			});
+			expect(result.path).toBe("user");
+			expect(result.className).toBe("User");
+		});
+
+		it("does not nest when not opinionated (stays flat)", async () => {
+			const result = await splitTarget({
+				target: "userLogin",
+				schematic: "controller",
+				opinionated: false,
+			});
+			expect(result.path).toBe("user-login");
+			expect(result.className).toBe("UserLogin");
+		});
 	});
 });

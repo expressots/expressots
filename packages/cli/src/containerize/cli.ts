@@ -1,15 +1,14 @@
 import { Argv, CommandModule } from "yargs";
 import { containerizeProject } from "./form";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = Record<string, never>;
 
 const containerize = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "containerize [target] [environment]",
 		describe:
 			"Generate container configurations for your ExpressoTS application.",
-		aliases: ["c"],
+		aliases: ["ctr"],
 		builder: (yargs: Argv): Argv => {
 			yargs.positional("target", {
 				choices: ["docker", "kubernetes", "k8s", "compose"] as const,
