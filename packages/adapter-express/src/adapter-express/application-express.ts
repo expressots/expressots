@@ -911,10 +911,7 @@ export class AppExpress implements Server.IWebServer {
               .catch((error) => {
                 if (forced) return;
                 clearTimeout(overallTimer);
-                this.logger.error(
-                  `Error during shutdown: ${error.message}`,
-                  "adapter-express",
-                );
+                this.logger.error(`Error during shutdown: ${error.message}`, "adapter-express");
                 process.stderr.write("", () => {
                   process.exit(1);
                 });
