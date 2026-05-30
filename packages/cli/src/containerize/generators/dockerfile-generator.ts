@@ -9,11 +9,7 @@ import {
 	buildDockerVars,
 	logTemplateSource,
 } from "./template-loader";
-import {
-	printBullet,
-	printSection,
-	printWarning,
-} from "../../utils/cli-ui";
+import { printBullet, printSection, printWarning } from "../../utils/cli-ui";
 import {
 	shouldCopyEnvFiles,
 	getEnvFileForEnvironment,

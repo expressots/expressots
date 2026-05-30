@@ -49,10 +49,7 @@ export const containerizeProject = async (
 
 			printKeyValue("Node version", analysis.nodeVersion);
 			printKeyValue("Package manager", analysis.packageManager);
-			printKeyValue(
-				"Dependencies",
-				String(analysis.dependencies.length),
-			);
+			printKeyValue("Dependencies", String(analysis.dependencies.length));
 			printKeyValue("Controllers", String(analysis.controllers.length));
 
 			if (analysis.hasLocalDependencies) {
@@ -168,10 +165,7 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 
 	// Show detected env file config
 	if (bootstrapConfig.skipFileLoading || bootstrapConfig.ciMode) {
-		printSuccess(
-			"Container-ready configuration detected",
-			"bootstrap",
-		);
+		printSuccess("Container-ready configuration detected", "bootstrap");
 		printBullet(
 			chalk.gray(
 				`Using ${bootstrapConfig.skipFileLoading ? "skipFileLoading" : "ciMode"} mode`,
@@ -184,10 +178,7 @@ function printBootstrapAnalysis(analysis: ProjectAnalysis): void {
 	const copyEnvFiles = shouldCopyEnvFiles(bootstrapConfig);
 
 	if (copyEnvFiles) {
-		printWarning(
-			"Environment file configuration detected",
-			"bootstrap",
-		);
+		printWarning("Environment file configuration detected", "bootstrap");
 
 		if (bootstrapConfig.existingEnvFiles.length > 0) {
 			printBullet(chalk.bold("Existing env files:"));

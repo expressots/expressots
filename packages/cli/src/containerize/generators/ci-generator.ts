@@ -7,11 +7,7 @@ import {
 	getCiInstallCommand,
 	getRunScriptCommand,
 } from "../../utils/package-manager-commands";
-import {
-	printBullet,
-	printSection,
-	printWarning,
-} from "../../utils/cli-ui";
+import { printBullet, printSection, printWarning } from "../../utils/cli-ui";
 
 export type CIPlatform =
 	| "github"
