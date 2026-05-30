@@ -19,6 +19,7 @@ import {
 } from './introspection/container-introspector.js';
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
 import { SecurityEngine } from './security/index.js';
+import { resolveInstallId } from './identity/install-id.js';
 import * as fs from 'node:fs';
 import type { FSWatcher } from 'node:fs';
 import * as path from 'node:path';
@@ -126,6 +127,8 @@ export class StudioAgent {
 
   constructor(config: Partial<AgentConfig> = {}) {
     this.config = {
+      mode: config.mode ?? 'development',
+      installId: resolveInstallId(config.installId || undefined),
       port: config.port ?? 3334,
       dbPath: config.dbPath ?? '.studio/studio.db',
       enableRecording: config.enableRecording ?? true,

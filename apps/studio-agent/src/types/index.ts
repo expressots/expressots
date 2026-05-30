@@ -106,6 +106,31 @@ export interface RecordedExchange {
 
 /** Agent configuration options */
 export interface AgentConfig {
+  /**
+   * Agent operating mode.
+   *
+   * - `development` (default): full local instrumentation — Socket.IO
+   *   WebSocket server, SQLite recording, file watcher. Designed for
+   *   one developer running Studio UI on their laptop.
+   *
+   * - `production`: lightweight, cloud-ready mode. In a future release
+   *   this will disable local SQLite and Socket.IO, enable OTLP trace
+   *   export to a remote endpoint, and activate anonymous usage
+   *   telemetry. Today it is accepted but behaves identically to
+   *   `development` — reserving the field now ensures a non-breaking
+   *   upgrade path for users who set it early.
+   */
+  mode: 'development' | 'production';
+  /**
+   * Stable anonymous identifier for this install. Used to correlate
+   * telemetry, license checks, and multi-tenant cloud routing without
+   * exposing PII. Auto-generated (UUIDv4) on first agent start and
+   * persisted to `.studio/config.json` so it survives restarts.
+   *
+   * Users may override this (e.g. to share a team-wide id), but in
+   * the common case it is managed automatically.
+   */
+  installId: string;
   /** Port for the agent WebSocket server */
   port: number;
   /** Path to store SQLite database */
@@ -297,6 +322,8 @@ export interface MiddlewarePresetInfo {
 
 /** Default agent configuration */
 export const defaultAgentConfig: AgentConfig = {
+  mode: 'development',
+  installId: '',
   port: 3334,
   dbPath: '.studio/studio.db',
   enableRecording: true,

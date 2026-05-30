@@ -33,4 +33,5 @@ export {
   runFix,
   buildFixArgs,
 } from './security/index.js';
+export { resolveInstallId } from './identity/index.js';
 export * from './types/index.js';
