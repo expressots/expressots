@@ -852,8 +852,14 @@ export class AppExpress implements Server.IWebServer {
             }
             this.isShuttingDown = true;
 
-            // Use console.log for shutdown messages - synchronous and guaranteed to write before exit
-            console.log(`\n📡 Signal ${signal} received, initiating graceful shutdown...`);
+            // Emit the shutdown notice through the framework Logger so it
+            // matches the standard "[ExpressoTS] … INFO [context] …" output.
+            // The leading newline keeps it off the terminal's "^C" echo line.
+            process.stdout.write("\n");
+            this.logger.info(
+              `Signal ${signal} received, initiating graceful shutdown...`,
+              "adapter-express",
+            );
 
             // Hard overall cap on the graceful shutdown. `handleExit` chains
             // several `await`s — Studio agent stop, lifecycle shutdown
@@ -892,14 +898,26 @@ export class AppExpress implements Server.IWebServer {
               .then(() => {
                 if (forced) return;
                 clearTimeout(overallTimer);
-                console.log("✅ Graceful shutdown completed");
-                process.exit(0);
+                this.logger.info("Graceful shutdown completed", "adapter-express");
+                // Flush stdout before exiting. Writing an empty chunk with a
+                // callback guarantees the log line above is fully drained to
+                // the terminal (the callback only fires after prior queued
+                // writes complete), so the message can't appear after the
+                // shell has already redrawn its prompt.
+                process.stdout.write("", () => {
+                  process.exit(0);
+                });
               })
               .catch((error) => {
                 if (forced) return;
                 clearTimeout(overallTimer);
-                console.error(`❌ Error during shutdown: ${error.message}`);
-                process.exit(1);
+                this.logger.error(
+                  `Error during shutdown: ${error.message}`,
+                  "adapter-express",
+                );
+                process.stderr.write("", () => {
+                  process.exit(1);
+                });
               });
           };
 
