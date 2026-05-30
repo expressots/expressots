@@ -112,7 +112,9 @@ export function printMainHelp(version?: string): void {
 		`${chalk.bold("Usage:")} expressots <command> [options]`,
 		...renderHelpGroups(COMMAND_GROUPS),
 		"",
-		chalk.dim("Run 'expressots <command> --help' for details on a command."),
+		chalk.dim(
+			"Run 'expressots <command> --help' for details on a command.",
+		),
 		"",
 		`🌐  ${chalk.green("https://expresso-ts.com")}     ` +
 			`💖  ${chalk.green("https://github.com/sponsors/expressots")}`,

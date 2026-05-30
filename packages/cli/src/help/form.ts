@@ -12,7 +12,10 @@ const RESOURCE_GROUPS: HelpGroup[] = [
 	{
 		title: "Project",
 		entries: [
-			{ name: "new", desc: "Generate a new project (application or micro)" },
+			{
+				name: "new",
+				desc: "Generate a new project (application or micro)",
+			},
 			{ name: "dev", desc: "Start the development server" },
 			{ name: "build", desc: "Build the project for production" },
 			{ name: "prod", desc: "Run in production mode" },
@@ -53,7 +56,11 @@ const RESOURCE_GROUPS: HelpGroup[] = [
 	{
 		title: "Providers",
 		entries: [
-			{ name: "provider", alias: "g p", desc: "Generate internal provider" },
+			{
+				name: "provider",
+				alias: "g p",
+				desc: "Generate internal provider",
+			},
 			{
 				name: "add",
 				desc: "Add provider to the project (-d for devDependency)",

@@ -152,11 +152,7 @@ export function printDivider(): void {
 /**
  * Print an aligned key/value pair (e.g. `Source:  remote`).
  */
-export function printKeyValue(
-	key: string,
-	value: string,
-	padding = 12,
-): void {
+export function printKeyValue(key: string, value: string, padding = 12): void {
 	stdout.write(`  ${chalk.bold(`${key}:`.padEnd(padding))} ${value}\n`);
 }
 

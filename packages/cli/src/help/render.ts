@@ -48,9 +48,7 @@ export function renderRow(
 export function renderHelpGroups(groups: HelpGroup[]): string[] {
 	const all = groups.flatMap((g) => g.entries);
 	const nameWidth = Math.max(...all.map((e) => e.name.length));
-	const aliasWidth = Math.max(
-		...all.map((e) => formatAlias(e.alias).length),
-	);
+	const aliasWidth = Math.max(...all.map((e) => formatAlias(e.alias).length));
 
 	const lines: string[] = [];
 	for (const group of groups) {

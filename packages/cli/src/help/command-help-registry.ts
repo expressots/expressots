@@ -191,9 +191,7 @@ const SPECS: CommandHelpSpec[] = [
 			},
 			{
 				title: "Arguments",
-				entries: [
-					o("target", "Dockerfile path or image name"),
-				],
+				entries: [o("target", "Dockerfile path or image name")],
 			},
 			{
 				title: "Options",
@@ -342,11 +340,7 @@ const SPECS: CommandHelpSpec[] = [
 						"File watching / hot reload",
 						"default: true",
 					),
-					o(
-						"--follow",
-						"Follow logs (logs action)",
-						"default: true",
-					),
+					o("--follow", "Follow logs (logs action)", "default: true"),
 					o("--tail", "Log lines to show", "default: 100"),
 				],
 			},
@@ -364,7 +358,10 @@ const SPECS: CommandHelpSpec[] = [
 					o("list", "List available templates"),
 					o("update", "Update template cache from remote"),
 					o("clear", "Clear local template cache"),
-					o("info", "Show template info (info <category> <platform>)"),
+					o(
+						"info",
+						"Show template info (info <category> <platform>)",
+					),
 					o("repo", "View / set / reset template repository"),
 					o("status", "Show template system status"),
 				],
@@ -450,10 +447,7 @@ export function resolveCommandHelpSpec(
  *
  * @returns `true` when custom help was printed (caller should exit), else `false`.
  */
-export function tryPrintCommandHelp(
-	args: string[],
-	version?: string,
-): boolean {
+export function tryPrintCommandHelp(args: string[], version?: string): boolean {
 	const command = args[0];
 	if (!command || command.startsWith("-")) {
 		return false;
