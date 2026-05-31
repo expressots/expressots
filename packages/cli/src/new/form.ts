@@ -128,6 +128,7 @@ async function packageManagerInstall({
 			clearInterval(interval);
 			if (code === 0) {
 				progressBar.update(90, { doing: "Dependencies installed" });
+
 				resolve("Installation Done!");
 			} else {
 				progressBar.stop();
@@ -572,7 +573,7 @@ async function cloneFromGitHub({
 
 	try {
 		await degit(primaryRepo, { force: false }).clone(targetDir);
-		progressBar.update(30, { doing: "Template cloned" });
+		progressBar.update(30, { doing: "Template ready" });
 		return;
 	} catch (err: any) {
 		const isMissingRef = err?.code === "MISSING_REF";
@@ -583,7 +584,8 @@ async function cloneFromGitHub({
 
 		// Tag for this preview hasn't been pushed yet; transparently retry
 		// against the working branch and surface a one-line warning so the
-		// user knows what they actually got.
+		// user knows what they actually got. Written to stdout while the bar
+		// renders on stderr, so the streams do not interfere.
 		console.log(
 			chalk.yellow(
 				`\n⚠  Templates tag "${primaryRef}" not found on GitHub yet — falling back to "${PREVIEW_FALLBACK_REF}". ` +
@@ -596,7 +598,7 @@ async function cloneFromGitHub({
 			PREVIEW_FALLBACK_REF,
 		);
 		await degit(fallbackRepo, { force: false }).clone(targetDir);
-		progressBar.update(30, { doing: "Template cloned (fallback ref)" });
+		progressBar.update(30, { doing: "Template ready (fallback ref)" });
 	}
 }
 
@@ -619,11 +621,19 @@ const projectForm = async (
 	const [packageManager, template, directory, preset, events] = args;
 
 	if (packageManager && template) {
+		const resolvedPreset =
+			preset ??
+			(template === "application"
+				? ("api" as MiddlewarePresetKeys)
+				: undefined);
+
 		answer = {
 			name: projectName,
 			packageManager: packageManager,
 			template: Template[template],
-			preset: preset ? MiddlewarePreset[preset] : undefined,
+			preset: resolvedPreset
+				? MiddlewarePreset[resolvedPreset]
+				: undefined,
 			events: events,
 			confirm: true,
 		};
@@ -736,20 +746,49 @@ const projectForm = async (
 		}
 
 		await checkIfPackageManagerExists(answer.packageManager);
-		console.log("\n");
+
+		process.stdout.write(
+			`\n  ${chalk.dim("Creating")} ${chalk.bold.green(answer.name)}\n\n`,
+		);
+
+		const termCols =
+			typeof process.stdout.columns === "number" &&
+			process.stdout.columns > 0
+				? process.stdout.columns
+				: 80;
+		const barsize = Math.max(20, Math.min(40, termCols - 22));
+
 		const progressBar = new SingleBar(
 			{
 				format:
-					"Progress |" +
-					chalk.green("{bar}") +
-					"| {percentage}% || {doing}",
+					"  {bar}  " +
+					chalk.bold("{percentage}") +
+					chalk.dim("%") +
+					"  " +
+					chalk.dim("{doing}"),
+				barCompleteChar: "\u2588",
+				barIncompleteChar: "\u2591",
+				formatBar: (progress, options) => {
+					const completeSize = Math.round(
+						progress * (options.barsize ?? barsize),
+					);
+					const incompleteSize =
+						(options.barsize ?? barsize) - completeSize;
+					return (
+						chalk.green("\u2588".repeat(completeSize)) +
+						chalk.dim("\u2591".repeat(incompleteSize))
+					);
+				},
+				barsize,
 				hideCursor: true,
+				clearOnComplete: false,
+				linewrap: false,
 			},
-			Presets.rect,
+			Presets.legacy,
 		);
 
 		progressBar.start(100, 0, {
-			doing: "Creating project",
+			doing: "Fetching template",
 		});
 
 		// Extract template name from selection
@@ -802,7 +841,7 @@ const projectForm = async (
 				// Copy template files
 				copyDirectorySync(localTemplatePath, answer.name);
 
-				progressBar.update(30, { doing: "Template copied" });
+				progressBar.update(30, { doing: "Template ready" });
 			} else {
 				// GITHUB MODE (production)
 				// Pinned to the templates tag matching this CLI's published
@@ -871,7 +910,7 @@ const projectForm = async (
 		// Progress should already be at 90% from packageManagerInstall
 		// Only update if we skipped installation
 		if (!SKIP_INSTALL_FOR_TESTING) {
-			progressBar.update(90, { doing: "Finalizing project" });
+			progressBar.update(90, { doing: "Finalizing" });
 		}
 
 		changePackageName({

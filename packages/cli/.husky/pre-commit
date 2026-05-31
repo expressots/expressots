@@ -1,0 +1,40 @@
+#!/usr/bin/env sh
+
+# Ensure npm/node are on PATH when committing from GUI clients (Cursor, VS Code, ...)
+# that don't source the user's interactive shell rc files.
+if [ -z "$(command -v npm 2>/dev/null)" ]; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  for nvm_init in \
+    "$NVM_DIR/nvm.sh" \
+    "/usr/share/nvm/init-nvm.sh" \
+    "/usr/share/nvm/nvm.sh" \
+    "/usr/local/opt/nvm/nvm.sh" \
+    "/opt/homebrew/opt/nvm/nvm.sh"; do
+    if [ -s "$nvm_init" ]; then
+      # shellcheck disable=SC1090
+      . "$nvm_init"
+      break
+    fi
+  done
+fi
+
+if [ -z "$(command -v npm 2>/dev/null)" ]; then
+  echo "husky/pre-commit: npm not found in PATH. Skipping lint/format." >&2
+  echo "                 (Open a terminal where 'npm -v' works, or install nvm.)" >&2
+  exit 0
+fi
+
+# Only act on staged TS files so we don't re-format the entire codebase on every commit.
+STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACMR -- '*.ts' 'src/**/*.ts' 2>/dev/null \
+                  | awk '!seen[$0]++')
+
+if [ -z "$STAGED_TS_FILES" ]; then
+  exit 0
+fi
+
+# Run the same scripts the project already exposes, then re-stage the originally
+# staged files so any auto-fixes land in *this* commit (not a follow-up one).
+npm run lint:fix --silent || exit $?
+npm run format  --silent || exit $?
+
+echo "$STAGED_TS_FILES" | xargs -r git add --
