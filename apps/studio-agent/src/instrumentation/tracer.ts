@@ -201,6 +201,25 @@ export class StudioTracer {
     const sdk = this.sdk;
     this.sdk = null;
 
+    // Suppress the IPC channel error that OpenTelemetry's HTTP exporter
+    // can emit on the process when running under `tsx --watch`. The OTLP
+    // exporter lazy-loads its HTTP agent via dynamic `import()`; if SIGINT
+    // arrives mid-flush, the loader's IPC channel may already be closed
+    // and the rejection surfaces as an unhandled 'error' event on the
+    // process (tsx wraps `process.emit` in suppress-warnings.cjs).
+    // Swallowing this specific code keeps Ctrl+C clean without masking
+    // real shutdown errors.
+    const ipcErrorGuard = (err: NodeJS.ErrnoException): void => {
+      if (err?.code === "ERR_IPC_CHANNEL_CLOSED") return;
+      // Re-emit on the next tick so we don't disrupt the current emit
+      // chain, and so the default Node behaviour (uncaught -> crash)
+      // still applies to unexpected errors.
+      setImmediate(() => {
+        throw err;
+      });
+    };
+    process.on("error", ipcErrorGuard);
+
     // Hard cap the OpenTelemetry shutdown. NodeSDK.shutdown() awaits every
     // span processor's `forceFlush` and `shutdown`, and the default span
     // processor flush timeout is 30s — that's where the user-visible
@@ -212,6 +231,13 @@ export class StudioTracer {
     });
     const timeout = new Promise<void>((resolve) => setTimeout(resolve, 500));
     await Promise.race([drained, timeout]);
+
+    // Keep the guard installed for one more tick: the IPC error from a
+    // dangling lazy `import()` can land after our race resolves. Detach
+    // it shortly after so the listener doesn't outlive the SDK forever.
+    setTimeout(() => {
+      process.removeListener("error", ipcErrorGuard);
+    }, 1000).unref();
   }
 
   /** Get the current tracer */
