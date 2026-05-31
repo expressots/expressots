@@ -15,17 +15,21 @@
     "build:mcp": "npm run build -w @expressots/mcp-server",
     "dev": "npm run dev -w @expressots/studio",
     "dev:ui": "npm run dev:ui -w @expressots/studio",
-    "lint": "eslint \"packages/**/*.ts\" \"packages/**/*.tsx\"",
-    "lint:fix": "eslint \"packages/**/*.ts\" \"packages/**/*.tsx\" --fix",
-    "format": "prettier --write \"packages/**/*.{ts,tsx,json}\"",
+    "lint": "eslint \"packages/**/*.ts\" \"packages/**/*.tsx\" --cache --cache-location node_modules/.cache/eslint/",
+    "lint:fix": "eslint \"packages/**/*.ts\" \"packages/**/*.tsx\" --fix --cache --cache-location node_modules/.cache/eslint/",
+    "format": "prettier --write \"packages/**/*.{ts,tsx,json}\" --cache",
     "test": "npm run test --workspaces",
-    "clean": "node scripts/clean.js"
+    "clean": "node scripts/clean.js",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
+    "husky": "^9.1.7",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0"
   },
