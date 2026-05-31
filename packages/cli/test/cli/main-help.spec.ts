@@ -10,8 +10,15 @@ import path from "node:path";
 const CLI = path.resolve(__dirname, "../../bin/cli.js");
 
 function runHelp(args: string[]): string {
+	// Force NO_COLOR in the child so chalk never injects ANSI sequences
+	// into the rendered help. Without this, `toContain("Usage: expressots")`
+	// fails non-deterministically under concurrent jest workers when the
+	// parent env has FORCE_COLOR set (or supports-color heuristics detect
+	// color capability), because `chalk.bold("Usage:")` then expands to
+	// `\u001b[1mUsage:\u001b[22m` — the literal substring no longer matches.
 	const result = spawnSync(process.execPath, [CLI, ...args], {
 		encoding: "utf8",
+		env: { ...process.env, NO_COLOR: "1" },
 	});
 	expect(result.status).toBe(0);
 	return `${result.stdout}\n${result.stderr}`;
