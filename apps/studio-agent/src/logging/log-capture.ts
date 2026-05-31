@@ -160,7 +160,12 @@ export class LogCapture {
     const ctx = requestContext.getStore();
     const entry: LogEntry = {
       level,
-      message: formatArgs(args),
+      // Strip ANSI escape codes so Studio's web UI (and downstream
+      // consumers like cloud log aggregators) don't render raw "[32m…[0m"
+      // garbage. The terminal still sees the colored output because the
+      // wrapper invokes the original `console[level]` with the untouched
+      // args before this hook fires.
+      message: stripAnsi(formatArgs(args)),
       timestamp: Date.now(),
       traceId: ctx?.traceId,
     };
@@ -205,4 +210,20 @@ function formatArgs(args: unknown[]): string {
     }
   }
   return parts.join(' ');
+}
+
+/**
+ * Remove ANSI escape sequences (SGR colors, cursor moves, etc.) from a
+ * string so it renders cleanly in non-terminal consumers. Targets CSI
+ * sequences of the form `ESC [ <params> <final>` which covers
+ * essentially all colored-log output in practice.
+ *
+ * Implemented inline to avoid pulling in the `strip-ansi` dependency.
+ */
+function stripAnsi(input: string): string {
+  if (!input) return input;
+  // Quick check to skip the regex pass when no escape char is present.
+  if (input.indexOf('\u001b') === -1) return input;
+  // eslint-disable-next-line no-control-regex
+  return input.replace(/\u001b\[[\d;?]*[ -/]*[@-~]/g, '');
 }
