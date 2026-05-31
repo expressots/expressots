@@ -3,13 +3,58 @@
 import { PerformanceMetricsCollector } from "../logger.performance";
 import { Logger } from "../logger.provider";
 
-// Mock stdout/stderr
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// Mock console methods
+const mockConsoleLog = jest
+  .spyOn(console, "log")
+  .mockImplementation(() => undefined);
+const mockConsoleInfo = jest
+  .spyOn(console, "info")
+  .mockImplementation(() => undefined);
+const mockConsoleDebug = jest
+  .spyOn(console, "debug")
+  .mockImplementation(() => undefined);
+const mockConsoleWarn = jest
+  .spyOn(console, "warn")
+  .mockImplementation(() => undefined);
+const mockConsoleError = jest
+  .spyOn(console, "error")
+  .mockImplementation(() => undefined);
+
+function anyConsoleCalled(): boolean {
+  return (
+    mockConsoleLog.mock.calls.length +
+      mockConsoleInfo.mock.calls.length +
+      mockConsoleDebug.mock.calls.length +
+      mockConsoleWarn.mock.calls.length +
+      mockConsoleError.mock.calls.length >
+    0
+  );
+}
+
+function anyConsoleCalledWith(matcher: unknown): boolean {
+  const allCalls = [
+    ...mockConsoleLog.mock.calls,
+    ...mockConsoleInfo.mock.calls,
+    ...mockConsoleDebug.mock.calls,
+    ...mockConsoleWarn.mock.calls,
+    ...mockConsoleError.mock.calls,
+  ];
+  return allCalls.some((args) =>
+    args.some((arg: unknown) => {
+      if (typeof matcher === "string")
+        return typeof arg === "string" && arg.includes(matcher);
+      return false;
+    }),
+  );
+}
+
+function clearAllMocks(): void {
+  mockConsoleLog.mockClear();
+  mockConsoleInfo.mockClear();
+  mockConsoleDebug.mockClear();
+  mockConsoleWarn.mockClear();
+  mockConsoleError.mockClear();
+}
 
 describe("PerformanceMetricsCollector class", () => {
   let logger: Logger;
@@ -18,13 +63,15 @@ describe("PerformanceMetricsCollector class", () => {
   beforeEach(() => {
     logger = new Logger();
     collector = new PerformanceMetricsCollector(logger);
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    clearAllMocks();
   });
 
   afterAll(() => {
-    mockStdoutWrite.mockRestore();
-    mockStderrWrite.mockRestore();
+    mockConsoleLog.mockRestore();
+    mockConsoleInfo.mockRestore();
+    mockConsoleDebug.mockRestore();
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
   describe("start()", () => {
@@ -230,7 +277,7 @@ describe("PerformanceMetricsCollector class", () => {
       collector.summary();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
         expect.stringContaining("Performance Summary"),
       );
     });
@@ -244,7 +291,7 @@ describe("PerformanceMetricsCollector class", () => {
       collector.summary({ log: false });
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
 
     it("should log with debug level", () => {
@@ -256,7 +303,7 @@ describe("PerformanceMetricsCollector class", () => {
       collector.summary({ logLevel: "debug" });
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Performance Summary"),
       );
     });
@@ -270,7 +317,7 @@ describe("PerformanceMetricsCollector class", () => {
       collector.summary({ logLevel: "warn" });
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("Performance Summary"),
       );
     });

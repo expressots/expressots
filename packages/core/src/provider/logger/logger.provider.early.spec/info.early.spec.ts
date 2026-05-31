@@ -2,21 +2,17 @@
 
 import { Logger } from "../logger.provider";
 
-// Mocking the process.stdout.write and process.stderr.write
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// ConsoleTransport routes INFO-level logs through console.info
+const mockConsoleLog = jest
+  .spyOn(console, "info")
+  .mockImplementation(() => undefined);
 
 describe("Logger.info() info method", () => {
   let logger: Logger;
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    mockConsoleLog.mockClear();
   });
 
   describe("Happy Path", () => {
@@ -29,13 +25,13 @@ describe("Logger.info() info method", () => {
       logger.info(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining("INFO"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(module),
       );
     });
@@ -48,10 +44,10 @@ describe("Logger.info() info method", () => {
       logger.info(message);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining("INFO"),
       );
     });
@@ -67,10 +63,10 @@ describe("Logger.info() info method", () => {
       logger.info(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining("INFO"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(module),
       );
     });
@@ -84,10 +80,10 @@ describe("Logger.info() info method", () => {
       logger.info(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining("INFO"),
       );
     });
@@ -101,10 +97,10 @@ describe("Logger.info() info method", () => {
       logger.info(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining("INFO"),
       );
     });

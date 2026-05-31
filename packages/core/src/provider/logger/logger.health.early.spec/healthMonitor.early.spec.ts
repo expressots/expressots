@@ -8,21 +8,65 @@ import {
 } from "../logger.health";
 import { Logger } from "../logger.provider";
 
-// Mock stdout/stderr
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// Mock console methods
+const mockConsoleLog = jest
+  .spyOn(console, "log")
+  .mockImplementation(() => undefined);
+const mockConsoleInfo = jest
+  .spyOn(console, "info")
+  .mockImplementation(() => undefined);
+const mockConsoleDebug = jest
+  .spyOn(console, "debug")
+  .mockImplementation(() => undefined);
+const mockConsoleWarn = jest
+  .spyOn(console, "warn")
+  .mockImplementation(() => undefined);
+const mockConsoleError = jest
+  .spyOn(console, "error")
+  .mockImplementation(() => undefined);
+
+function anyConsoleCalled(): boolean {
+  return (
+    mockConsoleLog.mock.calls.length +
+      mockConsoleInfo.mock.calls.length +
+      mockConsoleDebug.mock.calls.length +
+      mockConsoleWarn.mock.calls.length +
+      mockConsoleError.mock.calls.length >
+    0
+  );
+}
+
+function anyConsoleCalledWith(matcher: unknown): boolean {
+  const allCalls = [
+    ...mockConsoleLog.mock.calls,
+    ...mockConsoleInfo.mock.calls,
+    ...mockConsoleDebug.mock.calls,
+    ...mockConsoleWarn.mock.calls,
+    ...mockConsoleError.mock.calls,
+  ];
+  return allCalls.some((args) =>
+    args.some((arg: unknown) => {
+      if (typeof matcher === "string")
+        return typeof arg === "string" && arg.includes(matcher);
+      return false;
+    }),
+  );
+}
+
+function clearAllMocks(): void {
+  mockConsoleLog.mockClear();
+  mockConsoleInfo.mockClear();
+  mockConsoleDebug.mockClear();
+  mockConsoleWarn.mockClear();
+  mockConsoleError.mockClear();
+}
 
 describe("HealthMonitor", () => {
   let logger: Logger;
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    clearAllMocks();
     jest.useFakeTimers();
   });
 
@@ -31,8 +75,11 @@ describe("HealthMonitor", () => {
   });
 
   afterAll(() => {
-    mockStdoutWrite.mockRestore();
-    mockStderrWrite.mockRestore();
+    mockConsoleLog.mockRestore();
+    mockConsoleInfo.mockRestore();
+    mockConsoleDebug.mockRestore();
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
   describe("Constructor", () => {
@@ -86,7 +133,7 @@ describe("HealthMonitor", () => {
       monitor.start();
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
 
     it("should stop existing interval before starting new one", async () => {
@@ -97,7 +144,7 @@ describe("HealthMonitor", () => {
       });
       monitor.start();
       await Promise.resolve();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       monitor.start();
@@ -137,14 +184,14 @@ describe("HealthMonitor", () => {
         interval: 1000,
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       monitor.stop();
 
       // Assert
       jest.advanceTimersByTime(2000);
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
 
     it("should handle stop when not started", () => {
@@ -185,14 +232,14 @@ describe("HealthMonitor", () => {
         alertLogLevel: "warn",
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
       await Promise.resolve(); // Wait for async checkHealth
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("Memory usage threshold exceeded"),
       );
     });
@@ -207,14 +254,14 @@ describe("HealthMonitor", () => {
         alertLogLevel: "error",
       });
       monitor.start();
-      mockStderrWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
       await Promise.resolve();
 
       // Assert
-      expect(mockStderrWrite).toHaveBeenCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringContaining("Memory usage threshold exceeded"),
       );
     });
@@ -228,7 +275,7 @@ describe("HealthMonitor", () => {
         alertsEnabled: true,
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
@@ -254,7 +301,7 @@ describe("HealthMonitor", () => {
         serviceChecks: [serviceCheck],
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
@@ -299,7 +346,7 @@ describe("HealthMonitor", () => {
         serviceChecks: [serviceCheck],
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
@@ -319,14 +366,14 @@ describe("HealthMonitor", () => {
         logLevel: "debug",
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
       await Promise.resolve();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(true);
     });
 
     it("should log with info level by default", async () => {
@@ -337,14 +384,14 @@ describe("HealthMonitor", () => {
         logLevel: "info",
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(1000);
       await Promise.resolve();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(true);
     });
   });
 
@@ -356,14 +403,14 @@ describe("HealthMonitor", () => {
         interval: 200, // > 100ms for CPU calculation
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(200);
       await Promise.resolve();
 
       // Assert - CPU calculation should occur
-      expect(mockStdoutWrite).toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(true);
     });
 
     it("should update baseline for short intervals", async () => {
@@ -373,14 +420,14 @@ describe("HealthMonitor", () => {
         interval: 50, // < 100ms
       });
       monitor.start();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       jest.advanceTimersByTime(50);
       await Promise.resolve();
 
       // Assert - should update baseline but not calculate CPU
-      expect(mockStdoutWrite).toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(true);
     });
   });
 });

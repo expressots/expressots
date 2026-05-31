@@ -3,26 +3,73 @@
 import { LogPerformance } from "../log-performance.decorator";
 import { Logger } from "../../logger.provider";
 
-// Mock stdout/stderr
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// Mock console methods
+const mockConsoleLog = jest
+  .spyOn(console, "log")
+  .mockImplementation(() => undefined);
+const mockConsoleInfo = jest
+  .spyOn(console, "info")
+  .mockImplementation(() => undefined);
+const mockConsoleDebug = jest
+  .spyOn(console, "debug")
+  .mockImplementation(() => undefined);
+const mockConsoleWarn = jest
+  .spyOn(console, "warn")
+  .mockImplementation(() => undefined);
+const mockConsoleError = jest
+  .spyOn(console, "error")
+  .mockImplementation(() => undefined);
+
+function anyConsoleCalled(): boolean {
+  return (
+    mockConsoleLog.mock.calls.length +
+      mockConsoleInfo.mock.calls.length +
+      mockConsoleDebug.mock.calls.length +
+      mockConsoleWarn.mock.calls.length +
+      mockConsoleError.mock.calls.length >
+    0
+  );
+}
+
+function anyConsoleCalledWith(matcher: unknown): boolean {
+  const allCalls = [
+    ...mockConsoleLog.mock.calls,
+    ...mockConsoleInfo.mock.calls,
+    ...mockConsoleDebug.mock.calls,
+    ...mockConsoleWarn.mock.calls,
+    ...mockConsoleError.mock.calls,
+  ];
+  return allCalls.some((args) =>
+    args.some((arg: unknown) => {
+      if (typeof matcher === "string")
+        return typeof arg === "string" && arg.includes(matcher);
+      return false;
+    }),
+  );
+}
+
+function clearAllMocks(): void {
+  mockConsoleLog.mockClear();
+  mockConsoleInfo.mockClear();
+  mockConsoleDebug.mockClear();
+  mockConsoleWarn.mockClear();
+  mockConsoleError.mockClear();
+}
 
 describe("LogPerformance decorator", () => {
   let logger: Logger;
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    clearAllMocks();
   });
 
   afterAll(() => {
-    mockStdoutWrite.mockRestore();
-    mockStderrWrite.mockRestore();
+    mockConsoleLog.mockRestore();
+    mockConsoleInfo.mockRestore();
+    mockConsoleDebug.mockRestore();
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
   describe("Async methods", () => {
@@ -43,10 +90,10 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Entering TestService.testMethod"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Exiting TestService.testMethod"),
       );
     });
@@ -68,7 +115,7 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
         expect.stringContaining("Exiting TestService.testMethod"),
       );
     });
@@ -90,7 +137,7 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("Exiting TestService.testMethod"),
       );
     });
@@ -110,7 +157,7 @@ describe("LogPerformance decorator", () => {
 
       // Act & Assert
       await expect(service.testMethod()).rejects.toThrow("Test error");
-      expect(mockStderrWrite).toHaveBeenCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringContaining("Error in TestService.testMethod"),
       );
     });
@@ -132,7 +179,7 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("CustomLabel"),
       );
     });
@@ -154,10 +201,10 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalledWith(
+      expect(mockConsoleDebug).not.toHaveBeenCalledWith(
         expect.stringContaining("Entering"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Exiting"),
       );
     });
@@ -179,10 +226,10 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Entering"),
       );
-      expect(mockStdoutWrite).not.toHaveBeenCalledWith(
+      expect(mockConsoleDebug).not.toHaveBeenCalledWith(
         expect.stringContaining("Exiting"),
       );
     });
@@ -204,7 +251,7 @@ describe("LogPerformance decorator", () => {
       await service.testMethod();
 
       // Assert - exit log should not be called because duration < minDuration
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Entering"),
       );
       // Exit log should not appear because duration is too short
@@ -244,10 +291,10 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Entering TestService.testMethod"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Exiting TestService.testMethod"),
       );
     });
@@ -269,7 +316,7 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
         expect.stringContaining("Exiting TestService.testMethod"),
       );
     });
@@ -291,7 +338,7 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("Exiting TestService.testMethod"),
       );
     });
@@ -311,7 +358,7 @@ describe("LogPerformance decorator", () => {
 
       // Act & Assert
       expect(() => service.testMethod()).toThrow("Test error");
-      expect(mockStderrWrite).toHaveBeenCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringContaining("Error in TestService.testMethod"),
       );
     });
@@ -333,7 +380,7 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("CustomLabel"),
       );
     });
@@ -355,10 +402,10 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalledWith(
+      expect(mockConsoleDebug).not.toHaveBeenCalledWith(
         expect.stringContaining("Entering"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Exiting"),
       );
     });
@@ -380,10 +427,10 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Entering"),
       );
-      expect(mockStdoutWrite).not.toHaveBeenCalledWith(
+      expect(mockConsoleDebug).not.toHaveBeenCalledWith(
         expect.stringContaining("Exiting"),
       );
     });
@@ -405,7 +452,7 @@ describe("LogPerformance decorator", () => {
       service.testMethod();
 
       // Assert - exit log should not be called because duration < minDuration
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Entering"),
       );
       // Exit log should not appear because duration is too short
@@ -443,7 +490,7 @@ describe("LogPerformance decorator", () => {
       service.testMethod("test", 123);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("[2 args]"),
       );
     });

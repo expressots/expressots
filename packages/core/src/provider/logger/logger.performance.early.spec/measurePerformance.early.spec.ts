@@ -6,26 +6,73 @@ import {
 } from "../logger.performance";
 import { Logger } from "../logger.provider";
 
-// Mock stdout/stderr
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// Mock console methods
+const mockConsoleLog = jest
+  .spyOn(console, "log")
+  .mockImplementation(() => undefined);
+const mockConsoleInfo = jest
+  .spyOn(console, "info")
+  .mockImplementation(() => undefined);
+const mockConsoleDebug = jest
+  .spyOn(console, "debug")
+  .mockImplementation(() => undefined);
+const mockConsoleWarn = jest
+  .spyOn(console, "warn")
+  .mockImplementation(() => undefined);
+const mockConsoleError = jest
+  .spyOn(console, "error")
+  .mockImplementation(() => undefined);
+
+function anyConsoleCalled(): boolean {
+  return (
+    mockConsoleLog.mock.calls.length +
+      mockConsoleInfo.mock.calls.length +
+      mockConsoleDebug.mock.calls.length +
+      mockConsoleWarn.mock.calls.length +
+      mockConsoleError.mock.calls.length >
+    0
+  );
+}
+
+function anyConsoleCalledWith(matcher: unknown): boolean {
+  const allCalls = [
+    ...mockConsoleLog.mock.calls,
+    ...mockConsoleInfo.mock.calls,
+    ...mockConsoleDebug.mock.calls,
+    ...mockConsoleWarn.mock.calls,
+    ...mockConsoleError.mock.calls,
+  ];
+  return allCalls.some((args) =>
+    args.some((arg: unknown) => {
+      if (typeof matcher === "string")
+        return typeof arg === "string" && arg.includes(matcher);
+      return false;
+    }),
+  );
+}
+
+function clearAllMocks(): void {
+  mockConsoleLog.mockClear();
+  mockConsoleInfo.mockClear();
+  mockConsoleDebug.mockClear();
+  mockConsoleWarn.mockClear();
+  mockConsoleError.mockClear();
+}
 
 describe("measurePerformance", () => {
   let logger: Logger;
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    clearAllMocks();
   });
 
   afterAll(() => {
-    mockStdoutWrite.mockRestore();
-    mockStderrWrite.mockRestore();
+    mockConsoleLog.mockRestore();
+    mockConsoleInfo.mockRestore();
+    mockConsoleDebug.mockRestore();
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
   describe("Async function", () => {
@@ -47,7 +94,7 @@ describe("measurePerformance", () => {
       expect(result).toBe("result");
       expect(performance.duration).toBeGreaterThan(0);
       expect(performance.memoryDelta).toBeDefined();
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("test-label"),
       );
     });
@@ -100,7 +147,7 @@ describe("measurePerformance", () => {
       expect(result).toBe("result");
       expect(performance.duration).toBeGreaterThanOrEqual(0);
       expect(performance.memoryDelta).toBeDefined();
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("test-label"),
       );
     });
@@ -112,13 +159,15 @@ describe("measurePerformanceSync", () => {
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    clearAllMocks();
   });
 
   afterAll(() => {
-    mockStdoutWrite.mockRestore();
-    mockStderrWrite.mockRestore();
+    mockConsoleLog.mockRestore();
+    mockConsoleInfo.mockRestore();
+    mockConsoleDebug.mockRestore();
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
   it("should measure sync function performance", () => {

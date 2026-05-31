@@ -3,26 +3,56 @@
 import { Timer } from "../logger.performance";
 import { Logger } from "../logger.provider";
 
-// Mock stdout/stderr
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// ConsoleTransport routes logs through console.* methods
+const mockConsoleLog = jest
+  .spyOn(console, "log")
+  .mockImplementation(() => undefined);
+const mockConsoleInfo = jest
+  .spyOn(console, "info")
+  .mockImplementation(() => undefined);
+const mockConsoleDebug = jest
+  .spyOn(console, "debug")
+  .mockImplementation(() => undefined);
+const mockConsoleWarn = jest
+  .spyOn(console, "warn")
+  .mockImplementation(() => undefined);
+const mockConsoleError = jest
+  .spyOn(console, "error")
+  .mockImplementation(() => undefined);
+
+function anyConsoleCalled(): boolean {
+  return (
+    mockConsoleLog.mock.calls.length +
+      mockConsoleInfo.mock.calls.length +
+      mockConsoleDebug.mock.calls.length +
+      mockConsoleWarn.mock.calls.length +
+      mockConsoleError.mock.calls.length >
+    0
+  );
+}
+
+function clearAllMocks(): void {
+  mockConsoleLog.mockClear();
+  mockConsoleInfo.mockClear();
+  mockConsoleDebug.mockClear();
+  mockConsoleWarn.mockClear();
+  mockConsoleError.mockClear();
+}
 
 describe("Timer class", () => {
   let logger: Logger;
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    clearAllMocks();
   });
 
   afterAll(() => {
-    mockStdoutWrite.mockRestore();
-    mockStderrWrite.mockRestore();
+    mockConsoleLog.mockRestore();
+    mockConsoleInfo.mockRestore();
+    mockConsoleDebug.mockRestore();
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
   describe("Constructor", () => {
@@ -41,7 +71,7 @@ describe("Timer class", () => {
 
       // Assert
       timer.end();
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining("Timer"),
       );
     });
@@ -52,7 +82,7 @@ describe("Timer class", () => {
 
       // Assert
       timer.end();
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
         expect.stringContaining("Timer"),
       );
     });
@@ -70,7 +100,7 @@ describe("Timer class", () => {
       // Assert
       expect(elapsed1).toBeGreaterThanOrEqual(0);
       expect(elapsed2).toBeGreaterThanOrEqual(elapsed1);
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
   });
 
@@ -83,7 +113,7 @@ describe("Timer class", () => {
       timer.end();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleDebug).toHaveBeenCalledWith(
         expect.stringContaining('Timer "test-timer" completed'),
       );
     });
@@ -96,7 +126,7 @@ describe("Timer class", () => {
       timer.end();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
         expect.stringContaining('Timer "test-timer" completed'),
       );
     });
@@ -109,7 +139,7 @@ describe("Timer class", () => {
       timer.end();
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining('Timer "test-timer" completed'),
       );
     });
@@ -134,20 +164,20 @@ describe("Timer class", () => {
       timer.end();
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
 
     it("should not log if timer is already ended", () => {
       // Arrange
       const timer = new Timer("test-timer", logger);
       timer.end();
-      mockStdoutWrite.mockClear();
+      clearAllMocks();
 
       // Act
       timer.end();
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
 
     it("should return elapsed time even if cancelled", () => {
@@ -186,7 +216,7 @@ describe("Timer class", () => {
       timer.end();
 
       // Assert
-      expect(mockStdoutWrite).not.toHaveBeenCalled();
+      expect(anyConsoleCalled()).toBe(false);
     });
   });
 });

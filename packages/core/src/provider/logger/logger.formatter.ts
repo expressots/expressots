@@ -13,6 +13,27 @@ export interface FormatOptions {
   redact?: boolean;
   /** Custom redactor instance (uses global if not provided) */
   redactor?: Redactor;
+  /**
+   * Emit ANSI color escape codes. When false, the formatted output is
+   * post-processed to strip every ANSI escape. Defaults to true (colored).
+   *
+   * Disable this for non-TTY consumers like cloud log viewers (Azure
+   * App Service, AWS CloudWatch, Heroku, Kubernetes, etc.) and Studio's
+   * Live Logs panel, all of which display the raw text without
+   * interpreting terminal escape sequences.
+   */
+  colors?: boolean;
+}
+
+/**
+ * Strip ANSI escape sequences (SGR colors, cursor moves, etc.) from a
+ * string. Cheap fast-path bails out when no escape character is present.
+ */
+// eslint-disable-next-line no-control-regex
+const ANSI_ESCAPE_REGEX = /\u001b\[[\d;?]*[ -/]*[@-~]/g;
+function stripAnsiEscapes(input: string): string {
+  if (!input || input.indexOf("\u001b") === -1) return input;
+  return input.replace(ANSI_ESCAPE_REGEX, "");
 }
 
 /**
@@ -68,6 +89,13 @@ export function formatDev(entry: LogEntry, options?: FormatOptions): string {
     output += formatFlow(processedEntry.flow, 2);
   }
 
+  // Strip ANSI escapes once at the end when colors are disabled. This is
+  // far simpler than threading a "useColors" flag through every nested
+  // `colorText(...)` call site and the perf cost (one regex pass over a
+  // log line) is negligible relative to the I/O that follows.
+  if (options?.colors === false) {
+    return stripAnsiEscapes(output);
+  }
   return output;
 }
 
@@ -415,6 +443,9 @@ export function formatGroupedDev(
     }
   }
 
+  if (options?.colors === false) {
+    return stripAnsiEscapes(output);
+  }
   return output;
 }
 
