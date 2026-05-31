@@ -66,8 +66,8 @@
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
     "format": "prettier --write \"src/**/*.ts\" --cache",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix"
+    "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
   },
   "dependencies": {
     "chalk": "4.1.2"
@@ -93,12 +93,19 @@
     "eslint-config-prettier": "10.0.2",
     "husky": "9.1.1",
     "jest": "29.7.0",
+    "lint-staged": "^15.2.10",
     "prettier": "3.5.3",
     "reflect-metadata": "0.2.2",
     "release-it": "^20.0.1",
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "typescript": "5.5.3"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --cache --cache-location node_modules/.cache/eslint/ --fix",
+      "prettier --write --cache"
+    ]
   },
   "release-it": {
     "git": {
