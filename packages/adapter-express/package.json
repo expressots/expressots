@@ -65,8 +65,8 @@
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
     "format": "prettier --write \"src/**/*.ts\" --cache",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix"
+    "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
   },
   "dependencies": {
     "@expressots/core": "file:../expressots/expressots-core-4.0.0-preview.3.tgz",
@@ -97,11 +97,18 @@
     "eslint-config-prettier": "9.1.0",
     "husky": "9.1.1",
     "jest": "29.7.0",
+    "lint-staged": "^15.2.10",
     "prettier": "3.3.3",
     "release-it": "^20.0.1",
     "ts-jest": "29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "5.5.3"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --cache --cache-location node_modules/.cache/eslint/ --fix",
+      "prettier --write --cache"
+    ]
   },
   "release-it": {
     "git": {
