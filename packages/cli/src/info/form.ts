@@ -27,11 +27,11 @@ function getInfosFromPackage() {
 	}
 }
 
-export const infoForm = (): void => {
+export const infoForm = async (): Promise<void> => {
 	getInfosFromPackage();
 
 	printSection("💻 System");
-	printKeyValue("OS", os.version());
+	printKeyValue("OS", `${os.type()} ${os.release()} (${os.arch()})`);
 	printKeyValue("Node.js", process.version);
 	printKeyValue("CLI", BUNDLE_VERSION);
 	console.log("");

@@ -1,8 +1,7 @@
 import { CommandModule } from "yargs";
 import { infoForm } from "./form";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CommandModuleArgs = {};
+type CommandModuleArgs = object;
 
 const infoProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
