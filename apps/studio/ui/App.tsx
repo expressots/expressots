@@ -19,6 +19,7 @@ import {
   LogsView,
   StatusDashboard,
   SecurityView,
+  DatabaseView,
 } from './components';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
 
@@ -63,6 +64,8 @@ function AppContent() {
         return <ApiClient />;
       case 'container':
         return <ContainerInspector />;
+      case 'database':
+        return <DatabaseView />;
       case 'logs':
         return <LogsView />;
       case 'security':

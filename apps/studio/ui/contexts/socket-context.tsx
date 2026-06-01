@@ -21,6 +21,8 @@ import type {
   SecurityReport,
   FixProgressMessage,
   FixResultMessage,
+  DatabaseSnapshot,
+  DatabaseTableData,
 } from '../types';
 
 interface SocketContextValue {
@@ -41,6 +43,10 @@ interface SocketContextValue {
   requestLogs: () => void;
   clearLogs: () => void;
   requestRuntime: () => void;
+  /** Re-request the in-memory database schema snapshot. */
+  requestDatabaseSchema: () => void;
+  /** Request a page of rows for a single in-memory database table. */
+  requestDatabaseTable: (table: string, offset?: number, limit?: number) => void;
   /** Re-run the supply-chain scan (`npm audit` + OSV) on the agent. */
   requestSecurityScan: () => void;
   /** Ask the agent to (re)broadcast its current cached security report. */
@@ -86,6 +92,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     incrementEventCount,
     setRuntime,
     setSecurityReport,
+    setDatabaseSnapshot,
+    setDatabaseTableData,
     startFixRun,
     appendFixProgress,
     completeFixRun,
@@ -218,12 +226,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'fix_result':
         completeFixRun(message.data as FixResultMessage);
         break;
+      case 'database':
+        setDatabaseSnapshot(message.data as DatabaseSnapshot);
+        break;
+      case 'database_table':
+        setDatabaseTableData(message.data as DatabaseTableData);
+        break;
       default:
         // Unknown event — ignored silently (a noisy `console.log` here
         // would echo back through the agent's own log capture).
         break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, appendFixProgress, completeFixRun]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, setDatabaseSnapshot, setDatabaseTableData, appendFixProgress, completeFixRun]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -253,6 +267,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_logs');
       socket.emit('get_runtime');
       socket.emit('get_security_report');
+      socket.emit('get_database_schema');
 
       // Kick off an immediate ping then settle into a 5s cadence.
       const sendPing = () => socket.emit('ping_studio', { sentAt: Date.now() });
@@ -315,6 +330,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     requestLogs: useCallback(() => emit('get_logs'), [emit]),
     clearLogs: useCallback(() => emit('clear_logs'), [emit]),
     requestRuntime: useCallback(() => emit('get_runtime'), [emit]),
+    requestDatabaseSchema: useCallback(() => emit('get_database_schema'), [emit]),
+    requestDatabaseTable: useCallback(
+      (table: string, offset = 0, limit = 50) =>
+        emit('get_database_table', { table, offset, limit }),
+      [emit],
+    ),
     requestSecurityScan: useCallback(() => emit('request_security_scan'), [emit]),
     requestSecurityReport: useCallback(() => emit('get_security_report'), [emit]),
     applyFix: useCallback(

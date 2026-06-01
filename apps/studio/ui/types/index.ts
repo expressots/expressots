@@ -216,7 +216,9 @@ export type WSMessageType =
   | 'security'
   | 'security_scan_state'
   | 'fix_progress'
-  | 'fix_result';
+  | 'fix_result'
+  | 'database'
+  | 'database_table';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
@@ -233,7 +235,60 @@ export type ViewMode =
   | 'api-client'
   | 'container'
   | 'logs'
-  | 'security';
+  | 'security'
+  | 'database';
+
+// ────────────────────────────────────────────────────────────────────────
+// In-memory database introspection
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Browser-side mirror of the agent's database introspection types. See
+ * `packages/studio-agent/src/types/index.ts` for field semantics.
+ */
+export interface DatabaseFieldSchema {
+  name: string;
+  isPrimaryKey: boolean;
+  isUnique: boolean;
+  isIndexed: boolean;
+  isNullable: boolean;
+  autoGenerate?: string;
+}
+
+export interface DatabaseRelationSchema {
+  field: string;
+  type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany';
+  target: string;
+  foreignKey?: string;
+  through?: string;
+}
+
+export interface DatabaseEntitySchema {
+  name: string;
+  timestamps: boolean;
+  softDelete: boolean;
+  fields: DatabaseFieldSchema[];
+  relations: DatabaseRelationSchema[];
+  recordCount: number;
+  indexes: Array<{ field: string; size: number; unique: boolean }>;
+  memoryEstimate: number;
+}
+
+export interface DatabaseSnapshot {
+  available: boolean;
+  tableCount: number;
+  totalRecords: number;
+  entities: DatabaseEntitySchema[];
+  timestamp: string;
+}
+
+export interface DatabaseTableData {
+  table: string;
+  rows: Array<Record<string, unknown>>;
+  total: number;
+  offset: number;
+  limit: number;
+}
 
 // ────────────────────────────────────────────────────────────────────────
 // DI Container introspection

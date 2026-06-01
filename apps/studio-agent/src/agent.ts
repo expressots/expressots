@@ -17,6 +17,7 @@ import {
   ContainerIntrospector,
   type ContainerSnapshot,
 } from './introspection/container-introspector.js';
+import { DatabaseIntrospector } from './introspection/database-introspector.js';
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
 import { SecurityEngine } from './security/index.js';
 import { resolveInstallId } from './identity/install-id.js';
@@ -105,6 +106,7 @@ export class StudioAgent {
   private recorder: RequestRecorder;
   private introspector: ContainerIntrospector | null = null;
   private containerSnapshot: ContainerSnapshot | null = null;
+  private databaseIntrospector: DatabaseIntrospector | null = null;
   private logCapture: LogCapture;
   private securityEngine: SecurityEngine | null = null;
   private io: SocketIOServer | null = null;
@@ -146,6 +148,9 @@ export class StudioAgent {
 
     if (this.config.appContainer) {
       this.introspector = new ContainerIntrospector(this.config.appContainer);
+      this.databaseIntrospector = new DatabaseIntrospector(
+        this.config.appContainer,
+      );
     }
 
     this.logCapture = new LogCapture(1000);
@@ -312,6 +317,24 @@ export class StudioAgent {
   /** Get the captured container snapshot (or null if unavailable). */
   getContainerSnapshot(): ContainerSnapshot | null {
     return this.containerSnapshot;
+  }
+
+  /**
+   * Capture a fresh in-memory database snapshot. Returns an "unavailable"
+   * snapshot when no `InMemoryDBProvider` is registered or no container was
+   * provided to the agent.
+   */
+  private captureDatabaseSnapshot(): import('./types/index.js').DatabaseSnapshot {
+    if (this.databaseIntrospector) {
+      return this.databaseIntrospector.capture();
+    }
+    return {
+      available: false,
+      tableCount: 0,
+      totalRecords: 0,
+      entities: [],
+      timestamp: new Date().toISOString(),
+    };
   }
 
   /** Stop the Studio Agent */
@@ -932,6 +955,15 @@ export class StudioAgent {
         });
       }
 
+      // Send the in-memory database schema snapshot (when a provider is
+      // registered). Always emitted so the UI can render the "not detected"
+      // empty state when `available` is false.
+      socket.emit('message', {
+        type: 'database',
+        timestamp: Date.now(),
+        data: this.captureDatabaseSnapshot(),
+      });
+
       socket.emit('message', {
         type: 'recording_state',
         timestamp: Date.now(),
@@ -1094,6 +1126,43 @@ export class StudioAgent {
           data: this.containerSnapshot,
         });
       });
+
+      // Re-send the in-memory database schema snapshot on demand. Captured
+      // fresh each call so newly created tables / records are reflected.
+      socket.on('get_database_schema', () => {
+        socket.emit('message', {
+          type: 'database',
+          timestamp: Date.now(),
+          data: this.captureDatabaseSnapshot(),
+        });
+      });
+
+      // Return a page of rows for a single table.
+      socket.on(
+        'get_database_table',
+        async (params: { table?: string; offset?: number; limit?: number }) => {
+          const table = typeof params?.table === 'string' ? params.table : '';
+          if (!table) return;
+          const offset =
+            typeof params?.offset === 'number' && params.offset >= 0
+              ? params.offset
+              : 0;
+          const limit =
+            typeof params?.limit === 'number' && params.limit > 0
+              ? Math.min(params.limit, 200)
+              : 50;
+
+          const data = this.databaseIntrospector
+            ? await this.databaseIntrospector.getTableData(table, offset, limit)
+            : { table, rows: [], total: 0, offset, limit };
+
+          socket.emit('message', {
+            type: 'database_table',
+            timestamp: Date.now(),
+            data,
+          });
+        },
+      );
 
       // Push the latest cached report on demand. Useful when the UI
       // explicitly navigates to the Security view and wants a fresh

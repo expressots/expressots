@@ -16,6 +16,7 @@ import {
   Terminal,
   LayoutDashboard,
   ShieldCheck,
+  Database,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { id: 'logs', label: 'Logs', icon: Terminal },
   { id: 'api-client', label: 'API Client', icon: Send },
   { id: 'container', label: 'Container', icon: Boxes },
+  { id: 'database', label: 'Database', icon: Database },
   { id: 'architecture', label: 'Architecture', icon: GitBranch },
   { id: 'metrics', label: 'Metrics', icon: BarChart3 },
   { id: 'replay', label: 'Replay', icon: Play },

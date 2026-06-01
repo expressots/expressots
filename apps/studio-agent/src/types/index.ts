@@ -353,13 +353,67 @@ export type WSMessageType =
   | 'security'
   | 'security_scan_state'
   | 'fix_progress'
-  | 'fix_result';
+  | 'fix_result'
+  | 'database'
+  | 'database_table';
 
 /** WebSocket message structure */
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
   timestamp: number;
   data: T;
+}
+
+/** A single field within an in-memory database entity. */
+export interface DatabaseFieldSchema {
+  name: string;
+  isPrimaryKey: boolean;
+  isUnique: boolean;
+  isIndexed: boolean;
+  isNullable: boolean;
+  autoGenerate?: string;
+}
+
+/** A relation between two in-memory database entities. */
+export interface DatabaseRelationSchema {
+  field: string;
+  type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany';
+  target: string;
+  foreignKey?: string;
+  through?: string;
+}
+
+/** Schema for a single in-memory database entity / table. */
+export interface DatabaseEntitySchema {
+  name: string;
+  timestamps: boolean;
+  softDelete: boolean;
+  fields: DatabaseFieldSchema[];
+  relations: DatabaseRelationSchema[];
+  recordCount: number;
+  indexes: Array<{ field: string; size: number; unique: boolean }>;
+  memoryEstimate: number;
+}
+
+/**
+ * Full in-memory database snapshot sent to the Studio UI.
+ * `available` is false when no `InMemoryDBProvider` is registered.
+ */
+export interface DatabaseSnapshot {
+  available: boolean;
+  tableCount: number;
+  totalRecords: number;
+  entities: DatabaseEntitySchema[];
+  timestamp: string;
+}
+
+/** A page of rows from a single in-memory database table. */
+export interface DatabaseTableData {
+  table: string;
+  rows: Array<Record<string, unknown>>;
+  total: number;
+  offset: number;
+  limit: number;
 }
 
 /** Application metrics */

@@ -21,6 +21,8 @@ import type {
   FixProgressMessage,
   FixResultMessage,
   HttpMethod,
+  DatabaseSnapshot,
+  DatabaseTableData,
 } from '../types';
 
 /**
@@ -73,6 +75,14 @@ interface AppState {
    * Apply-fix job. Cleared on next user-initiated run.
    */
   fixRun: FixRunState | null;
+  /**
+   * In-memory database schema snapshot from the agent. `null` until the
+   * first `database` WS message arrives; `available: false` when no
+   * `InMemoryDBProvider` is registered.
+   */
+  databaseSnapshot: DatabaseSnapshot | null;
+  /** Most recent page of rows for the table currently being browsed. */
+  databaseTableData: DatabaseTableData | null;
   /** Live console.* stream from the host app (latest first). */
   logs: LogEntry[];
   /** Logs grouped by traceId, so TraceDetail can show "logs for this request". */
@@ -126,6 +136,8 @@ interface AppState {
   setContainerResolutions: (entry: ContainerResolutions) => void;
   setRuntime: (runtime: RuntimeInfo) => void;
   setSecurityReport: (report: SecurityReport) => void;
+  setDatabaseSnapshot: (snapshot: DatabaseSnapshot | null) => void;
+  setDatabaseTableData: (data: DatabaseTableData | null) => void;
   startFixRun: (targetId: string, command: string) => void;
   appendFixProgress: (msg: FixProgressMessage) => void;
   completeFixRun: (msg: FixResultMessage) => void;
@@ -171,6 +183,8 @@ function buildInitialState() {
     containerResolutionsByExchange: {},
     runtime: null,
     securityReport: null,
+    databaseSnapshot: null,
+    databaseTableData: null,
     fixRun: null,
     logs: [],
     logsByTraceId: {},
@@ -233,6 +247,9 @@ export const useAppStore = create<AppState>((set) => ({
   setRuntime: (runtime) => set({ runtime }),
 
   setSecurityReport: (securityReport) => set({ securityReport }),
+
+  setDatabaseSnapshot: (databaseSnapshot) => set({ databaseSnapshot }),
+  setDatabaseTableData: (databaseTableData) => set({ databaseTableData }),
 
   startFixRun: (targetId, command) =>
     set({

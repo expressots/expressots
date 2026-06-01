@@ -18,3 +18,4 @@ export { ReplayDiff } from './ReplayDiff';
 export { HealthFooter } from './HealthFooter';
 export { StatusDashboard } from './StatusDashboard';
 export { SecurityView } from './SecurityView';
+export { DatabaseView } from './DatabaseView';
