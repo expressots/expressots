@@ -663,7 +663,7 @@ export class RouteScanner {
     };
 
     const fieldRe =
-      /^[ \t]*(?:public\s+|private\s+|protected\s+)?(?:readonly\s+)?(\w+)\s*\??\s*:\s*([A-Za-z_$][\w.<>\[\]|\s'"]*?)\s*[;=,]/gm;
+      /^[ \t]*(?:public\s+|private\s+|protected\s+)?(?:readonly\s+)?(\w+)\s*\??\s*:\s*([A-Za-z_$][\w.<>[\]|\s'"]*?)\s*[;=,]/gm;
 
     const buildSampleFromBody = (body: string): Record<string, unknown> => {
       const sample: Record<string, unknown> = {};

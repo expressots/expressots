@@ -24,7 +24,7 @@
     "dev": "tsc --watch",
     "dev:ui": "vite",
     "start": "node dist/cli.js",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "clean": "rimraf dist",
     "release:prepare": "node scripts/release/prepare-publish.mjs",

@@ -2824,14 +2824,17 @@ function PostureTab({
   const [owaspFilter, setOwaspFilter] = useState<string | null>(null);
   const [showSuppressed, setShowSuppressed] = useState(false);
 
+  // Always show the coverage tiles, even when there are no findings —
+  // the *zeros* are the credibility statement ("we checked these and
+  // you're clean"). These hooks must run unconditionally and BEFORE the
+  // early return below, so fall back to an empty posture until the report
+  // arrives.
+  const owaspCounts = useMemoOwaspCounts(report?.posture ?? []);
+  const authCoverage = useMemoAuthCoverage(routes, report?.posture ?? []);
+
   if (!report) {
     return <EmptyState icon={Loader2} message="Connecting to agent…" />;
   }
-  // Always show the coverage tiles, even when there are no findings —
-  // the *zeros* are the credibility statement ("we checked these and
-  // you're clean").
-  const owaspCounts = useMemoOwaspCounts(report.posture);
-  const authCoverage = useMemoAuthCoverage(routes, report.posture);
   const suppressedCount = report.posture.filter((f) =>
     suppressions.isSuppressed(`p:${f.id}`),
   ).length;
