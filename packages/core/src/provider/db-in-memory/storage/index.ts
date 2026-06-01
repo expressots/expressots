@@ -11,4 +11,6 @@ export {
   UniqueConstraintError,
   EntityNotFoundError,
   EntityAlreadyExistsError,
+  MaxRecordsExceededError,
+  EntityValidationError,
 } from "./memory-store.js";

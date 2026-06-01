@@ -545,6 +545,35 @@ export class InMemoryAdapter<T extends IEntity>
         });
       }
 
+      case "manyToMany": {
+        // Resolve through a join table. Convention: the `through` table holds
+        // link records with two foreign keys named `<sourceClass>Id` and
+        // `<targetClass>Id` (class names lowercased). For example, a
+        // Post <-> Tag relation through "post_tags" stores rows shaped like
+        // `{ postId, tagId }`.
+        if (!relation.through || !this.entityClass) return [];
+
+        const sourceKey = `${this.entityClass.name.toLowerCase()}Id`;
+        const targetKey = `${relation.target().name.toLowerCase()}Id`;
+
+        const joinAdapter = this.database.table(relation.through);
+        const joinRecords = await joinAdapter.findMany({
+          where: { [sourceKey]: entity.id } as WhereInput<IEntity>,
+        });
+
+        const targetIds = joinRecords
+          .map((record) => (record as Record<string, unknown>)[targetKey])
+          .filter((value): value is string => typeof value === "string");
+
+        if (targetIds.length === 0) return [];
+
+        const related = await Promise.all(
+          targetIds.map((id) => relatedAdapter.findUnique({ where: { id } })),
+        );
+
+        return related.filter((item) => item !== null);
+      }
+
       default:
         return null;
     }
@@ -665,6 +694,8 @@ export interface InMemoryDatabaseOptions {
   timestamps?: boolean;
   /** Enable soft deletes by default for all tables */
   softDelete?: boolean;
+  /** Maximum number of records per table (0 = unlimited) */
+  maxRecordsPerTable?: number;
   /** Persistence configuration */
   persist?: {
     /** Storage type */
@@ -748,6 +779,7 @@ export class InMemoryDatabase {
           entityClass,
           timestamps: this.options.timestamps,
           softDelete: this.options.softDelete,
+          maxRecordsPerTable: this.options.maxRecordsPerTable,
         }),
       );
     }

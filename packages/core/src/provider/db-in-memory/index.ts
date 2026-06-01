@@ -4,6 +4,14 @@
  * A high-performance, Prisma-compatible in-memory database
  * for ExpressoTS applications.
  *
+ * Scope: this database is intended for development, testing, and
+ * prototyping. Data lives in process memory (with optional file
+ * snapshots) and does not provide the crash safety, concurrency, or
+ * multi-process guarantees of a real database engine. It implements the
+ * universal `IDataAdapter` contract so it can be swapped for a
+ * production adapter (Prisma, TypeORM, etc.) without rewriting
+ * repositories.
+ *
  * Features:
  * - Prisma-like query API
  * - Type-safe queries with TypeScript
@@ -179,6 +187,8 @@ export {
   UniqueConstraintError,
   EntityNotFoundError,
   EntityAlreadyExistsError,
+  MaxRecordsExceededError,
+  EntityValidationError,
 } from "./storage/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════

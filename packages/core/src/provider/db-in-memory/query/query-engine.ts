@@ -10,6 +10,7 @@ import { IEntity } from "../schema/entity.interface.js";
 import { MemoryStore } from "../storage/memory-store.js";
 import {
   WhereInput,
+  WhereUniqueInput,
   OrderByInput,
   SortOrder,
   StringFilter,
@@ -495,6 +496,43 @@ export class QueryEngine<T extends IEntity> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // CURSOR
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Apply cursor-based pagination. The cursor identifies a record (by id or
+   * any other field combination) within the ordered result set; the returned
+   * slice starts at that record. Combine with `skip` (typically `skip: 1` to
+   * exclude the cursor itself) and `take`.
+   *
+   * Should be applied after `orderBy` and before `skip`/`take`.
+   *
+   * @param entities - Ordered entities to slice
+   * @param cursor - Unique cursor identifying the start record
+   * @returns Entities starting at the cursor (empty array if not found)
+   */
+  executeCursor(entities: Array<T>, cursor?: WhereUniqueInput<T>): Array<T> {
+    if (!cursor) return entities;
+
+    const keys = Object.keys(cursor).filter(
+      (key) => (cursor as Record<string, unknown>)[key] !== undefined,
+    );
+    if (keys.length === 0) return entities;
+
+    const index = entities.findIndex((entity) =>
+      keys.every(
+        (key) =>
+          (entity as Record<string, unknown>)[key] ===
+          (cursor as Record<string, unknown>)[key],
+      ),
+    );
+
+    if (index === -1) return [];
+
+    return entities.slice(index);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // DISTINCT
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -679,6 +717,7 @@ export class QueryEngine<T extends IEntity> {
     let entities = this.executeWhere(args.where);
     entities = this.executeDistinct(entities, args.distinct);
     entities = this.executeOrderBy(entities, args.orderBy);
+    entities = this.executeCursor(entities, args.cursor);
     entities = this.executePagination(entities, args.skip, args.take);
 
     if (args.select) {

@@ -423,19 +423,11 @@ describe("InMemoryAdapter includes and relations", () => {
         include: { posts: true },
       });
 
-      // Assert
-      expect(result).toBeDefined();
-      if (result) {
-        // Relations may not resolve if database/entityClass not set correctly
-        // Check if posts was resolved or if it's undefined (both are valid test outcomes)
-        if (result.posts !== undefined) {
-          expect(Array.isArray(result.posts)).toBe(true);
-          expect(result.posts?.length).toBe(2);
-        } else {
-          // If relations aren't resolving, that's a separate issue - just verify the entity was found
-          expect(result.name).toBe("John");
-        }
-      }
+      // Assert — relations resolve when the adapter is created with its
+      // entity class (see beforeEach).
+      expect(result).not.toBeNull();
+      expect(Array.isArray(result!.posts)).toBe(true);
+      expect(result!.posts?.length).toBe(2);
     });
 
     it("should resolve hasOne relation", async () => {
@@ -454,16 +446,9 @@ describe("InMemoryAdapter includes and relations", () => {
       });
 
       // Assert
-      expect(result).toBeDefined();
-      if (result) {
-        // Relations may not resolve if database/entityClass not set correctly
-        if (result.profile !== undefined) {
-          expect(result.profile?.bio).toBe("Bio");
-        } else {
-          // If relations aren't resolving, verify the entity was found
-          expect(result.name).toBe("John");
-        }
-      }
+      expect(result).not.toBeNull();
+      expect(result!.profile).toBeDefined();
+      expect(result!.profile?.bio).toBe("Bio");
     });
 
     it("should resolve belongsTo relation", async () => {
@@ -482,16 +467,9 @@ describe("InMemoryAdapter includes and relations", () => {
       });
 
       // Assert
-      expect(result).toBeDefined();
-      if (result) {
-        // Relations may not resolve if database/entityClass not set correctly
-        if (result.author !== undefined) {
-          expect(result.author?.name).toBe("John");
-        } else {
-          // If relations aren't resolving, verify the entity was found
-          expect(result.title).toBe("Post 1");
-        }
-      }
+      expect(result).not.toBeNull();
+      expect(result!.author).toBeDefined();
+      expect(result!.author?.name).toBe("John");
     });
 
     it("should return null for belongsTo when foreign key is missing", async () => {
@@ -532,20 +510,14 @@ describe("InMemoryAdapter includes and relations", () => {
         },
       });
 
-      // Assert
-      expect(result).toBeDefined();
-      // Nested includes may not resolve fully, but code paths should execute
-      if (
-        result &&
-        result.posts &&
-        Array.isArray(result.posts) &&
-        result.posts[0]
-      ) {
-        // If nested relation resolved
-        if (result.posts[0].author !== undefined) {
-          expect(result.posts[0].author).toBeDefined();
-        }
-      }
+      // Assert — the top-level hasMany resolves, and the nested belongsTo
+      // (post -> author) resolves back to the originating user.
+      expect(result).not.toBeNull();
+      expect(Array.isArray(result!.posts)).toBe(true);
+      expect(result!.posts?.length).toBe(1);
+      const nestedAuthor = (result!.posts?.[0] as PostEntity)?.author;
+      expect(nestedAuthor).toBeDefined();
+      expect(nestedAuthor?.name).toBe("John");
     });
 
     it("should skip non-existent relations", async () => {

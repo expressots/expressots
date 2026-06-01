@@ -561,6 +561,30 @@ export class SchemaRegistry {
   }
 
   /**
+   * Get primary key field names for an entity.
+   * @param target - Entity class
+   * @returns Array of primary key field names
+   * @public API
+   */
+  static getPrimaryKeys(
+    target: new (...args: Array<unknown>) => unknown,
+  ): Array<string | symbol> {
+    return Reflect.getMetadata(DB_METADATA_KEYS.primaryKey, target) || [];
+  }
+
+  /**
+   * Get nullable field names for an entity.
+   * @param target - Entity class
+   * @returns Array of nullable field names
+   * @public API
+   */
+  static getNullableFields(
+    target: new (...args: Array<unknown>) => unknown,
+  ): Array<string | symbol> {
+    return Reflect.getMetadata(DB_METADATA_KEYS.nullable, target) || [];
+  }
+
+  /**
    * Clear all registered entities (useful for testing).
    * @public API
    */

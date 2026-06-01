@@ -214,6 +214,41 @@ export class EntityNotFoundError extends Error {
 }
 
 /**
+ * Error thrown when a table reaches its configured record limit.
+ * @public API
+ */
+export class MaxRecordsExceededError extends Error {
+  tableName: string;
+  limit: number;
+
+  constructor(tableName: string, limit: number) {
+    super(`Table '${tableName}' has reached its maximum of ${limit} records`);
+    this.name = "MaxRecordsExceededError";
+    this.tableName = tableName;
+    this.limit = limit;
+  }
+}
+
+/**
+ * Error thrown when entity validation fails (when `@Entity({ validate: true })`).
+ * @public API
+ */
+export class EntityValidationError extends Error {
+  tableName: string;
+  field: string;
+
+  constructor(tableName: string, field: string, message?: string) {
+    super(
+      message ??
+        `Validation failed on '${tableName}': field '${field}' is required`,
+    );
+    this.name = "EntityValidationError";
+    this.tableName = tableName;
+    this.field = field;
+  }
+}
+
+/**
  * Error thrown when an entity already exists.
  * @public API
  */
@@ -309,6 +344,8 @@ export interface MemoryStoreOptions {
   timestamps?: boolean;
   /** Enable soft deletes */
   softDelete?: boolean;
+  /** Maximum number of records allowed in the table (0 = unlimited) */
+  maxRecordsPerTable?: number;
 }
 
 /**
@@ -342,12 +379,19 @@ export class MemoryStore<T extends IEntity> {
   private autoGenerateFields: Record<string, AutoGenerateStrategy> = {};
   /** Default values */
   private defaultValues: Record<string, unknown> = {};
+  /** Maximum number of records allowed (0 = unlimited) */
+  private maxRecords: number;
+  /** Enable runtime validation (from @Entity({ validate: true })) */
+  private validate = false;
+  /** Fields that must be present and non-null when validation is enabled */
+  private requiredFields: Array<string> = [];
 
   constructor(tableName: string, options: MemoryStoreOptions = {}) {
     this.tableName = tableName;
     this.entityClass = options.entityClass;
     this.timestamps = options.timestamps ?? true;
     this.softDelete = options.softDelete ?? false;
+    this.maxRecords = options.maxRecordsPerTable ?? 0;
 
     // Load schema metadata if entity class is provided
     if (this.entityClass) {
@@ -398,6 +442,43 @@ export class MemoryStore<T extends IEntity> {
     if (entityMeta) {
       this.timestamps = entityMeta.timestamps;
       this.softDelete = entityMeta.softDelete;
+      this.validate = entityMeta.validate;
+    }
+
+    // When validation is enabled, treat primary-key and unique fields as
+    // required (must be present and non-null) unless explicitly @Nullable.
+    if (this.validate) {
+      const nullable = new Set(
+        SchemaRegistry.getNullableFields(this.entityClass).map(String),
+      );
+      const required = new Set<string>();
+      for (const field of SchemaRegistry.getPrimaryKeys(this.entityClass)) {
+        required.add(String(field));
+      }
+      for (const field of SchemaRegistry.getUniqueFields(this.entityClass)) {
+        required.add(String(field));
+      }
+      this.requiredFields = Array.from(required).filter(
+        (field) => !nullable.has(field),
+      );
+    }
+  }
+
+  /**
+   * Validate an entity against the schema (only when `validate` is enabled).
+   * Ensures required fields (primary key + unique, excluding @Nullable) are
+   * present and non-null.
+   * @private
+   * @throws ValidationError when a required field is missing or null
+   */
+  private validateEntity(entity: T): void {
+    if (!this.validate) return;
+
+    for (const field of this.requiredFields) {
+      const value = (entity as Record<string, unknown>)[field];
+      if (value === undefined || value === null) {
+        throw new EntityValidationError(this.tableName, field);
+      }
     }
   }
 
@@ -457,6 +538,14 @@ export class MemoryStore<T extends IEntity> {
       throw new EntityAlreadyExistsError(this.tableName, prepared.id!);
     }
 
+    // Enforce per-table record limit (0 = unlimited)
+    if (this.maxRecords > 0 && this.data.size >= this.maxRecords) {
+      throw new MaxRecordsExceededError(this.tableName, this.maxRecords);
+    }
+
+    // Validate required fields (no-op unless @Entity({ validate: true }))
+    this.validateEntity(prepared);
+
     // Index first (will throw if unique constraint violated)
     this.indexManager.indexEntity(prepared);
     // Then store
@@ -511,6 +600,9 @@ export class MemoryStore<T extends IEntity> {
     if (this.timestamps) {
       (updated as { updatedAt?: Date }).updatedAt = new Date();
     }
+
+    // Validate required fields (no-op unless @Entity({ validate: true }))
+    this.validateEntity(updated);
 
     // Update indexes
     this.indexManager.updateIndex(existing, updated);
