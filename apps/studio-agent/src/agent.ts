@@ -182,9 +182,26 @@ export class StudioAgent {
       return;
     }
 
-    // Initialize recorder
+    // Initialize recorder. Best-effort: request recording is backed by
+    // Node's built-in `node:sqlite` (Node >=22.5). On older runtimes the
+    // recorder stays disabled and every other Studio feature keeps working,
+    // so a missing/unavailable SQLite backend must never abort startup.
     if (this.config.enableRecording) {
-      await this.recorder.initialize();
+      try {
+        await this.recorder.initialize();
+        if (!this.recorder.isAvailable()) {
+          this.config.enableRecording = false;
+          console.warn(
+            'StudioAgent: request recording disabled (node:sqlite unavailable, requires Node >=22.5). All other Studio features remain active.',
+          );
+        }
+      } catch (error) {
+        this.config.enableRecording = false;
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(
+          `StudioAgent: request recording disabled (${message}). All other Studio features remain active.`,
+        );
+      }
     }
 
     // Start tracer

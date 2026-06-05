@@ -3,7 +3,6 @@
  * Stores request/response pairs for replay functionality
  */
 
-import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
@@ -15,8 +14,67 @@ import type {
   HttpMethod,
 } from '../types/index.js';
 
+/**
+ * Minimal structural types for the slice of `node:sqlite` we use. Declaring
+ * them locally (instead of importing from `@types/node`) keeps the recorder
+ * independent of the installed `@types/node` version and avoids a hard
+ * module-resolution dependency on `node:sqlite` types at build time.
+ */
+interface SqliteStatement {
+  run(...params: unknown[]): unknown;
+  get(...params: unknown[]): unknown;
+  all(...params: unknown[]): unknown[];
+}
+interface SqliteDatabase {
+  exec(sql: string): void;
+  prepare(sql: string): SqliteStatement;
+  close(): void;
+}
+interface NodeSqliteModule {
+  DatabaseSync: new (path: string) => SqliteDatabase;
+}
+
+/**
+ * Lazily load Node's built-in `node:sqlite` (added in Node 22.5, unflagged
+ * since 22.13). Returns `null` when unavailable so the caller can disable
+ * recording gracefully instead of crashing on older runtimes.
+ *
+ * On Node 22.x the module emits a one-time `ExperimentalWarning` at load
+ * time. Because the agent runs inside the host app's process, we suppress
+ * only that single warning for the duration of the import and restore the
+ * original `process.emitWarning` immediately after, leaving every other
+ * warning untouched. The warning is already gone on Node >=24.15.
+ */
+async function loadNodeSqlite(): Promise<NodeSqliteModule | null> {
+  const original = process.emitWarning;
+  process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
+    const name =
+      typeof warning === 'string'
+        ? (args[0] as string | undefined)
+        : warning?.name;
+    const text = typeof warning === 'string' ? warning : warning?.message;
+    if (name === 'ExperimentalWarning' && /SQLite/i.test(String(text))) {
+      return;
+    }
+    return (original as (...a: unknown[]) => void)(warning, ...args);
+  }) as typeof process.emitWarning;
+
+  try {
+    // Non-literal specifier so TypeScript treats this as a dynamic import
+    // (`Promise<any>`) and does not require `node:sqlite` to be present in
+    // the resolved `@types/node`.
+    const specifier = 'node:sqlite';
+    const mod = (await import(specifier)) as NodeSqliteModule;
+    return mod && typeof mod.DatabaseSync === 'function' ? mod : null;
+  } catch {
+    return null;
+  } finally {
+    process.emitWarning = original;
+  }
+}
+
 export class RequestRecorder {
-  private db: Database.Database | null = null;
+  private db: SqliteDatabase | null = null;
   private dbPath: string;
   private maxExchanges: number;
   private initialized: boolean = false;
@@ -26,9 +84,29 @@ export class RequestRecorder {
     this.maxExchanges = maxExchanges;
   }
 
-  /** Initialize the database */
+  /**
+   * Whether the SQLite backend is available and ready. When `false`,
+   * recording is a no-op and reads return empty results (e.g. on Node
+   * < 22.5 where `node:sqlite` does not exist).
+   */
+  isAvailable(): boolean {
+    return this.db !== null;
+  }
+
+  /**
+   * Initialize the database. Never throws: if `node:sqlite` is unavailable
+   * the recorder stays disabled and the rest of Studio continues to work.
+   */
   async initialize(): Promise<void> {
     if (this.initialized) return;
+    this.initialized = true;
+
+    const sqlite = await loadNodeSqlite();
+    if (!sqlite) {
+      // Node < 22.5 (or a build without node:sqlite). Recording is optional;
+      // every other Studio feature works without it.
+      return;
+    }
 
     // Ensure directory exists
     const dir = path.dirname(this.dbPath);
@@ -36,8 +114,8 @@ export class RequestRecorder {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    this.db = new Database(this.dbPath);
-    this.db.pragma('journal_mode = WAL');
+    this.db = new sqlite.DatabaseSync(this.dbPath);
+    this.db.exec('PRAGMA journal_mode = WAL');
 
     // Create tables
     this.db.exec(`
@@ -80,8 +158,6 @@ export class RequestRecorder {
       CREATE INDEX IF NOT EXISTS idx_requests_path ON requests(path);
       CREATE INDEX IF NOT EXISTS idx_responses_request_id ON responses(request_id);
     `);
-
-    this.initialized = true;
   }
 
   /** Record a request */
@@ -95,8 +171,6 @@ export class RequestRecorder {
     cookies?: Record<string, string>,
     traceId?: string
   ): RecordedRequest {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
-
     const id = randomUUID();
     const timestamp = Date.now();
 
@@ -112,6 +186,10 @@ export class RequestRecorder {
       body,
       cookies,
     };
+
+    // Recording disabled / SQLite unavailable: return the in-memory record
+    // without persisting so callers depending on the id still work.
+    if (!this.db) return request;
 
     const stmt = this.db.prepare(`
       INSERT INTO requests (id, trace_id, timestamp, method, path, url, headers, query, body, cookies)
@@ -147,8 +225,6 @@ export class RequestRecorder {
     duration?: number,
     traceId?: string
   ): RecordedResponse {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
-
     const id = randomUUID();
     const timestamp = Date.now();
 
@@ -163,6 +239,8 @@ export class RequestRecorder {
       body,
       duration: duration || 0,
     };
+
+    if (!this.db) return response;
 
     const stmt = this.db.prepare(`
       INSERT INTO responses (id, request_id, trace_id, timestamp, status_code, status_message, headers, body, duration)
@@ -186,7 +264,7 @@ export class RequestRecorder {
 
   /** Record trace data */
   recordTrace(traceId: string, trace: TraceInfo, requestId?: string): void {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) return;
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO traces (trace_id, request_id, data, timestamp)
@@ -198,7 +276,7 @@ export class RequestRecorder {
 
   /** Get a recorded exchange by ID */
   getExchange(requestId: string): RecordedExchange | null {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) return null;
 
     const requestStmt = this.db.prepare('SELECT * FROM requests WHERE id = ?');
     const requestRow = requestStmt.get(requestId) as any;
@@ -259,7 +337,7 @@ export class RequestRecorder {
     limit: number = 100,
     offset: number = 0
   ): RecordedExchange[] {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) return [];
 
     const stmt = this.db.prepare(`
       SELECT r.*, 
@@ -322,7 +400,7 @@ export class RequestRecorder {
     method?: HttpMethod,
     limit: number = 100
   ): RecordedExchange[] {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) return [];
 
     let sql = `
       SELECT r.*, 
@@ -397,7 +475,15 @@ export class RequestRecorder {
     requestsByPath: Record<string, number>;
     requestsByMethod: Record<string, number>;
   } {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) {
+      return {
+        totalRequests: 0,
+        totalErrors: 0,
+        avgDuration: 0,
+        requestsByPath: {},
+        requestsByMethod: {},
+      };
+    }
 
     const totalStmt = this.db.prepare('SELECT COUNT(*) as count FROM requests');
     const totalRow = totalStmt.get() as any;
@@ -443,7 +529,7 @@ export class RequestRecorder {
 
   /** Delete an exchange */
   deleteExchange(requestId: string): void {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) return;
 
     const stmt = this.db.prepare('DELETE FROM requests WHERE id = ?');
     stmt.run(requestId);
@@ -451,7 +537,7 @@ export class RequestRecorder {
 
   /** Clear all recorded data */
   clearAll(): void {
-    if (!this.db) throw new Error('RequestRecorder not initialized');
+    if (!this.db) return;
 
     this.db.exec('DELETE FROM traces');
     this.db.exec('DELETE FROM responses');
