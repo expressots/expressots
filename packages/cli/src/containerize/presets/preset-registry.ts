@@ -1,7 +1,20 @@
 export interface PresetConfig {
 	name: string;
 	description: string;
+	/**
+	 * Explicit base image override. When set, it is used verbatim and
+	 * takes precedence over `baseVariant` + the project's Node version.
+	 * Primarily for custom/community presets that need a specific image.
+	 */
 	baseImage?: string;
+	/**
+	 * Linux distribution flavor for the (Node) base image. The generator
+	 * combines this with the project's resolved Node major version to
+	 * produce a valid tag: `alpine` -> `node:<major>-alpine`, `debian` ->
+	 * `node:<major>`. Defaults to `alpine` when unset. Lets presets pick a
+	 * distro without hardcoding (and thus pinning) the Node version.
+	 */
+	baseVariant?: "alpine" | "debian";
 	multiStage?: boolean;
 	security?: {
 		enabled: boolean;
@@ -23,23 +36,27 @@ const presets: Record<string, PresetConfig> = {
 		description: "Balanced configuration for most applications",
 		multiStage: true,
 		security: {
-			enabled: false,
+			enabled: true,
+			nonRootUser: true,
 		},
 		healthCheck: {
-			enabled: false,
+			enabled: true,
+			interval: "30s",
 		},
 	},
 
 	minimal: {
 		name: "Minimal",
 		description: "Smallest possible image size (<100MB)",
-		baseImage: "node:22-alpine",
+		baseVariant: "alpine",
 		multiStage: true,
 		security: {
-			enabled: false,
+			enabled: true,
+			nonRootUser: true,
 		},
 		healthCheck: {
-			enabled: false,
+			enabled: true,
+			interval: "30s",
 		},
 		optimization: {
 			layerCaching: true,
@@ -50,7 +67,7 @@ const presets: Record<string, PresetConfig> = {
 	secure: {
 		name: "Secure",
 		description: "Security-hardened configuration",
-		baseImage: "node:22-alpine",
+		baseVariant: "alpine",
 		multiStage: true,
 		security: {
 			enabled: true,
@@ -68,10 +85,11 @@ const presets: Record<string, PresetConfig> = {
 	"fast-startup": {
 		name: "Fast Startup",
 		description: "Optimized for quick cold starts",
-		baseImage: "node:22-alpine",
+		baseVariant: "alpine",
 		multiStage: true,
 		security: {
-			enabled: false,
+			enabled: true,
+			nonRootUser: true,
 		},
 		healthCheck: {
 			enabled: true,
@@ -85,7 +103,7 @@ const presets: Record<string, PresetConfig> = {
 	dev: {
 		name: "Development",
 		description: "Development environment with hot reload",
-		baseImage: "node:22",
+		baseVariant: "debian",
 		multiStage: false,
 		security: {
 			enabled: false,
@@ -98,7 +116,7 @@ const presets: Record<string, PresetConfig> = {
 	"multi-arch": {
 		name: "Multi-Architecture",
 		description: "Supports both ARM64 and x86_64",
-		baseImage: "node:22-alpine",
+		baseVariant: "alpine",
 		multiStage: true,
 		security: {
 			enabled: true,

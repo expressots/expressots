@@ -54,6 +54,12 @@ function makeAnalysis(
 		port: 3000,
 		hasLocalDependencies: false,
 		localDependencyPaths: [],
+		yarnBerry: false,
+		hasPnpmWorkspace: false,
+		hasWorkspaces: false,
+		workspacePackagePaths: [],
+		bunLockfileType: undefined,
+		hasNativeDependencies: false,
 		bootstrapConfig: {
 			hasEnvFileConfig: false,
 			skipFileLoading: false,

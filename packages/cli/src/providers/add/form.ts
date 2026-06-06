@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import fs from "node:fs";
 import { exit } from "node:process";
 import { printError } from "../../utils/cli-ui";
 import {
@@ -7,48 +6,11 @@ import {
 	isValidVersion,
 } from "../../utils/input-validation";
 import { safeSpawn } from "../../utils/safe-spawn";
-
-type PackageManagerConfig = {
-	install: string;
-	addDev: string;
-	remove: string;
-};
-
-type PackageManager = {
-	npm: PackageManagerConfig;
-	yarn: PackageManagerConfig;
-	pnpm: PackageManagerConfig;
-};
-
-const PACKAGE_MANAGERS: PackageManager = {
-	npm: {
-		install: "install",
-		addDev: "install --save-dev",
-		remove: "uninstall",
-	},
-	yarn: {
-		install: "add",
-		addDev: "add --dev",
-		remove: "remove",
-	},
-	pnpm: {
-		install: "add",
-		addDev: "add --save-dev",
-		remove: "remove",
-	},
-};
-
-function detectPackageManager(): string | null {
-	const lockFiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"];
-	const managers = Object.keys(PACKAGE_MANAGERS);
-
-	for (let i = 0; i < lockFiles.length; i++) {
-		if (fs.existsSync(lockFiles[i])) {
-			return managers[i];
-		}
-	}
-	return null;
-}
+import {
+	detectPackageManager,
+	getAddPackageArgs,
+	getRemovePackageArgs,
+} from "../../utils/package-manager-commands";
 
 async function execProcess({
 	command,
@@ -134,19 +96,14 @@ export async function addProvider(
 		return;
 	}
 
-	const pkgManagerConfig: PackageManagerConfig =
-		PACKAGE_MANAGERS[packageManager as keyof PackageManager];
-
-	const command = isDevDependency
-		? pkgManagerConfig.addDev
-		: pkgManagerConfig.install;
+	const args = getAddPackageArgs(packageManager, { dev: isDevDependency });
 
 	console.log(
 		`${isDevDependency ? "Adding devDependency" : "Installing"} ${packageName}...`,
 	);
 	await execProcess({
 		command: packageManager,
-		args: [...command.split(" "), `${packageName}${versionSuffix}`],
+		args: [...args, `${packageName}${versionSuffix}`],
 		directory: process.cwd(),
 	});
 }
@@ -167,13 +124,12 @@ export async function removeProvider(packageName: string): Promise<void> {
 		return;
 	}
 
-	const command =
-		PACKAGE_MANAGERS[packageManager as keyof PackageManager].remove;
+	const args = getRemovePackageArgs(packageManager);
 
 	console.log(`Removing ${packageName}...`);
 	await execProcess({
 		command: packageManager,
-		args: [...command.split(" "), packageName],
+		args: [...args, packageName],
 		directory: process.cwd(),
 	});
 }

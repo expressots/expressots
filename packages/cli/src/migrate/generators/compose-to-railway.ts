@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import type { MigrationOptions } from "../form";
+import { buildMigrationVars } from "./template-loader";
 
 export async function generateComposeToRailway(
 	outputDir: string,
@@ -11,6 +12,8 @@ export async function generateComposeToRailway(
 		chalk.yellow("  Generating Docker Compose → Railway migration..."),
 	);
 
+	const vars = buildMigrationVars(options);
+
 	// Generate railway.json
 	const railwayConfig = {
 		$schema: "https://railway.app/railway.schema.json",
@@ -19,7 +22,7 @@ export async function generateComposeToRailway(
 			dockerfilePath: "Dockerfile",
 		},
 		deploy: {
-			startCommand: "npm start",
+			startCommand: String(vars.startCommand),
 			healthcheckPath: "/health",
 			healthcheckTimeout: 300,
 			restartPolicyType: "ON_FAILURE",

@@ -5,6 +5,7 @@ import path from "path";
 import { printError, printWarning } from "../utils/cli-ui";
 import { isValidScriptName } from "../utils/input-validation";
 import { safeSpawnSync } from "../utils/safe-spawn";
+import { detectPackageManager } from "../utils/package-manager-commands";
 
 const cwd = process.cwd();
 const packageJsonPath = path.join(cwd, "package.json");
@@ -124,17 +125,11 @@ export const scriptsForm = async (scriptArgs: string[] = []): Promise<void> => {
 	const packageJson = readPackageJson();
 	const scripts = listScripts(packageJson);
 
-	const runner = fs.existsSync("package-lock.json")
-		? "npm"
-		: fs.existsSync("yarn.lock")
-			? "yarn"
-			: fs.existsSync("pnpm-lock.yaml")
-				? "pnpm"
-				: null;
+	const runner = detectPackageManager();
 
 	if (!runner) {
 		printError(
-			"No package manager found! Please ensure you have npm, yarn, or pnpm installed.",
+			"No package manager found! Please ensure you have npm, yarn, pnpm, or bun installed.",
 			"scripts-command",
 		);
 		process.exit(1);

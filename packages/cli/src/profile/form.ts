@@ -292,14 +292,24 @@ function generateProfileResult(
 		});
 	}
 
-	// Check for best practices
-	if (analysis.hasNpmInstallWithoutCi) {
+	// Check for best practices: a non-frozen install for any package
+	// manager hurts reproducibility.
+	if (analysis.hasNonFrozenInstall) {
+		const pm = analysis.nonFrozenPackageManager ?? "npm";
+		const frozenFix: Record<string, string> = {
+			npm: "Replace 'npm install' with 'npm ci' for reproducible builds",
+			pnpm: "Add '--frozen-lockfile' to 'pnpm install' for reproducible builds",
+			yarn: "Add '--frozen-lockfile' (Yarn Classic) or '--immutable' (Yarn Berry) to 'yarn install'",
+			bun: "Add '--frozen-lockfile' to 'bun install' for reproducible builds",
+		};
+		const looseCmd =
+			pm === "npm" ? "npm install" : `${pm} install (no frozen lockfile)`;
 		issues.push({
 			id: "BP001",
 			severity: "low",
 			category: "best-practice",
-			message: "Using 'npm install' instead of 'npm ci'",
-			fix: "Replace 'npm install' with 'npm ci' for reproducible builds",
+			message: `Using '${looseCmd}' instead of a frozen/locked install`,
+			fix: frozenFix[pm],
 		});
 	}
 

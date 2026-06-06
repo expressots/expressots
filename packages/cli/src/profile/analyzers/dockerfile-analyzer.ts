@@ -10,6 +10,13 @@ export interface DockerfileAnalysis {
 	hasNonRootUser: boolean;
 	hasDockerignore: boolean;
 	hasNpmInstallWithoutCi: boolean;
+	/**
+	 * True when a non-deterministic install (no frozen/immutable lockfile
+	 * flag) is detected for any package manager, not just npm.
+	 */
+	hasNonFrozenInstall: boolean;
+	/** The package manager whose loose install was detected, if any. */
+	nonFrozenPackageManager?: "npm" | "pnpm" | "yarn" | "bun";
 	hasCurlOrWgetWithoutCleanup: boolean;
 	instructions: DockerInstruction[];
 	stages: string[];
@@ -37,6 +44,8 @@ export async function analyzeDockerfile(
 	let hasHealthCheck = false;
 	let hasNonRootUser = false;
 	let hasNpmInstallWithoutCi = false;
+	let hasNonFrozenInstall = false;
+	let nonFrozenPackageManager: "npm" | "pnpm" | "yarn" | "bun" | undefined;
 	let hasCurlOrWgetWithoutCleanup = false;
 	let baseImage: string | undefined;
 	let nodeVersion: string | undefined;
@@ -106,6 +115,17 @@ export async function analyzeDockerfile(
 					hasNpmInstallWithoutCi = true;
 				}
 
+				// Check for a non-frozen install across every supported
+				// package manager. A reproducible Docker build pins the
+				// lockfile via npm ci / --frozen-lockfile / --immutable.
+				if (!hasNonFrozenInstall) {
+					const pm = detectNonFrozenInstall(args);
+					if (pm) {
+						hasNonFrozenInstall = true;
+						nonFrozenPackageManager = pm;
+					}
+				}
+
 				// Check for curl/wget without cleanup
 				if (
 					(args.includes("curl") || args.includes("wget")) &&
@@ -133,10 +153,45 @@ export async function analyzeDockerfile(
 		hasNonRootUser,
 		hasDockerignore,
 		hasNpmInstallWithoutCi,
+		hasNonFrozenInstall,
+		nonFrozenPackageManager,
 		hasCurlOrWgetWithoutCleanup,
 		instructions,
 		stages,
 	};
+}
+
+/**
+ * Detects a non-deterministic dependency install in a RUN command for
+ * any supported package manager. Returns the offending package manager,
+ * or undefined when the install is already frozen/immutable (or no
+ * install is present).
+ *
+ * - npm:  `npm install` (anything other than `npm ci`)
+ * - pnpm: `pnpm install` without `--frozen-lockfile`
+ * - yarn: `yarn install` without `--frozen-lockfile` or `--immutable`
+ * - bun:  `bun install` without `--frozen-lockfile`
+ */
+function detectNonFrozenInstall(
+	args: string,
+): "npm" | "pnpm" | "yarn" | "bun" | undefined {
+	if (args.includes("npm install") && !args.includes("npm ci")) {
+		return "npm";
+	}
+	if (args.includes("pnpm install") && !args.includes("--frozen-lockfile")) {
+		return "pnpm";
+	}
+	if (
+		args.includes("yarn install") &&
+		!args.includes("--frozen-lockfile") &&
+		!args.includes("--immutable")
+	) {
+		return "yarn";
+	}
+	if (args.includes("bun install") && !args.includes("--frozen-lockfile")) {
+		return "bun";
+	}
+	return undefined;
 }
 
 /**

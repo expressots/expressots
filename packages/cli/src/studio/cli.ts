@@ -9,6 +9,10 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { BUNDLE_VERSION } from "../cli";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
+import {
+	detectPackageManagerOrDefault,
+	getAddPackageArgs,
+} from "../utils/package-manager-commands";
 
 interface StudioOptions {
 	port: number;
@@ -40,27 +44,19 @@ async function installStudio(): Promise<boolean> {
 	const spinner = ora("Installing @expressots/studio...").start();
 
 	try {
-		const hasYarn = existsSync(resolve(process.cwd(), "yarn.lock"));
-		const hasPnpm = existsSync(resolve(process.cwd(), "pnpm-lock.yaml"));
-
 		// Pin the studio install to the same minor as the running CLI so
 		// `expressots studio` from a preview-N CLI fetches a matching
 		// preview-N studio. Falls back to a caret on the major if the CLI
 		// version isn't a valid prerelease (defensive).
 		const studioSpec = `@expressots/studio@^${BUNDLE_VERSION}`;
 
-		let pkgManager: "npm" | "yarn" | "pnpm";
-		let args: string[];
-		if (hasPnpm) {
-			pkgManager = "pnpm";
-			args = ["add", "-D", studioSpec];
-		} else if (hasYarn) {
-			pkgManager = "yarn";
-			args = ["add", "-D", studioSpec];
-		} else {
-			pkgManager = "npm";
-			args = ["install", "-D", studioSpec];
-		}
+		// Detect the project's package manager (npm/yarn/pnpm/bun),
+		// defaulting to npm when no lockfile is present.
+		const pkgManager = detectPackageManagerOrDefault();
+		const args = [
+			...getAddPackageArgs(pkgManager, { dev: true }),
+			studioSpec,
+		];
 
 		// `safeSpawnSync` (cross-spawn) resolves the Windows `.cmd` shim
 		// and properly escapes argv for cmd.exe. The argv here is a

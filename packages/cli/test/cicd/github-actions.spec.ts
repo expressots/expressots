@@ -101,6 +101,22 @@ describe("cicd › generateGitHubActions", () => {
 		expect(yml).not.toMatch(/run:\s+npm ci\b/);
 	});
 
+	test("bun project provisions Bun and uses frozen bun install", async () => {
+		await generateGitHubActions(tmpDir, {
+			...baseOptions,
+			packageManager: "bun",
+		});
+		const yml = fs.readFileSync(
+			path.join(tmpDir, ".github", "workflows", "ci.yml"),
+			"utf-8",
+		);
+		expect(yml).toContain("oven-sh/setup-bun");
+		expect(yml).toContain("bun install --frozen-lockfile");
+		// `cache: 'bun'` is invalid for actions/setup-node and must not
+		// be emitted for Bun projects.
+		expect(yml).not.toContain("cache: 'bun'");
+	});
+
 	test("uses configured trigger branch", async () => {
 		await generateGitHubActions(tmpDir, {
 			...baseOptions,

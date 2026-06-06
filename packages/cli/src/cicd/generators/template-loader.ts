@@ -4,6 +4,10 @@
  */
 
 import { getTemplateManager, type RenderOptions } from "../../templates";
+import {
+	getCiInstallCommand,
+	getRunScriptCommand,
+} from "../../utils/package-manager-commands";
 import type { GeneratorOptions } from "./github-actions";
 
 export interface TemplateResult {
@@ -45,10 +49,19 @@ export async function loadCICDTemplate(
 					branch: options.branch,
 					port: options.port,
 					// Computed variables
-					installCmd: getInstallCommand(options.packageManager),
-					testCmd: getTestCommand(options.packageManager),
-					buildCmd: getBuildCommand(options.packageManager),
-					lintCmd: getLintCommand(options.packageManager),
+					installCmd: getCiInstallCommand(options.packageManager),
+					testCmd: getRunScriptCommand(
+						options.packageManager,
+						"test",
+					),
+					buildCmd: getRunScriptCommand(
+						options.packageManager,
+						"build",
+					),
+					lintCmd: getRunScriptCommand(
+						options.packageManager,
+						"lint",
+					),
 				},
 				conditionals: {
 					includeSecurity: options.includeSecurity,
@@ -78,62 +91,6 @@ export async function loadCICDTemplate(
 		content: embeddedGenerator(options),
 		source: "embedded",
 	};
-}
-
-/**
- * Get install command for package manager
- */
-function getInstallCommand(packageManager: string): string {
-	switch (packageManager) {
-		case "pnpm":
-			return "pnpm install";
-		case "yarn":
-			return "yarn install";
-		default:
-			return "npm ci";
-	}
-}
-
-/**
- * Get test command for package manager
- */
-function getTestCommand(packageManager: string): string {
-	switch (packageManager) {
-		case "pnpm":
-			return "pnpm test";
-		case "yarn":
-			return "yarn test";
-		default:
-			return "npm test";
-	}
-}
-
-/**
- * Get build command for package manager
- */
-function getBuildCommand(packageManager: string): string {
-	switch (packageManager) {
-		case "pnpm":
-			return "pnpm build";
-		case "yarn":
-			return "yarn build";
-		default:
-			return "npm run build";
-	}
-}
-
-/**
- * Get lint command for package manager
- */
-function getLintCommand(packageManager: string): string {
-	switch (packageManager) {
-		case "pnpm":
-			return "pnpm lint";
-		case "yarn":
-			return "yarn lint";
-		default:
-			return "npm run lint";
-	}
 }
 
 /**

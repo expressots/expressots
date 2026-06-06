@@ -10,6 +10,19 @@ const DEFAULT_BRANCH = "main";
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com";
 const FETCH_TIMEOUT = 5000; // 5 seconds for faster fallback
 
+/**
+ * Maps a logical docker template type to its path in the templates
+ * repository. These paths must match the `docker` section of
+ * `manifest.json`. The names don't follow a single pattern (Dockerfiles
+ * vs compose files), so an explicit map is required.
+ */
+const DOCKER_TEMPLATE_PATHS: Record<string, string> = {
+	production: "docker/Dockerfile.production.tpl",
+	development: "docker/Dockerfile.development.tpl",
+	compose: "docker/docker-compose.yml.tpl",
+	"compose-development": "docker/docker-compose.development.yml.tpl",
+};
+
 export interface FetcherConfig {
 	repository: string;
 	branch: string;
@@ -187,7 +200,18 @@ export class GitHubFetcher {
 				templatePath = `cicd/${platform}/${variant || "basic"}.yml`;
 				break;
 			case "docker":
-				templatePath = `docker/${platform}.tpl`;
+				// Map the logical template type to its repo path. These
+				// names intentionally differ from the type key (see the
+				// `docker` section of manifest.json), so a single
+				// `${platform}.tpl` pattern does not work.
+				templatePath = DOCKER_TEMPLATE_PATHS[platform] ?? "";
+				if (!templatePath) {
+					return {
+						data: null,
+						source: "remote",
+						error: `Unknown docker template type: ${platform}`,
+					};
+				}
 				break;
 			case "kubernetes":
 				templatePath = `kubernetes/${platform}.yml.tpl`;

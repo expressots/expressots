@@ -22,7 +22,7 @@ export async function generateHerokuToRailway(
 			builder: "NIXPACKS",
 		},
 		deploy: {
-			startCommand: "npm start",
+			startCommand: String(vars.startCommand),
 			healthcheckPath: "/health",
 			healthcheckTimeout: 300,
 			restartPolicyType: "ON_FAILURE",

@@ -25,8 +25,8 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: ${String(vars.buildCommand)}
+    startCommand: ${String(vars.startCommand)}
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV

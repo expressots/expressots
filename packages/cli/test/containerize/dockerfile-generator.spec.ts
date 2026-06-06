@@ -88,6 +88,12 @@ function makeAnalysis(
 		port: 3000,
 		hasLocalDependencies: false,
 		localDependencyPaths: [],
+		yarnBerry: false,
+		hasPnpmWorkspace: false,
+		hasWorkspaces: false,
+		workspacePackagePaths: [],
+		bunLockfileType: undefined,
+		hasNativeDependencies: false,
 		bootstrapConfig: {
 			hasEnvFileConfig: false,
 			skipFileLoading: false,
@@ -112,34 +118,34 @@ describe("generateDockerfiles — package manager wiring", () => {
 			{
 				install: "RUN npm ci",
 				build: "RUN npm run build",
-				prune: "RUN npm prune --production",
+				prune: "RUN npm ci --omit=dev",
 				devCmd: 'CMD ["npm", "run", "dev"]',
 			},
 		],
 		[
 			"pnpm",
 			{
-				install: "RUN pnpm install",
+				install: "RUN pnpm install --frozen-lockfile",
 				build: "RUN pnpm run build",
-				prune: "RUN pnpm install --prod --no-frozen-lockfile",
+				prune: "RUN pnpm install --prod --frozen-lockfile",
 				devCmd: 'CMD ["pnpm", "run", "dev"]',
 			},
 		],
 		[
 			"yarn",
 			{
-				install: "RUN yarn install",
+				install: "RUN yarn install --frozen-lockfile",
 				build: "RUN yarn build",
-				prune: "RUN yarn install --production",
+				prune: "RUN yarn install --production --frozen-lockfile --ignore-scripts --prefer-offline",
 				devCmd: 'CMD ["yarn", "dev"]',
 			},
 		],
 		[
 			"bun",
 			{
-				install: "RUN bun install",
+				install: "RUN bun install --frozen-lockfile",
 				build: "RUN bun run build",
-				prune: "RUN bun install --production",
+				prune: "RUN bun install --frozen-lockfile --production",
 				devCmd: 'CMD ["bun", "run", "dev"]',
 			},
 		],
@@ -200,7 +206,7 @@ describe("generateDockerfiles — environment handling", () => {
 		// stage + prune step) should be present — staging used to
 		// silently fall through to a dev Dockerfile.
 		expect(staging).toMatch(/AS builder/);
-		expect(staging).toContain("RUN npm prune --production");
+		expect(staging).toContain("RUN npm ci --omit=dev");
 	});
 
 	test("production sets NODE_ENV=production and uses multi-stage build", async () => {
@@ -237,9 +243,9 @@ describe("generateDockerfiles — environment handling", () => {
 			makeAnalysis(),
 		);
 
-		expect(
-			fs.existsSync(path.join(tmpDir, "Dockerfile.development")),
-		).toBe(true);
+		expect(fs.existsSync(path.join(tmpDir, "Dockerfile.development"))).toBe(
+			true,
+		);
 		expect(fs.existsSync(path.join(tmpDir, "Dockerfile"))).toBe(true);
 	});
 });
@@ -397,6 +403,52 @@ describe("generateDockerfiles — auxiliary outputs", () => {
 		);
 	});
 
+	test("monorepo: copies each workspace package manifest before install", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({
+				packageManager: "pnpm",
+				hasWorkspaces: true,
+				hasPnpmWorkspace: true,
+				workspacePackagePaths: ["apps/api", "packages/shared"],
+			}),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).toContain("COPY apps/api/package.json ./apps/api/");
+		expect(prod).toContain(
+			"COPY packages/shared/package.json ./packages/shared/",
+		);
+		// The workspace config file is still copied for pnpm.
+		expect(prod).toContain("COPY pnpm-workspace.yaml ./");
+	});
+
+	test.each([
+		["yarn", "pkg.resolutions", "resolutions"],
+		["pnpm", "pkg.pnpm.overrides", "pnpm.overrides"],
+		["bun", "pkg.overrides", "overrides"],
+		["npm", "pkg.overrides", "overrides"],
+	])(
+		"docker-setup.js for %s writes the correct dependency-pinning field",
+		async (pm, expectedCode, expectedLabel) => {
+			await generateDockerfiles(
+				{ environment: "production", preset: "standard" },
+				makeAnalysis({
+					packageManager: pm as ProjectAnalysis["packageManager"],
+					hasLocalDependencies: true,
+					localDependencyPaths: ["./libs/core-1.0.0.tgz"],
+				}),
+			);
+
+			const setupScript = fs.readFileSync(
+				path.join(tmpDir, "docker-setup.js"),
+				"utf-8",
+			);
+			expect(setupScript).toContain(expectedCode);
+			expect(setupScript).toContain(`Added ${expectedLabel} for`);
+		},
+	);
+
 	test("health check is included when preset enables it", async () => {
 		await generateDockerfiles(
 			{ environment: "production", preset: "secure" },
@@ -405,5 +457,96 @@ describe("generateDockerfiles — auxiliary outputs", () => {
 
 		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
 		expect(prod).toContain("HEALTHCHECK");
+	});
+
+	test("standard preset defaults to non-root user and health check", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis(),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).toContain("USER nodejs");
+		expect(prod).toContain("HEALTHCHECK");
+		expect(prod).toMatch(/addgroup.*nodejs/);
+	});
+
+	test("bun project uses oven/bun builder and node runtime in multi-stage", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({ packageManager: "bun" }),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		// Builder stage uses the official Bun image.
+		expect(prod).toMatch(/FROM oven\/bun:.*AS builder/);
+		// Production stage still uses Node (runtime is `node dist/...`).
+		expect(prod).toMatch(/Stage 2: Production[\s\S]*FROM node:/);
+		// No `npm install -g bun` since the builder base already has it.
+		expect(prod).not.toContain("npm install -g bun");
+	});
+
+	test("bun dev Dockerfile uses oven/bun as base image", async () => {
+		await generateDockerfiles(
+			{ environment: "development", preset: "standard" },
+			makeAnalysis({ packageManager: "bun" }),
+		);
+
+		const dev = fs.readFileSync(
+			path.join(tmpDir, "Dockerfile.development"),
+			"utf-8",
+		);
+		expect(dev).toMatch(/FROM oven\/bun:/);
+		expect(dev).not.toContain("npm install -g bun");
+	});
+
+	test("native dependencies trigger build tools installation in builder", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({
+				packageManager: "bun",
+				dependencies: ["better-sqlite3", "@expressots/core"],
+				hasNativeDependencies: true,
+			}),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).toContain("apk add --no-cache python3 make g++");
+	});
+
+	test("no native build tools when hasNativeDependencies is false", async () => {
+		await generateDockerfiles(
+			{ environment: "production", preset: "standard" },
+			makeAnalysis({ packageManager: "bun" }),
+		);
+
+		const prod = fs.readFileSync(path.join(tmpDir, "Dockerfile"), "utf-8");
+		expect(prod).not.toContain("python3 make g++");
+		// The Bun builder needs no apk setup: oven/bun ships bun + bunx,
+		// and the CLI build step runs `bunx tsc` (no Node/npm required).
+		expect(prod).not.toContain("apk add");
+	});
+
+	test("native build tools use apt-get on a Debian (dev preset) image", async () => {
+		// The `dev` preset resolves to a Debian Node image (node:<major>),
+		// so the native-addon toolchain must be installed via apt-get.
+		await generateDockerfiles(
+			{ environment: "development", preset: "dev" },
+			makeAnalysis({
+				packageManager: "npm",
+				dependencies: ["better-sqlite3"],
+				hasNativeDependencies: true,
+			}),
+		);
+
+		const dev = fs.readFileSync(
+			path.join(tmpDir, "Dockerfile.development"),
+			"utf-8",
+		);
+		expect(dev).toMatch(/FROM node:\d+\b/);
+		expect(dev).toContain(
+			"apt-get install -y --no-install-recommends python3 make g++",
+		);
+		expect(dev).not.toContain("apk add");
 	});
 });

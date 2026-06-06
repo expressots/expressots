@@ -77,20 +77,43 @@ export function generateOptimizations(
 		});
 	}
 
-	// npm ci instead of npm install
-	if (analysis.hasNpmInstallWithoutCi) {
+	// Frozen/locked install instead of a loose install (any PM)
+	if (analysis.hasNonFrozenInstall) {
+		const pm = analysis.nonFrozenPackageManager ?? "npm";
+		const titles: Record<string, string> = {
+			npm: "Use npm ci instead of npm install",
+			pnpm: "Use a frozen lockfile with pnpm install",
+			yarn: "Use an immutable/frozen lockfile with yarn install",
+			bun: "Use a frozen lockfile with bun install",
+		};
+		// npm swaps the subcommand; the others append a flag. Only npm
+		// and bun get a safe regex auto-fix; pnpm/yarn flag variants
+		// (Classic vs Berry) are left for the developer to apply.
+		const autoFixable = pm === "npm" || pm === "bun";
 		optimizations.push({
 			id: "OPT004",
 			priority: "low",
 			category: "Best Practice",
-			title: "Use npm ci instead of npm install",
+			title: titles[pm],
 			description:
-				"npm ci provides faster, more reliable, and reproducible builds.",
+				"A frozen/locked install yields faster, more reliable, and reproducible builds.",
 			impact: "Faster builds, reproducible dependencies",
-			autoFixable: true,
-			fix: (content) => {
-				return content.replace(/npm install(?!\s+[-\w])/g, "npm ci");
-			},
+			autoFixable,
+			fix: autoFixable
+				? (content) => {
+						if (pm === "npm") {
+							return content.replace(
+								/npm install(?!\s+[-\w])/g,
+								"npm ci",
+							);
+						}
+						// bun: append the flag when missing
+						return content.replace(
+							/bun install(?![^\n]*--frozen-lockfile)/g,
+							"bun install --frozen-lockfile",
+						);
+					}
+				: undefined,
 		});
 	}
 

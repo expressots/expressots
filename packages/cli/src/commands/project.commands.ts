@@ -12,6 +12,10 @@ import chalk from "chalk";
 import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
+import {
+	detectPackageManagerOrDefault,
+	getExecCommand,
+} from "../utils/package-manager-commands";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 
 /**
@@ -427,10 +431,20 @@ const cleanDist = async (outDir: string): Promise<void> => {
 };
 
 /**
- * Helper function to compile TypeScript
+ * Helper function to compile TypeScript.
+ *
+ * Runs `tsc` through the project's package manager runner so the build
+ * works regardless of which manager (and which container base image) is
+ * in use. This matters in Docker: `oven/bun` images ship `bunx` but not
+ * `npx`, so a hardcoded `npx tsc` fails on Bun projects.
  */
 const compileTypescript = async () => {
-	await execCmd("npx", ["tsc", "-p", "tsconfig.build.json"]);
+	const packageManager = detectPackageManagerOrDefault();
+	const { command, args } = getExecCommand(packageManager, "tsc", [
+		"-p",
+		"tsconfig.build.json",
+	]);
+	await execCmd(command, args);
 	printSuccess("Built successfully", "compile-typescript");
 };
 

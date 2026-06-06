@@ -4,6 +4,11 @@
  */
 
 import { getTemplateManager, type RenderOptions } from "../../templates";
+import {
+	detectPackageManagerOrDefault,
+	getCiInstallCommand,
+	getRunScriptCommand,
+} from "../../utils/package-manager-commands";
 import type { MigrationOptions } from "../form";
 
 export interface TemplateResult {
@@ -56,6 +61,15 @@ export async function loadMigrationTemplate(
 export function buildMigrationVars(
 	options: MigrationOptions,
 ): Record<string, unknown> {
+	// Migrations run in the project root, so detect the package manager
+	// from the on-disk lockfile to emit matching build/start commands in
+	// the generated platform configs (Render/Railway/Fly, etc.).
+	const packageManager = detectPackageManagerOrDefault();
+	const installCommand = getCiInstallCommand(packageManager);
+	const buildScript = getRunScriptCommand(packageManager, "build");
+	const buildCommand = `${installCommand} && ${buildScript}`;
+	const startCommand = getRunScriptCommand(packageManager, "start");
+
 	return {
 		from: options.from,
 		to: options.to,
@@ -63,6 +77,10 @@ export function buildMigrationVars(
 		includeData: options.includeData,
 		dryRun: options.dryRun,
 		outputDir: options.outputDir,
+		packageManager,
+		installCommand,
+		buildCommand,
+		startCommand,
 	};
 }
 
