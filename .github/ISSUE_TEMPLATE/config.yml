@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord Community
+    url: https://discord.gg/A877Mc3V
+    about: Ask questions and get help from the community
+  - name: Stack Overflow
+    url: https://stackoverflow.com/questions/tagged/expressots
+    about: Ask questions with the expressots tag
+  - name: Expressots Project Board
+    url: https://github.com/orgs/expressots/projects/5
+    about: Track framework work across all ExpressoTS repositories
