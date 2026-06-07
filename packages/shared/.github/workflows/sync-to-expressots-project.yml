@@ -1,0 +1,109 @@
+name: Sync to Expressots Project
+
+on:
+  issues:
+    types: [opened, labeled, unlabeled, reopened, edited]
+
+permissions:
+  contents: read
+  issues: read
+  organization-projects: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue to Expressots Project
+        uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: https://github.com/orgs/expressots/projects/5
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Map labels to project fields
+        uses: actions/github-script@v7
+        env:
+          PROJECT_ID: PVT_kwDOB2xKV84AS0Xy
+          FIELD_WORK_TYPE: PVTSSF_lADOB2xKV84AS0XyzhU3Ad8
+          FIELD_IDEA_STATUS: PVTSSF_lADOB2xKV84AS0XyzhU3AeA
+          FIELD_COMPONENT: PVTSSF_lADOB2xKV84AS0XyzgMT2_s
+          FIELD_STATUS: PVTSSF_lADOB2xKV84AS0XyzgMBNik
+          OPT_BUG: 8302efca
+          OPT_ENHANCEMENT: adc61aa4
+          OPT_DOCUMENTATION: 0c3d8062
+          OPT_COMMUNITY_IDEA: 4e339d30
+          OPT_QUESTION: b1fbc745
+          OPT_CHORE: 83fcce1b
+          OPT_SECURITY: 8d496964
+          OPT_IDEA_SUBMITTED: 8124bc29
+          OPT_COMPONENT_DOC: 7b969220
+          OPT_STATUS_BACKLOG: 9cc3919d
+        with:
+          script: |
+            const issueId = context.payload.issue.node_id;
+            const labels = (context.payload.issue.labels || []).map((label) =>
+              typeof label === 'string' ? label : label.name
+            );
+
+            const queryItem = `
+              query($projectId: ID!, $contentId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    item(contentId: $contentId) { id }
+                  }
+                }
+              }
+            `;
+
+            const itemResult = await github.graphql(queryItem, {
+              projectId: process.env.PROJECT_ID,
+              contentId: issueId,
+            });
+
+            const itemId = itemResult?.node?.item?.id;
+            if (!itemId) {
+              console.log('Issue is not on the project yet; skipping field mapping.');
+              return;
+            }
+
+            const updates = [];
+
+            const addSingleSelect = (fieldId, optionId) => {
+              updates.push({ fieldId, optionId });
+            };
+
+            if (labels.includes('bug')) addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_BUG);
+            if (labels.includes('enhancement')) addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_ENHANCEMENT);
+            if (labels.includes('documentation') || labels.includes('doc fix') || labels.includes('doc update') || labels.includes('new doc')) {
+              addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_DOCUMENTATION);
+              addSingleSelect(process.env.FIELD_COMPONENT, process.env.OPT_COMPONENT_DOC);
+            }
+            if (labels.includes('community-idea')) {
+              addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_COMMUNITY_IDEA);
+              addSingleSelect(process.env.FIELD_IDEA_STATUS, process.env.OPT_IDEA_SUBMITTED);
+            }
+            if (labels.includes('question')) addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_QUESTION);
+            if (labels.includes('dependencies')) addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_CHORE);
+            if (labels.includes('security')) addSingleSelect(process.env.FIELD_WORK_TYPE, process.env.OPT_SECURITY);
+            if (labels.includes('needs triage')) addSingleSelect(process.env.FIELD_STATUS, process.env.OPT_STATUS_BACKLOG);
+
+            const mutation = `
+              mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                updateProjectV2ItemFieldValue(
+                  input: {
+                    projectId: $projectId
+                    itemId: $itemId
+                    fieldId: $fieldId
+                    value: { singleSelectOptionId: $optionId }
+                  }
+                ) { projectV2Item { id } }
+              }
+            `;
+
+            for (const update of updates) {
+              await github.graphql(mutation, {
+                projectId: process.env.PROJECT_ID,
+                itemId,
+                fieldId: update.fieldId,
+                optionId: update.optionId,
+              });
+            }
