@@ -1,6 +1,6 @@
 {
   "name": "@expressots/cli",
-  "version": "4.0.0-preview.3.1",
+  "version": "4.0.0-preview.3.2",
   "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
   "author": "Richard Zampieri",
   "license": "MIT",
@@ -40,6 +40,7 @@
     "cp:templates": "node scripts/cp.js ./src/generate/templates ./bin/generate/",
     "clean": "node scripts/rm.js bin",
     "prepublish": "npm run build && npm pack",
+    "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
     "format": "prettier --write \"./src/**/*.ts\" --cache",
     "lint": "eslint \"./src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
     "lint:fix": "eslint \"./src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/",
@@ -52,7 +53,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.1.tgz",
+    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.2.tgz",
     "chalk": "4.1.2",
     "cli-progress": "3.12.0",
     "cross-spawn": "7.0.6",
