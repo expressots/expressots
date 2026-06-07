@@ -1,64 +1,58 @@
-<p align="center">
-  <a href="https://expresso-ts.com/" target="blank"><img src="https://github.com/expressots/examples/blob/main/expressots.png" width="120" alt="Expresso TS Logo" /></a>
-</p>
+<div align="center">
+  <a href="https://expresso-ts.com">
+    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+  </a>
 
-# Expresso TS
+  <h1>ExpressoTS Examples</h1>
 
-A Typescript + [Node.js]("https://nodejs.org/en/") lightweight framework for quick building scalable, easy to read and maintain, server-side applications 🚀
+  <p>Example projects and demonstrations of the ExpressoTS framework.</p>
 
-## Expresso TS Framework Community Demos
+  <p>
+    <a href="https://github.com/expressots/examples/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/examples?style=flat-square&color=181717" alt="License"></a>
+    <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+    <a href="https://github.com/expressots/examples/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/examples/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
+  </p>
 
-Welcome to the Expresso TS Framework Community Demos repository! This repository is dedicated to showcasing demos and projects created by the Expresso TS Framework community members and the direct contributors of the framework. Our goal is to highlight the diverse applications and creative solutions built using Expresso TS Framework and inspire others to develop their own projects.
+  <p>
+    <a href="https://doc.expresso-ts.com">Documentation</a> ·
+    <a href="https://doc.expresso-ts.com/docs/core/first-steps">Getting Started</a> ·
+    <a href="https://github.com/orgs/expressots/projects/5">Project Board</a> ·
+    <a href="https://discord.com/invite/PyPJfGK">Community</a>
+  </p>
+</div>
 
-The demos in this repository cover a wide range of use cases and demonstrate various features and capabilities of the Expresso TS Framework. They serve as excellent learning resources for those who are new to the framework or looking for practical examples to incorporate into their own projects.
+---
 
-We encourage community members to contribute to this repository by sharing their own demos and projects. If you have a demo or project you would like to showcase, please feel free to submit a pull request, and we'll be happy to include it in this collection.
+## About
 
-Happy coding, and thank you for being a part of the Expresso TS Framework community!
+Runnable examples that demonstrate ExpressoTS patterns: project structure, providers, middleware, testing, and integrations. Clone an example and follow its README to get started.
 
-## Our Examples and Demos contributors 
+## Quick Start
 
-- **Antony Gabriel** [Git](https://github.com/AntonyZ89) || [Twitch](https://www.twitch.tv/antonydev) || [Linkedin](https://www.linkedin.com/in/antonydev/) || [Type ORM Vue UI](https://github.com/expressots/examples/tree/main/02-typeorm-demo/typeorm-demo-vue)
+```bash
+git clone https://github.com/expressots/examples.git
+cd examples
+# open the example directory you need
+```
 
-- **Rafael Thayto** [Git](https://github.com/rafa-thayto) || [Twitch](https://www.twitch.tv/thayto_dev) || [Linkedin](https://www.linkedin.com/in/thayto/) || [Expresso Opinionated with Docker](https://github.com/expressots/examples/tree/main/03-opinionated-with-docker)
+Browse the repository folders for focused demos aligned with the [official documentation](https://doc.expresso-ts.com).
 
-- **Ariel Betti** [Git](https://github.com/ArielBetti) || [Twitch](https://www.twitch.tv/asancode) || [Linkedin](https://www.linkedin.com/in/ariel-betti/) || [Poke Battle](https://github.com/expressots/examples/tree/main/04-poke-battle-with-prisma)
+## Documentation
 
-## Getting Started
+For guides, API reference, architecture patterns, and examples visit **[doc.expresso-ts.com](https://doc.expresso-ts.com)**.
 
-- Here is our [Official Documentation](https://expresso-ts.com/)
-- Checkout our [First Steps documentation](https://expresso-ts.com/docs/overview/first-steps)
-- Our [CLI Documentation](https://expresso-ts.com/docs/category/cli)
+## Contributing
 
-## Questions
+Welcome to the ExpressoTS community. See the [Contributing Guide](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md) for how to get involved.
 
-For questions and support please use the Official [Discord Channel](https://discord.com/invite/PyPJfGK). We have a very active community there, that will be happy to help you. Post your questions in the channel called **NEED SUPPORT** and forum called **expresso-ts**.
+## Support the project
 
-## Issues
-
-The [Issue Reporting Channel](https://github.com/expressots/expressots/issues) is for bug report and feature request **only**.
-
-Before you create an issue, please make sure you read the [Contribution Guidelines](CONTRIBUTING.md).
-
-## Support
-
-ExpressoTS is an MIT-licensed open source project. It's an independent project with ongoing development made possible thanks to your support. If you'd like to help, please consider:
-
-- Become a sponsor on GitHub
-- Follow the organization on GitHub and Star the project
-- Contribute submitting issues and pull requests
-- Share the project with your friends and colleagues
- 
-## Backers
-
-- Be the first, consider to become a sponsor
-
-## Stay in touch
-
-- Author: Richard Zampieri
-- Website: [https://expresso-ts.com](https://expresso-ts.com)
-- Twitch channel: [Richard Zampieri](https://www.twitch.tv/richardzampieri)
+- [GitHub Sponsors](https://github.com/sponsors/expressots)
+- [Star the organization](https://github.com/expressots) on GitHub
+- [Discord](https://discord.com/invite/PyPJfGK)
+- [Report an issue](https://github.com/expressots/examples/issues)
 
 ## License
 
-ExpressoTS is **[MIT licensed](LICENSE.md)**
+MIT — see [LICENSE](./LICENSE.md).
+
