@@ -1,6 +1,6 @@
 {
   "name": "@expressots/shared",
-  "version": "4.0.0-preview.3.1",
+  "version": "4.0.0-preview.3.2",
   "description": "Shared library for ExpressoTS modules 🐎",
   "author": "Richard Zampieri <richard.zampieri@expresso-ts.com>",
   "main": "./lib/cjs/index.js",
@@ -64,6 +64,7 @@
     "release:restore": "node scripts/release/restore-package-json.mjs",
     "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
     "prepublish": "npm run build && npm pack",
+    "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
