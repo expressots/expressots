@@ -1,0 +1,62 @@
+name: "✨ Feature Request"
+description: "Request a concrete enhancement to this package"
+labels: ["enhancement", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Feature requests
+
+        Use this template for scoped enhancements. For open-ended proposals, use **Community Ideas** instead.
+
+        All framework work is tracked on the [Expressots Project board](https://github.com/orgs/expressots/projects/5).
+
+        ---
+
+  - type: checkboxes
+    attributes:
+      label: "Is there an existing issue for this?"
+      description: "Please search [existing issues](../issues) before submitting"
+      options:
+        - label: "I have searched the existing issues"
+          required: true
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: "Problem or use case"
+      description: "What problem does this feature solve? Who benefits?"
+      placeholder: |
+        As a developer using ExpressoTS, I want ...
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: "Proposed solution"
+      description: "Describe the feature you would like to see"
+      placeholder: |
+        I propose adding ...
+
+  - type: textarea
+    attributes:
+      label: "Alternatives considered"
+      description: "Any alternative solutions or workarounds you considered"
+
+  - type: dropdown
+    id: affected-area
+    validations:
+      required: true
+    attributes:
+      label: "Which area does this affect?"
+      options:
+        - Core Runtime
+        - CLI
+        - HTTP Adapter
+        - Shared Utils
+        - Providers
+        - Studio / DX
+        - Documentation
+        - Templates / Examples
+        - Not sure
