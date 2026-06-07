@@ -6,11 +6,13 @@ body:
     attributes:
       value: |
         ## :warning: We use GitHub Issues to track bug reports and feature requests
- 
+
         If you are not sure that your issue is a bug, you could:
 
         - use our [Discord community](https://discord.gg/A877Mc3V)
         - use [StackOverflow using the tag `expressots`](https://stackoverflow.com/questions/tagged/expressots)
+
+        All framework work is tracked on the [Expressots Project board](https://github.com/orgs/expressots/projects/5).
 
         **NOTE:** You don't need to answer questions that you know that aren't relevant.
 

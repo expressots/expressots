@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "4.0.0-preview.3",
+  "version": "4.0.0-preview.3.1",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -18,6 +18,9 @@
     }
   },
   "files": [
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md",
     "lib/**/*"
   ],
   "license": "MIT",
@@ -72,7 +75,7 @@
     "docs:clean": "node scripts/rm.js docs"
   },
   "dependencies": {
-    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.tgz",
+    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.1.tgz",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
