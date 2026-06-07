@@ -1,0 +1,52 @@
+name: "📚 Documentation"
+description: "Report missing, incorrect, or unclear documentation"
+labels: ["documentation", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Documentation issues
+
+        Help us improve ExpressoTS docs. All framework work is tracked on the [Expressots Project board](https://github.com/orgs/expressots/projects/5).
+
+        ---
+
+  - type: checkboxes
+    attributes:
+      label: "Is there an existing issue for this?"
+      options:
+        - label: "I have searched the existing issues"
+          required: true
+
+  - type: dropdown
+    id: doc-type
+    validations:
+      required: true
+    attributes:
+      label: "What kind of documentation issue is this?"
+      options:
+        - Missing documentation
+        - Incorrect or outdated content
+        - Unclear or confusing wording
+        - Broken link or example
+        - Translation / localization
+
+  - type: input
+    attributes:
+      label: "Page or section URL"
+      description: "Link to the doc page, if applicable"
+      placeholder: "https://doc.expressots.io/..."
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: "Describe the issue"
+      description: "What is wrong or missing? What did you expect to find?"
+      placeholder: |
+        The page about X says ... but it should ...
+
+  - type: textarea
+    attributes:
+      label: "Suggested improvement"
+      description: "Optional: how would you improve this documentation?"
