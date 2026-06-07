@@ -1,6 +1,6 @@
 {
   "name": "@expressots/cli",
-  "version": "4.0.0-preview.3",
+  "version": "4.0.0-preview.3.1",
   "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
   "author": "Richard Zampieri",
   "license": "MIT",
@@ -52,7 +52,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.tgz",
+    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.1.tgz",
     "chalk": "4.1.2",
     "cli-progress": "3.12.0",
     "cross-spawn": "7.0.6",

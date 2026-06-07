@@ -31,9 +31,9 @@ function captureStdout(fn: () => void): string {
 
 describe("printHeader", () => {
 	it("includes the version when provided", () => {
-		const out = captureStdout(() => printHeader("4.0.0-preview.3"));
+		const out = captureStdout(() => printHeader("4.0.0-preview.3.1"));
 		expect(out).toContain("ExpressoTS CLI");
-		expect(out).toContain("v4.0.0-preview.3");
+		expect(out).toContain("v4.0.0-preview.3.1");
 	});
 
 	it("omits the version suffix when not provided", () => {
