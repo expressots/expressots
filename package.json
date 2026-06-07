@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "4.0.0-preview.3.1",
+  "version": "4.0.0-preview.3.2",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -61,6 +61,7 @@
     "build:esm": "node scripts/build-esm.js",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "prepublish": "npm run build && npm pack",
+    "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
     "release": "release-it",
     "release:prepare": "node scripts/release/prepare-publish.mjs",
     "release:restore": "node scripts/release/restore-package-json.mjs",
@@ -75,7 +76,7 @@
     "docs:clean": "node scripts/rm.js docs"
   },
   "dependencies": {
-    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.1.tgz",
+    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.2.tgz",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
