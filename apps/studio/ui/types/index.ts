@@ -190,6 +190,50 @@ export interface AppStructure {
   modules?: ModuleInfo[];
 }
 
+/**
+ * A generated OpenAPI 3.1 document, as returned by the agent's
+ * `get_openapi` handler. Kept opaque on the UI side — we display and
+ * download it, but don't introspect its internals beyond `paths`.
+ */
+export interface OpenApiDocument {
+  openapi: string;
+  info: {
+    title: string;
+    version: string;
+    description?: string;
+    'x-expressots-generated'?: 'inferred' | 'extracted' | 'mixed';
+  };
+  paths: Record<string, Record<string, unknown>>;
+  components?: { schemas?: Record<string, Record<string, unknown>> };
+  tags?: Array<{ name: string; description?: string }>;
+}
+
+export type SpecDriftSeverity = 'info' | 'warning' | 'error';
+
+export interface SpecDriftFinding {
+  rule:
+    | 'route-missing-in-spec'
+    | 'route-missing-in-code'
+    | 'undocumented-status'
+    | 'required-field-drift';
+  severity: SpecDriftSeverity;
+  method: string;
+  path: string;
+  message: string;
+}
+
+export interface SpecDriftReport {
+  generatedAt: number;
+  routeCount: number;
+  exchangeCount: number;
+  findings: SpecDriftFinding[];
+}
+
+/** Error envelope the agent returns when it cannot read a committed spec. */
+export interface SpecDriftError {
+  error: string;
+}
+
 export type WSMessageType =
   | 'routes'
   | 'trace'
@@ -218,7 +262,9 @@ export type WSMessageType =
   | 'fix_progress'
   | 'fix_result'
   | 'database'
-  | 'database_table';
+  | 'database_table'
+  | 'openapi'
+  | 'openapi_drift';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;

@@ -23,6 +23,9 @@ import type {
   FixResultMessage,
   DatabaseSnapshot,
   DatabaseTableData,
+  OpenApiDocument,
+  SpecDriftReport,
+  SpecDriftError,
 } from '../types';
 
 interface SocketContextValue {
@@ -47,6 +50,17 @@ interface SocketContextValue {
   requestDatabaseSchema: () => void;
   /** Request a page of rows for a single in-memory database table. */
   requestDatabaseTable: (table: string, offset?: number, limit?: number) => void;
+  /** Ask the agent to (re)generate the full-app OpenAPI document. */
+  requestOpenApi: (apiVersion?: string | number) => void;
+  /**
+   * Ask the agent to diff a committed spec against the live app. Pass the
+   * parsed spec inline (`spec`) or a `specPath` for the agent to read.
+   */
+  requestOpenApiDrift: (params?: {
+    spec?: Record<string, unknown>;
+    specPath?: string;
+    apiVersion?: string | number;
+  }) => void;
   /** Re-run the supply-chain scan (`npm audit` + OSV) on the agent. */
   requestSecurityScan: () => void;
   /** Ask the agent to (re)broadcast its current cached security report. */
@@ -94,6 +108,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setSecurityReport,
     setDatabaseSnapshot,
     setDatabaseTableData,
+    setOpenApiDoc,
+    setSpecDrift,
     startFixRun,
     appendFixProgress,
     completeFixRun,
@@ -232,12 +248,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'database_table':
         setDatabaseTableData(message.data as DatabaseTableData);
         break;
+      case 'openapi':
+        setOpenApiDoc(message.data as OpenApiDocument);
+        break;
+      case 'openapi_drift':
+        setSpecDrift(message.data as SpecDriftReport | SpecDriftError);
+        break;
       default:
         // Unknown event — ignored silently (a noisy `console.log` here
         // would echo back through the agent's own log capture).
         break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, setDatabaseSnapshot, setDatabaseTableData, appendFixProgress, completeFixRun]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, setDatabaseSnapshot, setDatabaseTableData, setOpenApiDoc, setSpecDrift, appendFixProgress, completeFixRun]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -268,6 +290,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_runtime');
       socket.emit('get_security_report');
       socket.emit('get_database_schema');
+      socket.emit('get_openapi');
 
       // Kick off an immediate ping then settle into a 5s cadence.
       const sendPing = () => socket.emit('ping_studio', { sentAt: Date.now() });
@@ -334,6 +357,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     requestDatabaseTable: useCallback(
       (table: string, offset = 0, limit = 50) =>
         emit('get_database_table', { table, offset, limit }),
+      [emit],
+    ),
+    requestOpenApi: useCallback(
+      (apiVersion?: string | number) => emit('get_openapi', { apiVersion }),
+      [emit],
+    ),
+    requestOpenApiDrift: useCallback(
+      (params?: {
+        spec?: Record<string, unknown>;
+        specPath?: string;
+        apiVersion?: string | number;
+      }) => emit('get_openapi_drift', params ?? {}),
       [emit],
     ),
     requestSecurityScan: useCallback(() => emit('request_security_scan'), [emit]),

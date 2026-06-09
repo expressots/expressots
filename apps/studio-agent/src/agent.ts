@@ -20,6 +20,7 @@ import {
 import { DatabaseIntrospector } from './introspection/database-introspector.js';
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
 import { SecurityEngine } from './security/index.js';
+import { buildOpenApiDocument, diffOpenApiSpec } from './openapi/index.js';
 import { resolveInstallId } from './identity/install-id.js';
 import * as fs from 'node:fs';
 import type { FSWatcher } from 'node:fs';
@@ -61,6 +62,21 @@ function safePackageVersion(pkgName: string): string | undefined {
     }
   }
   return undefined;
+}
+
+/**
+ * Read the host application's own version from the `package.json` in the
+ * current working directory. Used for an OpenAPI document's `info.version`
+ * so it reflects the user's API release, not the framework version.
+ */
+function readHostAppVersion(): string | undefined {
+  try {
+    const raw = fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf-8');
+    const parsed = JSON.parse(raw) as { version?: string };
+    return parsed?.version;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Yield candidate `node_modules/<pkg>/package.json` paths walking up from this file. */
@@ -1074,6 +1090,25 @@ export class StudioAgent {
         await this.scanRoutes();
       });
 
+      socket.on('get_openapi', (params?: { apiVersion?: string | number }) => {
+        socket.emit('message', {
+          type: 'openapi',
+          timestamp: Date.now(),
+          data: this.buildOpenApi(params?.apiVersion),
+        });
+      });
+
+      socket.on(
+        'get_openapi_drift',
+        (params?: { spec?: Record<string, unknown>; specPath?: string; apiVersion?: string | number }) => {
+          socket.emit('message', {
+            type: 'openapi_drift',
+            timestamp: Date.now(),
+            data: this.buildOpenApiDrift(params),
+          });
+        },
+      );
+
       socket.on('clear_recordings', () => {
         this.recorder.clearAll();
         // Reset in-memory aggregates so the Metrics / Endpoint tabs reflect
@@ -1487,6 +1522,57 @@ export class StudioAgent {
     if (this.io) {
       this.io.emit('message', this.createMessage(type as any, data));
     }
+  }
+
+  /**
+   * Build a full-app OpenAPI 3.1 document from the current route
+   * inventory enriched with recorded traffic. Dev-time only.
+   */
+  private buildOpenApi(apiVersion?: string | number): ReturnType<typeof buildOpenApiDocument> {
+    const exchanges = this.recorder.getRecentExchanges(
+      this.config.maxRecordedExchanges,
+      0,
+    );
+    return buildOpenApiDocument(this.routes, exchanges, {
+      title: this.config.serviceName || 'ExpressoTS API',
+      // `info.version` is the *host application's* version (from its
+      // package.json), not the framework version — the spec describes the
+      // user's API, so its version should track their releases.
+      version: readHostAppVersion() ?? '0.0.0',
+      apiVersion,
+    });
+  }
+
+  /**
+   * Compare a committed OpenAPI document against the live app. The
+   * committed spec is supplied either inline (`spec`) or as a path the
+   * agent reads from disk (`specPath`, defaulting to `./openapi.json`).
+   * File reads are best-effort and read-only.
+   */
+  private buildOpenApiDrift(params?: {
+    spec?: Record<string, unknown>;
+    specPath?: string;
+    apiVersion?: string | number;
+  }): ReturnType<typeof diffOpenApiSpec> | { error: string } {
+    let committed: Record<string, unknown> | null = params?.spec ?? null;
+
+    if (!committed) {
+      const specPath = path.resolve(process.cwd(), params?.specPath ?? 'openapi.json');
+      try {
+        committed = JSON.parse(fs.readFileSync(specPath, 'utf-8')) as Record<string, unknown>;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return { error: `Could not read committed spec at ${specPath}: ${message}` };
+      }
+    }
+
+    const exchanges = this.recorder.getRecentExchanges(
+      this.config.maxRecordedExchanges,
+      0,
+    );
+    return diffOpenApiSpec(committed, this.routes, exchanges, {
+      apiVersion: params?.apiVersion,
+    });
   }
 
   /** Create WebSocket message */

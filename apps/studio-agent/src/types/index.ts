@@ -355,7 +355,9 @@ export type WSMessageType =
   | 'fix_progress'
   | 'fix_result'
   | 'database'
-  | 'database_table';
+  | 'database_table'
+  | 'openapi'
+  | 'openapi_drift';
 
 /** WebSocket message structure */
 export interface WSMessage<T = unknown> {

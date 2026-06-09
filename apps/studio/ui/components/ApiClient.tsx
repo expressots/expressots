@@ -14,6 +14,7 @@ import {
   safeParseJSON,
 } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
+import { OpenApiPanel } from './OpenApiPanel';
 import type { HttpMethod } from '../types';
 
 type Tab = 'headers' | 'body' | 'query';
@@ -335,6 +336,9 @@ export function ApiClient() {
 
   return (
     <div className="space-y-4">
+      {/* OpenAPI: generate, download, and check drift */}
+      <OpenApiPanel />
+
       {/* Discovered routes — grouped by controller, filterable */}
       {groupedRoutes.length > 0 && (
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 space-y-3">

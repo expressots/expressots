@@ -35,4 +35,16 @@ export {
   buildFixArgs,
 } from './security/index.js';
 export { resolveInstallId } from './identity/index.js';
+export {
+  buildOpenApiDocument,
+  diffOpenApiSpec,
+  applyGlobalPrefix,
+  detectGlobalPrefix,
+  type OpenApiDocument,
+  type BuildOpenApiOptions,
+  type GenerationProvenance,
+  type SpecDriftReport,
+  type SpecDriftFinding,
+  type SpecDriftSeverity,
+} from './openapi/index.js';
 export * from './types/index.js';

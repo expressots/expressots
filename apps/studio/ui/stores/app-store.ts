@@ -23,6 +23,9 @@ import type {
   HttpMethod,
   DatabaseSnapshot,
   DatabaseTableData,
+  OpenApiDocument,
+  SpecDriftReport,
+  SpecDriftError,
 } from '../types';
 
 /**
@@ -83,6 +86,16 @@ interface AppState {
   databaseSnapshot: DatabaseSnapshot | null;
   /** Most recent page of rows for the table currently being browsed. */
   databaseTableData: DatabaseTableData | null;
+  /**
+   * Latest generated OpenAPI document from the agent's `get_openapi`
+   * handler. `null` until the first `openapi` message arrives.
+   */
+  openApiDoc: OpenApiDocument | null;
+  /**
+   * Latest spec-drift result. Either a report or an error envelope when
+   * the committed spec couldn't be read. `null` until first requested.
+   */
+  specDrift: SpecDriftReport | SpecDriftError | null;
   /** Live console.* stream from the host app (latest first). */
   logs: LogEntry[];
   /** Logs grouped by traceId, so TraceDetail can show "logs for this request". */
@@ -138,6 +151,8 @@ interface AppState {
   setSecurityReport: (report: SecurityReport) => void;
   setDatabaseSnapshot: (snapshot: DatabaseSnapshot | null) => void;
   setDatabaseTableData: (data: DatabaseTableData | null) => void;
+  setOpenApiDoc: (doc: OpenApiDocument | null) => void;
+  setSpecDrift: (drift: SpecDriftReport | SpecDriftError | null) => void;
   startFixRun: (targetId: string, command: string) => void;
   appendFixProgress: (msg: FixProgressMessage) => void;
   completeFixRun: (msg: FixResultMessage) => void;
@@ -185,6 +200,8 @@ function buildInitialState() {
     securityReport: null,
     databaseSnapshot: null,
     databaseTableData: null,
+    openApiDoc: null,
+    specDrift: null,
     fixRun: null,
     logs: [],
     logsByTraceId: {},
@@ -250,6 +267,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   setDatabaseSnapshot: (databaseSnapshot) => set({ databaseSnapshot }),
   setDatabaseTableData: (databaseTableData) => set({ databaseTableData }),
+
+  setOpenApiDoc: (openApiDoc) => set({ openApiDoc }),
+  setSpecDrift: (specDrift) => set({ specDrift }),
 
   startFixRun: (targetId, command) =>
     set({
