@@ -29,6 +29,7 @@
  * ```
  */
 
+import { nodeRequire } from "../../../utils/node-require.js";
 import {
   IValidationAdapter,
   ValidationFieldError,
@@ -154,6 +155,49 @@ export class ZodValidatorAdapter implements IValidationAdapter<ZodLikeSchema> {
   async transform(data: unknown, schema: ZodLikeSchema): Promise<unknown> {
     const result = await this.validate(data, schema);
     return result.success ? result.data : data;
+  }
+
+  /**
+   * Extract a JSON Schema from a Zod schema, for OpenAPI generation.
+   *
+   * Prefers Zod 4's built-in `z.toJSONSchema()`; falls back to the
+   * optional `zod-to-json-schema` package (Zod 3). Both are loaded lazily
+   * so neither is a hard dependency. When neither is available we return a
+   * permissive object schema so callers always receive valid JSON Schema.
+   */
+  extractSchema(schema: ZodLikeSchema): Record<string, unknown> {
+    // Zod 4: native converter. Resolve it from the package's top level
+    // (Zod 4 default) or the `zod/v4` subpath (shipped by Zod 3.25+).
+    for (const specifier of ["zod", "zod/v4"]) {
+      try {
+        const zod = nodeRequire<Record<string, unknown>>(specifier);
+        const native =
+          (zod?.toJSONSchema as ((s: unknown) => unknown) | undefined) ??
+          ((zod?.z as Record<string, unknown> | undefined)?.toJSONSchema as
+            | ((s: unknown) => unknown)
+            | undefined);
+        if (typeof native === "function") {
+          return native(schema) as Record<string, unknown>;
+        }
+      } catch {
+        // Not resolvable / no native converter — try the next option.
+      }
+    }
+
+    // Zod 3: optional `zod-to-json-schema` package.
+    try {
+      const mod = nodeRequire<Record<string, unknown>>("zod-to-json-schema");
+      const convert =
+        (mod?.zodToJsonSchema as ((s: unknown) => unknown) | undefined) ??
+        (mod?.default as ((s: unknown) => unknown) | undefined);
+      if (typeof convert === "function") {
+        return convert(schema) as Record<string, unknown>;
+      }
+    } catch {
+      // Not installed — fall through to the structural fallback.
+    }
+
+    return { type: "object" };
   }
 
   private mapIssues(issues: Array<ZodIssue>): Array<ValidationFieldError> {
