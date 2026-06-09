@@ -25,6 +25,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Boxes, Search, List as ListIcon, Network, FileSearch } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
+import { cn } from '../lib/utils';
 import type { ContainerBindingNode } from '../types';
 
 type Tab = 'list' | 'graph';
@@ -124,14 +125,14 @@ export function ContainerInspector() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search bindings…"
-            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-900 border border-gray-700 rounded focus:outline-none focus:border-primary-500"
+            className="studio-input w-full pl-9 pr-3 py-2"
           />
         </div>
 
         <select
           value={scopeFilter}
           onChange={(e) => setScopeFilter(e.target.value)}
-          className="px-3 py-2 text-sm bg-gray-900 border border-gray-700 rounded focus:outline-none focus:border-primary-500"
+          className="studio-select"
         >
           <option value="all">All scopes</option>
           {Object.keys(containerSnapshot.summary.byScope).map((s) => (
@@ -141,21 +142,23 @@ export function ContainerInspector() {
           ))}
         </select>
 
-        <div className="flex bg-gray-900 border border-gray-700 rounded overflow-hidden">
+        <div className="studio-segment">
           <button
             onClick={() => setTab('list')}
-            className={`flex items-center gap-1 px-3 py-2 text-sm ${
-              tab === 'list' ? 'bg-primary-700 text-white' : 'text-gray-400 hover:text-white'
-            }`}
+            className={cn(
+              'studio-segment-btn',
+              tab === 'list' && 'studio-segment-btn-active',
+            )}
           >
             <ListIcon className="w-4 h-4" />
             List
           </button>
           <button
             onClick={() => setTab('graph')}
-            className={`flex items-center gap-1 px-3 py-2 text-sm ${
-              tab === 'graph' ? 'bg-primary-700 text-white' : 'text-gray-400 hover:text-white'
-            }`}
+            className={cn(
+              'studio-segment-btn',
+              tab === 'graph' && 'studio-segment-btn-active',
+            )}
           >
             <Network className="w-4 h-4" />
             Graph
@@ -179,7 +182,7 @@ export function ContainerInspector() {
 
 function SummaryCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="px-3 py-2 bg-gray-900 border border-gray-800 rounded-lg">
+    <div className="studio-stat px-4 py-3">
       <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="text-2xl font-bold text-white">{value}</div>
     </div>
@@ -194,11 +197,11 @@ function BindingsTable({
   resolved: Set<string>;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+    <div className="studio-card">
       <div className="overflow-x-auto max-h-[60vh]">
         <table className="w-full text-sm">
-          <thead className="bg-gray-950 sticky top-0">
-            <tr className="text-left text-xs uppercase tracking-wider text-gray-500">
+          <thead className="bg-[#101319] sticky top-0">
+            <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-white/[0.06]">
               <th className="px-4 py-2 font-medium">Class</th>
               <th className="px-4 py-2 font-medium">Service Identifier</th>
               <th className="px-4 py-2 font-medium">Scope</th>
@@ -207,7 +210,7 @@ function BindingsTable({
               <th className="px-4 py-2 font-medium">Activated</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800">
+          <tbody className="divide-y divide-white/[0.06]">
             {bindings.map((b) => {
               const isResolved =
                 resolved.has(b.serviceIdentifier) || resolved.has(b.className);
@@ -217,7 +220,7 @@ function BindingsTable({
                   className={
                     isResolved
                       ? 'bg-primary-950/30 hover:bg-primary-950/50'
-                      : 'hover:bg-gray-800/50'
+                      : 'hover:bg-white/[0.04]'
                   }
                 >
                   <td className="px-4 py-2 font-mono text-white">{b.className}</td>
@@ -341,7 +344,7 @@ function DependencyGraph({
   useEffect(() => setEdges(graphEdges), [graphEdges, setEdges]);
 
   return (
-    <div className="h-[60vh] bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+    <div className="studio-card h-[60vh]">
       <ReactFlow
         nodes={nodesState}
         edges={edgesState}
@@ -352,9 +355,9 @@ function DependencyGraph({
         maxZoom={2}
       >
         <Background color="#1f2937" gap={16} />
-        <Controls className="!bg-gray-800 !border-gray-700" />
+        <Controls className="!bg-[#14171c] !border-white/[0.08]" />
         <MiniMap
-          className="!bg-gray-800"
+          className="!bg-[#14171c]"
           nodeColor={(n) => (n.style as any)?.borderColor || '#374151'}
         />
       </ReactFlow>

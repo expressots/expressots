@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
 import { useSocket } from '../contexts/socket-context';
+import { cn } from '../lib/utils';
 
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -94,22 +95,23 @@ export function Header() {
     currentView === 'requests' || currentView === 'replay';
 
   return (
-    <header className="h-16 bg-gray-900/50 backdrop-blur-sm border-b border-gray-800 flex items-center justify-between px-6">
+    <header className="h-16 studio-glass border-b flex items-center justify-between px-6">
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-lg font-semibold text-white tracking-tight">
           {viewTitles[currentView] || 'Dashboard'}
         </h2>
 
         {/* Live badge: flashes green when an event arrives, dims when paused. */}
         {showTimelineControls && (
           <span
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
+            className={cn(
+              'studio-pill transition-all duration-300',
               !recordingEnabled
-                ? 'bg-gray-800 border-gray-700 text-gray-400'
+                ? 'bg-gray-800/60 border-gray-700/80 text-gray-400'
                 : pulsing
                   ? 'bg-primary-500/15 border-primary-500/40 text-primary-300'
-                  : 'bg-gray-800/60 border-gray-700 text-gray-400'
-            }`}
+                  : 'bg-gray-800/40 border-gray-700/60 text-gray-400',
+            )}
             title={
               recordingEnabled
                 ? 'Recording — new requests stream in live'
@@ -117,27 +119,28 @@ export function Header() {
             }
           >
             <Radio
-              className={`w-3 h-3 ${
-                recordingEnabled && pulsing ? 'text-primary-400 animate-pulse' : ''
-              }`}
+              className={cn(
+                'w-3 h-3',
+                recordingEnabled && pulsing && 'text-primary-400 animate-pulse',
+              )}
             />
             {recordingEnabled ? 'Live' : 'Paused'}
-            <span className="text-gray-500">·</span>
+            <span className="text-gray-600">·</span>
             <span className="tabular-nums text-gray-400">{exchanges.length}</span>
           </span>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           <input
             type="text"
             placeholder="Search requests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-64"
+            className="studio-input pl-10 pr-4 py-2 w-64"
           />
         </div>
 
@@ -148,7 +151,7 @@ export function Header() {
             <select
               value={filterMethod || ''}
               onChange={(e) => setFilterMethod(e.target.value || null)}
-              className="bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="studio-select"
             >
               <option value="">All Methods</option>
               {methods.map((method) => (
@@ -163,7 +166,7 @@ export function Header() {
               onChange={(e) =>
                 setFilterStatus(e.target.value as 'all' | 'success' | 'error')
               }
-              className="bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="studio-select"
             >
               <option value="all">All Status</option>
               <option value="success">Success (2xx)</option>
@@ -174,40 +177,39 @@ export function Header() {
 
         {/* Toolbar */}
         {showTimelineControls && (
-          <div className="flex items-center gap-1 pl-2 border-l border-gray-800">
+          <div className="flex items-center gap-0.5 pl-2.5 border-l border-gray-800/80">
             <button
               onClick={togglePause}
-              className={`p-2 rounded-lg transition-colors ${
-                recordingEnabled
-                  ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                  : 'text-primary-400 hover:text-primary-300 hover:bg-primary-500/10'
-              }`}
+              className={cn(
+                'studio-icon-btn',
+                !recordingEnabled && 'text-primary-400 hover:text-primary-300 hover:bg-primary-500/10',
+              )}
               title={recordingEnabled ? 'Pause recording' : 'Resume recording'}
             >
               {recordingEnabled ? (
-                <Pause className="w-5 h-5" />
+                <Pause className="w-[18px] h-[18px]" />
               ) : (
-                <Play className="w-5 h-5" />
+                <Play className="w-[18px] h-[18px]" />
               )}
             </button>
 
             <button
               onClick={() => setConfirmClear(true)}
               disabled={exchanges.length === 0}
-              className="p-2 text-gray-400 hover:text-error-400 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent"
+              className="studio-icon-btn hover:text-error-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-transparent"
               title="Clear all recorded requests"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-[18px] h-[18px]" />
             </button>
           </div>
         )}
 
         <button
           onClick={handleRefresh}
-          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+          className="studio-icon-btn"
           title="Refresh routes, metrics, and recordings"
         >
-          <RefreshCw className="w-5 h-5" />
+          <RefreshCw className="w-[18px] h-[18px]" />
         </button>
       </div>
 
@@ -220,7 +222,7 @@ export function Header() {
           onClick={() => setConfirmClear(false)}
         >
           <div
-            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up"
+            className="studio-card shadow-elevated max-w-md w-full overflow-hidden animate-slide-up"
             onClick={(e) => e.stopPropagation()}
             role="alertdialog"
             aria-modal="true"

@@ -232,11 +232,11 @@ export function ErrorInspector({ exchange }: Props) {
                   column: firstUserFrame.column,
                 })
               }
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-primary-700 hover:bg-primary-600 text-white rounded"
+              className="studio-btn-primary"
             >
               <FileCode className="w-3.5 h-3.5" />
               Open throw site in editor
-              <span className="font-mono text-primary-200 opacity-80">
+              <span className="font-mono text-gray-900/70">
                 {shortenPath(firstUserFrame.file)}:{firstUserFrame.line}
               </span>
             </button>

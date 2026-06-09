@@ -114,16 +114,23 @@ export function StatusDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Banner — clean header without ASCII art */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+      {/* Banner — hero focal point with brand gradient wash */}
+      <div className="studio-card relative">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            background:
+              'radial-gradient(120% 140% at 0% 0%, rgba(61, 230, 120, 0.10) 0%, transparent 45%)',
+          }}
+        />
+        <div className="relative flex flex-wrap items-center justify-between gap-4 px-6 py-6">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/30 flex items-center justify-center">
-              <Server className="w-5 h-5 text-primary-400" />
+            <div className="w-12 h-12 rounded-xl bg-primary-500/12 border border-primary-500/30 flex items-center justify-center">
+              <Server className="w-6 h-6 text-primary-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white tracking-tight">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-2xl font-bold text-white tracking-tight">
                   {runtime?.serviceName ?? 'expressots-app'}
                 </h2>
                 {runtime?.env && (
@@ -132,25 +139,31 @@ export function StatusDashboard() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 font-mono">
-                {runtime?.versions.core && (
-                  <span title="@expressots/core">core v{runtime.versions.core}</span>
-                )}
-                {runtime?.versions.adapterExpress && (
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1.5 font-mono">
+                {connected && runtime?.versions.core ? (
                   <>
-                    <span className="text-gray-700">·</span>
-                    <span title="@expressots/adapter-express">
-                      adapter v{runtime.versions.adapterExpress}
-                    </span>
+                    <span title="@expressots/core">core v{runtime.versions.core}</span>
+                    {runtime?.versions.adapterExpress && (
+                      <>
+                        <span className="text-gray-700">·</span>
+                        <span title="@expressots/adapter-express">
+                          adapter v{runtime.versions.adapterExpress}
+                        </span>
+                      </>
+                    )}
+                    {runtime?.versions.agent && (
+                      <>
+                        <span className="text-gray-700">·</span>
+                        <span title="@expressots/studio-agent">
+                          studio-agent v{runtime.versions.agent}
+                        </span>
+                      </>
+                    )}
                   </>
-                )}
-                {runtime?.versions.agent && (
-                  <>
-                    <span className="text-gray-700">·</span>
-                    <span title="@expressots/studio-agent">
-                      studio-agent v{runtime.versions.agent}
-                    </span>
-                  </>
+                ) : (
+                  <span className="not-italic text-gray-500">
+                    Waiting for your app to connect — start it with the Studio agent enabled.
+                  </span>
                 )}
               </div>
             </div>
@@ -160,7 +173,7 @@ export function StatusDashboard() {
             <ConnectionPill connected={connected} latencyMs={agentLatencyMs} />
             <button
               onClick={refresh}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg transition-colors border border-gray-700"
+              className="studio-btn"
               title="Re-fetch runtime info, metrics, and rescan routes"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -389,8 +402,8 @@ function MiddlewarePresetCard({
     : 'off';
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors">
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/40">
+    <div className="studio-card">
+      <div className="studio-card-header">
         <Layers className="w-4 h-4 text-teal-400" />
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
           Preset
@@ -540,8 +553,8 @@ function DrillPanel({
   }, [drill, routes, structure, containerSnapshot, runtime]);
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-slide-up">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800 bg-gray-900/40">
+    <div className="studio-card animate-slide-up">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800 bg-white/[0.015]">
         <div className="flex items-center gap-2">
           <DrillIcon drill={drill} />
           <h3 className="text-sm font-semibold text-white">
@@ -816,8 +829,8 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors">
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800 bg-gray-900/40">
+    <div className="studio-card group">
+      <div className="studio-card-header">
         <Icon className={cn('w-4 h-4', accent)} />
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
           {title}

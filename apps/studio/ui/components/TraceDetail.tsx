@@ -60,14 +60,14 @@ export function TraceDetail() {
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="studio-backdrop"
         onClick={() => setSelectedExchangeId(null)}
       />
 
       {/* Panel */}
-      <div className="relative ml-auto w-full max-w-2xl bg-gray-900 border-l border-gray-800 overflow-y-auto animate-slide-up">
+      <div className="relative ml-auto w-full max-w-2xl bg-[#0e1014]/95 backdrop-blur-xl border-l border-white/[0.07] overflow-y-auto animate-slide-in-right shadow-elevated">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between z-10">
+        <div className="studio-panel-header">
           <div className="flex items-center gap-3">
             <span className={cn(
               'px-2 py-1 rounded text-xs font-mono font-semibold',
@@ -79,28 +79,28 @@ export function TraceDetail() {
           </div>
           <button
             onClick={() => setSelectedExchangeId(null)}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+            className="studio-icon-btn"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Summary */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
+        <div className="p-4 border-b border-white/[0.06]">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="studio-stat">
               <p className="text-xs text-gray-500 uppercase tracking-wide">Duration</p>
               <p className="text-lg font-semibold text-white mt-1">
                 {formatDuration(response.duration)}
               </p>
             </div>
-            <div>
+            <div className="studio-stat">
               <p className="text-xs text-gray-500 uppercase tracking-wide">Time</p>
               <p className="text-lg font-semibold text-white mt-1">
                 {formatTimestamp(request.timestamp)}
               </p>
             </div>
-            <div>
+            <div className="studio-stat">
               <p className="text-xs text-gray-500 uppercase tracking-wide">Status</p>
               <p className={cn(
                 'text-lg font-semibold mt-1',
@@ -114,9 +114,9 @@ export function TraceDetail() {
 
         {/* Source / DI panel */}
         {(matchedRoute || resolvedBindings.length > 0) && (
-          <div className="p-4 border-b border-gray-800 space-y-3">
+          <div className="p-4 border-b border-white/[0.06] space-y-3">
             {matchedRoute && matchedRoute.filePath && (
-              <div className="flex items-center justify-between bg-gray-800/40 border border-gray-700 rounded-lg px-3 py-2">
+              <div className="studio-card flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <FileCode className="w-4 h-4 text-primary-400 flex-shrink-0" />
                   <div className="min-w-0">
@@ -138,7 +138,7 @@ export function TraceDetail() {
                       lineNumber: matchedRoute.lineNumber,
                     })
                   }
-                  className="ml-3 px-3 py-1.5 text-xs font-medium bg-primary-700 hover:bg-primary-600 text-white rounded"
+                  className="studio-btn-primary ml-3"
                 >
                   Open in editor
                 </button>
@@ -146,7 +146,7 @@ export function TraceDetail() {
             )}
 
             {resolvedBindings.length > 0 && (
-              <div className="bg-gray-800/40 border border-gray-700 rounded-lg px-3 py-2">
+              <div className="studio-card px-3 py-2">
                 <div className="flex items-center gap-2 mb-2">
                   <Boxes className="w-4 h-4 text-primary-400" />
                   <span className="text-sm font-medium text-white">
@@ -195,10 +195,10 @@ export function TraceDetail() {
         ) : null}
 
         {/* Actions */}
-        <div className="p-4 border-t border-gray-800 flex gap-2 items-center flex-wrap">
+        <div className="p-4 border-t border-white/[0.06] flex gap-2 items-center flex-wrap">
           <button
             onClick={() => copyToClipboard(JSON.stringify(exchange, null, 2))}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
+            className="studio-btn px-4 py-2 text-sm"
           >
             <Copy className="w-4 h-4" />
             Copy as JSON
@@ -239,7 +239,7 @@ function SnapshotButton({
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-300 transition-colors"
+        className="studio-btn px-4 py-2 text-sm"
       >
         <Download className="w-4 h-4" />
         Export snapshot
@@ -252,7 +252,7 @@ function SnapshotButton({
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="absolute bottom-full mb-2 right-0 z-20 min-w-[200px] bg-gray-900 border border-gray-800 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute bottom-full mb-2 right-0 z-20 min-w-[200px] studio-card shadow-elevated">
             <SnapshotOption
               icon={Download}
               label="Download as JSON"
@@ -292,7 +292,7 @@ function SnapshotOption({
   return (
     <button
       onClick={onClick}
-      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-800 flex items-start gap-2"
+            className="w-full px-3 py-2 text-left text-sm hover:bg-white/[0.05] flex items-start gap-2"
     >
       <Icon className="w-4 h-4 text-primary-400 mt-0.5 flex-shrink-0" />
       <div>
@@ -349,7 +349,7 @@ function TraceWaterfall({ trace }: TraceWaterfallProps) {
   }
 
   return (
-    <div className="p-4 border-b border-gray-800">
+    <div className="p-4 border-b border-white/[0.06]">
       <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
         Trace Waterfall
       </h3>
@@ -365,7 +365,7 @@ function TraceWaterfall({ trace }: TraceWaterfallProps) {
                 <div className="w-32 text-xs text-gray-500 truncate">
                   {span.name}
                 </div>
-                <div className="flex-1 h-6 bg-gray-800 rounded relative">
+                <div className="flex-1 h-6 bg-black/30 rounded relative">
                   <div
                     className={cn(
                       'absolute h-full rounded',
@@ -398,10 +398,10 @@ function CollapsibleSection({ title, defaultOpen = false, children }: Collapsibl
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-800">
+    <div className="border-b border-white/[0.06]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-800/50 transition-colors"
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-white/[0.03] transition-colors"
       >
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">{title}</h3>
         <span className="text-gray-500 text-sm">{isOpen ? '−' : '+'}</span>
@@ -442,7 +442,7 @@ function JsonViewer({ data }: JsonViewerProps) {
   const formatted = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
   return (
-    <pre className="text-sm font-mono text-gray-300 bg-gray-800/50 rounded-lg p-4 overflow-x-auto">
+    <pre className="text-sm font-mono text-gray-300 bg-black/20 border border-white/[0.08] rounded-lg p-4 overflow-x-auto">
       {formatted}
     </pre>
   );

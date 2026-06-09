@@ -123,8 +123,8 @@ export function DatabaseView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
         {/* Table list */}
-        <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
-          <div className="px-3 py-2 border-b border-gray-800 text-xs uppercase tracking-wide text-gray-500 flex items-center gap-2">
+        <div className="studio-card">
+          <div className="studio-card-header text-xs uppercase tracking-wide text-gray-400">
             <TableIcon className="w-3.5 h-3.5" /> Tables
           </div>
           {entities.length === 0 ? (
@@ -192,7 +192,7 @@ export function DatabaseView() {
 
 function SchemaPanel({ entity }: { entity: DatabaseEntitySchema }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg">
+    <div className="studio-card">
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-gray-800">
         <Database className="w-4 h-4 text-primary-400" />
         <h3 className="text-sm font-semibold text-white">{entity.name}</h3>
@@ -329,7 +329,7 @@ function RowBrowser({
   const hasNext = to < total;
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg">
+    <div className="studio-card">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
         <h4 className="text-[11px] uppercase tracking-wide text-gray-500">
           Rows
@@ -400,7 +400,7 @@ function RowBrowser({
 
 function SummaryCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
+    <div className="studio-stat px-4 py-3">
       <div className="text-xs text-gray-500">{label}</div>
       <div className="text-xl font-semibold text-white mt-1">{value}</div>
     </div>

@@ -26,12 +26,12 @@ export function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-[60] flex items-center justify-center p-6"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
       <div
-        className="relative bg-gray-900 border border-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto"
+        className="relative studio-card shadow-elevated w-full max-w-2xl max-h-[80vh] overflow-y-auto animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-5 py-3 flex items-center justify-between">
+        <div className="studio-panel-header px-5 py-3">
           <div className="flex items-center gap-2">
             <Keyboard className="w-4 h-4 text-primary-400" />
             <h2 className="text-base font-semibold text-white">Keyboard shortcuts</h2>

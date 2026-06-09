@@ -2,136 +2,410 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
+/* ── Base layer ─────────────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Render native UI (select dropdowns, scrollbars, autofill) in dark mode
+       so the OS-drawn <option> popups don't flash white. */
+    color-scheme: dark;
+  }
+
+  body {
+    @apply text-gray-100;
+    background-color: #070809;
+    background-image: linear-gradient(180deg, #0a0c10 0%, #070809 100%);
+  }
+
+  /* Dark dropdown options for every native <select>. The popup itself is
+     OS-drawn, so we set a dark surface + light text on the options. */
+  option,
+  optgroup {
+    background-color: #14171c;
+    color: #e5e7eb;
+  }
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 4px;
+  background: rgba(75, 85, 99, 0.6);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: rgba(107, 114, 128, 0.8);
+  background-clip: padding-box;
 }
 
-/* Selection */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── Selection & focus ────────────────────────────────────────────────── */
+
 ::selection {
-  background-color: #3de678;
-  color: #171717;
+  background-color: rgba(61, 230, 120, 0.25);
+  color: #f9fafb;
 }
 
-/* Focus ring */
 *:focus-visible {
-  outline: 2px solid #3de678;
+  outline: 2px solid rgba(61, 230, 120, 0.6);
   outline-offset: 2px;
 }
 
-/* Animations */
+/* ── Component utilities ──────────────────────────────────────────────── */
+
+@layer components {
+  /* Glass panel for header, footer, drawers */
+  .studio-glass {
+    background-color: rgba(14, 16, 20, 0.72);
+    @apply backdrop-blur-xl;
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Elevated card surface — distinctly lighter than the app background so
+     cards visibly float, with a hairline top highlight for depth. */
+  .studio-card {
+    @apply rounded-xl overflow-hidden;
+    background-color: #14171c;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 6px 20px -8px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .studio-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: #161a20;
+  }
+
+  .studio-card-header {
+    @apply flex items-center gap-2 px-4 py-2.5;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.015);
+  }
+
+  /* Interactive list row — same blackish card surface as .studio-card,
+     with color-only hover (no positional motion for the live list). */
+  .studio-row {
+    @apply flex items-center p-3 rounded-lg cursor-pointer;
+    background-color: #14171c;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 1px 2px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+  }
+
+  .studio-row:hover {
+    background-color: #161a20;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .studio-row-selected {
+    background-color: rgba(61, 230, 120, 0.07);
+    border-color: rgba(61, 230, 120, 0.4);
+  }
+
+  .studio-row-selected:hover {
+    background-color: rgba(61, 230, 120, 0.1);
+    border-color: rgba(61, 230, 120, 0.5);
+  }
+
+  /* Form controls — recessed translucent surface with a white hairline,
+     matching the card system rather than the flat gray-800 default. */
+  .studio-input {
+    @apply rounded-lg text-sm text-gray-100 placeholder-gray-500 focus:outline-none;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  .studio-input:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .studio-input:focus {
+    background-color: rgba(255, 255, 255, 0.045);
+    border-color: rgba(61, 230, 120, 0.45);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.25),
+      0 0 0 3px rgba(61, 230, 120, 0.12);
+  }
+
+  .studio-select {
+    @apply rounded-lg text-sm text-gray-100 px-3 py-2 focus:outline-none;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  .studio-select:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .studio-select:focus {
+    background-color: rgba(255, 255, 255, 0.045);
+    border-color: rgba(61, 230, 120, 0.45);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.25),
+      0 0 0 3px rgba(61, 230, 120, 0.12);
+  }
+
+  .studio-icon-btn {
+    @apply p-2 rounded-lg text-gray-400 transition-all duration-150;
+  }
+
+  .studio-icon-btn:hover {
+    @apply text-white;
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .studio-icon-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Secondary action button — glassy hairline chip, same vocabulary as cards */
+  .studio-btn {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg text-gray-200 transition-all duration-150;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .studio-btn:hover {
+    @apply text-white;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .studio-btn:active {
+    transform: scale(0.98);
+  }
+
+  .studio-btn:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  .studio-btn:disabled:hover {
+    @apply text-gray-200;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Primary (brand) action button — premium green with a soft glow */
+  .studio-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150;
+    @apply bg-primary-500 hover:bg-primary-400 text-gray-950 border border-primary-400/40;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 6px 18px -8px rgba(61, 230, 120, 0.6);
+  }
+
+  .studio-btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .studio-btn-primary:disabled {
+    @apply bg-gray-700 text-gray-400 border-gray-700 cursor-not-allowed;
+    box-shadow: none;
+  }
+
+  /* Segmented control — tab-style toggle group (e.g. List / Graph) */
+  .studio-segment {
+    @apply inline-flex items-center rounded-lg overflow-hidden;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .studio-segment-btn {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors;
+  }
+
+  .studio-segment-btn:hover {
+    @apply text-gray-200;
+  }
+
+  .studio-segment-btn-active {
+    @apply bg-primary-500/15 text-primary-300;
+  }
+
+  /* Small stat / summary tile — premium surface for KPI numbers */
+  .studio-stat {
+    @apply rounded-xl px-4 py-3;
+    background-color: #14171c;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 6px 20px -8px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .studio-stat:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* Nav item in sidebar */
+  .studio-nav-item {
+    @apply relative flex items-center w-full mx-2 px-3 py-2 text-left rounded-lg transition-colors duration-100;
+    @apply text-gray-400;
+  }
+
+  .studio-nav-item:hover {
+    @apply text-gray-200 bg-gray-800/50;
+  }
+
+  .studio-nav-active {
+    @apply text-primary-400 bg-primary-500/[0.08];
+  }
+
+  .studio-nav-active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-primary-500;
+  }
+
+  /* Status pill */
+  .studio-pill {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border;
+  }
+
+  /* Drawer / panel header — glass strip with a white hairline + brand wash */
+  .studio-panel-header {
+    @apply sticky top-0 z-10 px-5 py-4 flex items-center justify-between backdrop-blur-xl;
+    background-color: rgba(14, 16, 20, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Modal backdrop */
+  .studio-backdrop {
+    @apply absolute inset-0 bg-black/60 backdrop-blur-sm;
+  }
+
+  /* View content wrapper — quick opacity fade only, no positional shift */
+  .studio-view {
+    animation: viewEnter 0.12s ease-out;
+  }
+}
+
+/* ── Legacy animation classes (kept for compatibility) ────────────────── */
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-in-out;
+@keyframes viewEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-slide-up {
-  animation: slideUp 0.2s ease-out;
-}
+.animate-fade-in { animation: fadeIn 0.18s ease-out; }
+.animate-slide-up { animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-slide-in-right { animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-view-enter { animation: viewEnter 0.12s ease-out; }
 
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
+/* ── React Flow ───────────────────────────────────────────────────────── */
 
-/* React Flow customizations */
 .react-flow__controls {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-  border-radius: 8px !important;
+  background-color: rgba(17, 24, 39, 0.9) !important;
+  border-color: rgba(55, 65, 81, 0.8) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
 }
 
 .react-flow__controls-button {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
+  background-color: transparent !important;
+  border-color: rgba(55, 65, 81, 0.6) !important;
   color: #9ca3af !important;
+  transition: all 0.15s ease !important;
 }
 
 .react-flow__controls-button:hover {
-  background-color: #374151 !important;
+  background-color: rgba(55, 65, 81, 0.6) !important;
   color: #fff !important;
 }
 
 .react-flow__minimap {
-  background-color: #1f2937 !important;
-  border-radius: 8px !important;
+  background-color: rgba(17, 24, 39, 0.9) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(12px);
 }
 
-/* Code blocks */
+/* ── Code blocks ──────────────────────────────────────────────────────── */
+
 pre code {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* Tooltips */
+/* ── Tooltips ─────────────────────────────────────────────────────────── */
+
 .tooltip {
-  @apply absolute z-50 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded shadow-lg;
+  @apply absolute z-50 px-2.5 py-1.5 text-xs font-medium text-gray-100 rounded-lg;
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(55, 65, 81, 0.8);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
 }
 
-/* Loading spinner */
+/* ── Loading spinner ──────────────────────────────────────────────────── */
+
 .spinner {
-  @apply w-5 h-5 border-2 border-gray-600 border-t-primary-500 rounded-full animate-spin;
+  @apply w-5 h-5 border-2 border-gray-700 border-t-primary-500 rounded-full animate-spin;
 }
 
-/* Badge styles */
+/* ── Badges ───────────────────────────────────────────────────────────── */
+
 .badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .badge-success {
-  @apply bg-success-500/10 text-success-500;
+  @apply bg-success-500/10 text-success-500 border border-success-500/20;
 }
 
 .badge-warning {
-  @apply bg-warning-500/10 text-warning-500;
+  @apply bg-warning-500/10 text-warning-500 border border-warning-500/20;
 }
 
 .badge-error {
-  @apply bg-error-500/10 text-error-500;
+  @apply bg-error-500/10 text-error-500 border border-error-500/20;
 }
 
 .badge-info {
-  @apply bg-primary-500/10 text-primary-400;
+  @apply bg-primary-500/10 text-primary-400 border border-primary-500/20;
 }

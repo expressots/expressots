@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Plug,
@@ -19,6 +20,7 @@ import {
   Check,
   AlertCircle,
   Copy,
+  Settings,
 } from 'lucide-react';
 import {
   useSettings,
@@ -30,6 +32,18 @@ import { cn, copyToClipboard } from '../lib/utils';
 import type { LogLevel, ViewMode } from '../types';
 
 const LOG_LEVELS: LogLevel[] = ['log', 'info', 'warn', 'error', 'debug'];
+
+/**
+ * Per-level chip colors — kept identical to the Logs view's `LEVEL_STYLES`
+ * so the "Default log levels" picker reads exactly like the live filter.
+ */
+const LOG_LEVEL_STYLES: Record<LogLevel, { text: string; bg: string; label: string }> = {
+  log: { text: 'text-gray-300', bg: 'bg-gray-700/30', label: 'LOG' },
+  info: { text: 'text-sky-400', bg: 'bg-sky-500/10', label: 'INFO' },
+  warn: { text: 'text-warning-500', bg: 'bg-warning-500/10', label: 'WARN' },
+  error: { text: 'text-error-400', bg: 'bg-error-500/15', label: 'ERROR' },
+  debug: { text: 'text-violet-400', bg: 'bg-violet-500/10', label: 'DEBUG' },
+};
 const VIEWS: { id: ViewMode; label: string }[] = [
   { id: 'status', label: 'Status' },
   { id: 'requests', label: 'Requests' },
@@ -51,26 +65,41 @@ export function SettingsPanel({ onClose }: Props) {
 
   const [confirmReset, setConfirmReset] = useState(false);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="relative ml-auto w-full max-w-xl bg-gray-900 border-l border-gray-800 overflow-y-auto animate-slide-up">
+      <div
+        className="relative ml-auto w-full max-w-xl overflow-y-auto animate-slide-in-right shadow-elevated"
+        style={{
+          backgroundColor: 'rgba(14, 16, 20, 0.96)',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.07)',
+        }}
+      >
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-white">Settings</h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
-          >
+        <div className="studio-panel-header">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-500/12 border border-primary-500/30 flex items-center justify-center shrink-0">
+              <Settings className="w-5 h-5 text-primary-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-white tracking-tight leading-none">
+                Settings
+              </h2>
+              <p className="text-[11px] text-gray-500 mt-1.5">
+                Studio preferences · saved to this browser
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="studio-icon-btn">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="divide-y divide-gray-800">
+        <div className="divide-y divide-white/[0.06]">
           {/* Connection */}
           <Section icon={Plug} title="Connection">
             <Field label="Agent URL" hint="WebSocket URL of the running Studio Agent.">
@@ -79,11 +108,11 @@ export function SettingsPanel({ onClose }: Props) {
                   type="text"
                   value={settings.agentUrl}
                   onChange={(e) => settings.update({ agentUrl: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded font-mono focus:outline-none focus:border-primary-500"
+                  className="studio-input flex-1 px-3 py-2 font-mono"
                 />
                 <button
                   onClick={() => setAgentUrl(settings.agentUrl)}
-                  className="px-3 py-2 text-xs bg-primary-700 hover:bg-primary-600 text-white rounded whitespace-nowrap"
+                  className="studio-btn-primary px-3 py-2 whitespace-nowrap"
                   title="Reconnect Studio to this URL (page reload required for full effect)"
                 >
                   Apply
@@ -104,7 +133,7 @@ export function SettingsPanel({ onClose }: Props) {
                 onChange={(e) =>
                   settings.update({ editorScheme: e.target.value as EditorScheme })
                 }
-                className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-primary-500"
+                className="studio-select w-full"
               >
                 {(Object.keys(EDITOR_SCHEME_LABELS) as EditorScheme[]).map((s) => (
                   <option key={s} value={s}>
@@ -124,7 +153,7 @@ export function SettingsPanel({ onClose }: Props) {
                   value={settings.customEditorPrefix}
                   onChange={(e) => settings.update({ customEditorPrefix: e.target.value })}
                   placeholder="vscode://file"
-                  className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded font-mono focus:outline-none focus:border-primary-500"
+                  className="studio-input w-full px-3 py-2 font-mono"
                 />
               </Field>
             )}
@@ -170,7 +199,7 @@ export function SettingsPanel({ onClose }: Props) {
               <select
                 value={settings.defaultView}
                 onChange={(e) => settings.update({ defaultView: e.target.value as ViewMode })}
-                className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-primary-500"
+                className="studio-select w-full"
               >
                 {VIEWS.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -191,9 +220,10 @@ export function SettingsPanel({ onClose }: Props) {
               onChange={(v) => settings.update({ defaultAutoScroll: v })}
             />
             <Field label="Default log levels" hint="Levels checked here are visible by default in the Logs view.">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1">
                 {LOG_LEVELS.map((level) => {
                   const checked = settings.defaultLogLevels.includes(level);
+                  const style = LOG_LEVEL_STYLES[level];
                   return (
                     <button
                       key={level}
@@ -204,13 +234,13 @@ export function SettingsPanel({ onClose }: Props) {
                         settings.update({ defaultLogLevels: next });
                       }}
                       className={cn(
-                        'px-2 py-1 text-[11px] font-mono uppercase rounded border transition-colors',
+                        'px-2 py-1 text-[11px] font-mono rounded border transition-colors',
                         checked
-                          ? 'border-primary-500/40 bg-primary-500/10 text-primary-300'
-                          : 'border-gray-800 text-gray-600 hover:text-gray-400',
+                          ? `${style.bg} ${style.text} border-current/30`
+                          : 'border-white/[0.08] text-gray-600 hover:text-gray-400 hover:border-white/[0.14]',
                       )}
                     >
-                      {level}
+                      {style.label}
                     </button>
                   );
                 })}
@@ -228,7 +258,7 @@ export function SettingsPanel({ onClose }: Props) {
               <Row label="Buffered log lines" value={`${logs.length}`} />
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-800">
+            <div className="mt-4 pt-4 border-t border-white/[0.06]">
               {confirmReset ? (
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-warning-500" />
@@ -244,7 +274,7 @@ export function SettingsPanel({ onClose }: Props) {
                   </button>
                   <button
                     onClick={() => setConfirmReset(false)}
-                    className="px-3 py-1.5 text-xs border border-gray-700 text-gray-400 hover:text-white rounded"
+                    className="px-3 py-1.5 text-xs border border-white/10 text-gray-400 hover:text-white hover:border-white/20 rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -252,7 +282,7 @@ export function SettingsPanel({ onClose }: Props) {
               ) : (
                 <button
                   onClick={() => setConfirmReset(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs border border-gray-700 text-gray-400 hover:text-error-400 hover:border-error-500/50 rounded transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs border border-white/10 text-gray-400 hover:text-error-400 hover:border-error-500/50 rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Reset all settings
@@ -262,7 +292,8 @@ export function SettingsPanel({ onClose }: Props) {
           </Section>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -370,7 +401,7 @@ function NumberInput({
       min={min}
       max={max}
       step={step}
-      className="w-32 px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-primary-500"
+      className="studio-input w-32 px-3 py-2"
     />
   );
 }

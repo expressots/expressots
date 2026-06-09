@@ -60,7 +60,7 @@ export function ExportMenu({ exchange, compact = false }: ExportMenuProps) {
         className={
           compact
             ? 'p-1 text-gray-500 hover:text-primary-400 rounded'
-            : 'flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 rounded'
+            : 'studio-btn'
         }
         title="Export this request"
       >
@@ -74,12 +74,12 @@ export function ExportMenu({ exchange, compact = false }: ExportMenuProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 py-1">
+        <div className="absolute right-0 top-full mt-1 w-56 studio-card shadow-elevated z-50 py-1">
           {FORMATS.map((f) => (
             <button
               key={f.id}
               onClick={(e) => handleCopy(e, f.id)}
-              className="flex items-center w-full text-left px-3 py-2 hover:bg-gray-700 transition-colors"
+              className="flex items-center w-full text-left px-3 py-2 hover:bg-gray-800/60 transition-colors"
             >
               <div className="flex-1">
                 <div className="text-sm text-white">{f.label}</div>

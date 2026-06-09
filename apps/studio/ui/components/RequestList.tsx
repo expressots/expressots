@@ -80,7 +80,7 @@ export function RequestList() {
             'flex items-center gap-1.5 px-2 py-1 rounded border transition-colors',
             autoScroll
               ? 'bg-primary-500/10 border-primary-500/30 text-primary-300'
-              : 'bg-gray-800/60 border-gray-700 text-gray-400 hover:text-gray-200',
+              : 'bg-black/20 border-white/[0.08] text-gray-400 hover:text-gray-200 hover:border-white/[0.14]',
           )}
           title={autoScroll ? 'Auto-scroll on' : 'Auto-scroll off'}
         >
@@ -112,20 +112,20 @@ export function RequestList() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-      <div className="w-16 h-16 mb-4 rounded-full bg-primary-500/10 flex items-center justify-center">
-        <Clock className="w-8 h-8 text-primary-400 opacity-70" />
+      <div className="w-16 h-16 mb-5 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+        <Clock className="w-7 h-7 text-primary-400" />
       </div>
-      <p className="text-lg text-white font-medium">No requests recorded yet</p>
-      <p className="text-sm mt-2 text-center max-w-md">
+      <p className="text-xl text-white font-semibold tracking-tight">No requests recorded yet</p>
+      <p className="text-sm mt-2.5 text-center max-w-md text-gray-400 leading-relaxed">
         Send a request to your running app (default{' '}
-        <code className="px-1.5 py-0.5 bg-gray-800 rounded text-primary-300 text-xs">
+        <code className="px-1.5 py-0.5 bg-black/30 border border-white/[0.08] rounded-md text-primary-300 text-xs font-mono">
           localhost:3000
         </code>
         ) and it will stream in here in real time.
       </p>
-      <p className="text-xs mt-4 text-gray-500">
+      <p className="text-xs mt-5 text-gray-500">
         Tip: use the{' '}
-        <span className="text-primary-300 font-medium">API Client</span> tab to
+        <span className="text-primary-400 font-medium">API Client</span> tab to
         send one from inside Studio.
       </p>
     </div>
@@ -145,10 +145,8 @@ function RequestRow({ exchange, isSelected, onSelect }: RequestRowProps) {
     <div
       onClick={onSelect}
       className={cn(
-        'flex items-center p-4 rounded-lg border cursor-pointer transition-all',
-        isSelected
-          ? 'bg-gray-800/80 border-primary-500/50'
-          : 'bg-gray-900/50 border-gray-800 hover:bg-gray-800/50 hover:border-gray-700'
+        'studio-row',
+        isSelected && 'studio-row-selected',
       )}
     >
       {/* Method Badge */}

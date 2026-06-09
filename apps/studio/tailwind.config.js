@@ -50,6 +50,13 @@ export default {
           900: '#10572b',
           950: '#082413',
         },
+        // Layered surface system for clear elevation in dark mode
+        surface: {
+          base: '#070809',
+          1: '#0e1014',
+          2: '#14171c',
+          3: '#1a1e24',
+        },
         success: {
           500: '#22c55e',
           600: '#16a34a',
@@ -67,10 +74,16 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
+      boxShadow: {
+        'card': '0 1px 2px rgba(0, 0, 0, 0.3)',
+        'elevated': '0 8px 32px rgba(0, 0, 0, 0.5)',
+      },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'fade-in': 'fadeIn 0.2s ease-in-out',
-        'slide-up': 'slideUp 0.2s ease-out',
+        'fade-in': 'fadeIn 0.18s ease-out',
+        'slide-up': 'slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-in-right': 'slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+        'view-enter': 'viewEnter 0.12s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -78,9 +91,20 @@ export default {
           '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        slideInRight: {
+          '0%': { opacity: '0', transform: 'translateX(100%)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        viewEnter: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+      },
+      transitionTimingFunction: {
+        'spring': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },

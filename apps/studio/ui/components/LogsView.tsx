@@ -94,7 +94,7 @@ export function LogsView() {
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar */}
-      <div className="border-b border-gray-800 px-4 py-3 space-y-3 bg-gray-900/40">
+      <div className="border-b border-white/[0.06] px-4 py-3 space-y-3 bg-white/[0.02]">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 mr-auto">
             <Terminal className="w-4 h-4 text-primary-400" />
@@ -107,10 +107,9 @@ export function LogsView() {
           <button
             onClick={() => setAutoScroll(!autoScroll)}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors',
-              autoScroll
-                ? 'bg-primary-500/15 border-primary-500/40 text-primary-300'
-                : 'border-gray-700 text-gray-400 hover:text-white',
+              'studio-btn',
+              autoScroll &&
+                'bg-primary-500/15 border-primary-500/40 text-primary-300 hover:bg-primary-500/20',
             )}
           >
             <ArrowDownToLine className="w-3 h-3" />
@@ -119,7 +118,7 @@ export function LogsView() {
 
           <button
             onClick={() => clearLogs()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-700 text-gray-400 hover:text-error-400 hover:border-error-500/50 rounded transition-colors"
+            className="studio-btn hover:text-error-400 hover:border-error-500/50"
           >
             <Trash2 className="w-3 h-3" />
             Clear
@@ -134,7 +133,7 @@ export function LogsView() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter messages…"
-              className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-primary-500 text-gray-200"
+              className="studio-input w-full pl-8 pr-3 py-1.5"
             />
           </div>
 
@@ -150,7 +149,7 @@ export function LogsView() {
                     'px-2 py-1 text-[11px] font-mono rounded border transition-colors',
                     active
                       ? `${style.bg} ${style.text} border-current/30`
-                      : 'border-gray-800 text-gray-600 hover:text-gray-400',
+                      : 'border-white/[0.08] text-gray-600 hover:text-gray-400 hover:border-white/[0.14]',
                   )}
                 >
                   {style.label}

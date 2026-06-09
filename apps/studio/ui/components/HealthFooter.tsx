@@ -30,7 +30,7 @@ export function HealthFooter() {
           : 'text-error-400';
 
   return (
-    <footer className="border-t border-gray-800 bg-gray-900/60 backdrop-blur-sm px-4 py-1.5 flex items-center gap-4 text-xs font-mono text-gray-400">
+    <footer className="studio-glass border-t px-4 py-2 flex items-center gap-4 text-[11px] font-mono text-gray-500">
       {/* Connection */}
       <span className="inline-flex items-center gap-1.5">
         {connected ? (
@@ -38,7 +38,7 @@ export function HealthFooter() {
         ) : (
           <WifiOff className="w-3 h-3 text-error-500" />
         )}
-        <span className={connected ? 'text-success-500' : 'text-error-500'}>
+        <span className={connected ? 'text-success-500/90' : 'text-error-500/90'}>
           {connected ? 'connected' : 'offline'}
         </span>
       </span>
@@ -57,7 +57,7 @@ export function HealthFooter() {
 
       {/* Events */}
       <span className="inline-flex items-center gap-1.5" title="Total messages received from the agent since page load">
-        <ArrowDown className="w-3 h-3" />
+        <ArrowDown className="w-3 h-3 text-gray-600" />
         <span>{eventsReceived.toLocaleString()} ev</span>
       </span>
 
@@ -66,7 +66,7 @@ export function HealthFooter() {
       {/* Memory (from the most recent metrics broadcast) */}
       {metrics && (
         <span className="inline-flex items-center gap-1.5" title="Agent process memory: heapUsed / heapTotal">
-          <MemoryStick className="w-3 h-3" />
+          <MemoryStick className="w-3 h-3 text-gray-600" />
           <span>
             {formatBytes(metrics.memoryUsage.heapUsed)} /{' '}
             {formatBytes(metrics.memoryUsage.heapTotal)}
@@ -75,7 +75,7 @@ export function HealthFooter() {
       )}
 
       {/* Buffer occupancy */}
-      <span className="ml-auto inline-flex items-center gap-3">
+      <span className="ml-auto inline-flex items-center gap-3 text-gray-600">
         <span className="inline-flex items-center gap-1.5" title="Recorded exchanges currently held in memory">
           <Activity className="w-3 h-3" />
           {exchanges.length} req
@@ -87,5 +87,5 @@ export function HealthFooter() {
 }
 
 function Separator() {
-  return <span className="text-gray-700">·</span>;
+  return <span className="text-gray-800 select-none">·</span>;
 }

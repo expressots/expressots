@@ -114,10 +114,7 @@ export function ReplayView() {
           const isReplaying = replayingId === exchange.id;
 
           return (
-            <div
-              key={exchange.id}
-              className="bg-gray-900/50 border border-gray-800 rounded-lg p-4"
-            >
+            <div key={exchange.id} className="studio-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div
@@ -141,16 +138,11 @@ export function ReplayView() {
                 <button
                   onClick={() => handleReplay(exchange)}
                   disabled={isReplaying}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                    isReplaying
-                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                      : 'bg-primary-500 text-white hover:bg-primary-600',
-                  )}
+                  className="studio-btn-primary px-4 py-2 text-sm"
                 >
                   {isReplaying ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
                       Replaying...
                     </>
                   ) : (
@@ -163,7 +155,7 @@ export function ReplayView() {
               </div>
 
               {result && (
-                <div className="mt-4 pt-4 border-t border-gray-800">
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
                   {result.success && result.diff ? (
                     <ReplayDiff payload={result.diff} />
                   ) : (

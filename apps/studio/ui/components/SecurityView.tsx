@@ -203,7 +203,7 @@ export function SecurityView() {
   return (
     <div className="space-y-6">
       {/* Header banner — score + plain-English explainer + rescan */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="studio-card">
         <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
           <div className="flex items-start gap-4 flex-1 min-w-0">
             <ScoreBadge report={report} />
@@ -221,10 +221,8 @@ export function SecurityView() {
               onClick={() => requestSecurityScan()}
               disabled={scanning}
               className={cn(
-                'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border',
-                scanning
-                  ? 'bg-gray-800 text-gray-500 border-gray-800 cursor-not-allowed'
-                  : 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700',
+                'studio-btn',
+                scanning && 'opacity-50 cursor-not-allowed hover:bg-gray-800/80',
               )}
               title="Re-run npm audit + OSV.dev lookup"
             >
@@ -259,7 +257,7 @@ export function SecurityView() {
       />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-gray-800">
+      <div className="flex items-center gap-1 border-b border-white/[0.06]">
         <TabButton
           active={tab === 'dependencies'}
           onClick={() => setTab('dependencies')}
@@ -632,10 +630,8 @@ function ExportMenu({
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         className={cn(
-          'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border',
-          disabled
-            ? 'bg-gray-800 text-gray-500 border-gray-800 cursor-not-allowed'
-            : 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700',
+          'studio-btn',
+          disabled && 'opacity-50 cursor-not-allowed hover:bg-gray-800/80',
         )}
         title="Export the current report"
       >
@@ -646,7 +642,10 @@ function ExportMenu({
         />
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 z-20 w-56 rounded-lg border border-gray-700 bg-gray-900 shadow-xl overflow-hidden">
+        <div
+          className="absolute right-0 mt-1 z-20 w-56 rounded-lg border border-white/10 shadow-elevated overflow-hidden"
+          style={{ backgroundColor: '#14171c' }}
+        >
           <ExportMenuItem
             icon={copied ? CheckCircle2 : Copy}
             label={copied ? 'Copied!' : 'Copy as Markdown'}
@@ -685,7 +684,7 @@ function ExportMenuItem({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-3 py-2 hover:bg-gray-800 flex items-start gap-2.5 transition-colors"
+      className="w-full text-left px-3 py-2 hover:bg-white/5 flex items-start gap-2.5 transition-colors"
     >
       <Icon className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
@@ -778,10 +777,9 @@ function AutoRescanToggle({
     <button
       onClick={() => setEnabled((v) => !v)}
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors border',
-        enabled
-          ? 'bg-primary-500/15 border-primary-500/40 text-primary-300'
-          : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700',
+        'studio-btn px-2.5 py-1.5 text-[11px]',
+        enabled &&
+          'bg-primary-500/15 border-primary-500/40 text-primary-300 hover:bg-primary-500/20',
       )}
       title={
         enabled
@@ -1234,14 +1232,14 @@ function Banner({
 
 function CountStrip({ report }: { report: SecurityReport | null }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 border-t border-gray-800">
+    <div className="grid grid-cols-2 sm:grid-cols-5 border-t border-white/[0.06]">
       {SEVERITY_ORDER.map((sev) => {
         const style = SEVERITY_STYLES[sev];
         const n = report?.counts[sev] ?? 0;
         return (
           <div
             key={sev}
-            className="flex items-center justify-between px-5 py-2.5 border-r border-gray-800 last:border-r-0"
+            className="flex items-center justify-between px-5 py-2.5 border-r border-white/[0.06] last:border-r-0"
           >
             <div className="flex items-center gap-2">
               <span className={cn('w-2 h-2 rounded-full', style.dot)} />
@@ -1301,7 +1299,7 @@ function TabButton({
       <span
         className={cn(
           'inline-flex items-center justify-center min-w-[20px] px-1.5 rounded text-[10px] font-mono',
-          active ? 'bg-primary-500/10 text-primary-400' : 'bg-gray-800 text-gray-500',
+          active ? 'bg-primary-500/10 text-primary-400' : 'bg-white/5 text-gray-500',
         )}
       >
         {count}
@@ -1519,7 +1517,7 @@ function SuppressControl({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"
+        className="studio-btn px-2.5 py-1 text-[11px]"
         title="Hide this finding from the main view (local-only, you can restore it later)"
       >
         <EyeOff className="w-3 h-3" />
@@ -1816,7 +1814,7 @@ function TopFixRow({
     (action.group.fix.kind === 'none' || action.group.fix.kind === 'override');
 
   return (
-    <li className="flex items-start gap-3 p-3 rounded-lg bg-gray-900/60 border border-gray-800">
+    <li className="flex items-start gap-3 p-3 rounded-lg bg-[#14171c] border border-white/[0.07]">
       <span
         className={cn(
           'mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium border shrink-0',
@@ -1869,7 +1867,7 @@ function TopFixRow({
         ) : (
           <button
             onClick={handlePostureCta}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700"
+            className="studio-btn px-2.5 py-1 text-[11px]"
           >
             <ExternalLink className="w-3 h-3" />
             Investigate
@@ -2269,7 +2267,7 @@ function FixGroupCard({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-gray-900/40 overflow-hidden transition-opacity',
+        'rounded-lg border bg-[#14171c] overflow-hidden transition-opacity',
         style.ring,
         allSuppressed && 'opacity-60',
       )}
@@ -2453,7 +2451,7 @@ function DependencyFindingCard({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-gray-900/40 p-4 space-y-3 transition-opacity',
+        'rounded-lg border bg-[#14171c] p-4 space-y-3 transition-opacity',
         style.ring,
         suppression && 'opacity-60',
       )}
@@ -2990,7 +2988,7 @@ function AuthCoverageTile({ coverage }: { coverage: AuthCoverage }) {
   // traffic yet — say so explicitly rather than implying 100% coverage.
   if (total === 0) {
     return (
-      <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-4">
+      <div className="studio-card p-4">
         <div className="flex items-center gap-2 mb-3">
           <ShieldQuestion className="w-4 h-4 text-gray-500" />
           <h3 className="text-sm font-semibold text-white tracking-tight">
@@ -3013,7 +3011,7 @@ function AuthCoverageTile({ coverage }: { coverage: AuthCoverage }) {
         : 'text-orange-300';
 
   return (
-    <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-4 h-full flex flex-col">
+    <div className="studio-card p-4 h-full flex flex-col">
       <div className="flex items-center gap-2 mb-3">
         <ShieldCheck className="w-4 h-4 text-purple-400" />
         <h3 className="text-sm font-semibold text-white tracking-tight">
@@ -3246,7 +3244,7 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
   }, [findingsByRule]);
 
   return (
-    <div className="bg-gray-900/40 border border-gray-800 rounded-xl overflow-hidden">
+    <div className="studio-card">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-800/40 transition-colors"
@@ -3376,7 +3374,7 @@ function OwaspCoverageTile({
   onSelect: (code: string | null) => void;
 }) {
   return (
-    <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-4">
+    <div className="studio-card p-4">
       <div className="flex items-center gap-2 mb-3">
         <ShieldCheck className="w-4 h-4 text-purple-400" />
         <h3 className="text-sm font-semibold text-white tracking-tight">
@@ -3447,7 +3445,7 @@ function PostureFindingCard({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-gray-900/40 p-4 space-y-3 transition-opacity',
+        'rounded-lg border bg-[#14171c] p-4 space-y-3 transition-opacity',
         style.ring,
         suppression && 'opacity-60',
       )}

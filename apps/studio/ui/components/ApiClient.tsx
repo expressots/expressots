@@ -341,7 +341,7 @@ export function ApiClient() {
 
       {/* Discovered routes — grouped by controller, filterable */}
       {groupedRoutes.length > 0 && (
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 space-y-3">
+        <div className="studio-card p-3 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-gray-500 uppercase tracking-wide">
               Discovered routes
@@ -355,7 +355,7 @@ export function ApiClient() {
               value={routeFilter}
               onChange={(e) => setRouteFilter(e.target.value)}
               placeholder="Filter by path, method, or handler…"
-              className="w-64 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-xs text-gray-200 focus:outline-none focus:border-primary-500"
+              className="studio-input w-64 px-2.5 py-1.5 text-xs"
             />
           </div>
           {filteredGroups.length === 0 ? (
@@ -366,11 +366,11 @@ export function ApiClient() {
               return (
                 <div
                   key={group.controller}
-                  className="border border-gray-800 rounded-md overflow-hidden bg-gray-950/40"
+                  className="border border-white/[0.06] rounded-md overflow-hidden bg-black/20"
                 >
                   <button
                     onClick={() => toggleGroup(group.controller)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left bg-gray-900/60 hover:bg-gray-900 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left bg-black/20 hover:bg-white/[0.04] transition-colors"
                   >
                     {isCollapsed ? (
                       <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
@@ -395,7 +395,7 @@ export function ApiClient() {
                               ? `Auto-fills body from ${r.bodyDto}`
                               : `${r.method} ${r.path}${r.controllerMethod ? ` → ${r.controllerMethod}()` : ''}`
                           }
-                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-800/60 border border-transparent hover:border-primary-500/40 transition-colors text-left"
+                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/[0.04] border border-transparent hover:border-primary-500/40 transition-colors text-left"
                         >
                           <span
                             className={cn(
@@ -439,7 +439,7 @@ export function ApiClient() {
           value={method}
           onChange={(e) => setMethod(e.target.value as HttpMethod)}
           className={cn(
-            'px-3 py-2 rounded-lg bg-gray-900 border border-gray-800 text-sm font-mono font-semibold focus:outline-none focus:border-primary-500',
+            'studio-select font-mono font-semibold',
             getMethodColor(method),
           )}
         >
@@ -457,21 +457,16 @@ export function ApiClient() {
             if (e.key === 'Enter' && !sending) send();
           }}
           placeholder="http://localhost:3000/"
-          className="flex-1 px-3 py-2 rounded-lg bg-gray-900 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+          className="studio-input flex-1 px-3 py-2 font-mono"
         />
         <button
           onClick={send}
           disabled={sending || !url.trim()}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-            sending || !url.trim()
-              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-              : 'bg-primary-500 text-white hover:bg-primary-600',
-          )}
+          className="studio-btn-primary px-4 py-2 text-sm"
         >
           {sending ? (
             <>
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
               Sending...
             </>
           ) : (
@@ -484,8 +479,8 @@ export function ApiClient() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
-        <div className="flex border-b border-gray-800">
+      <div className="studio-card">
+        <div className="flex border-b border-white/[0.06]">
           {(['headers', 'query', 'body'] as Tab[]).map((t) => (
             <button
               key={t}
@@ -542,16 +537,14 @@ export function ApiClient() {
               {supportsBody ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="inline-flex rounded-md border border-gray-800 overflow-hidden">
+                    <div className="studio-segment">
                       {(['form', 'json'] as BodyMode[]).map((m) => (
                         <button
                           key={m}
                           onClick={() => setBodyMode(m)}
                           className={cn(
-                            'px-3 py-1 text-xs font-medium uppercase tracking-wide transition-colors',
-                            bodyMode === m
-                              ? 'bg-primary-500/20 text-primary-300'
-                              : 'bg-gray-900 text-gray-500 hover:text-gray-300',
+                            'studio-segment-btn uppercase tracking-wide',
+                            bodyMode === m && 'studio-segment-btn-active',
                           )}
                         >
                           {m}
@@ -572,7 +565,7 @@ export function ApiClient() {
                       onChange={(e) => setBody(e.target.value)}
                       placeholder={'{\n  "key": "value"\n}'}
                       spellCheck={false}
-                      className="w-full h-48 px-3 py-2 rounded-lg bg-gray-950 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500 resize-none"
+                      className="studio-input w-full h-48 px-3 py-2 font-mono resize-none"
                     />
                   )}
                 </div>
@@ -586,8 +579,8 @@ export function ApiClient() {
 
       {/* Response */}
       {(response || error) && (
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+        <div className="studio-card">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-4">
               {response && (
                 <>
@@ -608,13 +601,13 @@ export function ApiClient() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowHeaders((v) => !v)}
-                  className="text-xs text-gray-400 hover:text-gray-200 px-2 py-1 rounded"
+                  className="studio-btn"
                 >
                   {showHeaders ? 'Hide' : 'Show'} headers
                 </button>
                 <button
                   onClick={handleCopyResponse}
-                  className="text-xs text-gray-400 hover:text-gray-200 px-2 py-1 rounded flex items-center gap-1"
+                  className="studio-btn"
                 >
                   {copied ? (
                     <>
@@ -631,7 +624,7 @@ export function ApiClient() {
           </div>
 
           {response && showHeaders && (
-            <div className="px-4 py-3 border-b border-gray-800 bg-gray-950/50">
+            <div className="px-4 py-3 border-b border-white/[0.06] bg-black/20">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Response headers</p>
               <div className="space-y-1">
                 {Object.entries(response.headers).map(([k, v]) => (
@@ -644,7 +637,7 @@ export function ApiClient() {
           )}
 
           {response && (
-            <pre className="px-4 py-3 text-xs text-gray-200 font-mono overflow-auto max-h-96 bg-gray-950/50">
+            <pre className="px-4 py-3 text-xs text-gray-200 font-mono overflow-auto max-h-96 bg-black/20">
               {response.isJson && typeof response.parsed !== 'string'
                 ? JSON.stringify(response.parsed, null, 2)
                 : response.body || '(empty body)'}
@@ -688,14 +681,14 @@ function KeyValueEditor({
             value={kv.key}
             onChange={(e) => onChange(kv.id, { key: e.target.value })}
             placeholder={keyPlaceholder}
-            className="flex-1 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+            className="studio-input flex-1 px-2.5 py-1.5 font-mono"
           />
           <input
             type="text"
             value={kv.value}
             onChange={(e) => onChange(kv.id, { value: e.target.value })}
             placeholder={valuePlaceholder}
-            className="flex-1 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+            className="studio-input flex-1 px-2.5 py-1.5 font-mono"
           />
           <button
             onClick={() => onRemove(kv.id)}
@@ -790,12 +783,12 @@ function BodyFormEditor({
               value={f.key}
               onChange={(e) => updateField(f.id, { key: e.target.value })}
               placeholder="field"
-              className="w-40 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+              className="studio-input w-40 px-2.5 py-1.5 font-mono"
             />
             <select
               value={f.type}
               onChange={(e) => updateField(f.id, { type: e.target.value as FormFieldType })}
-              className="w-24 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-xs font-mono text-gray-300 focus:outline-none focus:border-primary-500"
+              className="studio-select w-24 px-2.5 py-1.5 text-xs font-mono"
             >
               <option value="string">string</option>
               <option value="number">number</option>
@@ -807,7 +800,7 @@ function BodyFormEditor({
               <select
                 value={f.value || 'true'}
                 onChange={(e) => updateField(f.id, { value: e.target.value })}
-                className="flex-1 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+                className="studio-select flex-1 px-2.5 py-1.5 font-mono"
               >
                 <option value="true">true</option>
                 <option value="false">false</option>
@@ -821,7 +814,7 @@ function BodyFormEditor({
                   f.type === 'json' ? '{"nested":true}' : f.type === 'number' ? '0' : 'value'
                 }
                 spellCheck={false}
-                className="flex-1 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-sm font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+                className="studio-input flex-1 px-2.5 py-1.5 font-mono"
               />
             ) : (
               <span className="flex-1 px-2 py-1 text-xs text-gray-500 italic">null</span>

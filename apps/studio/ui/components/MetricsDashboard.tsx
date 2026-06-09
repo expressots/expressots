@@ -70,7 +70,7 @@ export function MetricsDashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-2 gap-6">
         {/* Latency Distribution */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="studio-card p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Response Time Percentiles</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart
@@ -84,10 +84,12 @@ export function MetricsDashboard() {
               <XAxis dataKey="name" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" tickFormatter={(v) => `${v}ms`} />
               <Tooltip
+                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                 contentStyle={{
-                  backgroundColor: '#1f2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
+                  backgroundColor: '#14171c',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                 }}
                 labelStyle={{ color: '#fff' }}
                 formatter={(value: number) => [`${value.toFixed(2)}ms`, 'Duration']}
@@ -98,7 +100,7 @@ export function MetricsDashboard() {
         </div>
 
         {/* Memory Usage */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="studio-card p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Memory Usage</h3>
           <div className="flex items-center justify-center h-[250px]">
             <ResponsiveContainer width="100%" height={200}>
@@ -120,9 +122,10 @@ export function MetricsDashboard() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
+                    backgroundColor: '#14171c',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                   }}
                   formatter={(value: number) => formatBytes(value)}
                 />
@@ -147,7 +150,7 @@ export function MetricsDashboard() {
 
       {/* System Info */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="studio-stat">
           <div className="flex items-center gap-3">
             <HardDrive className="w-5 h-5 text-gray-500" />
             <div>
@@ -156,7 +159,7 @@ export function MetricsDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="studio-stat">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-gray-500" />
             <div>
@@ -165,7 +168,7 @@ export function MetricsDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="studio-stat">
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-gray-500" />
             <div>
@@ -288,7 +291,7 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
   }
 
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="studio-card p-6">
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div>
           <h3 className="text-lg font-semibold text-white">Per-route performance</h3>
@@ -302,7 +305,7 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter routes…"
-          className="px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-primary-500 w-48"
+          className="studio-input px-3 py-2 w-48"
         />
       </div>
 
@@ -478,7 +481,7 @@ interface MetricCardProps {
 
 function MetricCard({ icon: Icon, label, value, color }: MetricCardProps) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="studio-stat p-6">
       <div className="flex items-center gap-3">
         <Icon className={cn('w-8 h-8', color)} />
         <div>

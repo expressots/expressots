@@ -72,7 +72,7 @@ export function OpenApiPanel() {
     specDrift && !('error' in specDrift) ? (specDrift as SpecDriftReport) : null;
 
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg">
+    <div className="studio-card">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2 px-3 py-2 text-left"
@@ -103,36 +103,19 @@ export function OpenApiPanel() {
         <div className="px-3 pb-3 space-y-3 border-t border-gray-800 pt-3">
           {/* Generate / export controls */}
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => requestOpenApi()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs bg-gray-800 hover:bg-gray-700 text-gray-200"
-            >
+            <button onClick={() => requestOpenApi()} className="studio-btn">
               <RefreshCw className="w-3.5 h-3.5" />
               Regenerate
             </button>
             <button
               onClick={handleDownload}
               disabled={!openApiDoc}
-              className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs',
-                openApiDoc
-                  ? 'bg-primary-500 text-white hover:bg-primary-600'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed',
-              )}
+              className="studio-btn-primary"
             >
               <Download className="w-3.5 h-3.5" />
               Download openapi.json
             </button>
-            <button
-              onClick={handleCopy}
-              disabled={!openApiDoc}
-              className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs',
-                openApiDoc
-                  ? 'bg-gray-800 hover:bg-gray-700 text-gray-200'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed',
-              )}
-            >
+            <button onClick={handleCopy} disabled={!openApiDoc} className="studio-btn">
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy spec'}
             </button>
@@ -153,12 +136,9 @@ export function OpenApiPanel() {
                 value={specPath}
                 onChange={(e) => setSpecPath(e.target.value)}
                 placeholder="openapi.json"
-                className="flex-1 px-2 py-1 rounded bg-gray-950 border border-gray-800 text-xs font-mono text-gray-200 focus:outline-none focus:border-primary-500"
+                className="studio-input flex-1 px-2.5 py-1.5 text-xs font-mono"
               />
-              <button
-                onClick={handleCheckDrift}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs bg-gray-800 hover:bg-gray-700 text-gray-200"
-              >
+              <button onClick={handleCheckDrift} className="studio-btn">
                 <RefreshCw className={cn('w-3.5 h-3.5', checking && 'animate-spin')} />
                 Check drift
               </button>
