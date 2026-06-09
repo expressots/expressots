@@ -28,6 +28,7 @@ import { printMainHelp } from "./help/main-help";
 import { tryPrintCommandHelp } from "./help/command-help-registry";
 import { scriptsCommand } from "./scripts";
 import { studioCommand } from "./studio";
+import { openApiCommand } from "./openapi";
 
 /**
  * The current version of the ExpressoTS Bundle.
@@ -107,6 +108,7 @@ yargs(hideBin(process.argv))
 	.command(templatesCommand())
 	.command(scriptsCommand())
 	.command(studioCommand())
+	.command(openApiCommand())
 	.command(infoProject())
 	.command(helpCommand())
 	.completion("completion", "Generate a shell completion script (bash/zsh)")
