@@ -121,6 +121,8 @@
     "tagline": "Source for <a href=\"https://doc.expresso-ts.com\">doc.expresso-ts.com</a>, the official ExpressoTS documentation site.",
     "npm": null,
     "github": "expressots/expresso-site-doc",
+    "workflow_file": "static.yml",
+    "license_badge": "static",
     "issues": "https://github.com/expressots/expresso-site-doc/issues",
     "license_path": "./LICENSE",
     "docs_primary": "https://doc.expresso-ts.com",
