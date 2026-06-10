@@ -48,6 +48,9 @@ const SecurityView = lazy(() =>
 const DatabaseView = lazy(() =>
   import('./components/DatabaseView').then((m) => ({ default: m.DatabaseView })),
 );
+const CoverageView = lazy(() =>
+  import('./components/CoverageView').then((m) => ({ default: m.CoverageView })),
+);
 const TraceDetail = lazy(() =>
   import('./components/TraceDetail').then((m) => ({ default: m.TraceDetail })),
 );
@@ -102,6 +105,8 @@ function AppContent() {
         return <LogsView />;
       case 'security':
         return <SecurityView />;
+      case 'coverage':
+        return <CoverageView />;
       default:
         return <RequestList />;
     }

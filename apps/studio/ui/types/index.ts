@@ -264,7 +264,12 @@ export type WSMessageType =
   | 'database'
   | 'database_table'
   | 'openapi'
-  | 'openapi_drift';
+  | 'openapi_drift'
+  | 'coverage'
+  | 'coverage_source'
+  | 'coverage_run_progress'
+  | 'coverage_run_result'
+  | 'coverage_tests';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
@@ -282,6 +287,7 @@ export type ViewMode =
   | 'container'
   | 'logs'
   | 'security'
+  | 'coverage'
   | 'database';
 
 // ────────────────────────────────────────────────────────────────────────
@@ -631,5 +637,150 @@ export interface SecurityReport {
       command: string;
       error?: string;
     };
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Coverage — local, git-aware code coverage intelligence
+// ────────────────────────────────────────────────────────────────────────
+// Browser-side mirrors of the agent's coverage types. See
+// `packages/studio-agent/src/types/index.ts` for field semantics.
+
+export interface CoverageMetric {
+  covered: number;
+  total: number;
+  pct: number;
+}
+
+export interface CoverageMetrics {
+  statements: CoverageMetric;
+  branches: CoverageMetric;
+  functions: CoverageMetric;
+  lines: CoverageMetric;
+}
+
+export interface FileCoverage {
+  path: string;
+  relPath: string;
+  metrics: CoverageMetrics;
+  coveredLines: number[];
+  uncoveredLines: number[];
+  partialBranchLines: number[];
+}
+
+export interface CoverageTreeNode {
+  name: string;
+  path: string;
+  type: 'dir' | 'file';
+  metrics: CoverageMetrics;
+  children?: CoverageTreeNode[];
+}
+
+export interface DiffFileCoverage {
+  path: string;
+  relPath: string;
+  changedLines: number[];
+  coveredChanged: number[];
+  uncoveredChanged: number[];
+  pct: number;
+}
+
+export interface DiffCoverage {
+  base: string;
+  changedLineCount: number;
+  coveredLineCount: number;
+  uncoveredLineCount: number;
+  pct: number;
+  files: DiffFileCoverage[];
+  unavailable?: boolean;
+  reason?: string;
+}
+
+export type CoverageProvider = 'istanbul' | 'v8' | 'lcov' | 'unknown';
+
+export interface CoverageHistoryPoint {
+  at: number;
+  lines: number;
+  branches: number;
+  statements: number;
+  functions: number;
+}
+
+export interface CoverageReport {
+  generatedAt: number;
+  totals: CoverageMetrics;
+  files: FileCoverage[];
+  tree: CoverageTreeNode;
+  provider: CoverageProvider;
+  diff?: DiffCoverage;
+  delta?: Partial<Record<keyof CoverageMetrics, number>>;
+  thresholds?: {
+    lines?: number;
+    branches?: number;
+    functions?: number;
+    statements?: number;
+    passed?: boolean;
+  };
+  history?: CoverageHistoryPoint[];
+  scanState: {
+    source: 'watch' | 'run';
+    state: 'idle' | 'parsing' | 'running' | 'error';
+    lastRunAt: number;
+    runner?: string;
+    detectedRunners?: string[];
+    suggestedCommand?: string;
+    error?: string;
+    missingArtifact?: boolean;
+    artifactPath?: string;
+  };
+}
+
+export interface CoverageSource {
+  relPath: string;
+  content: string | null;
+  uncoveredLines: number[];
+  partialBranchLines: number[];
+  error?: string;
+}
+
+export interface CoverageRunProgressMessage {
+  stream: 'stdout' | 'stderr';
+  line: string;
+  timestamp: number;
+}
+
+export interface CoverageRunResultMessage {
+  success: boolean;
+  exitCode: number | null;
+  durationMs: number;
+  command: string;
+  runner?: string;
+  summary: string;
+  errorTail?: string;
+}
+
+export interface TestCaseResult {
+  name: string;
+  suite?: string;
+  status: 'passed' | 'failed' | 'skipped';
+  durationMs: number;
+  message?: string;
+  filePath?: string;
+}
+
+export interface TestRunSummary {
+  generatedAt: number;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  durationMs: number;
+  cases: TestCaseResult[];
+  source: 'junit' | 'tap' | 'json' | 'unknown';
+  scanState: {
+    state: 'idle' | 'parsing' | 'error';
+    lastRunAt: number;
+    error?: string;
+    missingArtifact?: boolean;
   };
 }

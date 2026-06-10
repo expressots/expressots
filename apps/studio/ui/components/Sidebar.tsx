@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Database,
+  Gauge,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
@@ -44,6 +45,7 @@ const navItems: NavItem[] = [
   { id: 'metrics', label: 'Metrics', icon: BarChart3 },
   { id: 'replay', label: 'Replay', icon: Play },
   { id: 'security', label: 'Security', icon: ShieldCheck },
+  { id: 'coverage', label: 'Coverage', icon: Gauge },
 ];
 
 export function Sidebar() {

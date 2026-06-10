@@ -26,6 +26,11 @@ import type {
   OpenApiDocument,
   SpecDriftReport,
   SpecDriftError,
+  CoverageReport,
+  CoverageSource,
+  CoverageRunProgressMessage,
+  CoverageRunResultMessage,
+  TestRunSummary,
 } from '../types';
 
 interface SocketContextValue {
@@ -77,6 +82,19 @@ interface SocketContextValue {
     command: string;
     allowMajor?: boolean;
   }) => void;
+  /** Ask the agent to (re)broadcast its current cached coverage report. */
+  requestCoverageReport: () => void;
+  /** Ask the agent to re-detect + re-parse the coverage artifact. */
+  requestCoverageScan: () => void;
+  /** Fetch a single annotated source file for the coverage viewer. */
+  requestCoverageSource: (relPath: string) => void;
+  /**
+   * Ask the agent to run the project's tests with coverage enabled.
+   * Progress streams over `coverage_run_progress`; the final state
+   * arrives via `coverage_run_result` and a fresh `coverage` report
+   * follows automatically.
+   */
+  runCoverage: (runner?: string) => void;
 }
 
 const SocketContext = createContext<SocketContextValue | null>(null);
@@ -113,6 +131,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     startFixRun,
     appendFixProgress,
     completeFixRun,
+    setCoverageReport,
+    setCoverageSource,
+    startCoverageRun,
+    appendCoverageProgress,
+    completeCoverageRun,
+    setTestResults,
   } = useAppStore();
 
   // Handle incoming messages
@@ -254,12 +278,27 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'openapi_drift':
         setSpecDrift(message.data as SpecDriftReport | SpecDriftError);
         break;
+      case 'coverage':
+        setCoverageReport(message.data as CoverageReport);
+        break;
+      case 'coverage_source':
+        setCoverageSource(message.data as CoverageSource);
+        break;
+      case 'coverage_run_progress':
+        appendCoverageProgress(message.data as CoverageRunProgressMessage);
+        break;
+      case 'coverage_run_result':
+        completeCoverageRun(message.data as CoverageRunResultMessage);
+        break;
+      case 'coverage_tests':
+        setTestResults(message.data as TestRunSummary);
+        break;
       default:
         // Unknown event — ignored silently (a noisy `console.log` here
         // would echo back through the agent's own log capture).
         break;
     }
-  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, setDatabaseSnapshot, setDatabaseTableData, setOpenApiDoc, setSpecDrift, appendFixProgress, completeFixRun]);
+  }, [setRoutes, addTrace, setMetrics, setStructure, setExchanges, setEndpointStats, addExchange, setReplayResult, setContainerSnapshot, setContainerResolutions, setRecordingEnabled, markLiveEvent, clearExchanges, addLog, setLogs, clearLogsLocal, setAgentLatency, incrementEventCount, setRuntime, setSecurityReport, setDatabaseSnapshot, setDatabaseTableData, setOpenApiDoc, setSpecDrift, appendFixProgress, completeFixRun, setCoverageReport, setCoverageSource, appendCoverageProgress, completeCoverageRun, setTestResults]);
 
   // Connect to agent - only once
   useEffect(() => {
@@ -291,6 +330,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.emit('get_security_report');
       socket.emit('get_database_schema');
       socket.emit('get_openapi');
+      socket.emit('get_coverage_report');
 
       // Kick off an immediate ping then settle into a 5s cadence.
       const sendPing = () => socket.emit('ping_studio', { sentAt: Date.now() });
@@ -390,6 +430,21 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         });
       },
       [emit, startFixRun],
+    ),
+    requestCoverageReport: useCallback(() => emit('get_coverage_report'), [emit]),
+    requestCoverageScan: useCallback(() => emit('request_coverage_scan'), [emit]),
+    requestCoverageSource: useCallback(
+      (relPath: string) => emit('get_coverage_source', { relPath }),
+      [emit],
+    ),
+    runCoverage: useCallback(
+      (runner?: string) => {
+        // Seed the local transcript so the UI flips into "running"
+        // immediately, before the agent's first progress line.
+        startCoverageRun(runner);
+        emit('run_coverage', { runner });
+      },
+      [emit, startCoverageRun],
     ),
   };
 

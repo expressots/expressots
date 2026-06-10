@@ -20,3 +20,4 @@ export { HealthFooter } from './HealthFooter';
 export { StatusDashboard } from './StatusDashboard';
 export { SecurityView } from './SecurityView';
 export { DatabaseView } from './DatabaseView';
+export { CoverageView } from './CoverageView';

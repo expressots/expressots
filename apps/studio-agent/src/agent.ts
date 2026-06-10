@@ -20,6 +20,7 @@ import {
 import { DatabaseIntrospector } from './introspection/database-introspector.js';
 import { LogCapture, type LogEntry } from './logging/log-capture.js';
 import { SecurityEngine } from './security/index.js';
+import { CoverageEngine } from './coverage/index.js';
 import { buildOpenApiDocument, diffOpenApiSpec } from './openapi/index.js';
 import { resolveInstallId } from './identity/install-id.js';
 import * as fs from 'node:fs';
@@ -125,6 +126,9 @@ export class StudioAgent {
   private databaseIntrospector: DatabaseIntrospector | null = null;
   private logCapture: LogCapture;
   private securityEngine: SecurityEngine | null = null;
+  private coverageEngine: CoverageEngine | null = null;
+  private coverageWatcher: FSWatcher | null = null;
+  private coverageRescanTimer: NodeJS.Timeout | null = null;
   private io: SocketIOServer | null = null;
   private httpServer: HttpServer | null = null;
   private routes: RouteInfo[] = [];
@@ -160,6 +164,7 @@ export class StudioAgent {
       globalPrefix: config.globalPrefix,
       startupMs: config.startupMs,
       interceptorCount: config.interceptorCount,
+      coverage: config.coverage,
     };
 
     if (this.config.appContainer) {
@@ -258,6 +263,8 @@ export class StudioAgent {
 
     this.startSecurityEngine();
 
+    this.startCoverageEngine();
+
     // Watch the project's `src/` for controller / module / DTO changes so
     // the Routes, Architecture and API client tabs stay live without the
     // user reloading Studio. Disabled in production and silently no-ops
@@ -347,6 +354,106 @@ export class StudioAgent {
     void this.securityEngine.runFullScan();
   }
 
+  /**
+   * Stand up the CoverageEngine, parse any existing coverage artifact,
+   * and watch the coverage directory for fresh test runs. Like the
+   * SecurityEngine, every report transition goes out as a gated
+   * `WSMessage<'coverage'>` so we never queue frames against a tab with
+   * no connected clients.
+   */
+  private startCoverageEngine(): void {
+    this.coverageEngine = new CoverageEngine({
+      cwd: process.cwd(),
+      dbPath: this.config.dbPath,
+      coverage: this.config.coverage,
+    });
+
+    this.coverageEngine.onReport((report) => {
+      if (!this.io || this.io.engine.clientsCount === 0) return;
+      this.broadcast('coverage', report);
+    });
+
+    this.coverageEngine.onTestResults((summary) => {
+      if (!this.io || this.io.engine.clientsCount === 0) return;
+      this.broadcast('coverage_tests', summary);
+    });
+
+    // Parse whatever's already on disk in the background — never blocks
+    // start(). The empty/missing-artifact state is itself a valid report.
+    void this.coverageEngine.refresh();
+
+    this.startCoverageWatcher();
+  }
+
+  /**
+   * Watch the project's coverage output directory and trigger a
+   * debounced re-parse whenever a test run rewrites it. When the
+   * directory doesn't exist yet we watch the cwd (non-recursively) so we
+   * can attach the real watcher the moment it's created — without that,
+   * the first-ever test run wouldn't be picked up until a Studio reload.
+   * Best-effort and disabled in production, mirroring `startSrcWatcher`.
+   */
+  private startCoverageWatcher(): void {
+    if (process.env.NODE_ENV === 'production') return;
+    if (process.env.EXPRESSOTS_STUDIO_FS_WATCH === 'false') return;
+
+    const cwd = process.cwd();
+    const coverageDir = path.resolve(cwd, 'coverage');
+
+    const scheduleRescan = () => {
+      if (this.coverageRescanTimer) clearTimeout(this.coverageRescanTimer);
+      this.coverageRescanTimer = setTimeout(() => {
+        this.coverageRescanTimer = null;
+        this.coverageEngine?.scheduleRefresh();
+      }, 300);
+    };
+
+    const attachDirWatcher = (): boolean => {
+      if (!fs.existsSync(coverageDir)) return false;
+      try {
+        this.coverageWatcher = fs.watch(
+          coverageDir,
+          { recursive: true },
+          () => scheduleRescan(),
+        );
+        this.coverageWatcher.on('error', () => {
+          this.coverageWatcher?.close();
+          this.coverageWatcher = null;
+        });
+        return true;
+      } catch {
+        // Recursive watch unsupported on some platforms — fall back to a
+        // non-recursive watch (artifact files are direct children anyway).
+        try {
+          this.coverageWatcher = fs.watch(coverageDir, () => scheduleRescan());
+          return true;
+        } catch {
+          this.coverageWatcher = null;
+          return false;
+        }
+      }
+    };
+
+    if (attachDirWatcher()) return;
+
+    // Coverage dir doesn't exist yet: watch the cwd for its creation,
+    // then swap to the real watcher.
+    try {
+      const bootstrap = fs.watch(cwd, (_event, filename) => {
+        if (!filename) return;
+        if (filename.toString() !== 'coverage') return;
+        if (!fs.existsSync(coverageDir)) return;
+        bootstrap.close();
+        if (attachDirWatcher()) scheduleRescan();
+      });
+      bootstrap.on('error', () => bootstrap.close());
+      // Keep a handle so stop() can tear it down if the dir is never made.
+      this.coverageWatcher = bootstrap;
+    } catch {
+      this.coverageWatcher = null;
+    }
+  }
+
   /** Get the captured container snapshot (or null if unavailable). */
   getContainerSnapshot(): ContainerSnapshot | null {
     return this.containerSnapshot;
@@ -397,6 +504,23 @@ export class StudioAgent {
     if (this.securityEngine) {
       this.securityEngine.stop();
       this.securityEngine = null;
+    }
+
+    if (this.coverageEngine) {
+      this.coverageEngine.stop();
+      this.coverageEngine = null;
+    }
+    if (this.coverageRescanTimer) {
+      clearTimeout(this.coverageRescanTimer);
+      this.coverageRescanTimer = null;
+    }
+    if (this.coverageWatcher) {
+      try {
+        this.coverageWatcher.close();
+      } catch {
+        // best-effort
+      }
+      this.coverageWatcher = null;
     }
 
     if (this.metricsTimer) {
@@ -1024,6 +1148,22 @@ export class StudioAgent {
         });
       }
 
+      // Replay the latest coverage report (always present — seeds to an
+      // empty/missing-artifact state) so the Coverage view renders
+      // immediately on connect instead of waiting for a file change.
+      if (this.coverageEngine) {
+        socket.emit('message', {
+          type: 'coverage',
+          timestamp: Date.now(),
+          data: this.coverageEngine.getReport(),
+        });
+        socket.emit('message', {
+          type: 'coverage_tests',
+          timestamp: Date.now(),
+          data: this.coverageEngine.getTestResults(),
+        });
+      }
+
       // Handle client requests
       socket.on('get_routes', () => {
         socket.emit('message', this.createMessage('routes', this.routes));
@@ -1233,6 +1373,49 @@ export class StudioAgent {
       socket.on('request_security_scan', () => {
         if (!this.securityEngine) return;
         void this.securityEngine.runFullScan();
+      });
+
+      // Re-broadcast the cached coverage report on demand (e.g. when the
+      // UI navigates to the Coverage view).
+      socket.on('get_coverage_report', () => {
+        if (!this.coverageEngine) return;
+        socket.emit('message', {
+          type: 'coverage',
+          timestamp: Date.now(),
+          data: this.coverageEngine.getReport(),
+        });
+      });
+
+      // User clicked "Refresh": re-detect + re-parse the artifact.
+      socket.on('request_coverage_scan', () => {
+        if (!this.coverageEngine) return;
+        void this.coverageEngine.refresh();
+      });
+
+      // Fetch a single annotated source file for the coverage viewer.
+      socket.on('get_coverage_source', (params: { relPath?: string }) => {
+        if (!this.coverageEngine) return;
+        const relPath =
+          typeof params?.relPath === 'string' ? params.relPath : '';
+        if (!relPath) return;
+        socket.emit('message', {
+          type: 'coverage_source',
+          timestamp: Date.now(),
+          data: this.coverageEngine.readSource(relPath),
+        });
+      });
+
+      // Active mode: run the project's tests with coverage. Each output
+      // line streams over `coverage_run_progress`; the final state lands
+      // on `coverage_run_result`, and the engine emits a fresh `coverage`
+      // report once it re-parses the artifact.
+      socket.on('run_coverage', async (params: { runner?: string }) => {
+        if (!this.coverageEngine) return;
+        const result = await this.coverageEngine.runCoverage(
+          typeof params?.runner === 'string' ? params.runner : undefined,
+          (msg) => this.broadcast('coverage_run_progress', msg),
+        );
+        this.broadcast('coverage_run_result', result);
       });
 
       // User clicked "Apply fix" on a finding or fix group. The engine

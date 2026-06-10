@@ -200,6 +200,44 @@ export interface AgentConfig {
    * middleware is active without reading framework internals.
    */
   middlewarePreset?: MiddlewarePresetInfo;
+  /**
+   * Coverage tool configuration. Programmatic overrides take precedence
+   * over the `.studio/coverage.json` file. All fields optional — when
+   * absent, the engine falls back to artifact/runner auto-detection.
+   */
+  coverage?: CoverageConfig;
+}
+
+/**
+ * Coverage tool overrides. Can be supplied programmatically via
+ * `AgentConfig.coverage` or, more commonly, via a `.studio/coverage.json`
+ * file in the project. Heuristic auto-detection is the default; anything
+ * set here wins, which is what makes monorepos / custom scripts / mixed
+ * runner setups deterministic instead of a guess.
+ */
+export interface CoverageConfig {
+  /**
+   * Force the active-run test runner. One of `vitest` | `jest` | `mocha`
+   * | `node:test`. Overrides auto-detection for the "Run tests" button.
+   */
+  runner?: string;
+  /**
+   * Full custom command for "Run tests" (e.g. `npm run test:cov`).
+   * Overrides `runner` and is executed via the shell — only ever sourced
+   * from local config the developer wrote, never from a WS message.
+   */
+  command?: string;
+  /** Project-root-relative artifact search overrides (freshest wins). */
+  paths?: string[];
+  /** Git base ref for diff coverage (default: origin/HEAD → HEAD). */
+  diffBase?: string;
+  /** Pass/fail threshold gates (percentages, 0-100). */
+  thresholds?: {
+    lines?: number;
+    branches?: number;
+    functions?: number;
+    statements?: number;
+  };
 }
 
 /**
@@ -357,7 +395,12 @@ export type WSMessageType =
   | 'database'
   | 'database_table'
   | 'openapi'
-  | 'openapi_drift';
+  | 'openapi_drift'
+  | 'coverage'
+  | 'coverage_source'
+  | 'coverage_run_progress'
+  | 'coverage_run_result'
+  | 'coverage_tests';
 
 /** WebSocket message structure */
 export interface WSMessage<T = unknown> {
@@ -910,4 +953,241 @@ export interface FixResultMessage {
   summary: string;
   /** Captured stderr tail when `success === false` (truncated to 4 KB). */
   errorTail?: string;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Coverage — local, git-aware code coverage intelligence
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * A single coverage dimension: how many units (statements / branches /
+ * functions / lines) are covered out of the total, plus the derived
+ * percentage. `pct` is 100 when `total` is 0 (an empty file is fully
+ * covered by convention — matches Istanbul's own summary behaviour).
+ */
+export interface CoverageMetric {
+  covered: number;
+  total: number;
+  pct: number;
+}
+
+/** The four standard coverage dimensions for a file, folder, or project. */
+export interface CoverageMetrics {
+  statements: CoverageMetric;
+  branches: CoverageMetric;
+  functions: CoverageMetric;
+  lines: CoverageMetric;
+}
+
+/** Per-file coverage, normalised from whatever artifact produced it. */
+export interface FileCoverage {
+  /** Absolute path on disk (as reported by the coverage artifact). */
+  path: string;
+  /** Path relative to the project root (`cwd`), POSIX separators. */
+  relPath: string;
+  metrics: CoverageMetrics;
+  /**
+   * Coverable line numbers that were hit at least once (1-based, sorted).
+   * Together with `uncoveredLines` this is the full set of executable
+   * lines — used for diff coverage and to tint the source viewer.
+   */
+  coveredLines: number[];
+  /** Line numbers with zero hits (1-based, sorted ascending). */
+  uncoveredLines: number[];
+  /**
+   * Line numbers where a branch is only partially taken (some paths hit,
+   * some not). Drives the yellow "partial" gutter in the source viewer.
+   */
+  partialBranchLines: number[];
+}
+
+/**
+ * A node in the coverage file-tree. Directories aggregate their
+ * children's metrics; files carry the per-file metrics directly. Used
+ * by the UI to render a collapsible, sortable coverage explorer.
+ */
+export interface CoverageTreeNode {
+  /** Display name (basename of `path`). */
+  name: string;
+  /** Path relative to the project root (POSIX separators). */
+  path: string;
+  type: 'dir' | 'file';
+  metrics: CoverageMetrics;
+  children?: CoverageTreeNode[];
+}
+
+/** Diff coverage for a single changed file. */
+export interface DiffFileCoverage {
+  path: string;
+  relPath: string;
+  /** Lines added/modified in this file per the git diff (1-based). */
+  changedLines: number[];
+  /** Subset of `changedLines` that are covered. */
+  coveredChanged: number[];
+  /** Subset of `changedLines` that are NOT covered. */
+  uncoveredChanged: number[];
+  /** Coverage of changed lines only (0-100). 100 when no changed lines. */
+  pct: number;
+}
+
+/**
+ * Coverage restricted to the lines the user actually changed. This is
+ * Studio's killer local feature: "of the lines you touched, which are
+ * still uncovered?" computed against the working tree (uncommitted) or
+ * a base ref, before anything is pushed.
+ */
+export interface DiffCoverage {
+  /** Base of the comparison: a git ref, or `WORKING_TREE` for uncommitted. */
+  base: string;
+  changedLineCount: number;
+  coveredLineCount: number;
+  uncoveredLineCount: number;
+  /** Overall diff-coverage percentage (0-100). 100 when nothing changed. */
+  pct: number;
+  files: DiffFileCoverage[];
+  /** Set when git is unavailable / not a repo — UI shows guidance, not 0%. */
+  unavailable?: boolean;
+  /** Short human reason when `unavailable` is true. */
+  reason?: string;
+}
+
+/** Which engine produced the coverage numbers, for explainability. */
+export type CoverageProvider = 'istanbul' | 'v8' | 'lcov' | 'unknown';
+
+/** A compact historical data point used for the trend sparkline. */
+export interface CoverageHistoryPoint {
+  at: number;
+  lines: number;
+  branches: number;
+  statements: number;
+  functions: number;
+}
+
+/**
+ * The whole coverage view, assembled by the `CoverageEngine` and
+ * broadcast as one `coverage` envelope. Mirrors the `SecurityReport`
+ * shape: a single state transition drives the entire UI.
+ */
+export interface CoverageReport {
+  /** When the agent finished assembling this report (ms epoch). */
+  generatedAt: number;
+  totals: CoverageMetrics;
+  files: FileCoverage[];
+  tree: CoverageTreeNode;
+  /** Which engine produced the underlying artifact. */
+  provider: CoverageProvider;
+  /**
+   * Diff coverage vs the working tree / a base ref. Optional — populated
+   * once git analysis runs; absent on the very first parse.
+   */
+  diff?: DiffCoverage;
+  /** Change in each metric's pct vs the previous run (signed). */
+  delta?: Partial<Record<keyof CoverageMetrics, number>>;
+  /** Configured pass/fail gates and whether this report meets them. */
+  thresholds?: {
+    lines?: number;
+    branches?: number;
+    functions?: number;
+    statements?: number;
+    passed?: boolean;
+  };
+  /** Compact per-run history for the trend sparkline (oldest → newest). */
+  history?: CoverageHistoryPoint[];
+  /** Lifecycle of the parse / run, mirroring `SecurityReport.scanState`. */
+  scanState: {
+    /** Where this report's data came from. */
+    source: 'watch' | 'run';
+    state: 'idle' | 'parsing' | 'running' | 'error';
+    /** When coverage was last successfully parsed. 0 = never. */
+    lastRunAt: number;
+    /**
+     * Primary runner used for the active-run button and labels. Honours
+     * `CoverageConfig.runner`, else the first auto-detected runner.
+     */
+    runner?: string;
+    /**
+     * Every supported test runner detected in the project (priority
+     * order). Lets the UI say "Detected vitest, jest, mocha" instead of
+     * authoritatively claiming one when several are installed.
+     */
+    detectedRunners?: string[];
+    /**
+     * Best-effort command to produce coverage, surfaced in the empty
+     * state. Prefers a configured command, then the project's own
+     * coverage npm script, then the primary runner's example.
+     */
+    suggestedCommand?: string;
+    /** Short reason when `state === 'error'`. */
+    error?: string;
+    /**
+     * True when no coverage artifact was found. The UI should show an
+     * empty state with instructions, not "0% coverage".
+     */
+    missingArtifact?: boolean;
+    /** Path of the artifact that produced this report (for the footer). */
+    artifactPath?: string;
+  };
+}
+
+/**
+ * Source of a single file, sent on demand so the UI can render an
+ * annotated source viewer (covered / uncovered / partial gutters)
+ * without bundling the project's files.
+ */
+export interface CoverageSource {
+  relPath: string;
+  /** File contents, or `null` when unreadable / out of bounds. */
+  content: string | null;
+  /** Echoed back so the UI can colour gutters without a second lookup. */
+  uncoveredLines: number[];
+  partialBranchLines: number[];
+  error?: string;
+}
+
+/** Streaming line from an in-flight `run_coverage` job. */
+export interface CoverageRunProgressMessage {
+  stream: 'stdout' | 'stderr';
+  line: string;
+  timestamp: number;
+}
+
+/** Final outcome of a `run_coverage` job. */
+export interface CoverageRunResultMessage {
+  success: boolean;
+  exitCode: number | null;
+  durationMs: number;
+  /** Command that ran (echoed for the transcript footer). */
+  command: string;
+  runner?: string;
+  summary: string;
+  errorTail?: string;
+}
+
+/** A single test case result, normalised across reporters. */
+export interface TestCaseResult {
+  name: string;
+  suite?: string;
+  status: 'passed' | 'failed' | 'skipped';
+  durationMs: number;
+  message?: string;
+  filePath?: string;
+}
+
+/** Aggregate test-run results — a stream distinct from coverage. */
+export interface TestRunSummary {
+  generatedAt: number;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  durationMs: number;
+  /** Failed cases first, then slowest — capped for transport. */
+  cases: TestCaseResult[];
+  source: 'junit' | 'tap' | 'json' | 'unknown';
+  scanState: {
+    state: 'idle' | 'parsing' | 'error';
+    lastRunAt: number;
+    error?: string;
+    missingArtifact?: boolean;
+  };
 }

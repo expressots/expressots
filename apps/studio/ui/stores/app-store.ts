@@ -26,6 +26,11 @@ import type {
   OpenApiDocument,
   SpecDriftReport,
   SpecDriftError,
+  CoverageReport,
+  CoverageSource,
+  CoverageRunProgressMessage,
+  CoverageRunResultMessage,
+  TestRunSummary,
 } from '../types';
 
 /**
@@ -39,6 +44,19 @@ export interface FixRunState {
   startedAt: number;
   lines: { stream: 'stdout' | 'stderr'; text: string; timestamp: number }[];
   result?: FixResultMessage;
+}
+
+/**
+ * Live transcript for an in-flight "Run tests with coverage" job.
+ * Mirrors `FixRunState`: lines accumulate from `coverage_run_progress`
+ * frames; once `result` lands the banner switches to its final state and
+ * a fresh `coverage` report follows.
+ */
+export interface CoverageRunState {
+  startedAt: number;
+  runner?: string;
+  lines: { stream: 'stdout' | 'stderr'; text: string; timestamp: number }[];
+  result?: CoverageRunResultMessage;
 }
 
 import { useSettings } from './settings-store';
@@ -96,6 +114,18 @@ interface AppState {
    * the committed spec couldn't be read. `null` until first requested.
    */
   specDrift: SpecDriftReport | SpecDriftError | null;
+  /**
+   * Latest coverage report from the agent. `null` until the first
+   * `coverage` message arrives; `scanState.missingArtifact` is true when
+   * no coverage artifact has been produced yet.
+   */
+  coverageReport: CoverageReport | null;
+  /** Source of the file currently open in the coverage source viewer. */
+  coverageSource: CoverageSource | null;
+  /** Live transcript of the current/just-finished coverage run, if any. */
+  coverageRun: CoverageRunState | null;
+  /** Latest parsed test-run results (distinct stream from coverage). */
+  testResults: TestRunSummary | null;
   /** Live console.* stream from the host app (latest first). */
   logs: LogEntry[];
   /** Logs grouped by traceId, so TraceDetail can show "logs for this request". */
@@ -153,6 +183,13 @@ interface AppState {
   setDatabaseTableData: (data: DatabaseTableData | null) => void;
   setOpenApiDoc: (doc: OpenApiDocument | null) => void;
   setSpecDrift: (drift: SpecDriftReport | SpecDriftError | null) => void;
+  setCoverageReport: (report: CoverageReport) => void;
+  setCoverageSource: (source: CoverageSource | null) => void;
+  startCoverageRun: (runner?: string) => void;
+  appendCoverageProgress: (msg: CoverageRunProgressMessage) => void;
+  completeCoverageRun: (msg: CoverageRunResultMessage) => void;
+  clearCoverageRun: () => void;
+  setTestResults: (summary: TestRunSummary) => void;
   startFixRun: (targetId: string, command: string) => void;
   appendFixProgress: (msg: FixProgressMessage) => void;
   completeFixRun: (msg: FixResultMessage) => void;
@@ -202,6 +239,10 @@ function buildInitialState() {
     databaseTableData: null,
     openApiDoc: null,
     specDrift: null,
+    coverageReport: null,
+    coverageSource: null,
+    coverageRun: null,
+    testResults: null,
     fixRun: null,
     logs: [],
     logsByTraceId: {},
@@ -270,6 +311,40 @@ export const useAppStore = create<AppState>((set) => ({
 
   setOpenApiDoc: (openApiDoc) => set({ openApiDoc }),
   setSpecDrift: (specDrift) => set({ specDrift }),
+
+  setCoverageReport: (coverageReport) => set({ coverageReport }),
+  setCoverageSource: (coverageSource) => set({ coverageSource }),
+
+  startCoverageRun: (runner) =>
+    set({
+      coverageRun: {
+        startedAt: Date.now(),
+        runner,
+        lines: [],
+        result: undefined,
+      },
+    }),
+
+  appendCoverageProgress: (msg) =>
+    set((state) => {
+      if (!state.coverageRun) return {};
+      const next = [
+        ...state.coverageRun.lines,
+        { stream: msg.stream, text: msg.line, timestamp: msg.timestamp },
+      ];
+      const trimmed = next.length > 2000 ? next.slice(-2000) : next;
+      return { coverageRun: { ...state.coverageRun, lines: trimmed } };
+    }),
+
+  completeCoverageRun: (msg) =>
+    set((state) => {
+      if (!state.coverageRun) return {};
+      return { coverageRun: { ...state.coverageRun, result: msg } };
+    }),
+
+  clearCoverageRun: () => set({ coverageRun: null }),
+
+  setTestResults: (testResults) => set({ testResults }),
 
   startFixRun: (targetId, command) =>
     set({

@@ -34,6 +34,18 @@ export {
   runFix,
   buildFixArgs,
 } from './security/index.js';
+export {
+  CoverageEngine,
+  detectCoverageArtifact,
+  parseIstanbulCoverage,
+  parseLcov,
+  buildCoverageTree,
+  type CoverageEngineDeps,
+  type CoverageReportListener,
+  type DetectedArtifact,
+  type ArtifactKind,
+  type IstanbulCoverageData,
+} from './coverage/index.js';
 export { resolveInstallId } from './identity/index.js';
 export {
   buildOpenApiDocument,
