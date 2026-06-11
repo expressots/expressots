@@ -10,6 +10,7 @@ import { changePackageName } from "../utils/change-package-info";
 import { printError } from "../utils/cli-ui";
 import { isValidPackageManager } from "../utils/input-validation";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
+import { writePnpmAllowBuildsConfig } from "./pnpm-allow-builds";
 
 /**
  * Install dependencies using the selected package manager
@@ -889,6 +890,10 @@ const projectForm = async (
 			injectPresetDependencies(answer.name, answer.preset);
 			createPresetFiles(answer.name, answer.preset);
 			applyMiddlewarePreset(answer.name, answer.preset);
+		}
+
+		if (answer.packageManager === "pnpm") {
+			writePnpmAllowBuildsConfig(answer.name);
 		}
 
 		if (SKIP_INSTALL_FOR_TESTING) {
