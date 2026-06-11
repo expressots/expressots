@@ -118,16 +118,51 @@ export interface RoutingConfig {
   rootPath: string;
 }
 
+/**
+ * Represents the authenticated identity attached to the current HTTP context.
+ * Produced by an {@link AuthProvider} and exposed to guards and controllers
+ * via `HttpContext.user`.
+ *
+ * @typeParam T - Shape of the user details payload (e.g. a User entity or JWT claims)
+ *
+ * @public API
+ */
 export interface Principal<T = unknown> {
+  /** Application-specific user details (entity, token claims, etc.). */
   details: T;
+  /** Whether the current request carries a valid authenticated identity. */
   isAuthenticated(): Promise<boolean>;
-  // Allows role-based auth
+  /**
+   * Role-based authorization check.
+   * @param role - Role name to test (e.g. "admin")
+   * @returns true when the principal holds the given role
+   */
   isInRole(role: string): Promise<boolean>;
-  // Allows content-based auth
+  /**
+   * Content-based (ownership) authorization check.
+   * @param resourceId - Identifier of the resource being accessed
+   * @returns true when the principal owns the resource
+   */
   isResourceOwner(resourceId: unknown): Promise<boolean>;
 }
 
+/**
+ * Resolves the {@link Principal} for each incoming request. Register a
+ * custom provider via `setupAuthorizationForExpress(container, config,
+ * middleware, MyAuthProvider)` to integrate any authentication scheme
+ * (sessions, JWT, API keys).
+ *
+ * @public API
+ */
 export interface AuthProvider {
+  /**
+   * Resolve the principal for the current request. Called once per request
+   * before the route handler executes.
+   * @param req - Express request
+   * @param res - Express response
+   * @param next - Express next function
+   * @returns The resolved principal (use an unauthenticated principal rather than throwing for anonymous requests)
+   */
   getUser(req: Request, res: Response, next: NextFunction): Promise<Principal>;
 }
 

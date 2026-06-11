@@ -1,8 +1,8 @@
 {
   "name": "@expressots/adapter-express",
-  "version": "4.0.0-preview.3.2",
+  "version": "4.0.0-preview.3.3",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@adapter-express)",
-  "author": "",
+  "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/types/index.d.ts",
   "exports": {
@@ -72,8 +72,8 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
   },
   "dependencies": {
-    "@expressots/core": "file:../expressots/expressots-core-4.0.0-preview.3.2.tgz",
-    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.2.tgz",
+    "@expressots/core": "file:../expressots/expressots-core-4.0.0-preview.3.3.tgz",
+    "@expressots/shared": "file:../shared/expressots-shared-4.0.0-preview.3.3.tgz",
     "express": "^5.1.0",
     "reflect-metadata": "0.2.2"
   },

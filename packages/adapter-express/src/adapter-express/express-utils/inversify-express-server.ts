@@ -982,9 +982,36 @@ export class InversifyExpressServer {
       }
     }
 
+    // @Consumes() metadata declared on the route handler, resolved once at
+    // route-build time. Requests carrying a body with a non-matching
+    // Content-Type are rejected with 415 before guards or validation run.
+    const consumesTypes: Array<string> | undefined = controllerConstructor
+      ? (Reflect.getMetadata(METADATA_KEY.consumes, controllerConstructor.prototype, key) as
+          | Array<string>
+          | undefined)
+      : undefined;
+
     // Create handler function
     const handler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
+        // Enforce @Consumes() before any further processing
+        if (consumesTypes && consumesTypes.length > 0) {
+          const contentType = req.headers["content-type"];
+          if (contentType && !req.is(consumesTypes)) {
+            res
+              .status(415)
+              .type("application/problem+json")
+              .json({
+                type: "https://expressots.dev/errors/unsupported-media-type",
+                title: "Unsupported Media Type",
+                status: 415,
+                detail: `Content-Type "${contentType}" is not supported by this route. Supported: ${consumesTypes.join(", ")}`,
+                instance: req.path,
+              });
+            return;
+          }
+        }
+
         // Attach controller and method metadata to request for exception handler middleware
         // This provides a reliable fallback if route stack extraction fails
         if (controllerConstructor) {

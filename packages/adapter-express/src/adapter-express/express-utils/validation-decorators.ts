@@ -25,6 +25,12 @@ export interface ValidationSchemaMetadata {
   options?: ValidationOptions;
   /** Whether this metadata was auto-inferred from TypeScript types */
   inferred?: boolean;
+  /**
+   * Name of the individual parameter to validate (e.g. the "id" in
+   * `@validatedParam("id", uuidSchema)`). When set, only that single value
+   * is extracted from the source and validated, instead of the whole object.
+   */
+  paramName?: string;
 }
 
 /**
@@ -41,6 +47,16 @@ export interface ValidatedDecoratorOptions extends ValidationOptions {
 }
 
 /**
+ * Determine whether a plain object passed to a validated decorator is an
+ * options bag rather than a schema (e.g. a Zod schema object).
+ * @param value - Object received by the decorator
+ * @returns true when the object should be treated as ValidatedDecoratorOptions
+ */
+function isDecoratorOptions(value: object): value is ValidatedDecoratorOptions {
+  return "group" in value || "partial" in value || "adapter" in value;
+}
+
+/**
  * Create a validated parameter decorator
  * @param source - Parameter source type
  * @param parameterType - The PARAMETER_TYPE enum value
@@ -49,11 +65,15 @@ function createValidatedParamDecorator(
   source: "body" | "query" | "params" | "headers",
   parameterType: PARAMETER_TYPE,
 ): {
-  (schema?: SchemaType | ValidatedDecoratorOptions): ParameterDecorator;
-  (nameOrSchema?: string | SchemaType | ValidatedDecoratorOptions): ParameterDecorator;
+  (
+    schema?: SchemaType | ValidatedDecoratorOptions,
+    options?: ValidatedDecoratorOptions,
+  ): ParameterDecorator;
+  (name: string, schema?: SchemaType | ValidatedDecoratorOptions): ParameterDecorator;
 } {
   return function (
     nameOrSchema?: string | SchemaType | ValidatedDecoratorOptions,
+    schemaOrOptions?: SchemaType | ValidatedDecoratorOptions,
   ): ParameterDecorator {
     return function (
       target: object,
@@ -68,20 +88,44 @@ function createValidatedParamDecorator(
       if (nameOrSchema === undefined) {
         // No arguments - just inject the whole object
       } else if (typeof nameOrSchema === "string") {
-        // String argument - it's a parameter name (for query, params, headers)
+        // String argument - it's a parameter name (for query, params, headers).
+        // An optional second argument provides the schema for that single value,
+        // e.g. `@validatedParam("id", uuidSchema)`.
         paramName = nameOrSchema;
+
+        if (typeof schemaOrOptions === "function") {
+          schema = schemaOrOptions;
+        } else if (typeof schemaOrOptions === "object" && schemaOrOptions !== null) {
+          if (isDecoratorOptions(schemaOrOptions)) {
+            options = schemaOrOptions;
+          } else {
+            schema = schemaOrOptions as SchemaType;
+          }
+        }
       } else if (typeof nameOrSchema === "function") {
         // Function (class constructor) - it's a schema
         schema = nameOrSchema;
       } else if (typeof nameOrSchema === "object") {
         // Object - could be schema (Zod, etc.) or options
-        if ("group" in nameOrSchema || "partial" in nameOrSchema || "adapter" in nameOrSchema) {
+        if (isDecoratorOptions(nameOrSchema)) {
           // It's options
           options = nameOrSchema as ValidatedDecoratorOptions;
         } else {
           // It's a schema (like Zod schema)
           schema = nameOrSchema as SchemaType;
         }
+      }
+
+      // A schema paired with a name allows trailing options: (schema, options)
+      if (
+        schema &&
+        !options &&
+        !paramName &&
+        typeof schemaOrOptions === "object" &&
+        schemaOrOptions !== null &&
+        isDecoratorOptions(schemaOrOptions)
+      ) {
+        options = schemaOrOptions;
       }
 
       // Store basic parameter metadata using existing pattern
@@ -118,6 +162,7 @@ function createValidatedParamDecorator(
           source,
           schema,
           options,
+          paramName,
         };
 
         // Get existing validation metadata for this method
@@ -176,6 +221,11 @@ export const validatedBody = createValidatedParamDecorator("body", PARAMETER_TYP
  * @Get("/search")
  * search(@query("page") page: number) {}
  *
+ * // Validate a single query param against a schema
+ * const pageSchema = z.coerce.number().int().min(1);
+ * @Get("/search")
+ * search(@validatedQuery("page", pageSchema) page: number) {}
+ *
  * // Extract all query params with validation
  * @Get("/search")
  * search(@query(SearchQueryDTO) query: SearchQueryDTO) {}
@@ -191,6 +241,11 @@ export const validatedQuery = createValidatedParamDecorator("query", PARAMETER_T
  * // Extract single route param (backward compatible)
  * @Get("/:id")
  * getUser(@param("id") id: string) {}
+ *
+ * // Validate a single route param against a schema
+ * const uuidSchema = z.string().uuid();
+ * @Get("/:id")
+ * getUser(@validatedParam("id", uuidSchema) id: string) {}
  *
  * // Extract all route params with validation
  * @Get("/:userId/posts/:postId")

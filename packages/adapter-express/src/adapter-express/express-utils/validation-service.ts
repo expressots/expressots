@@ -175,7 +175,7 @@ export class ValidationService {
       const result = await this.validateValue(paramValue, metadata);
 
       if (!result.success) {
-        allErrors.push(...(result.errors || []));
+        allErrors.push(...this.scopeErrorsToParam(result.errors || [], metadata));
       } else {
         // Update argument with validated/transformed data
         validatedArgs[metadata.index] = result.data;
@@ -267,21 +267,56 @@ export class ValidationService {
   }
 
   /**
-   * Get the parameter value from the request
+   * Get the parameter value from the request.
+   * When the metadata targets a single named parameter (e.g.
+   * `@validatedParam("id", uuidSchema)`), only that value is returned.
    */
   private getParameterValue(req: Request, metadata: ValidationSchemaMetadata): unknown {
+    let container: unknown;
+
     switch (metadata.source) {
       case "body":
-        return req.body;
+        container = req.body;
+        break;
       case "query":
-        return req.query;
+        container = req.query;
+        break;
       case "params":
-        return req.params;
+        container = req.params;
+        break;
       case "headers":
-        return req.headers;
+        container = req.headers;
+        break;
       default:
         return undefined;
     }
+
+    if (metadata.paramName && container && typeof container === "object") {
+      // HTTP header names are case-insensitive; Express lowercases them
+      const key =
+        metadata.source === "headers" ? metadata.paramName.toLowerCase() : metadata.paramName;
+      return (container as Record<string, unknown>)[key];
+    }
+
+    return container;
+  }
+
+  /**
+   * Rewrite error paths so single-parameter validation errors point to the
+   * named parameter (e.g. "id") instead of an empty root path.
+   */
+  private scopeErrorsToParam(
+    errors: Array<ValidationFieldError>,
+    metadata: ValidationSchemaMetadata,
+  ): Array<ValidationFieldError> {
+    if (!metadata.paramName) {
+      return errors;
+    }
+
+    return errors.map((error) => ({
+      ...error,
+      path: error.path ? `${metadata.paramName}.${error.path}` : metadata.paramName!,
+    }));
   }
 
   /**
