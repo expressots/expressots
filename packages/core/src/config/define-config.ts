@@ -5,8 +5,8 @@
  *
  * Type-safe configuration definition with zero-config defaults.
  *
- * UNIQUE Features:
- * - Full TypeScript inference (no type casting!)
+ * Features:
+ * - Full TypeScript inference (no type casting)
  * - Multi-environment defaults
  * - Helpful validation errors
  * - Secret management with auto-redaction
@@ -16,7 +16,7 @@
  * ```typescript
  * import { defineConfig, Env } from "@expressots/core";
  *
- * // One-liner: Define your entire config with full type safety!
+ * // One-liner: Define your entire config with full type safety
  * export const config = defineConfig({
  *   server: {
  *     port: Env.port("PORT", { default: 3000 }),
@@ -31,7 +31,7 @@
  *   },
  * });
  *
- * // Usage with FULL type safety!
+ * // Usage with full type safety
  * config.values.server.port     // number
  * config.values.database.url    // string
  * config.values.auth.secret     // SecretValue (auto-redacted)
@@ -62,7 +62,7 @@ import { isSecretValue } from "./secret-value.js";
 /**
  * Format validation errors with helpful information.
  *
- * UNIQUE: Uses same patterns as HelpfulErrorFormatter for consistency!
+ * Uses same patterns as HelpfulErrorFormatter for consistency.
  */
 function formatValidationErrors(errors: Array<ConfigValidationError>): string {
   const lines: Array<string> = [];
@@ -566,7 +566,7 @@ class ConfigInstance<T extends Record<string, unknown>>
 /**
  * Define a type-safe configuration schema.
  *
- * UNIQUE: Full TypeScript inference, zero boilerplate!
+ * Full TypeScript inference, zero boilerplate.
  *
  * @param schema - Configuration schema using Env helpers
  * @param options - Optional configuration options
@@ -584,7 +584,7 @@ class ConfigInstance<T extends Record<string, unknown>>
  *   },
  *   database: {
  *     host: Env.string("DB_HOST", {
- *       development: "localhost",      // Different per environment!
+ *       development: "localhost",      // Different per environment
  *       production: "prod-db.example.com",
  *     }),
  *     port: Env.port("DB_PORT", { default: 5432 }),
@@ -607,7 +607,7 @@ class ConfigInstance<T extends Record<string, unknown>>
  *   },
  * });
  *
- * // Full type safety - TypeScript knows exact types!
+ * // Full type safety: TypeScript knows exact types
  * config.values.server.port       // number
  * config.values.database.host     // string
  * config.values.auth.secret       // SecretValue

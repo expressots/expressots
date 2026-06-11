@@ -75,7 +75,13 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
   ): void | Promise<void>;
 
   /**
-   * Sends an error response
+   * Sends an error response.
+   *
+   * Error bodies follow RFC 7807 (Problem Details), so the response is
+   * tagged with the `application/problem+json` media type. A filter can
+   * override this by setting its own Content-Type before calling this
+   * helper, since an explicitly set type is preserved.
+   *
    * @param context - The exception context
    * @param statusCode - HTTP status code
    * @param body - Response body
@@ -86,6 +92,9 @@ export abstract class BaseExceptionFilter implements IExceptionFilter {
     body: unknown,
   ): void {
     if (!context.response.headersSent) {
+      if (!context.response.get?.("Content-Type")) {
+        context.response.type?.("application/problem+json");
+      }
       context.response.status(statusCode).json(body);
     }
   }

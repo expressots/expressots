@@ -52,7 +52,7 @@ interface ModuleMetrics {
  * @audience application-developers
  * @concept lazy-loading
  *
- * UNIQUE: Framework tracks module load times and provides actionable
+ * Framework tracks module load times and provides actionable
  * recommendations based on actual usage patterns.
  *
  * @example

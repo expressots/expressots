@@ -5,8 +5,8 @@
  *
  * Type-safe, zero-config environment configuration for ExpressoTS.
  *
- * UNIQUE Features:
- * - Full TypeScript inference (no type casting!)
+ * Features:
+ * - Full TypeScript inference (no type casting)
  * - Multi-environment defaults (dev/staging/prod)
  * - Helpful validation errors with examples and hints
  * - Secret management with auto-redaction
@@ -15,7 +15,7 @@
  *
  * @example
  * ```typescript
- * // 1. Define your config (one file, all type-safe!)
+ * // 1. Define your config (one file, all type-safe)
  * import { defineConfig, Env } from "@expressots/core";
  *
  * export const config = defineConfig({
@@ -36,7 +36,7 @@
  *   },
  * });
  *
- * // 2. Use with FULL type safety!
+ * // 2. Use with full type safety
  * config.values.server.port      // number
  * config.values.database.url     // string
  * config.values.auth.secret      // SecretValue (auto-redacted)

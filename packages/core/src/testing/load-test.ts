@@ -3,8 +3,6 @@
  *
  * @module testing
  *
- * UNIQUE FEATURE: No other framework has built-in load testing!
- *
  * Provides comprehensive load testing with:
  * - Concurrent request handling
  * - Ramp-up strategies
@@ -249,7 +247,7 @@ async function executeRequest(
  * @audience application-developers
  * @concept testing
  *
- * UNIQUE FEATURE: Built-in load testing with percentile metrics!
+ * Built-in load testing with percentile metrics.
  *
  * @param appOrUrl - Test app or base URL
  * @param options - Load test options

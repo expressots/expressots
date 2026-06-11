@@ -273,12 +273,12 @@ function extractControllerPaths(
  * @audience application-developers
  * @concept lazy-loading
  *
- * UNIQUE: Zero-configuration lazy loading with automatic route detection!
+ * Zero-configuration lazy loading with automatic route detection.
  * Just wrap your controllers and routes are auto-discovered from @controller() decorators.
  *
  * @example
  * ```typescript
- * // Zero-config! Routes auto-detected from @controller("/admin")
+ * // Zero-config: routes auto-detected from @controller("/admin")
  * export const AdminModule = CreateLazyModule([
  *   AdminController,        // @controller("/admin")
  *   AdminDashboardController // @controller("/admin/dashboard")

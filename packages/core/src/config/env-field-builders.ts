@@ -8,7 +8,7 @@
  *
  * @example
  * ```typescript
- * // UNIQUE: Full TypeScript inference, no type casting!
+ * // Full TypeScript inference, no type casting
  * const config = defineConfig({
  *   port: Env.port("PORT", { default: 3000 }),
  *   dbHost: Env.string("DB_HOST", { default: "localhost" }),
@@ -17,7 +17,7 @@
  *   logLevel: Env.enum("LOG_LEVEL", ["debug", "info", "warn", "error"]),
  * });
  *
- * // TypeScript knows the exact types!
+ * // TypeScript knows the exact types
  * config.values.port     // number
  * config.values.dbHost   // string
  * config.values.apiKey   // SecretValue
@@ -153,7 +153,7 @@ function boolean(
 /**
  * Create an enum configuration field.
  *
- * UNIQUE: Full TypeScript inference for enum values!
+ * Full TypeScript inference for enum values.
  *
  * @param envVar - Environment variable name
  * @param values - Allowed enum values
@@ -265,7 +265,7 @@ function port(
 /**
  * Create a secret configuration field.
  *
- * UNIQUE: Auto-redacted in logs, partial reveal in dev mode!
+ * Auto-redacted in logs, partial reveal in dev mode.
  *
  * Secrets:
  * - Never logged in plain text
@@ -395,43 +395,6 @@ function array<T extends string | number>(
 // ============================================================================
 
 /**
- * Environment configuration field builders.
- *
- * UNIQUE: Type-safe, zero-config environment configuration!
- *
- * @example
- * ```typescript
- * import { Env, defineConfig } from "@expressots/core";
- *
- * export const config = defineConfig({
- *   // Full TypeScript inference!
- *   server: {
- *     port: Env.port("PORT", { default: 3000 }),
- *     host: Env.string("HOST", { default: "0.0.0.0" }),
- *   },
- *   database: {
- *     url: Env.url("DATABASE_URL", { required: true }),
- *     pool: Env.number("DB_POOL_SIZE", { default: 10, min: 1, max: 100 }),
- *   },
- *   auth: {
- *     secret: Env.secret("JWT_SECRET", { required: true, minLength: 32 }),
- *     expiry: Env.string("JWT_EXPIRY", { default: "1h" }),
- *   },
- *   features: {
- *     enableCache: Env.boolean("ENABLE_CACHE", { default: true }),
- *     logLevel: Env.enum("LOG_LEVEL", ["debug", "info", "warn", "error"]),
- *   },
- * });
- *
- * // Usage with full type safety!
- * config.values.server.port    // number
- * config.values.auth.secret    // SecretValue
- * config.values.features.logLevel // "debug" | "info" | "warn" | "error"
- * ```
- *
- * @public API
- */
-/**
  * Returns true when the current Node environment (`NODE_ENV`) matches the
  * supplied name. Pass an array to match any of several names. The comparison
  * is case-insensitive and falls back to `"development"` when `NODE_ENV` is
@@ -480,6 +443,42 @@ function envWhen<TValue, TFallback>(
   return ok ? value : fallback;
 }
 
+/**
+ * Environment configuration field builders.
+ *
+ * Type-safe, zero-config environment configuration. Each builder reads an
+ * environment variable, applies coercion and validation, and contributes
+ * its inferred type to the resolved config object.
+ *
+ * @example
+ * ```typescript
+ * import { Env, defineConfig } from "@expressots/core";
+ *
+ * export const config = defineConfig({
+ *   server: {
+ *     port: Env.port("PORT", { default: 3000 }),
+ *     host: Env.string("HOST", { default: "0.0.0.0" }),
+ *   },
+ *   database: {
+ *     url: Env.url("DATABASE_URL", { required: true }),
+ *     pool: Env.number("DB_POOL_SIZE", { default: 10, min: 1, max: 100 }),
+ *   },
+ *   auth: {
+ *     secret: Env.secret("JWT_SECRET", { required: true, minLength: 32 }),
+ *   },
+ *   features: {
+ *     enableCache: Env.boolean("ENABLE_CACHE", { default: true }),
+ *     logLevel: Env.enum("LOG_LEVEL", ["debug", "info", "warn", "error"]),
+ *   },
+ * });
+ *
+ * config.values.server.port       // number
+ * config.values.auth.secret       // SecretValue
+ * config.values.features.logLevel // "debug" | "info" | "warn" | "error"
+ * ```
+ *
+ * @public API
+ */
 export const Env = {
   string,
   number,

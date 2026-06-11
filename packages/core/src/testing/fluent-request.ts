@@ -246,7 +246,7 @@ class FluentRequestImpl implements FluentRequest {
   }
 
   /**
-   * Assert response time (UNIQUE ExpressoTS feature).
+   * Assert response time.
    */
   expectTime(options: TimeAssertion): FluentRequest {
     this.config.expectedTime = options;

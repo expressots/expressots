@@ -27,7 +27,7 @@ import { isLazyModule } from "./lazy-module.js";
  * @audience application-developers
  * @concept lazy-loading
  *
- * UNIQUE: Intelligent module loading with dependency resolution,
+ * Intelligent module loading with dependency resolution,
  * parallel loading, and automatic container integration.
  *
  * @example

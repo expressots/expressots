@@ -25,7 +25,7 @@ import { LazyModuleLoader } from "./lazy-module-loader.js";
  * @audience application-developers
  * @concept lazy-loading
  *
- * UNIQUE: Query module load status at runtime, get statistics,
+ * Query module load status at runtime, get statistics,
  * and manually control module loading.
  *
  * @example

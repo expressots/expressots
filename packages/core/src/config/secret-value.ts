@@ -5,7 +5,7 @@
  *
  * Wraps sensitive values to prevent accidental logging.
  *
- * UNIQUE: Auto-redacted in logs, partial reveal in dev mode!
+ * Auto-redacted in logs, partial reveal in dev mode.
  *
  * @example
  * ```typescript

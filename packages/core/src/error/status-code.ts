@@ -110,6 +110,21 @@ const HttpStatusErrorCode = {
   ...ClientErrorResponse,
   ...ServerErrorResponse,
 };
+
+/**
+ * HTTP status codes grouped from the informational (1xx) through server
+ * error (5xx) ranges. Use with `AppError`, exception filters, and the
+ * `@Http()` route decorators instead of magic numbers.
+ *
+ * @example
+ * ```typescript
+ * import { AppError, StatusCode } from "@expressots/core";
+ *
+ * throw new AppError("User not found", StatusCode.NotFound);
+ * ```
+ *
+ * @public API
+ */
 const StatusCode = { ...HttpStatusErrorCode };
 
 export { StatusCode };

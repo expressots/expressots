@@ -7,10 +7,10 @@
  * Provides zero-config setup, smart mocks, fluent HTTP testing,
  * snapshot testing, and built-in load testing.
  *
- * UNIQUE FEATURES (No other framework has these!):
+ * Features:
  * - Zero-config test app creation
  * - Smart mocking with auto-discovery
- * - Fluent HTTP testing API (better than supertest)
+ * - Fluent HTTP testing API
  * - API snapshot testing
  * - Built-in load testing with percentile metrics
  * - Database testing utilities
@@ -63,7 +63,7 @@
  *
  * @example
  * ```typescript
- * // Load testing (UNIQUE!)
+ * // Load testing
  * import { loadTest } from "@expressots/testing";
  *
  * test("handles 1000 concurrent requests", async () => {
@@ -107,7 +107,7 @@ export { createFluentRequest, request } from "./fluent-request.js";
 // Snapshot testing
 export { snapshotRequest, toMatchApiSnapshot } from "./snapshot-request.js";
 
-// Load testing (UNIQUE!)
+// Load testing
 export { loadTest, benchmark, stressTest } from "./load-test.js";
 
 // Database testing

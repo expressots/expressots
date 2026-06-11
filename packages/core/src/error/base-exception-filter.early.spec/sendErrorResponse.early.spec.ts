@@ -17,6 +17,8 @@ class MockResponse {
   public headersSent = false;
   public status = jest.fn().mockReturnThis();
   public json = jest.fn().mockReturnThis();
+  public type = jest.fn().mockReturnThis();
+  public get = jest.fn().mockReturnValue(undefined);
 }
 
 class MockRequest {
@@ -65,6 +67,37 @@ describe("BaseExceptionFilter.sendErrorResponse() sendErrorResponse method", () 
       // Assert
       expect(mockResponse.status).toHaveBeenCalledWith(statusCode);
       expect(mockResponse.json).toHaveBeenCalledWith(body);
+    });
+
+    it("should tag the response as application/problem+json (RFC 7807)", () => {
+      // Arrange
+      const statusCode = 500;
+      const body = {
+        type: "about:blank",
+        title: "Internal error",
+        status: 500,
+      };
+
+      // Act
+      filter["sendErrorResponse"](context, statusCode, body);
+
+      // Assert
+      expect(mockResponse.type).toHaveBeenCalledWith(
+        "application/problem+json",
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(body);
+    });
+
+    it("should preserve an explicitly set Content-Type", () => {
+      // Arrange
+      mockResponse.get.mockReturnValue("application/json");
+
+      // Act
+      filter["sendErrorResponse"](context, 400, { error: "Bad request" });
+
+      // Assert
+      expect(mockResponse.type).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalled();
     });
 
     it("should send error response when headers not sent", () => {

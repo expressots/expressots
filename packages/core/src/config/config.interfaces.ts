@@ -278,7 +278,7 @@ export interface PortFieldOptions extends BaseFieldOptions<number> {
 
 /**
  * Options for secret configuration fields.
- * UNIQUE: Auto-redacted in logs, partial reveal in dev mode.
+ * Auto-redacted in logs, partial reveal in dev mode.
  *
  * @public API
  */
@@ -597,7 +597,7 @@ export interface ConfigChangeEvent {
 /**
  * Wrapper for secret values that prevents accidental logging.
  *
- * UNIQUE: Secrets are auto-redacted but can be revealed in dev mode.
+ * Secrets are auto-redacted but can be revealed in dev mode.
  *
  * @public API
  */
@@ -666,7 +666,7 @@ type ExtractFieldValue<T> =
 /**
  * Type helper to resolve config schema to actual values.
  *
- * UNIQUE: Full TypeScript inference - no type casting needed!
+ * Full TypeScript inference, no type casting needed.
  *
  * @public API
  */

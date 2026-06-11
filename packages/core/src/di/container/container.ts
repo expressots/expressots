@@ -23,6 +23,18 @@ type GetArgs<T> = Omit<
   "contextInterceptor" | "targetType"
 >;
 
+/**
+ * The dependency injection container used by ExpressoTS. Holds service
+ * bindings, resolves them with scope handling (singleton, transient,
+ * request, custom), and supports hierarchical containers, container
+ * modules, snapshots, and activation/deactivation hooks.
+ *
+ * Application code rarely instantiates this directly; the framework
+ * creates the container during bootstrap and exposes it through
+ * `AppContainer` and module registration.
+ *
+ * @public API
+ */
 class Container implements interfaces.Container {
   public id: number;
   public parent: interfaces.Container | null;

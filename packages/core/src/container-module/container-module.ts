@@ -270,6 +270,17 @@ export class BaseModule {
     return symbols;
   }
 
+  /**
+   * Bind a controller symbol to its target class using the given scope.
+   * Built-in scopes (Singleton, Transient, Request) map to their Inversify
+   * equivalents; any other string is treated as a custom scope. Invalid
+   * values fall back to request scope.
+   *
+   * @param symbol - Symbol identifying the controller binding
+   * @param target - Controller class to bind
+   * @param bindingType - Binding scope (built-in or custom string)
+   * @param bind - The Inversify bind function from the container module
+   */
   public static bindToScope(
     symbol: symbol,
     target: new () => any,
@@ -408,6 +419,18 @@ export class BaseModule {
   }
 }
 
+/**
+ * Convenience alias for {@link BaseModule.createContainerModule}.
+ * Creates a ContainerModule from an array of controllers, with optional
+ * scope and custom bindings callback.
+ *
+ * @example
+ * ```typescript
+ * export const UserModule = CreateModule([UserController]);
+ * ```
+ *
+ * @public API
+ */
 const CreateModule = BaseModule.createContainerModule;
 
 export { CreateModule, scope };

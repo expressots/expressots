@@ -36,7 +36,7 @@ const DEFAULT_WARMUP_CONFIG: WarmupConfig = {
  * @audience application-developers
  * @concept lazy-loading
  *
- * UNIQUE: Automatic module warmup during server idle time.
+ * Automatic module warmup during server idle time.
  * Modules are loaded in the background without blocking requests.
  *
  * @example
