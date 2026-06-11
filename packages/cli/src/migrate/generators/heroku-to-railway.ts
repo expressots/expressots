@@ -217,36 +217,36 @@ function checkCommand(cmd) {
 }
 
 async function main() {
-    console.log('\\n🚀 Starting Heroku → Railway Migration\\n');
+    console.log('\\nStarting Heroku to Railway Migration\\n');
 
     // Check prerequisites
     if (!checkCommand('railway')) {
-        console.error('❌ Railway CLI required. Install: npm i -g @railway/cli');
+        console.error('Railway CLI required. Install: npm i -g @railway/cli');
         process.exit(1);
     }
 
     // Export Heroku config (if heroku CLI available)
     if (checkCommand('heroku')) {
-        console.log('📦 Exporting Heroku configuration...');
+        console.log('Exporting Heroku configuration...');
         try {
             const config = execSync(\`heroku config --app \${HEROKU_APP} --shell\`, { encoding: 'utf-8' });
             fs.writeFileSync('.env.heroku', config);
-            console.log('  ✓ Exported to .env.heroku');
+            console.log('  Exported to .env.heroku');
         } catch {
-            console.log('  ⚠ Could not export Heroku config. Set HEROKU_APP_NAME env var.');
+            console.log('  Warning: could not export Heroku config. Set HEROKU_APP_NAME env var.');
         }
     } else {
-        console.log('⚠ Heroku CLI not found. Skipping config export.');
+        console.log('Warning: Heroku CLI not found. Skipping config export.');
         console.log('  Manually export your environment variables.');
     }
 
     // Initialize Railway project
-    console.log('\\n🚂 Initializing Railway project...');
+    console.log('\\nInitializing Railway project...');
     run('railway init', { ignoreError: true });
 
     // Import environment variables
     if (fs.existsSync('.env.heroku')) {
-        console.log('\\n🔐 Setting up environment variables...');
+        console.log('\\nSetting up environment variables...');
         const envContent = fs.readFileSync('.env.heroku', 'utf-8');
         const lines = envContent.split('\\n');
         
@@ -261,10 +261,10 @@ async function main() {
     }
 
     // Deploy
-    console.log('\\n🚀 Deploying to Railway...');
+    console.log('\\nDeploying to Railway...');
     run('railway up');
 
-    console.log('\\n✅ Migration complete!');
+    console.log('\\nMigration complete.');
     console.log('   Check your deployment at: https://railway.app/dashboard\\n');
 }
 
@@ -280,22 +280,22 @@ function generateMigrationScriptBash(): string {
 
 set -e
 
-echo "🚀 Starting Heroku → Railway Migration"
+echo "Starting Heroku to Railway Migration"
 
 # Check prerequisites
 command -v railway >/dev/null 2>&1 || { echo "Railway CLI required. Install: npm i -g @railway/cli"; exit 1; }
 command -v heroku >/dev/null 2>&1 || { echo "Heroku CLI required."; exit 1; }
 
 # Export Heroku config
-echo "📦 Exporting Heroku configuration..."
+echo "Exporting Heroku configuration..."
 heroku config --app \${HEROKU_APP_NAME:-your-app} --shell > .env.heroku
 
 # Initialize Railway project
-echo "🚂 Initializing Railway project..."
+echo "Initializing Railway project..."
 railway init
 
 # Copy environment variables
-echo "🔐 Setting up environment variables..."
+echo "Setting up environment variables..."
 while IFS='=' read -r key value; do
     if [[ ! -z "$key" && ! "$key" =~ ^# ]]; then
         echo "  Setting $key..."
@@ -304,10 +304,10 @@ while IFS='=' read -r key value; do
 done < .env.heroku
 
 # Deploy
-echo "🚀 Deploying to Railway..."
+echo "Deploying to Railway..."
 railway up
 
-echo "✅ Migration complete!"
+echo "Migration complete."
 echo "   Check your deployment at: https://railway.app/dashboard"
 `;
 }

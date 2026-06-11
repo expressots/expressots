@@ -412,7 +412,7 @@ jobs:
 
       - name: Deployment placeholder
         run: |
-          echo "⚠️  Add your deployment commands here"
+          echo "Add your deployment commands here"
           echo "Examples:"
           echo "  - kubectl apply -f k8s/"
           echo "  - aws ecs update-service ..."
@@ -539,7 +539,7 @@ deploy:
   image: alpine:latest
   script:
     - echo "Deploying $DOCKER_IMAGE to ${options.environment || "production"}"
-    - echo "⚠️  Add your deployment commands here"
+    - echo "Add your deployment commands here"
   environment:
     name: ${options.environment || "production"}
     url: https://expressots-app.yourdomain.com
@@ -637,7 +637,7 @@ jobs:
           name: Deploy application
           command: |
             echo "Deploying to ${options.environment || "production"}"
-            echo "⚠️  Add your deployment commands here"
+            echo "Add your deployment commands here"
 
 workflows:
   version: 2
@@ -770,7 +770,7 @@ pipeline {
             }
             steps {
                 echo 'Deploying to ${options.environment || "production"}'
-                echo '⚠️  Add your deployment commands here'
+                echo 'Add your deployment commands here'
                 // sh 'kubectl apply -f k8s/'
                 // sh 'helm upgrade --install myapp ./helm-chart'
             }
@@ -860,7 +860,7 @@ definitions:
         deployment: ${options.environment || "production"}
         script:
           - echo "Deploying to ${options.environment || "production"}"
-          - echo "⚠️  Add your deployment commands here"
+          - echo "Add your deployment commands here"
 
 pipelines:
   default:

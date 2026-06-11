@@ -1067,7 +1067,7 @@ function generateDockerSetupScriptNode(
 const fs = require('fs');
 const path = require('path');
 
-console.log('📦 Setting up local dependencies for Docker build...');
+console.log('Setting up local dependencies for Docker build...');
 
 // Create .docker-deps directory
 const depsDir = '.docker-deps';
@@ -1083,7 +1083,7 @@ ${localDependencyPaths
 try {
   fs.copyFileSync('${depPath.replace(/\\/g, "/")}', path.join(depsDir, '${filename}'));
 } catch (err) {
-  console.error('  ❌ Failed to copy ${filename}:', err.message);
+  console.error('  Failed to copy ${filename}:', err.message);
   process.exit(1);
 }`;
 	})
@@ -1130,7 +1130,7 @@ if (Object.keys(overrides).length > 0) {
 
 fs.writeFileSync('package.docker.json', JSON.stringify(pkg, null, 2) + '\\n', 'utf-8');
 
-console.log('✅ Local dependencies setup complete!');
+console.log('Local dependencies setup complete.');
 console.log('   You can now run: docker build -t myapp .');
 `;
 }

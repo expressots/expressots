@@ -201,11 +201,11 @@ function checkCommand(cmd) {
 }
 
 async function main() {
-    console.log('\\n🪰 Starting Heroku → Fly.io Migration\\n');
+    console.log('\\nStarting Heroku to Fly.io Migration\\n');
 
     // Check prerequisites
     if (!checkCommand('fly') && !checkCommand('flyctl')) {
-        console.error('❌ Fly CLI required.');
+        console.error('Fly CLI required.');
         console.error('   Windows: powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"');
         console.error('   Mac/Linux: curl -L https://fly.io/install.sh | sh');
         process.exit(1);
@@ -215,23 +215,23 @@ async function main() {
 
     // Export Heroku config (if available)
     if (checkCommand('heroku')) {
-        console.log('📦 Exporting Heroku configuration...');
+        console.log('Exporting Heroku configuration...');
         try {
             const config = execSync(\`heroku config --app \${HEROKU_APP} --shell\`, { encoding: 'utf-8' });
             fs.writeFileSync('.env.heroku', config);
-            console.log('  ✓ Exported to .env.heroku');
+            console.log('  Exported to .env.heroku');
         } catch {
-            console.log('  ⚠ Could not export. Set HEROKU_APP_NAME env var.');
+            console.log('  Warning: could not export. Set HEROKU_APP_NAME env var.');
         }
     }
 
     // Create Fly app
-    console.log('\\n🪰 Creating Fly app...');
+    console.log('\\nCreating Fly app...');
     run(\`\${flyCmd} apps create \${FLY_APP}\`, { ignoreError: true });
 
     // Import secrets
     if (fs.existsSync('.env.heroku')) {
-        console.log('\\n🔐 Setting secrets...');
+        console.log('\\nSetting secrets...');
         const envContent = fs.readFileSync('.env.heroku', 'utf-8');
         const lines = envContent.split('\\n');
         
@@ -246,10 +246,10 @@ async function main() {
     }
 
     // Deploy
-    console.log('\\n🚀 Deploying to Fly.io...');
+    console.log('\\nDeploying to Fly.io...');
     run(\`\${flyCmd} deploy\`);
 
-    console.log('\\n✅ Migration complete!');
+    console.log('\\nMigration complete.');
     console.log(\`   Dashboard: \${flyCmd} dashboard\`);
     console.log(\`   Logs: \${flyCmd} logs\\n\`);
 }
@@ -266,7 +266,7 @@ function generateFlyMigrationScriptBash(): string {
 
 set -e
 
-echo "🪰 Starting Heroku → Fly.io Migration"
+echo "Starting Heroku to Fly.io Migration"
 
 # Check prerequisites
 command -v fly >/dev/null 2>&1 || command -v flyctl >/dev/null 2>&1 || { 
@@ -278,15 +278,15 @@ FLY_CMD="fly"
 command -v flyctl >/dev/null 2>&1 && FLY_CMD="flyctl"
 
 # Export Heroku config
-echo "📦 Exporting Heroku configuration..."
+echo "Exporting Heroku configuration..."
 heroku config --app \${HEROKU_APP_NAME:-your-app} --shell > .env.heroku
 
 # Create Fly app
-echo "🪰 Creating Fly app..."
+echo "Creating Fly app..."
 $FLY_CMD apps create \${FLY_APP_NAME:-expressots-app} || echo "App may already exist"
 
 # Set secrets from Heroku config
-echo "🔐 Setting secrets..."
+echo "Setting secrets..."
 while IFS='=' read -r key value; do
     if [[ ! -z "$key" && ! "$key" =~ ^# ]]; then
         echo "  Setting $key..."
@@ -295,10 +295,10 @@ while IFS='=' read -r key value; do
 done < .env.heroku
 
 # Deploy
-echo "🚀 Deploying to Fly.io..."
+echo "Deploying to Fly.io..."
 $FLY_CMD deploy
 
-echo "✅ Migration complete!"
+echo "Migration complete."
 echo "   Dashboard: $FLY_CMD dashboard"
 echo "   Logs: $FLY_CMD logs"
 `;

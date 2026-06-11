@@ -113,6 +113,10 @@ const RESOURCE_GROUPS: HelpGroup[] = [
 		title: "Studio & Help",
 		entries: [
 			{ name: "studio", desc: "Launch ExpressoTS Studio" },
+			{
+				name: "openapi",
+				desc: "Generate an OpenAPI 3.1 spec from your project",
+			},
 			{ name: "resources", alias: "r", desc: "Show this reference" },
 			{ name: "completion", desc: "Generate a shell completion script" },
 		],

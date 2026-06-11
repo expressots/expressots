@@ -77,6 +77,10 @@ const COMMAND_GROUPS: HelpGroup[] = [
 		entries: [
 			{ name: "studio", desc: "Launch ExpressoTS Studio" },
 			{
+				name: "openapi",
+				desc: "Generate an OpenAPI 3.1 spec from your project",
+			},
+			{
 				name: "resources",
 				alias: "r",
 				desc: "Show full command & schematics reference",
