@@ -1,6 +1,17 @@
-# @expressots/studio-agent
+<div align="center">
 
-Instrumentation agent for ExpressoTS Studio - provides route discovery, OpenTelemetry tracing, and request recording.
+  <h1>@expressots/studio-agent</h1>
+
+  <p>Instrumentation agent for ExpressoTS Studio - route discovery, tracing, and request recording.</p>
+
+  <p>
+    <a href="https://www.npmjs.com/package/@expressots/studio-agent"><img src="https://img.shields.io/npm/v/@expressots%2Fstudio-agent?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
+    <a href="https://github.com/expressots/expressots-studio/blob/main/LICENSE"><img src="https://img.shields.io/github/license/expressots/expressots-studio?style=flat-square&color=181717" alt="License"></a>
+    <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+    <a href="https://github.com/expressots/expressots-studio/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots-studio/build.yml?branch=feature/v4.0&style=flat-square&logo=github&label=build" alt="Build"></a>
+  </p>
+
+</div>
 
 ## Features
 
