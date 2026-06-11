@@ -31,6 +31,12 @@
     "CLI",
     "Scaffolding"
   ],
+  "files": [
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md",
+    "bin/**/*"
+  ],
   "scripts": {
     "prepare": "husky",
     "start:build": "npm run build && npm run start",
