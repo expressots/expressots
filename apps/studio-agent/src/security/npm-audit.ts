@@ -56,6 +56,7 @@ export type AuditFixAvailability =
   | { kind: 'auto' }
   | { kind: 'none' };
 
+/** Outcome of an `npm audit --json` run, normalised for the engine. */
 export interface NpmAuditResult {
   state: 'ok' | 'error' | 'missing-lockfile';
   /** Empty on `missing-lockfile` / `error`. */

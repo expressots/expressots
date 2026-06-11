@@ -419,6 +419,27 @@ function extractParamTypes(params: string): string[] {
   return out;
 }
 
+/**
+ * Static route and structure scanner for ExpressoTS applications.
+ *
+ * Walks the project's TypeScript sources and extracts controllers,
+ * services, providers, middleware, modules, routes, and the dependency
+ * graph between them by parsing decorator metadata (`@controller`,
+ * `@Get` and friends, `@provide`, `@inject`) without executing any user
+ * code. The result feeds the Studio Routes, Architecture and API client
+ * views.
+ *
+ * A complementary runtime scan is available via the static
+ * `scanExpressApp()` helper, which inspects a live Express router stack
+ * to pick up routes registered outside decorated controllers.
+ *
+ * @example
+ * ```typescript
+ * const scanner = new RouteScanner('./src');
+ * const structure = await scanner.scan();
+ * const routes = scanner.getRoutes();
+ * ```
+ */
 export class RouteScanner {
   private srcPath: string;
   private controllers: ControllerInfo[] = [];
@@ -471,11 +492,25 @@ export class RouteScanner {
    */
   private dtoSamples: Map<string, Record<string, unknown>> = new Map();
 
+  /**
+   * Create a scanner rooted at the given source directory.
+   *
+   * @param srcPath - Directory to scan for TypeScript sources. Resolved
+   *   to an absolute path. Default: "./src".
+   */
   constructor(srcPath: string = './src') {
     this.srcPath = path.resolve(srcPath);
   }
 
-  /** Scan the application and return structure */
+  /**
+   * Scan the source tree and build the application structure.
+   *
+   * Resets all internal state, so repeated calls (e.g. on file-watcher
+   * rescans) always reflect the current sources.
+   *
+   * @returns The discovered controllers, services, providers, middleware,
+   *   dependency edges, and modules.
+   */
   async scan(): Promise<AppStructure> {
     // Reset collections
     this.controllers = [];
@@ -595,7 +630,12 @@ export class RouteScanner {
     }
   }
 
-  /** Get all discovered routes */
+  /**
+   * Get all routes discovered by the last `scan()`.
+   *
+   * @returns Routes flattened across every discovered controller. Empty
+   *   before the first scan.
+   */
   getRoutes(): RouteInfo[] {
     return this.controllers.flatMap((c) => c.routes);
   }
@@ -1195,7 +1235,20 @@ export class RouteScanner {
     return (basePath + routePath).replace(/\/+/g, '/');
   }
 
-  /** Scan Express app for routes (runtime) */
+  /**
+   * Scan a live Express application's router stack for routes.
+   *
+   * Complements the static scan: picks up handlers registered ad-hoc via
+   * `app.get(...)` outside decorated controllers. Compatible with both
+   * Express 4 (`app._router`) and Express 5 (`app.router`). Only the
+   * seven standard HTTP methods are reported, and catch-all paths are
+   * skipped.
+   *
+   * @param app - The Express application instance to inspect.
+   * @returns Routes found in the router stack, with `controller` and
+   *   `controllerMethod` set to "Unknown" (runtime layers carry no class
+   *   information). Empty when the app or its router is unavailable.
+   */
   static scanExpressApp(app: any): RouteInfo[] {
     const routes: RouteInfo[] = [];
 

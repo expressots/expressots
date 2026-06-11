@@ -25,6 +25,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
 /** OSV's batch endpoint accepts up to 1000 queries per request. */
 const MAX_BATCH_SIZE = 500;
 
+/** A single (package, version) pair to query OSV.dev for. */
 export interface PackageQuery {
   name: string;
   version: string;
@@ -53,7 +54,14 @@ interface OsvVulnFull {
   database_specific?: { severity?: string; cwe_ids?: string[] };
 }
 
+/**
+ * Client for the OSV.dev advisory database. Batches package queries
+ * against the querybatch endpoint, fetches full advisory details, and
+ * normalises them into `DependencyFinding`s, using an `OsvCache` to
+ * avoid repeat network calls within the cache TTL.
+ */
 export class OsvClient {
+  /** @param cache - Persistent cache consulted before any network call. */
   constructor(private readonly cache: OsvCache) {}
 
   /**

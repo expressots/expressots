@@ -14,16 +14,56 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { StudioAgent } from '@expressots/studio-agent';
 
+/**
+ * Configuration options for the {@link Studio} orchestrator.
+ *
+ * All fields are optional at construction time; the constructor fills in
+ * the defaults listed per field.
+ */
 export interface StudioConfig {
+  /** Port the Studio UI HTTP server listens on. Default: 3333. */
   uiPort: number;
+  /**
+   * Port of the Studio Agent WebSocket server. In UI-only mode the Studio
+   * probes this port for an agent running inside the user's app; in
+   * standalone mode the embedded agent binds to it. Default: 3334.
+   */
   agentPort: number;
+  /**
+   * Path to the SQLite database used for request recording (standalone
+   * mode only). Default: ".studio/studio.db".
+   */
   dbPath: string;
+  /** Source directory of the host application. Default: "./src". */
   srcPath: string;
+  /** Service name reported by the embedded agent. Default: "expressots-app". */
   serviceName?: string;
   /** If true, starts a standalone agent (default: false, just serves UI) */
   standalone?: boolean;
 }
 
+/**
+ * Orchestrator for ExpressoTS Studio: serves the Studio UI and connects
+ * it to a Studio Agent.
+ *
+ * Operates in one of two modes, selected via `StudioConfig.standalone`:
+ *
+ * 1. UI-only mode (default): serves the UI and probes for an agent
+ *    already running inside the user's application on `agentPort`.
+ * 2. Standalone mode: starts its own embedded `StudioAgent` in addition
+ *    to the UI server.
+ *
+ * Lifecycle: construct with optional config overrides, then call
+ * `start()` to bring up the servers and `stop()` to tear them down.
+ *
+ * @example
+ * ```typescript
+ * const studio = new Studio({ uiPort: 3333, agentPort: 3334 });
+ * await studio.start();
+ * // ... later
+ * await studio.stop();
+ * ```
+ */
 export class Studio {
   private config: StudioConfig;
   private agent: StudioAgent | null = null;
@@ -32,6 +72,12 @@ export class Studio {
   private agentClient: Socket | null = null;
   private agentConnected: boolean = false;
 
+  /**
+   * Create a Studio orchestrator.
+   *
+   * @param config - Partial configuration; any omitted field falls back
+   *   to its documented default (see `StudioConfig`).
+   */
   constructor(config: Partial<StudioConfig> = {}) {
     this.config = {
       uiPort: config.uiPort ?? 3333,
@@ -43,7 +89,16 @@ export class Studio {
     };
   }
 
-  /** Start the Studio */
+  /**
+   * Start the Studio.
+   *
+   * In standalone mode this boots an embedded agent first; otherwise it
+   * probes for an existing agent on `agentPort` (waiting up to 3 seconds).
+   * In both cases the UI HTTP server is then started on `uiPort`.
+   *
+   * @returns Resolves once the UI server is listening. Rejects if the UI
+   *   port cannot be bound.
+   */
   async start(): Promise<void> {
     if (this.config.standalone) {
       await this.startAgent();
@@ -56,7 +111,15 @@ export class Studio {
     await this.startUIServer();
   }
 
-  /** Stop the Studio */
+  /**
+   * Stop the Studio.
+   *
+   * Disconnects from a remote agent (if connected), closes the UI server,
+   * and stops the embedded agent when one was started in standalone mode.
+   * Safe to call when nothing is running.
+   *
+   * @returns Resolves once all owned servers have shut down.
+   */
   async stop(): Promise<void> {
     // Disconnect from agent
     if (this.agentClient) {
@@ -334,17 +397,31 @@ export class Studio {
     `;
   }
 
-  /** Check if agent is connected */
+  /**
+   * Check whether an agent is reachable.
+   *
+   * @returns True when a remote agent answered the connection probe, or
+   *   when an embedded agent is running (standalone mode).
+   */
   isAgentConnected(): boolean {
     return this.agentConnected || this.agent !== null;
   }
 
-  /** Get the Studio Agent instance (standalone mode only) */
+  /**
+   * Get the embedded Studio Agent instance.
+   *
+   * @returns The agent started by this Studio in standalone mode, or null
+   *   in UI-only mode.
+   */
   getAgent(): StudioAgent | null {
     return this.agent;
   }
 
-  /** Get configuration */
+  /**
+   * Get the resolved configuration (defaults applied).
+   *
+   * @returns A copy of the active configuration; mutating it has no effect.
+   */
   getConfig(): StudioConfig {
     return { ...this.config };
   }

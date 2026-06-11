@@ -12,22 +12,36 @@
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 
+/** A single DI binding rendered as a node in the Studio Container view. */
 export interface BindingNode {
+  /** Unique node id (binding id or derived key). */
   id: string;
+  /** Stringified service identifier the binding is registered under. */
   serviceIdentifier: string;
+  /** Implementation class name, when resolvable. */
   className: string;
+  /** Binding scope (e.g. "Singleton", "Transient", "Request"). */
   scope: string;
+  /** Binding type (e.g. "Instance", "ConstantValue", "Factory"). */
   type: string;
+  /** Whether the binding's activation hook has run. */
   activated: boolean;
+  /** Whether a cached instance exists (singletons after first resolve). */
   cached: boolean;
+  /** Id of the container module that registered the binding, if any. */
   moduleId?: number | string | null;
 }
 
+/** A dependency edge between two bindings (source depends on target). */
 export interface BindingEdge {
   source: string;
   target: string;
 }
 
+/**
+ * Point-in-time view of the DI container: all bindings, the dependency
+ * edges between them, and aggregate counts for the summary header.
+ */
 export interface ContainerSnapshot {
   bindings: BindingNode[];
   edges: BindingEdge[];
@@ -62,11 +76,24 @@ const INVERSIFY_TAGGED_PROPS = 'inversify:tagged_props';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ReflectAny: any = Reflect;
 
+/**
+ * Inspects an ExpressoTS `AppContainer` for the Studio Container view.
+ *
+ * Produces a `ContainerSnapshot` (bindings, dependency edges, summary)
+ * and, via `installResolutionTracker()` and `runWithRequest()`, records
+ * which bindings each HTTP request resolves. All methods fail soft:
+ * when the container is missing or not the expected Inversify shape,
+ * they return empty results instead of throwing.
+ */
 export class ContainerIntrospector {
   private appContainer: any;
   private als: AsyncLocalStorage<RequestContext>;
   private snapshot: ContainerSnapshot | null = null;
 
+  /**
+   * @param appContainer - The host's ExpressoTS `AppContainer` (or any
+   *   object exposing the underlying Inversify container).
+   */
   constructor(appContainer: unknown) {
     this.appContainer = appContainer;
     this.als = new AsyncLocalStorage<RequestContext>();

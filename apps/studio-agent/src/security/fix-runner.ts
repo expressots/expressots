@@ -32,7 +32,9 @@ export type FixCommandKind =
   | 'audit-fix'         // npm audit fix
   | 'audit-fix-force';  // npm audit fix --force
 
+/** Parameters describing the fix command to spawn. */
 export interface FixRunInput {
+  /** Host project root the command runs in. */
   cwd: string;
   kind: FixCommandKind;
   /** Required for `kind: 'install'`. */
@@ -43,6 +45,7 @@ export interface FixRunInput {
   targetId: FixTargetId;
 }
 
+/** Final state of a completed (or failed) fix command. */
 export interface FixRunResult {
   state: FixState;
   exitCode: number | null;
@@ -52,6 +55,7 @@ export interface FixRunResult {
   stderrTail: string;
 }
 
+/** Callback invoked for each output line of an in-flight fix command. */
 export type FixProgressHandler = (line: string, stream: 'stdout' | 'stderr') => void;
 
 /** Hard cap for an in-flight fix command (10 min). */

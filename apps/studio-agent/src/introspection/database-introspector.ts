@@ -41,11 +41,25 @@ type AnyObj = any;
 
 const FIELD_SAMPLE_SIZE = 50;
 
+/**
+ * Read-only introspector for the ExpressoTS in-memory database, powering
+ * the Studio "Database" view.
+ *
+ * Resolves an `InMemoryDBProvider` from the host's DI container by duck
+ * typing (the agent never imports `@expressots/core`) and exposes entity
+ * schemas, record counts, and paginated row data. Every method fails
+ * soft: when no provider is registered or the shapes don't match, an
+ * "unavailable" or empty result is returned instead of an error.
+ */
 export class DatabaseIntrospector {
   private appContainer: AnyObj;
   private provider: AnyObj | null = null;
   private resolved = false;
 
+  /**
+   * @param appContainer - The host's ExpressoTS `AppContainer` (or any
+   *   object exposing the underlying Inversify container).
+   */
   constructor(appContainer: unknown) {
     this.appContainer = appContainer;
   }

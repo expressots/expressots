@@ -23,7 +23,19 @@ import { detectVersionSegment, makePathMatcher, toOpenApiPath } from './path-uti
 
 const BODY_METHODS = new Set<HttpMethod>(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-/** Build a complete OpenAPI 3.1 document for the application. */
+/**
+ * Build a complete OpenAPI 3.1 document for the application.
+ *
+ * Routes are deduplicated by method + path, recorded exchanges are
+ * attributed to their route templates to backfill parameters, request
+ * examples, and response schemas, and the resulting document carries an
+ * `x-expressots-generated` provenance marker.
+ *
+ * @param routes - Static route inventory from `RouteScanner`.
+ * @param exchanges - Recorded traffic used to enrich the document.
+ * @param opts - Document metadata, version filtering, and schema overrides.
+ * @returns The assembled OpenAPI 3.1 document.
+ */
 export function buildOpenApiDocument(
   routes: RouteInfo[],
   exchanges: RecordedExchange[] = [],

@@ -116,10 +116,13 @@ function styleOf(state: State): AnsiStyle {
   return style;
 }
 
-// Matches any CSI sequence: ESC [ … <final-byte>. We split into colour (`m`)
-// vs. everything-else (stripped) at the call site.
+// Matches any CSI sequence: ESC [ ... <final-byte>. We split into colour (`m`)
+// vs. everything-else (stripped) at the call site. The control character is
+// intentional: this module exists to parse raw ANSI escape bytes.
+// eslint-disable-next-line no-control-regex
 const CSI = /\x1b\[[0-9;?]*[ -/]*[@-~]/g;
 // Other escapes (OSC, single-char escapes) we just drop.
+// eslint-disable-next-line no-control-regex
 const OTHER_ESC = /\x1b[\]P^_].*?(?:\x07|\x1b\\)|\x1b[@-Z\\-_]/g;
 
 /** Remove every ANSI escape (colour + control) to recover plain text. */
@@ -129,7 +132,7 @@ export function stripAnsi(input: string): string {
 
 /**
  * Parse a single line of (possibly ANSI-coloured) text into styled segments.
- * State does not persist across lines — each transcript line is self-contained
+ * State does not persist across lines; each transcript line is self-contained
  * in practice, and resetting avoids one stray code bleeding into the rest of
  * the panel.
  */

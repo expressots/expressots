@@ -49,6 +49,10 @@ const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'
  * @param committed - the parsed `openapi.json` the team publishes.
  * @param routes - current static route inventory.
  * @param exchanges - recorded traffic used for status / field-frequency checks.
+ * @param opts - generation options forwarded to `buildOpenApiDocument`
+ *   (e.g. `apiVersion` to restrict the comparison to one version).
+ * @returns A report listing every drift finding with rule, severity, and
+ *   a human-readable message.
  */
 export function diffOpenApiSpec(
   committed: OpenApiDocument | Record<string, unknown>,

@@ -16,12 +16,17 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { inspect } from 'node:util';
 
+/** Console method names the capture hooks into. */
 export type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 
+/** A single captured console line, streamed to the Studio Logs view. */
 export interface LogEntry {
   level: LogLevel;
+  /** Formatted message with ANSI escape codes stripped. */
   message: string;
+  /** Wall-clock ms when the line was emitted. */
   timestamp: number;
+  /** Trace id of the request active when the line was emitted, if any. */
   traceId?: string;
 }
 
@@ -37,6 +42,15 @@ const REENTRY = Symbol.for('expressots.studio.log.reentry');
 
 const LEVELS: LogLevel[] = ['log', 'info', 'warn', 'error', 'debug'];
 
+/**
+ * Intercepts `console.*` calls so Studio can stream the host app's
+ * output alongside requests, correlated by trace id when available.
+ *
+ * Original console behaviour is preserved: every call still forwards to
+ * the previous implementation, and `uninstall()` restores plain console
+ * methods. Captured lines go into a bounded ring buffer (oldest dropped
+ * first) and are delivered to subscribers registered via `onLog()`.
+ */
 export class LogCapture {
   private buffer: LogEntry[] = [];
   private readonly maxBuffer: number;
@@ -51,6 +65,7 @@ export class LogCapture {
   private listeners = new Set<(entry: LogEntry) => void>();
   private installed = false;
 
+  /** @param maxBuffer - Maximum buffered entries before the oldest are dropped. Default: 1000. */
   constructor(maxBuffer = 1000) {
     this.maxBuffer = maxBuffer;
   }

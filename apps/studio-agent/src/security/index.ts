@@ -63,14 +63,21 @@ const POSTURE_DEBOUNCE_MS = 2000;
  * agent having to thread updates through.
  */
 export interface SecurityEngineDeps {
+  /** Host project root; `npm audit` and lockfile reads run here. */
   cwd: string;
+  /** Agent DB path; the OSV response cache lives in the same directory. */
   dbPath: string;
+  /** Returns the current route inventory. */
   getRoutes: () => RouteInfo[];
+  /** Returns the latest scanned application structure, if any. */
   getStructure: () => AppStructure | null;
+  /** Returns the recorded exchanges used for posture and reachability checks. */
   getExchanges: () => RecordedExchange[];
+  /** Returns the captured console log buffer. */
   getLogs: () => LogEntry[];
 }
 
+/** Callback invoked whenever the engine produces a changed `SecurityReport`. */
 export type SecurityReportListener = (report: SecurityReport) => void;
 
 /**
@@ -95,6 +102,21 @@ export interface ApplyFixInput {
   allowMajor?: boolean;
 }
 
+/**
+ * Orchestrates Studio's security scanning: supply-chain analysis
+ * (`npm audit` reconciled with OSV.dev advisories) plus runtime posture
+ * analysis over the agent's routes, exchanges, and logs. Assembles the
+ * result into a single `SecurityReport` and notifies the registered
+ * listener only when the report meaningfully changes.
+ *
+ * Also runs user-initiated remediations via `applyFix()`, streaming
+ * command output back through a progress callback and rescanning
+ * afterwards so the next report reflects the lockfile's real state.
+ *
+ * The engine is transport-agnostic: it reads fresh state through the
+ * accessor functions in `SecurityEngineDeps` and leaves broadcast policy
+ * (debouncing aside) to the agent.
+ */
 export class SecurityEngine {
   private readonly osvClient: OsvClient;
   private readonly osvCache: OsvCache;

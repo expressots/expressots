@@ -27,6 +27,14 @@ import type {
 
 const SEVERITY_KEYS: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
 
+/**
+ * Assemble a `SecurityReport` from dependency findings, posture
+ * findings, and fix groups: tallies counts per severity and derives the
+ * aggregate A-F letter grade.
+ *
+ * @param args - Findings, fix groups, and the current scan lifecycle state.
+ * @returns The complete report ready for broadcast.
+ */
 export function buildSecurityReport(args: {
   dependencies: DependencyFinding[];
   posture: PostureFinding[];

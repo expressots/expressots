@@ -28,6 +28,7 @@ interface CacheEntry {
   advisories: OsvAdvisory[];
 }
 
+/** A normalised OSV advisory as stored in (and served from) the cache. */
 export interface OsvAdvisory {
   id: string;
   aliases: string[];
@@ -47,6 +48,12 @@ function cacheKey(ecosystem: string, name: string, version: string): string {
   return `${ecosystem}|${name}|${version}`;
 }
 
+/**
+ * Best-effort on-disk cache of normalised OSV advisories, keyed by
+ * `(ecosystem, package, version)` with a 6 hour TTL. Lives next to the
+ * agent database (`.studio/security-cache.json`). Writes are coalesced;
+ * call `flush()` at the end of a scan to persist.
+ */
 export class OsvCache {
   private readonly filePath: string;
   private data: CacheFile = { version: CACHE_VERSION, entries: {} };

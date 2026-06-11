@@ -17,17 +17,30 @@ import {
 import { trace, context, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import type { SpanInfo, TraceInfo } from '../types/index.js';
 
-/** Custom span processor that emits spans to Studio */
+/**
+ * OpenTelemetry span processor that assembles finished spans into
+ * complete traces for Studio.
+ *
+ * Spans are buffered per trace id; a trace is considered complete one
+ * second after its last span ends, at which point the `onTraceComplete`
+ * callback receives a `TraceInfo` with the root span identified and all
+ * spans sorted by start time.
+ */
 export class StudioSpanProcessor implements SpanProcessor {
   private spans: Map<string, SpanInfo[]> = new Map();
   private onTraceComplete?: (trace: TraceInfo) => void;
   private traceTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private traceCompletionDelay = 1000; // Wait 1 second for all spans
 
+  /**
+   * @param onTraceComplete - Invoked once per assembled trace, after the
+   *   one-second completion window elapses.
+   */
   constructor(onTraceComplete?: (trace: TraceInfo) => void) {
     this.onTraceComplete = onTraceComplete;
   }
 
+  /** No-op: spans are forwarded synchronously as traces complete. */
   forceFlush(): Promise<void> {
     return Promise.resolve();
   }
@@ -36,6 +49,7 @@ export class StudioSpanProcessor implements SpanProcessor {
     // Span started - can emit event if needed
   }
 
+  /** Buffer the finished span and (re)arm the trace-completion timeout. */
   onEnd(span: ReadableSpan): void {
     const traceId = span.spanContext().traceId;
     const spanInfo = this.convertSpan(span);
@@ -150,6 +164,7 @@ export class StudioSpanProcessor implements SpanProcessor {
     }
   }
 
+  /** Cancel pending trace timeouts and drop buffered spans. */
   shutdown(): Promise<void> {
     for (const timeout of this.traceTimeouts.values()) {
       clearTimeout(timeout);
@@ -160,13 +175,25 @@ export class StudioSpanProcessor implements SpanProcessor {
   }
 }
 
-/** OpenTelemetry SDK wrapper */
+/**
+ * Wrapper around the OpenTelemetry Node SDK used by the agent.
+ *
+ * Configures auto-instrumentation (with the noisy `fs` instrumentation
+ * disabled) and routes finished spans through a `StudioSpanProcessor`
+ * so completed traces reach the agent as `TraceInfo` objects.
+ */
 export class StudioTracer {
   private sdk: NodeSDK | null = null;
   private spanProcessor: StudioSpanProcessor | null = null;
   private serviceName: string;
   private serviceVersion: string;
 
+  /**
+   * @param serviceName - OTel `service.name` resource attribute.
+   *   Default: "expressots-app".
+   * @param serviceVersion - OTel `service.version` resource attribute.
+   *   Default: "1.0.0".
+   */
   constructor(
     serviceName: string = 'expressots-app',
     serviceVersion: string = '1.0.0'
@@ -175,7 +202,12 @@ export class StudioTracer {
     this.serviceVersion = serviceVersion;
   }
 
-  /** Initialize the OpenTelemetry SDK */
+  /**
+   * Initialize and start the OpenTelemetry SDK.
+   *
+   * @param onTraceComplete - Invoked once per completed trace.
+   * @returns Resolves when the SDK has started.
+   */
   async start(onTraceComplete?: (trace: TraceInfo) => void): Promise<void> {
     this.spanProcessor = new StudioSpanProcessor(onTraceComplete);
 
@@ -195,7 +227,15 @@ export class StudioTracer {
     await this.sdk.start();
   }
 
-  /** Stop the OpenTelemetry SDK */
+  /**
+   * Stop the OpenTelemetry SDK.
+   *
+   * The shutdown drain is capped at 500ms so a stuck exporter never
+   * delays the host application's own shutdown. Safe to call when the
+   * SDK was never started.
+   *
+   * @returns Resolves once the drain completes or the cap elapses.
+   */
   async stop(): Promise<void> {
     if (!this.sdk) return;
     const sdk = this.sdk;
@@ -240,12 +280,27 @@ export class StudioTracer {
     }, 1000).unref();
   }
 
-  /** Get the current tracer */
+  /**
+   * Get an OpenTelemetry tracer instance.
+   *
+   * @param name - Tracer name. Default: "studio-agent".
+   * @returns The tracer registered under that name.
+   */
   getTracer(name: string = 'studio-agent') {
     return trace.getTracer(name);
   }
 
-  /** Create a custom span */
+  /**
+   * Run a function inside a new active span.
+   *
+   * The span status is set to OK on success or ERROR (with the error
+   * message) when the function throws; the error is re-thrown.
+   *
+   * @param name - Span name.
+   * @param fn - Function to execute inside the span.
+   * @param attributes - Optional attributes set on the span.
+   * @returns The promise returned by the active-span execution.
+   */
   createSpan(
     name: string,
     fn: () => void | Promise<void>,

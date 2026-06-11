@@ -116,6 +116,32 @@ function resolveOwnVersion(): string {
   return safePackageVersion('@expressots/studio-agent') ?? 'unknown';
 }
 
+/**
+ * Main orchestrator for ExpressoTS Studio instrumentation. Runs inside
+ * the host application's process and coordinates every Studio subsystem:
+ *
+ * - route discovery (`RouteScanner`, static and runtime)
+ * - OpenTelemetry tracing (`StudioTracer`)
+ * - request/response recording (`RequestRecorder`, SQLite-backed)
+ * - DI container and in-memory database introspection
+ * - console log capture, security scanning, and coverage reporting
+ *
+ * The agent exposes a Socket.IO server (default port 3334) that the
+ * Studio UI connects to; all data flows to the UI as `WSMessage`
+ * envelopes. Lifecycle: construct with an `AgentConfig`, call `start()`
+ * once, and `stop()` during host shutdown.
+ *
+ * @example
+ * ```typescript
+ * const agent = new StudioAgent({
+ *   port: 3334,
+ *   dbPath: '.studio/studio.db',
+ *   serviceName: 'expressots-app',
+ *   enableRecording: true,
+ * });
+ * await agent.start();
+ * ```
+ */
 export class StudioAgent {
   private config: AgentConfig;
   private tracer: StudioTracer;
@@ -147,6 +173,13 @@ export class StudioAgent {
    */
   private metricsTimer: NodeJS.Timeout | null = null;
 
+  /**
+   * Create an agent with the given configuration.
+   *
+   * @param config - Partial configuration; omitted fields fall back to
+   *   the defaults documented on `AgentConfig` (port 3334, recording
+   *   enabled, 1000 recorded exchanges, etc.).
+   */
   constructor(config: Partial<AgentConfig> = {}) {
     this.config = {
       mode: config.mode ?? 'development',
@@ -196,7 +229,18 @@ export class StudioAgent {
     };
   }
 
-  /** Start the Studio Agent */
+  /**
+   * Start the agent.
+   *
+   * Initializes the recorder (best-effort; recording is disabled on
+   * runtimes without `node:sqlite`), starts the tracer, performs the
+   * initial route scan, captures a DI container snapshot when a container
+   * was provided, starts the WebSocket server and metrics broadcasting,
+   * installs console log capture, and kicks off the security and coverage
+   * engines. Idempotent: calling it while already running is a no-op.
+   *
+   * @returns Resolves once the WebSocket server is listening.
+   */
   async start(): Promise<void> {
     if (this.isRunning) {
       console.warn('StudioAgent is already running');
@@ -477,7 +521,17 @@ export class StudioAgent {
     };
   }
 
-  /** Stop the Studio Agent */
+  /**
+   * Stop the agent and release all resources.
+   *
+   * Tears down the WebSocket server (with a hard timeout so host shutdown
+   * never hangs), stops the tracer, closes the recorder database, restores
+   * the original console methods, and stops the security and coverage
+   * engines along with their watchers and timers. Safe to call multiple
+   * times; only the first call performs the teardown.
+   *
+   * @returns Resolves once teardown has completed (or timed out).
+   */
   async stop(): Promise<void> {
     if (!this.isRunning) return;
     // Mark stopped up-front so concurrent stop() calls bail and the
@@ -592,7 +646,17 @@ export class StudioAgent {
     await Promise.race([drained, timeout]);
   }
 
-  /** Scan application for routes */
+  /**
+   * Scan the application for routes and structure, then broadcast the
+   * results to connected clients.
+   *
+   * Runs the static source scan, merges runtime middleware data, applies
+   * the host's global URL prefix, and (when an Express app instance was
+   * provided) adds runtime-only routes the static scan cannot see.
+   * Errors are logged and never thrown; the previous route list is kept.
+   *
+   * @returns Resolves when the scan and broadcast are complete.
+   */
   async scanRoutes(): Promise<void> {
     try {
       this.appStructure = await this.scanner.scan();
@@ -684,7 +748,12 @@ export class StudioAgent {
     }
   }
 
-  /** Get discovered routes */
+  /**
+   * Get the currently discovered routes.
+   *
+   * @returns The route list from the most recent scan, with the global
+   *   prefix applied. Empty until the first `scanRoutes()` completes.
+   */
   getRoutes(): RouteInfo[] {
     return this.routes;
   }
@@ -717,12 +786,22 @@ export class StudioAgent {
     return prefix + (path.startsWith('/') ? path : `/${path}`);
   }
 
-  /** Get application structure */
+  /**
+   * Get the application structure from the most recent scan.
+   *
+   * @returns Controllers, services, providers, middleware, modules and
+   *   dependency edges, or null before the first scan completes.
+   */
   getAppStructure(): AppStructure | null {
     return this.appStructure;
   }
 
-  /** Get current metrics */
+  /**
+   * Get a snapshot of current application metrics.
+   *
+   * @returns Aggregate metrics (request/error counts, response-time
+   *   percentiles) with uptime and memory usage computed at call time.
+   */
   getMetrics(): AppMetrics {
     return {
       ...this.metrics,
@@ -731,7 +810,13 @@ export class StudioAgent {
     };
   }
 
-  /** Get endpoint statistics (without internal durations array) */
+  /**
+   * Get per-endpoint statistics.
+   *
+   * @returns One entry per observed method + path combination, with
+   *   request/error counts and duration percentiles. The internal
+   *   durations array used for percentile calculation is stripped.
+   */
   getEndpointStats(): EndpointStats[] {
     return Array.from(this.endpointStats.values()).map(({ durations, ...stats }) => stats);
   }
@@ -1801,7 +1886,18 @@ export class StudioAgent {
     this.metricsTimer.unref?.();
   }
 
-  /** Create Express middleware for request/response recording */
+  /**
+   * Create the Express middleware that powers request/response recording.
+   *
+   * The middleware sets permissive CORS headers for localhost origins (so
+   * the Studio API client can call the app from a different port), records
+   * each request and its response into the recorder, updates metrics and
+   * endpoint statistics, and runs the downstream handler chain inside the
+   * log-capture and DI-resolution tracking scopes. When recording is
+   * disabled it only handles CORS and passes through.
+   *
+   * @returns An Express-compatible `(req, res, next)` middleware function.
+   */
   createMiddleware() {
     return (req: any, res: any, next: any) => {
       // CORS for Studio UI: allow any localhost origin in dev so the

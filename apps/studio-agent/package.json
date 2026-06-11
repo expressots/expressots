@@ -1,6 +1,6 @@
 {
   "name": "@expressots/studio-agent",
-  "version": "4.0.0-preview.3.2",
+  "version": "4.0.0-preview.3.3",
   "publishConfig": {
     "access": "public"
   },
