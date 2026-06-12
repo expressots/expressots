@@ -57,6 +57,8 @@ interface SocketContextValue {
   requestStats: () => void;
   requestEndpointStats: () => void;
   requestContainer: () => void;
+  /** Re-capture the DI container snapshot (forces agent-side rescan). */
+  refreshContainer: () => void;
   requestLogs: () => void;
   clearLogs: () => void;
   requestRuntime: () => void;
@@ -437,6 +439,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     requestStats: useCallback(() => emit('get_stats'), [emit]),
     requestEndpointStats: useCallback(() => emit('get_endpoint_stats'), [emit]),
     requestContainer: useCallback(() => emit('get_container'), [emit]),
+    refreshContainer: useCallback(() => emit('refresh_container'), [emit]),
     requestLogs: useCallback(() => emit('get_logs'), [emit]),
     clearLogs: useCallback(() => emit('clear_logs'), [emit]),
     requestRuntime: useCallback(() => emit('get_runtime'), [emit]),

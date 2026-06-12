@@ -109,6 +109,19 @@ export class ContainerIntrospector {
   /** Builds the snapshot once and caches it. */
   capture(): ContainerSnapshot {
     if (this.snapshot) return this.snapshot;
+    return this.buildSnapshot();
+  }
+
+  /**
+   * Invalidates the cached snapshot and re-scans. Use after the host
+   * finishes registering all bindings (e.g. post-`configureServices()`).
+   */
+  recapture(): ContainerSnapshot {
+    this.snapshot = null;
+    return this.buildSnapshot();
+  }
+
+  private buildSnapshot(): ContainerSnapshot {
 
     const inversify = this.getInversifyContainer();
     if (!inversify) {

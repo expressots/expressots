@@ -504,6 +504,22 @@ export class StudioAgent {
   }
 
   /**
+   * Re-capture the DI container snapshot and broadcast to all connected
+   * clients. Called by the adapter after `configureServices()` and
+   * `InversifyExpressServer.build()` so the snapshot reflects every
+   * binding registered during the full boot sequence.
+   */
+  refreshContainer(): void {
+    if (!this.introspector || !this.introspector.isAvailable()) return;
+    try {
+      this.containerSnapshot = this.introspector.recapture();
+      this.broadcast('container', this.containerSnapshot);
+    } catch {
+      // Best-effort; never break the host.
+    }
+  }
+
+  /**
    * Capture a fresh in-memory database snapshot. Returns an "unavailable"
    * snapshot when no `InMemoryDBProvider` is registered or no container was
    * provided to the agent.
@@ -1461,6 +1477,10 @@ export class StudioAgent {
           timestamp: Date.now(),
           data: this.containerSnapshot,
         });
+      });
+
+      socket.on('refresh_container', () => {
+        this.refreshContainer();
       });
 
       // Re-send the in-memory database schema snapshot on demand. Captured
