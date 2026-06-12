@@ -1344,9 +1344,11 @@ export async function bootstrap(
 ): Promise<IWebServerPublic> {
   let logger: Logger | undefined;
 
-  // Note: Path resolution is auto-initialized as a side effect when
-  // @expressots/core is imported (see core/src/index.ts).
-  // This happens BEFORE bootstrap() runs, ensuring path aliases work.
+  // Note: bootstrap() does NOT resolve path aliases. In dev, tsx resolves
+  // tsconfig `paths` natively; in production, `expressots build` rewrites
+  // aliases to relative paths in the emitted output. Advanced setups can
+  // opt in to runtime resolution by calling `initializePathResolution()`
+  // before bootstrap() (exported from @expressots/core).
 
   // STEP 0: Load .env files FIRST (before config resolution)
   // This ensures config reads from .env files when it resolves

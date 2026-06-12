@@ -53,8 +53,11 @@ export interface PathResolverConfig {
 }
 
 /**
- * Register TypeScript path mappings for runtime resolution.
- * This replaces the need for tsconfig-paths and register-path.js
+ * Patch Node's CommonJS module resolver so `@alias/*` requests resolve to
+ * their mapped files at runtime.
+ *
+ * Advanced/manual use only: standard projects get aliases rewritten to
+ * relative paths at build time (`expressots build`) and never call this.
  *
  * @param config - Path resolver configuration
  * @internal
@@ -184,11 +187,18 @@ export function registerPathMappings(config: PathResolverConfig): void {
 }
 
 /**
- * Load tsconfig and extract path mappings.
- * Automatically called during bootstrap if tsconfig has paths.
+ * Load a tsconfig and extract its `paths` mapping.
+ *
+ * `baseUrl` is optional (it is deprecated in TypeScript 7). When omitted,
+ * `paths` are treated as relative to the tsconfig directory, i.e. the same
+ * as `baseUrl: "."` -- the convention the v4 templates use.
+ *
+ * This is NOT called automatically anywhere. Use it together with
+ * {@link registerPathMappings} (or via {@link initializePathResolution})
+ * only for advanced/manual runtime resolution.
  *
  * @param tsconfigPath - Path to tsconfig.json or tsconfig.build.json
- * @returns Path resolver configuration or null if not found
+ * @returns Path resolver configuration, or null when no `paths` are defined
  * @internal
  *
  * @example
@@ -224,28 +234,29 @@ export function loadPathMappingsFromTsConfig(
 
     const compilerOptions = tsconfig.compilerOptions;
 
-    if (!compilerOptions?.paths || !compilerOptions?.baseUrl) {
+    if (!compilerOptions?.paths) {
       if (debug) {
-        console.log(
-          `[PathResolver] Missing paths or baseUrl in ${tsconfigPath}`,
-        );
-        console.log(
-          `[PathResolver] paths: ${JSON.stringify(compilerOptions?.paths)}`,
-        );
-        console.log(`[PathResolver] baseUrl: ${compilerOptions?.baseUrl}`);
+        console.log(`[PathResolver] No paths defined in ${tsconfigPath}`);
       }
       return null;
     }
 
+    // `baseUrl` is optional (deprecated in TypeScript 7). When it is absent,
+    // as the v4 templates intentionally leave it, `paths` resolve relative
+    // to the tsconfig directory, i.e. the same as `baseUrl: "."`. Default to
+    // that so this helper supports both the legacy (`baseUrl: "./src"`) and
+    // current template conventions.
+    const baseUrl: string = compilerOptions.baseUrl ?? ".";
+
     // IMPORTANT: In production, resolve baseUrl relative to outDir
-    // outDir: "./dist", baseUrl: "./src" → resolve to "./dist/src"
-    let resolvedBaseUrl = compilerOptions.baseUrl;
+    // outDir: "./dist", baseUrl: "./src" -> resolve to "./dist/src"
+    let resolvedBaseUrl = baseUrl;
     const outDir = compilerOptions.outDir;
 
     if (outDir) {
       // We're in compiled output (dist/), adjust baseUrl relative to current directory
       // Current dir is root (where dist/ is), baseUrl should be relative to that
-      resolvedBaseUrl = path.join(outDir, compilerOptions.baseUrl);
+      resolvedBaseUrl = path.join(outDir, baseUrl);
     }
 
     if (debug) {
@@ -271,19 +282,23 @@ export function loadPathMappingsFromTsConfig(
 }
 
 /**
- * Initialize path resolution automatically.
- * This is called by bootstrap() before the app starts.
+ * Opt-in runtime path-alias resolution for advanced setups.
  *
- * @param tsconfigPath - Optional path to tsconfig.json
+ * This is NOT called automatically by `bootstrap()`. Standard ExpressoTS
+ * projects never need it: `expressots dev` resolves tsconfig `paths` via tsx,
+ * and `expressots build` rewrites aliases to relative paths for production.
+ * Call this manually (before `bootstrap()`) only if you run compiled output
+ * that still contains `@alias/*` requires.
+ *
+ * @param tsconfigPath - Optional path to tsconfig.json (defaults to ./tsconfig.json)
  * @returns true if paths were registered, false otherwise
  * @public
  *
  * @example
  * ```typescript
- * // In production, initialize with build config
- * if (process.env.NODE_ENV === "production") {
- *   initializePathResolution("./tsconfig.build.json");
- * }
+ * // Resolve aliases at runtime from the build tsconfig, before bootstrap()
+ * initializePathResolution("./tsconfig.build.json");
+ * await bootstrap(App);
  * ```
  */
 export function initializePathResolution(tsconfigPath?: string): boolean {
