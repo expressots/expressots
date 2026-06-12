@@ -1,4 +1,3 @@
-#!/usr/bin/env sh
 
 # Ensure npx/node are on PATH when committing from GUI clients (Cursor, VS Code, ...)
 # that don't source the user's interactive shell rc files.
