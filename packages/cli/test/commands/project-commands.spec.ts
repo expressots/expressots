@@ -109,7 +109,7 @@ describe("runCommand: dev", () => {
 		);
 	});
 
-	it("invokes tsx with --watch and the entrypoint", async () => {
+	it("invokes the tsx watch subcommand and the entrypoint", async () => {
 		spawnMock.mockReturnValue(makeFakeChildProcess(0));
 
 		await runCommand({ command: "dev" });
@@ -119,32 +119,57 @@ describe("runCommand: dev", () => {
 		// cross-spawn handles the Windows `.cmd` shim resolution
 		// internally, so the command we forward is always the bare name.
 		expect(cmd).toBe("tsx");
-		expect(args).toContain("--watch");
+		// The `watch` subcommand (not the root `--watch` flag) must be the
+		// first arg so the watch-specific flags below are recognised.
+		expect(args[0]).toBe("watch");
 		expect(args.some((a) => a.endsWith("./src/main.ts"))).toBe(true);
 	});
 
-	it("adds tsconfig-paths/register flag in opinionated mode", async () => {
+	it("keeps logs across reloads and excludes generated/output files", async () => {
 		spawnMock.mockReturnValue(makeFakeChildProcess(0));
 
 		await runCommand({ command: "dev" });
 
 		const args = spawnMock.mock.calls[0][1] as string[];
-		expect(args).toContain("-r");
-		expect(args).toContain("tsconfig-paths/register");
+		expect(args).toContain("--clear-screen=false");
+		expect(args).toContain("--exclude");
+		expect(args).toContain("**/*.generated.*");
+		expect(args).toContain("**/dist/**");
 	});
 
-	it("omits tsconfig-paths/register in non-opinionated mode", async () => {
-		loadConfigMock.mockResolvedValue({
-			opinionated: false,
-			entryPoint: "main",
-			sourceRoot: "src",
-			scaffoldPattern: "kebab-case",
-		});
+	it("does not force polling unless EXPRESSOTS_WATCH_POLL is set", async () => {
+		spawnMock.mockReturnValue(makeFakeChildProcess(0));
+
+		await runCommand({ command: "dev" });
+
+		const opts = spawnMock.mock.calls[0][2] as { env?: NodeJS.ProcessEnv };
+		// No env override object is passed, so the child inherits the
+		// parent environment untouched.
+		expect(opts.env).toBeUndefined();
+	});
+
+	it("enables chokidar polling when EXPRESSOTS_WATCH_POLL is set", async () => {
+		process.env.EXPRESSOTS_WATCH_POLL = "1";
+		spawnMock.mockReturnValue(makeFakeChildProcess(0));
+
+		try {
+			await runCommand({ command: "dev" });
+		} finally {
+			delete process.env.EXPRESSOTS_WATCH_POLL;
+		}
+
+		const opts = spawnMock.mock.calls[0][2] as { env?: NodeJS.ProcessEnv };
+		expect(opts.env?.CHOKIDAR_USEPOLLING).toBe("1");
+		expect(opts.env?.CHOKIDAR_INTERVAL).toBe("300");
+	});
+
+	it("does not preload tsconfig-paths/register (tsx resolves paths natively)", async () => {
 		spawnMock.mockReturnValue(makeFakeChildProcess(0));
 
 		await runCommand({ command: "dev" });
 
 		const args = spawnMock.mock.calls[0][1] as string[];
+		expect(args).not.toContain("-r");
 		expect(args).not.toContain("tsconfig-paths/register");
 	});
 });

@@ -154,20 +154,55 @@ function getOutDir(): string {
 }
 
 /**
- * Build the tsx watch arguments for development mode.
- * Uses tsx's built-in --watch flag for reliable cross-platform file watching
- * (avoids nodemon + SIGTERM issues on Windows).
+ * Globs excluded from the dev watcher.
  *
- * @param opinionated - Whether to use opinionated configuration
+ * tsx only watches the entry file plus its import graph, and already
+ * ignores `node_modules` and dotfiles (so `.env*` never triggers a
+ * reload). These extra patterns defend against the remaining restart-loop
+ * trigger: generated or written-at-runtime files that re-enter the import
+ * graph (e.g. the view type generator's `*.generated.d.ts`, build output,
+ * coverage reports, log files).
+ */
+const DEV_WATCH_EXCLUDES: ReadonlyArray<string> = [
+	"**/dist/**",
+	"**/build/**",
+	"**/coverage/**",
+	"**/*.generated.*",
+	"**/*.log",
+];
+
+/**
+ * Build the tsx watch arguments for development mode.
+ *
+ * Uses tsx's `watch` subcommand (not the root-level `--watch` flag) for
+ * reliable cross-platform file watching, which avoids nodemon + SIGTERM
+ * issues on Windows. The subcommand form is required so the watch-specific
+ * flags below are recognised; passing them to `tsx --watch` would forward
+ * them to Node and crash the process.
+ *
+ * Path aliases (`@useCases/*`, `@providers/*`, ...) are resolved natively by
+ * tsx from `tsconfig.json` (including when `baseUrl` is omitted, as the v4
+ * templates do), so no `tsconfig-paths/register` preload is needed at dev
+ * time. Production builds rewrite those aliases to relative paths during
+ * `build` (see {@link transformPathAliases}), so prod never needs it either.
+ *
  * @returns The tsx arguments array
  */
-async function buildDevArgs(opinionated: boolean): Promise<Array<string>> {
+async function buildDevArgs(): Promise<Array<string>> {
 	const { entryPoint, sourceRoot } = await Compiler.loadConfig();
 
-	const args: Array<string> = ["--watch"];
+	const args: Array<string> = ["watch"];
 
-	if (opinionated) {
-		args.push("-r", "tsconfig-paths/register");
+	// Keep prior logs on screen across reloads. tsx resets the terminal
+	// (\x1Bc) on every restart by default, which erases the "Restarting...
+	// <file>" line that tells you *why* a reload happened. On Windows a
+	// single save commonly emits several filesystem events (atomic
+	// save + antivirus/indexer re-touch), so preserving that line is
+	// essential to diagnose (and trust) restart behaviour.
+	args.push("--clear-screen=false");
+
+	for (const glob of DEV_WATCH_EXCLUDES) {
+		args.push("--exclude", glob);
 	}
 
 	// Honor `sourceRoot` from expressots.config.ts so projects whose
@@ -176,6 +211,30 @@ async function buildDevArgs(opinionated: boolean): Promise<Array<string>> {
 	args.push(`./${sourceRoot}/${entryPoint}.ts`);
 
 	return args;
+}
+
+/**
+ * Resolve optional environment overrides for the dev watcher.
+ *
+ * On networked, virtualized, or cloud-synced filesystems (OneDrive, mapped
+ * drives, some VM shares) Windows' native `fs.watch` events are unreliable,
+ * which surfaces as missed reloads or phantom restart loops. Setting
+ * `EXPRESSOTS_WATCH_POLL=1` switches tsx's underlying chokidar watcher to
+ * polling, which is steadier at the cost of a little CPU. The poll interval
+ * (ms) can be tuned with `EXPRESSOTS_WATCH_INTERVAL` (default 300).
+ *
+ * @returns Env overrides to merge into the child process, or undefined.
+ */
+function buildDevEnv(): NodeJS.ProcessEnv | undefined {
+	const poll = process.env.EXPRESSOTS_WATCH_POLL;
+	if (!poll || poll === "0" || poll === "false") {
+		return undefined;
+	}
+
+	return {
+		CHOKIDAR_USEPOLLING: "1",
+		CHOKIDAR_INTERVAL: process.env.EXPRESSOTS_WATCH_INTERVAL ?? "300",
+	};
 }
 
 /**
@@ -350,6 +409,7 @@ function execCmd(
 	command: string,
 	args: Array<string>,
 	cwd: string = process.cwd(),
+	env?: NodeJS.ProcessEnv,
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
 		// `safeSpawn` (cross-spawn) resolves Windows `.cmd` shims (npx,
@@ -359,6 +419,9 @@ function execCmd(
 		const proc = safeSpawn(command, args, {
 			stdio: "inherit",
 			cwd,
+			// Only override the environment when extra vars are supplied so
+			// the default (inherit the parent env) is preserved otherwise.
+			...(env ? { env: { ...process.env, ...env } } : {}),
 		});
 
 		// On Ctrl+C the SIGINT hits the whole foreground process group, so
@@ -943,7 +1006,12 @@ export const runCommand = async ({
 	try {
 		switch (command) {
 			case "dev":
-				await execCmd("tsx", await buildDevArgs(opinionated));
+				await execCmd(
+					"tsx",
+					await buildDevArgs(),
+					process.cwd(),
+					buildDevEnv(),
+				);
 				break;
 			case "build":
 				if (!outDir) {
