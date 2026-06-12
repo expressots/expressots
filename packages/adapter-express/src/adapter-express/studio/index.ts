@@ -5,4 +5,5 @@ export {
   getStudioAgent,
   reportStudioRuntimeInfo,
   rescanStudioRoutes,
+  refreshStudioContainer,
 } from "./studio-integration.js";

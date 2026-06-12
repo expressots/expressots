@@ -35,7 +35,7 @@ import {
 const PROVIDE_METADATA_KEY = "inversify-binding-decorators:provide";
 import { Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared";
 
-import { interfaces } from "@expressots/core";
+import { interfaces, schemaToJsonSchema } from "@expressots/core";
 import { ExpressHandler, MiddlewareConfig } from "./application-express.types.js";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware.js";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server.js";
@@ -47,12 +47,14 @@ import {
   getControllerMethodMetadata,
   getControllerMetadata,
 } from "./express-utils/utils.js";
+import { getValidationMetadata } from "./express-utils/validation-decorators.js";
 import {
   initializeStudio,
   stopStudio,
   isStudioEnabled,
   reportStudioRuntimeInfo,
   rescanStudioRoutes,
+  refreshStudioContainer,
 } from "./studio/index.js";
 
 /**
@@ -822,6 +824,12 @@ export class AppExpress implements Server.IWebServer {
         // Fire-and-forget; the Studio Agent broadcasts the result over WS.
         void rescanStudioRoutes();
 
+        // Re-capture the DI container snapshot now that all bindings are
+        // registered (configureServices + InversifyExpressServer.build).
+        // The initial capture runs before configureServices(), so any
+        // late-registered bindings would otherwise be missing.
+        refreshStudioContainer();
+
         // Setup signal handlers for graceful shutdown
         // Supported signals:
         // - SIGTERM: Standard termination (Kubernetes, Docker, process managers)
@@ -1470,6 +1478,15 @@ export class AppExpress implements Server.IWebServer {
           httpMethod?: string;
           routePath?: string;
         }>;
+        routeSchemas?: Array<{
+          controllerName: string;
+          controllerMethod?: string;
+          httpMethod?: string;
+          routePath?: string;
+          bodyDto?: string;
+          bodySample?: Record<string, unknown>;
+          bodySchema?: Record<string, unknown>;
+        }>;
       }
     | undefined {
     try {
@@ -1509,17 +1526,19 @@ export class AppExpress implements Server.IWebServer {
 
       const middleware = this.collectMiddlewarePipelineItems();
       const middlewareBindings = this.collectMiddlewareBindings();
+      const routeSchemas = this.collectRouteSchemas();
 
       if (
         providers.length === 0 &&
         interceptors.length === 0 &&
         !middleware &&
-        !middlewareBindings
+        !middlewareBindings &&
+        !routeSchemas
       ) {
         return undefined;
       }
 
-      return { providers, interceptors, middleware, middlewareBindings };
+      return { providers, interceptors, middleware, middlewareBindings, routeSchemas };
     } catch {
       return undefined;
     }
@@ -1633,6 +1652,174 @@ export class AppExpress implements Server.IWebServer {
       return out.length > 0 ? out : undefined;
     } catch {
       return undefined;
+    }
+  }
+
+  /**
+   * Harvest per-route request-body schemas from runtime validation
+   * metadata. The validated decorators (`@body(Schema)`, `@validatedBody`,
+   * `@Validate`) store the actual schema object under
+   * `METADATA_KEY.validationSchema`; this is the only place a Zod /
+   * class-validator / Yup schema exists at all (the Studio agent's static
+   * source scanner can't read it). For each body-source schema we convert
+   * to JSON Schema via the framework's `schemaToJsonSchema()` and derive a
+   * sample body, forwarding both to the agent so the API client's auto-fill
+   * works for schematised DTOs, not just plain typed `@body()` params.
+   */
+  private collectRouteSchemas():
+    | Array<{
+        controllerName: string;
+        controllerMethod?: string;
+        httpMethod?: string;
+        routePath?: string;
+        bodyDto?: string;
+        bodySample?: Record<string, unknown>;
+        bodySchema?: Record<string, unknown>;
+      }>
+    | undefined {
+    try {
+      const controllers = getControllersFromMetadata();
+      if (!controllers || controllers.length === 0) return undefined;
+
+      const out: Array<{
+        controllerName: string;
+        controllerMethod?: string;
+        httpMethod?: string;
+        routePath?: string;
+        bodyDto?: string;
+        bodySample?: Record<string, unknown>;
+        bodySchema?: Record<string, unknown>;
+      }> = [];
+
+      for (const controllerTarget of controllers) {
+        const controllerCtor = controllerTarget as unknown as NewableFunction;
+        const controllerName = (controllerCtor as { name?: string }).name;
+        if (typeof controllerName !== "string" || controllerName.length === 0) {
+          continue;
+        }
+
+        const ctrlMeta = getControllerMetadata(controllerCtor);
+        const basePath = ctrlMeta?.path ?? "";
+        const methodMeta = getControllerMethodMetadata(controllerCtor);
+        if (!Array.isArray(methodMeta)) continue;
+
+        for (const route of methodMeta) {
+          const methodKey = typeof route.key === "string" ? route.key : undefined;
+          if (!methodKey) continue;
+
+          const validation = getValidationMetadata(controllerCtor, methodKey);
+          if (!Array.isArray(validation) || validation.length === 0) continue;
+
+          // Whole-body schema only (a `paramName` means a single sub-field
+          // was validated, not the request body shape).
+          const bodyEntry = validation.find(
+            (v) => v?.source === "body" && !v?.paramName && v?.schema,
+          );
+          if (!bodyEntry?.schema) continue;
+
+          const bodySchema = schemaToJsonSchema(bodyEntry.schema) ?? undefined;
+          if (!bodySchema) continue;
+
+          const sample = this.jsonSchemaToSample(bodySchema);
+          const bodySample =
+            sample && typeof sample === "object" && !Array.isArray(sample)
+              ? (sample as Record<string, unknown>)
+              : undefined;
+
+          out.push({
+            controllerName,
+            controllerMethod: methodKey,
+            httpMethod: typeof route.method === "string" ? route.method.toUpperCase() : undefined,
+            routePath: this.joinRoutePath(basePath, route.path),
+            bodyDto: this.schemaDisplayName(bodyEntry.schema),
+            bodySample,
+            bodySchema,
+          });
+        }
+      }
+
+      return out.length > 0 ? out : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Best-effort display name for a validation schema. Class-based schemas
+   * (class-validator DTOs) carry a constructor name; structural schemas
+   * (Zod objects) don't, so we return `undefined` and let the sample/schema
+   * speak for itself.
+   */
+  private schemaDisplayName(schema: unknown): string | undefined {
+    if (typeof schema === "function") {
+      const name = (schema as { name?: string }).name;
+      return typeof name === "string" && name.length > 0 ? name : undefined;
+    }
+    return undefined;
+  }
+
+  /**
+   * Derive a representative sample value from a JSON Schema. Depth-limited
+   * so recursive/huge schemas can't blow the stack, and falls back to
+   * `null` for shapes it can't interpret (keeps the emitted JSON parseable).
+   */
+  private jsonSchemaToSample(schema: Record<string, unknown>, depth = 0): unknown {
+    if (!schema || typeof schema !== "object") return null;
+    if (depth > 4) return null;
+
+    const enumVals = (schema as { enum?: Array<unknown> }).enum;
+    if (Array.isArray(enumVals) && enumVals.length > 0) return enumVals[0];
+    if ("const" in schema) return (schema as { const?: unknown }).const;
+    if ("default" in schema) return (schema as { default?: unknown }).default;
+
+    const rawType = (schema as { type?: unknown }).type;
+    const type = Array.isArray(rawType) ? rawType[0] : rawType;
+
+    switch (type) {
+      case "object": {
+        const props = (
+          schema as {
+            properties?: Record<string, Record<string, unknown>>;
+          }
+        ).properties;
+        const out: Record<string, unknown> = {};
+        if (props) {
+          for (const [key, propSchema] of Object.entries(props)) {
+            out[key] = this.jsonSchemaToSample(propSchema, depth + 1);
+          }
+        }
+        return out;
+      }
+      case "array": {
+        const items = (schema as { items?: Record<string, unknown> }).items;
+        if (items && depth < 3) return [this.jsonSchemaToSample(items, depth + 1)];
+        return [];
+      }
+      case "string": {
+        const format = (schema as { format?: string }).format;
+        if (format === "email") return "user@example.com";
+        if (format === "uri" || format === "url") return "https://example.com";
+        if (format === "uuid") return "00000000-0000-0000-0000-000000000000";
+        if (format === "date-time") return new Date(0).toISOString();
+        return "";
+      }
+      case "integer":
+      case "number":
+        return 0;
+      case "boolean":
+        return false;
+      case "null":
+        return null;
+      default: {
+        // Composed schemas (allOf/anyOf/oneOf) — sample the first variant.
+        for (const key of ["allOf", "anyOf", "oneOf"] as const) {
+          const variants = (schema as Record<string, unknown>)[key];
+          if (Array.isArray(variants) && variants.length > 0) {
+            return this.jsonSchemaToSample(variants[0] as Record<string, unknown>, depth + 1);
+          }
+        }
+        return null;
+      }
     }
   }
 

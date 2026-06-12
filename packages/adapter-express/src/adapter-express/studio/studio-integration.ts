@@ -59,6 +59,11 @@ interface StudioAgentInstance {
     runtimeItems?: StudioRuntimeItems;
     middlewarePreset?: StudioMiddlewarePresetInfo;
   }): void;
+  /**
+   * Optional — older agents may not implement this. Re-captures the DI
+   * container snapshot after all bindings are registered.
+   */
+  refreshContainer?(): void;
 }
 
 /**
@@ -96,6 +101,22 @@ export interface StudioRuntimeItems {
     controllerMethod?: string;
     httpMethod?: string;
     routePath?: string;
+  }>;
+  /**
+   * Per-route request-body schemas harvested from runtime validation
+   * metadata (Zod / class-validator / Yup) so the Studio agent can fill the
+   * API client's body auto-fill for routes its static scanner can't read.
+   *
+   * Mirrors `RouteSchema` in `@expressots/studio-agent`.
+   */
+  routeSchemas?: Array<{
+    controllerName: string;
+    controllerMethod?: string;
+    httpMethod?: string;
+    routePath?: string;
+    bodyDto?: string;
+    bodySample?: Record<string, unknown>;
+    bodySchema?: Record<string, unknown>;
   }>;
 }
 
@@ -361,6 +382,25 @@ export async function rescanStudioRoutes(): Promise<void> {
     logger().warn(
       `Studio route rescan failed: ${error instanceof Error ? error.message : String(error)}`,
     );
+  }
+}
+
+/**
+ * Re-capture the Studio Agent's DI container snapshot. Called after
+ * `configureServices()` and `InversifyExpressServer.build()` complete so
+ * the snapshot reflects all registered bindings (not just those present
+ * at the early `initializeStudio()` call).
+ *
+ * No-ops when Studio isn't enabled or the agent doesn't expose
+ * `refreshContainer()` (older previews).
+ */
+export function refreshStudioContainer(): void {
+  if (!studioAgent) return;
+  if (typeof studioAgent.refreshContainer !== "function") return;
+  try {
+    studioAgent.refreshContainer();
+  } catch {
+    // Best-effort; never break the host.
   }
 }
 
