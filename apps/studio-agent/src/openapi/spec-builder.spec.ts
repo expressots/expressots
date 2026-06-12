@@ -99,6 +99,16 @@ describe('buildOpenApiDocument', () => {
     expect((schema.properties as Record<string, unknown>).name).toBeDefined();
   });
 
+  it('tags operations by derived resource and keeps a controller operationId', () => {
+    const doc = buildOpenApiDocument(ROUTES, []);
+    const post = doc.paths['/users'].post as Record<string, unknown>;
+    // All `/users*` routes (including `/v2/users`, version stripped) collapse
+    // under one path-derived resource tag, not one tag per controller class.
+    expect(post.tags).toEqual(['users']);
+    expect(post.operationId).toBe('UsersController_create');
+    expect(doc.tags).toEqual([{ name: 'users' }]);
+  });
+
   it('prefers a precise schema override over the inferred sample', () => {
     const override = {
       type: 'object',

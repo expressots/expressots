@@ -3,19 +3,22 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Send, Plus, X, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Send, Plus, X, Copy, Check } from 'lucide-react';
 import {
   cn,
   copyToClipboard,
   formatDuration,
-  getMethodBgColor,
   getMethodColor,
   getStatusColor,
   safeParseJSON,
 } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
+import { useApiClientStore } from '../stores/api-client-store';
+import { useSocket } from '../contexts/socket-context';
+import { routeKey } from '../lib/resource-tags';
 import { OpenApiPanel } from './OpenApiPanel';
-import type { HttpMethod } from '../types';
+import { RouteSidebar } from './RouteSidebar';
+import type { HttpMethod, RouteInfo } from '../types';
 
 type Tab = 'headers' | 'body' | 'query';
 type BodyMode = 'form' | 'json';
@@ -60,7 +63,9 @@ const newKV = (): KeyValue => ({
 });
 
 export function ApiClient() {
-  const { routes, pendingApiClientRequest, setPendingApiClientRequest, runtime } = useAppStore();
+  const { pendingApiClientRequest, setPendingApiClientRequest, runtime } = useAppStore();
+  const { sendApiRequest } = useSocket();
+  const addRecent = useApiClientStore((s) => s.addRecent);
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState<string>(`${DEFAULT_BASE_URL}/`);
   const [tab, setTab] = useState<Tab>('headers');
@@ -119,88 +124,22 @@ export function ApiClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingApiClientRequest]);
 
-  // Group discovered routes by controller so big APIs (dozens of
-  // endpoints across many controllers) stay scannable. Within each
-  // group routes are sorted by path → method to mirror the order
-  // users read them in source. Anonymous routes (e.g. `app.get(...)`
-  // outside a controller) bucket under the synthetic "Other" group.
-  const groupedRoutes = useMemo(() => {
-    const buckets = new Map<
-      string,
-      Array<{
-        method: HttpMethod;
-        path: string;
-        bodyDto?: string;
-        bodySample?: Record<string, unknown>;
-        controllerMethod?: string;
-      }>
-    >();
-
-    for (const r of routes) {
-      const groupKey = r.controller && r.controller !== 'Unknown' ? r.controller : 'Other';
-      const list = buckets.get(groupKey) ?? [];
-      list.push({
-        method: r.method,
-        path: r.path,
-        bodyDto: r.bodyDto,
-        bodySample: r.bodySample,
-        controllerMethod: r.controllerMethod,
-      });
-      buckets.set(groupKey, list);
+  // Highlight the sidebar row whose method + path matches what's loaded in
+  // the composer. Best-effort: the URL may be hand-edited to something with
+  // no matching route.
+  const activeKey = useMemo(() => {
+    try {
+      return `${method} ${new URL(url).pathname}`;
+    } catch {
+      return null;
     }
+  }, [method, url]);
 
-    const ordered: Array<{
-      controller: string;
-      routes: Array<{
-        method: HttpMethod;
-        path: string;
-        bodyDto?: string;
-        bodySample?: Record<string, unknown>;
-        controllerMethod?: string;
-      }>;
-    }> = [];
-    for (const [controller, list] of buckets) {
-      list.sort((a, b) =>
-        a.path === b.path ? a.method.localeCompare(b.method) : a.path.localeCompare(b.path),
-      );
-      ordered.push({ controller, routes: list });
-    }
-    // "Other" always last so user-defined controllers come first.
-    ordered.sort((a, b) => {
-      if (a.controller === 'Other') return 1;
-      if (b.controller === 'Other') return -1;
-      return a.controller.localeCompare(b.controller);
-    });
-    return ordered;
-  }, [routes]);
-
-  // Per-controller collapse state. Default: every group expanded so
-  // small APIs stay one-click. Users can collapse noisy groups.
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const toggleGroup = (name: string) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
+  // Selecting a route from the sidebar loads it and records it as recent.
+  const handlePick = (route: RouteInfo) => {
+    pickRoute(route.method, route.path, route.bodySample);
+    addRecent(routeKey(route));
   };
-  const [routeFilter, setRouteFilter] = useState<string>('');
-  const filteredGroups = useMemo(() => {
-    const q = routeFilter.trim().toLowerCase();
-    if (!q) return groupedRoutes;
-    return groupedRoutes
-      .map((g) => ({
-        controller: g.controller,
-        routes: g.routes.filter(
-          (r) =>
-            r.path.toLowerCase().includes(q) ||
-            r.method.toLowerCase().includes(q) ||
-            (r.controllerMethod ?? '').toLowerCase().includes(q),
-        ),
-      }))
-      .filter((g) => g.routes.length > 0);
-  }, [groupedRoutes, routeFilter]);
 
   const pickRoute = (
     m: HttpMethod,
@@ -272,9 +211,9 @@ export function ApiClient() {
         reqHeaders[h.key] = h.value;
       });
 
-    const init: RequestInit = { method, headers: reqHeaders };
+    let bodyToSend: string | undefined;
     if (supportsBody && body.trim()) {
-      init.body = body;
+      bodyToSend = body;
       const hasCT = Object.keys(reqHeaders).some(
         (k) => k.toLowerCase() === 'content-type',
       );
@@ -286,23 +225,39 @@ export function ApiClient() {
       }
     }
 
-    const start = performance.now();
     try {
-      const res = await fetch(finalUrl, init);
-      const duration = performance.now() - start;
-      const text = await res.text();
-      const respHeaders: Record<string, string> = {};
-      res.headers.forEach((v, k) => {
-        respHeaders[k] = v;
+      // Dispatch through the agent (server-side) rather than a browser
+      // `fetch`. The agent calls the app in-process, so the request is
+      // never subject to the app's CORS policy — what you send is exactly
+      // what your handlers receive.
+      const result = await sendApiRequest({
+        id: `api-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        method,
+        url: finalUrl,
+        headers: reqHeaders,
+        body: bodyToSend,
       });
-      const contentType = res.headers.get('content-type') || '';
+
+      if (!result.success) {
+        const msg = result.error || 'Request failed';
+        const hint = /econnrefused|fetch failed|connect/i.test(msg)
+          ? ' — check that your app is running and reachable at this URL.'
+          : '';
+        setError(`${msg}${hint}`);
+        return;
+      }
+
+      const respHeaders = result.headers ?? {};
+      const contentType =
+        respHeaders['content-type'] ?? respHeaders['Content-Type'] ?? '';
       const isJson = contentType.includes('application/json');
+      const text = result.body ?? '';
       const parsed = isJson ? safeParseJSON(text) : text;
 
       setResponse({
-        status: res.status,
-        statusText: res.statusText,
-        duration,
+        status: result.status ?? 0,
+        statusText: result.statusText ?? '',
+        duration: result.durationMs ?? 0,
         headers: respHeaders,
         body: text,
         parsed,
@@ -310,12 +265,7 @@ export function ApiClient() {
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Request failed';
-      const hint =
-        msg.toLowerCase().includes('failed to fetch') ||
-        msg.toLowerCase().includes('networkerror')
-          ? ' — check that the app is running and that @expressots/studio-agent is installed (it injects CORS headers for the Studio UI).'
-          : '';
-      setError(`${msg}${hint}`);
+      setError(msg);
     } finally {
       setSending(false);
     }
@@ -335,103 +285,12 @@ export function ApiClient() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex gap-4 items-start">
+      <RouteSidebar activeKey={activeKey} onPick={handlePick} />
+
+      <div className="flex-1 min-w-0 space-y-4">
       {/* OpenAPI: generate, download, and check drift */}
       <OpenApiPanel />
-
-      {/* Discovered routes — grouped by controller, filterable */}
-      {groupedRoutes.length > 0 && (
-        <div className="studio-card p-3 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
-              Discovered routes
-              <span className="ml-2 text-gray-600 normal-case font-normal">
-                {groupedRoutes.reduce((sum, g) => sum + g.routes.length, 0)} endpoints across{' '}
-                {groupedRoutes.length} controller{groupedRoutes.length === 1 ? '' : 's'}
-              </span>
-            </p>
-            <input
-              type="text"
-              value={routeFilter}
-              onChange={(e) => setRouteFilter(e.target.value)}
-              placeholder="Filter by path, method, or handler…"
-              className="studio-input w-64 px-2.5 py-1.5 text-xs"
-            />
-          </div>
-          {filteredGroups.length === 0 ? (
-            <p className="text-xs text-gray-500 italic">No routes match "{routeFilter}".</p>
-          ) : (
-            filteredGroups.map((group) => {
-              const isCollapsed = collapsed.has(group.controller);
-              return (
-                <div
-                  key={group.controller}
-                  className="border border-white/[0.06] rounded-md overflow-hidden bg-black/20"
-                >
-                  <button
-                    onClick={() => toggleGroup(group.controller)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left bg-black/20 hover:bg-white/[0.04] transition-colors"
-                  >
-                    {isCollapsed ? (
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-                    )}
-                    <span className="text-xs font-mono font-semibold text-primary-300">
-                      {group.controller}
-                    </span>
-                    <span className="text-[11px] text-gray-500">
-                      {group.routes.length} route{group.routes.length === 1 ? '' : 's'}
-                    </span>
-                  </button>
-                  {!isCollapsed && (
-                    <div className="px-3 py-2 flex flex-col gap-1">
-                      {group.routes.map((r, i) => (
-                        <button
-                          key={`${r.method}-${r.path}-${i}`}
-                          onClick={() => pickRoute(r.method, r.path, r.bodySample)}
-                          title={
-                            r.bodyDto
-                              ? `Auto-fills body from ${r.bodyDto}`
-                              : `${r.method} ${r.path}${r.controllerMethod ? ` → ${r.controllerMethod}()` : ''}`
-                          }
-                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/[0.04] border border-transparent hover:border-primary-500/40 transition-colors text-left"
-                        >
-                          <span
-                            className={cn(
-                              'text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded w-14 text-center',
-                              getMethodBgColor(r.method),
-                              getMethodColor(r.method),
-                            )}
-                          >
-                            {r.method}
-                          </span>
-                          <span className="text-xs font-mono text-gray-200 flex-1 truncate">
-                            {r.path}
-                          </span>
-                          {r.controllerMethod && (
-                            <span className="text-[10px] font-mono text-gray-500 truncate">
-                              {r.controllerMethod}()
-                            </span>
-                          )}
-                          {r.bodyDto && (
-                            <span
-                              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary-500/10 border border-primary-500/30 text-primary-300"
-                              title={`Auto-fills body from ${r.bodyDto}`}
-                            >
-                              {r.bodyDto}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
 
       {/* Request bar */}
       <div className="flex items-stretch gap-2">
@@ -576,10 +435,12 @@ export function ApiClient() {
           )}
         </div>
       </div>
+      </div>
 
-      {/* Response */}
-      {(response || error) && (
-        <div className="studio-card">
+      {/* Response column */}
+      <div className="flex-1 min-w-0">
+        {response || error ? (
+          <div className="studio-card">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-4">
               {response && (
@@ -643,8 +504,13 @@ export function ApiClient() {
                 : response.body || '(empty body)'}
             </pre>
           )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="studio-card p-8 text-center text-sm text-gray-500">
+            Send a request to see the response here.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

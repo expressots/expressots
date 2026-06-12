@@ -22,7 +22,7 @@ export const SHORTCUTS: ShortcutDescriptor[] = [
   { combo: '?',          description: 'Toggle keyboard shortcuts overlay',  category: 'Help' },
   { combo: 'Esc',        description: 'Close open panel or overlay',        category: 'Help' },
   { combo: '/',          description: 'Focus the search / filter input',    category: 'Lists' },
-  { combo: 'Cmd/Ctrl+K', description: 'Focus the search / filter input',    category: 'Lists' },
+  { combo: 'Cmd/Ctrl+K', description: 'Open command palette (jump to route)', category: 'Navigation' },
   { combo: 'J',          description: 'Select next request',                category: 'Lists' },
   { combo: 'K',          description: 'Select previous request',            category: 'Lists' },
   { combo: 'Enter',      description: 'Open the selected request',          category: 'Lists' },
@@ -67,9 +67,10 @@ function focusSearchInput(): boolean {
 interface Options {
   onToggleHelp: () => void;
   onCloseAll: () => void;
+  onOpenCommandPalette: () => void;
 }
 
-export function useKeyboardShortcuts({ onToggleHelp, onCloseAll }: Options) {
+export function useKeyboardShortcuts({ onToggleHelp, onCloseAll, onOpenCommandPalette }: Options) {
   const {
     exchanges,
     selectedExchangeId,
@@ -103,6 +104,15 @@ export function useKeyboardShortcuts({ onToggleHelp, onCloseAll }: Options) {
         onCloseAll();
         return;
       }
+
+      // Cmd/Ctrl+K opens the command palette and must work even while the
+      // user is typing in an input (that's the whole point of a palette).
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        onOpenCommandPalette();
+        return;
+      }
+
       if (e.key === '?' && !isTypingTarget(e.target)) {
         e.preventDefault();
         onToggleHelp();
@@ -114,8 +124,8 @@ export function useKeyboardShortcuts({ onToggleHelp, onCloseAll }: Options) {
 
       const cmd = e.metaKey || e.ctrlKey;
 
-      // Cmd/Ctrl+K or '/' → focus filter
-      if ((cmd && e.key.toLowerCase() === 'k') || e.key === '/') {
+      // '/' → focus the in-view filter input.
+      if (e.key === '/') {
         if (focusSearchInput()) {
           e.preventDefault();
         }
@@ -185,5 +195,13 @@ export function useKeyboardShortcuts({ onToggleHelp, onCloseAll }: Options) {
       window.removeEventListener('keydown', handler);
       if (leaderTimer) clearTimeout(leaderTimer);
     };
-  }, [exchanges, selectedExchangeId, setSelectedExchangeId, setCurrentView, onToggleHelp, onCloseAll]);
+  }, [
+    exchanges,
+    selectedExchangeId,
+    setSelectedExchangeId,
+    setCurrentView,
+    onToggleHelp,
+    onCloseAll,
+    onOpenCommandPalette,
+  ]);
 }

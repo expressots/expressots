@@ -16,6 +16,16 @@ export {
   applyGlobalPrefix,
 } from './path-utils.js';
 export { detectGlobalPrefix } from './detect-prefix.js';
+export {
+  deriveResourceGroups,
+  deriveResourceTagMap,
+  routeKey,
+} from './resource-tags.js';
+export type {
+  RouteLike,
+  ResourceGroup,
+  DeriveResourceOptions,
+} from './resource-tags.js';
 export type {
   OpenApiDocument,
   OpenApiInfo,

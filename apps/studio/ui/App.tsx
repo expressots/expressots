@@ -57,6 +57,9 @@ const TraceDetail = lazy(() =>
 const ShortcutsOverlay = lazy(() =>
   import('./components/ShortcutsOverlay').then((m) => ({ default: m.ShortcutsOverlay })),
 );
+const CommandPalette = lazy(() =>
+  import('./components/CommandPalette').then((m) => ({ default: m.CommandPalette })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,12 +73,17 @@ const queryClient = new QueryClient({
 function AppContent() {
   const { currentView, selectedExchangeId, setSelectedExchangeId } = useAppStore();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
 
   useKeyboardShortcuts({
     onToggleHelp: () => setShowShortcuts((v) => !v),
+    onOpenCommandPalette: () => setShowPalette((v) => !v),
     onCloseAll: () => {
-      // Esc closes the shortcuts overlay first, then any open detail panel.
-      if (showShortcuts) {
+      // Esc closes overlays first (palette, then shortcuts), then any open
+      // detail panel.
+      if (showPalette) {
+        setShowPalette(false);
+      } else if (showShortcuts) {
         setShowShortcuts(false);
       } else if (selectedExchangeId) {
         setSelectedExchangeId(null);
@@ -127,6 +135,11 @@ function AppContent() {
       {showShortcuts && (
         <Suspense fallback={null}>
           <ShortcutsOverlay onClose={() => setShowShortcuts(false)} />
+        </Suspense>
+      )}
+      {showPalette && (
+        <Suspense fallback={null}>
+          <CommandPalette onClose={() => setShowPalette(false)} />
         </Suspense>
       )}
     </Layout>

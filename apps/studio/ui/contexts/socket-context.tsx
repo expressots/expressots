@@ -31,10 +31,19 @@ import type {
   CoverageRunProgressMessage,
   CoverageRunResultMessage,
   TestRunSummary,
+  ApiProxyRequest,
+  ApiProxyResponse,
 } from '../types';
 
 interface SocketContextValue {
   emit: (event: string, data?: unknown) => void;
+  /**
+   * Dispatch an API Client request through the agent (server-side) and
+   * await the response. The agent performs the HTTP call in-process with
+   * the user's app, so the browser is never blocked by the app's CORS
+   * policy. Rejects if disconnected or if no response arrives in time.
+   */
+  sendApiRequest: (req: ApiProxyRequest) => Promise<ApiProxyResponse>;
   requestRoutes: () => void;
   requestMetrics: () => void;
   requestStructure: () => void;
@@ -367,9 +376,47 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Proxy an API Client request through the agent and resolve with the
+  // correlated `api_response`. We attach a one-shot listener filtered by
+  // request id and tear it down on resolve / timeout so concurrent sends
+  // don't cross-talk.
+  const sendApiRequest = useCallback(
+    (req: ApiProxyRequest) =>
+      new Promise<ApiProxyResponse>((resolve, reject) => {
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          reject(
+            new Error(
+              'Not connected to the Studio agent. Is your app running with @expressots/studio-agent enabled?',
+            ),
+          );
+          return;
+        }
+
+        const timeout = setTimeout(() => {
+          socket.off('message', onMessage);
+          reject(new Error('Request timed out waiting for the agent.'));
+        }, 30000);
+
+        const onMessage = (message: WSMessage) => {
+          if (message.type !== 'api_response') return;
+          const data = message.data as ApiProxyResponse;
+          if (data.id !== req.id) return;
+          clearTimeout(timeout);
+          socket.off('message', onMessage);
+          resolve(data);
+        };
+
+        socket.on('message', onMessage);
+        socket.emit('api_request', req);
+      }),
+    [],
+  );
+
   // Request methods
   const value: SocketContextValue = {
     emit,
+    sendApiRequest,
     requestRoutes: useCallback(() => emit('get_routes'), [emit]),
     requestMetrics: useCallback(() => emit('get_metrics'), [emit]),
     requestStructure: useCallback(() => emit('get_structure'), [emit]),

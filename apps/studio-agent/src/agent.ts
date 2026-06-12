@@ -721,6 +721,11 @@ export class StudioAgent {
         }
       }
 
+      // Fold any runtime-reported body schemas (Zod / class-validator)
+      // onto the freshly scanned routes so the API client auto-fills work
+      // even when the static scanner couldn't read the DTO shape.
+      this.mergeRouteSchemasIntoRoutes();
+
       // Broadcast to connected clients. The routes payload is small,
       // but the architecture map needs the full `appStructure` (controllers,
       // services, providers, middleware, dependencies) to redraw nodes
@@ -853,6 +858,7 @@ export class StudioAgent {
       this.config.globalPrefix = patch.globalPrefix;
       prefixChanged = true;
     }
+    const schemasChanged = patch.runtimeItems?.routeSchemas !== undefined;
     if (patch.startupMs !== undefined) this.config.startupMs = patch.startupMs;
     if (patch.interceptorCount !== undefined) {
       this.config.interceptorCount = patch.interceptorCount;
@@ -890,10 +896,16 @@ export class StudioAgent {
 
     // If the global URL prefix changed, splice it onto every cached
     // route so the Routes / API client tabs immediately reflect the
-    // mounted paths instead of the bare per-controller paths.
+    // mounted paths instead of the bare per-controller paths. New body
+    // schemas reported via `runtimeItems.routeSchemas` are folded on too.
     if (prefixChanged) {
       this.applyGlobalPrefixToRoutes();
-      if (this.io) this.broadcast('routes', this.routes);
+    }
+    if (schemasChanged) {
+      this.mergeRouteSchemasIntoRoutes();
+    }
+    if ((prefixChanged || schemasChanged) && this.io) {
+      this.broadcast('routes', this.routes);
     }
 
     if (this.io) {
@@ -920,6 +932,40 @@ export class StudioAgent {
       route.path = prefix
         ? this.joinPrefixWithRoute(prefix, original)
         : original;
+    }
+  }
+
+  /**
+   * Fold runtime-reported request-body schemas (from
+   * `runtimeItems.routeSchemas`) onto the cached routes. The adapter
+   * harvests these from validation metadata at boot, which is the only
+   * place a Zod / class-validator schema object actually exists — the
+   * static scanner can only read plain `@body()`-typed params. Matching is
+   * by controller + handler method, falling back to HTTP method + the
+   * un-prefixed route path. Runtime data overrides the static guess.
+   */
+  private mergeRouteSchemasIntoRoutes(): void {
+    const schemas = this.config.runtimeItems?.routeSchemas;
+    if (!schemas || schemas.length === 0) return;
+
+    for (const route of this.routes) {
+      const original =
+        (route as RouteInfo & { originalPath?: string }).originalPath ?? route.path;
+      const match = schemas.find((s) => {
+        const byHandler =
+          s.controllerName === route.controller &&
+          !!s.controllerMethod &&
+          s.controllerMethod === route.controllerMethod;
+        const byPath =
+          (!s.httpMethod || s.httpMethod === route.method) &&
+          !!s.routePath &&
+          (s.routePath === original || s.routePath === route.path);
+        return byHandler || byPath;
+      });
+      if (!match) continue;
+      if (match.bodyDto) route.bodyDto = match.bodyDto;
+      if (match.bodySample) route.bodySample = match.bodySample;
+      if (match.bodySchema) route.bodySchema = match.bodySchema;
     }
   }
 
@@ -1310,6 +1356,19 @@ export class StudioAgent {
       socket.on('replay', async (params: { exchangeId: string }) => {
         await this.replayRequest(params.exchangeId, socket);
       });
+
+      socket.on(
+        'api_request',
+        async (params: {
+          id?: string;
+          method?: string;
+          url?: string;
+          headers?: Record<string, string>;
+          body?: string;
+        }) => {
+          await this.proxyApiRequest(params, socket);
+        },
+      );
 
       socket.on('rescan', async () => {
         await this.scanRoutes();
@@ -1785,6 +1844,142 @@ export class StudioAgent {
     }
   }
 
+  /**
+   * Dispatch an API Client request on behalf of the Studio UI. The call
+   * runs server-side (in-process with the user's app), so it is never
+   * subject to the browser's same-origin / CORS rules — the request the
+   * user composes is the request the app's handlers receive.
+   *
+   * Two safeguards keep this from becoming an open proxy / SSRF vector:
+   *   1. Targets are restricted to loopback hosts (the app the agent is
+   *      embedded in runs on localhost during development).
+   *   2. The `Origin` / `Referer` headers are stripped so the app's own
+   *      `cors` middleware treats this as a same-origin/server call and
+   *      doesn't reject it.
+   *
+   * The result is correlated back to the awaiting UI caller via `id`.
+   */
+  private async proxyApiRequest(
+    params: {
+      id?: string;
+      method?: string;
+      url?: string;
+      headers?: Record<string, string>;
+      body?: string;
+    },
+    socket: any,
+  ): Promise<void> {
+    const id = typeof params?.id === 'string' ? params.id : '';
+    const reply = (data: Record<string, unknown>): void => {
+      socket.emit('message', {
+        type: 'api_response',
+        timestamp: Date.now(),
+        data: { id, ...data },
+      });
+    };
+
+    const target = this.resolveProxyTarget(params?.url ?? '');
+    if (!target) {
+      reply({
+        success: false,
+        error:
+          'Only requests to the local app (localhost) can be sent from Studio.',
+      });
+      return;
+    }
+
+    const method = (params?.method ?? 'GET').toUpperCase();
+
+    // Forward user-supplied headers, dropping the ones that must be set by
+    // the HTTP client (or that would make the app reject us on CORS).
+    const headers: Record<string, string> = {};
+    for (const [k, v] of Object.entries(params?.headers ?? {})) {
+      const key = k.toLowerCase();
+      if (
+        key === 'host' ||
+        key === 'content-length' ||
+        key === 'connection' ||
+        key === 'origin' ||
+        key === 'referer' ||
+        key.startsWith('sec-')
+      ) {
+        continue;
+      }
+      headers[k] = String(v);
+    }
+
+    const hasBody = method !== 'GET' && method !== 'HEAD';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    const start = Date.now();
+
+    try {
+      const response = await fetch(target, {
+        method,
+        headers,
+        body: hasBody ? (params?.body ?? undefined) : undefined,
+        signal: controller.signal,
+      });
+
+      const responseBody = await response.text();
+      reply({
+        success: true,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseBody,
+        durationMs: Date.now() - start,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.name === 'AbortError'
+            ? 'Request timed out after 30s.'
+            : error.message
+          : 'Request failed';
+      reply({ success: false, error: message });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
+   * Resolve an API Client target URL and enforce the loopback-only
+   * guardrail. Relative paths (e.g. `/users`) are resolved against the
+   * app's own port. Returns `null` for anything that isn't an http(s)
+   * loopback target so the agent can't be coerced into proxying to
+   * arbitrary hosts.
+   */
+  private resolveProxyTarget(rawUrl: string): string | null {
+    if (!rawUrl || typeof rawUrl !== 'string') return null;
+
+    let url: URL;
+    try {
+      if (/^https?:\/\//i.test(rawUrl)) {
+        url = new URL(rawUrl);
+      } else {
+        const port = this.config.appPort ?? 3000;
+        const pathPart = rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
+        url = new URL(pathPart, `http://localhost:${port}`);
+      }
+    } catch {
+      return null;
+    }
+
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+
+    const host = url.hostname.toLowerCase();
+    const isLoopback =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host === '::1' ||
+      host === '[::1]';
+    if (!isLoopback) return null;
+
+    return url.toString();
+  }
+
   /** Broadcast message to all connected clients */
   private broadcast<T>(type: string, data: T): void {
     if (this.io) {
@@ -1889,46 +2084,20 @@ export class StudioAgent {
   /**
    * Create the Express middleware that powers request/response recording.
    *
-   * The middleware sets permissive CORS headers for localhost origins (so
-   * the Studio API client can call the app from a different port), records
-   * each request and its response into the recorder, updates metrics and
-   * endpoint statistics, and runs the downstream handler chain inside the
-   * log-capture and DI-resolution tracking scopes. When recording is
-   * disabled it only handles CORS and passes through.
+   * The middleware records each request and its response into the
+   * recorder, updates metrics and endpoint statistics, and runs the
+   * downstream handler chain inside the log-capture and DI-resolution
+   * tracking scopes. When recording is disabled it passes through.
+   *
+   * The Studio API Client never calls the app directly from the browser;
+   * requests are proxied through the agent (see `proxyApiRequest`), so no
+   * CORS header injection is needed here and the app's own CORS policy is
+   * left untouched.
    *
    * @returns An Express-compatible `(req, res, next)` middleware function.
    */
   createMiddleware() {
     return (req: any, res: any, next: any) => {
-      // CORS for Studio UI: allow any localhost origin in dev so the
-      // built-in API Client (served from a different localhost port)
-      // can read responses and send preflighted methods.
-      const origin = req.headers.origin as string | undefined;
-      if (
-        origin &&
-        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
-      ) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Vary', 'Origin');
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader(
-          'Access-Control-Allow-Methods',
-          'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS',
-        );
-        const reqHeaders = req.headers['access-control-request-headers'];
-        res.setHeader(
-          'Access-Control-Allow-Headers',
-          reqHeaders || 'Content-Type, Authorization, X-Trace-Id',
-        );
-        res.setHeader('Access-Control-Max-Age', '600');
-
-        // Short-circuit preflights so they don't pollute the request timeline
-        if (req.method === 'OPTIONS') {
-          res.statusCode = 204;
-          return res.end();
-        }
-      }
-
       if (!this.config.enableRecording) {
         return next();
       }

@@ -27,6 +27,14 @@ export interface RouteInfo {
    * types fall back to `null` so the JSON stays parseable.
    */
   bodySample?: Record<string, unknown>;
+  /**
+   * JSON Schema for the request body, when the route declares a runtime
+   * validation schema (Zod, class-validator, Yup, …). Produced by the
+   * adapter's runtime bridge via `schemaToJsonSchema()` and used for richer
+   * form rendering and OpenAPI request bodies. Optional — absent when the
+   * body type was only inferred statically.
+   */
+  bodySchema?: Record<string, unknown>;
 }
 
 /** Parameter information for a route */
@@ -260,6 +268,35 @@ export interface RuntimeItems {
    * "middleware → controller / route" edges in the architecture map.
    */
   middlewareBindings?: MiddlewareBinding[];
+  /**
+   * Per-route request-body schemas harvested from runtime validation
+   * metadata (Zod / class-validator / Yup). Reported by the adapter so the
+   * agent can fill `RouteInfo.bodyDto` / `bodySample` / `bodySchema` for
+   * routes the static scanner can't read (e.g. `@body(ZodSchema)`).
+   */
+  routeSchemas?: RouteSchema[];
+}
+
+/**
+ * A request-body schema for a single route, derived at boot from runtime
+ * validation metadata. Matched back onto `RouteInfo` by controller + method
+ * (falling back to HTTP method + path).
+ */
+export interface RouteSchema {
+  /** Class name of the controller declaring the route. */
+  controllerName: string;
+  /** Handler method name on the controller. */
+  controllerMethod?: string;
+  /** HTTP verb (uppercase). */
+  httpMethod?: string;
+  /** Un-prefixed route path (controller base + route path). */
+  routePath?: string;
+  /** Schema/DTO display name, when derivable (e.g. a class-validator class). */
+  bodyDto?: string;
+  /** Example JSON body derived from the schema. */
+  bodySample?: Record<string, unknown>;
+  /** Full JSON Schema for the body. */
+  bodySchema?: Record<string, unknown>;
 }
 
 /** A single runtime-discovered item (provider, interceptor, etc.). */
@@ -400,7 +437,8 @@ export type WSMessageType =
   | 'coverage_source'
   | 'coverage_run_progress'
   | 'coverage_run_result'
-  | 'coverage_tests';
+  | 'coverage_tests'
+  | 'api_response';
 
 /** WebSocket message structure */
 export interface WSMessage<T = unknown> {

@@ -16,6 +16,12 @@ export interface RouteInfo {
   bodyDto?: string;
   /** Sample JSON body inferred from the DTO fields (auto-fill seed). */
   bodySample?: Record<string, unknown>;
+  /**
+   * JSON Schema for the request body, when the route declares a runtime
+   * validation schema (Zod, class-validator, Yup). Optional — used for
+   * richer form rendering; absent for statically-inferred bodies.
+   */
+  bodySchema?: Record<string, unknown>;
 }
 
 export interface SpanInfo {
@@ -269,12 +275,39 @@ export type WSMessageType =
   | 'coverage_source'
   | 'coverage_run_progress'
   | 'coverage_run_result'
-  | 'coverage_tests';
+  | 'coverage_tests'
+  | 'api_response';
 
 export interface WSMessage<T = unknown> {
   type: WSMessageType;
   timestamp: number;
   data: T;
+}
+
+/**
+ * API Client request dispatched to the agent over the socket. The agent
+ * performs the HTTP call server-side (in-process with the user's app) so
+ * the browser is never subject to the app's CORS policy. `id` correlates
+ * the asynchronous `api_response` back to the awaiting caller.
+ */
+export interface ApiProxyRequest {
+  id: string;
+  method: string;
+  url: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+/** Result of an agent-proxied API Client request (`api_response`). */
+export interface ApiProxyResponse {
+  id: string;
+  success: boolean;
+  status?: number;
+  statusText?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  durationMs?: number;
+  error?: string;
 }
 
 export type ViewMode =

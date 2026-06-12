@@ -20,6 +20,7 @@ import type { RouteInfo, RecordedExchange, HttpMethod } from '../types/index.js'
 import type { BuildOpenApiOptions, JsonSchema, OpenApiDocument, GenerationProvenance } from './types.js';
 import { inferSchema, unionSchema } from './schema-infer.js';
 import { detectVersionSegment, makePathMatcher, toOpenApiPath } from './path-utils.js';
+import { deriveResourceTagMap, routeKey } from './resource-tags.js';
 
 const BODY_METHODS = new Set<HttpMethod>(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -59,6 +60,11 @@ export function buildOpenApiDocument(
 
   const exchangesByRoute = attributeExchanges(uniqueRoutes, exchanges);
 
+  // Group operations by a path-derived resource tag (e.g. `users`,
+  // `azure-devops`) so the document mirrors the Studio API Client sidebar
+  // instead of one tag per controller class.
+  const resourceTags = deriveResourceTagMap(uniqueRoutes);
+
   const paths: Record<string, Record<string, unknown>> = {};
   const tags = new Set<string>();
   let usedOverride = false;
@@ -71,10 +77,12 @@ export function buildOpenApiDocument(
 
     const operation: Record<string, unknown> = {};
 
-    // Tag + operationId from the controller, when known.
-    if (route.controller && route.controller !== 'Unknown') {
-      tags.add(route.controller);
-      operation.tags = [route.controller];
+    // Tag from the path-derived resource group; operationId from the
+    // controller, when known.
+    const resourceTag = resourceTags.get(routeKey(route));
+    if (resourceTag) {
+      tags.add(resourceTag);
+      operation.tags = [resourceTag];
     }
     operation.summary = route.controllerMethod && route.controllerMethod !== 'Unknown'
       ? `${route.controllerMethod}()`

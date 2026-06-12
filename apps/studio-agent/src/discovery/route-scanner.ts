@@ -157,6 +157,119 @@ function sampleForType(typeName: string): unknown {
 }
 
 /**
+ * Split a comma-separated source fragment at top-level commas only,
+ * respecting nested `()`, `[]`, and `{}`. Used to walk the fields of a
+ * `z.object({ ... })` literal without a real parser.
+ */
+function splitTopLevel(body: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === '(' || ch === '[' || ch === '{') depth++;
+    else if (ch === ')' || ch === ']' || ch === '}') depth--;
+    else if (ch === ',' && depth === 0) {
+      parts.push(body.slice(start, i));
+      start = i + 1;
+    }
+  }
+  if (start < body.length) parts.push(body.slice(start));
+  return parts;
+}
+
+/** Split a single `key: value` entry at the first top-level colon. */
+function splitKeyValue(part: string): [string, string] | null {
+  let depth = 0;
+  for (let i = 0; i < part.length; i++) {
+    const ch = part[i];
+    if (ch === '(' || ch === '[' || ch === '{') depth++;
+    else if (ch === ')' || ch === ']' || ch === '}') depth--;
+    else if (ch === ':' && depth === 0) {
+      return [part.slice(0, i).trim(), part.slice(i + 1).trim()];
+    }
+  }
+  return null;
+}
+
+/** Parse a quoted/numeric/boolean literal token into a JSON value. */
+function parseLiteralToken(raw: string): unknown {
+  const s = raw.trim();
+  if (/^['"`]/.test(s)) return s.slice(1, -1);
+  if (s === 'true') return true;
+  if (s === 'false') return false;
+  if (s === 'null') return null;
+  const n = Number(s);
+  if (s !== '' && !Number.isNaN(n)) return n;
+  return s;
+}
+
+/**
+ * Best-effort sample value for a single Zod field expression, e.g.
+ * `z.string().email().optional()` → `""`, `z.number().int()` → `0`,
+ * `z.enum(['a','b'])` → `"a"`. Nested objects/arrays collapse to `{}`/`[]`
+ * (one level), matching the static scanner's deliberate shallowness.
+ */
+function sampleForZodExpr(expr: string): unknown {
+  const e = expr.trim();
+
+  const enumMatch = e.match(/\.enum\s*\(\s*\[\s*(['"`])([\s\S]*?)\1/);
+  if (enumMatch) return enumMatch[2];
+
+  const literalMatch = e.match(/\.literal\s*\(\s*([\s\S]+?)\s*\)/);
+  if (literalMatch) return parseLiteralToken(literalMatch[1]);
+
+  // Order matters: arrays/objects before scalars so `z.string().array()`
+  // resolves to `[]`, not `""`.
+  if (/\.(array|tuple)\s*\(/.test(e)) return [];
+  if (/\.(object|record)\s*\(/.test(e)) return {};
+  if (/\.(string|email|url|uuid|cuid|ulid|datetime)\s*\(/.test(e)) return '';
+  if (/\.(number|int|bigint)\s*\(/.test(e)) return 0;
+  if (/\.boolean\s*\(/.test(e)) return false;
+  if (/\.date\s*\(/.test(e)) return new Date(0).toISOString();
+
+  const defaultMatch = e.match(/\.default\s*\(\s*([\s\S]+?)\s*\)/);
+  if (defaultMatch) return parseLiteralToken(defaultMatch[1]);
+
+  return null;
+}
+
+/**
+ * Find the body between the brace at `openBraceIdx` and its matching
+ * close brace. Returns `null` when unbalanced.
+ */
+function matchBraces(content: string, openBraceIdx: number): string | null {
+  let depth = 0;
+  for (let i = openBraceIdx; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return content.slice(openBraceIdx + 1, i);
+    }
+  }
+  return null;
+}
+
+/**
+ * Parse the fields of a `z.object({ ... })` literal body into a sample
+ * object. Each top-level `field: z.<chain>` entry becomes one sample value.
+ */
+function parseZodObjectFields(objectBody: string): Record<string, unknown> {
+  const sample: Record<string, unknown> = {};
+  for (const part of splitTopLevel(objectBody)) {
+    const kv = splitKeyValue(part);
+    if (!kv) continue;
+    const [rawKey, valueExpr] = kv;
+    if (!/z\s*\./.test(valueExpr)) continue;
+    const key = rawKey.replace(/^['"`]|['"`]$/g, '').trim();
+    if (!key || /[^A-Za-z0-9_$]/.test(key)) continue;
+    sample[key] = sampleForZodExpr(valueExpr);
+  }
+  return sample;
+}
+
+/**
  * Starting at `fromIndex` in `content`, walk forward to the next method
  * declaration and return its name + the *balanced* parameter list.
  *
@@ -750,6 +863,23 @@ export class RouteScanner {
       registerSample(declaredName, buildSampleFromBody(typeAliasMatch[2]));
     }
 
+    // (d) Zod object schemas — `const FooSchema = z.object({ … })`.
+    // Registered under the declared const name regardless of the *Dto
+    // naming convention (Zod schemas are conventionally named `*Schema`),
+    // so a route declared `@body(FooSchema)` resolves its sample here. The
+    // runtime bridge (adapter `collectRouteSchemas`) supersedes this when
+    // the app is actually running; this keeps coverage for static/offline
+    // scans where no schema object exists.
+    const zodConstRe = /(?:export\s+)?const\s+(\w+)\s*=\s*z\s*\.\s*object\s*\(\s*\{/g;
+    let zodMatch;
+    while ((zodMatch = zodConstRe.exec(content)) !== null) {
+      const declaredName = zodMatch[1];
+      const openBraceIdx = zodMatch.index + zodMatch[0].length - 1;
+      const objectBody = matchBraces(content, openBraceIdx);
+      if (!objectBody) continue;
+      registerSample(declaredName, parseZodObjectFields(objectBody));
+    }
+
     // Check if this is a controller
     const controllerMatch = content.match(/@controller\s*\(\s*['"`]([^'"`]+)['"`]/i);
     if (controllerMatch) {
@@ -968,28 +1098,52 @@ export class RouteScanner {
         });
       }
 
-      // Detect `@Body() name: DtoType` (case-insensitive — the
-      // decorator is exported as both `Body` and `body` from
-      // adapter-express). Captured groups:
-      //   1 = parameter name (informational)
-      //   2 = parameter type (the DTO class / interface name)
+      // Detect the request-body parameter and any DTO / schema it names.
+      // Handles every form the adapter exposes (decorators are
+      // case-insensitive — `Body`/`body`):
+      //   @body() x: DtoType                  → type only
+      //   @body(Schema) x: DtoType            → schema arg + type
+      //   @validatedBody(Schema) x: DtoType   → schema arg + type
+      //   @Validate(Schema) @body() x: Type   → schema via @Validate
+      // Captured groups for the body decorator:
+      //   1 = optional schema identifier passed to the decorator
+      //   2 = parameter name (informational)
+      //   3 = parameter type (the DTO class / interface name)
       const bodyParamRe =
-        /@body\s*\(\s*\)\s*(\w+)\s*\??\s*:\s*([A-Za-z_$][\w.$]*)/i;
+        /@(?:validatedBody|body)\s*\(\s*([A-Za-z_$][\w.$]*)?\s*(?:,[\s\S]*?)?\)\s*(\w+)\s*\??\s*:\s*([A-Za-z_$][\w.$]*)/i;
       const bodyMatch = sig.params.match(bodyParamRe);
-      if (bodyMatch) {
-        const rawDtoName = bodyMatch[2].split('.').pop() || bodyMatch[2];
-        route.bodyDto = rawDtoName;
-        // Look up the inferred sample. Try the literal name first, then
-        // strip a leading `I` (the common interface-prefix convention,
-        // e.g. `IUserCreateRequestDTO` → `UserCreateRequestDTO`) so a
-        // sample harvested from the implementing class still applies.
-        const sample =
-          this.dtoSamples.get(rawDtoName) ??
-          (rawDtoName.startsWith('I')
-            ? this.dtoSamples.get(rawDtoName.slice(1))
-            : undefined);
-        if (sample) {
-          route.bodySample = sample;
+      const validateMatch = sig.params.match(
+        /@Validate\s*\(\s*([A-Za-z_$][\w.$]*)/,
+      );
+
+      if (bodyMatch || validateMatch) {
+        const schemaArg = bodyMatch?.[1]
+          ? bodyMatch[1].split('.').pop()
+          : undefined;
+        const paramType = bodyMatch?.[3]
+          ? bodyMatch[3].split('.').pop()
+          : undefined;
+        const validateArg = validateMatch?.[1]
+          ? validateMatch[1].split('.').pop()
+          : undefined;
+
+        // Display name: prefer an explicit schema/DTO over the param type.
+        const displayName = schemaArg ?? validateArg ?? paramType;
+        if (displayName) route.bodyDto = displayName;
+
+        // Resolve a sample from the first candidate that has one. Each is
+        // also tried with a leading `I` stripped (interface-prefix convention).
+        const candidates = [schemaArg, validateArg, paramType].filter(
+          (c): c is string => Boolean(c),
+        );
+        for (const name of candidates) {
+          const sample =
+            this.dtoSamples.get(name) ??
+            (name.startsWith('I') ? this.dtoSamples.get(name.slice(1)) : undefined);
+          if (sample) {
+            route.bodySample = sample;
+            break;
+          }
         }
       }
 
