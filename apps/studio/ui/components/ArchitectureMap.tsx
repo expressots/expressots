@@ -21,6 +21,7 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   MarkerType,
   Handle,
   Position,
@@ -47,6 +48,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
 import { openInEditor } from '../lib/open-in-editor';
+import { assignNodeDepths } from '../lib/architecture-layout';
 import { copyToClipboard, getMethodColor } from '../lib/utils';
 import type {
   AppStructure,
@@ -375,7 +377,6 @@ export function ArchitectureMap() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
-          fitView
           minZoom={0.1}
           maxZoom={2}
           // Hide the "React Flow" attribution badge in the bottom-right.
@@ -407,6 +408,10 @@ export function ArchitectureMap() {
             markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' },
           }}
         >
+          <FitViewOnGraphChange
+            nodeCount={overlayed.nodes.length}
+            layoutDir={layoutDir}
+          />
           <Background color="#374151" gap={20} />
           <Controls
             className="!bg-[#14171c] !border-white/[0.08]"
@@ -499,6 +504,27 @@ export function ArchitectureMap() {
       </div>
     </div>
   );
+}
+
+/** Fit the viewport once when the graph shape changes, not on every render. */
+function FitViewOnGraphChange({
+  nodeCount,
+  layoutDir,
+}: {
+  nodeCount: number;
+  layoutDir: LayoutDirection;
+}) {
+  const { fitView } = useReactFlow();
+
+  useEffect(() => {
+    if (nodeCount === 0) return;
+    const frame = requestAnimationFrame(() => {
+      void fitView({ padding: 0.15, duration: 150 });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [fitView, nodeCount, layoutDir]);
+
+  return null;
 }
 
 // ────────────────────────────────────────────────────────────────────────
@@ -995,75 +1021,11 @@ function buildGraph(
     nodeMap.set(entry.name, `${entry.kind}-${entry.name}`);
   }
 
-  // Adjacency for layered layout.
-  const outgoing = new Map<string, string[]>();
-  const incoming = new Map<string, string[]>();
-  for (const entry of allEntries) {
-    outgoing.set(entry.name, []);
-    incoming.set(entry.name, []);
-  }
-  const seenEdge = new Set<string>();
-  for (const dep of structure.dependencies) {
-    if (!nodeMap.has(dep.source) || !nodeMap.has(dep.target)) continue;
-    const key = `${dep.source}->${dep.target}`;
-    if (seenEdge.has(key)) continue;
-    seenEdge.add(key);
-    outgoing.get(dep.source)!.push(dep.target);
-    incoming.get(dep.target)!.push(dep.source);
-  }
-
-  // BFS depth.
-  const depth = new Map<string, number>();
-  const queue: string[] = [];
-  // Middleware always sits at depth 0 (the leftmost column in LR
-  // layout). Controllers go at depth 1 so the request-flow reads
-  // left → right as "middleware → controller → service → provider".
-  // Other entries inherit depth from BFS over the dependency graph.
-  for (const entry of allEntries) {
-    if (entry.kind === 'middleware') {
-      depth.set(entry.name, 0);
-      queue.push(entry.name);
-    }
-  }
-  for (const entry of allEntries) {
-    if (entry.kind === 'controller') {
-      // Controllers want depth 1 unless something earlier already
-      // pushed them there; this is just a seed.
-      if (!depth.has(entry.name)) {
-        depth.set(entry.name, 1);
-        queue.push(entry.name);
-      }
-    }
-  }
-  for (const entry of allEntries) {
-    if ((incoming.get(entry.name) ?? []).length === 0 && !depth.has(entry.name)) {
-      depth.set(entry.name, 0);
-      queue.push(entry.name);
-    }
-  }
-  if (queue.length === 0) {
-    for (const entry of allEntries) {
-      if (entry.kind === 'controller') {
-        depth.set(entry.name, 0);
-        queue.push(entry.name);
-      }
-    }
-  }
-  while (queue.length > 0) {
-    const cur = queue.shift()!;
-    const curDepth = depth.get(cur) ?? 0;
-    for (const next of outgoing.get(cur) ?? []) {
-      const proposed = curDepth + 1;
-      if ((depth.get(next) ?? -1) < proposed) {
-        depth.set(next, proposed);
-        queue.push(next);
-      }
-    }
-  }
-  const maxDepth = Math.max(0, ...Array.from(depth.values()));
-  for (const entry of allEntries) {
-    if (!depth.has(entry.name)) depth.set(entry.name, maxDepth + 1);
-  }
+  // Layered-layout depth per node. The algorithm lives in a pure,
+  // React-free helper (`assignNodeDepths`) so it can be unit-tested
+  // against pathological inputs — most importantly cyclic DI graphs,
+  // which previously spun the relaxation forever and froze this tab.
+  const depth = assignNodeDepths(allEntries, structure.dependencies);
 
   // Bucket per layer.
   const layers = new Map<number, Entry[]>();
