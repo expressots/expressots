@@ -1,8 +1,6 @@
 import chalk from "chalk";
 import { Argv, CommandModule } from "yargs";
-import semver from "semver";
 import { projectForm } from "./form";
-import { printWarning } from "../utils/cli-ui";
 
 type CommandModuleArgs = object;
 
@@ -110,17 +108,6 @@ const commandOptions = (yargs: Argv): Argv => {
 		.epilog(NEW_COMMAND_EPILOG);
 };
 
-const checkNodeVersion = (): void => {
-	const minVersion = "20.0.0";
-	const maxVersion = "24.0.0";
-	const currentVersion = process.version;
-
-	if (!semver.satisfies(currentVersion, `>=${minVersion} <=${maxVersion}`)) {
-		const msg: string = `Node.js version [${chalk.bold(chalk.white(currentVersion))}] is not fully tested. Recommended: v20.x or v22.x LTS.`;
-		printWarning(msg);
-	}
-};
-
 const createProject = (): CommandModule<CommandModuleArgs, any> => {
 	return {
 		command: "new <project-name> [package-manager] [template] [directory]",
@@ -134,7 +121,6 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 			preset,
 			events,
 		}) => {
-			checkNodeVersion();
 			return await projectForm(projectName, [
 				packageManager,
 				template,
