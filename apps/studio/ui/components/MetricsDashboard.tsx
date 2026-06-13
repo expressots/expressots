@@ -15,7 +15,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Activity, Clock, AlertTriangle, Zap, HardDrive, Users, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { Activity, Clock, AlertTriangle, Zap, TrendingUp, HardDrive, Users, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn, formatDuration, formatBytes } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import type { EndpointStats } from '../types';
@@ -37,10 +37,15 @@ export function MetricsDashboard() {
     ? ((metrics.errorCount / metrics.requestCount) * 100).toFixed(1)
     : '0';
 
+  const uptimeSec = metrics.uptime / 1000;
+  const throughput = uptimeSec > 0
+    ? (metrics.requestCount / uptimeSec).toFixed(2)
+    : '0';
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <MetricCard
           icon={Activity}
           label="Total Requests"
@@ -64,6 +69,12 @@ export function MetricsDashboard() {
           label="P95 Latency"
           value={formatDuration(metrics.p95ResponseTime)}
           color="text-accent-400"
+        />
+        <MetricCard
+          icon={TrendingUp}
+          label="Throughput"
+          value={`${throughput} req/s`}
+          color="text-purple-400"
         />
       </div>
 
@@ -145,6 +156,9 @@ export function MetricsDashboard() {
         </div>
       </div>
 
+      {/* Slowest endpoints highlight */}
+      <SlowestRoutesStrip endpointStats={endpointStats} />
+
       {/* Per-route performance */}
       <RoutePerformanceTable endpointStats={endpointStats} />
 
@@ -183,6 +197,66 @@ export function MetricsDashboard() {
 }
 
 // ────────────────────────────────────────────────────────────────────────
+// Slowest endpoints highlight
+// ────────────────────────────────────────────────────────────────────────
+
+function SlowestRoutesStrip({ endpointStats }: { endpointStats: EndpointStats[] }) {
+  const top3 = useMemo(() => {
+    if (endpointStats.length === 0) return [];
+    return [...endpointStats]
+      .filter((s) => s.requestCount > 0)
+      .sort((a, b) => b.p95Duration - a.p95Duration)
+      .slice(0, 3);
+  }, [endpointStats]);
+
+  if (top3.length === 0) return null;
+
+  return (
+    <div className="studio-card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Zap className="w-4 h-4 text-warning-500" />
+        <h3 className="text-sm font-semibold text-white">Slowest Endpoints</h3>
+        <span className="text-xs text-gray-500">by P95 latency</span>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {top3.map((stat, i) => (
+          <div
+            key={`${stat.method}:${stat.path}`}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg border',
+              i === 0
+                ? 'border-warning-500/30 bg-warning-500/5'
+                : 'border-gray-800 bg-gray-800/20',
+            )}
+          >
+            <span className="text-lg font-bold text-gray-600 w-5 shrink-0">#{i + 1}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded',
+                    methodBadgeClass(stat.method),
+                  )}
+                >
+                  {stat.method}
+                </span>
+                <span className="text-xs font-mono text-gray-300 truncate">{stat.path}</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-xs">
+                <span className={cn('font-medium tabular-nums', latencyClass(stat.p95Duration))}>
+                  p95: {formatDuration(stat.p95Duration)}
+                </span>
+                <span className="text-gray-500 tabular-nums">{stat.requestCount} req</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
 // Per-route performance table
 // ────────────────────────────────────────────────────────────────────────
 
@@ -191,35 +265,37 @@ type SortKey =
   | 'path'
   | 'requestCount'
   | 'errorRate'
+  | 'minDuration'
   | 'p50Duration'
   | 'p95Duration'
   | 'p99Duration'
-  | 'maxDuration';
+  | 'maxDuration'
+  | 'lastRequestTime';
 
 const SORT_LABELS: Record<SortKey, string> = {
   method: 'Method',
   path: 'Route',
   requestCount: 'Reqs',
   errorRate: 'Err %',
+  minDuration: 'Min',
   p50Duration: 'p50',
   p95Duration: 'p95',
   p99Duration: 'p99',
   maxDuration: 'Max',
+  lastRequestTime: 'Last seen',
 };
 
-function errorRate(stat: EndpointStats): number {
+function endpointErrorRate(stat: EndpointStats): number {
   if (stat.requestCount === 0) return 0;
   return (stat.errorCount / stat.requestCount) * 100;
 }
 
-/** Color-code latency cells so slow routes stand out at a glance. */
 function latencyClass(ms: number): string {
   if (ms >= 500) return 'text-error-400';
   if (ms >= 200) return 'text-warning-500';
   return 'text-gray-300';
 }
 
-/** Color-code error rate the same way. */
 function errorRateClass(rate: number): string {
   if (rate >= 5) return 'text-error-400';
   if (rate >= 1) return 'text-warning-500';
@@ -243,6 +319,16 @@ function methodBadgeClass(method: string): string {
   }
 }
 
+function formatRelativeTime(timestamp: number): string {
+  if (!timestamp) return '-';
+  const delta = Date.now() - timestamp;
+  if (delta < 1000) return 'just now';
+  if (delta < 60_000) return `${Math.floor(delta / 1000)}s ago`;
+  if (delta < 3_600_000) return `${Math.floor(delta / 60_000)}m ago`;
+  if (delta < 86_400_000) return `${Math.floor(delta / 3_600_000)}h ago`;
+  return `${Math.floor(delta / 86_400_000)}d ago`;
+}
+
 function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats[] }) {
   const [sortBy, setSortBy] = useState<SortKey>('p95Duration');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -262,7 +348,7 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
         case 'path':
           return s.path;
         case 'errorRate':
-          return errorRate(s);
+          return endpointErrorRate(s);
         default:
           return s[sortBy] as number;
       }
@@ -285,7 +371,6 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
       setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(key);
-      // Numeric columns make more sense desc by default; text asc.
       setSortDir(key === 'method' || key === 'path' ? 'asc' : 'desc');
     }
   }
@@ -304,14 +389,14 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter routes…"
+          placeholder="Filter routes..."
           className="studio-input px-3 py-2 w-48"
         />
       </div>
 
       {endpointStats.length === 0 ? (
         <p className="text-gray-500 text-center py-8 text-sm">
-          No requests recorded yet — endpoint stats will populate as traffic flows.
+          No requests recorded yet. Endpoint stats will populate as traffic flows.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -346,6 +431,13 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
                   align="right"
                 />
                 <SortHeader
+                  label={SORT_LABELS.minDuration}
+                  active={sortBy === 'minDuration'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('minDuration')}
+                  align="right"
+                />
+                <SortHeader
                   label={SORT_LABELS.p50Duration}
                   active={sortBy === 'p50Duration'}
                   dir={sortDir}
@@ -373,11 +465,18 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
                   onClick={() => toggleSort('maxDuration')}
                   align="right"
                 />
+                <SortHeader
+                  label={SORT_LABELS.lastRequestTime}
+                  active={sortBy === 'lastRequestTime'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('lastRequestTime')}
+                  align="right"
+                />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/60">
               {rows.map((stat) => {
-                const rate = errorRate(stat);
+                const rate = endpointErrorRate(stat);
                 return (
                   <tr
                     key={`${stat.method}:${stat.path}`}
@@ -400,12 +499,15 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
                       {stat.requestCount.toLocaleString()}
                     </td>
                     <td className={cn('py-2.5 text-right tabular-nums', errorRateClass(rate))}>
-                      {rate === 0 ? '—' : `${rate.toFixed(1)}%`}
+                      {rate === 0 ? '-' : `${rate.toFixed(1)}%`}
                       {stat.errorCount > 0 && (
                         <span className="text-gray-500 ml-1 text-xs">
                           ({stat.errorCount})
                         </span>
                       )}
+                    </td>
+                    <td className={cn('py-2.5 text-right tabular-nums', latencyClass(stat.minDuration))}>
+                      {stat.minDuration === Infinity ? '-' : formatDuration(stat.minDuration)}
                     </td>
                     <td className={cn('py-2.5 text-right tabular-nums', latencyClass(stat.p50Duration))}>
                       {formatDuration(stat.p50Duration)}
@@ -419,12 +521,15 @@ function RoutePerformanceTable({ endpointStats }: { endpointStats: EndpointStats
                     <td className={cn('py-2.5 text-right tabular-nums', latencyClass(stat.maxDuration))}>
                       {formatDuration(stat.maxDuration)}
                     </td>
+                    <td className="py-2.5 text-right text-gray-500 text-xs">
+                      {formatRelativeTime(stat.lastRequestTime)}
+                    </td>
                   </tr>
                 );
               })}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-gray-500 text-sm">
+                  <td colSpan={10} className="py-8 text-center text-gray-500 text-sm">
                     No routes match the current filter.
                   </td>
                 </tr>

@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react';
-import { Clock, ExternalLink, ArrowDownToLine } from 'lucide-react';
+import { Clock, ExternalLink, ArrowDownToLine, GitBranch } from 'lucide-react';
 import { cn, formatDuration, formatTimestamp, getMethodColor, getMethodBgColor, getStatusColor, getStatusBgColor, getDurationColor } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import type { RecordedExchange } from '../types';
@@ -140,6 +140,8 @@ interface RequestRowProps {
 
 function RequestRow({ exchange, isSelected, onSelect }: RequestRowProps) {
   const { request, response } = exchange;
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const setPendingArchitectureContext = useAppStore((s) => s.setPendingArchitectureContext);
 
   return (
     <div
@@ -181,8 +183,25 @@ function RequestRow({ exchange, isSelected, onSelect }: RequestRowProps) {
         {formatDuration(response.duration)}
       </div>
 
+      {/* View flow */}
+      <button
+        className="ml-2 p-1 rounded text-gray-600 hover:text-primary-300 hover:bg-primary-500/10 transition-colors"
+        title="View request flow"
+        onClick={(e) => {
+          e.stopPropagation();
+          setPendingArchitectureContext({
+            lens: 'flow',
+            route: { method: request.method, path: request.path },
+            exchangeId: exchange.id,
+          });
+          setCurrentView('architecture');
+        }}
+      >
+        <GitBranch className="w-3.5 h-3.5" />
+      </button>
+
       {/* Export */}
-      <div className="ml-3" onClick={(e) => e.stopPropagation()}>
+      <div className="ml-2" onClick={(e) => e.stopPropagation()}>
         <ExportMenu exchange={exchange} compact />
       </div>
 

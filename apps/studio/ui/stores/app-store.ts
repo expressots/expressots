@@ -149,6 +149,13 @@ interface AppState {
     path: string;
     body?: Record<string, unknown>;
   } | null;
+  pendingArchitectureContext: {
+    lens: 'overview' | 'flow' | 'explore';
+    route?: { method: HttpMethod; path: string };
+    nodeId?: string;
+    warningFilter?: 'cycle' | 'orphan' | 'hub';
+    exchangeId?: string;
+  } | null;
   /** Agent-side recording toggle (`set_recording` event). */
   recordingEnabled: boolean;
   /** Auto-scroll the request list to the newest entry. */
@@ -205,6 +212,15 @@ interface AppState {
   setPendingApiClientRequest: (
     req: { method: HttpMethod; path: string; body?: Record<string, unknown> } | null,
   ) => void;
+  setPendingArchitectureContext: (
+    ctx: {
+      lens: 'overview' | 'flow' | 'explore';
+      route?: { method: HttpMethod; path: string };
+      nodeId?: string;
+      warningFilter?: 'cycle' | 'orphan' | 'hub';
+      exchangeId?: string;
+    } | null,
+  ) => void;
   setRecordingEnabled: (enabled: boolean) => void;
   setAutoScroll: (enabled: boolean) => void;
   markLiveEvent: () => void;
@@ -252,6 +268,7 @@ function buildInitialState() {
     filterMethod: null,
     filterStatus: 'all' as const,
     pendingApiClientRequest: null,
+    pendingArchitectureContext: null,
     recordingEnabled: true,
     autoScroll: s.defaultAutoScroll,
     lastEventAt: null,
@@ -440,6 +457,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   setPendingApiClientRequest: (pendingApiClientRequest) =>
     set({ pendingApiClientRequest }),
+
+  setPendingArchitectureContext: (pendingArchitectureContext) =>
+    set({ pendingArchitectureContext }),
 
   setRecordingEnabled: (recordingEnabled) => set({ recordingEnabled }),
   setAutoScroll: (autoScroll) => set({ autoScroll }),

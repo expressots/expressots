@@ -3,7 +3,7 @@
  */
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { X, Copy, FileCode, Boxes, Download, FileText, ChevronDown } from 'lucide-react';
+import { X, Copy, FileCode, Boxes, Download, FileText, ChevronDown, GitBranch } from 'lucide-react';
 import { cn, formatDuration, formatTimestamp, copyToClipboard } from '../lib/utils';
 import { useAppStore } from '../stores/app-store';
 import { openInEditor } from '../lib/open-in-editor';
@@ -131,17 +131,33 @@ export function TraceDetail() {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() =>
-                    openInEditor({
-                      filePath: matchedRoute.filePath,
-                      lineNumber: matchedRoute.lineNumber,
-                    })
-                  }
-                  className="studio-btn-primary ml-3"
-                >
-                  Open in editor
-                </button>
+                <div className="flex items-center gap-2 ml-3">
+                  <button
+                    onClick={() =>
+                      openInEditor({
+                        filePath: matchedRoute.filePath,
+                        lineNumber: matchedRoute.lineNumber,
+                      })
+                    }
+                    className="studio-btn-primary"
+                  >
+                    Open in editor
+                  </button>
+                  <button
+                    onClick={() => {
+                      useAppStore.getState().setPendingArchitectureContext({
+                        lens: 'flow',
+                        route: { method: exchange!.request.method, path: exchange!.request.path },
+                        exchangeId: exchange!.id,
+                      });
+                      useAppStore.getState().setCurrentView('architecture');
+                    }}
+                    className="studio-btn"
+                    title="View request flow"
+                  >
+                    <GitBranch className="w-3.5 h-3.5" /> View flow
+                  </button>
+                </div>
               </div>
             )}
 

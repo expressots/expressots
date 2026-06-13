@@ -463,7 +463,7 @@ export class SecurityEngine {
         kind = 'audit-fix';
         break;
       case 'audit-fix-force':
-        kind = input.allowMajor ? 'audit-fix-force' : 'audit-fix-force';
+        kind = input.allowMajor ? 'audit-fix-force' : 'audit-fix';
         break;
       case 'override':
       case 'none':

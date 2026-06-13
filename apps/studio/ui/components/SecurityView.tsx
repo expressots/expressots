@@ -185,8 +185,12 @@ const SCORE_RUBRIC: Record<
 export function SecurityView() {
   const { securityReport, connected, setCurrentView, setSelectedExchangeId } =
     useAppStore();
-  const { requestSecurityScan } = useSocket();
+  const { requestSecurityScan, requestSecurityReport } = useSocket();
   const [tab, setTab] = useState<Tab>('dependencies');
+
+  useEffect(() => {
+    requestSecurityReport();
+  }, [requestSecurityReport]);
 
   const report = securityReport;
   const scanning = report?.scanState.audit === 'running';
@@ -2813,25 +2817,17 @@ function PostureTab({
   onOpenRoute,
   onOpenLogs,
 }: PostureTabProps) {
-  // Pull the route list out of the global app store so the Auth
-  // coverage tile can reason about how many routes exist in total.
   const routes = useAppStore((s) => s.routes);
+  const exchanges = useAppStore((s) => s.exchanges);
 
-  // Click an OWASP cell to filter the list down to that category.
-  // `null` means "show all" (the default).
   const [owaspFilter, setOwaspFilter] = useState<string | null>(null);
   const [showSuppressed, setShowSuppressed] = useState(false);
 
-  // Always show the coverage tiles, even when there are no findings —
-  // the *zeros* are the credibility statement ("we checked these and
-  // you're clean"). These hooks must run unconditionally and BEFORE the
-  // early return below, so fall back to an empty posture until the report
-  // arrives.
   const owaspCounts = useMemoOwaspCounts(report?.posture ?? []);
   const authCoverage = useMemoAuthCoverage(routes, report?.posture ?? []);
 
   if (!report) {
-    return <EmptyState icon={Loader2} message="Connecting to agent…" />;
+    return <EmptyState icon={Loader2} message="Connecting to agent..." />;
   }
   const suppressedCount = report.posture.filter((f) =>
     suppressions.isSuppressed(`p:${f.id}`),
@@ -2851,14 +2847,19 @@ function PostureTab({
   );
 
   if (report.posture.length === 0) {
+    const emptyMessage = exchanges.length === 0
+      ? 'No traffic recorded yet. Use the API Client or send requests to your app. The posture analyzer will evaluate headers, CORS, auth, and error handling from real responses.'
+      : `All posture checks passed on ${exchanges.length} recorded exchange${exchanges.length === 1 ? '' : 's'}.`;
+    const emptyIcon = exchanges.length === 0 ? ShieldQuestion : ShieldCheck;
+    const emptyTone = exchanges.length === 0 ? undefined : 'success' as const;
     return (
       <div className="space-y-6">
         {tiles}
-        <RuleCoveragePanel findings={report.posture} />
+        <RuleCoveragePanel findings={report.posture} exchangeCount={exchanges.length} />
         <EmptyState
-          icon={ShieldCheck}
-          tone="success"
-          message="No runtime posture findings yet. Send some requests through your app — the analyzer evaluates recorded traffic."
+          icon={emptyIcon}
+          tone={emptyTone}
+          message={emptyMessage}
         />
       </div>
     );
@@ -2876,7 +2877,7 @@ function PostureTab({
   return (
     <div className="space-y-6">
       {tiles}
-      <RuleCoveragePanel findings={report.posture} />
+      <RuleCoveragePanel findings={report.posture} exchangeCount={exchanges.length} />
 
       <div className="flex flex-wrap items-center gap-3 text-xs">
         {owaspFilter && (
@@ -3098,6 +3099,8 @@ const POSTURE_RULE_CATALOG: Array<{
      * Default match is exact `rule` equality.
      */
     matchPrefix?: string;
+    /** True when the rule requires recorded exchanges to evaluate. */
+    needsTraffic?: boolean;
   }>;
 }> = [
   {
@@ -3109,6 +3112,7 @@ const POSTURE_RULE_CATALOG: Array<{
         description: 'Mitigates XSS and resource-injection attacks.',
         severity: 'MEDIUM',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
       {
         rule: 'missing-strict-transport-security',
@@ -3116,6 +3120,7 @@ const POSTURE_RULE_CATALOG: Array<{
         description: 'Forces HTTPS for the configured max-age window.',
         severity: 'MEDIUM',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
       {
         rule: 'missing-x-content-type-options',
@@ -3123,6 +3128,7 @@ const POSTURE_RULE_CATALOG: Array<{
         description: 'Stops MIME sniffing on responses.',
         severity: 'LOW',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
       {
         rule: 'missing-x-frame-options',
@@ -3130,6 +3136,7 @@ const POSTURE_RULE_CATALOG: Array<{
         description: 'Prevents clickjacking via embedded iframes.',
         severity: 'LOW',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
       {
         rule: 'missing-referrer-policy',
@@ -3137,6 +3144,7 @@ const POSTURE_RULE_CATALOG: Array<{
         description: 'Controls how much URL information leaves the origin.',
         severity: 'LOW',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
     ],
   },
@@ -3150,6 +3158,7 @@ const POSTURE_RULE_CATALOG: Array<{
           'Wildcard `Access-Control-Allow-Origin: *`, especially on authenticated routes.',
         severity: 'HIGH',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
     ],
   },
@@ -3163,6 +3172,7 @@ const POSTURE_RULE_CATALOG: Array<{
           'Routes returning 2xx with no observed `Authorization` / cookie and no global auth middleware.',
         severity: 'LOW',
         owasp: 'API2:2023',
+        needsTraffic: true,
       },
     ],
   },
@@ -3176,6 +3186,7 @@ const POSTURE_RULE_CATALOG: Array<{
           'Server errors that leak implementation details to the client.',
         severity: 'MEDIUM',
         owasp: 'API8:2023',
+        needsTraffic: true,
       },
     ],
   },
@@ -3189,6 +3200,7 @@ const POSTURE_RULE_CATALOG: Array<{
           'High-precision patterns: AWS keys, GitHub PATs, Slack tokens, Stripe live keys, JWTs.',
         severity: 'HIGH',
         owasp: 'API3:2023',
+        needsTraffic: true,
       },
       {
         rule: 'log-secret',
@@ -3210,13 +3222,15 @@ const POSTURE_RULE_CATALOG: Array<{
           'Controllers accepting non-empty request bodies but not importing zod / class-validator / a DTO.',
         severity: 'INFO',
         owasp: 'API4:2023',
+        needsTraffic: true,
       },
     ],
   },
 ];
 
-function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
+function RuleCoveragePanel({ findings, exchangeCount }: { findings: PostureFinding[]; exchangeCount: number }) {
   const [open, setOpen] = useState(false);
+  const noTraffic = exchangeCount === 0;
 
   const findingsByRule = useMemo(() => {
     const out: Record<string, number> = {};
@@ -3226,22 +3240,41 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
     return out;
   }, [findings]);
 
-  // Tally clean / triggered across the whole catalog so the disclosure
-  // header can show "9 / 11 checks clean" without expanding.
   const totals = useMemo(() => {
     let total = 0;
     let clean = 0;
+    let notEvaluated = 0;
     for (const grp of POSTURE_RULE_CATALOG) {
       for (const r of grp.rules) {
         total++;
         const matched = r.matchPrefix
           ? Object.keys(findingsByRule).some((k) => k.startsWith(r.matchPrefix as string))
           : (findingsByRule[r.rule] ?? 0) > 0;
-        if (!matched) clean++;
+        if (noTraffic && r.needsTraffic) {
+          notEvaluated++;
+        } else if (!matched) {
+          clean++;
+        }
       }
     }
-    return { total, clean };
-  }, [findingsByRule]);
+    return { total, clean, notEvaluated };
+  }, [findingsByRule, noTraffic]);
+
+  const headerIcon = noTraffic
+    ? <ShieldQuestion className="w-4 h-4 text-gray-500" />
+    : <ShieldCheck className="w-4 h-4 text-success-500" />;
+
+  const headerSummary = noTraffic
+    ? <span className="text-[11px] text-gray-500">
+        <span className="text-gray-400 font-medium">{totals.notEvaluated}</span>
+        {' / '}
+        {totals.total} not yet evaluated (no traffic)
+      </span>
+    : <span className="text-[11px] text-gray-500">
+        <span className="text-success-500 font-medium">{totals.clean}</span>
+        {' / '}
+        {totals.total} checks clean
+      </span>;
 
   return (
     <div className="studio-card">
@@ -3255,24 +3288,20 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
           ) : (
             <ChevronRight className="w-4 h-4 text-gray-500" />
           )}
-          <ShieldCheck className="w-4 h-4 text-success-500" />
+          {headerIcon}
           <h3 className="text-sm font-semibold text-white tracking-tight">
             What Studio checks for
           </h3>
         </div>
-        <span className="text-[11px] text-gray-500">
-          <span className="text-success-500 font-medium">{totals.clean}</span>
-          {' / '}
-          {totals.total} checks clean
-        </span>
+        {headerSummary}
       </button>
 
       {open && (
         <div className="px-4 pb-4 pt-1 space-y-4">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            Each check runs over recorded traffic, the route map, the captured
-            logs, or the application source. A green tick means the check ran
-            and produced no findings — not that the check was skipped.
+            {noTraffic
+              ? 'Most checks require recorded traffic to evaluate. Send requests through your app or use the API Client to begin analysis.'
+              : 'Each check runs over recorded traffic, the route map, the captured logs, or the application source. A green tick means the check ran and produced no findings.'}
           </p>
           {POSTURE_RULE_CATALOG.map((grp) => (
             <div key={grp.group}>
@@ -3286,7 +3315,8 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
                         .filter(([k]) => k.startsWith(r.matchPrefix as string))
                         .reduce((acc, [, n]) => acc + n, 0)
                     : (findingsByRule[r.rule] ?? 0);
-                  const clean = count === 0;
+                  const pending = noTraffic && r.needsTraffic;
+                  const triggered = count > 0;
                   return (
                     <li
                       key={r.rule}
@@ -3295,15 +3325,19 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
                       <span
                         className={cn(
                           'inline-flex items-center justify-center w-4 h-4 rounded-full mt-0.5 shrink-0',
-                          clean
-                            ? 'bg-success-500/15 text-success-500'
-                            : 'bg-orange-500/15 text-orange-300',
+                          triggered
+                            ? 'bg-orange-500/15 text-orange-300'
+                            : pending
+                              ? 'bg-gray-700/40 text-gray-600'
+                              : 'bg-success-500/15 text-success-500',
                         )}
                       >
-                        {clean ? (
-                          <CheckCircle2 className="w-3 h-3" />
-                        ) : (
+                        {triggered ? (
                           <AlertTriangle className="w-3 h-3" />
+                        ) : pending ? (
+                          <ShieldQuestion className="w-3 h-3" />
+                        ) : (
+                          <CheckCircle2 className="w-3 h-3" />
                         )}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -3311,7 +3345,7 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
                           <span
                             className={cn(
                               'font-medium',
-                              clean ? 'text-gray-300' : 'text-orange-200',
+                              triggered ? 'text-orange-200' : pending ? 'text-gray-500' : 'text-gray-300',
                             )}
                           >
                             {r.title}
@@ -3322,9 +3356,14 @@ function RuleCoveragePanel({ findings }: { findings: PostureFinding[] }) {
                           <span className="text-[10px] font-mono text-gray-600">
                             {r.severity}
                           </span>
-                          {!clean && (
+                          {triggered && (
                             <span className="text-[10px] font-mono text-orange-300">
                               {count} finding{count === 1 ? '' : 's'}
+                            </span>
+                          )}
+                          {pending && (
+                            <span className="text-[10px] font-mono text-gray-600">
+                              awaiting traffic
                             </span>
                           )}
                         </div>

@@ -21,6 +21,7 @@ import {
   FileSearch,
   ArrowRight,
   ArrowLeft,
+  Network,
 } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
 import { useSocket } from '../contexts/socket-context';
@@ -701,6 +702,9 @@ function BindingDetailPanel({
         </section>
       )}
 
+      {/* Explore in Architecture */}
+      <ExploreInArchitectureButton className={binding.className} />
+
       {/* Dependencies (from DI edges) */}
       {(dependsOn.length > 0 || dependedOnBy.length > 0) && (
         <section>
@@ -897,4 +901,37 @@ function resolveStructureMatch(
   }
 
   return null;
+}
+
+function ExploreInArchitectureButton({ className: name }: { className: string }) {
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const setPendingArchitectureContext = useAppStore((s) => s.setPendingArchitectureContext);
+  const structure = useAppStore((s) => s.structure);
+
+  const kind = useMemo(() => {
+    if (!structure) return null;
+    if (structure.controllers.some((c) => c.name === name)) return 'controller';
+    if (structure.services.some((s) => s.name === name)) return 'service';
+    if (structure.providers.some((p) => p.name === name)) return 'provider';
+    if (structure.middleware.some((m) => m.name === name)) return 'middleware';
+    return null;
+  }, [structure, name]);
+
+  if (!kind) return null;
+
+  return (
+    <button
+      onClick={() => {
+        setPendingArchitectureContext({
+          lens: 'explore',
+          nodeId: `${kind}-${name}`,
+        });
+        setCurrentView('architecture');
+      }}
+      className="studio-btn w-full justify-center text-xs"
+    >
+      <Network className="w-3.5 h-3.5" />
+      Explore dependencies
+    </button>
+  );
 }

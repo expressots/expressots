@@ -1411,12 +1411,14 @@ export class StudioAgent {
 
       socket.on('clear_recordings', () => {
         this.recorder.clearAll();
-        // Reset in-memory aggregates so the Metrics / Endpoint tabs reflect
-        // the cleared timeline instead of showing pre-clear totals.
         this.endpointStats.clear();
         this.responseTimes = [];
         this.metrics.requestCount = 0;
         this.metrics.errorCount = 0;
+        this.metrics.avgResponseTime = 0;
+        this.metrics.p50ResponseTime = 0;
+        this.metrics.p95ResponseTime = 0;
+        this.metrics.p99ResponseTime = 0;
         this.broadcast('cleared', { success: true });
         this.broadcast('metrics', this.getMetrics());
         this.broadcast('endpoint_stats', this.getEndpointStats());
@@ -1683,36 +1685,35 @@ export class StudioAgent {
 
   /** Handle incoming trace */
   private handleTrace(trace: TraceInfo): void {
-    // Update metrics
-    this.metrics.requestCount++;
-    this.responseTimes.push(trace.duration);
+    // When recording is enabled the middleware already updates metrics
+    // and endpoint stats for this request; only count here when the
+    // middleware path is inactive to avoid double-counting.
+    if (!this.config.enableRecording) {
+      this.metrics.requestCount++;
+      this.responseTimes.push(trace.duration);
 
-    // Keep only last 1000 response times for percentile calculation
-    if (this.responseTimes.length > 1000) {
-      this.responseTimes = this.responseTimes.slice(-1000);
+      if (this.responseTimes.length > 1000) {
+        this.responseTimes = this.responseTimes.slice(-1000);
+      }
+
+      if (trace.rootSpan.status === 'ERROR') {
+        this.metrics.errorCount++;
+      }
+
+      const httpMethod = trace.rootSpan.attributes['http.method'] as string;
+      const httpPath = trace.rootSpan.attributes['http.target'] as string ||
+                       trace.rootSpan.attributes['http.route'] as string;
+
+      if (httpMethod && httpPath) {
+        const isError = trace.rootSpan.status === 'ERROR';
+        this.updateEndpointStats(httpMethod as HttpMethod, httpPath, trace.duration, isError);
+      }
     }
 
-    // Check if error
-    if (trace.rootSpan.status === 'ERROR') {
-      this.metrics.errorCount++;
-    }
-
-    // Update endpoint stats
-    const httpMethod = trace.rootSpan.attributes['http.method'] as string;
-    const httpPath = trace.rootSpan.attributes['http.target'] as string || 
-                     trace.rootSpan.attributes['http.route'] as string;
-    
-    if (httpMethod && httpPath) {
-      const isError = trace.rootSpan.status === 'ERROR';
-      this.updateEndpointStats(httpMethod as HttpMethod, httpPath, trace.duration, isError);
-    }
-
-    // Store trace
     if (this.config.enableRecording) {
       this.recorder.recordTrace(trace.traceId, trace);
     }
 
-    // Broadcast to UI
     this.broadcast('trace', trace);
   }
 

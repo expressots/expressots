@@ -39,6 +39,7 @@ import {
   ShieldAlert,
   Route,
   FileCode,
+  Network,
   X,
 } from 'lucide-react';
 import { useAppStore } from '../stores/app-store';
@@ -336,6 +337,17 @@ export function StatusDashboard() {
             active={drill === 'middleware'}
             onClick={() => toggleDrill('middleware')}
           />
+          {structure && (
+            <button
+              onClick={() => {
+                useAppStore.getState().setPendingArchitectureContext({ lens: 'overview' });
+                setCurrentView('architecture');
+              }}
+              className="mt-2 w-full flex items-center justify-center gap-1.5 text-[10px] text-primary-300 hover:text-primary-200 py-1.5 rounded-md border border-primary-500/20 hover:border-primary-500/40 transition-colors"
+            >
+              <Network className="w-3 h-3" /> View Architecture
+            </button>
+          )}
         </Card>
 
         {/* Security & Scope — clickable, opens the Security view */}

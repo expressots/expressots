@@ -54,7 +54,6 @@ interface SocketContextValue {
   rescan: () => void;
   clearRecordings: () => void;
   setRecording: (enabled: boolean) => void;
-  requestStats: () => void;
   requestEndpointStats: () => void;
   requestContainer: () => void;
   /** Re-capture the DI container snapshot (forces agent-side rescan). */
@@ -266,11 +265,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       case 'security':
         setSecurityReport(message.data as SecurityReport);
         break;
-      case 'security_scan_state':
-        // Scan-state-only updates are folded into the report broadcast
-        // upstream; we keep the case to avoid the "unknown event"
-        // fallthrough warning surfacing for future agent versions.
-        break;
+      // Scan state is delivered inside SecurityReport.scanState; no
+      // separate message type is needed.
       case 'fix_progress':
         appendFixProgress(message.data as FixProgressMessage);
         break;
@@ -436,7 +432,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       (enabled: boolean) => emit('set_recording', { enabled }),
       [emit],
     ),
-    requestStats: useCallback(() => emit('get_stats'), [emit]),
     requestEndpointStats: useCallback(() => emit('get_endpoint_stats'), [emit]),
     requestContainer: useCallback(() => emit('get_container'), [emit]),
     refreshContainer: useCallback(() => emit('refresh_container'), [emit]),

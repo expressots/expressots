@@ -264,7 +264,6 @@ export type WSMessageType =
   | 'pong_studio'
   | 'runtime'
   | 'security'
-  | 'security_scan_state'
   | 'fix_progress'
   | 'fix_result'
   | 'database'
