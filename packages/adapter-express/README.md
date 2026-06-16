@@ -8,10 +8,10 @@
   <p>Express HTTP adapter for ExpressoTS. Connects the framework core to the Express.js server engine.</p>
 
   <p>
-    <a href="https://www.npmjs.com/package/@expressots/adapter-express"><img src="https://img.shields.io/npm/v/@expressots%2Fadapter-express?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
-    <a href="https://github.com/expressots/adapter-express/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/adapter-express?style=flat-square&color=181717" alt="License"></a>
+    <a href="https://www.npmjs.com/package/@expressots/adapter-express"><img src="https://img.shields.io/npm/v/@expressots%2Fadapter-express/next?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
+    <a href="https://github.com/expressots/adapter-express/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/adapter-express/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/adapter-express/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
+    <a href="https://github.com/expressots/adapter-express/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/adapter-express/build.yaml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
 
   <p>
