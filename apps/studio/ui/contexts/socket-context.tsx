@@ -12,6 +12,7 @@ import type {
   AppMetrics,
   AppStructure,
   RecordedExchange,
+  RecordedRequest,
   EndpointStats,
   ReplayResultPayload,
   ContainerSnapshot,
@@ -200,7 +201,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         break;
       case 'request': {
         // Real-time request notification - add to exchanges
-        const requestData = message.data as { request: any; response: { statusCode: number; duration: number } };
+        const requestData = message.data as {
+          request: RecordedRequest;
+          response: { statusCode: number; duration: number };
+        };
         if (requestData.request) {
           const exchange = {
             id: requestData.request.id,

@@ -49,6 +49,24 @@ const PRIMITIVE_TYPES = new Set([
   'buffer',
 ]);
 
+/** Minimal Express router layer shape for runtime route scanning. */
+interface ExpressRouteLayer {
+  route?: {
+    path: string;
+    methods: Record<string, boolean>;
+  };
+  name?: string;
+  path?: string;
+  regexp?: { source?: string };
+  handle?: { stack?: ExpressRouteLayer[] };
+}
+
+/** Express app reference with router stack (Express 4 and 5). */
+interface ExpressAppLike {
+  _router?: { stack: ExpressRouteLayer[] };
+  router?: { stack: ExpressRouteLayer[] };
+}
+
 /**
  * Locate the constructor parameter list in `content`, honouring balanced
  * parentheses inside parameter decorators like `@inject(MyService)`.
@@ -1403,7 +1421,7 @@ export class RouteScanner {
    *   `controllerMethod` set to "Unknown" (runtime layers carry no class
    *   information). Empty when the app or its router is unavailable.
    */
-  static scanExpressApp(app: any): RouteInfo[] {
+  static scanExpressApp(app: ExpressAppLike): RouteInfo[] {
     const routes: RouteInfo[] = [];
 
     // Express 5 renamed `app._router` to `app.router`. Fall back gracefully
@@ -1429,7 +1447,7 @@ export class RouteScanner {
       'OPTIONS',
     ]);
 
-    const extractRoutes = (stack: any[], basePath: string = '') => {
+    const extractRoutes = (stack: ExpressRouteLayer[], basePath: string = '') => {
       for (const layer of stack) {
         if (layer.route) {
           const route = layer.route;

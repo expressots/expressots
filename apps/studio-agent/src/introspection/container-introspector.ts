@@ -12,6 +12,46 @@
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 
+interface InversifyBinding {
+  implementationType?: { name?: string };
+  scope?: string;
+  type?: string;
+  activated?: boolean;
+  cache?: unknown;
+  moduleId?: number | string | null;
+}
+
+interface InversifyContainer {
+  id?: number;
+  _bindingDictionary?: {
+    _map?: Map<unknown, InversifyBinding[]>;
+  };
+  applyMiddleware?: (middleware: MiddlewareFactory) => void;
+}
+
+interface AppContainerLike {
+  Container?: InversifyContainer;
+  container?: InversifyContainer;
+  introspect?: () => {
+    options?: Record<string, unknown>;
+    containerId?: number;
+  };
+}
+
+interface ContainerIntrospection {
+  options?: Record<string, unknown>;
+  containerId?: number;
+}
+
+interface InjectMetadata {
+  key?: string;
+  value?: unknown;
+}
+
+type MiddlewareFactory = (
+  planAndResolve: (args: { serviceIdentifier?: unknown }) => unknown,
+) => (args: { serviceIdentifier?: unknown }) => unknown;
+
 /** A single DI binding rendered as a node in the Studio Container view. */
 export interface BindingNode {
   /** Unique node id (binding id or derived key). */
@@ -86,7 +126,7 @@ const ReflectAny: any = Reflect;
  * they return empty results instead of throwing.
  */
 export class ContainerIntrospector {
-  private appContainer: any;
+  private appContainer: AppContainerLike | null;
   private als: AsyncLocalStorage<RequestContext>;
   private snapshot: ContainerSnapshot | null = null;
 
@@ -95,7 +135,10 @@ export class ContainerIntrospector {
    *   object exposing the underlying Inversify container).
    */
   constructor(appContainer: unknown) {
-    this.appContainer = appContainer;
+    this.appContainer =
+      appContainer && typeof appContainer === 'object'
+        ? (appContainer as AppContainerLike)
+        : null;
     this.als = new AsyncLocalStorage<RequestContext>();
   }
 
@@ -129,9 +172,9 @@ export class ContainerIntrospector {
       return this.snapshot;
     }
 
-    let introspection: any = null;
+    let introspection: ContainerIntrospection | null = null;
     try {
-      introspection = typeof this.appContainer.introspect === 'function'
+      introspection = typeof this.appContainer?.introspect === 'function'
         ? this.appContainer.introspect()
         : null;
     } catch {
@@ -163,7 +206,7 @@ export class ContainerIntrospector {
     }
 
     const als = this.als;
-    const trackingMiddleware = (planAndResolve: any) => (args: any) => {
+    const trackingMiddleware: MiddlewareFactory = (planAndResolve) => (args) => {
       const ctx = als.getStore();
       if (ctx) {
         try {
@@ -206,19 +249,19 @@ export class ContainerIntrospector {
   // Internals
   // ────────────────────────────────────────────────────────────────────────
 
-  private getInversifyContainer(): any | null {
+  private getInversifyContainer(): InversifyContainer | null {
     if (!this.appContainer) return null;
     // ExpressoTS AppContainer exposes `Container` as the inversify instance.
     const inv =
       this.appContainer.Container ??
       this.appContainer.container ??
-      this.appContainer;
+      (this.appContainer as InversifyContainer);
     if (!inv) return null;
     if (!inv._bindingDictionary) return null;
     return inv;
   }
 
-  private scanBindings(inversify: any): {
+  private scanBindings(inversify: InversifyContainer): {
     nodes: BindingNode[];
     edges: BindingEdge[];
   } {
@@ -226,7 +269,7 @@ export class ContainerIntrospector {
     const edges: BindingEdge[] = [];
 
     const dict = inversify._bindingDictionary;
-    const map: Map<unknown, any[]> | undefined = dict?._map;
+    const map: Map<unknown, InversifyBinding[]> | undefined = dict?._map;
     if (!map) return { nodes, edges };
 
     // First pass: build all nodes so we know which service identifiers exist.
@@ -280,18 +323,18 @@ export class ContainerIntrospector {
    * Reads inversify's constructor-injection metadata and returns the list of
    * service identifiers each constructor parameter depends on.
    */
-  private getConstructorDependencies(impl: any): string[] {
+  private getConstructorDependencies(impl: { name?: string }): string[] {
     const out: string[] = [];
     if (!impl) return out;
 
     // Inversify stores `@inject(SID)` constructor params under "inversify:tagged"
     // keyed by the prototype + index. The simpler `inversify:paramtypes` key on
     // the prototype gives the TS design types — useful as a fallback.
-    const tagged: Map<number, any[]> | undefined =
+    const tagged: Map<number, InjectMetadata[]> | undefined =
       ReflectAny.getMetadata?.(INVERSIFY_TAGGED, impl);
 
     if (tagged && typeof tagged.forEach === 'function') {
-      tagged.forEach((metadataList: any[]) => {
+      tagged.forEach((metadataList: InjectMetadata[]) => {
         for (const m of metadataList || []) {
           if (m?.key === 'inject' && m?.value !== undefined) {
             out.push(this.formatServiceIdentifier(m.value));
@@ -301,7 +344,7 @@ export class ContainerIntrospector {
     }
 
     // Property-injected dependencies via @inject() on properties.
-    const taggedProps: Record<string, any[]> | undefined =
+    const taggedProps: Record<string, InjectMetadata[]> | undefined =
       ReflectAny.getMetadata?.(INVERSIFY_TAGGED_PROPS, impl);
     if (taggedProps && typeof taggedProps === 'object') {
       for (const propKey of Object.keys(taggedProps)) {
@@ -334,7 +377,7 @@ export class ContainerIntrospector {
     if (sid == null) return 'unknown';
     if (typeof sid === 'string') return sid;
     if (typeof sid === 'symbol') return sid.toString();
-    if (typeof sid === 'function') return (sid as any).name || sid.toString();
+    if (typeof sid === 'function') return sid.name || sid.toString();
     return String(sid);
   }
 

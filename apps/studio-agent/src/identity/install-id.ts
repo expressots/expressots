@@ -68,9 +68,14 @@ export function resolveInstallId(explicitId?: string): string {
     }
 
     const config: StudioConfig = {
-      ...existing as any,
       installId: newId,
-      createdAt: existing.createdAt as string || new Date().toISOString(),
+      createdAt:
+        typeof existing === 'object' &&
+        existing !== null &&
+        'createdAt' in existing &&
+        typeof (existing as Partial<StudioConfig>).createdAt === 'string'
+          ? (existing as Partial<StudioConfig>).createdAt!
+          : new Date().toISOString(),
     };
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');

@@ -70,6 +70,20 @@ const DRILL_TITLES: Record<DrillKey, string> = {
   interceptors: 'Interceptors',
 };
 
+interface DrillListItem {
+  key: string;
+  primary: string;
+  secondary?: string;
+  method?: string;
+  deps?: string[];
+  filePath?: string;
+  scope?: string;
+  cached?: boolean;
+  activated?: boolean;
+  middlewareType?: 'built-in' | 'custom';
+  lineNumber?: number;
+}
+
 export function StatusDashboard() {
   const {
     runtime,
@@ -507,7 +521,7 @@ function DrillPanel({
 }) {
   const { routes, structure, containerSnapshot, runtime } = useAppStore();
 
-  const items = useMemo(() => {
+  const items = useMemo((): DrillListItem[] => {
     switch (drill) {
       case 'routes':
         return routes.map((r, i) => ({
@@ -591,7 +605,7 @@ function DrillPanel({
           </div>
         ) : (
           <ul className="divide-y divide-gray-800">
-            {items.map((item: any) => (
+            {items.map((item) => (
               <DrillRow key={item.key} item={item} drill={drill} />
             ))}
           </ul>
@@ -605,7 +619,7 @@ function DrillRow({
   item,
   drill,
 }: {
-  item: any;
+  item: DrillListItem;
   drill: DrillKey;
 }) {
   return (
@@ -701,7 +715,7 @@ function mergeProviders(
   runtimeProviders: { name: string; source?: string }[] | undefined,
   staticProviders: { name: string; filePath: string; methods: string[]; dependencies: string[] }[] | undefined,
   bindings: { className: string; serviceIdentifier: string; scope: string; cached: boolean; activated: boolean }[] | undefined,
-): Array<Record<string, unknown>> {
+): DrillListItem[] {
   const staticByName = new Map((staticProviders ?? []).map((p) => [p.name, p]));
   const bindingByName = new Map((bindings ?? []).map((b) => [b.className, b]));
 
@@ -746,7 +760,7 @@ function mergeProviders(
 function mergeInterceptors(
   runtimeInterceptors: { name: string; priority?: number; source?: string }[] | undefined,
   staticMiddleware: import('../types').MiddlewareInfo[] | undefined,
-): Array<Record<string, unknown>> {
+): DrillListItem[] {
   if (runtimeInterceptors && runtimeInterceptors.length > 0) {
     const sorted = [...runtimeInterceptors].sort(
       (a, b) => (a.priority ?? 100) - (b.priority ?? 100),
@@ -775,13 +789,12 @@ function mergeInterceptors(
 function mergeMiddleware(
   runtimeMiddleware: import('../types').MiddlewarePipelineItem[] | undefined,
   staticMiddleware: import('../types').MiddlewareInfo[] | undefined,
-): Array<Record<string, unknown>> {
+): DrillListItem[] {
   if (runtimeMiddleware && runtimeMiddleware.length > 0) {
     return runtimeMiddleware.map((m, i) => ({
       key: `${m.name}-${i}`,
       primary: m.name,
       secondary: `${m.category} · ${m.type}${m.path ? ` · ${m.path}` : ''}`,
-      category: m.category,
       middlewareType: m.type,
     }));
   }

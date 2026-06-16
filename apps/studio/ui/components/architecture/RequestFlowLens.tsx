@@ -33,7 +33,7 @@ export function RequestFlowLens() {
       (r) => r.method === exchange.request.method && r.path === exchange.request.path,
     );
     if (matched) setSelectedRoute(matched);
-  }, [selectedExchangeId, exchanges, routes]);
+  }, [selectedExchangeId, selectedRoute, exchanges, routes]);
 
   useEffect(() => {
     if (!selectedRoute || exchanges.length === 0) return;

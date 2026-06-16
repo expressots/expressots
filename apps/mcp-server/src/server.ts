@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'node:url';
 import { glob } from 'glob';
+import type { CodeAnalysisResult, GeneratedCode } from './types/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkgVersion = (() => {
@@ -502,7 +503,7 @@ export function createMCPServer(config: MCPServerConfig): Server {
 }
 
 /** Format generated code result for display */
-function formatGeneratedCode(result: { files: any[]; summary: string }): string {
+function formatGeneratedCode(result: GeneratedCode): string {
   let output = `## ${result.summary}\n\n`;
 
   for (const file of result.files) {
@@ -516,7 +517,7 @@ function formatGeneratedCode(result: { files: any[]; summary: string }): string 
 }
 
 /** Format analysis result for display */
-function formatAnalysisResult(result: any): string {
+function formatAnalysisResult(result: CodeAnalysisResult): string {
   let output = `## Analysis: ${result.file}\n\n`;
 
   if (result.issues.length > 0) {

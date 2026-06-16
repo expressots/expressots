@@ -30,6 +30,67 @@ interface SqliteDatabase {
   prepare(sql: string): SqliteStatement;
   close(): void;
 }
+
+interface SqliteCountRow {
+  count: number;
+}
+
+interface SqliteAvgRow {
+  avg: number | null;
+}
+
+interface SqlitePathCountRow {
+  path: string;
+  count: number;
+}
+
+interface SqliteMethodCountRow {
+  method: string;
+  count: number;
+}
+
+interface SqliteRequestRow {
+  id: string;
+  trace_id: string | null;
+  timestamp: number;
+  method: string;
+  path: string;
+  url: string;
+  headers: string;
+  query: string;
+  body: string | null;
+  cookies: string | null;
+}
+
+interface SqliteResponseRow {
+  id: string;
+  request_id: string;
+  trace_id: string | null;
+  timestamp: number;
+  status_code: number;
+  status_message: string;
+  headers: string;
+  body: string | null;
+  duration: number;
+}
+
+interface SqliteTraceRow {
+  trace_id: string;
+  request_id: string | null;
+  data: string;
+  timestamp: number;
+}
+
+interface SqliteExchangeRow extends SqliteRequestRow {
+  res_id: string | null;
+  res_timestamp: number | null;
+  status_code: number | null;
+  status_message: string | null;
+  res_headers: string | null;
+  res_body: string | null;
+  duration: number | null;
+  trace_data: string | null;
+}
 interface NodeSqliteModule {
   DatabaseSync: new (path: string) => SqliteDatabase;
 }
@@ -340,18 +401,18 @@ export class RequestRecorder {
     if (!this.db) return null;
 
     const requestStmt = this.db.prepare('SELECT * FROM requests WHERE id = ?');
-    const requestRow = requestStmt.get(requestId) as any;
+    const requestRow = requestStmt.get(requestId) as SqliteRequestRow | undefined;
     if (!requestRow) return null;
 
     const responseStmt = this.db.prepare(
       'SELECT * FROM responses WHERE request_id = ?'
     );
-    const responseRow = responseStmt.get(requestId) as any;
+    const responseRow = responseStmt.get(requestId) as SqliteResponseRow | undefined;
 
     const traceStmt = this.db.prepare(
       'SELECT * FROM traces WHERE request_id = ? OR trace_id = ?'
     );
-    const traceRow = traceStmt.get(requestId, requestRow.trace_id) as any;
+    const traceRow = traceStmt.get(requestId, requestRow.trace_id ?? '') as SqliteTraceRow | undefined;
 
     return {
       id: requestRow.id,
@@ -420,9 +481,17 @@ export class RequestRecorder {
       LIMIT ? OFFSET ?
     `);
 
-    const rows = stmt.all(limit, offset) as any[];
+    const rows = stmt.all(limit, offset) as SqliteExchangeRow[];
 
-    return rows.map((row) => ({
+    return rows.map((row) => this.mapExchangeRow(row));
+  }
+
+  /**
+   * Map a joined SQLite row to a recorded exchange, coalescing nullable
+   * LEFT JOIN columns from responses/traces.
+   */
+  private mapExchangeRow(row: SqliteExchangeRow): RecordedExchange {
+    return {
       id: row.id,
       request: {
         id: row.id,
@@ -441,12 +510,12 @@ export class RequestRecorder {
             id: row.res_id,
             requestId: row.id,
             traceId: row.trace_id || '',
-            timestamp: row.res_timestamp,
-            statusCode: row.status_code,
-            statusMessage: row.status_message,
-            headers: JSON.parse(row.res_headers),
+            timestamp: row.res_timestamp ?? 0,
+            statusCode: row.status_code ?? 0,
+            statusMessage: row.status_message ?? '',
+            headers: JSON.parse(row.res_headers ?? '{}'),
             body: row.res_body ? JSON.parse(row.res_body) : undefined,
-            duration: row.duration,
+            duration: row.duration ?? 0,
           }
         : {
             id: '',
@@ -459,7 +528,7 @@ export class RequestRecorder {
             duration: 0,
           },
       trace: row.trace_data ? JSON.parse(row.trace_data) : undefined,
-    }));
+    };
   }
 
   /**
@@ -491,7 +560,7 @@ export class RequestRecorder {
       WHERE r.path LIKE ?
     `;
 
-    const params: any[] = [`%${query}%`];
+    const params: Array<string | number> = [`%${query}%`];
 
     if (method) {
       sql += ' AND r.method = ?';
@@ -502,46 +571,9 @@ export class RequestRecorder {
     params.push(limit);
 
     const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params) as SqliteExchangeRow[];
 
-    return rows.map((row) => ({
-      id: row.id,
-      request: {
-        id: row.id,
-        traceId: row.trace_id || '',
-        timestamp: row.timestamp,
-        method: row.method as HttpMethod,
-        path: row.path,
-        url: row.url,
-        headers: JSON.parse(row.headers),
-        query: JSON.parse(row.query),
-        body: row.body ? JSON.parse(row.body) : undefined,
-        cookies: row.cookies ? JSON.parse(row.cookies) : undefined,
-      },
-      response: row.res_id
-        ? {
-            id: row.res_id,
-            requestId: row.id,
-            traceId: row.trace_id || '',
-            timestamp: row.res_timestamp,
-            statusCode: row.status_code,
-            statusMessage: row.status_message,
-            headers: JSON.parse(row.res_headers),
-            body: row.res_body ? JSON.parse(row.res_body) : undefined,
-            duration: row.duration,
-          }
-        : {
-            id: '',
-            requestId: row.id,
-            traceId: '',
-            timestamp: 0,
-            statusCode: 0,
-            statusMessage: 'No response recorded',
-            headers: {},
-            duration: 0,
-          },
-      trace: row.trace_data ? JSON.parse(row.trace_data) : undefined,
-    }));
+    return rows.map((row) => this.mapExchangeRow(row));
   }
 
   /**
@@ -569,27 +601,27 @@ export class RequestRecorder {
     }
 
     const totalStmt = this.db.prepare('SELECT COUNT(*) as count FROM requests');
-    const totalRow = totalStmt.get() as any;
+    const totalRow = totalStmt.get() as SqliteCountRow;
 
     const errorStmt = this.db.prepare(
       'SELECT COUNT(*) as count FROM responses WHERE status_code >= 400'
     );
-    const errorRow = errorStmt.get() as any;
+    const errorRow = errorStmt.get() as SqliteCountRow;
 
     const avgStmt = this.db.prepare(
       'SELECT AVG(duration) as avg FROM responses'
     );
-    const avgRow = avgStmt.get() as any;
+    const avgRow = avgStmt.get() as SqliteAvgRow;
 
     const pathStmt = this.db.prepare(
       'SELECT path, COUNT(*) as count FROM requests GROUP BY path ORDER BY count DESC LIMIT 20'
     );
-    const pathRows = pathStmt.all() as any[];
+    const pathRows = pathStmt.all() as SqlitePathCountRow[];
 
     const methodStmt = this.db.prepare(
       'SELECT method, COUNT(*) as count FROM requests GROUP BY method'
     );
-    const methodRows = methodStmt.all() as any[];
+    const methodRows = methodStmt.all() as SqliteMethodCountRow[];
 
     const requestsByPath: Record<string, number> = {};
     for (const row of pathRows) {
@@ -637,7 +669,7 @@ export class RequestRecorder {
     if (!this.db) return;
 
     const countStmt = this.db.prepare('SELECT COUNT(*) as count FROM requests');
-    const row = countStmt.get() as any;
+    const row = countStmt.get() as SqliteCountRow;
 
     if (row.count > this.maxExchanges) {
       const deleteCount = row.count - this.maxExchanges;

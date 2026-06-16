@@ -8,7 +8,7 @@
  * - WebSocket communication with Studio UI
  */
 
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, type Socket } from 'socket.io';
 import { createServer, Server as HttpServer } from 'http';
 import { StudioTracer } from './instrumentation/tracer.js';
 import { RouteScanner } from './discovery/route-scanner.js';
@@ -35,6 +35,7 @@ import type {
   AppMetrics,
   EndpointStats,
   WSMessage,
+  WSMessageType,
   HttpMethod,
   RuntimeInfo,
 } from './types/index.js';
@@ -839,7 +840,7 @@ export class StudioAgent {
    *   durations array used for percentile calculation is stripped.
    */
   getEndpointStats(): EndpointStats[] {
-    return Array.from(this.endpointStats.values()).map(({ durations, ...stats }) => stats);
+    return Array.from(this.endpointStats.values()).map(({ durations: _durations, ...stats }) => stats);
   }
 
   /**
@@ -1780,7 +1781,7 @@ export class StudioAgent {
   }
 
   /** Replay a recorded request */
-  private async replayRequest(exchangeId: string, socket: any): Promise<void> {
+  private async replayRequest(exchangeId: string, socket: Socket): Promise<void> {
     const exchange = this.recorder.getExchange(exchangeId);
     if (!exchange) {
       socket.emit('message', {
@@ -1888,7 +1889,7 @@ export class StudioAgent {
       headers?: Record<string, string>;
       body?: string;
     },
-    socket: any,
+    socket: Socket,
   ): Promise<void> {
     const id = typeof params?.id === 'string' ? params.id : '';
     const reply = (data: Record<string, unknown>): void => {
@@ -2004,7 +2005,7 @@ export class StudioAgent {
   /** Broadcast message to all connected clients */
   private broadcast<T>(type: string, data: T): void {
     if (this.io) {
-      this.io.emit('message', this.createMessage(type as any, data));
+      this.io.emit('message', this.createMessage(this.asMessageType(type), data));
     }
   }
 
@@ -2060,12 +2061,16 @@ export class StudioAgent {
   }
 
   /** Create WebSocket message */
-  private createMessage<T>(type: string, data: T): WSMessage<T> {
+  private createMessage<T>(type: WSMessageType, data: T): WSMessage<T> {
     return {
-      type: type as any,
+      type,
       timestamp: Date.now(),
       data,
     };
+  }
+
+  private asMessageType(type: string): WSMessageType {
+    return type as WSMessageType;
   }
 
   /** Start metrics collection interval */
@@ -2118,7 +2123,37 @@ export class StudioAgent {
    * @returns An Express-compatible `(req, res, next)` middleware function.
    */
   createMiddleware() {
-    return (req: any, res: any, next: any) => {
+    type MiddlewareRequest = {
+      method: string;
+      path: string;
+      originalUrl?: string;
+      url: string;
+      headers: Record<string, string | string[] | undefined>;
+      query: Record<string, string>;
+      body: unknown;
+      cookies?: Record<string, string>;
+    };
+    type MiddlewareResponse = {
+      end: (...args: unknown[]) => unknown;
+      on: (event: 'finish', listener: () => void) => void;
+      statusCode: number;
+      statusMessage?: string;
+      getHeaders: () => Record<string, string | string[] | number | undefined>;
+    };
+    type MiddlewareNext = () => void;
+
+    const normalizeHeaders = (
+      headers: Record<string, string | string[] | undefined>,
+    ): Record<string, string> => {
+      const out: Record<string, string> = {};
+      for (const [key, value] of Object.entries(headers)) {
+        if (value === undefined) continue;
+        out[key] = Array.isArray(value) ? value.join(', ') : value;
+      }
+      return out;
+    };
+
+    return (req: MiddlewareRequest, res: MiddlewareResponse, next: MiddlewareNext) => {
       if (!this.config.enableRecording) {
         return next();
       }
@@ -2131,7 +2166,7 @@ export class StudioAgent {
         req.method as HttpMethod,
         req.path,
         req.originalUrl || req.url,
-        req.headers,
+        normalizeHeaders(req.headers),
         req.query || {},
         req.body,
         req.cookies,
@@ -2139,15 +2174,20 @@ export class StudioAgent {
       );
 
       // Capture response
-      const originalEnd = res.end;
-      let responseBody: any;
+      const originalEnd = res.end.bind(res);
+      let responseBody: string | undefined;
 
-      res.end = function (chunk: any, ...args: any[]) {
-        if (chunk) {
-          responseBody = chunk.toString();
+      res.end = ((chunk?: unknown, ...args: unknown[]) => {
+        if (chunk !== undefined && chunk !== null) {
+          responseBody =
+            typeof chunk === 'string'
+              ? chunk
+              : Buffer.isBuffer(chunk)
+                ? chunk.toString()
+                : String(chunk);
         }
-        return originalEnd.apply(res, [chunk, ...args]);
-      };
+        return originalEnd(chunk, ...args);
+      }) as MiddlewareResponse['end'];
 
       // Track DI resolutions for this request (if the introspector is wired).
       // We capture the live Set reference and read it on `finish`, which fires
