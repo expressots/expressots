@@ -1,0 +1,52 @@
+name: Examples CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - 01-starter-api
+          - 02-jwt-authentication
+          - 03-authorization-rbac
+          - 04-database-inmemory
+          - 05-database-postgres
+          - 06-database-prisma
+          - 07-file-upload
+          - 08-events
+          - 09-message-queue
+          - 10-redis-cache
+          - 11-testing
+          - 12-docker-compose
+          - 13-micro-api
+          - 14-interceptors
+          - 15-openapi-studio
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ${{ matrix.example }}/package-lock.json
+
+      - name: Install and test
+        working-directory: ${{ matrix.example }}
+        env:
+          NODE_ENV: test
+          JWT_SECRET: dev-secret-change-me-min-32-chars-long
+          SKIP_DB: "1"
+        run: |
+          npm ci
+          if [ "${{ matrix.example }}" = "06-database-prisma" ]; then
+            npx prisma generate
+          fi
+          npm test
