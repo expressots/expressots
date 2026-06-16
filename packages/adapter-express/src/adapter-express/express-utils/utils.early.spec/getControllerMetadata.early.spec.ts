@@ -15,7 +15,7 @@ describe("getControllerMetadata() getControllerMetadata method", () => {
       const expectedMetadata: ControllerMetadata = {
         middleware: [],
         path: "/mock-path",
-        target: MockController,
+        target: MockController as unknown as ControllerMetadata["target"],
       };
       Reflect.getOwnMetadata = jest.fn().mockReturnValue(expectedMetadata);
 

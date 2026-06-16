@@ -1,13 +1,19 @@
 // Updated Unit tests for: listen
 
 import express from "express";
-import process from "process";
 import { AppExpress } from "../application-express";
 
-jest.mock("process", () => ({
-  ...jest.requireActual("process"),
-  exit: jest.fn(),
-  on: jest.fn(),
+const reportStudioRuntimeInfo = jest.fn();
+const rescanStudioRoutes = jest.fn().mockResolvedValue(undefined);
+const refreshStudioContainer = jest.fn().mockResolvedValue(undefined);
+
+jest.mock("../studio/index.js", () => ({
+  initializeStudio: jest.fn().mockResolvedValue(false),
+  reportStudioRuntimeInfo: (...args: unknown[]) => reportStudioRuntimeInfo(...args),
+  rescanStudioRoutes: (...args: unknown[]) => rescanStudioRoutes(...args),
+  refreshStudioContainer: (...args: unknown[]) => refreshStudioContainer(...args),
+  isStudioEnabled: jest.fn().mockReturnValue(false),
+  stopStudio: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock("../express-utils/inversify-express-server", () => {
@@ -33,6 +39,7 @@ jest.mock("../express-utils/inversify-express-server", () => {
 class MockLogger {
   error = jest.fn();
   info = jest.fn();
+  warn = jest.fn();
 }
 
 class MockConsole {
@@ -48,7 +55,15 @@ class MockProviderManager {}
 
 class MockMiddleware {
   getMiddlewarePipeline = jest.fn().mockReturnValue([]);
-  getErrorHandler = jest.fn();
+  getErrorHandler = jest.fn().mockReturnValue(null);
+  setExpressApp = jest.fn();
+  getContentNegotiationService = jest.fn().mockReturnValue(null);
+  getValidationConfig = jest.fn().mockReturnValue(null);
+  getStartupLogs = jest.fn().mockReturnValue([]);
+  clearStartupLogs = jest.fn();
+  getPipelineInfo = jest.fn().mockReturnValue([]);
+  getFormattedView = jest.fn().mockReturnValue("");
+  render = jest.fn();
 }
 
 describe("AppExpress.listen() method", () => {
@@ -59,6 +74,8 @@ describe("AppExpress.listen() method", () => {
   let mockProviderManager: MockProviderManager;
   let mockMiddlewareManager: MockMiddleware;
   let mockApp: express.Application;
+  let processExitSpy: jest.SpyInstance;
+  let processOnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockLogger = new MockLogger();
@@ -66,6 +83,13 @@ describe("AppExpress.listen() method", () => {
     mockAppContainer = new MockAppContainer();
     mockProviderManager = new MockProviderManager();
     mockMiddlewareManager = new MockMiddleware();
+
+    reportStudioRuntimeInfo.mockClear();
+    rescanStudioRoutes.mockClear();
+    refreshStudioContainer.mockClear();
+
+    processExitSpy = jest.spyOn(process, "exit").mockImplementation((() => {}) as any);
+    processOnSpy = jest.spyOn(process, "on");
 
     appExpress = new AppExpress();
 
@@ -79,9 +103,14 @@ describe("AppExpress.listen() method", () => {
     // Mock the express application
     mockApp = {
       set: jest.fn(),
-      listen: jest.fn().mockImplementation((port, callback) => {
-        callback();
-        return { on: jest.fn(), close: jest.fn() };
+      listen: jest.fn().mockImplementation((port: number, callback: () => void) => {
+        const server = {
+          on: jest.fn(),
+          close: jest.fn(),
+          address: jest.fn().mockReturnValue({ port }),
+        };
+        process.nextTick(callback);
+        return server;
       }),
     } as unknown as express.Application;
 
@@ -92,6 +121,11 @@ describe("AppExpress.listen() method", () => {
       setErrorConfig: jest.fn(),
       build: jest.fn().mockReturnValue(mockApp),
     }));
+  });
+
+  afterEach(() => {
+    processExitSpy.mockRestore();
+    processOnSpy.mockRestore();
   });
 
   describe("Happy paths", () => {
@@ -108,6 +142,87 @@ describe("AppExpress.listen() method", () => {
 
       expect(mockApp.set).toHaveBeenCalledWith("env", "development");
     });
+
+    it("should report Studio runtime info after the server starts", async () => {
+      await appExpress.listen(3000);
+
+      expect(reportStudioRuntimeInfo).toHaveBeenCalledWith(
+        expect.objectContaining({ appPort: 3000, globalPrefix: expect.any(String) }),
+      );
+      expect(rescanStudioRoutes).toHaveBeenCalled();
+      expect(refreshStudioContainer).toHaveBeenCalled();
+    });
+
+    it("should track inbound connections for graceful shutdown", async () => {
+      let connectionHandler: ((socket: unknown) => void) | undefined;
+      mockApp.listen = jest.fn().mockImplementation((port: number, callback: () => void) => {
+        const server = {
+          on: jest.fn((event: string, handler: (socket: unknown) => void) => {
+            if (event === "connection") {
+              connectionHandler = handler;
+            }
+          }),
+          close: jest.fn(),
+          address: jest.fn().mockReturnValue({ port }),
+        };
+        process.nextTick(callback);
+        return server;
+      }) as unknown as typeof mockApp.listen;
+
+      await appExpress.listen(3000);
+
+      const closeCallbacks: Record<string, () => void> = {};
+      const socket = {
+        once: jest.fn((event: string, cb: () => void) => {
+          closeCallbacks[event] = cb;
+        }),
+        destroy: jest.fn(),
+      };
+      connectionHandler?.(socket);
+      closeCallbacks.close?.();
+
+      expect(
+        (appExpress as unknown as { activeConnections: Set<unknown> }).activeConnections.has(
+          socket,
+        ),
+      ).toBe(false);
+    });
+
+    it("should reject when the configured port cannot be freed", async () => {
+      jest
+        .spyOn(
+          appExpress as unknown as { ensurePortAvailable: (port: number) => Promise<boolean> },
+          "ensurePortAvailable",
+        )
+        .mockResolvedValue(false);
+
+      await expect(appExpress.listen(3000)).rejects.toThrow(/still in use/);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Port 3000 is still in use and could not be freed",
+        "adapter-express",
+      );
+    });
+
+    it("should reject generic server startup errors", async () => {
+      mockApp.listen = jest.fn().mockImplementation(() => {
+        const server = {
+          on: jest.fn((event: string, handler: (error: NodeJS.ErrnoException) => void) => {
+            if (event === "error") {
+              process.nextTick(() => handler(Object.assign(new Error("boom"), { code: "EACCES" })));
+            }
+          }),
+          close: jest.fn(),
+          address: jest.fn(),
+        };
+        return server;
+      }) as unknown as typeof mockApp.listen;
+
+      await expect(appExpress.listen(3000)).rejects.toThrow("boom");
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Error starting server: boom",
+        "adapter-express",
+      );
+    });
   });
 
   describe("Edge cases", () => {
@@ -123,7 +238,7 @@ describe("AppExpress.listen() method", () => {
 
       const signals = ["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"];
       signals.forEach((signal) => {
-        expect(process.on).toHaveBeenCalledWith(signal, expect.any(Function));
+        expect(processOnSpy).toHaveBeenCalledWith(signal, expect.any(Function));
       });
     });
 
@@ -138,7 +253,78 @@ describe("AppExpress.listen() method", () => {
         "No container provided for application configuration",
         "adapter-express",
       );
-      expect(process.exit).toHaveBeenCalledWith(1);
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it("should reject when the HTTP server emits EADDRINUSE", async () => {
+      mockApp.listen = jest.fn().mockImplementation(() => {
+        const server = {
+          on: jest.fn((event: string, handler: (error: NodeJS.ErrnoException) => void) => {
+            if (event === "error") {
+              process.nextTick(() =>
+                handler(Object.assign(new Error("in use"), { code: "EADDRINUSE" })),
+              );
+            }
+          }),
+          close: jest.fn(),
+          address: jest.fn(),
+        };
+        return server;
+      }) as unknown as typeof mockApp.listen;
+
+      await expect(appExpress.listen(3000)).rejects.toThrow(/Port 3000 is already in use/);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Port 3000 is already in use",
+        "adapter-express",
+      );
+    });
+
+    it("should close an existing server instance before re-listening", async () => {
+      const close = jest.fn((cb: () => void) => cb());
+      (appExpress as any).serverInstance = { close, on: jest.fn() };
+
+      await appExpress.listen(3000);
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "Closing existing server instance before starting new one",
+        "adapter-express",
+      );
+      expect(close).toHaveBeenCalled();
+    });
+
+    it("should initiate graceful shutdown when a signal handler fires", async () => {
+      (appExpress as unknown as { handleExit: jest.Mock }).handleExit = jest
+        .fn()
+        .mockResolvedValue(undefined);
+      jest.spyOn(process.stdout, "write").mockImplementation(() => true);
+
+      await appExpress.listen(3000);
+
+      const sigintHandler = processOnSpy.mock.calls.find(([signal]) => signal === "SIGINT")?.[1];
+      sigintHandler?.();
+      sigintHandler?.();
+      await Promise.resolve();
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining("Signal SIGINT received"),
+        "adapter-express",
+      );
+      expect((appExpress as unknown as { handleExit: jest.Mock }).handleExit).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    it("should execute lifecycle bootstrap hooks after the server starts", async () => {
+      const executeBootstrap = jest.fn().mockResolvedValue(undefined);
+      (
+        appExpress as unknown as {
+          lifecycleRegistry: { executeBootstrap: typeof executeBootstrap };
+        }
+      ).lifecycleRegistry = { executeBootstrap };
+
+      await appExpress.listen(3000);
+
+      expect(executeBootstrap).toHaveBeenCalled();
     });
   });
 });

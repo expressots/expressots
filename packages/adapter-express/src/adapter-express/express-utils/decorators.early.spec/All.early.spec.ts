@@ -16,7 +16,13 @@ jest.mock("../resolver-multer", () => {
 });
 
 // Mocking the Reflect metadata functions
-jest.spyOn(Reflect, "getOwnMetadata").mockImplementation(() => ({}));
+jest.spyOn(Reflect, "getOwnMetadata").mockImplementation((key) => {
+  // Return undefined for version metadata to match test expectations
+  if (key === METADATA_KEY.version) {
+    return undefined;
+  }
+  return {};
+});
 jest.spyOn(Reflect, "defineMetadata").mockImplementation(() => {});
 
 describe("All() All method", () => {
@@ -41,6 +47,7 @@ describe("All() All method", () => {
         middleware: mockMiddleware,
         path,
         target,
+        version: undefined,
       };
 
       expect(Reflect.defineMetadata).toHaveBeenCalledWith(
@@ -71,6 +78,7 @@ describe("All() All method", () => {
         middleware: [],
         path,
         target,
+        version: undefined,
       };
 
       expect(Reflect.defineMetadata).toHaveBeenCalledWith(
@@ -100,6 +108,7 @@ describe("All() All method", () => {
         middleware: mockMiddleware,
         path,
         target,
+        version: undefined,
       };
 
       expect(Reflect.defineMetadata).toHaveBeenCalledWith(

@@ -1,0 +1,139 @@
+/**
+ * Vercel Adapter for ExpressoTS Micro API
+ *
+ * Converts Vercel serverless function requests to Express format.
+ */
+
+import { Application, Request, Response } from "express";
+
+/**
+ * Vercel Request type - extends Express Request with Vercel-specific properties
+ */
+export interface VercelRequest extends Request {
+  query: Record<string, string | Array<string>>;
+  cookies: Record<string, string>;
+  body: unknown;
+}
+
+/**
+ * Vercel Response type - use Express Response directly to avoid type conflicts
+ */
+export type VercelResponse = Response;
+
+/**
+ * Vercel Handler Type
+ */
+export type VercelHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
+
+/**
+ * Vercel Adapter Configuration
+ */
+export interface VercelAdapterConfig {
+  /** Enable debug logging */
+  debug?: boolean;
+}
+
+/**
+ * Create a Vercel serverless handler from an Express app
+ *
+ * @example
+ * ```typescript
+ * // api/index.ts
+ * import { createMicroAPI, vercelAdapter } from "@expressots/adapter-express";
+ *
+ * const microAPI = createMicroAPI();
+ * const app = microAPI.build();
+ *
+ * app.Middleware.parse();
+ * app.Route.get("/api", (req, res) => res.json({ message: "Hello Vercel!" }));
+ *
+ * export default vercelAdapter(app);
+ * ```
+ *
+ * vercel.json:
+ * ```json
+ * {
+ *   "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
+ * }
+ * ```
+ */
+export function vercelAdapter(
+  app: { getExpressApp?: () => Application } | Application,
+  config?: VercelAdapterConfig,
+): VercelHandler {
+  const expressApp =
+    "getExpressApp" in app && app.getExpressApp ? app.getExpressApp() : (app as Application);
+
+  const debug = config?.debug ?? false;
+
+  return async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+    if (debug) {
+      console.log("[Vercel] Request:", {
+        method: req.method,
+        url: req.url,
+        query: req.query,
+      });
+    }
+
+    // Vercel passes the request directly to Express
+    // We just need to handle the response properly
+    return new Promise((resolve) => {
+      const originalEnd = res.end.bind(res);
+
+      // Override end to resolve the promise when response is complete
+      // Using 'any' to avoid complex Express Response type conflicts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (res as any).end = function (
+        this: Response,
+        chunk?: unknown,
+        encoding?: unknown,
+        callback?: () => void,
+      ): Response {
+        if (debug) {
+          console.log("[Vercel] Response:", {
+            statusCode: res.statusCode,
+          });
+        }
+
+        // Call original end with proper typing
+        if (typeof chunk === "function") {
+          originalEnd();
+          (chunk as () => void)();
+        } else if (typeof encoding === "function") {
+          originalEnd(chunk as string | Buffer);
+          (encoding as () => void)();
+        } else if (callback) {
+          originalEnd(chunk as string | Buffer, encoding as BufferEncoding, callback);
+        } else if (encoding) {
+          originalEnd(chunk as string | Buffer, encoding as BufferEncoding);
+        } else if (chunk) {
+          originalEnd(chunk as string | Buffer);
+        } else {
+          originalEnd();
+        }
+
+        resolve();
+        return this;
+      };
+
+      // Handle request through Express
+      try {
+        expressApp(req as Request, res as Response, (err: unknown) => {
+          if (err) {
+            console.error("[Vercel] Express error:", err);
+            res.status(500).json({
+              error: err instanceof Error ? err.message : "Unknown error",
+            });
+            resolve();
+          }
+        });
+      } catch (error: unknown) {
+        console.error("[Vercel] Handler error:", error);
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+        resolve();
+      }
+    });
+  };
+}

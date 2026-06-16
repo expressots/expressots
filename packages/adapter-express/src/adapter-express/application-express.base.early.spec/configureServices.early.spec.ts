@@ -5,7 +5,7 @@ import { ApplicationBase } from "../application-express.base";
 class ConcreteApplication extends ApplicationBase {
   private servicesConfigured: boolean = false;
 
-  protected async globalConfiguration(): Promise<void> {}
+  protected globalConfiguration(): void {}
 
   protected async configureServices(): Promise<void> {
     this.servicesConfigured = true;

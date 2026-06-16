@@ -46,7 +46,7 @@ describe("Put() Put method", () => {
 
       // Act
       const decorator: HandlerDecorator = Put(path, mockMiddleware as any);
-      const target: DecoratorTarget = class TestController {};
+      const target = class TestController {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 
@@ -68,7 +68,7 @@ describe("Put() Put method", () => {
 
       // Act
       const decorator: HandlerDecorator = Put(path);
-      const target: DecoratorTarget = class TestController {};
+      const target = class TestController {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 
@@ -88,7 +88,7 @@ describe("Put() Put method", () => {
 
       // Act
       const decorator: HandlerDecorator = Put(path, mockMiddleware as any);
-      const target: DecoratorTarget = class TestController {};
+      const target = class TestController {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 
@@ -110,7 +110,7 @@ describe("Put() Put method", () => {
 
       // Act
       const decorator: HandlerDecorator = Put(path, mockMiddleware1 as any, mockMiddleware2 as any);
-      const target: DecoratorTarget = class TestController {};
+      const target = class TestController {} as unknown as DecoratorTarget;
       const key = "testMethod";
       decorator(target, key, undefined);
 

@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { inject, injectable, decorate } from "@expressots/core";
+import { inject, injectable, decorate, getGlobalUploadConfig } from "@expressots/core";
 import {
   TYPE,
   METADATA_KEY,
@@ -8,7 +8,7 @@ import {
   HTTP_VERBS_ENUM,
   HTTP_CODE_METADATA,
   RENDER_METADATA_KEY,
-} from "./constants";
+} from "./constants.js";
 import type {
   Controller,
   ControllerMetadata,
@@ -17,13 +17,18 @@ import type {
   DecoratorTarget,
   HandlerDecorator,
   Middleware,
+  NewableFunction,
   ParameterMetadata,
-} from "./interfaces";
-import { packageResolver } from "./resolver-multer";
+} from "./interfaces.js";
+import { packageResolver } from "./resolver-multer.js";
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import { Report, StatusCode } from "@expressots/core";
+import { splitPathConstraints, createPathConstraintMiddleware } from "./path-pattern-compat.js";
 
-export const injectHttpContext = inject(TYPE.HttpContext);
+// Explicit type annotation: without this, the inferred type pulls a
+// non-portable path from @expressots/core's internal decorator_utils,
+// which TS2742 rejects under NodeNext when emitting .d.ts files.
+export const injectHttpContext: ParameterDecorator & PropertyDecorator = inject(TYPE.HttpContext);
 
 /**
  * Controller decorator to define a new controller
@@ -33,10 +38,28 @@ export const injectHttpContext = inject(TYPE.HttpContext);
  */
 export function controller(path: string, ...middleware: Array<Middleware>) {
   return (target: NewableFunction): void => {
+    // Check for version metadata on the controller class
+    const controllerVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target) as
+      | string
+      | number
+      | undefined;
+
+    // Translate any inline regex constraints in the controller-level
+    // prefix (`@controller("/users/:tenant(\\d+)")`) into a
+    // request-time validator. Keeps `@controller("/")` and the common
+    // case allocation-free.
+    const split = splitPathConstraints(path);
+    const constraintMiddleware = createPathConstraintMiddleware(split.constraints);
+    const effectivePath = split.path;
+    const effectiveMiddleware: Array<Middleware> = constraintMiddleware
+      ? [constraintMiddleware as Middleware, ...middleware]
+      : middleware;
+
     const currentMetadata: ControllerMetadata = {
-      middleware,
-      path,
-      target,
+      middleware: effectiveMiddleware,
+      path: effectivePath,
+      target: target as DecoratorTarget,
+      version: controllerVersion,
     };
 
     const pathMetadata = Reflect.getOwnMetadata(HTTP_CODE_METADATA.path, Reflect) || {};
@@ -46,8 +69,20 @@ export function controller(path: string, ...middleware: Array<Middleware>) {
 
     for (const key in pathMetadata) {
       if (statusCodeMetadata && statusCodeMetadata[key]) {
-        const realPath =
-          pathMetadata[key]["path"] === "/" ? path : `${path}${pathMetadata[key]["path"]}`;
+        const methodPath = pathMetadata[key]["path"];
+        // Properly join controller and method paths. The controller
+        // path is the v8-cleaned `effectivePath` so the mapping key is
+        // consistent with what gets registered on Express.
+        let realPath: string;
+        if (methodPath === "/" || methodPath === "") {
+          realPath = effectivePath;
+        } else if (effectivePath === "/" || effectivePath === "") {
+          realPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
+        } else {
+          const basePath = effectivePath.endsWith("/") ? effectivePath.slice(0, -1) : effectivePath;
+          const subPath = methodPath.startsWith("/") ? methodPath : `/${methodPath}`;
+          realPath = `${basePath}${subPath}`;
+        }
 
         statusCodePathMapping[`${realPath}/-${pathMetadata[key]["method"].toLowerCase()}`] =
           statusCodeMetadata[key];
@@ -96,6 +131,65 @@ export function Http(code: number) {
     }
 
     Reflect.defineMetadata(HTTP_CODE_METADATA.statusCode, httpCodeMetadata, Reflect);
+  };
+}
+
+/**
+ * Version decorator to define the API version for a controller or route method
+ * @param version API version (e.g., "1", "1.0", "v1", or 1)
+ * @returns ClassDecorator | MethodDecorator
+ * @example ```typescript
+ * @Version("1")
+ * @controller("/users")
+ * class UserController {}
+ *
+ * // Or at method level:
+ * @Version("2")
+ * @Get("/")
+ * getUsers() {
+ *   return "v2 users";
+ * }
+ * ```
+ * @public API
+ */
+export function Version(version: string | number) {
+  // Normalize version to string format (e.g., "v1" or "1" -> "v1")
+  const normalizedVersion =
+    typeof version === "number" ? `v${version}` : version.startsWith("v") ? version : `v${version}`;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (target: any, key?: string | symbol, descriptor?: any): void => {
+    if (key !== undefined && descriptor !== undefined) {
+      // Method decorator - store version metadata for the method
+      // This will be read by enhancedHttpMethod/Method when they create metadata
+      Reflect.defineMetadata(METADATA_KEY.version, normalizedVersion, target, key);
+
+      // Also update existing metadata if it exists
+      const metadataList = Reflect.getOwnMetadata(
+        METADATA_KEY.controllerMethod,
+        target.constructor,
+      ) as Array<ControllerMethodMetadata> | undefined;
+
+      if (metadataList) {
+        const methodMetadata = metadataList.find((m) => m.key === key);
+        if (methodMetadata) {
+          methodMetadata.version = normalizedVersion;
+        }
+      }
+    } else {
+      // Class decorator - store version metadata for the controller
+      // This will be read by controller decorator when it creates metadata
+      Reflect.defineMetadata(METADATA_KEY.version, normalizedVersion, target);
+
+      // Also update existing metadata if it exists
+      const controllerMetadata = Reflect.getOwnMetadata(METADATA_KEY.controller, target) as
+        | ControllerMetadata
+        | undefined;
+
+      if (controllerMetadata) {
+        controllerMetadata.version = normalizedVersion;
+      }
+    }
   };
 }
 
@@ -179,13 +273,31 @@ function enhancedHttpMethod(
   path: string,
   ...middleware: Array<Middleware>
 ): HandlerDecorator {
-  return (target: DecoratorTarget, key: string): void => {
+  return (target: object, key: string | symbol): void => {
+    // Check for version metadata on the method
+    const methodVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target, key) as
+      | string
+      | number
+      | undefined;
+
+    // Express 5 / path-to-regexp v8 dropped inline regex constraints
+    // (`:id(\\d+)`). Split them out into a v8-compatible path + a
+    // request-time validator middleware so existing routes — and our
+    // {@link Patterns} / {@link pattern} public API — keep working.
+    const split = splitPathConstraints(path);
+    const constraintMiddleware = createPathConstraintMiddleware(split.constraints);
+    const effectivePath = split.path;
+    const effectiveMiddleware: Array<Middleware> = constraintMiddleware
+      ? [constraintMiddleware as Middleware, ...middleware]
+      : middleware;
+
     const metadata: ControllerMethodMetadata = {
-      key,
+      key: String(key),
       method,
-      middleware,
-      path,
-      target,
+      middleware: effectiveMiddleware,
+      path: effectivePath,
+      target: target as DecoratorTarget,
+      version: methodVersion,
     };
     let metadataList: Array<ControllerMethodMetadata> = [];
 
@@ -193,13 +305,13 @@ function enhancedHttpMethod(
 
     if (pathMetadata) {
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     } else {
       pathMetadata = {};
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     }
@@ -242,13 +354,28 @@ export function Method(
   path: string,
   ...middleware: Array<Middleware>
 ): HandlerDecorator {
-  return (target: DecoratorTarget, key: string): void => {
+  return (target: object, key: string | symbol): void => {
+    // Check for version metadata on the method
+    const methodVersion = Reflect.getOwnMetadata(METADATA_KEY.version, target, key) as
+      | string
+      | number
+      | undefined;
+
+    // Same path-to-regexp v8 compatibility shim as `enhancedHttpMethod`.
+    const split = splitPathConstraints(path);
+    const constraintMiddleware = createPathConstraintMiddleware(split.constraints);
+    const effectivePath = split.path;
+    const effectiveMiddleware: Array<Middleware> = constraintMiddleware
+      ? [constraintMiddleware as Middleware, ...middleware]
+      : middleware;
+
     const metadata: ControllerMethodMetadata = {
-      key,
+      key: String(key),
       method,
-      middleware,
-      path,
-      target,
+      middleware: effectiveMiddleware,
+      path: effectivePath,
+      target: target as DecoratorTarget,
+      version: methodVersion,
     };
 
     let metadataList: Array<ControllerMethodMetadata> = [];
@@ -257,13 +384,13 @@ export function Method(
 
     if (pathMetadata) {
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     } else {
       pathMetadata = {};
       pathMetadata[key] = {
-        path,
+        path: effectivePath,
         method,
       };
     }
@@ -518,11 +645,40 @@ function isResponse(obj: unknown): obj is Response {
 }
 
 /**
- * File upload decorator to handle file uploads
- * @param options
- * @param multerOptions
+ * File upload decorator to handle file uploads.
+ *
+ * This decorator integrates with the global upload configuration
+ * set via `Middleware.upload()` in app.ts. If global config exists,
+ * it will be used as defaults, with local options taking precedence.
+ *
+ * @param options - Field configuration (fieldName, maxCount, none, any)
+ * @param multerOptions - Optional multer options (overrides global config)
  * @default { none: true }
  * @returns MethodDecorator
+ *
+ * @example
+ * ```typescript
+ * // In app.ts - configure globally (optional)
+ * this.Middleware.upload({
+ *   destination: './uploads',
+ *   limits: { fileSize: 10 * 1024 * 1024 }
+ * });
+ *
+ * // In controller - uses global config automatically
+ * @Post('avatar')
+ * @FileUpload({ fieldName: 'avatar' })
+ * uploadAvatar(req: Request) {
+ *   return req.file;
+ * }
+ *
+ * // Override global config for specific endpoint
+ * @Post('document')
+ * @FileUpload({ fieldName: 'doc' }, { limits: { fileSize: 50 * 1024 * 1024 } })
+ * uploadDocument(req: Request) {
+ *   return req.file;
+ * }
+ * ```
+ *
  * @public API
  */
 export function FileUpload(
@@ -539,7 +695,44 @@ export function FileUpload(
       options = { none: true };
     }
 
-    upload = multer(multerOptions);
+    // Get global upload configuration (set via Middleware.upload())
+    const globalConfig = getGlobalUploadConfig();
+
+    // Build final multer options, merging global config with local options
+    // Local options always take precedence over global config
+    const finalMulterOptions: MulterOptions = {};
+
+    // Apply global config as defaults
+    if (globalConfig) {
+      if (globalConfig.destination) {
+        finalMulterOptions.dest = globalConfig.destination;
+      }
+      if (globalConfig.limits) {
+        finalMulterOptions.limits = globalConfig.limits;
+      }
+    }
+
+    // Apply local options (overrides global)
+    if (multerOptions) {
+      if (multerOptions.dest) {
+        finalMulterOptions.dest = multerOptions.dest;
+      }
+      if (multerOptions.limits) {
+        // Merge limits - local takes precedence
+        finalMulterOptions.limits = {
+          ...finalMulterOptions.limits,
+          ...multerOptions.limits,
+        };
+      }
+      if (multerOptions.storage) {
+        finalMulterOptions.storage = multerOptions.storage;
+      }
+      if (multerOptions.fileFilter) {
+        finalMulterOptions.fileFilter = multerOptions.fileFilter;
+      }
+    }
+
+    upload = multer(finalMulterOptions);
     method = inferMulterMethod(options);
   }
 

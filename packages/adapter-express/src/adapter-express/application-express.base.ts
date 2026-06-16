@@ -12,7 +12,9 @@
  * class Application extends ApplicationBase {
  *   protected configureServices() { //... }
  *   protected postServerInitialization() { //... }
- *   protected serverShutdown() { //... }
+ *   protected serverShutdown(signal) {
+ *     console.log(`Shutting down due to ${signal}`);
+ *   }
  * }
  *
  * @export
@@ -21,15 +23,18 @@
 export abstract class ApplicationBase {
   /**
    * Implement this method to set up global configurations for the server.
-   * This method is called before any other server initialization methods.
-   * Use this method to configure global settings that apply to the entire
-   * server application. Supports asynchronous setup with a Promise.
+   * This method is called synchronously in the constructor before any other
+   * server initialization methods. Use this method to configure global settings
+   * that apply to the entire server application.
+   *
+   * Note: This method is synchronous and called during object construction.
+   * For asynchronous initialization, use `configureServices()` instead.
    *
    * @abstract
-   * @returns {void | Promise<void>}
+   * @returns {void}
    * @public API
    */
-  protected abstract globalConfiguration(): void | Promise<void>;
+  protected abstract globalConfiguration(): void;
 
   /**
    * Implement this method to set up required services or configurations before
@@ -59,9 +64,17 @@ export abstract class ApplicationBase {
    * cleanup procedures to ensure a graceful server shutdown. Supports asynchronous
    * cleanup with a Promise.
    *
+   * The signal parameter indicates what triggered the shutdown:
+   * - SIGTERM: Graceful termination (e.g., Kubernetes pod shutdown)
+   * - SIGINT: User interrupt (e.g., Ctrl+C)
+   * - SIGHUP: Terminal hangup
+   * - SIGQUIT: Quit with core dump
+   * - SIGBREAK: Windows break signal
+   *
    * @abstract
+   * @param signal - The signal that triggered the shutdown (optional for backward compatibility)
    * @returns {void | Promise<void>}
    * @public API
    */
-  protected abstract serverShutdown(): void | Promise<void>;
+  protected abstract serverShutdown(signal?: NodeJS.Signals): void | Promise<void>;
 }

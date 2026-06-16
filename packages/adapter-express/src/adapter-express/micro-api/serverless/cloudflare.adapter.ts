@@ -1,0 +1,216 @@
+/**
+ * Cloudflare Workers Adapter for ExpressoTS Micro API
+ *
+ * Converts Cloudflare Workers requests to Express format.
+ * Note: This adapter requires a Cloudflare Workers-compatible Express implementation
+ * or uses a fetch-based approach.
+ */
+
+import { Application } from "express";
+
+/**
+ * Cloudflare Workers Environment bindings
+ */
+export interface CloudflareEnv {
+  [key: string]: unknown;
+}
+
+/**
+ * Cloudflare Workers Execution Context
+ */
+export interface CloudflareContext {
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
+}
+
+/**
+ * Cloudflare Workers Handler Type
+ */
+export type CloudflareHandler = {
+  fetch(
+    request: globalThis.Request,
+    env: CloudflareEnv,
+    ctx: CloudflareContext,
+  ): Promise<globalThis.Response>;
+};
+
+/**
+ * Cloudflare Adapter Configuration
+ */
+export interface CloudflareAdapterConfig {
+  /** Enable debug logging */
+  debug?: boolean;
+}
+
+/**
+ * Create a Cloudflare Workers handler from an Express app
+ *
+ * Note: Full Express compatibility in Cloudflare Workers requires
+ * additional setup. This adapter provides a basic implementation.
+ *
+ * @example
+ * ```typescript
+ * // src/worker.ts
+ * import { createMicroAPI, cloudflareAdapter } from "@expressots/adapter-express";
+ *
+ * const microAPI = createMicroAPI();
+ * const app = microAPI.build();
+ *
+ * app.Middleware.parse();
+ * app.Route.get("/", (req, res) => res.json({ message: "Hello Workers!" }));
+ *
+ * export default cloudflareAdapter(app);
+ * ```
+ *
+ * wrangler.toml:
+ * ```toml
+ * name = "my-worker"
+ * main = "src/worker.ts"
+ * compatibility_date = "2024-01-01"
+ * ```
+ */
+export function cloudflareAdapter(
+  app: { getExpressApp?: () => Application } | Application,
+  config?: CloudflareAdapterConfig,
+): CloudflareHandler {
+  const expressApp =
+    "getExpressApp" in app && app.getExpressApp ? app.getExpressApp() : (app as Application);
+
+  const debug = config?.debug ?? false;
+
+  return {
+    async fetch(
+      request: globalThis.Request,
+      env: CloudflareEnv,
+      ctx: CloudflareContext,
+    ): Promise<globalThis.Response> {
+      const url = new URL(request.url);
+
+      if (debug) {
+        console.log("[Cloudflare] Request:", {
+          method: request.method,
+          url: request.url,
+          path: url.pathname,
+        });
+      }
+
+      // Parse body if present
+      let body: string | undefined;
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        body = await request.text();
+      }
+
+      // Build query parameters
+      const query: Record<string, string> = {};
+      url.searchParams.forEach((value, key) => {
+        query[key] = value;
+      });
+
+      // Build headers
+      const headers: Record<string, string> = {};
+      request.headers.forEach((value, key) => {
+        headers[key.toLowerCase()] = value;
+      });
+
+      return new Promise((resolve) => {
+        // Create mock Express-compatible request object
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const req: any = {
+          method: request.method,
+          url: url.pathname + url.search,
+          path: url.pathname,
+          headers,
+          query,
+          params: {},
+          body: body ? JSON.parse(body) : undefined,
+          get: (name: string) => headers[name.toLowerCase()],
+          cloudflare: { env, ctx },
+        };
+
+        // Create mock Express-compatible response object
+        const chunks: Array<Buffer> = [];
+        const responseHeaders: Record<string, string> = {};
+        let statusCode = 200;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res: any = {
+          statusCode: 200,
+          setHeader: (name: string, value: string) => {
+            responseHeaders[name.toLowerCase()] = value;
+          },
+          getHeader: (name: string) => responseHeaders[name.toLowerCase()],
+          write: (chunk: string | Buffer) => {
+            chunks.push(Buffer.from(chunk));
+          },
+          end: (chunk?: string | Buffer) => {
+            if (chunk) {
+              chunks.push(Buffer.from(chunk));
+            }
+
+            const bodyBuffer = Buffer.concat(chunks);
+
+            if (debug) {
+              console.log("[Cloudflare] Response:", {
+                statusCode,
+                headers: responseHeaders,
+                bodyLength: bodyBuffer.length,
+              });
+            }
+
+            resolve(
+              new globalThis.Response(bodyBuffer, {
+                status: statusCode,
+                headers: responseHeaders,
+              }),
+            );
+          },
+          status: (code: number) => {
+            statusCode = code;
+            return res;
+          },
+          json: (data: unknown) => {
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify(data));
+          },
+          send: (data: unknown) => {
+            if (typeof data === "string") {
+              res.setHeader("content-type", "text/html");
+              res.end(data);
+            } else if (Buffer.isBuffer(data)) {
+              res.end(data);
+            } else {
+              res.json(data);
+            }
+          },
+        };
+
+        // Handle request through Express
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          expressApp(req, res, (err: any) => {
+            if (err) {
+              console.error("[Cloudflare] Express error:", err);
+              resolve(
+                new globalThis.Response(JSON.stringify({ error: err.message }), {
+                  status: 500,
+                  headers: {
+                    "content-type": "application/json",
+                  },
+                }),
+              );
+            }
+          });
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error("[Cloudflare] Handler error:", error);
+          resolve(
+            new globalThis.Response(JSON.stringify({ error: errorMessage }), {
+              status: 500,
+              headers: { "content-type": "application/json" },
+            }),
+          );
+        }
+      });
+    },
+  };
+}

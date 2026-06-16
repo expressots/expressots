@@ -18,6 +18,7 @@ jest.mock("../render/engine", () => {
 // Mock classes and types
 class MockLogger {
   error = jest.fn();
+  warn = jest.fn();
 }
 
 class MockConsole {

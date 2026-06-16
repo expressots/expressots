@@ -1,4 +1,35 @@
+## [4.0.0-preview.3](https://github.com/expressots/adapter-express/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
+Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
+
+### Features
+
+* **Express 5:** upgraded to Express `^5.1.0` and `@types/express@^5`. Route registration uses `app.use(handler)` for the global HttpContext middleware (was `app.all("*", ...)`) so we are forward-compatible with `path-to-regexp` v8.
+* **AppExpress lifecycle:** `globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown` hooks fully wired with async support; `setGlobalRoutePrefix`, `setBanner({ style, showMetrics })`, `isDevelopment()`, `getPort()` helpers.
+* **systems setup helpers:** `setupInterceptorsForExpress`, `setupEventSystemForExpress`, `setupLazyLoadingForExpress`, `setupAuthorizationForExpress` — one-call wiring for the new core subsystems with consistent return-shape diagnostics (`interceptorsRegistered`, `handlersDiscovered`, `lazyModulesCount`, `routeMappings`, ...).
+* **`micro()` API:** single-file Express apps with auto-response serialisation, optional global route prefix, environment-aware banner, and `setErrorHandler`.
+* **serverless adapters:** `awsLambdaAdapter`, `vercelAdapter`, `cloudflareAdapter` — same code runs locally and on the target platform with binary content-type and base64 handling.
+* **microservices primitives:** `CircuitBreaker`, `ServiceDiscovery` (static + dynamic), `ServiceClient` (timeouts, retries, circuit-breaker integration), `ServiceProxy` via `createProxy` with `pathRewrite` / `changeOrigin` / `onError`.
+* **content negotiation runtime + decorators:** `@Accept`, `@Consumes`, `@Produces`, `StreamResponse` decorators; `addContentNegotiation` middleware factory with `XmlOptions`, `CsvOptions`, `YamlOptions`, quality-value support, lazy formatter loading; built-in JSON / XML / CSV / YAML / Text formatters.
+* **route constraints + API versioning:** `@Version` decorator, `Patterns` route-constraint catalogue (`NUMERIC_ID`, `UUID`, `SLUG`, `ALPHA`, `ALPHANUMERIC`, `ANY_PATH`), URL / header / query versioning helpers.
+* **smart validation runtime:** `Middleware.addValidation({ smartDetection, autoDetection, errorFormat })`.
+* **request logging middleware:** `createRequestLoggingMiddleware(logger, { verbosity, logBody, logHeaders, slowRequestThreshold, requestIdHeader, correlationIdHeader })`.
+* **route, body, query, params, header decorators:** `@Get/@Post/@Put/@Delete/@Patch`, `@body`, `@query`, `@param`, `@headers`.
+* **exception filter middleware:** `Middleware.setErrorHandler({ showStackTrace, enableExceptionFilters })`.
+* **studio agent integration:** `@expressots/studio-agent` is an optional peer dependency — adapter-express dynamically imports it only when `NODE_ENV=development` and the package is installed; production deployments pay zero runtime cost. Detection now uses `createRequire(import.meta.url)` so it works in both CJS and ESM consumers.
+
+### Bug Fixes
+
+* **import-time stdio:** importing `@expressots/adapter-express` no longer mutates `process.stdout.write`, `process.stderr.write`, or `console.*`. Banner-first log buffering is now opt-in: `bootstrap()` activates it before app construction, the `AppExpress` constructor is a safety net, and `micro()` keeps disabling it on entry. Test harnesses, type-only consumers, and IDE tooling that import the module without booting an app see normal stdio. (Regression test: `application-express.early.spec/no-import-side-effects.early.spec.ts`.)
+* **runtime dep classification:** `@expressots/core` and `@expressots/shared` are now declared in `dependencies` (previously misclassified as `devDependencies`). Fresh `npm install @expressots/adapter-express` no longer throws `Cannot find module '@expressots/core'`.
+* `setupAuthorizationForExpress` signature corrected to `(container, config?, middleware?, authProvider?)` so the auth provider is passed as the fourth argument rather than inside the config object.
+
+### Breaking Changes
+
+* **Express 5** is now required. Most apps need no changes; review the [Express 5 migration guide](https://expressjs.com/en/guide/migrating-5.html) if you used `req.param()`, `app.del()`, or path patterns like `:foo?` / `:foo*`.
+* All `AppExpress` lifecycle methods are now async; `await` them or rely on the bootstrap pipeline to drive them.
+* `getHttpServer()` now returns an `http.Server` instance (was `AppExpress` in v3).
+* `server.listen(0)` now resolves to a randomly assigned port and the actual port is observable via `getHttpServer().address()`.
 
 ## [3.0.0](https://github.com/expressots/adapter-express/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 

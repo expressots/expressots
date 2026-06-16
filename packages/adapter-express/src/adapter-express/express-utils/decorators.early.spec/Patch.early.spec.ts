@@ -33,7 +33,7 @@ describe("Patch() Patch method", () => {
       // Arrange
       const path = "/test";
       const middleware: MockMiddleware[] = [jest.fn(), jest.fn().mockName("mockConstructor")];
-      const target: DecoratorTarget = class {};
+      const target = class {} as unknown as DecoratorTarget;
       const key = "testMethod";
 
       // Act
@@ -54,7 +54,7 @@ describe("Patch() Patch method", () => {
     it("should handle when no middleware is provided", () => {
       // Arrange
       const path = "/test";
-      const target: DecoratorTarget = class {};
+      const target = class {} as unknown as DecoratorTarget;
       const key = "testMethod";
 
       // Act
@@ -74,7 +74,7 @@ describe("Patch() Patch method", () => {
       // Arrange
       const path = "";
       const middleware: MockMiddleware[] = [jest.fn()];
-      const target: DecoratorTarget = class {};
+      const target = class {} as unknown as DecoratorTarget;
       const key = "testMethod";
 
       // Act
