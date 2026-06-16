@@ -1,58 +1,71 @@
+# ExpressoTS Examples
+
 <div align="center">
   <a href="https://expresso-ts.com">
-    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+    <img src="./expressots.png" alt="ExpressoTS" width="120">
   </a>
 
-  <h1>ExpressoTS Examples</h1>
+  <h1>ExpressoTS v4 Examples</h1>
 
-  <p>Example projects and demonstrations of the ExpressoTS framework.</p>
-
-  <p>
-    <a href="https://github.com/expressots/examples/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/examples?style=flat-square&color=181717" alt="License"></a>
-    <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/examples/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/examples/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
-  </p>
-
-  <p>
-    <a href="https://doc.expresso-ts.com">Documentation</a> ·
-    <a href="https://doc.expresso-ts.com/docs/core/first-steps">Getting Started</a> ·
-    <a href="https://github.com/orgs/expressots/projects/5">Project Board</a> ·
-    <a href="https://discord.com/invite/PyPJfGK">Community</a>
-  </p>
+  <p>Focused, runnable examples for common backend patterns with ExpressoTS v4.</p>
 </div>
 
 ---
 
-## About
+## v4 catalog
 
-Runnable examples that demonstrate ExpressoTS patterns: project structure, providers, middleware, testing, and integrations. Clone an example and follow its README to get started.
+See **[CATALOG.md](./CATALOG.md)** for the full list of 15 examples mapped to documentation.
 
-## Quick Start
+| # | Example | Topic |
+| --- | --- | --- |
+| 01 | [starter-api](./01-starter-api/) | Minimal REST API |
+| 02 | [jwt-authentication](./02-jwt-authentication/) | JWT + AuthProvider |
+| 03 | [authorization-rbac](./03-authorization-rbac/) | Roles and permissions |
+| 04 | [database-inmemory](./04-database-inmemory/) | InMemoryDBProvider |
+| 05 | [database-postgres](./05-database-postgres/) | PostgreSQL provider |
+| 06 | [database-prisma](./06-database-prisma/) | Prisma ORM |
+| 07 | [file-upload](./07-file-upload/) | File uploads |
+| 08 | [events](./08-events/) | Event system |
+| 09 | [message-queue](./09-message-queue/) | BullMQ jobs |
+| 10 | [redis-cache](./10-redis-cache/) | Redis cache |
+| 11 | [testing](./11-testing/) | Test utilities |
+| 12 | [docker-compose](./12-docker-compose/) | Docker Compose dev |
+| 13 | [micro-api](./13-micro-api/) | Micro API |
+| 14 | [interceptors](./14-interceptors/) | Interceptors |
+| 15 | [openapi-studio](./15-openapi-studio/) | OpenAPI + Studio |
+
+**Preview pin:** `@expressots/*@4.0.0-preview.3.4`
+
+## Previous versions
+
+Pre-v4 examples are under **[previousVersions/](./previousVersions/)**.
+
+## Quick start
 
 ```bash
 git clone https://github.com/expressots/examples.git
-cd examples
-# open the example directory you need
+cd examples/01-starter-api
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-Browse the repository folders for focused demos aligned with the [official documentation](https://doc.expresso-ts.com).
+## Test all examples
+
+```bash
+./scripts/test-all.sh
+```
+
+## Issues found during implementation
+
+See **[issues.md](./issues.md)** for framework bugs, doc drift, and workarounds discovered while building these examples.
 
 ## Documentation
 
-For guides, API reference, architecture patterns, and examples visit **[doc.expresso-ts.com](https://doc.expresso-ts.com)**.
-
-## Contributing
-
-Welcome to the ExpressoTS community. See the [Contributing Guide](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md) for how to get involved.
-
-## Support the project
-
-- [GitHub Sponsors](https://github.com/sponsors/expressots)
-- [Star the organization](https://github.com/expressots) on GitHub
-- [Discord](https://discord.com/invite/PyPJfGK)
-- [Report an issue](https://github.com/expressots/examples/issues)
+- [doc.expresso-ts.com](https://doc.expresso-ts.com)
+- [First steps](https://doc.expresso-ts.com/docs/core/first-steps)
+- [Example projects](https://doc.expresso-ts.com/docs/guides/example-projects)
 
 ## License
 
 MIT — see [LICENSE](./LICENSE.md).
-
