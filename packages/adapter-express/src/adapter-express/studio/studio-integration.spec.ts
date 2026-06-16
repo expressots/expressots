@@ -115,6 +115,18 @@ describe("studio-integration", () => {
     );
   });
 
+  it("ignores runtime update failures without breaking the host", async () => {
+    process.env.NODE_ENV = "development";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+    await initializeStudio(fakeApp, { enabled: true });
+    mockAgent.updateRuntimeInfo.mockImplementationOnce(() => {
+      throw new Error("runtime update failed");
+    });
+
+    expect(() => reportStudioRuntimeInfo({ appPort: 3000 })).not.toThrow();
+  });
+
   it("rescans routes and refreshes the container best-effort", async () => {
     process.env.NODE_ENV = "development";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -176,6 +188,18 @@ describe("studio-integration", () => {
     mockAgent.start.mockRejectedValueOnce(
       Object.assign(new Error("port in use"), { code: "EADDRINUSE" }),
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+
+    const started = await initializeStudio(fakeApp, { enabled: true });
+
+    expect(started).toBe(false);
+    expect(isStudioEnabled()).toBe(false);
+  });
+
+  it("returns false when agent startup fails for an unexpected reason", async () => {
+    process.env.NODE_ENV = "development";
+    mockAgent.start.mockRejectedValueOnce(new Error("unexpected startup failure"));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fakeApp: any = { use: jest.fn() };
 

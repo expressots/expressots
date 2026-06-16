@@ -20,12 +20,6 @@ describe("AppExpress log buffering static API", () => {
     expect(() => console.log("after-disable")).not.toThrow();
   });
 
-  it("handles object arguments while restoring original console methods", () => {
-    AppExpress.startLogBuffering();
-    console.warn({ nested: { value: 1 } });
-    AppExpress.disableBuffering();
-  });
-
   it("flushes buffered logs after disabling buffering", () => {
     const writes: string[] = [];
     const captureWrite = ((chunk: string | Uint8Array) => {
@@ -42,5 +36,19 @@ describe("AppExpress log buffering static API", () => {
     AppExpress.disableBuffering();
 
     expect(writes.join("")).toContain("queued-log");
+  });
+
+  it("falls back to String() when original console methods receive circular objects", () => {
+    AppExpress.startLogBuffering();
+    AppExpress.disableBuffering();
+
+    const circular: { self?: unknown } = {};
+    circular.self = circular;
+
+    expect(() =>
+      (
+        AppExpress as unknown as { originalGlobalConsole: { warn: (...args: unknown[]) => void } }
+      ).originalGlobalConsole.warn(circular),
+    ).not.toThrow();
   });
 });

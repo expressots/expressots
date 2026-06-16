@@ -312,4 +312,104 @@ describe("InversifyExpressServer.executeRouteHandler()", () => {
 
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: "boom" }));
   });
+
+  it("records flow tracker steps when validation fails", async () => {
+    const core = jest.requireMock("@expressots/core") as {
+      ContextManager: { getCurrentContext: jest.Mock };
+      findFlowTracker: jest.Mock;
+    };
+    const flowTracker = {
+      isEnabled: jest.fn().mockReturnValue(true),
+      startStep: jest.fn(),
+      endStep: jest.fn(),
+      failStep: jest.fn(),
+    };
+    core.ContextManager.getCurrentContext.mockReturnValue({ requestId: "req-1" });
+    core.findFlowTracker.mockReturnValue(flowTracker);
+
+    const server = buildExecuteServer();
+    const validationService = new ValidationService();
+    validationService.enable({
+      adapters: [ZodValidatorAdapter],
+      smartDetection: false,
+      autoDetection: false,
+    });
+    server.setValidationService(validationService);
+
+    class CreateDto {}
+    class ItemsController {
+      create(_dto: CreateDto): void {}
+    }
+    validatedBody(fakeSchema(() => false))(ItemsController.prototype, "create", 0);
+
+    const controller = new ItemsController();
+    const req = { method: "POST", path: "/items", body: { bad: true }, params: {} } as Request;
+    attachHttpContext(req, controller, "ItemsController");
+    server.extractParameters.mockReturnValue([req.body]);
+
+    const res = {
+      headersSent: false,
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      send: jest.fn(),
+    } as unknown as Response;
+
+    await server.executeRouteHandler(
+      req,
+      res,
+      jest.fn(),
+      "ItemsController",
+      "create",
+      [],
+      ItemsController,
+    );
+
+    expect(flowTracker.startStep).toHaveBeenCalledWith(
+      "validation",
+      "Validation: ItemsController.create",
+    );
+    expect(flowTracker.failStep).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it("stops when smart detection validation fails without explicit decorators", async () => {
+    const core = jest.requireMock("@expressots/core") as {
+      findFlowTracker: jest.Mock;
+    };
+    core.findFlowTracker.mockReturnValue(undefined);
+
+    const server = buildExecuteServer();
+    const validateParameters = jest.fn().mockResolvedValue(null);
+    server.setValidationService({
+      isEnabled: () => true,
+      validateParameters,
+    } as unknown as ValidationService);
+
+    class ItemsController {
+      create(body: { name: string }): { name: string } {
+        return body;
+      }
+    }
+
+    const controller = new ItemsController();
+    const body = { name: "Ada" };
+    const req = { method: "POST", path: "/items", body, params: {} } as Request;
+    attachHttpContext(req, controller, "ItemsController");
+    server.extractParameters.mockReturnValue([body]);
+
+    const send = jest.fn();
+    const res = { headersSent: false, send } as unknown as Response;
+
+    await server.executeRouteHandler(
+      req,
+      res,
+      jest.fn(),
+      "ItemsController",
+      "create",
+      [],
+      ItemsController,
+    );
+
+    expect(validateParameters).toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+  });
 });

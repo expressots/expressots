@@ -103,4 +103,62 @@ describe("AppExpress.displayStartupBanner() method", () => {
     expect(logger.warn).toHaveBeenCalledWith("helmet missing", "middleware");
     expect(clearStartupLogs).toHaveBeenCalled();
   });
+
+  it("falls back to the legacy console banner when banner generation throws", () => {
+    const appExpress = new AppExpress() as AppExpress;
+    const messageServer = jest.fn();
+    const display = jest.fn().mockImplementation(() => {
+      throw new Error("banner render failed");
+    });
+    const logger = {
+      withContext: jest.fn().mockReturnValue({ debug: jest.fn() }),
+      warn: jest.fn(),
+    };
+
+    (appExpress as unknown as { console: { messageServer: typeof messageServer } }).console = {
+      messageServer,
+    };
+    (appExpress as unknown as { logger: typeof logger }).logger = logger;
+    (appExpress as unknown as { bannerGenerator: { display: typeof display } }).bannerGenerator = {
+      display,
+    };
+    (appExpress as unknown as { port: number }).port = 3000;
+    (appExpress as unknown as { environment: string }).environment = "development";
+    (
+      appExpress as unknown as { appContainer: { Container: { isBound: () => boolean } } }
+    ).appContainer = { Container: { isBound: () => false } };
+    (
+      appExpress as unknown as {
+        providerManager: { discover: () => void; getFormattedView: () => string };
+      }
+    ).providerManager = {
+      discover: jest.fn(),
+      getFormattedView: () => "providers",
+    };
+    (appExpress as unknown as { middlewareManager: Record<string, unknown> }).middlewareManager = {
+      getMiddlewarePipeline: () => [],
+      getContentNegotiationService: () => null,
+      getValidationConfig: () => ({ smartDetection: false }),
+      getErrorHandler: () => jest.fn(),
+      getPipelineInfo: () => ({ entries: [] }),
+      getFormattedView: () => "middleware",
+      getStartupLogs: () => [],
+      clearStartupLogs: jest.fn(),
+    };
+
+    (
+      appExpress as unknown as { displayStartupBanner: (info?: { appName: string }) => void }
+    ).displayStartupBanner({ appName: "demo", appVersion: "1.0.0" } as never);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Failed to display startup banner, using fallback",
+      "adapter-express",
+      expect.any(Error),
+    );
+    expect(messageServer).toHaveBeenCalledWith(
+      3000,
+      "development",
+      expect.objectContaining({ appName: "demo" }),
+    );
+  });
 });

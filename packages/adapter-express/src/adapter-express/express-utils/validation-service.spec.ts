@@ -109,4 +109,27 @@ describe("ValidationService", () => {
 
     expect(result === null || Array.isArray(result)).toBe(true);
   });
+
+  it("scopes validation errors to named parameters", async () => {
+    const service = new ValidationService();
+    service.enable({
+      adapters: [ZodValidatorAdapter],
+      smartDetection: false,
+      autoDetection: false,
+    });
+
+    class ItemsController {
+      search(_id: string): void {}
+    }
+
+    const schema = fakeSchema(() => false);
+    validatedQuery("id", schema)(ItemsController.prototype, "search", 0);
+
+    const req = { query: { id: "bad" } } as unknown as Request;
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() } as unknown as Response;
+
+    await service.validateParameters(req, res, ItemsController, "search", ["bad"]);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
 });

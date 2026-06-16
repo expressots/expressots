@@ -42,6 +42,33 @@ describe("HttpStatusCodeMiddleware", () => {
     expect(res.statusCode).toBe(201);
   });
 
+  it("matches dynamic route segments from the status-code mapping", () => {
+    const middleware = new HttpStatusCodeMiddleware("/");
+    const req = { method: "GET", path: "/users/42", headers: {} } as Request;
+    const res = { status: jest.fn().mockReturnThis(), statusCode: 200 } as unknown as Response;
+
+    middleware.use(req, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("strips the global prefix before resolving status codes", () => {
+    Reflect.defineMetadata(
+      HTTP_CODE_METADATA.httpCode,
+      {
+        "/health/-get": 204,
+      },
+      Reflect,
+    );
+    const middleware = new HttpStatusCodeMiddleware("/api");
+    const req = { method: "GET", path: "/api/health", headers: {} } as Request;
+    const res = { status: jest.fn().mockReturnThis(), statusCode: 200 } as unknown as Response;
+
+    middleware.use(req, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(204);
+  });
+
   it("strips conditional headers when req.fresh cannot be overridden", () => {
     const middleware = new HttpStatusCodeMiddleware("/");
     const req = {

@@ -171,14 +171,57 @@ describe("AppExpress.listen() method", () => {
 
       await appExpress.listen(3000);
 
-      const socket = { once: jest.fn(), destroy: jest.fn() };
+      const closeCallbacks: Record<string, () => void> = {};
+      const socket = {
+        once: jest.fn((event: string, cb: () => void) => {
+          closeCallbacks[event] = cb;
+        }),
+        destroy: jest.fn(),
+      };
       connectionHandler?.(socket);
+      closeCallbacks.close?.();
 
       expect(
         (appExpress as unknown as { activeConnections: Set<unknown> }).activeConnections.has(
           socket,
         ),
-      ).toBe(true);
+      ).toBe(false);
+    });
+
+    it("should reject when the configured port cannot be freed", async () => {
+      jest
+        .spyOn(
+          appExpress as unknown as { ensurePortAvailable: (port: number) => Promise<boolean> },
+          "ensurePortAvailable",
+        )
+        .mockResolvedValue(false);
+
+      await expect(appExpress.listen(3000)).rejects.toThrow(/still in use/);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Port 3000 is still in use and could not be freed",
+        "adapter-express",
+      );
+    });
+
+    it("should reject generic server startup errors", async () => {
+      mockApp.listen = jest.fn().mockImplementation(() => {
+        const server = {
+          on: jest.fn((event: string, handler: (error: NodeJS.ErrnoException) => void) => {
+            if (event === "error") {
+              process.nextTick(() => handler(Object.assign(new Error("boom"), { code: "EACCES" })));
+            }
+          }),
+          close: jest.fn(),
+          address: jest.fn(),
+        };
+        return server;
+      }) as unknown as typeof mockApp.listen;
+
+      await expect(appExpress.listen(3000)).rejects.toThrow("boom");
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Error starting server: boom",
+        "adapter-express",
+      );
     });
   });
 
@@ -259,14 +302,15 @@ describe("AppExpress.listen() method", () => {
 
       const sigintHandler = processOnSpy.mock.calls.find(([signal]) => signal === "SIGINT")?.[1];
       sigintHandler?.();
+      sigintHandler?.();
       await Promise.resolve();
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining("Signal SIGINT received"),
         "adapter-express",
       );
-      expect((appExpress as unknown as { handleExit: jest.Mock }).handleExit).toHaveBeenCalledWith(
-        "SIGINT",
+      expect((appExpress as unknown as { handleExit: jest.Mock }).handleExit).toHaveBeenCalledTimes(
+        1,
       );
     });
 

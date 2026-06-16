@@ -82,4 +82,44 @@ describe("InversifyExpressServer route registration", () => {
       ),
     ).toBe(true);
   });
+
+  it("wraps handlers with interceptors when the interceptor system is ready", () => {
+    class ApiController {
+      root(): string {
+        return "root";
+      }
+    }
+
+    (getControllersFromContainer as jest.Mock).mockReturnValue([new ApiController()]);
+    (getControllerMetadata as jest.Mock).mockReturnValue({
+      path: "/",
+      middleware: [],
+      target: ApiController,
+    });
+    (getControllerMethodMetadata as jest.Mock).mockReturnValue([
+      { key: "root", method: "get", path: "", middleware: [] },
+    ]);
+    (getControllerParameterMetadata as jest.Mock).mockReturnValue({});
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const server = Object.create(InversifyExpressServer.prototype) as any;
+    server._container = new MockContainer();
+    server._routingConfig = { rootPath: "" };
+    server._app = express();
+    server._router = express.Router();
+    server._forceControllers = false;
+    server.resolveMiddleware = jest.fn().mockReturnValue([]);
+    server.handlerFactory = jest.fn().mockReturnValue((_req, _res, next) => next());
+    server.extractInterceptors = jest.fn().mockReturnValue([class LoggingInterceptor {}]);
+    server.isInterceptorSystemReady = jest.fn().mockReturnValue(true);
+    server.wrapWithInterceptors = jest.fn((handler) => handler);
+    server.initializeInterceptorSystem = jest.fn();
+
+    server.registerControllers();
+
+    expect(server.wrapWithInterceptors).toHaveBeenCalled();
+    expect(
+      server._router.stack.some((layer: { route?: { path: string } }) => layer.route?.path === "/"),
+    ).toBe(true);
+  });
 });

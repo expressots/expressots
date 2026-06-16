@@ -1,54 +1,48 @@
-// Unit tests for: getControllerParameterMetadata
-
-import type { ControllerParameterMetadata } from "../interfaces";
-import { getControllerParameterMetadata } from "../utils";
 import "reflect-metadata";
+import { getControllerParameterMetadata, getContentNegotiationMetadata } from "../utils";
+import { METADATA_KEY } from "../constants";
 
-interface MockNewableFunction {
-  prototype: any;
-}
+describe("getControllerParameterMetadata()", () => {
+  class BaseController {}
+  class UsersController extends BaseController {
+    create(): void {}
+  }
 
-class MockConstructor implements MockNewableFunction {
-  prototype: any = {};
-}
+  it("returns generic metadata when only the parent class defines parameters", () => {
+    Reflect.defineMetadata(
+      METADATA_KEY.controllerParameter,
+      { create: [{ index: 0, type: 1 }] },
+      BaseController,
+    );
 
-describe("getControllerParameterMetadata() getControllerParameterMetadata method", () => {
-  let mockConstructor: MockConstructor;
-
-  beforeEach(() => {
-    mockConstructor = new MockConstructor();
-  });
-
-  describe("Happy Path", () => {});
-
-  describe("Edge Cases", () => {
-    it("should return undefined when both parameterMetadata and genericMetadata are undefined", () => {
-      // Arrange
-      Reflect.getOwnMetadata = jest.fn().mockReturnValue(undefined);
-      Reflect.getMetadata = jest.fn().mockReturnValue(undefined);
-
-      // Act
-      const result = getControllerParameterMetadata(mockConstructor as any);
-
-      // Assert
-      expect(result).toBeUndefined();
-    });
-
-    it("should handle empty metadata objects gracefully", () => {
-      // Arrange
-      const parameterMetadata: ControllerParameterMetadata = {};
-      const genericMetadata: ControllerParameterMetadata = {};
-
-      Reflect.getOwnMetadata = jest.fn().mockReturnValue(parameterMetadata as any);
-      Reflect.getMetadata = jest.fn().mockReturnValue(genericMetadata as any);
-
-      // Act
-      const result = getControllerParameterMetadata(mockConstructor as any);
-
-      // Assert
-      expect(result).toEqual({});
+    expect(getControllerParameterMetadata(UsersController)).toEqual({
+      create: [{ index: 0, type: 1 }],
     });
   });
 });
 
-// End of unit tests for: getControllerParameterMetadata
+describe("getContentNegotiationMetadata()", () => {
+  it("reads negotiation metadata keys from the controller method", () => {
+    class UsersController {
+      list(): void {}
+    }
+
+    Reflect.defineMetadata(
+      METADATA_KEY.accept,
+      ["application/json"],
+      UsersController.prototype,
+      "list",
+    );
+    Reflect.defineMetadata(
+      METADATA_KEY.produces,
+      ["text/plain"],
+      UsersController.prototype,
+      "list",
+    );
+
+    const metadata = getContentNegotiationMetadata(UsersController.prototype, "list");
+
+    expect(metadata.accept).toEqual(["application/json"]);
+    expect(metadata.produces).toEqual(["text/plain"]);
+  });
+});
