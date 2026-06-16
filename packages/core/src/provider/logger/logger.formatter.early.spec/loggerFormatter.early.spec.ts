@@ -136,6 +136,29 @@ describe("logger.formatter", () => {
       expect(result).toContain("Performance:");
       expect(result).toContain("Duration");
       expect(result).toContain("Memory");
+      expect(result).toContain("└─ Memory");
+    });
+
+    it("should mark the last performance metric with a tree terminator when cpu is absent", () => {
+      const entry = {
+        ...baseEntry,
+        performance: { duration: 150 },
+      };
+
+      const result = formatDev(entry);
+
+      expect(result).toContain("└─ Duration");
+    });
+
+    it("should include cpu usage as the final performance metric", () => {
+      const entry = {
+        ...baseEntry,
+        performance: { duration: 150, memoryDelta: 1024, cpuUsage: 12.5 },
+      };
+
+      const result = formatDev(entry);
+
+      expect(result).toContain("└─ CPU");
     });
 
     it("should format flow visualization", () => {
