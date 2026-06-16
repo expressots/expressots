@@ -45,7 +45,11 @@ jobs:
         run: npm ci
 
       - name: Build target workspace
-        run: npm run build -w @expressots/${{ inputs.package }}
+        run: |
+          if [ "${{ inputs.package }}" = "studio" ]; then
+            npm run build -w @expressots/studio-agent
+          fi
+          npm run build -w @expressots/${{ inputs.package }}
 
       - name: Test target workspace
         run: npm test -w @expressots/${{ inputs.package }}

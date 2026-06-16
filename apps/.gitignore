@@ -43,6 +43,8 @@ Thumbs.db
 
 # Test / coverage
 coverage/
+!packages/studio-agent/src/coverage/
+!packages/studio-agent/src/coverage/**
 .nyc_output/
 
 # Private keys / certs - never commit

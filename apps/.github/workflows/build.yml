@@ -32,7 +32,7 @@ jobs:
         run: npm run lint
 
       - name: Build all workspaces
-        run: npm run build --workspaces --if-present
+        run: npm run build
 
       - name: Test all workspaces
         run: npm run test --workspaces --if-present
