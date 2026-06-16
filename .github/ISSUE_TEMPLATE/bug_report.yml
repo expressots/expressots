@@ -62,9 +62,9 @@ body:
     attributes:
       label: "Package version"
       description: |
-        Which version of `@expressots/core` are you using?
+        Which version of this package are you using?
         **Tip**: Make sure that all of yours `@expressots/*` dependencies are in sync!
-      placeholder: "1.2.0"
+      placeholder: "@expressots/core (e.g. 3.0.0)"
 
   - type: input
     attributes:
