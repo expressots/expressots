@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+      - feature/v4.0
   pull_request:
-    branches: ["main"]
+    branches: ["main", "feature/v4.0"]
   pull_request_target:
     types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -15,34 +19,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.11.0"
+          node-version: "20.19.0"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
 
       - name: Unit Tests
-        working-directory: ./src
         run: npm run test
         env:
           CI: true
 
       - name: Run Code Coverage
-        working-directory: ./src
         run: npm run coverage
-
-      - name: Build
-        run: npm run build
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
           working-directory: .
           token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Set up .npmrc
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc

@@ -1,5 +1,5 @@
-import { ENV_VAR_REGEX } from "./constants";
-import { IConfigOptions } from "./interfaces";
+import { ENV_VAR_REGEX } from "./constants.js";
+import { IConfigOptions } from "./interfaces.js";
 
 /**
  * Matches the options passed in the command line

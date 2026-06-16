@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { configDotenv } from "../environment";
 import { IConfigOutput } from "../interfaces";
+import { log, LogLevel } from "../../utils/logger";
 
 // Mocking the logger
 jest.mock("../../utils/logger", () => {
@@ -49,13 +50,19 @@ describe("configDotenv() configDotenv method", () => {
       const result: IConfigOutput = configDotenv(mockOptions as any);
 
       // Assert
-      expect({
-        ANOTHER_KEY: "another_value",
-        KEY: "value",
-      }).toEqual({
+      expect(result.parsed).toEqual({
         KEY: "value",
         ANOTHER_KEY: "another_value",
       });
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should default options when called with no arguments", () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue("KEY=value");
+
+      const result: IConfigOutput = configDotenv();
+
+      expect(result.parsed).toEqual({ KEY: "value" });
       expect(result.error).toBeUndefined();
     });
   });
@@ -71,6 +78,19 @@ describe("configDotenv() configDotenv method", () => {
       expect(result.parsed).toEqual({});
       expect(result.error).toBeDefined();
       expect(result.error?.message).toBe("File not found");
+    });
+
+    it("should log debug output when file read fails and debug is enabled", () => {
+      mockOptions.debug = true;
+      (fs.readFileSync as jest.Mock).mockImplementation(() => {
+        throw new Error("File not found");
+      });
+
+      const result: IConfigOutput = configDotenv(mockOptions as any);
+
+      expect(result.parsed).toEqual({});
+      expect(result.error?.message).toBe("File not found");
+      expect(log).toHaveBeenCalledWith(expect.stringContaining("Failed to load"), LogLevel.Debug);
     });
 
     it("should handle empty .env file", () => {

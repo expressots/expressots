@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Server as HTTPServer } from "http";
-import { IConsoleMessage } from "./console.interface";
-import { Environment, IEnvironment } from "./environment.interface";
-import { RenderEngine } from "./render/render.types";
+import { IConsoleMessage } from "./console.interface.js";
+import { RenderEngine } from "./render/render.types.js";
 
 /**
  * Namespace for the Server Application.
@@ -14,8 +13,6 @@ export namespace Server {
    * Interface for the WebServer application implementation.
    */
   export interface IWebServer {
-    initEnvironment(environment: Environment, options?: IEnvironment): Promise<void>;
-
     listen(port: number | string, appInfo?: IConsoleMessage): Promise<IWebServerPublic>;
 
     setEngine<T extends RenderEngine.EngineOptions>(
@@ -55,6 +52,14 @@ export namespace Server {
      * @public API
      */
     getHttpServer(): Promise<HTTPServer>;
+
+    /**
+     * Get the port the server is listening on.
+     * Useful for dynamic port assignment (port: 0) in testing scenarios.
+     * @returns The actual port number the server is bound to.
+     * @public API
+     */
+    getPort(): Promise<number>;
   }
 }
 

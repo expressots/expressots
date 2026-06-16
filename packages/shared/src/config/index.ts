@@ -1,1 +1,1 @@
-export { Pattern, ExpressoConfig } from "./project-config";
+export { Pattern, ExpressoConfig } from "./project-config.js";

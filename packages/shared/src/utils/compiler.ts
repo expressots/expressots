@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import path from "path";
 import { RegisterOptions, Service } from "ts-node";
 import chalk from "chalk";
-import { ExpressoConfig } from "../config";
+import { ExpressoConfig } from "../config/index.js";
 
 export function printError(message: string, component: string): void {
   console.error(chalk.red(`${message}:`, chalk.bold(chalk.white(`[${component}] ❌`))));
