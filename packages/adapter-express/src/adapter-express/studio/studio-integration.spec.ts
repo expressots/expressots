@@ -127,4 +127,26 @@ describe("studio-integration", () => {
     expect(mockAgent.scanRoutes).toHaveBeenCalled();
     expect(mockAgent.refreshContainer).toHaveBeenCalled();
   });
+
+  it("no-ops runtime helpers when Studio is not running", async () => {
+    await stopStudio();
+    reportStudioRuntimeInfo({ appPort: 3000 });
+    await rescanStudioRoutes();
+    refreshStudioContainer();
+    expect(mockAgent.updateRuntimeInfo).not.toHaveBeenCalled();
+  });
+
+  it("returns false when the agent cannot bind its WebSocket port", async () => {
+    process.env.NODE_ENV = "development";
+    mockAgent.start.mockRejectedValueOnce(
+      Object.assign(new Error("port in use"), { code: "EADDRINUSE" }),
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+
+    const started = await initializeStudio(fakeApp, { enabled: true });
+
+    expect(started).toBe(false);
+    expect(isStudioEnabled()).toBe(false);
+  });
 });

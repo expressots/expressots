@@ -10,6 +10,8 @@ import {
   validatedQuery,
   validatedHeaders,
   getValidationMetadata,
+  hasValidationMetadata,
+  Validate,
   ValidationSchemaMetadata,
 } from "./validation-decorators";
 import { ValidationService } from "./validation-service";
@@ -119,6 +121,18 @@ describe("validated parameter decorators", () => {
       expect(metadata).toHaveLength(1);
       expect(metadata[0].paramName).toBe("x-api-key");
       expect(metadata[0].source).toBe("headers");
+    });
+
+    it("hasValidationMetadata reflects whether a method was decorated", () => {
+      class TestController {
+        decorated(_value: unknown): void {}
+        plain(): void {}
+      }
+      const schema = fakeSchema(() => true);
+      Validate(schema)(TestController.prototype, "decorated", 0);
+
+      expect(hasValidationMetadata(TestController, "decorated")).toBe(true);
+      expect(hasValidationMetadata(TestController, "plain")).toBe(false);
     });
   });
 
