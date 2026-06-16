@@ -1,0 +1,10 @@
+# Documentation output
+api/
+modules/
+*.md
+!README.md
+
+# Generated files
+*.html
+*.json
+

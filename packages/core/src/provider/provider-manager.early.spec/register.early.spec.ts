@@ -1,6 +1,6 @@
 // Unit tests for: register
 
-import { BindingScopeEnum, interfaces } from "../../di/inversify";
+import { Scope, interfaces } from "../../di/inversify";
 import { ProviderManager } from "../provider-manager";
 
 // Mock types and interfaces
@@ -63,7 +63,7 @@ describe("ProviderManager.register() register method", () => {
     it("should register a provider with a constructor and specified scope", () => {
       const mockServiceIdentifier: MockServiceIdentifier = "TestService";
       const mockConstructor: MockNewable<any> = jest.fn();
-      const mockScope: MockBindingScope = BindingScopeEnum.Singleton;
+      const mockScope: MockBindingScope = Scope.Singleton;
 
       mockContainer.isBound.mockReturnValue(false);
 

@@ -1,4 +1,4 @@
-import { Metadata } from "../planning/metadata";
+import { Metadata } from "../planning/metadata.js";
 
 function propertyEventDecorator(eventKey: string, errorMessage: string) {
   return () => {

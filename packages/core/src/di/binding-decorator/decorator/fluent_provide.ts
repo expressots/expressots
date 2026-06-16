@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import ProvideInWhenOnSyntax from "../syntax/provide_in_when_on_syntax";
-import ProvideWhenSyntax from "../syntax/provide_when_syntax";
-import ProvideOnSyntax from "../syntax/provide_on_syntax";
-import ProvideInSyntax from "../syntax/provide_in_syntax";
-import ProvideDoneSyntax from "../syntax/provide_done_syntax";
-import interfaces from "../interfaces/interfaces";
-import { interfaces as inversifyInterfaces } from "../../../di/inversify";
+import ProvideInWhenOnSyntax from "../syntax/provide_in_when_on_syntax.js";
+import ProvideWhenSyntax from "../syntax/provide_when_syntax.js";
+import ProvideOnSyntax from "../syntax/provide_on_syntax.js";
+import ProvideInSyntax from "../syntax/provide_in_syntax.js";
+import ProvideDoneSyntax from "../syntax/provide_done_syntax.js";
+import interfaces from "../interfaces/interfaces.js";
+import { interfaces as inversifyInterfaces } from "../../../di/inversify.js";
 
 function fluentProvide(
   serviceIdentifier: inversifyInterfaces.ServiceIdentifier<any>,

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { decorate, interfaces } from "../../inversify";
-import provide from "../decorator/provide";
+import { decorate, interfaces } from "../../inversify.js";
+import provide from "../decorator/provide.js";
 
 function autoProvide(
   container: interfaces.Container,

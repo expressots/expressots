@@ -1,9 +1,8 @@
 // Unit tests for: error
 
-import { colorCodes } from "../../../console/color-codes";
 import { Logger } from "../logger.provider";
 
-const stripAnsiCodes = (str) => str.replace(/\x1b\[[0-9;]*m/g, "");
+const stripAnsiCodes = (str: string) => str.replace(/\x1b\[[0-9;]*m/g, "");
 
 describe("Logger.error() error method", () => {
   let logger: Logger;
@@ -17,24 +16,27 @@ describe("Logger.error() error method", () => {
       // Arrange
       const message = "This is an error message";
       const module = "TestModule";
-      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR [${module}] ${message}\n`;
+      // console.* methods append the newline themselves, so the message
+      // we capture from the spy has the trailing "\n" stripped by the
+      // ConsoleTransport before being passed through console.error.
+      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR [${module}] ${message}`;
 
       jest
         .spyOn(global.Date.prototype, "toLocaleString")
-        .mockReturnValue("01/01/2023, 00:00:00" as any);
-      const stderrSpy = jest
-        .spyOn(process.stderr, "write")
-        .mockImplementation(() => true);
+        .mockReturnValue("01/01/2023, 00:00:00" as never);
+      const consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
 
       // Act
       logger.error(message, module);
 
       // Assert
-      const actualOutput = stderrSpy.mock.calls[0][0];
+      const actualOutput = consoleErrorSpy.mock.calls[0][0] as string;
       expect(stripAnsiCodes(actualOutput)).toEqual(expectedOutput);
 
       // Cleanup
-      stderrSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -43,48 +45,49 @@ describe("Logger.error() error method", () => {
       // Arrange
       const message = "";
       const module = "TestModule";
-      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR [${module}] ${message}\n`;
+      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR [${module}] ${message}`;
 
       jest
         .spyOn(global.Date.prototype, "toLocaleString")
-        .mockReturnValue("01/01/2023, 00:00:00" as any);
-      const stderrSpy = jest
-        .spyOn(process.stderr, "write")
-        .mockImplementation(() => true);
+        .mockReturnValue("01/01/2023, 00:00:00" as never);
+      const consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
 
       // Act
       logger.error(message, module);
 
       // Assert
-      const actualOutput = stderrSpy.mock.calls[0][0];
+      const actualOutput = consoleErrorSpy.mock.calls[0][0] as string;
       expect(stripAnsiCodes(actualOutput)).toEqual(expectedOutput);
 
       // Cleanup
-      stderrSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
 
     it("should handle undefined module gracefully", () => {
       // Arrange
       const message = "This is an error message";
-      const module = undefined || "";
-      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR [${module}] ${message}\n`;
+      const module = undefined;
+      // When module is undefined/empty, the formatter omits the [module] part
+      const expectedOutput = `[ExpressoTS] 01/01/2023 00:00:00 [PID:${process.pid}] ERROR  ${message}`;
 
       jest
         .spyOn(global.Date.prototype, "toLocaleString")
-        .mockReturnValue("01/01/2023, 00:00:00" as any);
-      const stderrSpy = jest
-        .spyOn(process.stderr, "write")
-        .mockImplementation(() => true);
+        .mockReturnValue("01/01/2023, 00:00:00" as never);
+      const consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
 
       // Act
       logger.error(message, module);
 
       // Assert
-      const actualOutput = stderrSpy.mock.calls[0][0];
+      const actualOutput = consoleErrorSpy.mock.calls[0][0] as string;
       expect(stripAnsiCodes(actualOutput)).toEqual(expectedOutput);
 
       // Cleanup
-      stderrSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 });

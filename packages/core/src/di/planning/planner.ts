@@ -1,25 +1,25 @@
-import { BindingCount } from "../bindings/binding_count";
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingTypeEnum, TargetTypeEnum } from "../constants/literal_types";
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { isStackOverflowExeption } from "../utils/exceptions";
+import { BindingCount } from "../bindings/binding_count.js";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { BindingTypeEnum, TargetTypeEnum } from "../constants/literal_types.js";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { isStackOverflowExeption } from "../utils/exceptions.js";
 import {
   circularDependencyToException,
   getServiceIdentifierAsString,
   listMetadataForTarget,
   listRegisteredBindingsForServiceIdentifier,
-} from "../utils/serialization";
-import { Context } from "./context";
-import { Metadata } from "./metadata";
-import { Plan } from "./plan";
+} from "../utils/serialization.js";
+import { Context } from "./context.js";
+import { Metadata } from "./metadata.js";
+import { Plan } from "./plan.js";
 import {
   getBaseClassDependencyCount,
   getDependencies,
   getFunctionName,
-} from "./reflection_utils";
-import { Request } from "./request";
-import { Target } from "./target";
+} from "./reflection_utils.js";
+import { Request } from "./request.js";
+import { Target } from "./target.js";
 
 function getBindingDictionary(
   cntnr: interfaces.Container,

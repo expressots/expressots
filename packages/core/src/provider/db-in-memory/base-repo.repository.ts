@@ -1,10 +1,10 @@
-import { inject, injectable, unmanaged } from "../../di/inversify";
+import { inject, injectable, unmanaged } from "../../di/inversify.js";
 import {
   IDataProvider,
   IDataTable,
   IEntity,
   IRepository,
-} from "./db-in-memory.interface";
+} from "./db-in-memory.interface.js";
 
 /**
  * Base repository class using the repository pattern.

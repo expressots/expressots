@@ -1,17 +1,35 @@
-import { ExpressHandler, MiddlewareOptions } from "./middleware-service";
-import { OptionsJson } from "./interfaces/body-parser.interface";
-import { CompressionOptions } from "./interfaces/compression.interface";
-import { CookieParserOptions } from "./interfaces/cookie-parser.interface";
-import { CookieSessionOptions } from "./interfaces/cookie-session/cookie-session.interface";
-import { CorsOptions } from "./interfaces/cors.interface";
-import { RateLimitOptions } from "./interfaces/express-rate-limit.interface";
-import { SessionOptions } from "./interfaces/express-session.interface";
-import { OptionsHelmet } from "./interfaces/helmet.interface";
-import { FormatFn, OptionsMorgan } from "./interfaces/morgan.interface";
-import { multer } from "./interfaces/multer.interface";
-import { ServeFaviconOptions } from "./interfaces/serve-favicon.interface";
-import { ServeStaticOptions } from "./interfaces/serve-static.interface";
-import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
+import type { RequestHandler } from "express";
+import {
+  ExpressHandler,
+  MiddlewareOptions,
+  MiddlewareCategory,
+  MiddlewareEntry,
+  MiddlewarePipelineInfo,
+  ConditionalMiddlewareConfig,
+} from "./middleware-service.js";
+import {
+  MiddlewareProfiler,
+  MiddlewareMetrics,
+  ProfilerStats,
+} from "./middleware-profiler.js";
+import type {
+  ParseOptions,
+  MiddlewareLoggerConfig,
+  SecurityConfig,
+  SecurityPreset,
+  CompressConfig,
+  SessionConfig as V4SessionConfig,
+  UploadConfig,
+  UploadHandler,
+  StaticConfig,
+  MiddlewareConfig as V4MiddlewareConfig,
+  OptimizationConfig,
+  PipelineAnalysis,
+  Recommendation,
+} from "./middleware-config.js";
+import type { MiddlewareEntry as RegistryEntry } from "./middleware-registry.js";
+import type { RenderConfig, PresetName } from "../render/render-config.js";
+import type { RenderService } from "../render/render-service.js";
 
 /**
  * ErrorHandlerOptions Interface
@@ -19,11 +37,28 @@ import { OptionsUrlencoded } from "./interfaces/url-encoded.interface";
  * The ErrorHandlerOptions interface specifies the configuration options for the error handler middleware.
  * @param errorHandler: An Express error handler function that takes care of processing errors and formulating the response.
  * @param showStackTrace: A boolean value indicating whether to include the stack trace in the error response. The default value is false.
+ * @param enableExceptionFilters: A boolean value indicating whether to enable automatic exception filter integration. When enabled, exception filters decorated with @Catch() will be automatically discovered and used. Requires container to be provided. Default value is false.
+ * @param container: Optional container instance for exception filter auto-discovery. Required when enableExceptionFilters is true.
  * @public API
  */
 export interface ErrorHandlerOptions {
   errorHandler?: ExpressHandler;
   showStackTrace?: boolean;
+  enableExceptionFilters?: boolean;
+  container?: import("../di/inversify.js").interfaces.Container;
+}
+
+/**
+ * Health check endpoint options.
+ * @public API
+ */
+export interface HealthCheckOptions {
+  /** Path for the health check endpoint (default: "/health/middleware") */
+  path?: string;
+  /** Include profiling metrics in the response */
+  includeMetrics?: boolean;
+  /** Include detailed middleware information */
+  detailed?: boolean;
 }
 
 /**
@@ -32,95 +67,415 @@ export interface ErrorHandlerOptions {
  * @public API
  */
 export interface IMiddleware {
-  /**
-   * Adds a URL Encoded Parser middleware to the middleware collection.
-   * The URL Encoded Parser is responsible for parsing the URL-encoded data in the incoming request bodies.
-   *
-   * @param options - Optional configuration options for the URL Encoded Parser.
-   * @public API
-   */
-  addUrlEncodedParser(options?: OptionsUrlencoded): void;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 UNIFIED METHODS - Category-based middleware configuration
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Adds a Rate Limit middleware to the middleware collection.
-   * The rate limiter is responsible for adding dynamic rate limit and request throttling to the application.
+   * 🌟 Configure request parsing (unified method).
+   * Replaces: addBodyParser, addUrlEncodedParser, addCookieParser
    *
-   * @param options - Optional configuration options for the rate limiter.
+   * @param options - Parse configuration options
+   *
+   * @example Simple (all defaults)
+   * ```typescript
+   * this.Middleware.parse();  // Enables json + urlencoded with smart defaults
+   * ```
+   *
+   * @example Advanced
+   * ```typescript
+   * this.Middleware.parse({
+   *   json: { limit: '10mb', strict: true },
+   *   urlencoded: { extended: true, limit: '10mb' },
+   *   cookies: { secret: 'my-secret' },
+   *   raw: false,
+   *   text: false
+   * });
+   * ```
+   *
    * @public API
    */
-  addRateLimiter(options?: RateLimitOptions): void;
+  parse(options?: ParseOptions): void;
 
   /**
-   * Adds a Body Parser middleware to the middleware collection.
-   * The body parser is responsible for parsing the incoming request bodies in a middleware.
+   * 🌟 Configure logging with any implementation.
+   * Replaces: addMorgan
    *
-   * @param options - Optional configuration options for the JSON body parser.
+   * Auto-detects best available: pino → winston → morgan → console
+   *
+   * @param config - Logger configuration
+   *
+   * @example Auto-detect
+   * ```typescript
+   * this.Middleware.logger();  // Uses best available logger
+   * ```
+   *
+   * @example Specific implementation
+   * ```typescript
+   * this.Middleware.logger({
+   *   implementation: 'pino',
+   *   options: { level: 'info' }
+   * });
+   * ```
+   *
+   * @example Custom logger
+   * ```typescript
+   * this.Middleware.logger({
+   *   custom: (req, res, next) => {
+   *     console.log(`${req.method} ${req.url}`);
+   *     next();
+   *   }
+   * });
+   * ```
+   *
    * @public API
    */
-  addBodyParser(options?: OptionsJson): void;
+  logger(config?: MiddlewareLoggerConfig): void;
 
   /**
-   * Adds Cross-Origin Resource Sharing (CORS) middleware to enable or control cross-origin requests.
+   * 🌟 Unified security configuration.
+   * Replaces: addHelmet, addCors, addRateLimiter
    *
-   * @param options - Optional configuration options for CORS. Defines the behavior of CORS requests like allowed origins, methods, headers, etc.
+   * @param config - Security configuration or preset name
+   *
+   * @example Preset-based
+   * ```typescript
+   * this.Middleware.security('standard');   // Helmet + CORS
+   * this.Middleware.security('strict');      // Maximum security
+   * this.Middleware.security('api');         // API-optimized
+   * ```
+   *
+   * @example Granular control
+   * ```typescript
+   * this.Middleware.security({
+   *   headers: 'helmet',
+   *   cors: { origin: ['https://myapp.com'], credentials: true },
+   *   rateLimit: { windowMs: 60000, max: 100 }
+   * });
+   * ```
+   *
    * @public API
    */
-  addCors(options?: CorsOptions): void;
+  security(config?: SecurityConfig | SecurityPreset): void;
 
   /**
-   * Adds Compression middleware to reduce the size of the response body and improve the speed of the client-server communication.
+   * 🌟 Configure compression with any algorithm.
+   * Replaces: addCompression
    *
-   * @param options - Optional configuration options for Compression. Allows fine-tuning the compression behavior, such as setting the compression level, threshold, and filter functions to determine which requests should be compressed.
+   * Auto-detects: shrink-ray → compression
+   *
+   * @param config - Compression configuration
+   *
+   * @example Auto-detect
+   * ```typescript
+   * this.Middleware.compress();  // Uses best available
+   * ```
+   *
+   * @example With options
+   * ```typescript
+   * this.Middleware.compress({
+   *   level: 6,
+   *   threshold: '1kb',
+   *   algorithms: ['gzip', 'deflate']
+   * });
+   * ```
+   *
    * @public API
    */
-  addCompression(options?: CompressionOptions): void;
+  compress(config?: CompressConfig): void;
 
   /**
-   * Adds Cookie Parser middleware to parse the cookie header and populate req.cookies with an object keyed by the cookie names.
+   * 🌟 Unified session management.
+   * Replaces: addSession, addCookieSession
    *
-   * @param secret - A string or array used for signing cookies. This is optional and if not specified, the cookie-parser will not parse signed cookies.
-   * @param options - Optional configuration options for Cookie Parser.
+   * @param config - Session configuration
+   *
+   * @example Cookie session
+   * ```typescript
+   * this.Middleware.session({
+   *   type: 'cookie',
+   *   secret: 'my-secret',
+   *   cookie: { maxAge: 86400000 }
+   * });
+   * ```
+   *
+   * @example Store-based session
+   * ```typescript
+   * this.Middleware.session({
+   *   type: 'store',
+   *   secret: 'my-secret',
+   *   store: new RedisStore({ client: redisClient })
+   * });
+   * ```
+   *
    * @public API
    */
-  addCookieParser(
-    secret?: string | Array<string> | undefined,
-    options?: CookieParserOptions,
+  session(config: V4SessionConfig): void;
+
+  /**
+   * 🌟 Enhanced file upload handling.
+   * Replaces: setupMulter
+   *
+   * @param config - Upload configuration
+   * @returns Upload handler with single, array, fields, any, none methods
+   *
+   * @example Local storage
+   * ```typescript
+   * const upload = this.Middleware.upload({
+   *   destination: './uploads',
+   *   limits: { fileSize: 5 * 1024 * 1024 }
+   * });
+   * ```
+   *
+   * @public API
+   */
+  upload(config?: UploadConfig): UploadHandler;
+
+  /**
+   * 🌟 Enhanced static file serving.
+   * Replaces: serveStatic, addServeFavicon
+   *
+   * @param config - Static configuration or path string
+   *
+   * @example Simple
+   * ```typescript
+   * this.Middleware.static('./public');
+   * ```
+   *
+   * @example SPA mode
+   * ```typescript
+   * this.Middleware.static({
+   *   path: './dist',
+   *   spa: true,
+   *   index: 'index.html'
+   * });
+   * ```
+   *
+   * @example Multiple directories
+   * ```typescript
+   * this.Middleware.static([
+   *   { path: './public', prefix: '/assets' },
+   *   { path: './uploads', prefix: '/media' },
+   *   { path: './dist', spa: true }
+   * ]);
+   * ```
+   *
+   * @public API
+   */
+  static(config: StaticConfig | string | Array<StaticConfig | string>): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 MIDDLEWARE REGISTRY - Named middleware for route-level use
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * 🌟 Register a named middleware for use in routes.
+   *
+   * @param name - Unique name for the middleware
+   * @param handler - Express handler, array of handlers, or ExpressoMiddleware
+   *
+   * @example Register single handler
+   * ```typescript
+   * this.Middleware.register('auth', verifyJwtMiddleware);
+   * ```
+   *
+   * @example Register chain
+   * ```typescript
+   * this.Middleware.register('admin', [verifyJwt, loadUser, checkAdmin]);
+   * ```
+   *
+   * @example Use in controller
+   * ```typescript
+   * @httpGet('/', ...use('auth'))
+   * async getUsers() { }
+   * ```
+   *
+   * @public API
+   */
+  register(
+    name: string,
+    handler: RequestHandler | Array<RequestHandler> | RegistryEntry,
   ): void;
 
   /**
-   * Adds Cookie Session middleware to enable cookie-based sessions.
+   * Get a registered middleware by name.
    *
-   * @param options - Optional configuration options for Cookie Session. Defines the behavior of cookie sessions like the name of the cookie, keys to sign the cookie, etc.
+   * @param name - Middleware name
+   * @returns The middleware handler(s) or undefined
    * @public API
    */
-  addCookieSession(options: CookieSessionOptions): void;
+  get(name: string): RequestHandler | Array<RequestHandler> | undefined;
 
   /**
-   * Adds Morgan middleware to log HTTP requests.
+   * Check if a middleware is registered.
    *
-   * @param format - The log format. Can be a string or a function.
-   * @param options - Optional configuration options for Morgan. Defines the behavior of the logger like the output stream, buffer duration, etc.
+   * @param name - Middleware name
+   * @returns True if registered
    * @public API
    */
-  addMorgan(format: string | FormatFn, options?: OptionsMorgan): void;
+  has(name: string): boolean;
 
   /**
-   * Adds a middleware to serve the favicon to the middleware collection.
-   * The favicon is the icon that is displayed in the browser tab for the application.
+   * Get all registered middleware names.
    *
-   * @param path - The path to the favicon file.
-   * @param options - Optional configuration options for serving the favicon. Defines the behavior of the favicon middleware like cache control, custom headers, etc.
+   * @returns Array of registered names
    * @public API
    */
-  addServeFavicon(path: string | Buffer, options?: ServeFaviconOptions): void;
+  getRegisteredNames(): Array<string>;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 PRESETS - Enhanced preset system
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Add a middleware to enable express-session.
+   * 🌟 Define a custom reusable preset.
    *
-   * @param options - Optional configuration options for Session.
+   * @param name - Preset name
+   * @param config - Middleware configuration
+   *
+   * @example
+   * ```typescript
+   * this.Middleware.definePreset('my-api', {
+   *   parse: { json: { limit: '5mb' } },
+   *   logger: { implementation: 'pino' },
+   *   security: 'strict',
+   *   compress: true
+   * });
+   *
+   * this.Middleware.usePreset('my-api');
+   * ```
+   *
    * @public API
    */
-  addSession(options: SessionOptions): void;
+  definePreset(name: string, config: V4MiddlewareConfig): void;
+
+  /**
+   * 🌟 Apply a preset configuration (v4 enhanced).
+   *
+   * @param preset - Preset name (built-in or custom)
+   * @param overrides - Optional overrides for the preset
+   *
+   * @example Built-in preset
+   * ```typescript
+   * this.Middleware.usePreset('api');
+   * ```
+   *
+   * @example With overrides
+   * ```typescript
+   * this.Middleware.usePreset('api', {
+   *   logger: { implementation: 'pino' },
+   *   security: { rateLimit: { max: 200 } }
+   * });
+   * ```
+   *
+   * @public API
+   */
+  applyPreset(preset: string, overrides?: Partial<V4MiddlewareConfig>): void;
+
+  /**
+   * Get all available presets (built-in + custom).
+   *
+   * @returns Record of preset names to configurations
+   * @public API
+   */
+  getAllPresets(): Record<string, V4MiddlewareConfig>;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 ADVANCED FEATURES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * 🌟 Conditional middleware application.
+   *
+   * @param condition - Boolean or function returning boolean
+   * @param handler - Middleware to apply or function to execute
+   *
+   * @example Environment-based
+   * ```typescript
+   * this.Middleware.when(
+   *   process.env.NODE_ENV === 'development',
+   *   () => this.Middleware.logger({ implementation: 'morgan', options: { format: 'dev' } })
+   * );
+   * ```
+   *
+   * @public API
+   */
+  when(
+    condition: boolean | (() => boolean),
+    handler: RequestHandler | (() => void),
+  ): void;
+
+  /**
+   * 🌟 Auto-optimize middleware pipeline.
+   *
+   * @param config - Optimization configuration
+   *
+   * @example
+   * ```typescript
+   * this.Middleware.optimize({
+   *   autoReorder: true,  // Reorder for performance
+   *   metrics: true       // Enable performance metrics
+   * });
+   * ```
+   *
+   * @public API
+   */
+  optimize(config?: OptimizationConfig): void;
+
+  /**
+   * 🌟 Analyze middleware pipeline.
+   *
+   * @returns Pipeline analysis with issues and bottlenecks
+   * @public API
+   */
+  analyze(): PipelineAnalysis;
+
+  /**
+   * 🌟 Get recommendations for improvement.
+   *
+   * @returns Array of recommendations
+   * @public API
+   */
+  getRecommendations(): Array<Recommendation>;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 CUSTOM MIDDLEWARE (renamed from addMiddleware)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * 🌟 Add custom middleware to global pipeline.
+   * Supports: Express handlers, ExpressoTS classes, middleware configs
+   *
+   * @param middleware - The middleware to add
+   *
+   * @example Express Handler
+   * ```typescript
+   * this.Middleware.add((req, res, next) => {
+   *   req.requestId = crypto.randomUUID();
+   *   next();
+   * });
+   * ```
+   *
+   * @example ExpressoTS Middleware
+   * ```typescript
+   * this.Middleware.add(new AuthMiddleware());
+   * ```
+   *
+   * @example Route-specific
+   * ```typescript
+   * this.Middleware.add({
+   *   path: '/api',
+   *   middlewares: [authMiddleware, rateLimiter]
+   * });
+   * ```
+   *
+   * @public API
+   */
+  add(middleware: MiddlewareOptions): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ERROR HANDLER
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * Configures the error handling middleware for the application.
@@ -133,43 +488,158 @@ export interface IMiddleware {
   setErrorHandler(options?: ErrorHandlerOptions): void;
 
   /**
-   * Adds a middleware to serve static files from the specified root directory.
-   * Allows the application to serve files like images, CSS, JavaScript, etc.
+   * Gets the configured error handler middleware.
    *
-   * @param root - The root directory from which the static assets are to be served.
-   * @param options - Optional configuration options for serving static files. Defines behavior like cache control, custom headers, etc.
+   * @returns The error handler middleware.
    * @public API
    */
-  serveStatic(root: string, options?: ServeStaticOptions): void;
+  getErrorHandler(): ExpressHandler;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONDITIONAL MIDDLEWARE
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Adds a middleware to the middleware collection.
+   * Add middleware that only executes when a condition is met.
    *
-   * @param options - The Express request handler function to be added to the middleware collection, or a middleware configuration object
-   * that is composed by a route and an expressjs handler, or a custom Expresso middleware.
+   * @param config - Conditional middleware configuration
    *
-   * @example Express Handler
-   *  const middleware = (req, res, next) => {
-   *  // Your middleware logic here
-   *  next();
-   * }
+   * @example
+   * ```typescript
+   * // Only apply rate limiting for non-internal requests
+   * this.Middleware.addConditional({
+   *   middleware: rateLimiter,
+   *   condition: (req) => !req.headers["x-internal-service"],
+   *   name: "conditional-rate-limit"
+   * });
+   * ```
    *
-   * @example Middleware Configuration Object
-   * const middleware = {
-   *  path: "/",
-   *  middlewares: [] // Array of Express Handlers
-   * }
-   *
-   * @example Expresso Middleware
-   * class CustomMiddleware implements IExpressoMiddleware {
-   *  use(req: Request, res: Response, next: NextFunction): Promise<void> | void {
-   *   // Your middleware logic here
-   *   next();
-   *  }
-   * }
    * @public API
    */
-  addMiddleware(options: MiddlewareOptions): void;
+  addConditional(config: ConditionalMiddlewareConfig): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONTENT NEGOTIATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configures content negotiation middleware for automatic response format selection
+   * based on Accept headers. Supports multiple formats (JSON, XML, CSV, YAML, etc.)
+   * with quality value negotiation (RFC 7231).
+   *
+   * @param options - Configuration options for content negotiation
+   * @example
+   * ```typescript
+   * this.Middleware.addContentNegotiation({
+   *   defaultFormat: "application/json",
+   *   formatters: [JsonFormatter, XmlFormatter, CsvFormatter],
+   *   strictMode: false
+   * });
+   * ```
+   * @public API
+   */
+  addContentNegotiation(
+    options?: import("./interfaces/content-negotiation.interface.js").ContentNegotiationOptions,
+  ): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configures validation for automatic request parameter validation.
+   * Supports multiple validation libraries (class-validator, Zod, Yup, custom adapters)
+   * with smart field detection and helpful error messages.
+   *
+   * @param options - Configuration options for validation
+   * @example
+   * ```typescript
+   * this.Middleware.addValidation({
+   *   smartDetection: true,
+   *   errorFormat: "helpful",
+   *   adapters: [ClassValidatorAdapter]
+   * });
+   * ```
+   * @public API
+   */
+  addValidation(
+    options?: import("../provider/validation/validation.interface.js").ValidationConfig,
+  ): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFILING
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Enable middleware profiling to track execution times.
+   *
+   * @param options - Profiler options
+   * @returns The profiler instance
+   *
+   * @example
+   * ```typescript
+   * const profiler = middleware.enableProfiling();
+   * // Later, get metrics
+   * const stats = profiler.getStats();
+   * ```
+   *
+   * @public API
+   */
+  enableProfiling(options?: { maxSamples?: number }): MiddlewareProfiler;
+
+  /**
+   * Disable middleware profiling.
+   * @public API
+   */
+  disableProfiling(): void;
+
+  /**
+   * Get the profiler instance.
+   * @returns The profiler or null if not enabled
+   * @public API
+   */
+  getProfiler(): MiddlewareProfiler | null;
+
+  /**
+   * Get profiling metrics for all middleware.
+   *
+   * @returns Array of middleware metrics or empty array if profiling is disabled
+   * @public API
+   */
+  getProfilingMetrics(): Array<MiddlewareMetrics>;
+
+  /**
+   * Get profiling statistics.
+   *
+   * @returns Profiler statistics or null if profiling is disabled
+   * @public API
+   */
+  getProfilingStats(): ProfilerStats | null;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEALTH CHECK
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add a health check endpoint that reports middleware status.
+   *
+   * @param options - Health check options
+   *
+   * @example
+   * ```typescript
+   * middleware.addHealthCheck({
+   *   path: "/health/middleware",
+   *   includeMetrics: true
+   * });
+   * ```
+   *
+   * @public API
+   */
+  addHealthCheck(options?: HealthCheckOptions): void;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PIPELINE INSPECTION
+  // ═══════════════════════════════════════════════════════════════════════════
 
   /**
    * View middleware pipeline formatted.
@@ -179,28 +649,175 @@ export interface IMiddleware {
   viewMiddlewarePipeline(): void;
 
   /**
-   * Gets the configured error handler middleware.
+   * Get a visual ASCII representation of the middleware pipeline.
    *
-   * @returns The error handler middleware.
+   * @returns ASCII art diagram of the pipeline
    * @public API
    */
-  getErrorHandler(): ExpressHandler;
+  visualizePipeline(): string;
 
   /**
-   * Adds Helmet middleware to enhance security by setting various HTTP headers.
+   * Get a compact summary of the middleware pipeline.
    *
-   * @param options - Optional configuration options for Helmet.
-   * @returns The configuration options for Helmet middleware.
+   * @returns Single-line summary
    * @public API
    */
-  addHelmet(options?: OptionsHelmet): void;
+  getPipelineSummary(): string;
 
   /**
-   * Adds Multer middleware for handling multipart/form-data, typically used for file uploads.
+   * Get structured pipeline info for banner display and introspection.
    *
-   * @param options - Optional configuration options for Multer.
-   * @returns The Multer middleware.
+   * @returns Middleware pipeline information
    * @public API
    */
-  setupMulter(options?: multer.Options): multer.Multer;
+  getPipelineInfo(): MiddlewarePipelineInfo;
+
+  /**
+   * Get a formatted view for banner display.
+   *
+   * @param maxDisplay - Maximum number of middleware to show
+   * @returns Formatted middleware view
+   * @public API
+   */
+  getFormattedView(maxDisplay?: number): {
+    entries: Array<{
+      name: string;
+      category: MiddlewareCategory;
+      type: "built-in" | "custom";
+    }>;
+    total: number;
+    remaining: number;
+  };
+
+  /**
+   * Get middleware count by category.
+   *
+   * @returns Record of category to count
+   * @public API
+   */
+  getCountByCategory(): Record<MiddlewareCategory, number>;
+
+  /**
+   * Get middleware by name.
+   *
+   * @param name - The middleware name
+   * @returns The middleware entry or undefined
+   * @public API
+   */
+  getByName(name: string): MiddlewareEntry | undefined;
+
+  /**
+   * Remove a middleware from the pipeline by name.
+   *
+   * @param name - The middleware name to remove
+   * @returns True if removed, false if not found
+   * @public API
+   */
+  remove(name: string): boolean;
+
+  /**
+   * Clear all middleware from the pipeline.
+   * @public API
+   */
+  clear(): void;
+
+  /**
+   * Get the total number of middleware in the pipeline.
+   *
+   * @returns Number of middleware
+   * @public API
+   */
+  count(): number;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 RENDER ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configure view rendering with unified API.
+   * Supports traditional engines (EJS, Pug, Handlebars) and modern frameworks (React, Vue, Svelte).
+   *
+   * @param config - Render configuration or preset name
+   *
+   * @example Auto-detect
+   * ```typescript
+   * this.Middleware.render();  // Detects installed engine
+   * ```
+   *
+   * @example With preset
+   * ```typescript
+   * this.Middleware.render('production');  // Production-optimized settings
+   * this.Middleware.render('development'); // Dev settings with hot reload
+   * ```
+   *
+   * @example Full configuration
+   * ```typescript
+   * this.Middleware.render({
+   *   engine: 'react',
+   *   viewsDir: 'src/views',
+   *   cache: 'auto',
+   *   ssr: { hydrate: true, streaming: true },
+   *   watch: 'auto'
+   * });
+   * ```
+   *
+   * @public API
+   */
+  render(config?: RenderConfig | PresetName): Promise<void>;
+
+  /**
+   * Get the render service instance.
+   * Use this to access advanced rendering features.
+   *
+   * @returns Render service or null if not configured
+   *
+   * @example
+   * ```typescript
+   * const renderService = this.Middleware.getRenderService();
+   * if (renderService) {
+   *   const html = await renderService.render('Home', { title: 'Welcome' });
+   * }
+   * ```
+   *
+   * @public API
+   */
+  getRenderService(): RenderService | null;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // V4 STARTUP LOGS (displayed after banner)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get buffered startup logs for display after the banner.
+   * These logs are collected during configureServices() and should be
+   * displayed in postServerInitialization() after the banner.
+   *
+   * @returns Array of startup log entries with message and type
+   *
+   * @example
+   * ```typescript
+   * async postServerInitialization(): Promise<void> {
+   *   // Display middleware startup logs after banner
+   *   const logs = this.Middleware.getStartupLogs();
+   *   logs.forEach(log => {
+   *     if (log.type === 'warn') {
+   *       console.log(`⚠️ ${log.message}`);
+   *     } else {
+   *       console.log(`✓ ${log.message}`);
+   *     }
+   *   });
+   * }
+   * ```
+   *
+   * @public API
+   */
+  getStartupLogs(): Array<{ message: string; type: "info" | "warn" }>;
+
+  /**
+   * Clear all buffered startup logs.
+   * Call this after displaying the logs to free memory.
+   *
+   * @public API
+   */
+  clearStartupLogs(): void;
 }

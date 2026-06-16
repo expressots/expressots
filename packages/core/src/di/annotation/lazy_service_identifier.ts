@@ -1,4 +1,4 @@
-import { interfaces } from "../interfaces/interfaces";
+import { interfaces } from "../interfaces/interfaces.js";
 
 export type ServiceIdentifierOrFunc<T> =
   | interfaces.ServiceIdentifier<T>

@@ -1,1 +1,1 @@
-export * from "./scope-binding";
+export * from "./scope-binding.js";

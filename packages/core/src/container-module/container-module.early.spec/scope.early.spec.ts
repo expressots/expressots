@@ -2,7 +2,7 @@
 
 import { provideSingleton, provideTransient } from "../../decorator";
 import { provide } from "../../di/binding-decorator";
-import { BindingScopeEnum, interfaces } from "../../di/inversify";
+import { Scope, interfaces } from "../../di/inversify";
 import { BINDING_TYPE_METADATA_KEY, scope } from "../container-module";
 import "reflect-metadata";
 
@@ -25,7 +25,7 @@ describe("scope() scope method", () => {
     it("should apply Singleton binding and call provideSingleton", () => {
       // Arrange
       class TestClass {}
-      const binding = BindingScopeEnum.Singleton;
+      const binding = Scope.Singleton;
 
       // Act
       scope(binding)(TestClass);
@@ -42,7 +42,7 @@ describe("scope() scope method", () => {
     it("should apply Transient binding and call provideTransient", () => {
       // Arrange
       class TestClass {}
-      const binding = BindingScopeEnum.Transient;
+      const binding = Scope.Transient;
 
       // Act
       scope(binding)(TestClass);
@@ -59,7 +59,7 @@ describe("scope() scope method", () => {
     it("should apply default binding and call provide", () => {
       // Arrange
       class TestClass {}
-      const binding = BindingScopeEnum.Request; // Assuming Request is the default case
+      const binding = Scope.Request; // Assuming Request is the default case
 
       // Act
       scope(binding)(TestClass);
@@ -79,11 +79,11 @@ describe("scope() scope method", () => {
     it("should not redefine metadata if it already exists", () => {
       // Arrange
       class TestClass {}
-      const binding = BindingScopeEnum.Singleton;
+      const binding = Scope.Singleton;
       Reflect.defineMetadata(BINDING_TYPE_METADATA_KEY, binding, TestClass);
 
       // Act
-      scope(BindingScopeEnum.Transient)(TestClass);
+      scope(Scope.Transient)(TestClass);
 
       // Assert
       expect(Reflect.getMetadata(BINDING_TYPE_METADATA_KEY, TestClass)).toBe(

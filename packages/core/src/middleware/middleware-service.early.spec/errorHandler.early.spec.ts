@@ -1,24 +1,36 @@
-// Unit tests for: errorHandler
+// Unit tests for: errorHandler (setErrorHandler method)
 
 import { NextFunction, Request, Response } from "express";
 import { Middleware } from "../middleware-service";
-import { ErrorHandlerOptions } from "../middleware-interface";
+
+jest.mock("../../error/error-handler-middleware", () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+jest.mock("../middleware-resolver", () => {
+  const actual = jest.requireActual("../middleware-resolver");
+  return {
+    ...actual,
+    middlewareResolver: jest.fn(),
+  };
+});
 
 type CustomErrorHandler = (
   err: any,
   req: Request,
   res: Response,
   next: NextFunction,
-  showStackTrace?: boolean,
 ) => any;
 
-describe("errorHandler() errorHandler method", () => {
+describe("Middleware.setErrorHandler() setErrorHandler method", () => {
   let middleware: Middleware;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     middleware = new Middleware();
     mockRequest = {};
     mockResponse = {
@@ -30,36 +42,74 @@ describe("errorHandler() errorHandler method", () => {
 
   describe("Happy Path", () => {
     it("should set a custom error handler when provided", () => {
-      // Arrange
       const customErrorHandler: CustomErrorHandler = jest.fn();
 
-      // Act
       middleware.setErrorHandler({ errorHandler: customErrorHandler });
       const errorHandler = middleware.getErrorHandler() as CustomErrorHandler;
 
-      // Assert
       expect(errorHandler).toBe(customErrorHandler);
     });
 
     it("should use the default error handler when no custom handler is provided", () => {
-      // Arrange
-      const defaultErrorHandler = jest.fn();
-      jest.mock(
-        "../../error/error-handler-middleware",
-        () => defaultErrorHandler,
-      );
-
-      // Act
       middleware.setErrorHandler();
-      const errorHandler = middleware.getErrorHandler() as CustomErrorHandler;
+      const errorHandler = middleware.getErrorHandler();
 
-      // Assert
       expect(errorHandler).toBeDefined();
-      expect(errorHandler).not.toBe(defaultErrorHandler); // Ensure it's not the mocked default handler directly
+    });
+
+    it("should configure showStackTrace option", () => {
+      middleware.setErrorHandler({ showStackTrace: true });
+      const errorHandler = middleware.getErrorHandler();
+
+      expect(errorHandler).toBeDefined();
     });
   });
 
-  describe("Edge Cases", () => {});
+  describe("Exception Filters", () => {
+    it("should warn when custom errorHandler and enableExceptionFilters are both set", () => {
+      const loggerSpy = jest.spyOn((middleware as any)._logger, "warn");
+      const customHandler = jest.fn();
+
+      middleware.setErrorHandler({
+        errorHandler: customHandler,
+        enableExceptionFilters: true,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Custom errorHandler provided"),
+        expect.any(String),
+      );
+    });
+
+    it("should warn when enableExceptionFilters is true but container is not provided", () => {
+      const loggerSpy = jest.spyOn((middleware as any)._logger, "warn");
+
+      middleware.setErrorHandler({
+        enableExceptionFilters: true,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining("container is not provided"),
+        expect.any(String),
+      );
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("should handle undefined options", () => {
+      middleware.setErrorHandler(undefined);
+      const errorHandler = middleware.getErrorHandler();
+
+      expect(errorHandler).toBeDefined();
+    });
+
+    it("should handle empty options object", () => {
+      middleware.setErrorHandler({});
+      const errorHandler = middleware.getErrorHandler();
+
+      expect(errorHandler).toBeDefined();
+    });
+  });
 });
 
 // End of unit tests for: errorHandler

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-namespace */
-import { interfaces as inversifyInterfaces } from "../../inversify";
+import { interfaces as inversifyInterfaces } from "../../inversify.js";
 
 namespace interfaces {
   export type BindConstraint = (
@@ -21,6 +21,7 @@ namespace interfaces {
   export interface ProvideInSyntax<T> extends ProvideDoneSyntax {
     inSingletonScope(): ProvideWhenOnSyntax<T>;
     inTransientScope(): ProvideWhenOnSyntax<T>;
+    inScope(scope: string): ProvideWhenOnSyntax<T>;
   }
 
   export interface ProvideInWhenOnSyntax<T>

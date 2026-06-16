@@ -68,11 +68,17 @@ export const POST_CONSTRUCT_ERROR = (
 export const PRE_DESTROY_ERROR = (
   clazz: string,
   errorMessage: string,
-): string => `@preDestroy error in class ${clazz}: ${errorMessage}`;
+): string =>
+  `@preDestroy error in class ${clazz}: ${errorMessage} ` +
+  `Lifecycle hooks (@preDestroy / onDeactivation) only fire for singleton-scoped bindings. ` +
+  `Use @provideSingleton(${clazz}) instead of @provide(${clazz}), or remove @preDestroy if the class is meant to be request- or transient-scoped.`;
 export const ON_DEACTIVATION_ERROR = (
   clazz: string,
   errorMessage: string,
-): string => `onDeactivation() error in class ${clazz}: ${errorMessage}`;
+): string =>
+  `onDeactivation() error in class ${clazz}: ${errorMessage} ` +
+  `onDeactivation handlers only fire for singleton-scoped bindings. ` +
+  `Use @provideSingleton(${clazz}) instead of @provide(${clazz}), or remove the onDeactivation handler if the class is meant to be request- or transient-scoped.`;
 
 export const CIRCULAR_DEPENDENCY_IN_FACTORY = (
   factoryType: string,

@@ -1,6 +1,6 @@
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { interfaces } from "../interfaces/interfaces";
-import { isClonable } from "../utils/clonable";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { isClonable } from "../utils/clonable.js";
 
 class Lookup<T> implements interfaces.Lookup<T> {
   // dictionary used store multiple values for each key <key>

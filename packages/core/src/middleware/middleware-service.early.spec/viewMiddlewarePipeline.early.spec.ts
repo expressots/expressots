@@ -18,55 +18,86 @@ jest.mock("../../error/error-handler-middleware", () => ({
 
 // Mock interfaces and types
 interface MockMiddlewarePipeline {
-  timestamp: Date;
+  order: number;
   middleware: any;
+  name?: string;
+  category?: string;
+  isBuiltIn?: boolean;
 }
 
 describe("Middleware.viewMiddlewarePipeline() viewMiddlewarePipeline method", () => {
   let middleware: Middleware;
+  let consoleSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    middleware = new Middleware() as any;
+    middleware = new Middleware();
+    consoleSpy = jest.spyOn(console, "table").mockImplementation();
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
   });
 
   describe("Happy Path", () => {
     it("should correctly format and display the middleware pipeline", () => {
-      // Arrange
-      const mockMiddlewarePipeline: MockMiddlewarePipeline[] = [
-        {
-          timestamp: new Date("2023-01-01T00:00:00Z"),
-          middleware: jest.fn() as any,
-        },
-        {
-          timestamp: new Date("2023-01-02T00:00:00Z"),
-          middleware: jest.fn() as any,
-        },
-      ];
-      jest
-        .spyOn(middleware, "getMiddlewarePipeline" as any)
-        .mockReturnValue(mockMiddlewarePipeline as any);
+      // Add some middleware
+      const handler1 = jest.fn();
+      Object.defineProperty(handler1, "name", { value: "firstMiddleware" });
+      const handler2 = jest.fn();
+      Object.defineProperty(handler2, "name", { value: "secondMiddleware" });
+
+      middleware.addMiddleware(handler1);
+      middleware.addMiddleware(handler2);
 
       // Act
       middleware.viewMiddlewarePipeline();
 
       // Assert
-      // Here, you would check the console output or the formatted data
-      // Since console.table is used, you might need to mock console.table
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            order: expect.any(Number),
+            path: "Global",
+            middleware: expect.any(String),
+          }),
+        ]),
+      );
+    });
+
+    it("should display middleware config with path", () => {
+      const config = {
+        path: "/api",
+        middlewares: [jest.fn()],
+      };
+
+      middleware.addMiddleware(config as any);
+      middleware.viewMiddlewarePipeline();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: "/api",
+          }),
+        ]),
+      );
     });
   });
 
   describe("Edge Cases", () => {
     it("should handle an empty middleware pipeline gracefully", () => {
-      // Arrange
-      jest
-        .spyOn(middleware, "getMiddlewarePipeline" as any)
-        .mockReturnValue([] as any);
-
-      // Act
-      middleware.viewMiddlewarePipeline();
+      // Act - should not throw
+      expect(() => middleware.viewMiddlewarePipeline()).not.toThrow();
 
       // Assert
-      // Check that no errors are thrown and the output is as expected
+      expect(consoleSpy).toHaveBeenCalledWith([]);
+    });
+
+    it("should handle anonymous middleware", () => {
+      const anonymousHandler = function () {};
+      middleware.addMiddleware(anonymousHandler as any);
+
+      expect(() => middleware.viewMiddlewarePipeline()).not.toThrow();
+      expect(consoleSpy).toHaveBeenCalled();
     });
   });
 });

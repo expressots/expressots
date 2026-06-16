@@ -1,8 +1,8 @@
-import { getServiceIdentifierAsString } from "../utils/serialization";
-import type { interfaces } from "../interfaces/interfaces";
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingTypeEnum } from "../constants/literal_types";
-import { FactoryType } from "./factory_type";
+import { getServiceIdentifierAsString } from "../utils/serialization.js";
+import type { interfaces } from "../interfaces/interfaces.js";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { BindingTypeEnum } from "../constants/literal_types.js";
+import { FactoryType } from "./factory_type.js";
 
 export const multiBindToService =
   (container: interfaces.Container) =>

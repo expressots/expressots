@@ -1,0 +1,63 @@
+flowchart TD
+    Start([Application Bootstrap]) --> CreateContainer[Create DI Container]
+    CreateContainer --> CreateRegistry[Create LifecycleRegistry]
+    CreateRegistry --> Discover[registry.discover]
+    
+    Discover --> ScanMetadata[Scan @provide Metadata]
+    ScanMetadata --> CheckBootstrap{Has bootstrap<br/>method?}
+    CheckBootstrap -->|Yes| AddBootstrap[Add to Bootstrap Set]
+    CheckBootstrap -->|No| CheckShutdown{Has shutdown<br/>method?}
+    AddBootstrap --> CheckShutdown
+    CheckShutdown -->|Yes| AddShutdown[Add to Shutdown Set]
+    CheckShutdown -->|No| NextProvider{More<br/>Providers?}
+    AddShutdown --> NextProvider
+    NextProvider -->|Yes| ScanMetadata
+    NextProvider -->|No| ServerStart[Start Server]
+    
+    ServerStart --> ServerReady{Server<br/>Ready?}
+    ServerReady -->|No| ServerStart
+    ServerReady -->|Yes| PostInit[postServerInitialization]
+    PostInit --> ExecuteBootstrap[registry.executeBootstrap]
+    
+    ExecuteBootstrap --> GetBootstrapInstance[Get Instance from Container]
+    GetBootstrapInstance --> ValidateBootstrap{isBootstrap?}
+    ValidateBootstrap -->|No| NextBootstrap{More<br/>Bootstrap<br/>Providers?}
+    ValidateBootstrap -->|Yes| CallBootstrap[Call bootstrap]
+    CallBootstrap --> IsAsync{Async?}
+    IsAsync -->|Yes| CollectPromise[Collect Promise]
+    IsAsync -->|No| NextBootstrap
+    CollectPromise --> NextBootstrap
+    NextBootstrap -->|Yes| GetBootstrapInstance
+    NextBootstrap -->|No| WaitBootstrap[Promise.all Promises]
+    WaitBootstrap --> CheckBootstrapError{Any<br/>Errors?}
+    CheckBootstrapError -->|Yes| FailStartup[Fail Startup]
+    CheckBootstrapError -->|No| Ready[Application Ready]
+    
+    Ready --> Running([Application Running])
+    
+    Running --> ShutdownSignal{Shutdown<br/>Signal?}
+    ShutdownSignal -->|No| Running
+    ShutdownSignal -->|Yes| ExecuteShutdown[registry.executeShutdown]
+    
+    ExecuteShutdown --> GetShutdownInstance[Get Instance from Container]
+    GetShutdownInstance --> ValidateShutdown{isShutdown?}
+    ValidateShutdown -->|No| NextShutdown{More<br/>Shutdown<br/>Providers?}
+    ValidateShutdown -->|Yes| CallShutdown[Call shutdown]
+    CallShutdown --> IsAsyncShutdown{Async?}
+    IsAsyncShutdown -->|Yes| CollectShutdownPromise[Collect Promise]
+    IsAsyncShutdown -->|No| NextShutdown
+    CollectShutdownPromise --> NextShutdown
+    NextShutdown -->|Yes| GetShutdownInstance
+    NextShutdown -->|No| WaitShutdown[Promise.all Promises]
+    WaitShutdown --> LogShutdownErrors[Log Errors if Any]
+    LogShutdownErrors --> CloseServer[Close Server]
+    CloseServer --> End([Application Shutdown])
+    
+    style Start fill:#e1f5ff
+    style End fill:#e1f5ff
+    style Ready fill:#e1f5ff
+    style Discover fill:#fff4e1
+    style ExecuteBootstrap fill:#ffe1f5
+    style ExecuteShutdown fill:#ffe1f5
+    style FailStartup fill:#ffcccc
+

@@ -1,16 +1,23 @@
 // Unit tests for: provide
 
-import { fluentProvide } from "../../di/binding-decorator";
+import { fluentProvide, METADATA_KEY } from "../../di/binding-decorator";
 import { provide } from "../scope-binding";
 
 jest.mock("../../di/binding-decorator", () => {
-  const doneMock = jest.fn(() => "mockedDoneResult");
+  const originalDecorator = jest.fn((target) => target);
+  const doneMock = jest.fn(() => originalDecorator);
   const fluentProvideMock = jest.fn(() => ({
     done: doneMock,
   }));
   return {
     fluentProvide: fluentProvideMock,
-    __doneMock: doneMock, // Expose doneMock for assertions
+    __doneMock: doneMock,
+    __originalDecorator: originalDecorator,
+    METADATA_KEY: {
+      scope: "expressots:provider:scope",
+      source: "expressots:provider:source",
+      providerMeta: "expressots:provider:meta",
+    },
   };
 });
 
@@ -20,7 +27,7 @@ beforeEach(() => {
 
 describe("provide() provide method", () => {
   describe("Happy Path", () => {
-    it("should return the result of fluentProvide.done() when called with a valid identifier", () => {
+    it("should return a decorator function when called with a valid identifier", () => {
       // Arrange
       const identifier = "validIdentifier";
 
@@ -35,7 +42,25 @@ describe("provide() provide method", () => {
 
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
       expect(doneMock).toHaveBeenCalled();
-      expect(result).toBe("mockedDoneResult");
+      expect(typeof result).toBe("function");
+    });
+
+    it("should store metadata when decorator is applied to a class", () => {
+      // Arrange
+      const identifier = "validIdentifier";
+      class TestClass {}
+
+      // Act
+      const decorator = provide(identifier);
+      const DecoratedClass = decorator(TestClass);
+
+      // Assert
+      const scope = Reflect.getMetadata(METADATA_KEY.scope, TestClass);
+      const source = Reflect.getMetadata(METADATA_KEY.source, TestClass);
+
+      expect(scope).toBe("Request");
+      expect(source).toBe("user");
+      expect(DecoratedClass).toBe(TestClass);
     });
   });
 
@@ -55,7 +80,7 @@ describe("provide() provide method", () => {
 
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
       expect(doneMock).toHaveBeenCalled();
-      expect(result).toBe("mockedDoneResult");
+      expect(typeof result).toBe("function");
     });
 
     it("should handle undefined identifier gracefully", () => {
@@ -73,7 +98,7 @@ describe("provide() provide method", () => {
 
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
       expect(doneMock).toHaveBeenCalled();
-      expect(result).toBe("mockedDoneResult");
+      expect(typeof result).toBe("function");
     });
 
     it("should handle numeric identifier gracefully", () => {
@@ -85,8 +110,7 @@ describe("provide() provide method", () => {
 
       // Assert
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
-      //      expect(fluentProvide(identifier).done).toHaveBeenCalled();
-      expect(result).toBe("mockedDoneResult");
+      expect(typeof result).toBe("function");
     });
 
     it("should handle object identifier gracefully", () => {
@@ -98,8 +122,7 @@ describe("provide() provide method", () => {
 
       // Assert
       expect(fluentProvide).toHaveBeenCalledWith(identifier);
-      //      expect(fluentProvide(identifier).done).toHaveBeenCalled();
-      expect(result).toBe("mockedDoneResult");
+      expect(typeof result).toBe("function");
     });
   });
 });

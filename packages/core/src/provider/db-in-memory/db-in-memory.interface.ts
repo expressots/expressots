@@ -1,4 +1,4 @@
-import { IProvider } from "../provider-manager";
+import { IProvider } from "../provider-manager.js";
 
 /*
  * Base interface that defines the structure of an entity.

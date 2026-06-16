@@ -2,7 +2,7 @@
 
 import "reflect-metadata";
 import {
-  BindingScopeEnum,
+  Scope,
   Container,
   ContainerModule,
   interfaces,
@@ -51,7 +51,7 @@ describe("AppContainer.create() create method", () => {
     it("should use default options when none are provided", () => {
       // Arrange
       const defaultOptions: interfaces.ContainerOptions = {
-        defaultScope: BindingScopeEnum.Request,
+        defaultScope: Scope.Request,
         autoBindInjectable: true,
         skipBaseClassChecks: false,
       };
@@ -66,7 +66,7 @@ describe("AppContainer.create() create method", () => {
     it("should override default options with provided options", () => {
       // Arrange
       const customOptions: interfaces.ContainerOptions = {
-        defaultScope: BindingScopeEnum.Singleton,
+        defaultScope: Scope.Singleton,
         autoBindInjectable: false,
         skipBaseClassChecks: true,
       };

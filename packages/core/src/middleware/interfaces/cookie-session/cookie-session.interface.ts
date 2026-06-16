@@ -1,4 +1,4 @@
-import { Keygrip } from "./keygrip.interface";
+import { Keygrip } from "./keygrip.interface.js";
 
 interface CookieSessionOptions {
   /**

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import interfaces from "../interfaces/interfaces";
-import ProvideWhenSyntax from "./provide_when_syntax";
-import ProvideDoneSyntax from "./provide_done_syntax";
-import { interfaces as inversifyInterfaces } from "../../inversify";
+import interfaces from "../interfaces/interfaces.js";
+import ProvideWhenSyntax from "./provide_when_syntax.js";
+import ProvideDoneSyntax from "./provide_done_syntax.js";
+import { interfaces as inversifyInterfaces } from "../../inversify.js";
 
 class ProvideOnSyntax<T> implements interfaces.ProvideOnSyntax<T> {
   private _bindingOnSyntax: (

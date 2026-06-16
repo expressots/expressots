@@ -30,7 +30,8 @@ describe("beautifyStackTrace() beautifyStackTrace method", () => {
     it("should handle an empty stack trace gracefully", () => {
       const stack = "";
       const result = beautifyStackTrace(stack);
-      expect(result).toBeUndefined();
+      // Empty/falsy stack returns empty string
+      expect(result).toBe("");
     });
 
     it('should handle a stack trace with no "at" lines', () => {

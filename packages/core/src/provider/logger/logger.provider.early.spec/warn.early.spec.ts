@@ -2,21 +2,17 @@
 
 import { Logger } from "../logger.provider";
 
-// Mocking the process.stdout.write and process.stderr.write
-const mockStdoutWrite = jest
-  .spyOn(process.stdout, "write")
-  .mockImplementation(() => true);
-const mockStderrWrite = jest
-  .spyOn(process.stderr, "write")
-  .mockImplementation(() => true);
+// ConsoleTransport routes WARN-level logs through console.warn
+const mockConsoleWarn = jest
+  .spyOn(console, "warn")
+  .mockImplementation(() => undefined);
 
 describe("Logger.warn() warn method", () => {
   let logger: Logger;
 
   beforeEach(() => {
     logger = new Logger();
-    mockStdoutWrite.mockClear();
-    mockStderrWrite.mockClear();
+    mockConsoleWarn.mockClear();
   });
 
   // Happy Path Tests
@@ -30,13 +26,13 @@ describe("Logger.warn() warn method", () => {
       logger.warn(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("WARN"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(module),
       );
     });
@@ -49,10 +45,10 @@ describe("Logger.warn() warn method", () => {
       logger.warn(message);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("WARN"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
     });
@@ -69,13 +65,13 @@ describe("Logger.warn() warn method", () => {
       logger.warn(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("WARN"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(module),
       );
     });
@@ -89,13 +85,13 @@ describe("Logger.warn() warn method", () => {
       logger.warn(message, module);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("WARN"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(module),
       );
     });
@@ -109,10 +105,10 @@ describe("Logger.warn() warn method", () => {
       logger.warn(message, module as any);
 
       // Assert
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("WARN"),
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith(
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining(message),
       );
     });

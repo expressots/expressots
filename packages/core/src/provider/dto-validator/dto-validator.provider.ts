@@ -1,9 +1,9 @@
 import "reflect-metadata";
 
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import { StatusCode } from "../../error/status-code";
-import { packageResolver } from "./package-resolver";
-import { Logger } from "../logger/logger.provider";
+import { StatusCode } from "../../error/status-code.js";
+import { packageResolver } from "./package-resolver.js";
+import { Logger } from "../logger/logger.provider.js";
 
 /**
  * Validate the DTO using class-validator and class-transformer.

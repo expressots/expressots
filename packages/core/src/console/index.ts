@@ -1,2 +1,2 @@
 export { IConsoleMessage } from "@expressots/shared";
-export { Console } from "./console";
+export { Console } from "./console.js";

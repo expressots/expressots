@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { FactoryType } from "../utils/factory_type";
+import { FactoryType } from "../utils/factory_type.js";
 
 namespace interfaces {
   export type DynamicValue<T> = (context: interfaces.Context) => T | Promise<T>;
@@ -11,7 +11,10 @@ namespace interfaces {
     ? (...args: TArgs) => Promise<TResult>
     : never;
 
-  export type BindingScope = "Singleton" | "Transient" | "Request";
+  // BindingScope supports built-in scopes and custom scope names
+  // Built-in: "Singleton" | "Transient" | "Request"
+  // Custom: any string (e.g., "tenant", "transaction", "workflow")
+  export type BindingScope = "Singleton" | "Transient" | "Request" | string;
 
   export type BindingType =
     | "ConstantValue"
@@ -25,7 +28,7 @@ namespace interfaces {
 
   export type TargetType = "ConstructorArgument" | "ClassProperty" | "Variable";
 
-  export interface BindingScopeEnum {
+  export interface Scope {
     Request: interfaces.BindingScope;
     Singleton: interfaces.BindingScope;
     Transient: interfaces.BindingScope;
@@ -468,6 +471,7 @@ namespace interfaces {
     inSingletonScope(): BindingWhenOnSyntax<T>;
     inTransientScope(): BindingWhenOnSyntax<T>;
     inRequestScope(): BindingWhenOnSyntax<T>;
+    inScope(scope: string): BindingWhenOnSyntax<T>;
   }
 
   export interface BindingInWhenOnSyntax<T>

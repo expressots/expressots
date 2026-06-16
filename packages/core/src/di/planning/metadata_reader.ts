@@ -1,5 +1,5 @@
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
 
 class MetadataReader implements interfaces.MetadataReader {
   public getConstructorMetadata(

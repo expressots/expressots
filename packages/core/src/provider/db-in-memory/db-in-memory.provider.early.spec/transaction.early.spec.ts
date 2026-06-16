@@ -87,6 +87,41 @@ describe("InMemoryDataTable.transaction() transaction method", () => {
       await dataTable.transaction(async () => {});
       expect(rollbackTransactionSpy).not.toHaveBeenCalled();
     });
+
+    it("should throw error when rollbackTransaction is called without a transaction", () => {
+      // Arrange
+      const dataTable = new InMemoryDataTable<MockEntity>("testTable") as any;
+      (dataTable as any).transactionStack = [];
+
+      // Act & Assert
+      expect(() => {
+        (dataTable as any).rollbackTransaction();
+      }).toThrow("No transaction to rollback.");
+    });
+
+    it("should restore items from snapshot on rollback", async () => {
+      // Arrange
+      const dataTable = new InMemoryDataTable<MockEntity>("testTable") as any;
+      const originalItems = new Map<string, MockEntity>();
+      const entity1 = new MockEntity();
+      entity1.id = "1";
+      originalItems.set("1", entity1);
+      (dataTable as any).items = originalItems;
+      (dataTable as any).transactionStack = [];
+
+      // Begin transaction and modify items
+      (dataTable as any).beginTransaction();
+      const entity2 = new MockEntity();
+      entity2.id = "2";
+      (dataTable as any).items.set("2", entity2);
+
+      // Act - rollback
+      (dataTable as any).rollbackTransaction();
+
+      // Assert - items should be restored to original state
+      expect((dataTable as any).items.has("1")).toBe(true);
+      expect((dataTable as any).items.has("2")).toBe(false);
+    });
   });
 });
 

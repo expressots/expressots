@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { interfaces } from "../interfaces/interfaces";
-import { BindingOnSyntax } from "./binding_on_syntax";
+import { interfaces } from "../interfaces/interfaces.js";
+import { BindingOnSyntax } from "./binding_on_syntax.js";
 import {
   namedConstraint,
   taggedConstraint,
   traverseAncerstors,
   typeConstraint,
-} from "./constraint_helpers";
+} from "./constraint_helpers.js";
 
 class BindingWhenSyntax<T> implements interfaces.BindingWhenSyntax<T> {
   private _binding: interfaces.Binding<T>;

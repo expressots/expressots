@@ -1,28 +1,40 @@
-import { Binding } from "../bindings/binding";
-import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingScopeEnum, TargetTypeEnum } from "../constants/literal_types";
-import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { MetadataReader } from "../planning/metadata_reader";
+import { Binding } from "../bindings/binding.js";
+import * as ERROR_MSGS from "../constants/error_msgs.js";
+import { Scope, TargetTypeEnum } from "../constants/literal_types.js";
+import * as METADATA_KEY from "../constants/metadata_keys.js";
+import { interfaces } from "../interfaces/interfaces.js";
+import { MetadataReader } from "../planning/metadata_reader.js";
 import {
   createMockRequest,
   getBindingDictionary,
   plan,
-} from "../planning/planner";
-import { resolve } from "../resolution/resolver";
-import { BindingToSyntax } from "../syntax/binding_to_syntax";
-import { isPromise, isPromiseOrContainsPromise } from "../utils/async";
-import { id } from "../utils/id";
-import { getServiceIdentifierAsString } from "../utils/serialization";
-import { ContainerSnapshot } from "./container_snapshot";
-import { Lookup } from "./lookup";
-import { ModuleActivationStore } from "./module_activation_store";
+} from "../planning/planner.js";
+import { resolve } from "../resolution/resolver.js";
+import { BindingToSyntax } from "../syntax/binding_to_syntax.js";
+import { isPromise, isPromiseOrContainsPromise } from "../utils/async.js";
+import { id } from "../utils/id.js";
+import { getServiceIdentifierAsString } from "../utils/serialization.js";
+import { ContainerSnapshot } from "./container_snapshot.js";
+import { Lookup } from "./lookup.js";
+import { ModuleActivationStore } from "./module_activation_store.js";
 
 type GetArgs<T> = Omit<
   interfaces.NextArgs<T>,
   "contextInterceptor" | "targetType"
 >;
 
+/**
+ * The dependency injection container used by ExpressoTS. Holds service
+ * bindings, resolves them with scope handling (singleton, transient,
+ * request, custom), and supports hierarchical containers, container
+ * modules, snapshots, and activation/deactivation hooks.
+ *
+ * Application code rarely instantiates this directly; the framework
+ * creates the container during bootstrap and exposes it through
+ * `AppContainer` and module registration.
+ *
+ * @public API
+ */
 class Container implements interfaces.Container {
   public id: number;
   public parent: interfaces.Container | null;
@@ -78,11 +90,11 @@ class Container implements interfaces.Container {
     }
 
     if (options.defaultScope === undefined) {
-      options.defaultScope = BindingScopeEnum.Transient;
+      options.defaultScope = Scope.Transient;
     } else if (
-      options.defaultScope !== BindingScopeEnum.Singleton &&
-      options.defaultScope !== BindingScopeEnum.Transient &&
-      options.defaultScope !== BindingScopeEnum.Request
+      options.defaultScope !== Scope.Singleton &&
+      options.defaultScope !== Scope.Transient &&
+      options.defaultScope !== Scope.Request
     ) {
       throw new Error(`${ERROR_MSGS.CONTAINER_OPTIONS_INVALID_DEFAULT_SCOPE}`);
     }
@@ -182,7 +194,7 @@ class Container implements interfaces.Container {
   public bind<T>(
     serviceIdentifier: interfaces.ServiceIdentifier<T>,
   ): interfaces.BindingToSyntax<T> {
-    const scope = this.options.defaultScope || BindingScopeEnum.Transient;
+    const scope = this.options.defaultScope || Scope.Transient;
     const binding = new Binding<T>(serviceIdentifier, scope);
     this._bindingDictionary.add(serviceIdentifier, binding as Binding<unknown>);
     return new BindingToSyntax<T>(binding);

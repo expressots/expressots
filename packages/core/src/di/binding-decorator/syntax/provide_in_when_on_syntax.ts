@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import interfaces from "../interfaces/interfaces";
-import { interfaces as inversifyInterfaces } from "../../inversify";
+import interfaces from "../interfaces/interfaces.js";
+import { interfaces as inversifyInterfaces } from "../../inversify.js";
 
 class ProvideInWhenOnSyntax<T> implements interfaces.ProvideInWhenOnSyntax<T> {
   private _provideInSyntax: interfaces.ProvideInSyntax<T>;
@@ -110,6 +110,10 @@ class ProvideInWhenOnSyntax<T> implements interfaces.ProvideInWhenOnSyntax<T> {
 
   public inTransientScope(): interfaces.ProvideWhenOnSyntax<T> {
     return this._provideInSyntax.inTransientScope();
+  }
+
+  public inScope(scope: string): interfaces.ProvideWhenOnSyntax<T> {
+    return this._provideInSyntax.inScope(scope);
   }
 
   public done(force?: boolean): any {
