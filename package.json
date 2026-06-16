@@ -79,6 +79,9 @@
     "@expressots/shared": "^4.0.0-preview.3.4",
     "reflect-metadata": "0.2.2"
   },
+  "overrides": {
+    "js-yaml": "4.2.0"
+  },
   "devDependencies": {
     "@codecov/vite-plugin": "^2.0.1",
     "@commitlint/cli": "19.2.1",
