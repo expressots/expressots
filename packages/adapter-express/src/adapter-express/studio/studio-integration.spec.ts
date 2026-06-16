@@ -3,14 +3,32 @@ import {
   stopStudio,
   isStudioEnabled,
   getStudioAgent,
+  reportStudioRuntimeInfo,
+  rescanStudioRoutes,
+  refreshStudioContainer,
 } from "./studio-integration";
+
+const mockAgent = {
+  start: jest.fn().mockResolvedValue(undefined),
+  stop: jest.fn().mockResolvedValue(undefined),
+  createMiddleware: jest
+    .fn()
+    .mockReturnValue((_req: unknown, _res: unknown, next: () => void) => next()),
+  scanRoutes: jest.fn().mockResolvedValue(undefined),
+  updateRuntimeInfo: jest.fn(),
+  refreshContainer: jest.fn(),
+};
+
+jest.mock("@expressots/studio-agent", () => ({
+  StudioAgent: jest.fn().mockImplementation(() => mockAgent),
+}));
 
 describe("studio-integration", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    jest.resetModules();
+    jest.clearAllMocks();
   });
 
   afterEach(async () => {
@@ -48,22 +66,65 @@ describe("studio-integration", () => {
     expect(result).toBe(false);
   });
 
-  it("returns false when @expressots/studio-agent is not installed", async () => {
-    // The peer is optional; in a typical adapter-express test environment
-    // it isn't installed and require.resolve throws.
+  it("returns true in development when studio-agent is available", async () => {
     process.env.NODE_ENV = "development";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fakeApp: any = { use: jest.fn() };
     const result = await initializeStudio(fakeApp);
 
-    // Either false (peer missing) or true (rare, peer present in monorepo).
-    // Both are acceptable for a smoke test; what we assert is that the
-    // function never throws and the boolean shape is preserved.
-    expect(typeof result).toBe("boolean");
+    expect(result).toBe(true);
+    expect(isStudioEnabled()).toBe(true);
   });
 
   it("stopStudio() is safe to call when no agent is running", async () => {
     await expect(stopStudio()).resolves.toBeUndefined();
     expect(isStudioEnabled()).toBe(false);
+  });
+
+  it("initializes Studio in development when studio-agent is available", async () => {
+    process.env.NODE_ENV = "development";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+
+    const started = await initializeStudio(fakeApp, { port: 3456, serviceName: "test-app" });
+
+    expect(started).toBe(true);
+    expect(isStudioEnabled()).toBe(true);
+    expect(getStudioAgent()).not.toBeNull();
+    expect(fakeApp.use).toHaveBeenCalled();
+    expect(mockAgent.start).toHaveBeenCalled();
+  });
+
+  it("forwards runtime info to the agent when supported", async () => {
+    process.env.NODE_ENV = "development";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+    await initializeStudio(fakeApp, { enabled: true });
+
+    reportStudioRuntimeInfo({
+      appPort: 3000,
+      globalPrefix: "/api",
+      runtimeItems: { providers: [{ name: "LoggerProvider" }] },
+    });
+
+    expect(mockAgent.updateRuntimeInfo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appPort: 3000,
+        globalPrefix: "/api",
+      }),
+    );
+  });
+
+  it("rescans routes and refreshes the container best-effort", async () => {
+    process.env.NODE_ENV = "development";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+    await initializeStudio(fakeApp, { enabled: true });
+
+    await rescanStudioRoutes();
+    refreshStudioContainer();
+
+    expect(mockAgent.scanRoutes).toHaveBeenCalled();
+    expect(mockAgent.refreshContainer).toHaveBeenCalled();
   });
 });
