@@ -6,7 +6,7 @@
  * 2. Standalone mode: Starts its own agent (for demos or when not using core integration)
  */
 
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import { createServer, Server } from 'http';
 import { io as SocketIOClient, Socket } from 'socket.io-client';
 import path from 'path';
@@ -197,6 +197,7 @@ export class Studio {
   /** Start the UI server */
   private async startUIServer(): Promise<void> {
     this.uiApp = express();
+    this.uiApp.use(this.createRateLimiter(120, 60_000));
 
     // Try to find the built UI files
     const uiDistPath = this.findUIDistPath();
@@ -231,6 +232,30 @@ export class Studio {
         reject(err);
       });
     });
+  }
+
+  /**
+   * Simple in-memory rate limiter for the local UI server. Studio binds
+   * to localhost by default; this caps SPA fallback / static file churn
+   * from runaway clients without adding a dependency.
+   */
+  private createRateLimiter(maxHits: number, windowMs: number) {
+    const buckets = new Map<string, { count: number; resetAt: number }>();
+    return (req: Request, res: Response, next: NextFunction): void => {
+      const key = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+      const now = Date.now();
+      let bucket = buckets.get(key);
+      if (!bucket || now >= bucket.resetAt) {
+        bucket = { count: 0, resetAt: now + windowMs };
+        buckets.set(key, bucket);
+      }
+      bucket.count += 1;
+      if (bucket.count > maxHits) {
+        res.status(429).send('Too many requests');
+        return;
+      }
+      next();
+    };
   }
 
   /** Find the bundled UI dist path */

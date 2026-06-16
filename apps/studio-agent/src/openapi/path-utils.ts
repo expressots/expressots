@@ -15,18 +15,45 @@
  * Inline regex constraints (`:id(\\d+)`) are stripped — OpenAPI carries
  * those as a `schema.pattern`, which we don't attempt to reconstruct.
  */
+function isParamIdentStart(ch: string): boolean {
+  return /[A-Za-z_$]/.test(ch);
+}
+
+function isParamIdentPart(ch: string): boolean {
+  return /[\w$]/.test(ch);
+}
+
 export function toOpenApiPath(path: string): {
   openApiPath: string;
   params: string[];
 } {
   const params: string[] = [];
-  const openApiPath = path.replace(
-    /:([A-Za-z_$][\w$]*)(\([^)]*\))?/g,
-    (_match, name: string) => {
+  let openApiPath = '';
+  let i = 0;
+  while (i < path.length) {
+    const ch = path[i]!;
+    if (ch === ':' && i + 1 < path.length && isParamIdentStart(path[i + 1]!)) {
+      let j = i + 1;
+      while (j < path.length && isParamIdentPart(path[j]!)) j++;
+      const name = path.slice(i + 1, j);
+      if (path[j] === '(') {
+        let depth = 1;
+        j++;
+        while (j < path.length && depth > 0) {
+          const c = path[j]!;
+          if (c === '(') depth++;
+          else if (c === ')') depth--;
+          j++;
+        }
+      }
       params.push(name);
-      return `{${name}}`;
-    },
-  );
+      openApiPath += `{${name}}`;
+      i = j;
+      continue;
+    }
+    openApiPath += ch;
+    i++;
+  }
   return { openApiPath, params };
 }
 

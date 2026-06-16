@@ -524,23 +524,29 @@ function middlewareIdentifierFromArg(arg: string): string | null {
   return head;
 }
 
+function stripLeadingDecorators(segment: string): { injectToken: string | null; rest: string } {
+  let injectToken: string | null = null;
+  let rest = segment.trimStart();
+  const DECORATOR_RE = /^@\w+\s*\(\s*([\w.$]+)?\s*\)\s*/;
+  for (;;) {
+    const match = DECORATOR_RE.exec(rest);
+    if (!match) break;
+    if (match[1]) injectToken = match[1];
+    rest = rest.slice(match[0].length);
+  }
+  return { injectToken, rest };
+}
+
 function extractParamTypes(params: string): string[] {
   const out: string[] = [];
-  // Anchor each iteration to consume exactly one parameter:
-  //   1) Optional `@decorator(...)` prefix(es) — args may contain commas
-  //      Capture group 1 isolates the *first* @inject(...) token so we
-  //      can prefer it over the declared type when both are present.
-  //   2) Optional access modifier (and `readonly`)
-  //   3) Parameter name (non-capturing, we don't need it)
-  //   4) `:` then the captured Type (allow `Foo`, `Ns.Foo`, `Foo<...>`)
-  //   5) `?:` is allowed to support optional injection
-  const PARAM_RE =
-    /(?:@\w+\s*\(\s*([\w.$]+)?\s*\)\s*)*(?:(?:public|private|protected)\s+)?(?:readonly\s+)?\w+\s*\??\s*:\s*([A-Za-z_$][\w.$]*)/g;
-  for (const match of params.matchAll(PARAM_RE)) {
-    const injectToken = match[1];
-    const typeName = match[2];
+  const PARAM_TYPE_RE =
+    /^(?:(?:public|private|protected)\s+)?(?:readonly\s+)?\w+\s*\??\s*:\s*([A-Za-z_$][\w.$]*)/;
+  for (const segment of splitTopLevelArgs(params)) {
+    const { injectToken, rest } = stripLeadingDecorators(segment);
+    const typeMatch = PARAM_TYPE_RE.exec(rest.trimStart());
+    if (!typeMatch) continue;
 
-    const candidate = injectToken || typeName;
+    const candidate = injectToken || typeMatch[1];
     if (!candidate) continue;
 
     const head = candidate.split('.').pop() || candidate;

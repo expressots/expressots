@@ -352,7 +352,10 @@ function mergeRoutes(into: RouteInfo[], add: RouteInfo[]): RouteInfo[] {
 
 /** Strip query string / trailing slash so route-key matching is stable. */
 function normalisePath(p: string): string {
-  const noQuery = p.split('?')[0] ?? p;
-  const trimmed = noQuery.replace(/\/+$/, '');
+  const q = p.indexOf('?');
+  const noQuery = q === -1 ? p : p.slice(0, q);
+  let end = noQuery.length;
+  while (end > 1 && noQuery[end - 1] === '/') end--;
+  const trimmed = noQuery.slice(0, end);
   return trimmed || '/';
 }

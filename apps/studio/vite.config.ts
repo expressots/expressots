@@ -17,6 +17,8 @@ export default defineConfig({
     outDir: 'dist/ui',
     emptyOutDir: true,
     sourcemap: true,
+    // esbuild 0.28+ no longer downlevels destructuring to es2020 targets.
+    target: 'es2022',
     rollupOptions: {
       output: {
         // Split third-party code into stable, separately cacheable chunks.

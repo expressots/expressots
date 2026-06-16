@@ -228,7 +228,7 @@ function checkAuthGaps(input: PostureInputs): PostureFinding[] {
 // Rule: verbose error responses (stack trace leakage)
 // ────────────────────────────────────────────────────────────────────
 
-const STACK_REGEX = /at\s+[\w.<>$]+\s+\(.+:\d+:\d+\)/;
+const STACK_REGEX = /at\s+[\w.<>$]+\s+\([^)]+:\d+:\d+\)/;
 
 function checkVerboseErrors(input: PostureInputs): PostureFinding[] {
   const out: PostureFinding[] = [];
@@ -468,7 +468,7 @@ function prettyHeader(headerName: string): string {
  * detection (hash the id set; only broadcast on transition).
  */
 function stableId(...parts: string[]): string {
-  const h = createHash('sha1');
+  const h = createHash('sha256');
   for (const p of parts) h.update(p);
   h.update('\0');
   return h.digest('hex').slice(0, 16);

@@ -284,7 +284,7 @@ function quoteVersionRange(version: string): string {
   if (/[\s<>=^~|*"'\\]/.test(version)) {
     // Use single quotes; npm install on every platform accepts the
     // shell-quoted form. Escape any embedded single quotes too.
-    return `'${version.replace(/'/g, "\\'")}'`;
+    return `'${version.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
   }
   return version;
 }
