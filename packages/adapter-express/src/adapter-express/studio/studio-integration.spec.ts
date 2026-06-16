@@ -136,6 +136,41 @@ describe("studio-integration", () => {
     expect(mockAgent.updateRuntimeInfo).not.toHaveBeenCalled();
   });
 
+  it("logs debug output when EXPRESSOTS_STUDIO_DEBUG is true", async () => {
+    process.env.NODE_ENV = "development";
+    process.env.EXPRESSOTS_STUDIO_DEBUG = "true";
+    const debugSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+
+    await initializeStudio(fakeApp, { enabled: true });
+
+    expect(debugSpy).toHaveBeenCalled();
+    debugSpy.mockRestore();
+  });
+
+  it("warns when route rescan fails", async () => {
+    process.env.NODE_ENV = "development";
+    mockAgent.scanRoutes.mockRejectedValueOnce(new Error("scan failed"));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+    await initializeStudio(fakeApp, { enabled: true });
+
+    await rescanStudioRoutes();
+
+    expect(mockAgent.scanRoutes).toHaveBeenCalled();
+  });
+
+  it("replaces a previously running agent before re-initializing", async () => {
+    process.env.NODE_ENV = "development";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeApp: any = { use: jest.fn() };
+    await initializeStudio(fakeApp, { enabled: true });
+    await initializeStudio(fakeApp, { enabled: true });
+
+    expect(mockAgent.stop).toHaveBeenCalled();
+  });
+
   it("returns false when the agent cannot bind its WebSocket port", async () => {
     process.env.NODE_ENV = "development";
     mockAgent.start.mockRejectedValueOnce(
