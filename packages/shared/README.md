@@ -9,9 +9,9 @@
 
   <p>
     <a href="https://www.npmjs.com/package/@expressots/shared"><img src="https://img.shields.io/npm/v/@expressots%2Fshared?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
-    <a href="https://github.com/expressots/shared/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/shared?style=flat-square&color=181717" alt="License"></a>
+    <a href="https://github.com/expressots/shared/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/shared/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/shared/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
+    <a href="https://github.com/expressots/shared/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/shared/build.yaml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
 
   <p>
