@@ -3,6 +3,7 @@
 
 import fs from "fs";
 import { _dotenvKey, _vaultPath, config, configDotenv } from "../environment";
+import { log, LogLevel } from "../../utils/logger";
 
 // Import necessary modules and functions
 
@@ -73,6 +74,22 @@ describe("config() config method", () => {
 
     // Assert
     expect(result).toBe("testKey");
+  });
+
+  test("should warn and fall back to configDotenv when DOTENV_KEY is set but vault file is missing", () => {
+    const mockOptions = new MockIConfigOptions() as any;
+    mockOptions.vaultEnvKey =
+      "dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development";
+    jest.spyOn(fs, "existsSync").mockReturnValue(false as any);
+    (fs.readFileSync as jest.Mock).mockReturnValue("FOO=bar");
+
+    const result = config(mockOptions);
+
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining("no .env.vault file was found"),
+      LogLevel.Warn,
+    );
+    expect(result.parsed).toEqual({ FOO: "bar" });
   });
 });
 

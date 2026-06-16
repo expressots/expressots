@@ -50,13 +50,19 @@ describe("configDotenv() configDotenv method", () => {
       const result: IConfigOutput = configDotenv(mockOptions as any);
 
       // Assert
-      expect({
-        ANOTHER_KEY: "another_value",
-        KEY: "value",
-      }).toEqual({
+      expect(result.parsed).toEqual({
         KEY: "value",
         ANOTHER_KEY: "another_value",
       });
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should default options when called with no arguments", () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue("KEY=value");
+
+      const result: IConfigOutput = configDotenv();
+
+      expect(result.parsed).toEqual({ KEY: "value" });
       expect(result.error).toBeUndefined();
     });
   });
