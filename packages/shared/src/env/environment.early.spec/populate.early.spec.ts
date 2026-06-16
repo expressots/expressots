@@ -72,6 +72,7 @@ describe("populate() populate method", () => {
     populate(mockEnvObject, mockParsed, mockOptions as any);
 
     expect(log).toHaveBeenCalledWith('"KEY1" was set to "value1"', LogLevel.Debug);
+    expect(log).toHaveBeenCalledWith("Loaded env keys: KEY1", LogLevel.Debug);
   });
 
   test("should handle empty parsed object gracefully", () => {
