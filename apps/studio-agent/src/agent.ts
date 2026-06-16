@@ -8,11 +8,25 @@
  * - WebSocket communication with Studio UI
  */
 
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, type Socket } from 'socket.io';
 import { createServer, Server as HttpServer } from 'http';
 import { StudioTracer } from './instrumentation/tracer.js';
 import { RouteScanner } from './discovery/route-scanner.js';
 import { RequestRecorder } from './recording/request-recorder.js';
+import {
+  ContainerIntrospector,
+  type ContainerSnapshot,
+} from './introspection/container-introspector.js';
+import { DatabaseIntrospector } from './introspection/database-introspector.js';
+import { LogCapture, type LogEntry } from './logging/log-capture.js';
+import { SecurityEngine } from './security/index.js';
+import { CoverageEngine } from './coverage/index.js';
+import { buildOpenApiDocument, diffOpenApiSpec } from './openapi/index.js';
+import { resolveInstallId } from './identity/install-id.js';
+import * as fs from 'node:fs';
+import type { FSWatcher } from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type {
   AgentConfig,
   RouteInfo,
@@ -21,14 +35,127 @@ import type {
   AppMetrics,
   EndpointStats,
   WSMessage,
+  WSMessageType,
   HttpMethod,
+  RuntimeInfo,
 } from './types/index.js';
 
+/**
+ * Best-effort version lookup for a package installed in the host's
+ * `node_modules`. We read `package.json` straight from disk instead of
+ * going through `require()` — most modern packages don't expose
+ * `./package.json` in their `exports` map, which made the `require`
+ * approach silently return `undefined`.
+ */
+function safePackageVersion(pkgName: string): string | undefined {
+  const candidates = [
+    // Standard layout: <cwd>/node_modules/<pkg>/package.json
+    path.resolve(process.cwd(), 'node_modules', ...pkgName.split('/'), 'package.json'),
+    // Walk up from this module's location for nested / hoisted layouts.
+    ...walkParentNodeModules(pkgName),
+  ];
+  for (const file of candidates) {
+    try {
+      const raw = fs.readFileSync(file, 'utf-8');
+      const parsed = JSON.parse(raw) as { version?: string };
+      if (parsed?.version) return parsed.version;
+    } catch {
+      // try the next candidate
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Read the host application's own version from the `package.json` in the
+ * current working directory. Used for an OpenAPI document's `info.version`
+ * so it reflects the user's API release, not the framework version.
+ */
+function readHostAppVersion(): string | undefined {
+  try {
+    const raw = fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf-8');
+    const parsed = JSON.parse(raw) as { version?: string };
+    return parsed?.version;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Yield candidate `node_modules/<pkg>/package.json` paths walking up from this file. */
+function walkParentNodeModules(pkgName: string): string[] {
+  const out: string[] = [];
+  try {
+    let dir = path.dirname(fileURLToPath(import.meta.url));
+    for (let i = 0; i < 8; i++) {
+      out.push(path.resolve(dir, 'node_modules', ...pkgName.split('/'), 'package.json'));
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  } catch {
+    // import.meta.url may be unavailable in some bundles — fine.
+  }
+  return out;
+}
+
+/**
+ * Resolve our own package version from the agent's bundled `package.json`.
+ * Reads the manifest sitting two levels up from the compiled `agent.js`
+ * (i.e. `dist/agent.js` → `package.json`). Falls back to the host lookup,
+ * then to "unknown".
+ */
+function resolveOwnVersion(): string {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const candidate = path.resolve(here, '..', 'package.json');
+    const raw = fs.readFileSync(candidate, 'utf-8');
+    const parsed = JSON.parse(raw) as { version?: string };
+    if (parsed?.version) return parsed.version;
+  } catch {
+    // fall through
+  }
+  return safePackageVersion('@expressots/studio-agent') ?? 'unknown';
+}
+
+/**
+ * Main orchestrator for ExpressoTS Studio instrumentation. Runs inside
+ * the host application's process and coordinates every Studio subsystem:
+ *
+ * - route discovery (`RouteScanner`, static and runtime)
+ * - OpenTelemetry tracing (`StudioTracer`)
+ * - request/response recording (`RequestRecorder`, SQLite-backed)
+ * - DI container and in-memory database introspection
+ * - console log capture, security scanning, and coverage reporting
+ *
+ * The agent exposes a Socket.IO server (default port 3334) that the
+ * Studio UI connects to; all data flows to the UI as `WSMessage`
+ * envelopes. Lifecycle: construct with an `AgentConfig`, call `start()`
+ * once, and `stop()` during host shutdown.
+ *
+ * @example
+ * ```typescript
+ * const agent = new StudioAgent({
+ *   port: 3334,
+ *   dbPath: '.studio/studio.db',
+ *   serviceName: 'expressots-app',
+ *   enableRecording: true,
+ * });
+ * await agent.start();
+ * ```
+ */
 export class StudioAgent {
   private config: AgentConfig;
   private tracer: StudioTracer;
   private scanner: RouteScanner;
   private recorder: RequestRecorder;
+  private introspector: ContainerIntrospector | null = null;
+  private containerSnapshot: ContainerSnapshot | null = null;
+  private databaseIntrospector: DatabaseIntrospector | null = null;
+  private logCapture: LogCapture;
+  private securityEngine: SecurityEngine | null = null;
+  private coverageEngine: CoverageEngine | null = null;
+  private coverageWatcher: FSWatcher | null = null;
+  private coverageRescanTimer: NodeJS.Timeout | null = null;
   private io: SocketIOServer | null = null;
   private httpServer: HttpServer | null = null;
   private routes: RouteInfo[] = [];
@@ -38,9 +165,26 @@ export class StudioAgent {
   private responseTimes: number[] = [];
   private startTime: number = Date.now();
   private isRunning: boolean = false;
+  private srcWatcher: FSWatcher | null = null;
+  private rescanTimer: NodeJS.Timeout | null = null;
+  /**
+   * Periodic metrics-broadcast timer. Captured so `stop()` can clear it
+   * cleanly; `.unref()`'d so it never keeps the Node event loop alive in
+   * tests / serverless environments.
+   */
+  private metricsTimer: NodeJS.Timeout | null = null;
 
+  /**
+   * Create an agent with the given configuration.
+   *
+   * @param config - Partial configuration; omitted fields fall back to
+   *   the defaults documented on `AgentConfig` (port 3334, recording
+   *   enabled, 1000 recorded exchanges, etc.).
+   */
   constructor(config: Partial<AgentConfig> = {}) {
     this.config = {
+      mode: config.mode ?? 'development',
+      installId: resolveInstallId(config.installId || undefined),
       port: config.port ?? 3334,
       dbPath: config.dbPath ?? '.studio/studio.db',
       enableRecording: config.enableRecording ?? true,
@@ -49,7 +193,22 @@ export class StudioAgent {
       traceSampleRate: config.traceSampleRate ?? 1.0,
       serviceName: config.serviceName ?? 'expressots-app',
       expressApp: config.expressApp,
+      appContainer: config.appContainer,
+      appPort: config.appPort,
+      globalPrefix: config.globalPrefix,
+      startupMs: config.startupMs,
+      interceptorCount: config.interceptorCount,
+      coverage: config.coverage,
     };
+
+    if (this.config.appContainer) {
+      this.introspector = new ContainerIntrospector(this.config.appContainer);
+      this.databaseIntrospector = new DatabaseIntrospector(
+        this.config.appContainer,
+      );
+    }
+
+    this.logCapture = new LogCapture(1000);
 
     this.tracer = new StudioTracer(this.config.serviceName);
     this.scanner = new RouteScanner();
@@ -71,27 +230,63 @@ export class StudioAgent {
     };
   }
 
-  /** Start the Studio Agent */
+  /**
+   * Start the agent.
+   *
+   * Initializes the recorder (best-effort; recording is disabled on
+   * runtimes without `node:sqlite`), starts the tracer, performs the
+   * initial route scan, captures a DI container snapshot when a container
+   * was provided, starts the WebSocket server and metrics broadcasting,
+   * installs console log capture, and kicks off the security and coverage
+   * engines. Idempotent: calling it while already running is a no-op.
+   *
+   * @returns Resolves once the WebSocket server is listening.
+   */
   async start(): Promise<void> {
     if (this.isRunning) {
       console.warn('StudioAgent is already running');
       return;
     }
 
-    console.log('🚀 Starting ExpressoTS Studio Agent...');
-
-    // Initialize recorder
+    // Initialize recorder. Best-effort: request recording is backed by
+    // Node's built-in `node:sqlite` (Node >=22.5). On older runtimes the
+    // recorder stays disabled and every other Studio feature keeps working,
+    // so a missing/unavailable SQLite backend must never abort startup.
     if (this.config.enableRecording) {
-      await this.recorder.initialize();
-      console.log('📝 Request recording enabled');
+      try {
+        await this.recorder.initialize();
+        if (!this.recorder.isAvailable()) {
+          this.config.enableRecording = false;
+          console.warn(
+            'StudioAgent: request recording disabled (node:sqlite unavailable, requires Node >=22.5). All other Studio features remain active.',
+          );
+        }
+      } catch (error) {
+        this.config.enableRecording = false;
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(
+          `StudioAgent: request recording disabled (${message}). All other Studio features remain active.`,
+        );
+      }
     }
 
     // Start tracer
     await this.tracer.start((trace) => this.handleTrace(trace));
-    console.log('🔍 OpenTelemetry tracing enabled');
 
     // Scan for routes
     await this.scanRoutes();
+
+    // Capture DI container snapshot (bindings + dependency graph). Best-effort:
+    // if the container is missing or not the expected Inversify shape we just
+    // get an empty snapshot back and the Container view in the UI stays empty.
+    if (this.introspector && this.introspector.isAvailable()) {
+      try {
+        this.containerSnapshot = this.introspector.capture();
+        this.introspector.installResolutionTracker();
+      } catch {
+        this.containerSnapshot = null;
+      }
+    }
 
     // Start WebSocket server
     await this.startWebSocketServer();
@@ -99,78 +294,536 @@ export class StudioAgent {
     // Start metrics collection
     this.startMetricsCollection();
 
+    // Capture console.* output and stream it to the UI. We install this
+    // last so the agent's own startup logs ("Studio Agent listening on …")
+    // still go through unmodified.
+    this.logCapture.install();
+    this.logCapture.onLog((entry) => {
+      this.broadcast('log', entry);
+      // Each new log line is a potential signal for the posture
+      // analyzer (e.g. it may reveal a leaked secret). Cheap to
+      // debounce; the engine collapses bursts.
+      this.securityEngine?.scheduleRefresh();
+    });
+
+    this.startSecurityEngine();
+
+    this.startCoverageEngine();
+
+    // Watch the project's `src/` for controller / module / DTO changes so
+    // the Routes, Architecture and API client tabs stay live without the
+    // user reloading Studio. Disabled in production and silently no-ops
+    // when the directory is missing or `fs.watch(recursive)` isn't
+    // supported on this platform/Node version.
+    this.startSrcWatcher();
+
     this.isRunning = true;
-    console.log(`✨ Studio Agent running on ws://localhost:${this.config.port}`);
   }
 
-  /** Stop the Studio Agent */
+  /**
+   * Start a debounced filesystem watcher over `./src` (relative to the
+   * host's CWD) that triggers a route + structure rescan whenever a
+   * `*.ts` / `*.js` file changes. Uses `fs.watch({ recursive: true })`
+   * to avoid taking a chokidar dependency. Failures are non-fatal.
+   */
+  private startSrcWatcher(): void {
+    if (process.env.NODE_ENV === 'production') return;
+    if (process.env.EXPRESSOTS_STUDIO_FS_WATCH === 'false') return;
+
+    const srcDir = path.resolve(process.cwd(), 'src');
+    if (!fs.existsSync(srcDir)) return;
+
+    const debounceMs = 300;
+    const onChange = (_event: string, filename: string | Buffer | null) => {
+      if (!filename) return;
+      const name = filename.toString();
+      // Only react to source file changes; skip editor swap files and the
+      // compiled output to avoid feedback loops.
+      if (!/\.(ts|js)$/i.test(name)) return;
+      if (name.includes('node_modules')) return;
+      if (name.includes('dist' + path.sep) || name.startsWith('dist')) return;
+
+      if (this.rescanTimer) clearTimeout(this.rescanTimer);
+      this.rescanTimer = setTimeout(() => {
+        this.rescanTimer = null;
+        void this.scanRoutes();
+      }, debounceMs);
+    };
+
+    try {
+      this.srcWatcher = fs.watch(srcDir, { recursive: true }, onChange);
+      this.srcWatcher.on('error', () => {
+        // Best-effort: a closed handle / inotify exhaustion shouldn't take
+        // down the agent. Disable further reactions until next start().
+        this.srcWatcher?.close();
+        this.srcWatcher = null;
+      });
+    } catch {
+      // Recursive watch is unsupported on some Linux setups (Node < 20).
+      // Live updates simply degrade to "rescan on next request"; users
+      // running tsx/nodemon will still get a fresh agent on each restart.
+      this.srcWatcher = null;
+    }
+  }
+
+  /**
+   * Stand up the SecurityEngine and kick off the first scan. The
+   * engine reuses the existing Socket.IO server — every transition in
+   * its report goes out as a `WSMessage<'security'>` envelope, gated
+   * on at least one connected client.
+   */
+  private startSecurityEngine(): void {
+    this.securityEngine = new SecurityEngine({
+      cwd: process.cwd(),
+      dbPath: this.config.dbPath,
+      getRoutes: () => this.routes,
+      getStructure: () => this.appStructure,
+      getExchanges: () =>
+        this.config.enableRecording
+          ? this.recorder.getRecentExchanges(this.config.maxRecordedExchanges, 0)
+          : [],
+      getLogs: () => this.logCapture.getBuffer(),
+    });
+
+    this.securityEngine.onReport((report) => {
+      // Gate on clientsCount > 0 — no point queueing 100 KB frames
+      // against a backgrounded tab. The next reconnecting client gets
+      // the latest report from the initial-data replay anyway.
+      if (!this.io || this.io.engine.clientsCount === 0) return;
+      this.broadcast('security', report);
+    });
+
+    // Kick off the first full scan in the background — never blocks
+    // start(). Failures are absorbed by the engine and surface in
+    // `scanState.audit === 'error'`.
+    void this.securityEngine.runFullScan();
+  }
+
+  /**
+   * Stand up the CoverageEngine, parse any existing coverage artifact,
+   * and watch the coverage directory for fresh test runs. Like the
+   * SecurityEngine, every report transition goes out as a gated
+   * `WSMessage<'coverage'>` so we never queue frames against a tab with
+   * no connected clients.
+   */
+  private startCoverageEngine(): void {
+    this.coverageEngine = new CoverageEngine({
+      cwd: process.cwd(),
+      dbPath: this.config.dbPath,
+      coverage: this.config.coverage,
+    });
+
+    this.coverageEngine.onReport((report) => {
+      if (!this.io || this.io.engine.clientsCount === 0) return;
+      this.broadcast('coverage', report);
+    });
+
+    this.coverageEngine.onTestResults((summary) => {
+      if (!this.io || this.io.engine.clientsCount === 0) return;
+      this.broadcast('coverage_tests', summary);
+    });
+
+    // Parse whatever's already on disk in the background — never blocks
+    // start(). The empty/missing-artifact state is itself a valid report.
+    void this.coverageEngine.refresh();
+
+    this.startCoverageWatcher();
+  }
+
+  /**
+   * Watch the project's coverage output directory and trigger a
+   * debounced re-parse whenever a test run rewrites it. When the
+   * directory doesn't exist yet we watch the cwd (non-recursively) so we
+   * can attach the real watcher the moment it's created — without that,
+   * the first-ever test run wouldn't be picked up until a Studio reload.
+   * Best-effort and disabled in production, mirroring `startSrcWatcher`.
+   */
+  private startCoverageWatcher(): void {
+    if (process.env.NODE_ENV === 'production') return;
+    if (process.env.EXPRESSOTS_STUDIO_FS_WATCH === 'false') return;
+
+    const cwd = process.cwd();
+    const coverageDir = path.resolve(cwd, 'coverage');
+
+    const scheduleRescan = () => {
+      if (this.coverageRescanTimer) clearTimeout(this.coverageRescanTimer);
+      this.coverageRescanTimer = setTimeout(() => {
+        this.coverageRescanTimer = null;
+        this.coverageEngine?.scheduleRefresh();
+      }, 300);
+    };
+
+    const attachDirWatcher = (): boolean => {
+      if (!fs.existsSync(coverageDir)) return false;
+      try {
+        this.coverageWatcher = fs.watch(
+          coverageDir,
+          { recursive: true },
+          () => scheduleRescan(),
+        );
+        this.coverageWatcher.on('error', () => {
+          this.coverageWatcher?.close();
+          this.coverageWatcher = null;
+        });
+        return true;
+      } catch {
+        // Recursive watch unsupported on some platforms — fall back to a
+        // non-recursive watch (artifact files are direct children anyway).
+        try {
+          this.coverageWatcher = fs.watch(coverageDir, () => scheduleRescan());
+          return true;
+        } catch {
+          this.coverageWatcher = null;
+          return false;
+        }
+      }
+    };
+
+    if (attachDirWatcher()) return;
+
+    // Coverage dir doesn't exist yet: watch the cwd for its creation,
+    // then swap to the real watcher.
+    try {
+      const bootstrap = fs.watch(cwd, (_event, filename) => {
+        if (!filename) return;
+        if (filename.toString() !== 'coverage') return;
+        if (!fs.existsSync(coverageDir)) return;
+        bootstrap.close();
+        if (attachDirWatcher()) scheduleRescan();
+      });
+      bootstrap.on('error', () => bootstrap.close());
+      // Keep a handle so stop() can tear it down if the dir is never made.
+      this.coverageWatcher = bootstrap;
+    } catch {
+      this.coverageWatcher = null;
+    }
+  }
+
+  /** Get the captured container snapshot (or null if unavailable). */
+  getContainerSnapshot(): ContainerSnapshot | null {
+    return this.containerSnapshot;
+  }
+
+  /**
+   * Re-capture the DI container snapshot and broadcast to all connected
+   * clients. Called by the adapter after `configureServices()` and
+   * `InversifyExpressServer.build()` so the snapshot reflects every
+   * binding registered during the full boot sequence.
+   */
+  refreshContainer(): void {
+    if (!this.introspector || !this.introspector.isAvailable()) return;
+    try {
+      this.containerSnapshot = this.introspector.recapture();
+      this.broadcast('container', this.containerSnapshot);
+    } catch {
+      // Best-effort; never break the host.
+    }
+  }
+
+  /**
+   * Capture a fresh in-memory database snapshot. Returns an "unavailable"
+   * snapshot when no `InMemoryDBProvider` is registered or no container was
+   * provided to the agent.
+   */
+  private captureDatabaseSnapshot(): import('./types/index.js').DatabaseSnapshot {
+    if (this.databaseIntrospector) {
+      return this.databaseIntrospector.capture();
+    }
+    return {
+      available: false,
+      tableCount: 0,
+      totalRecords: 0,
+      entities: [],
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Stop the agent and release all resources.
+   *
+   * Tears down the WebSocket server (with a hard timeout so host shutdown
+   * never hangs), stops the tracer, closes the recorder database, restores
+   * the original console methods, and stops the security and coverage
+   * engines along with their watchers and timers. Safe to call multiple
+   * times; only the first call performs the teardown.
+   *
+   * @returns Resolves once teardown has completed (or timed out).
+   */
   async stop(): Promise<void> {
     if (!this.isRunning) return;
-
-    console.log('Stopping ExpressoTS Studio Agent...');
-
-    // Close WebSocket server
-    if (this.io) {
-      this.io.close();
-      this.io = null;
-    }
-
-    if (this.httpServer) {
-      this.httpServer.close();
-      this.httpServer = null;
-    }
-
-    // Stop tracer
-    await this.tracer.stop();
-
-    // Close recorder
-    this.recorder.close();
-
+    // Mark stopped up-front so concurrent stop() calls bail and the
+    // host's shutdown hook isn't held waiting on a duplicate teardown.
     this.isRunning = false;
-    console.log('Studio Agent stopped');
+
+    await this.shutdownWebSocketServer();
+
+    try {
+      await this.tracer.stop();
+    } catch {
+      // best-effort
+    }
+
+    try {
+      this.recorder.close();
+    } catch {
+      // best-effort
+    }
+
+    // Restore original console.* so the host process logs untouched.
+    this.logCapture.uninstall();
+
+    if (this.securityEngine) {
+      this.securityEngine.stop();
+      this.securityEngine = null;
+    }
+
+    if (this.coverageEngine) {
+      this.coverageEngine.stop();
+      this.coverageEngine = null;
+    }
+    if (this.coverageRescanTimer) {
+      clearTimeout(this.coverageRescanTimer);
+      this.coverageRescanTimer = null;
+    }
+    if (this.coverageWatcher) {
+      try {
+        this.coverageWatcher.close();
+      } catch {
+        // best-effort
+      }
+      this.coverageWatcher = null;
+    }
+
+    if (this.metricsTimer) {
+      clearInterval(this.metricsTimer);
+      this.metricsTimer = null;
+    }
+
+    if (this.rescanTimer) {
+      clearTimeout(this.rescanTimer);
+      this.rescanTimer = null;
+    }
+    if (this.srcWatcher) {
+      try {
+        this.srcWatcher.close();
+      } catch {
+        // best-effort
+      }
+      this.srcWatcher = null;
+    }
   }
 
-  /** Scan application for routes */
+  /**
+   * Tear down the WebSocket / HTTP server with a hard timeout so the
+   * host's graceful shutdown never hangs on a slow socket.io drain.
+   *
+   * If the close doesn't complete in time, we move on — the OS reclaims
+   * the port the moment the host process exits, so the next hot-reload
+   * start succeeds anyway. (`tsx --watch` / `nodemon` will SIGKILL us
+   * otherwise, which surfaces to the user as "Failed running ./src/main.ts".)
+   */
+  private async shutdownWebSocketServer(): Promise<void> {
+    const io = this.io;
+    const httpServer = this.httpServer;
+    this.io = null;
+    this.httpServer = null;
+
+    if (!io && !httpServer) return;
+
+    // Force-close any lingering keep-alive / WebSocket sockets so the
+    // underlying server can release the port immediately rather than
+    // waiting for the OS-level read timeout. (Node 18.2+; older Node
+    // silently no-ops via the optional-call.)
+    if (httpServer) {
+      try {
+        (httpServer as unknown as { closeAllConnections?: () => void })
+          .closeAllConnections?.();
+      } catch {
+        // best-effort
+      }
+    }
+
+    const drained = new Promise<void>((resolve) => {
+      const finish = () => resolve();
+      if (io) {
+        // socket.io closes the underlying http server itself.
+        io.close(finish);
+      } else if (httpServer) {
+        httpServer.close(() => finish());
+      } else {
+        finish();
+      }
+    });
+
+    // Hard cap: 500ms is plenty for a clean drain after
+    // closeAllConnections; anything slower is a stuck client and we
+    // don't want that to hold up the host's shutdown.
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 500));
+
+    await Promise.race([drained, timeout]);
+  }
+
+  /**
+   * Scan the application for routes and structure, then broadcast the
+   * results to connected clients.
+   *
+   * Runs the static source scan, merges runtime middleware data, applies
+   * the host's global URL prefix, and (when an Express app instance was
+   * provided) adds runtime-only routes the static scan cannot see.
+   * Errors are logged and never thrown; the previous route list is kept.
+   *
+   * @returns Resolves when the scan and broadcast are complete.
+   */
   async scanRoutes(): Promise<void> {
     try {
       this.appStructure = await this.scanner.scan();
       this.routes = this.scanner.getRoutes();
-      console.log(`📍 Discovered ${this.routes.length} routes`);
+      // Snapshot the un-prefixed path for every freshly scanned route.
+      // The static scanner only sees `@controller(...)` + `@Get(...)`
+      // metadata — the host mounts the whole router under
+      // `setGlobalRoutePrefix("/api")` later, so the source-of-truth
+      // path is kept on `originalPath` and the user-visible `path` is
+      // always recomputed from it. This lets `updateRuntimeInfo` swap
+      // the prefix later without compounding `/api/api/health`-style
+      // duplication on each call.
+      for (const r of this.routes) {
+        (r as RouteInfo & { originalPath?: string }).originalPath = r.path;
+      }
+      // Re-fold any previously reported runtime middleware data into
+      // the fresh static structure. Without this, a hot-reload rescan
+      // would drop the global pipeline nodes and Reflect-derived edges
+      // until the next `updateRuntimeInfo()` callback.
+      this.mergeRuntimeMiddlewareIntoStructure();
 
-      // If Express app is provided, also scan runtime routes
+      // Apply the host-supplied global URL prefix. Earlier versions
+      // tried to recover the prefix from `app.router.stack[i].regexp`
+      // at runtime, but Express 5 dropped that field in favour of
+      // opaque `matchers` closures, so the prefix is no longer
+      // recoverable from the layer alone. The host already passes it
+      // in via `agentOptions.globalPrefix` — use that as the source of
+      // truth.
+      this.applyGlobalPrefixToRoutes();
+
+      // If Express app is provided, also scan runtime routes and merge
+      // anything the static scan missed (handlers registered ad-hoc via
+      // `app.get(...)` outside a `@Controller()` class, e.g. health-check
+      // probes wired directly in `configureServices`). The static
+      // scanner is the source of truth for decorated routes; runtime
+      // routes only ever *add* — never replace.
       if (this.config.expressApp) {
         const runtimeRoutes = RouteScanner.scanExpressApp(this.config.expressApp);
-        console.log(`📍 Found ${runtimeRoutes.length} runtime routes`);
-        
-        // Merge with discovered routes
+        const prefix = this.normaliseGlobalPrefix(this.config.globalPrefix);
+
         for (const runtimeRoute of runtimeRoutes) {
-          const exists = this.routes.some(
-            (r) => r.path === runtimeRoute.path && r.method === runtimeRoute.method
+          // Apply the same global prefix to runtime routes — Express 5
+          // strips it from `app.router.stack` (the prefix lives inside
+          // sub-router matcher closures), so `scanExpressApp` returns
+          // un-prefixed paths just like the static scanner.
+          const fullPath = prefix
+            ? this.joinPrefixWithRoute(prefix, runtimeRoute.path)
+            : runtimeRoute.path;
+
+          const exact = this.routes.find(
+            (r) => r.path === fullPath && r.method === runtimeRoute.method,
           );
-          if (!exists) {
-            this.routes.push(runtimeRoute);
-          }
+          if (exact) continue;
+
+          this.routes.push({
+            ...runtimeRoute,
+            path: fullPath,
+            // Keep the un-prefixed form so a later prefix change rewrites
+            // this route the same way it does decorator-discovered ones.
+            ...(({ originalPath: runtimeRoute.path }) as { originalPath: string }),
+          });
         }
       }
 
-      // Broadcast to connected clients
+      // Fold any runtime-reported body schemas (Zod / class-validator)
+      // onto the freshly scanned routes so the API client auto-fills work
+      // even when the static scanner couldn't read the DTO shape.
+      this.mergeRouteSchemasIntoRoutes();
+
+      // Broadcast to connected clients. The routes payload is small,
+      // but the architecture map needs the full `appStructure` (controllers,
+      // services, providers, middleware, dependencies) to redraw nodes
+      // and edges for newly added classes — without this second emit the
+      // map keeps showing the boot-time graph even after a rescan.
       this.broadcast('routes', this.routes);
+      if (this.appStructure) {
+        this.broadcast('structure', this.appStructure);
+      }
     } catch (error) {
-      console.error('Failed to scan routes:', error);
+      // `console.error('Failed to scan routes:', error)` prints `{}` for any
+      // thrown value that isn't a `Error` instance (because plain objects
+      // serialise as their enumerable keys, of which there are none on most
+      // exception shapes). Normalise to a useful one-liner so users can
+      // actually diagnose what the static scan tripped over.
+      const err = error as { message?: string; code?: string; stack?: string };
+      const message =
+        (err && (err.message || err.code)) ||
+        (typeof error === 'string' ? error : JSON.stringify(error)) ||
+        'unknown error';
+      console.error(`[StudioAgent] Failed to scan routes: ${message}`);
+      if (err?.stack && process.env.EXPRESSOTS_STUDIO_DEBUG === 'true') {
+        console.error(err.stack);
+      }
     }
   }
 
-  /** Get discovered routes */
+  /**
+   * Get the currently discovered routes.
+   *
+   * @returns The route list from the most recent scan, with the global
+   *   prefix applied. Empty until the first `scanRoutes()` completes.
+   */
   getRoutes(): RouteInfo[] {
     return this.routes;
   }
 
-  /** Get application structure */
+  /**
+   * Normalise the host-supplied global URL prefix into the form we
+   * actually want to splice into route paths.
+   *
+   *   - Returns `''` for "no prefix" (so callers can fall through with a
+   *     simple truthy check).
+   *   - Strips trailing slashes (`/api/` → `/api`) so the join helper
+   *     never produces `/api//foo`.
+   *   - Defends against the host passing through a legitimate but
+   *     no-op `'/'` prefix.
+   */
+  private normaliseGlobalPrefix(value: string | undefined): string {
+    if (!value || typeof value !== 'string') return '';
+    if (value === '/' || value === '') return '';
+    return value.endsWith('/') ? value.slice(0, -1) : value;
+  }
+
+  /**
+   * Splice a normalised global prefix onto a controller-relative route
+   * path while preserving the leading slash and avoiding doubled
+   * separators. `/api` + `/` → `/api/`, `/api` + `users` → `/api/users`,
+   * `/api` + `/users` → `/api/users`.
+   */
+  private joinPrefixWithRoute(prefix: string, path: string): string {
+    if (!path || path === '/') return prefix + '/';
+    return prefix + (path.startsWith('/') ? path : `/${path}`);
+  }
+
+  /**
+   * Get the application structure from the most recent scan.
+   *
+   * @returns Controllers, services, providers, middleware, modules and
+   *   dependency edges, or null before the first scan completes.
+   */
   getAppStructure(): AppStructure | null {
     return this.appStructure;
   }
 
-  /** Get current metrics */
+  /**
+   * Get a snapshot of current application metrics.
+   *
+   * @returns Aggregate metrics (request/error counts, response-time
+   *   percentiles) with uptime and memory usage computed at call time.
+   */
   getMetrics(): AppMetrics {
     return {
       ...this.metrics,
@@ -179,9 +832,370 @@ export class StudioAgent {
     };
   }
 
-  /** Get endpoint statistics (without internal durations array) */
+  /**
+   * Get per-endpoint statistics.
+   *
+   * @returns One entry per observed method + path combination, with
+   *   request/error counts and duration percentiles. The internal
+   *   durations array used for percentile calculation is stripped.
+   */
   getEndpointStats(): EndpointStats[] {
-    return Array.from(this.endpointStats.values()).map(({ durations, ...stats }) => stats);
+    return Array.from(this.endpointStats.values()).map(({ durations: _durations, ...stats }) => stats);
+  }
+
+  /**
+   * Apply runtime details that the host application only knows after
+   * boot (e.g. the actual port returned by `app.listen()`, total startup
+   * duration, count of registered interceptors).
+   *
+   * Called by the adapter integration once the HTTP server is listening.
+   * Re-broadcasts the updated runtime info so connected Studio clients
+   * see fresh values without waiting for the next metrics tick.
+   */
+  updateRuntimeInfo(patch: {
+    appPort?: number;
+    globalPrefix?: string;
+    startupMs?: number;
+    interceptorCount?: number;
+    providerCount?: number;
+    middlewareCount?: number;
+    runtimeItems?: import('./types/index.js').RuntimeItems;
+    middlewarePreset?: import('./types/index.js').MiddlewarePresetInfo;
+  }): void {
+    if (patch.appPort !== undefined) this.config.appPort = patch.appPort;
+    // Track whether the prefix actually changed before assigning, so we
+    // know whether to re-prefix the cached `routes`. Without this, a
+    // late `updateRuntimeInfo({ globalPrefix: "/api" })` (e.g. fired
+    // from `app.listen()`'s callback after `setGlobalRoutePrefix("/api")`
+    // ran during configureServices) would update the config but leave
+    // the route list still showing un-prefixed paths until the next
+    // file-watcher rescan.
+    let prefixChanged = false;
+    if (patch.globalPrefix !== undefined && patch.globalPrefix !== this.config.globalPrefix) {
+      this.config.globalPrefix = patch.globalPrefix;
+      prefixChanged = true;
+    }
+    const schemasChanged = patch.runtimeItems?.routeSchemas !== undefined;
+    if (patch.startupMs !== undefined) this.config.startupMs = patch.startupMs;
+    if (patch.interceptorCount !== undefined) {
+      this.config.interceptorCount = patch.interceptorCount;
+    }
+    if (patch.providerCount !== undefined) {
+      this.config.providerCount = patch.providerCount;
+    }
+    if (patch.middlewareCount !== undefined) {
+      this.config.middlewareCount = patch.middlewareCount;
+    }
+    if (patch.runtimeItems !== undefined) {
+      this.config.runtimeItems = {
+        ...this.config.runtimeItems,
+        ...patch.runtimeItems,
+      };
+    }
+    if (patch.middlewarePreset !== undefined) {
+      this.config.middlewarePreset = patch.middlewarePreset;
+    }
+
+    // Fold the latest runtime data into the cached `appStructure` so the
+    // architecture map sees:
+    //   1. Global pipeline middleware as nodes (even when nothing in
+    //      source extends ExpressoMiddleware — e.g. plain functions
+    //      added via `Middleware.add`).
+    //   2. Scoped middleware → controller / route edges from the
+    //      `middlewareBindings` payload.
+    //
+    // The merge is idempotent — calling `updateRuntimeInfo` repeatedly
+    // with the same payload yields the same structure.
+    const merged = this.mergeRuntimeMiddlewareIntoStructure();
+    if (merged && this.io) {
+      this.broadcast('structure', this.appStructure!);
+    }
+
+    // If the global URL prefix changed, splice it onto every cached
+    // route so the Routes / API client tabs immediately reflect the
+    // mounted paths instead of the bare per-controller paths. New body
+    // schemas reported via `runtimeItems.routeSchemas` are folded on too.
+    if (prefixChanged) {
+      this.applyGlobalPrefixToRoutes();
+    }
+    if (schemasChanged) {
+      this.mergeRouteSchemasIntoRoutes();
+    }
+    if ((prefixChanged || schemasChanged) && this.io) {
+      this.broadcast('routes', this.routes);
+    }
+
+    if (this.io) {
+      this.broadcast('runtime', this.getRuntimeInfo());
+    }
+  }
+
+  /**
+   * Recompute every route's `path` from its captured `originalPath` plus
+   * the current `config.globalPrefix`. Idempotent and prefix-change-safe
+   * — calling it twice with different prefixes never produces the
+   * `/api/api/health` doubling we'd see if we appended in place.
+   *
+   * Routes pushed by older code paths that don't carry an `originalPath`
+   * (defensive — hot-reload scans always set it now) are left alone, so
+   * we never silently strip a prefix the source of truth set
+   * intentionally.
+   */
+  private applyGlobalPrefixToRoutes(): void {
+    const prefix = this.normaliseGlobalPrefix(this.config.globalPrefix);
+    for (const route of this.routes) {
+      const original = (route as RouteInfo & { originalPath?: string }).originalPath;
+      if (typeof original !== 'string') continue;
+      route.path = prefix
+        ? this.joinPrefixWithRoute(prefix, original)
+        : original;
+    }
+  }
+
+  /**
+   * Fold runtime-reported request-body schemas (from
+   * `runtimeItems.routeSchemas`) onto the cached routes. The adapter
+   * harvests these from validation metadata at boot, which is the only
+   * place a Zod / class-validator schema object actually exists — the
+   * static scanner can only read plain `@body()`-typed params. Matching is
+   * by controller + handler method, falling back to HTTP method + the
+   * un-prefixed route path. Runtime data overrides the static guess.
+   */
+  private mergeRouteSchemasIntoRoutes(): void {
+    const schemas = this.config.runtimeItems?.routeSchemas;
+    if (!schemas || schemas.length === 0) return;
+
+    for (const route of this.routes) {
+      const original =
+        (route as RouteInfo & { originalPath?: string }).originalPath ?? route.path;
+      const match = schemas.find((s) => {
+        const byHandler =
+          s.controllerName === route.controller &&
+          !!s.controllerMethod &&
+          s.controllerMethod === route.controllerMethod;
+        const byPath =
+          (!s.httpMethod || s.httpMethod === route.method) &&
+          !!s.routePath &&
+          (s.routePath === original || s.routePath === route.path);
+        return byHandler || byPath;
+      });
+      if (!match) continue;
+      if (match.bodyDto) route.bodyDto = match.bodyDto;
+      if (match.bodySample) route.bodySample = match.bodySample;
+      if (match.bodySchema) route.bodySchema = match.bodySchema;
+    }
+  }
+
+  /**
+   * Merge global pipeline middleware and runtime middleware bindings
+   * into the static `appStructure` so the architecture map sees a
+   * single source of truth. Returns `true` when the structure changed.
+   *
+   * Rules:
+   *   - Each `runtimeItems.middleware` entry whose `type === 'custom'`
+   *     gets a `MiddlewareInfo` node with `scope: 'global'` (built-in
+   *     pipeline entries like `helmet` / `jsonParser` aren't worth
+   *     plotting — they would clutter every architecture map without
+   *     adding signal). Names are deduplicated against the existing
+   *     middleware list.
+   *   - Each `runtimeItems.middlewareBindings` entry contributes a
+   *     `middleware → controller` edge (deduplicated with the static
+   *     bindings produced by `RouteScanner`). The middleware node's
+   *     scope is upgraded to `controller` or `route`.
+   *   - Global middleware also gets synthetic edges to every
+   *     controller in the structure so the map shows the pipeline
+   *     fanning out across the app.
+   */
+  private mergeRuntimeMiddlewareIntoStructure(): boolean {
+    if (!this.appStructure) return false;
+    const runtime = this.config.runtimeItems;
+    if (!runtime) return false;
+
+    let changed = false;
+    const byName = new Map<string, AppStructure['middleware'][number]>();
+    for (const mw of this.appStructure.middleware) {
+      byName.set(mw.name, mw);
+    }
+
+    // Global pipeline middleware → upgrade or create a node.
+    for (const item of runtime.middleware ?? []) {
+      if (item.type === 'built-in') continue;
+      const existing = byName.get(item.name);
+      if (existing) {
+        if (existing.scope !== 'global') {
+          existing.scope = 'global';
+          changed = true;
+        }
+      } else {
+        const node = {
+          name: item.name,
+          filePath: '',
+          dependencies: [],
+          methods: [],
+          scope: 'global' as const,
+        };
+        this.appStructure.middleware.push(node);
+        byName.set(item.name, node);
+        changed = true;
+      }
+    }
+
+    const knownNodes = new Set<string>();
+    for (const c of this.appStructure.controllers) knownNodes.add(c.name);
+    for (const s of this.appStructure.services) knownNodes.add(s.name);
+    for (const p of this.appStructure.providers) knownNodes.add(p.name);
+    for (const m of this.appStructure.middleware) knownNodes.add(m.name);
+
+    const seenEdge = new Set<string>();
+    for (const dep of this.appStructure.dependencies) {
+      seenEdge.add(`${dep.source}->${dep.target}@${dep.type}`);
+    }
+
+    // Scoped bindings from Reflect metadata. If a binding references a
+    // middleware name we haven't seen before (common for plain-function
+    // middleware like `newMiddleware()` that doesn't extend
+    // ExpressoMiddleware), create a lightweight node on-the-fly so the
+    // architecture map can still render it.
+    for (const binding of runtime.middlewareBindings ?? []) {
+      if (!knownNodes.has(binding.controllerName)) continue;
+
+      if (!knownNodes.has(binding.middlewareName)) {
+        const node = {
+          name: binding.middlewareName,
+          filePath: '',
+          dependencies: [],
+          methods: [],
+          scope: binding.scope as 'controller' | 'route',
+        };
+        this.appStructure.middleware.push(node);
+        byName.set(binding.middlewareName, node);
+        knownNodes.add(binding.middlewareName);
+        changed = true;
+      }
+
+      const key = `${binding.middlewareName}->${binding.controllerName}@middleware`;
+      if (!seenEdge.has(key)) {
+        this.appStructure.dependencies.push({
+          source: binding.middlewareName,
+          target: binding.controllerName,
+          type: 'middleware',
+        });
+        seenEdge.add(key);
+        changed = true;
+      }
+
+      const mw = byName.get(binding.middlewareName);
+      if (mw) {
+        if (binding.scope === 'controller' && mw.scope !== 'controller') {
+          mw.scope = 'controller';
+          changed = true;
+        } else if (
+          binding.scope === 'route' &&
+          mw.scope !== 'controller' &&
+          mw.scope !== 'route'
+        ) {
+          mw.scope = 'route';
+          changed = true;
+        }
+      }
+    }
+
+    // Global middleware fans out to every controller. We only emit
+    // edges for nodes that already exist; the list is short (typically
+    // a handful of custom middleware × a handful of controllers) so
+    // duplication is cheap and produces a readable layered layout.
+    for (const mw of this.appStructure.middleware) {
+      if (mw.scope !== 'global') continue;
+      for (const ctrl of this.appStructure.controllers) {
+        const key = `${mw.name}->${ctrl.name}@middleware`;
+        if (seenEdge.has(key)) continue;
+        this.appStructure.dependencies.push({
+          source: mw.name,
+          target: ctrl.name,
+          type: 'middleware',
+        });
+        seenEdge.add(key);
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
+  /**
+   * Build a snapshot of runtime information for the Status dashboard.
+   *
+   * Pulls together:
+   *   - host process info (`pid`, `nodeVersion`, `platform`, etc.)
+   *   - explicit values passed via `AgentConfig` (port, prefix, startupMs)
+   *   - counts derived from the latest discovery scan
+   *   - best-effort framework versions from the host's `node_modules`
+   *
+   * Designed to be cheap to call on every WebSocket connection.
+   */
+  getRuntimeInfo(): RuntimeInfo {
+    // Resolve the host application's HTTP port. Order of preference:
+    //   1) Explicit value passed via AgentConfig (most accurate; the
+    //      adapter-express integration forwards the listening port here).
+    //   2) `PORT` environment variable, which a lot of hosting platforms
+    //      (and `expressots dev`) set.
+    //   3) ExpressoTS default port (3000).
+    const envPort = process.env.PORT ? parseInt(process.env.PORT, 10) : undefined;
+    const appPort =
+      this.config.appPort ?? (Number.isFinite(envPort) ? envPort : 3000);
+    const appUrl = appPort ? `http://localhost:${appPort}` : undefined;
+
+    // Prefer counts reported by the adapter (which uses the same
+    // `MetricsCollector` as the CLI banner — so Studio always agrees with
+    // the terminal) and fall back to whatever the static scan turned up.
+    //
+    // This matters for things our static scanner can't see:
+    //   - framework-registered providers (lifecycle, logger, etc.)
+    //   - interceptors registered via decorators on classes the agent
+    //     hasn't reached during file traversal
+    const interceptorCount =
+      this.config.interceptorCount ??
+      this.appStructure?.middleware.length;
+    const providerCount =
+      this.config.providerCount ??
+      this.appStructure?.providers.length ??
+      0;
+    const middlewareCount =
+      this.config.middlewareCount ??
+      this.appStructure?.middleware.length ??
+      0;
+
+    return {
+      serviceName: this.config.serviceName,
+      pid: process.pid,
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      env: process.env.NODE_ENV || 'development',
+      agentPort: this.config.port,
+      appPort,
+      appUrl,
+      globalPrefix: this.config.globalPrefix ?? '/',
+      startedAt: this.startTime,
+      uptimeMs: Date.now() - this.startTime,
+      startupMs: this.config.startupMs,
+      versions: {
+        agent: resolveOwnVersion(),
+        core: safePackageVersion('@expressots/core'),
+        adapterExpress: safePackageVersion('@expressots/adapter-express'),
+      },
+      counts: {
+        controllers: this.appStructure?.controllers.length ?? 0,
+        services: this.appStructure?.services.length ?? 0,
+        providers: providerCount,
+        routes: this.routes.length,
+        middleware: middlewareCount,
+        interceptors: interceptorCount,
+      },
+      runtimeItems: this.config.runtimeItems,
+      recordingEnabled: this.config.enableRecording,
+      middlewarePreset: this.config.middlewarePreset,
+    };
   }
 
   /** Start WebSocket server */
@@ -197,6 +1211,23 @@ export class StudioAgent {
       res.end();
     });
 
+    // Critical: handle server errors so EADDRINUSE doesn't crash the host
+    // process. Without this, an unhandled `'error'` event during `.listen()`
+    // emits an unhandled error and Node terminates the host app — which is
+    // exactly what users hit on hot-reload when the previous tsx-watched
+    // process hasn't yet released the port.
+    this.httpServer.on('error', (err) => {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'EADDRINUSE') {
+        // Surfaced so `start()` can retry / degrade gracefully.
+        return;
+      }
+      console.warn(
+        `[studio-agent] WebSocket server error (${code ?? 'unknown'}):`,
+        err.message,
+      );
+    });
+
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
         origin: '*',
@@ -205,18 +1236,79 @@ export class StudioAgent {
     });
 
     this.io.on('connection', (socket) => {
-      console.log(`📡 Studio UI connected: ${socket.id}`);
+      // Client connected
       this.metrics.activeConnections++;
 
       // Send initial data
       socket.emit('message', this.createMessage('routes', this.routes));
       socket.emit('message', this.createMessage('metrics', this.getMetrics()));
-      
+      socket.emit('message', this.createMessage('runtime', this.getRuntimeInfo()));
+
       if (this.appStructure) {
         socket.emit('message', {
           type: 'structure',
           timestamp: Date.now(),
           data: this.appStructure,
+        });
+      }
+
+      if (this.containerSnapshot) {
+        socket.emit('message', {
+          type: 'container',
+          timestamp: Date.now(),
+          data: this.containerSnapshot,
+        });
+      }
+
+      // Send the in-memory database schema snapshot (when a provider is
+      // registered). Always emitted so the UI can render the "not detected"
+      // empty state when `available` is false.
+      socket.emit('message', {
+        type: 'database',
+        timestamp: Date.now(),
+        data: this.captureDatabaseSnapshot(),
+      });
+
+      socket.emit('message', {
+        type: 'recording_state',
+        timestamp: Date.now(),
+        data: { enabled: this.config.enableRecording },
+      });
+
+      // Replay buffered logs so reconnecting clients catch up to the stream.
+      const buffered = this.logCapture.getBuffer();
+      if (buffered.length > 0) {
+        socket.emit('message', {
+          type: 'logs',
+          timestamp: Date.now(),
+          data: buffered,
+        });
+      }
+
+      // Replay the latest security report so the Security view doesn't
+      // sit empty until the next analyzer tick. The engine always has
+      // a report (it initialises to an empty A-grade one).
+      if (this.securityEngine) {
+        socket.emit('message', {
+          type: 'security',
+          timestamp: Date.now(),
+          data: this.securityEngine.getReport(),
+        });
+      }
+
+      // Replay the latest coverage report (always present — seeds to an
+      // empty/missing-artifact state) so the Coverage view renders
+      // immediately on connect instead of waiting for a file change.
+      if (this.coverageEngine) {
+        socket.emit('message', {
+          type: 'coverage',
+          timestamp: Date.now(),
+          data: this.coverageEngine.getReport(),
+        });
+        socket.emit('message', {
+          type: 'coverage_tests',
+          timestamp: Date.now(),
+          data: this.coverageEngine.getTestResults(),
         });
       }
 
@@ -235,6 +1327,13 @@ export class StudioAgent {
           timestamp: Date.now(),
           data: this.appStructure,
         });
+      });
+
+      socket.on('get_runtime', () => {
+        socket.emit(
+          'message',
+          this.createMessage('runtime', this.getRuntimeInfo()),
+        );
       });
 
       socket.on('get_exchanges', (params: { limit?: number; offset?: number }) => {
@@ -275,17 +1374,63 @@ export class StudioAgent {
         await this.replayRequest(params.exchangeId, socket);
       });
 
+      socket.on(
+        'api_request',
+        async (params: {
+          id?: string;
+          method?: string;
+          url?: string;
+          headers?: Record<string, string>;
+          body?: string;
+        }) => {
+          await this.proxyApiRequest(params, socket);
+        },
+      );
+
       socket.on('rescan', async () => {
         await this.scanRoutes();
       });
 
+      socket.on('get_openapi', (params?: { apiVersion?: string | number }) => {
+        socket.emit('message', {
+          type: 'openapi',
+          timestamp: Date.now(),
+          data: this.buildOpenApi(params?.apiVersion),
+        });
+      });
+
+      socket.on(
+        'get_openapi_drift',
+        (params?: { spec?: Record<string, unknown>; specPath?: string; apiVersion?: string | number }) => {
+          socket.emit('message', {
+            type: 'openapi_drift',
+            timestamp: Date.now(),
+            data: this.buildOpenApiDrift(params),
+          });
+        },
+      );
+
       socket.on('clear_recordings', () => {
         this.recorder.clearAll();
-        socket.emit('message', {
-          type: 'cleared',
-          timestamp: Date.now(),
-          data: { success: true },
+        this.endpointStats.clear();
+        this.responseTimes = [];
+        this.metrics.requestCount = 0;
+        this.metrics.errorCount = 0;
+        this.metrics.avgResponseTime = 0;
+        this.metrics.p50ResponseTime = 0;
+        this.metrics.p95ResponseTime = 0;
+        this.metrics.p99ResponseTime = 0;
+        this.broadcast('cleared', { success: true });
+        this.broadcast('metrics', this.getMetrics());
+        this.broadcast('endpoint_stats', this.getEndpointStats());
+      });
+
+      socket.on('set_recording', (params: { enabled: boolean }) => {
+        this.config.enableRecording = Boolean(params?.enabled);
+        this.broadcast('recording_state', {
+          enabled: this.config.enableRecording,
         });
+        this.broadcast('runtime', this.getRuntimeInfo());
       });
 
       socket.on('get_stats', () => {
@@ -305,51 +1450,271 @@ export class StudioAgent {
         });
       });
 
+      // Lightweight round-trip used by the UI to compute agent latency.
+      // We echo the client's timestamp so the round-trip can be measured
+      // without depending on agent vs. client clock drift.
+      socket.on('ping_studio', (payload: { sentAt?: number } | undefined) => {
+        socket.emit('message', {
+          type: 'pong_studio',
+          timestamp: Date.now(),
+          data: { sentAt: payload?.sentAt ?? 0, agentNow: Date.now() },
+        });
+      });
+
+      socket.on('get_logs', () => {
+        socket.emit('message', {
+          type: 'logs',
+          timestamp: Date.now(),
+          data: this.logCapture.getBuffer(),
+        });
+      });
+
+      socket.on('clear_logs', () => {
+        this.logCapture.clear();
+        this.broadcast('logs_cleared', { success: true });
+      });
+
+      socket.on('get_container', () => {
+        socket.emit('message', {
+          type: 'container',
+          timestamp: Date.now(),
+          data: this.containerSnapshot,
+        });
+      });
+
+      socket.on('refresh_container', () => {
+        this.refreshContainer();
+      });
+
+      // Re-send the in-memory database schema snapshot on demand. Captured
+      // fresh each call so newly created tables / records are reflected.
+      socket.on('get_database_schema', () => {
+        socket.emit('message', {
+          type: 'database',
+          timestamp: Date.now(),
+          data: this.captureDatabaseSnapshot(),
+        });
+      });
+
+      // Return a page of rows for a single table.
+      socket.on(
+        'get_database_table',
+        async (params: { table?: string; offset?: number; limit?: number }) => {
+          const table = typeof params?.table === 'string' ? params.table : '';
+          if (!table) return;
+          const offset =
+            typeof params?.offset === 'number' && params.offset >= 0
+              ? params.offset
+              : 0;
+          const limit =
+            typeof params?.limit === 'number' && params.limit > 0
+              ? Math.min(params.limit, 200)
+              : 50;
+
+          const data = this.databaseIntrospector
+            ? await this.databaseIntrospector.getTableData(table, offset, limit)
+            : { table, rows: [], total: 0, offset, limit };
+
+          socket.emit('message', {
+            type: 'database_table',
+            timestamp: Date.now(),
+            data,
+          });
+        },
+      );
+
+      // Push the latest cached report on demand. Useful when the UI
+      // explicitly navigates to the Security view and wants a fresh
+      // copy even if nothing has changed.
+      socket.on('get_security_report', () => {
+        if (!this.securityEngine) return;
+        socket.emit('message', {
+          type: 'security',
+          timestamp: Date.now(),
+          data: this.securityEngine.getReport(),
+        });
+      });
+
+      // User-initiated rescan: re-run `npm audit` + OSV. The engine
+      // coalesces concurrent calls, so spamming this button is safe.
+      socket.on('request_security_scan', () => {
+        if (!this.securityEngine) return;
+        void this.securityEngine.runFullScan();
+      });
+
+      // Re-broadcast the cached coverage report on demand (e.g. when the
+      // UI navigates to the Coverage view).
+      socket.on('get_coverage_report', () => {
+        if (!this.coverageEngine) return;
+        socket.emit('message', {
+          type: 'coverage',
+          timestamp: Date.now(),
+          data: this.coverageEngine.getReport(),
+        });
+      });
+
+      // User clicked "Refresh": re-detect + re-parse the artifact.
+      socket.on('request_coverage_scan', () => {
+        if (!this.coverageEngine) return;
+        void this.coverageEngine.refresh();
+      });
+
+      // Fetch a single annotated source file for the coverage viewer.
+      socket.on('get_coverage_source', (params: { relPath?: string }) => {
+        if (!this.coverageEngine) return;
+        const relPath =
+          typeof params?.relPath === 'string' ? params.relPath : '';
+        if (!relPath) return;
+        socket.emit('message', {
+          type: 'coverage_source',
+          timestamp: Date.now(),
+          data: this.coverageEngine.readSource(relPath),
+        });
+      });
+
+      // Active mode: run the project's tests with coverage. Each output
+      // line streams over `coverage_run_progress`; the final state lands
+      // on `coverage_run_result`, and the engine emits a fresh `coverage`
+      // report once it re-parses the artifact.
+      socket.on('run_coverage', async (params: { runner?: string }) => {
+        if (!this.coverageEngine) return;
+        const result = await this.coverageEngine.runCoverage(
+          typeof params?.runner === 'string' ? params.runner : undefined,
+          (msg) => this.broadcast('coverage_run_progress', msg),
+        );
+        this.broadcast('coverage_run_result', result);
+      });
+
+      // User clicked "Apply fix" on a finding or fix group. The engine
+      // spawns the npm command and streams each output line through
+      // `fix_progress` so the UI can render a live transcript. When the
+      // command exits the agent emits a single `fix_result`; the engine
+      // also kicks off a full rescan, so the next `security` frame
+      // reflects whatever actually changed.
+      socket.on(
+        'apply_security_fix',
+        async (params: {
+          targetKind?: 'finding' | 'fix-group';
+          targetId?: string;
+          allowMajor?: boolean;
+        }) => {
+          if (!this.securityEngine) return;
+          if (
+            !params ||
+            (params.targetKind !== 'finding' && params.targetKind !== 'fix-group') ||
+            typeof params.targetId !== 'string' ||
+            params.targetId.length === 0
+          ) {
+            return;
+          }
+          const result = await this.securityEngine.applyFix(
+            {
+              targetKind: params.targetKind,
+              targetId: params.targetId,
+              allowMajor: Boolean(params.allowMajor),
+            },
+            (msg) => {
+              this.broadcast('fix_progress', msg);
+            },
+          );
+          this.broadcast('fix_result', result);
+        },
+      );
+
       socket.on('disconnect', () => {
-        console.log(`📡 Studio UI disconnected: ${socket.id}`);
         this.metrics.activeConnections--;
       });
     });
 
-    return new Promise((resolve) => {
-      this.httpServer!.listen(this.config.port, () => {
+    await this.listenWithRetry(this.httpServer, this.config.port);
+  }
+
+  /**
+   * `httpServer.listen()` that survives transient `EADDRINUSE` from
+   * hot-reload races — when `tsx --watch` (or nodemon) restarts the host
+   * process before the previous run has released the agent port. We
+   * retry a few times with exponential-ish backoff before giving up.
+   *
+   * On final failure throws an `Error` whose `.code` is preserved so
+   * the integration layer (`@expressots/adapter-express`) can decide
+   * whether to surface it; today it just logs a warning and the host
+   * app keeps running (Studio is opt-in dev tooling).
+   */
+  private async listenWithRetry(
+    server: HttpServer,
+    port: number,
+    attempts = 5,
+    initialDelayMs = 250,
+  ): Promise<void> {
+    let delay = initialDelayMs;
+
+    for (let i = 1; i <= attempts; i++) {
+      try {
+        await this.listenOnce(server, port);
+        return;
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== 'EADDRINUSE' || i === attempts) {
+          throw err;
+        }
+        // Hot-reload race — port hasn't been released yet. Wait and retry.
+        console.warn(
+          `[studio-agent] Port ${port} busy (attempt ${i}/${attempts}); retrying in ${delay}ms…`,
+        );
+        await new Promise<void>((r) => setTimeout(r, delay));
+        delay = Math.min(delay * 2, 2000);
+      }
+    }
+  }
+
+  /** Single attempt — resolves on `listening`, rejects on `error`. */
+  private listenOnce(server: HttpServer, port: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const onError = (err: Error) => {
+        server.removeListener('listening', onListening);
+        reject(err);
+      };
+      const onListening = () => {
+        server.removeListener('error', onError);
         resolve();
-      });
+      };
+      server.once('error', onError);
+      server.once('listening', onListening);
+      server.listen(port);
     });
   }
 
   /** Handle incoming trace */
   private handleTrace(trace: TraceInfo): void {
-    // Update metrics
-    this.metrics.requestCount++;
-    this.responseTimes.push(trace.duration);
+    // When recording is enabled the middleware already updates metrics
+    // and endpoint stats for this request; only count here when the
+    // middleware path is inactive to avoid double-counting.
+    if (!this.config.enableRecording) {
+      this.metrics.requestCount++;
+      this.responseTimes.push(trace.duration);
 
-    // Keep only last 1000 response times for percentile calculation
-    if (this.responseTimes.length > 1000) {
-      this.responseTimes = this.responseTimes.slice(-1000);
+      if (this.responseTimes.length > 1000) {
+        this.responseTimes = this.responseTimes.slice(-1000);
+      }
+
+      if (trace.rootSpan.status === 'ERROR') {
+        this.metrics.errorCount++;
+      }
+
+      const httpMethod = trace.rootSpan.attributes['http.method'] as string;
+      const httpPath = trace.rootSpan.attributes['http.target'] as string ||
+                       trace.rootSpan.attributes['http.route'] as string;
+
+      if (httpMethod && httpPath) {
+        const isError = trace.rootSpan.status === 'ERROR';
+        this.updateEndpointStats(httpMethod as HttpMethod, httpPath, trace.duration, isError);
+      }
     }
 
-    // Check if error
-    if (trace.rootSpan.status === 'ERROR') {
-      this.metrics.errorCount++;
-    }
-
-    // Update endpoint stats
-    const httpMethod = trace.rootSpan.attributes['http.method'] as string;
-    const httpPath = trace.rootSpan.attributes['http.target'] as string || 
-                     trace.rootSpan.attributes['http.route'] as string;
-    
-    if (httpMethod && httpPath) {
-      const isError = trace.rootSpan.status === 'ERROR';
-      this.updateEndpointStats(httpMethod as HttpMethod, httpPath, trace.duration, isError);
-    }
-
-    // Store trace
     if (this.config.enableRecording) {
       this.recorder.recordTrace(trace.traceId, trace);
     }
 
-    // Broadcast to UI
     this.broadcast('trace', trace);
   }
 
@@ -416,7 +1781,7 @@ export class StudioAgent {
   }
 
   /** Replay a recorded request */
-  private async replayRequest(exchangeId: string, socket: any): Promise<void> {
+  private async replayRequest(exchangeId: string, socket: Socket): Promise<void> {
     const exchange = this.recorder.getExchange(exchangeId);
     if (!exchange) {
       socket.emit('message', {
@@ -428,16 +1793,45 @@ export class StudioAgent {
     }
 
     try {
-      // Make the request
-      const response = await fetch(exchange.request.url, {
+      // The recorder stores only the request path (e.g. "/users/1"). To
+      // replay we need an absolute URL — reconstruct it from the original
+      // `host` header captured at record time.
+      const recordedHeaders = (exchange.request.headers || {}) as Record<string, string>;
+      const host = recordedHeaders['host'] || recordedHeaders['Host'] || 'localhost';
+      const recordedUrl = exchange.request.url || exchange.request.path || '/';
+      const targetUrl = /^https?:\/\//i.test(recordedUrl)
+        ? recordedUrl
+        : `http://${host}${recordedUrl.startsWith('/') ? '' : '/'}${recordedUrl}`;
+
+      // Strip hop-by-hop and content-length headers so fetch can compute its
+      // own. Also drop `host` (browsers/Node set it from the URL).
+      const replayHeaders: Record<string, string> = {};
+      for (const [k, v] of Object.entries(recordedHeaders)) {
+        const key = k.toLowerCase();
+        if (
+          key === 'host' ||
+          key === 'content-length' ||
+          key === 'connection' ||
+          key.startsWith('sec-') ||
+          key === 'origin' ||
+          key === 'referer'
+        ) {
+          continue;
+        }
+        replayHeaders[k] = String(v);
+      }
+
+      const replayStart = Date.now();
+      const response = await fetch(targetUrl, {
         method: exchange.request.method,
-        headers: exchange.request.headers,
+        headers: replayHeaders,
         body: exchange.request.body
           ? JSON.stringify(exchange.request.body)
           : undefined,
       });
 
       const responseBody = await response.text();
+      const replayDuration = Date.now() - replayStart;
       let parsedBody: unknown;
       try {
         parsedBody = JSON.parse(responseBody);
@@ -456,6 +1850,7 @@ export class StudioAgent {
             statusMessage: response.statusText,
             headers: Object.fromEntries(response.headers.entries()),
             body: parsedBody,
+            duration: replayDuration,
           },
         },
       });
@@ -471,30 +1866,227 @@ export class StudioAgent {
     }
   }
 
-  /** Broadcast message to all connected clients */
-  private broadcast<T>(type: string, data: T): void {
-    if (this.io) {
-      this.io.emit('message', this.createMessage(type as any, data));
+  /**
+   * Dispatch an API Client request on behalf of the Studio UI. The call
+   * runs server-side (in-process with the user's app), so it is never
+   * subject to the browser's same-origin / CORS rules — the request the
+   * user composes is the request the app's handlers receive.
+   *
+   * Two safeguards keep this from becoming an open proxy / SSRF vector:
+   *   1. Targets are restricted to loopback hosts (the app the agent is
+   *      embedded in runs on localhost during development).
+   *   2. The `Origin` / `Referer` headers are stripped so the app's own
+   *      `cors` middleware treats this as a same-origin/server call and
+   *      doesn't reject it.
+   *
+   * The result is correlated back to the awaiting UI caller via `id`.
+   */
+  private async proxyApiRequest(
+    params: {
+      id?: string;
+      method?: string;
+      url?: string;
+      headers?: Record<string, string>;
+      body?: string;
+    },
+    socket: Socket,
+  ): Promise<void> {
+    const id = typeof params?.id === 'string' ? params.id : '';
+    const reply = (data: Record<string, unknown>): void => {
+      socket.emit('message', {
+        type: 'api_response',
+        timestamp: Date.now(),
+        data: { id, ...data },
+      });
+    };
+
+    const target = this.resolveProxyTarget(params?.url ?? '');
+    if (!target) {
+      reply({
+        success: false,
+        error:
+          'Only requests to the local app (localhost) can be sent from Studio.',
+      });
+      return;
+    }
+
+    const method = (params?.method ?? 'GET').toUpperCase();
+
+    // Forward user-supplied headers, dropping the ones that must be set by
+    // the HTTP client (or that would make the app reject us on CORS).
+    const headers: Record<string, string> = {};
+    for (const [k, v] of Object.entries(params?.headers ?? {})) {
+      const key = k.toLowerCase();
+      if (
+        key === 'host' ||
+        key === 'content-length' ||
+        key === 'connection' ||
+        key === 'origin' ||
+        key === 'referer' ||
+        key.startsWith('sec-')
+      ) {
+        continue;
+      }
+      headers[k] = String(v);
+    }
+
+    const hasBody = method !== 'GET' && method !== 'HEAD';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    const start = Date.now();
+
+    try {
+      const response = await fetch(target, {
+        method,
+        headers,
+        body: hasBody ? (params?.body ?? undefined) : undefined,
+        signal: controller.signal,
+      });
+
+      const responseBody = await response.text();
+      reply({
+        success: true,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseBody,
+        durationMs: Date.now() - start,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.name === 'AbortError'
+            ? 'Request timed out after 30s.'
+            : error.message
+          : 'Request failed';
+      reply({ success: false, error: message });
+    } finally {
+      clearTimeout(timer);
     }
   }
 
+  /**
+   * Resolve an API Client target URL and enforce the loopback-only
+   * guardrail. Relative paths (e.g. `/users`) are resolved against the
+   * app's own port. Returns `null` for anything that isn't an http(s)
+   * loopback target so the agent can't be coerced into proxying to
+   * arbitrary hosts.
+   */
+  private resolveProxyTarget(rawUrl: string): string | null {
+    if (!rawUrl || typeof rawUrl !== 'string') return null;
+
+    let url: URL;
+    try {
+      if (/^https?:\/\//i.test(rawUrl)) {
+        url = new URL(rawUrl);
+      } else {
+        const port = this.config.appPort ?? 3000;
+        const pathPart = rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
+        url = new URL(pathPart, `http://localhost:${port}`);
+      }
+    } catch {
+      return null;
+    }
+
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+
+    const host = url.hostname.toLowerCase();
+    const isLoopback =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host === '::1' ||
+      host === '[::1]';
+    if (!isLoopback) return null;
+
+    return url.toString();
+  }
+
+  /** Broadcast message to all connected clients */
+  private broadcast<T>(type: string, data: T): void {
+    if (this.io) {
+      this.io.emit('message', this.createMessage(this.asMessageType(type), data));
+    }
+  }
+
+  /**
+   * Build a full-app OpenAPI 3.1 document from the current route
+   * inventory enriched with recorded traffic. Dev-time only.
+   */
+  private buildOpenApi(apiVersion?: string | number): ReturnType<typeof buildOpenApiDocument> {
+    const exchanges = this.recorder.getRecentExchanges(
+      this.config.maxRecordedExchanges,
+      0,
+    );
+    return buildOpenApiDocument(this.routes, exchanges, {
+      title: this.config.serviceName || 'ExpressoTS API',
+      // `info.version` is the *host application's* version (from its
+      // package.json), not the framework version — the spec describes the
+      // user's API, so its version should track their releases.
+      version: readHostAppVersion() ?? '0.0.0',
+      apiVersion,
+    });
+  }
+
+  /**
+   * Compare a committed OpenAPI document against the live app. The
+   * committed spec is supplied either inline (`spec`) or as a path the
+   * agent reads from disk (`specPath`, defaulting to `./openapi.json`).
+   * File reads are best-effort and read-only.
+   */
+  private buildOpenApiDrift(params?: {
+    spec?: Record<string, unknown>;
+    specPath?: string;
+    apiVersion?: string | number;
+  }): ReturnType<typeof diffOpenApiSpec> | { error: string } {
+    let committed: Record<string, unknown> | null = params?.spec ?? null;
+
+    if (!committed) {
+      const specPath = path.resolve(process.cwd(), params?.specPath ?? 'openapi.json');
+      try {
+        committed = JSON.parse(fs.readFileSync(specPath, 'utf-8')) as Record<string, unknown>;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return { error: `Could not read committed spec at ${specPath}: ${message}` };
+      }
+    }
+
+    const exchanges = this.recorder.getRecentExchanges(
+      this.config.maxRecordedExchanges,
+      0,
+    );
+    return diffOpenApiSpec(committed, this.routes, exchanges, {
+      apiVersion: params?.apiVersion,
+    });
+  }
+
   /** Create WebSocket message */
-  private createMessage<T>(type: string, data: T): WSMessage<T> {
+  private createMessage<T>(type: WSMessageType, data: T): WSMessage<T> {
     return {
-      type: type as any,
+      type,
       timestamp: Date.now(),
       data,
     };
   }
 
+  private asMessageType(type: string): WSMessageType {
+    return type as WSMessageType;
+  }
+
   /** Start metrics collection interval */
   private startMetricsCollection(): void {
-    setInterval(() => {
+    // Reuse an existing timer rather than stacking duplicates if the host
+    // re-invokes start(); also makes idempotent restarts safe.
+    if (this.metricsTimer) {
+      clearInterval(this.metricsTimer);
+      this.metricsTimer = null;
+    }
+    this.metricsTimer = setInterval(() => {
       // Calculate percentiles
       if (this.responseTimes.length > 0) {
         const sorted = [...this.responseTimes].sort((a, b) => a - b);
         const len = sorted.length;
-        
+
         this.metrics.avgResponseTime =
           sorted.reduce((a, b) => a + b, 0) / len;
         this.metrics.p50ResponseTime = sorted[Math.floor(len * 0.5)] || 0;
@@ -504,46 +2096,108 @@ export class StudioAgent {
 
       // Broadcast metrics
       this.broadcast('metrics', this.getMetrics());
+      // Piggyback runtime info on the metrics tick so the Status page's
+      // uptime counter and memory chip stay in sync without a separate
+      // timer. The payload is small (~600 B JSON) so the extra traffic is
+      // negligible.
+      this.broadcast('runtime', this.getRuntimeInfo());
     }, 5000);
+    // Don't keep the event loop alive solely for metrics broadcasting;
+    // the agent is observability infrastructure, not application logic.
+    this.metricsTimer.unref?.();
   }
 
-  /** Create Express middleware for request/response recording */
+  /**
+   * Create the Express middleware that powers request/response recording.
+   *
+   * The middleware records each request and its response into the
+   * recorder, updates metrics and endpoint statistics, and runs the
+   * downstream handler chain inside the log-capture and DI-resolution
+   * tracking scopes. When recording is disabled it passes through.
+   *
+   * The Studio API Client never calls the app directly from the browser;
+   * requests are proxied through the agent (see `proxyApiRequest`), so no
+   * CORS header injection is needed here and the app's own CORS policy is
+   * left untouched.
+   *
+   * @returns An Express-compatible `(req, res, next)` middleware function.
+   */
   createMiddleware() {
-    return (req: any, res: any, next: any) => {
+    type MiddlewareRequest = {
+      method: string;
+      path: string;
+      originalUrl?: string;
+      url: string;
+      headers: Record<string, string | string[] | undefined>;
+      query: Record<string, string>;
+      body: unknown;
+      cookies?: Record<string, string>;
+    };
+    type MiddlewareResponse = {
+      end: (...args: unknown[]) => unknown;
+      on: (event: 'finish', listener: () => void) => void;
+      statusCode: number;
+      statusMessage?: string;
+      getHeaders: () => Record<string, string | string[] | number | undefined>;
+    };
+    type MiddlewareNext = () => void;
+
+    const normalizeHeaders = (
+      headers: Record<string, string | string[] | undefined>,
+    ): Record<string, string> => {
+      const out: Record<string, string> = {};
+      for (const [key, value] of Object.entries(headers)) {
+        if (value === undefined) continue;
+        out[key] = Array.isArray(value) ? value.join(', ') : value;
+      }
+      return out;
+    };
+
+    return (req: MiddlewareRequest, res: MiddlewareResponse, next: MiddlewareNext) => {
       if (!this.config.enableRecording) {
         return next();
       }
 
       const startTime = Date.now();
-      const traceId = req.headers['x-trace-id'] || '';
+      const traceId = (req.headers['x-trace-id'] as string) || '';
 
       // Record request
       const recordedRequest = this.recorder.recordRequest(
         req.method as HttpMethod,
         req.path,
         req.originalUrl || req.url,
-        req.headers,
+        normalizeHeaders(req.headers),
         req.query || {},
         req.body,
         req.cookies,
-        traceId
+        traceId,
       );
 
       // Capture response
-      const originalEnd = res.end;
-      let responseBody: any;
+      const originalEnd = res.end.bind(res);
+      let responseBody: string | undefined;
 
-      res.end = function (chunk: any, ...args: any[]) {
-        if (chunk) {
-          responseBody = chunk.toString();
+      res.end = ((chunk?: unknown, ...args: unknown[]) => {
+        if (chunk !== undefined && chunk !== null) {
+          responseBody =
+            typeof chunk === 'string'
+              ? chunk
+              : Buffer.isBuffer(chunk)
+                ? chunk.toString()
+                : String(chunk);
         }
-        return originalEnd.apply(res, [chunk, ...args]);
-      };
+        return originalEnd(chunk, ...args);
+      }) as MiddlewareResponse['end'];
+
+      // Track DI resolutions for this request (if the introspector is wired).
+      // We capture the live Set reference and read it on `finish`, which fires
+      // after the handler chain has fully drained.
+      let resolvedRef: Set<string> | undefined;
 
       res.on('finish', () => {
         const duration = Date.now() - startTime;
         const isError = res.statusCode >= 400;
-        
+
         try {
           let parsedBody: unknown;
           try {
@@ -559,33 +2213,21 @@ export class StudioAgent {
             res.getHeaders() as Record<string, string>,
             parsedBody,
             duration,
-            traceId
+            traceId,
           );
 
-          // ========================================
-          // UPDATE METRICS FROM MIDDLEWARE
-          // ========================================
-          
-          // Update request count
+          // Update metrics
           this.metrics.requestCount++;
-          
-          // Update error count
-          if (isError) {
-            this.metrics.errorCount++;
-          }
-          
-          // Track response time for percentile calculation
+          if (isError) this.metrics.errorCount++;
           this.responseTimes.push(duration);
           if (this.responseTimes.length > 1000) {
             this.responseTimes = this.responseTimes.slice(-1000);
           }
-          
-          // Update endpoint stats
           this.updateEndpointStats(
             req.method as HttpMethod,
             req.path,
             duration,
-            isError
+            isError,
           );
 
           // Emit request to UI
@@ -596,17 +2238,56 @@ export class StudioAgent {
               duration,
             },
           });
-          
+
+          // Per-request DI resolutions (if tracked)
+          if (resolvedRef && resolvedRef.size > 0) {
+            this.broadcast('container_resolutions', {
+              exchangeId: recordedRequest.id,
+              traceId,
+              method: req.method,
+              path: req.path,
+              resolved: Array.from(resolvedRef),
+              timestamp: Date.now(),
+            });
+          }
+
           // Broadcast updated metrics immediately for real-time updates
           this.broadcast('metrics', this.getMetrics());
           this.broadcast('endpoint_stats', this.getEndpointStats());
-          
+
+          // New exchange = potential signal for the posture analyzer
+          // (new route, new header pattern, error leakage, …). Cheap
+          // to debounce; the engine collapses bursts.
+          this.securityEngine?.scheduleRefresh();
         } catch (error) {
           console.error('[Studio] Error in middleware:', error);
         }
       });
 
-      next();
+      // Run the rest of the request chain inside two nested ALS scopes:
+      //  - LogCapture's, so any `console.*` calls get tagged with the traceId.
+      //  - ContainerIntrospector's, so any `container.get(...)` resolutions
+      //    are recorded for the per-request "Resolved bindings" panel.
+      const scopedTraceId = String(traceId || recordedRequest.id);
+      const runner = (cb: () => void) =>
+        this.logCapture.runWith(scopedTraceId, cb);
+
+      if (this.introspector) {
+        runner(() => {
+          const { resolved } = this.introspector!.runWithRequest(
+            scopedTraceId,
+            () => {
+              next();
+              return undefined;
+            },
+          );
+          resolvedRef = resolved;
+        });
+      } else {
+        runner(() => next());
+      }
     };
   }
 }
+
+export type { LogEntry };

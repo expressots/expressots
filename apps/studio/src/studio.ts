@@ -14,16 +14,56 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { StudioAgent } from '@expressots/studio-agent';
 
+/**
+ * Configuration options for the {@link Studio} orchestrator.
+ *
+ * All fields are optional at construction time; the constructor fills in
+ * the defaults listed per field.
+ */
 export interface StudioConfig {
+  /** Port the Studio UI HTTP server listens on. Default: 3333. */
   uiPort: number;
+  /**
+   * Port of the Studio Agent WebSocket server. In UI-only mode the Studio
+   * probes this port for an agent running inside the user's app; in
+   * standalone mode the embedded agent binds to it. Default: 3334.
+   */
   agentPort: number;
+  /**
+   * Path to the SQLite database used for request recording (standalone
+   * mode only). Default: ".studio/studio.db".
+   */
   dbPath: string;
+  /** Source directory of the host application. Default: "./src". */
   srcPath: string;
+  /** Service name reported by the embedded agent. Default: "expressots-app". */
   serviceName?: string;
   /** If true, starts a standalone agent (default: false, just serves UI) */
   standalone?: boolean;
 }
 
+/**
+ * Orchestrator for ExpressoTS Studio: serves the Studio UI and connects
+ * it to a Studio Agent.
+ *
+ * Operates in one of two modes, selected via `StudioConfig.standalone`:
+ *
+ * 1. UI-only mode (default): serves the UI and probes for an agent
+ *    already running inside the user's application on `agentPort`.
+ * 2. Standalone mode: starts its own embedded `StudioAgent` in addition
+ *    to the UI server.
+ *
+ * Lifecycle: construct with optional config overrides, then call
+ * `start()` to bring up the servers and `stop()` to tear them down.
+ *
+ * @example
+ * ```typescript
+ * const studio = new Studio({ uiPort: 3333, agentPort: 3334 });
+ * await studio.start();
+ * // ... later
+ * await studio.stop();
+ * ```
+ */
 export class Studio {
   private config: StudioConfig;
   private agent: StudioAgent | null = null;
@@ -32,6 +72,12 @@ export class Studio {
   private agentClient: Socket | null = null;
   private agentConnected: boolean = false;
 
+  /**
+   * Create a Studio orchestrator.
+   *
+   * @param config - Partial configuration; any omitted field falls back
+   *   to its documented default (see `StudioConfig`).
+   */
   constructor(config: Partial<StudioConfig> = {}) {
     this.config = {
       uiPort: config.uiPort ?? 3333,
@@ -43,11 +89,18 @@ export class Studio {
     };
   }
 
-  /** Start the Studio */
+  /**
+   * Start the Studio.
+   *
+   * In standalone mode this boots an embedded agent first; otherwise it
+   * probes for an existing agent on `agentPort` (waiting up to 3 seconds).
+   * In both cases the UI HTTP server is then started on `uiPort`.
+   *
+   * @returns Resolves once the UI server is listening. Rejects if the UI
+   *   port cannot be bound.
+   */
   async start(): Promise<void> {
     if (this.config.standalone) {
-      // Standalone mode: Start our own agent
-      console.log('🔧 Starting in standalone mode...');
       await this.startAgent();
     } else {
       // UI-only mode: Try to connect to existing agent
@@ -58,7 +111,15 @@ export class Studio {
     await this.startUIServer();
   }
 
-  /** Stop the Studio */
+  /**
+   * Stop the Studio.
+   *
+   * Disconnects from a remote agent (if connected), closes the UI server,
+   * and stops the embedded agent when one was started in standalone mode.
+   * Safe to call when nothing is running.
+   *
+   * @returns Resolves once all owned servers have shut down.
+   */
   async stop(): Promise<void> {
     // Disconnect from agent
     if (this.agentClient) {
@@ -84,43 +145,38 @@ export class Studio {
   /** Connect to an existing agent running in the user's app */
   private async connectToAgent(): Promise<void> {
     const agentUrl = `http://localhost:${this.config.agentPort}`;
-    
+
     return new Promise((resolve) => {
-      this.agentClient = SocketIOClient(agentUrl, {
+      const probe = SocketIOClient(agentUrl, {
         transports: ['websocket'],
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionAttempts: 5,
+        reconnection: false,
         timeout: 3000,
       });
+      this.agentClient = probe;
+
+      const cleanup = (connected: boolean) => {
+        this.agentConnected = connected;
+        probe.removeAllListeners();
+        probe.disconnect();
+        if (this.agentClient === probe) {
+          this.agentClient = null;
+        }
+        resolve();
+      };
 
       const timeout = setTimeout(() => {
         if (!this.agentConnected) {
-          console.log('\n⚠️  No agent detected on port ' + this.config.agentPort);
-          console.log('   Your app needs @expressots/studio-agent installed to capture requests.');
-          console.log('');
-          console.log('   Quick fix options:');
-          console.log('   1. Install in your app: npm install @expressots/studio-agent');
-          console.log('   2. Or run standalone:   expressots studio --standalone');
-          console.log('');
-          resolve();
+          cleanup(false);
         }
       }, 3000);
 
-      this.agentClient.on('connect', () => {
+      probe.on('connect', () => {
         clearTimeout(timeout);
-        this.agentConnected = true;
-        console.log('✅ Connected to Studio Agent in your app');
-        resolve();
+        cleanup(true);
       });
 
-      this.agentClient.on('disconnect', () => {
-        this.agentConnected = false;
-        console.log('⚠️  Disconnected from Studio Agent');
-      });
-
-      this.agentClient.on('connect_error', () => {
-        // Will retry automatically
+      probe.on('connect_error', () => {
+        // Wait for timeout fallback; reconnection is disabled.
       });
     });
   }
@@ -149,13 +205,17 @@ export class Studio {
       // Serve static files from the UI build
       this.uiApp.use(express.static(uiDistPath));
 
-      // SPA fallback - Express 5.x requires named wildcards
-      this.uiApp.get('/{*splat}', (_req: Request, res: Response) => {
+      // SPA fallback. Express 5 / path-to-regexp v8 dropped the implicit
+      // `*` wildcard — bare `'*'` now throws `Missing parameter name at
+      // index 1`. Use the v8-compliant named-splat form `/*splat` (the
+      // `splat` identifier is conventional; the captured value is unused
+      // because we always serve the same `index.html`).
+      this.uiApp.get('/*splat', (_req: Request, res: Response) => {
         res.sendFile(path.join(uiDistPath, 'index.html'));
       });
     } else {
-      // Development mode - show placeholder
-      this.uiApp.get('/{*splat}', (_req: Request, res: Response) => {
+      // Development mode - show placeholder. Same v8 wildcard rules apply.
+      this.uiApp.get('/*splat', (_req: Request, res: Response) => {
         res.send(this.getDevModeHTML());
       });
     }
@@ -173,30 +233,45 @@ export class Studio {
     });
   }
 
-  /** Find the UI dist path */
+  /** Find the bundled UI dist path */
   private findUIDistPath(): string | null {
-    const possiblePaths = [
-      // Monorepo development
-      path.resolve(process.cwd(), 'node_modules/@expressots/studio-ui/dist'),
-      // Installed as dependency
-      path.resolve(
-        path.dirname(fileURLToPath(import.meta.url)),
-        '../../studio-ui/dist'
-      ),
-      // Relative to this package
-      path.resolve(
-        path.dirname(fileURLToPath(import.meta.url)),
-        '../../../studio-ui/dist'
-      ),
-    ];
+    // The UI is bundled into this package at build time and lives at
+    // `<package>/dist/ui/` next to the orchestrator's compiled JS.
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const candidate = path.resolve(here, 'ui');
+    return fs.existsSync(candidate) ? candidate : null;
+  }
 
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        return p;
+  /**
+   * Resolve the brand icon SVG as a base64 data URI. Used by the dev-mode
+   * fallback HTML, which is served as a catch-all when the UI bundle is
+   * missing — so we can't rely on `/expressots-icon.svg` being reachable.
+   * Returns a tiny inline SVG placeholder if the asset is missing.
+   */
+  private getIconDataUri(): string {
+    try {
+      const here = path.dirname(fileURLToPath(import.meta.url));
+      const candidates = [
+        path.resolve(here, 'ui', 'expressots-icon.svg'),
+        path.resolve(here, '..', 'public', 'expressots-icon.svg'),
+        path.resolve(here, '..', '..', 'public', 'expressots-icon.svg'),
+      ];
+      for (const c of candidates) {
+        if (fs.existsSync(c)) {
+          const svg = fs.readFileSync(c, 'utf8');
+          return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+        }
       }
+    } catch {
+      // fall through
     }
-
-    return null;
+    // Minimal inline fallback (green circle) — matches the brand tone but
+    // ships zero external dependencies.
+    const fallback =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+      '<circle cx="32" cy="32" r="30" fill="#171717"/>' +
+      '<circle cx="32" cy="32" r="22" fill="#3de678"/></svg>';
+    return `data:image/svg+xml;base64,${Buffer.from(fallback).toString('base64')}`;
   }
 
   /** Get development mode HTML */
@@ -213,18 +288,21 @@ export class Studio {
         ? '#22c55e'
         : '#6b7280';
 
+    const iconDataUri = this.getIconDataUri();
+
     return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="${iconDataUri}">
   <title>ExpressoTS Studio</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0c1222 0%, #1a1a2e 100%);
+      background: #171717;
       color: #fff;
       min-height: 100vh;
       display: flex;
@@ -232,18 +310,25 @@ export class Studio {
       justify-content: center;
     }
     .container { text-align: center; padding: 40px; max-width: 600px; }
-    .logo { font-size: 4rem; margin-bottom: 20px; }
+    .logo {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 20px;
+      display: block;
+      border-radius: 50%;
+      box-shadow: 0 8px 32px rgba(61, 230, 120, 0.2);
+    }
     h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
-      background: linear-gradient(90deg, #0ea5e9, #d946ef);
+      background: linear-gradient(90deg, #3de678, #19ce59);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .subtitle { color: #9ca3af; font-size: 1.1rem; margin-bottom: 30px; }
     .status {
-      background: rgba(14, 165, 233, 0.1);
+      background: rgba(61, 230, 120, 0.08);
       border: 1px solid ${modeColor}40;
       border-radius: 12px;
       padding: 20px 30px;
@@ -281,7 +366,7 @@ export class Studio {
 </head>
 <body>
   <div class="container">
-    <div class="logo">⚡</div>
+    <img class="logo" src="${iconDataUri}" alt="ExpressoTS" />
     <h1>ExpressoTS Studio</h1>
     <p class="subtitle">Developer Experience Platform</p>
     
@@ -304,7 +389,7 @@ export class Studio {
     ` : ''}
     
     <p class="instructions">
-      To see the full UI, ensure @expressots/studio-ui is installed
+      The Studio UI failed to load. Try reinstalling @expressots/studio.
     </p>
   </div>
 </body>
@@ -312,17 +397,31 @@ export class Studio {
     `;
   }
 
-  /** Check if agent is connected */
+  /**
+   * Check whether an agent is reachable.
+   *
+   * @returns True when a remote agent answered the connection probe, or
+   *   when an embedded agent is running (standalone mode).
+   */
   isAgentConnected(): boolean {
     return this.agentConnected || this.agent !== null;
   }
 
-  /** Get the Studio Agent instance (standalone mode only) */
+  /**
+   * Get the embedded Studio Agent instance.
+   *
+   * @returns The agent started by this Studio in standalone mode, or null
+   *   in UI-only mode.
+   */
   getAgent(): StudioAgent | null {
     return this.agent;
   }
 
-  /** Get configuration */
+  /**
+   * Get the resolved configuration (defaults applied).
+   *
+   * @returns A copy of the active configuration; mutating it has no effect.
+   */
   getConfig(): StudioConfig {
     return { ...this.config };
   }

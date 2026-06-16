@@ -1,92 +1,83 @@
-# ExpressoTS Studio
+<div align="center">
+  <a href="https://expresso-ts.com">
+    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+  </a>
 
-> **Status: PREVIEW (v4.0.0-preview.1).** Studio is published under the npm `preview` dist-tag for the v4.0.0 release line. The polished GA ships with **v4.1.0**. See [Known limitations](#known-limitations-v400-preview).
+  <h1>ExpressoTS Studio</h1>
 
-**Developer Experience Platform for ExpressoTS**
+  <p>Developer experience platform for route discovery, request recording, live logs, error analysis, and security insights.</p>
 
-ExpressoTS Studio adds local route discovery, request timeline, and a developer dashboard on top of any v4 ExpressoTS application.
+  <p>
+    <a href="https://www.npmjs.com/package/@expressots/studio"><img src="https://img.shields.io/npm/v/@expressots%2Fstudio?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
+    <a href="https://github.com/expressots/expressots-studio/blob/main/expressots/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/expressots-studio?style=flat-square&color=181717" alt="License"></a>
+    <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+    <a href="https://github.com/expressots/expressots-studio/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots-studio/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
+  </p>
 
-## The Magic Loop
+  <p>
+    <a href="https://doc.expresso-ts.com">Documentation</a> ·
+    <a href="https://doc.expresso-ts.com/docs/core/first-steps">Getting Started</a> ·
+    <a href="https://github.com/orgs/expressots/projects/5">Project Board</a> ·
+    <a href="https://discord.com/invite/PyPJfGK">Community</a>
+  </p>
+</div>
 
+---
+
+## Install
+
+```bash
+npm install -D @expressots/studio @expressots/studio-agent
 ```
-Generate → Run → Observe → Fix → Deploy
-```
+
+## What This Package Does
+
+Studio adds a local developer dashboard on top of any ExpressoTS application: route discovery, HTTP recording to SQLite, live logs, runtime error analysis, supply-chain security checks, and a built-in API client. Everything runs locally. Nothing leaves your machine.
 
 ## Packages
 
-| Package                       | Description                                         |
-| ----------------------------- | --------------------------------------------------- |
-| `@expressots/studio`          | Main launcher and orchestrator                      |
-| `@expressots/studio-agent`    | Instrumentation, tracing, and route discovery       |
-| `@expressots/studio-ui`       | Web-based developer dashboard                       |
-| `@expressots/mcp-server`      | AI integration via Model Context Protocol (preview) |
+| Package | Role |
+| --- | --- |
+| `@expressots/studio` | CLI, orchestrator, and bundled web UI |
+| `@expressots/studio-agent` | In-app instrumentation, tracing, recording, and log capture |
 
-## Quick start
+## Quick Look
 
 ```bash
-# In your ExpressoTS v4 project
-npm install -D @expressots/studio@preview
-
-# Launch Studio
 npx expressots-studio
-# or via the framework CLI
-expressots studio
+# or: expressots studio
 ```
 
-The CLI prints a preview banner on every launch.
+Studio auto-activates when `@expressots/studio-agent` is installed and `NODE_ENV` is `development`. Set `EXPRESSOTS_STUDIO=false` to opt out.
 
-## Features (working in preview)
+## Features
 
-- **Route Discovery**: detect controllers, services, providers, middleware (regex-based today; container-introspection in v4.1).
-- **Request Timeline**: live view of incoming requests recorded to a local SQLite database.
-- **Trace Detail**: OpenTelemetry spans rendered per request.
-- **Metrics Dashboard**: P50/P95/P99 latency, error rates, request count.
-- **Architecture Map**: read-only XYFlow graph of detected components.
+| View | What it does |
+| --- | --- |
+| Status Dashboard | App health, runtime info, DI scope counts, top routes, security score |
+| Architecture Map | Read-only graph of controllers, use-cases, providers, and middleware |
+| Request Timeline | Live recording with per-route P50/P95/P99 and error rate |
+| Live Logs | Filterable log buffer by level, route, and context |
+| Error Inspector | Aggregated runtime errors with stack frames and source deep-links |
+| Security View | npm audit + OSV advisories, OWASP API Top 10 posture findings |
+| API Client | Built-in HTTP client for firing requests at your app |
 
-## Known limitations (v4.0.0-preview)
+## Documentation
 
-These are tracked for v4.1.0 GA in [ROADMAP_v4.1.md](../ROADMAP_v4.1.md):
+For guides, API reference, architecture patterns, and examples visit **[doc.expresso-ts.com](https://doc.expresso-ts.com)**.
 
-- **Replay view is a placeholder.** It does not yet subscribe to `replay_result`; the displayed duration is simulated.
-- **Architecture Map can stay empty if structure arrives async**: a React Flow `useNodesState` initialization issue.
-- **Default agent URL** in the UI store is `ws://localhost:3334`; Socket.IO clients normally expect `http://`. Set the URL explicitly if the connection fails.
-- **`SocketContext` does not yet handle the `exchange` event** (single-exchange UI updates).
-- **Sidebar Settings panel is non-functional.**
-- **Studio agent does not yet consume `AppContainer.introspect()`**; the architecture graph is built from a regex source-scan only.
-- **MCP server is parallel, not integrated**: the `@expressots/mcp-server` binary works as an MCP code-generation provider but does not yet expose Studio recordings as MCP resources.
-- **AI Fix Generator** is on the v4.1.0 roadmap and not present in the preview UI.
-- **Cloud Studio**: not in scope for v4.x.
+## Contributing
 
-## Architecture (current implementation)
+Welcome to the ExpressoTS community. See the [Contributing Guide](https://github.com/expressots/expressots/blob/main/CONTRIBUTING.md) for how to get involved.
 
-```mermaid
-flowchart LR
-    studioCli["@expressots/studio CLI"]
-    agent["@expressots/studio-agent (in your app)"]
-    ui["@expressots/studio-ui (browser)"]
-    mcp["@expressots/mcp-server (separate stdio process)"]
-    sqlite[(SQLite recording)]
+## Support the project
 
-    studioCli --> agent
-    studioCli --> ui
-    agent --> sqlite
-    ui -. "Socket.IO" .-> agent
-    mcp -. "stdio" .-> editor[AI editor / IDE]
-```
-
-## Requirements
-
-- Node.js >= 20.18.0
-- ExpressoTS >= 4.0.0
-
-## Development
-
-```bash
-npm install
-npm run build
-npm run dev          # @expressots/studio in tsc --watch
-```
+- [GitHub Sponsors](https://github.com/sponsors/expressots)
+- [Star the organization](https://github.com/expressots) on GitHub
+- [Discord](https://discord.com/invite/PyPJfGK)
+- [Report an issue](https://github.com/expressots/expressots-studio/issues)
 
 ## License
 
-MIT (c) ExpressoTS
+MIT. See [LICENSE](../expressots/LICENSE.md).
+

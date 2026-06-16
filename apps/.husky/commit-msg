@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+# Ensure npx/node are on PATH when committing from GUI clients (Cursor, VS Code, ...)
+# that don't source the user's interactive shell rc files.
+if [ -z "$(command -v npx 2>/dev/null)" ]; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  for nvm_init in \
+    "$NVM_DIR/nvm.sh" \
+    "/usr/share/nvm/init-nvm.sh" \
+    "/usr/share/nvm/nvm.sh" \
+    "/usr/local/opt/nvm/nvm.sh" \
+    "/opt/homebrew/opt/nvm/nvm.sh"; do
+    if [ -s "$nvm_init" ]; then
+      # shellcheck disable=SC1090
+      . "$nvm_init"
+      break
+    fi
+  done
+fi
+
+if [ -z "$(command -v npx 2>/dev/null)" ]; then
+  echo "husky/commit-msg: npx not found in PATH. Skipping commitlint." >&2
+  echo "                 (Open a terminal where 'npx -v' works, or install nvm.)" >&2
+  exit 0
+fi
+
+npx --no -- commitlint --edit "$1"

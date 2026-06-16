@@ -4,7 +4,7 @@
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -17,17 +17,30 @@ import {
 import { trace, context, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import type { SpanInfo, TraceInfo } from '../types/index.js';
 
-/** Custom span processor that emits spans to Studio */
+/**
+ * OpenTelemetry span processor that assembles finished spans into
+ * complete traces for Studio.
+ *
+ * Spans are buffered per trace id; a trace is considered complete one
+ * second after its last span ends, at which point the `onTraceComplete`
+ * callback receives a `TraceInfo` with the root span identified and all
+ * spans sorted by start time.
+ */
 export class StudioSpanProcessor implements SpanProcessor {
   private spans: Map<string, SpanInfo[]> = new Map();
   private onTraceComplete?: (trace: TraceInfo) => void;
   private traceTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private traceCompletionDelay = 1000; // Wait 1 second for all spans
 
+  /**
+   * @param onTraceComplete - Invoked once per assembled trace, after the
+   *   one-second completion window elapses.
+   */
   constructor(onTraceComplete?: (trace: TraceInfo) => void) {
     this.onTraceComplete = onTraceComplete;
   }
 
+  /** No-op: spans are forwarded synchronously as traces complete. */
   forceFlush(): Promise<void> {
     return Promise.resolve();
   }
@@ -36,6 +49,7 @@ export class StudioSpanProcessor implements SpanProcessor {
     // Span started - can emit event if needed
   }
 
+  /** Buffer the finished span and (re)arm the trace-completion timeout. */
   onEnd(span: ReadableSpan): void {
     const traceId = span.spanContext().traceId;
     const spanInfo = this.convertSpan(span);
@@ -104,7 +118,7 @@ export class StudioSpanProcessor implements SpanProcessor {
     return {
       traceId: span.spanContext().traceId,
       spanId: span.spanContext().spanId,
-      parentSpanId: span.parentSpanId,
+      parentSpanId: span.parentSpanContext?.spanId,
       name: span.name,
       kind: this.getSpanKindName(span.kind),
       startTime: span.startTime[0] * 1000 + span.startTime[1] / 1e6,
@@ -150,6 +164,7 @@ export class StudioSpanProcessor implements SpanProcessor {
     }
   }
 
+  /** Cancel pending trace timeouts and drop buffered spans. */
   shutdown(): Promise<void> {
     for (const timeout of this.traceTimeouts.values()) {
       clearTimeout(timeout);
@@ -160,13 +175,25 @@ export class StudioSpanProcessor implements SpanProcessor {
   }
 }
 
-/** OpenTelemetry SDK wrapper */
+/**
+ * Wrapper around the OpenTelemetry Node SDK used by the agent.
+ *
+ * Configures auto-instrumentation (with the noisy `fs` instrumentation
+ * disabled) and routes finished spans through a `StudioSpanProcessor`
+ * so completed traces reach the agent as `TraceInfo` objects.
+ */
 export class StudioTracer {
   private sdk: NodeSDK | null = null;
   private spanProcessor: StudioSpanProcessor | null = null;
   private serviceName: string;
   private serviceVersion: string;
 
+  /**
+   * @param serviceName - OTel `service.name` resource attribute.
+   *   Default: "expressots-app".
+   * @param serviceVersion - OTel `service.version` resource attribute.
+   *   Default: "1.0.0".
+   */
   constructor(
     serviceName: string = 'expressots-app',
     serviceVersion: string = '1.0.0'
@@ -175,12 +202,17 @@ export class StudioTracer {
     this.serviceVersion = serviceVersion;
   }
 
-  /** Initialize the OpenTelemetry SDK */
+  /**
+   * Initialize and start the OpenTelemetry SDK.
+   *
+   * @param onTraceComplete - Invoked once per completed trace.
+   * @returns Resolves when the SDK has started.
+   */
   async start(onTraceComplete?: (trace: TraceInfo) => void): Promise<void> {
     this.spanProcessor = new StudioSpanProcessor(onTraceComplete);
 
     this.sdk = new NodeSDK({
-      resource: new Resource({
+      resource: resourceFromAttributes({
         [ATTR_SERVICE_NAME]: this.serviceName,
         [ATTR_SERVICE_VERSION]: this.serviceVersion,
       }),
@@ -195,20 +227,80 @@ export class StudioTracer {
     await this.sdk.start();
   }
 
-  /** Stop the OpenTelemetry SDK */
+  /**
+   * Stop the OpenTelemetry SDK.
+   *
+   * The shutdown drain is capped at 500ms so a stuck exporter never
+   * delays the host application's own shutdown. Safe to call when the
+   * SDK was never started.
+   *
+   * @returns Resolves once the drain completes or the cap elapses.
+   */
   async stop(): Promise<void> {
-    if (this.sdk) {
-      await this.sdk.shutdown();
-      this.sdk = null;
-    }
+    if (!this.sdk) return;
+    const sdk = this.sdk;
+    this.sdk = null;
+
+    // Suppress the IPC channel error that OpenTelemetry's HTTP exporter
+    // can emit on the process when running under `tsx --watch`. The OTLP
+    // exporter lazy-loads its HTTP agent via dynamic `import()`; if SIGINT
+    // arrives mid-flush, the loader's IPC channel may already be closed
+    // and the rejection surfaces as an unhandled 'error' event on the
+    // process (tsx wraps `process.emit` in suppress-warnings.cjs).
+    // Swallowing this specific code keeps Ctrl+C clean without masking
+    // real shutdown errors.
+    const ipcErrorGuard = (err: NodeJS.ErrnoException): void => {
+      if (err?.code === "ERR_IPC_CHANNEL_CLOSED") return;
+      // Re-emit on the next tick so we don't disrupt the current emit
+      // chain, and so the default Node behaviour (uncaught -> crash)
+      // still applies to unexpected errors.
+      setImmediate(() => {
+        throw err;
+      });
+    };
+    process.on("error", ipcErrorGuard);
+
+    // Hard cap the OpenTelemetry shutdown. NodeSDK.shutdown() awaits every
+    // span processor's `forceFlush` and `shutdown`, and the default span
+    // processor flush timeout is 30s — that's where the user-visible
+    // "press Ctrl+C, wait, then `Graceful shutdown completed`" lag comes
+    // from. The SDK keeps no persistent state worth blocking shutdown on,
+    // so we race the drain against a short timeout and move on.
+    const drained = sdk.shutdown().catch(() => {
+      // Best-effort: never hold the host shutdown on a stuck exporter.
+    });
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 500));
+    await Promise.race([drained, timeout]);
+
+    // Keep the guard installed for one more tick: the IPC error from a
+    // dangling lazy `import()` can land after our race resolves. Detach
+    // it shortly after so the listener doesn't outlive the SDK forever.
+    setTimeout(() => {
+      process.removeListener("error", ipcErrorGuard);
+    }, 1000).unref();
   }
 
-  /** Get the current tracer */
+  /**
+   * Get an OpenTelemetry tracer instance.
+   *
+   * @param name - Tracer name. Default: "studio-agent".
+   * @returns The tracer registered under that name.
+   */
   getTracer(name: string = 'studio-agent') {
     return trace.getTracer(name);
   }
 
-  /** Create a custom span */
+  /**
+   * Run a function inside a new active span.
+   *
+   * The span status is set to OK on success or ERROR (with the error
+   * message) when the function throws; the error is re-thrown.
+   *
+   * @param name - Span name.
+   * @param fn - Function to execute inside the span.
+   * @param attributes - Optional attributes set on the span.
+   * @returns The promise returned by the active-span execution.
+   */
   createSpan(
     name: string,
     fn: () => void | Promise<void>,
