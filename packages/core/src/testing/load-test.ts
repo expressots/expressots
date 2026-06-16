@@ -508,9 +508,9 @@ export async function benchmark(
   const times: Array<number> = [];
 
   for (let i = 0; i < iterations; i++) {
-    const start = Date.now();
+    const start = performance.now();
     await fn();
-    times.push(Date.now() - start);
+    times.push(performance.now() - start);
   }
 
   const sorted = [...times].sort((a, b) => a - b);
