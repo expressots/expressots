@@ -322,18 +322,23 @@ function formatPerformance(
   const indentStr = " ".repeat(indent);
   let output = `${indentStr}├─ ${colorText("Performance:", "yellow")}\n`;
 
+  const lines: Array<string> = [];
   if (perf.duration !== undefined) {
-    output += `${indentStr}  ├─ Duration: ${colorText(`${perf.duration}ms`, "yellow")}\n`;
+    lines.push(`Duration: ${colorText(`${perf.duration}ms`, "yellow")}`);
   }
   if (perf.memoryDelta !== undefined) {
     const mb = (perf.memoryDelta / 1024 / 1024).toFixed(2);
-    output += `${indentStr}  ├─ Memory: ${colorText(`${mb}MB`, "yellow")}\n`;
+    lines.push(`Memory: ${colorText(`${mb}MB`, "yellow")}`);
   }
   if (perf.cpuUsage !== undefined) {
-    output += `${indentStr}  └─ CPU: ${colorText(`${perf.cpuUsage}%`, "yellow")}\n`;
-  } else if (perf.duration !== undefined || perf.memoryDelta !== undefined) {
-    output = output.replace(/├─/g, "└─").replace(/├─/g, "├─");
+    lines.push(`CPU: ${colorText(`${perf.cpuUsage}%`, "yellow")}`);
   }
+
+  lines.forEach((line, index) => {
+    const isLast = index === lines.length - 1;
+    const connector = isLast ? "└─" : "├─";
+    output += `${indentStr}  ${connector} ${line}\n`;
+  });
 
   return output;
 }

@@ -11,7 +11,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const SRC_DIR = path.join(ROOT_DIR, "packages", "core", "src");
@@ -287,7 +287,7 @@ function generateTypeDoc() {
 
   try {
     // Run TypeDoc - it may generate docs despite some TS errors
-    execSync(`npx typedoc --options ${configPath}`, {
+    execFileSync("npx", ["typedoc", "--options", configPath], {
       stdio: "inherit",
       cwd: ROOT_DIR,
     });

@@ -52,6 +52,16 @@ export interface PathResolverConfig {
   rootDir?: string;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Convert a tsconfig path alias (e.g. `@app/*`) into a anchored RegExp. */
+function aliasPathPatternToRegExp(alias: string): RegExp {
+  const segments = alias.split("*").map(escapeRegExp);
+  return new RegExp(`^${segments.join("(.*)")}$`);
+}
+
 /**
  * Patch Node's CommonJS module resolver so `@alias/*` requests resolve to
  * their mapped files at runtime.
@@ -93,10 +103,7 @@ export function registerPathMappings(config: PathResolverConfig): void {
   ): string {
     // Check if request matches any path mapping
     for (const [alias, targets] of Object.entries(paths)) {
-      // Convert tsconfig path pattern to regex
-      // @entities/* -> ^@entities/(.*)$
-      const pattern = alias.replace(/\*/g, "(.*)").replace(/\//g, "\\/");
-      const regex = new RegExp(`^${pattern}$`);
+      const regex = aliasPathPatternToRegExp(alias);
       const match = request.match(regex);
 
       if (match) {
@@ -158,8 +165,7 @@ export function registerPathMappings(config: PathResolverConfig): void {
         paths,
         resolve: (request: string): string | null => {
           for (const [alias, targets] of Object.entries(paths)) {
-            const pattern = alias.replace(/\*/g, "(.*)").replace(/\//g, "\\/");
-            const regex = new RegExp(`^${pattern}$`);
+            const regex = aliasPathPatternToRegExp(alias);
             const match = request.match(regex);
 
             if (match) {

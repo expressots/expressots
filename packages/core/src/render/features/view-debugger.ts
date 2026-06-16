@@ -159,10 +159,15 @@ export class ViewDebugger {
    * Wrap preview HTML with debug info.
    */
   private wrapPreview(view: string, html: string): string {
+    const safeView = this.escapeHtml(view);
+    const safeEngine = this.escapeHtml(
+      this.renderService.getActiveEngine().name,
+    );
+
     return `<!DOCTYPE html>
 <html>
 <head>
-  <title>View Preview: ${view}</title>
+  <title>View Preview: ${safeView}</title>
   <style>
     .debug-bar {
       position: fixed;
@@ -197,9 +202,9 @@ export class ViewDebugger {
 </head>
 <body>
   <div class="debug-bar">
-    <span>📁 <strong>${view}</strong></span>
+    <span>📁 <strong>${safeView}</strong></span>
     <span>|</span>
-    <span>Engine: <strong>${this.renderService.getActiveEngine().name}</strong></span>
+    <span>Engine: <strong>${safeEngine}</strong></span>
     <span>|</span>
     <a href="/__views">← Back to Views</a>
   </div>
@@ -208,5 +213,14 @@ export class ViewDebugger {
   </div>
 </body>
 </html>`;
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 }

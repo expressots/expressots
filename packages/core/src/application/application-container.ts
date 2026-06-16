@@ -497,10 +497,7 @@ export class AppContainer {
 
     // Handle string identifiers
     if (typeof identifier === "string") {
-      if (identifier.startsWith("[class ")) {
-        return identifier.replace("[class ", "").replace("]", "");
-      }
-      return identifier;
+      return this.unwrapClassIdentifierString(identifier);
     }
 
     // Handle Symbol identifiers
@@ -516,15 +513,22 @@ export class AppContainer {
     // Handle objects with toString (fallback)
     if (typeof identifier === "object" && identifier !== null) {
       const str = String(identifier);
-      // Clean up "[object Object]" style strings
-      if (str.startsWith("[class ")) {
-        return str.replace("[class ", "").replace("]", "");
-      }
-      return str;
+      return this.unwrapClassIdentifierString(str);
     }
 
     // Final fallback
     return String(identifier);
+  }
+
+  /**
+   * Strip the `[class Name]` wrapper used by some DI stringifiers.
+   * @private
+   */
+  private unwrapClassIdentifierString(value: string): string {
+    if (value.startsWith("[class ") && value.endsWith("]")) {
+      return value.slice("[class ".length, -1);
+    }
+    return value;
   }
 
   /**
