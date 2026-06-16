@@ -45,8 +45,9 @@ yarn.lock
 templates/opinionated/yarn.lock
 templates/opinionated/package-lock.json
 
-# ignore npm lock files
+# ignore npm lock files (keep root package-lock.json for CI npm ci)
 *-lock.json
+!package-lock.json
 
 # Ignore VSCODE configuration files
 .vscode
