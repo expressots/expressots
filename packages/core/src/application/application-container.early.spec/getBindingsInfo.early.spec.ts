@@ -200,6 +200,78 @@ describe("AppContainer.getBindingsInfo() getBindingsInfo method", () => {
       expect(result[0].serviceIdentifier).toBe("Symbol(MySymbolService)");
     });
 
+    it("should unwrap [class Name] string identifiers", () => {
+      const mockBindings = [
+        {
+          scope: "Singleton",
+          type: "Constructor",
+          cache: {},
+          moduleId: 1,
+          activated: true,
+        },
+      ];
+      mockContainer._bindingDictionary._map.set(
+        "[class UserService]",
+        mockBindings,
+      );
+
+      const result = appContainer.getBindingsInfo();
+
+      expect(result[0].serviceIdentifier).toBe("UserService");
+    });
+
+    it("should unwrap [class Name] object toString identifiers", () => {
+      const mockBindings = [
+        {
+          scope: "Singleton",
+          type: "Constructor",
+          cache: {},
+          moduleId: 1,
+          activated: true,
+        },
+      ];
+      const objectKey = { toString: () => "[class OrderService]" };
+      mockContainer._bindingDictionary._map.set(objectKey, mockBindings);
+
+      const result = appContainer.getBindingsInfo();
+
+      expect(result[0].serviceIdentifier).toBe("OrderService");
+    });
+
+    it("should label null identifiers as unknown", () => {
+      const mockBindings = [
+        {
+          scope: "Singleton",
+          type: "Constructor",
+          cache: {},
+          moduleId: 1,
+          activated: true,
+        },
+      ];
+      mockContainer._bindingDictionary._map.set(null, mockBindings);
+
+      const result = appContainer.getBindingsInfo();
+
+      expect(result[0].serviceIdentifier).toBe("unknown");
+    });
+
+    it("should stringify non-class object identifiers", () => {
+      const mockBindings = [
+        {
+          scope: "Singleton",
+          type: "Constructor",
+          cache: {},
+          moduleId: 1,
+          activated: true,
+        },
+      ];
+      mockContainer._bindingDictionary._map.set(42, mockBindings);
+
+      const result = appContainer.getBindingsInfo();
+
+      expect(result[0].serviceIdentifier).toBe("42");
+    });
+
     it("should handle class constructor identifiers", () => {
       // Arrange
       class TestController {}
