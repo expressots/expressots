@@ -157,6 +157,76 @@ describe("AppExpress.listen() method", () => {
       );
       expect(processExitSpy).toHaveBeenCalledWith(1);
     });
+
+    it("should reject when the HTTP server emits EADDRINUSE", async () => {
+      mockApp.listen = jest.fn().mockImplementation(() => {
+        const server = {
+          on: jest.fn((event: string, handler: (error: NodeJS.ErrnoException) => void) => {
+            if (event === "error") {
+              process.nextTick(() =>
+                handler(Object.assign(new Error("in use"), { code: "EADDRINUSE" })),
+              );
+            }
+          }),
+          close: jest.fn(),
+          address: jest.fn(),
+        };
+        return server;
+      }) as unknown as typeof mockApp.listen;
+
+      await expect(appExpress.listen(3000)).rejects.toThrow(/Port 3000 is already in use/);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Port 3000 is already in use",
+        "adapter-express",
+      );
+    });
+
+    it("should close an existing server instance before re-listening", async () => {
+      const close = jest.fn((cb: () => void) => cb());
+      (appExpress as any).serverInstance = { close, on: jest.fn() };
+
+      await appExpress.listen(3000);
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "Closing existing server instance before starting new one",
+        "adapter-express",
+      );
+      expect(close).toHaveBeenCalled();
+    });
+
+    it("should initiate graceful shutdown when a signal handler fires", async () => {
+      (appExpress as unknown as { handleExit: jest.Mock }).handleExit = jest
+        .fn()
+        .mockResolvedValue(undefined);
+      jest.spyOn(process.stdout, "write").mockImplementation(() => true);
+
+      await appExpress.listen(3000);
+
+      const sigintHandler = processOnSpy.mock.calls.find(([signal]) => signal === "SIGINT")?.[1];
+      sigintHandler?.();
+      await Promise.resolve();
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining("Signal SIGINT received"),
+        "adapter-express",
+      );
+      expect((appExpress as unknown as { handleExit: jest.Mock }).handleExit).toHaveBeenCalledWith(
+        "SIGINT",
+      );
+    });
+
+    it("should execute lifecycle bootstrap hooks after the server starts", async () => {
+      const executeBootstrap = jest.fn().mockResolvedValue(undefined);
+      (
+        appExpress as unknown as {
+          lifecycleRegistry: { executeBootstrap: typeof executeBootstrap };
+        }
+      ).lifecycleRegistry = { executeBootstrap };
+
+      await appExpress.listen(3000);
+
+      expect(executeBootstrap).toHaveBeenCalled();
+    });
   });
 });
 

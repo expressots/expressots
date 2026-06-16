@@ -25,4 +25,22 @@ describe("AppExpress log buffering static API", () => {
     console.warn({ nested: { value: 1 } });
     AppExpress.disableBuffering();
   });
+
+  it("flushes buffered logs after disabling buffering", () => {
+    const writes: string[] = [];
+    const captureWrite = ((chunk: string | Uint8Array) => {
+      writes.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString());
+      return true;
+    }) as typeof process.stdout.write;
+
+    AppExpress.startLogBuffering();
+    (
+      AppExpress as unknown as { originalStdoutWrite: typeof process.stdout.write }
+    ).originalStdoutWrite = captureWrite;
+    console.log("queued-log");
+    (AppExpress as unknown as { flushBufferedLogs: () => void }).flushBufferedLogs();
+    AppExpress.disableBuffering();
+
+    expect(writes.join("")).toContain("queued-log");
+  });
 });

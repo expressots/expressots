@@ -47,48 +47,50 @@ describe("AppExpress.isDevelopment() method", () => {
 
   describe("Happy Path", () => {
     it("should return true when environment is set to development", async () => {
-      // Arrange
       (mockApp.get as jest.Mock).mockReturnValue("development");
-
-      // Act
-      const result = await appExpress.isDevelopment();
-
-      // Assert
-      expect(result).toBe(true);
+      await expect(appExpress.isDevelopment()).resolves.toBe(true);
     });
 
     it("should return false when environment is not set to development", async () => {
-      // Arrange
       (mockApp.get as jest.Mock).mockReturnValue("production");
-
-      // Act
-      const result = await appExpress.isDevelopment();
-
-      // Assert
-      expect(result).toBe(false);
+      await expect(appExpress.isDevelopment()).resolves.toBe(false);
     });
   });
 
   describe("Edge Cases", () => {
     it("should return false when app is not initialized and no env fallback", async () => {
-      // Arrange
       appExpress["app"] = undefined as any;
       appExpress["environment"] = undefined as any;
       const originalEnv = process.env.NODE_ENV;
       delete process.env.NODE_ENV;
 
-      // Act
-      const result = await appExpress.isDevelopment();
+      await expect(appExpress.isDevelopment()).resolves.toBe(false);
 
-      // Assert
-      expect(result).toBe(false);
-
-      // Restore
       if (originalEnv !== undefined) {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it("should fall back to the instance environment when app is unavailable", async () => {
+      appExpress["app"] = undefined as any;
+      appExpress["environment"] = "development";
+
+      await expect(appExpress.isDevelopment()).resolves.toBe(true);
+    });
+
+    it("should fall back to NODE_ENV when app and instance environment are unset", async () => {
+      appExpress["app"] = undefined as any;
+      appExpress["environment"] = undefined as any;
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "development";
+
+      await expect(appExpress.isDevelopment()).resolves.toBe(true);
+
+      if (originalEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
         process.env.NODE_ENV = originalEnv;
       }
     });
   });
 });
-
-// End of unit tests for: isDevelopment

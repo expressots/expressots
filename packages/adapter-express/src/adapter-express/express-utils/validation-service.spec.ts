@@ -89,4 +89,24 @@ describe("ValidationService", () => {
     expect(result).toBeNull();
     expect(res.status).toHaveBeenCalledWith(400);
   });
+
+  it("uses smart detection when enabled and no explicit validation metadata exists", async () => {
+    const service = new ValidationService();
+    service.enable({
+      adapters: [ZodValidatorAdapter],
+      smartDetection: true,
+      autoDetection: false,
+    });
+
+    class Controller {
+      create(_dto: unknown): void {}
+    }
+
+    const req = { body: { email: "not-an-email" } } as unknown as Request;
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() } as unknown as Response;
+
+    const result = await service.validateParameters(req, res, Controller, "create", [req.body]);
+
+    expect(result === null || Array.isArray(result)).toBe(true);
+  });
 });

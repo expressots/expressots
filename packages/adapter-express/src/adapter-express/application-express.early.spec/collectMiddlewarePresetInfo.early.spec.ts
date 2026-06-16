@@ -63,4 +63,37 @@ describe("AppExpress.collectMiddlewarePresetInfo() method", () => {
       logger: { enabled: true, implementation: "pino" },
     });
   });
+
+  it("maps explicit security objects into the Studio preset shape", () => {
+    Object.defineProperty(appExpress, "Middleware", {
+      configurable: true,
+      get: () => ({
+        getLastAppliedPreset: () => ({
+          name: "custom",
+          hasOverrides: false,
+          config: {
+            security: {
+              headers: true,
+              cors: { origin: "https://example.com", credentials: true },
+              rateLimit: { windowMs: 1000, max: 10 },
+            },
+            compress: false,
+            logger: false,
+          },
+        }),
+      }),
+    });
+
+    expect(collect()).toEqual(
+      expect.objectContaining({
+        name: "custom",
+        security: expect.objectContaining({
+          cors: expect.objectContaining({ origin: "https://example.com" }),
+          rateLimit: { windowMs: 1000, max: 10 },
+        }),
+        compress: { enabled: false },
+        logger: { enabled: false },
+      }),
+    );
+  });
 });

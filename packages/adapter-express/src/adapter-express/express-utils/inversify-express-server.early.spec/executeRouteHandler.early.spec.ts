@@ -216,4 +216,61 @@ describe("InversifyExpressServer.executeRouteHandler()", () => {
 
     expect(send).toHaveBeenCalledWith(body);
   });
+
+  it("renders a template when render metadata is present", async () => {
+    const { getRenderMetadata } = jest.requireMock("../decorators");
+    getRenderMetadata.mockReturnValue({ template: "home", defaultData: { title: "Hi" } });
+
+    const server = buildExecuteServer();
+    class PagesController {
+      home(): { title: string } {
+        return { title: "Welcome" };
+      }
+    }
+    const controller = new PagesController();
+    const req = { method: "GET", path: "/", params: {} } as Request;
+    attachHttpContext(req, controller, "PagesController");
+
+    const render = jest.fn();
+    const res = { headersSent: false, render, send: jest.fn() } as unknown as Response;
+
+    await server.executeRouteHandler(
+      req,
+      res,
+      jest.fn(),
+      "PagesController",
+      "home",
+      [],
+      PagesController,
+    );
+
+    expect(render).toHaveBeenCalledWith("home", { title: "Welcome" });
+  });
+
+  it("forwards unexpected controller errors to Express error middleware", async () => {
+    const server = buildExecuteServer();
+    class BrokenController {
+      boom(): never {
+        throw new Error("boom");
+      }
+    }
+    const controller = new BrokenController();
+    const req = { method: "GET", path: "/broken", params: {} } as Request;
+    attachHttpContext(req, controller, "BrokenController");
+
+    const next = jest.fn();
+    const res = { headersSent: false, send: jest.fn() } as unknown as Response;
+
+    await server.executeRouteHandler(
+      req,
+      res,
+      next,
+      "BrokenController",
+      "boom",
+      [],
+      BrokenController,
+    );
+
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: "boom" }));
+  });
 });

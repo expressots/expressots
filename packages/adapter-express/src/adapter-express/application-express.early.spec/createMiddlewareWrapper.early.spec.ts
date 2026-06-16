@@ -30,4 +30,18 @@ describe("AppExpress.createMiddlewareWrapper() method", () => {
 
     expect(setErrorHandler).toHaveBeenCalledWith(expect.objectContaining({ container }));
   });
+
+  it("forwards unrelated middleware properties through the proxy", () => {
+    const appExpress = new AppExpress() as AppExpress;
+    const getMiddlewarePipeline = jest.fn().mockReturnValue(["pipeline"]);
+    const base = { setErrorHandler: jest.fn(), getMiddlewarePipeline };
+
+    const wrapper = (
+      appExpress as unknown as {
+        createMiddlewareWrapper: (middleware: typeof base) => typeof base;
+      }
+    ).createMiddlewareWrapper(base);
+
+    expect(wrapper.getMiddlewarePipeline()).toEqual(["pipeline"]);
+  });
 });
