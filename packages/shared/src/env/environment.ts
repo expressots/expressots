@@ -346,9 +346,8 @@ export function populate(
     }
   }
 
-  // Final debug log to ensure variables are correctly populated
   if (debug) {
-    console.log("Final process.env object:", envObject);
+    log(`Loaded env keys: ${Object.keys(parsed).join(", ")}`, LogLevel.Debug);
   }
 }
 
