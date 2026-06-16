@@ -83,7 +83,6 @@
     "js-yaml": "4.2.0"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "^2.0.1",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
     "@release-it/conventional-changelog": "^11.0.0",

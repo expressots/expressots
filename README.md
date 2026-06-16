@@ -37,15 +37,10 @@ ExpressoTS Core is the foundation of the framework. It provides dependency injec
 ## Quick Look
 
 ```typescript
-import { AppFactory } from "@expressots/core";
+import { bootstrap } from "@expressots/core";
 import { App } from "./app";
 
-async function bootstrap() {
-  const app = await AppFactory.create(App);
-  await app.listen(3000, "development");
-}
-
-bootstrap();
+void bootstrap(App);
 ```
 
 ## Documentation
