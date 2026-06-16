@@ -3,6 +3,19 @@
 import express from "express";
 import { AppExpress } from "../application-express";
 
+const reportStudioRuntimeInfo = jest.fn();
+const rescanStudioRoutes = jest.fn().mockResolvedValue(undefined);
+const refreshStudioContainer = jest.fn().mockResolvedValue(undefined);
+
+jest.mock("../studio/index.js", () => ({
+  initializeStudio: jest.fn().mockResolvedValue(false),
+  reportStudioRuntimeInfo: (...args: unknown[]) => reportStudioRuntimeInfo(...args),
+  rescanStudioRoutes: (...args: unknown[]) => rescanStudioRoutes(...args),
+  refreshStudioContainer: (...args: unknown[]) => refreshStudioContainer(...args),
+  isStudioEnabled: jest.fn().mockReturnValue(false),
+  stopStudio: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock("../express-utils/inversify-express-server", () => {
   return {
     InversifyExpressServer: jest.fn().mockImplementation(() => ({
@@ -71,6 +84,10 @@ describe("AppExpress.listen() method", () => {
     mockProviderManager = new MockProviderManager();
     mockMiddlewareManager = new MockMiddleware();
 
+    reportStudioRuntimeInfo.mockClear();
+    rescanStudioRoutes.mockClear();
+    refreshStudioContainer.mockClear();
+
     processExitSpy = jest.spyOn(process, "exit").mockImplementation((() => {}) as any);
     processOnSpy = jest.spyOn(process, "on");
 
@@ -124,6 +141,44 @@ describe("AppExpress.listen() method", () => {
       await appExpress.listen(3000);
 
       expect(mockApp.set).toHaveBeenCalledWith("env", "development");
+    });
+
+    it("should report Studio runtime info after the server starts", async () => {
+      await appExpress.listen(3000);
+
+      expect(reportStudioRuntimeInfo).toHaveBeenCalledWith(
+        expect.objectContaining({ appPort: 3000, globalPrefix: expect.any(String) }),
+      );
+      expect(rescanStudioRoutes).toHaveBeenCalled();
+      expect(refreshStudioContainer).toHaveBeenCalled();
+    });
+
+    it("should track inbound connections for graceful shutdown", async () => {
+      let connectionHandler: ((socket: unknown) => void) | undefined;
+      mockApp.listen = jest.fn().mockImplementation((port: number, callback: () => void) => {
+        const server = {
+          on: jest.fn((event: string, handler: (socket: unknown) => void) => {
+            if (event === "connection") {
+              connectionHandler = handler;
+            }
+          }),
+          close: jest.fn(),
+          address: jest.fn().mockReturnValue({ port }),
+        };
+        process.nextTick(callback);
+        return server;
+      }) as unknown as typeof mockApp.listen;
+
+      await appExpress.listen(3000);
+
+      const socket = { once: jest.fn(), destroy: jest.fn() };
+      connectionHandler?.(socket);
+
+      expect(
+        (appExpress as unknown as { activeConnections: Set<unknown> }).activeConnections.has(
+          socket,
+        ),
+      ).toBe(true);
     });
   });
 

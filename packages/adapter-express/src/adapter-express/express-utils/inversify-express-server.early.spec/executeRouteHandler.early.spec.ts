@@ -217,6 +217,45 @@ describe("InversifyExpressServer.executeRouteHandler()", () => {
     expect(send).toHaveBeenCalledWith(body);
   });
 
+  it("delegates to content negotiation when enabled", async () => {
+    const { getContentNegotiationMetadata } = jest.requireMock("../utils");
+    getContentNegotiationMetadata.mockReturnValue({
+      accept: "application/json",
+      produces: undefined,
+    });
+
+    const server = buildExecuteServer();
+    server.getContentNegotiationService = jest.fn().mockReturnValue({
+      isEnabled: () => true,
+      handleResponse: jest.fn().mockResolvedValue(true),
+    });
+
+    class ItemsController {
+      list(): { ok: boolean } {
+        return { ok: true };
+      }
+    }
+    const controller = new ItemsController();
+    const req = { method: "GET", path: "/items", params: {} } as Request;
+    attachHttpContext(req, controller, "ItemsController");
+
+    const send = jest.fn();
+    const res = { headersSent: false, send } as unknown as Response;
+
+    await server.executeRouteHandler(
+      req,
+      res,
+      jest.fn(),
+      "ItemsController",
+      "list",
+      [],
+      ItemsController,
+    );
+
+    expect(server.getContentNegotiationService().handleResponse).toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("renders a template when render metadata is present", async () => {
     const { getRenderMetadata } = jest.requireMock("../decorators");
     getRenderMetadata.mockReturnValue({ template: "home", defaultData: { title: "Hi" } });

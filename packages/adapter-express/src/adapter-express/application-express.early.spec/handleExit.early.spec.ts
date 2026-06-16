@@ -33,4 +33,20 @@ describe("AppExpress.handleExit() shutdown path", () => {
     expect(close).toHaveBeenCalled();
     expect(socket.destroy).toHaveBeenCalled();
   });
+
+  it("runs lifecycle shutdown hooks when a registry is configured", async () => {
+    const appExpress = new AppExpress() as AppExpress;
+    const executeShutdown = jest.fn().mockResolvedValue(undefined);
+    (
+      appExpress as unknown as { lifecycleRegistry: { executeShutdown: typeof executeShutdown } }
+    ).lifecycleRegistry = { executeShutdown };
+    (appExpress as unknown as { shutdownTimeout: number }).shutdownTimeout = 50;
+    (appExpress as unknown as { serverInstance: null }).serverInstance = null;
+
+    await (
+      appExpress as unknown as { handleExit: (signal?: NodeJS.Signals) => Promise<void> }
+    ).handleExit("SIGINT");
+
+    expect(executeShutdown).toHaveBeenCalledWith("SIGINT");
+  });
 });

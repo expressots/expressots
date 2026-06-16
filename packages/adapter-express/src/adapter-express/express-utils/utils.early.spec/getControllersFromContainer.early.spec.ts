@@ -1,46 +1,47 @@
-// Unit tests for: getControllersFromContainer
-
+import { Logger } from "@expressots/core";
 import { getControllersFromContainer } from "../utils";
+import { NO_CONTROLLERS_FOUND, TYPE } from "../constants";
 
-class MockContainer {
-  private bindings: Map<string, any[]> = new Map();
-
-  isBound(type: string): boolean {
-    return this.bindings.has(type);
-  }
-
-  getAll<T>(type: string): T[] {
-    return this.bindings.get(type) || [];
-  }
-
-  bind(type: string, instance: any) {
-    if (!this.bindings.has(type)) {
-      this.bindings.set(type, []);
-    }
-    this.bindings.get(type)?.push(instance);
-  }
-}
-
-describe("getControllersFromContainer() getControllersFromContainer method", () => {
-  let mockContainer: MockContainer;
-
-  beforeEach(() => {
-    mockContainer = new MockContainer();
-  });
-
-  it("should return an empty array when no controllers are bound and forceControllers is false", () => {
-    const result = getControllersFromContainer(mockContainer as any, false);
-
-    expect(result).toEqual([]);
-  });
-
-  it("should throw an error when no controllers are bound and forceControllers is true", () => {
-    expect(() => {
-      getControllersFromContainer(mockContainer as any, true);
-    }).toThrowError(
-      "No controller found! Please ensure that you have register at least one Controller.",
-    );
-  });
+jest.mock("@expressots/core", () => {
+  const actual = jest.requireActual("@expressots/core");
+  return {
+    ...actual,
+    Logger: jest.fn().mockImplementation(() => ({
+      error: jest.fn(),
+    })),
+  };
 });
 
-// End of unit tests for: getControllersFromContainer
+describe("getControllersFromContainer()", () => {
+  it("returns an empty array when no controllers are bound and force is false", () => {
+    const container = {
+      isBound: jest.fn().mockReturnValue(false),
+      getAll: jest.fn(),
+    };
+
+    expect(getControllersFromContainer(container as never, false)).toEqual([]);
+  });
+
+  it("throws when controllers are required but missing", () => {
+    const container = {
+      isBound: jest.fn().mockReturnValue(false),
+      getAll: jest.fn(),
+    };
+
+    expect(() => getControllersFromContainer(container as never, true)).toThrow(
+      NO_CONTROLLERS_FOUND,
+    );
+    expect(Logger).toHaveBeenCalled();
+    expect(container.isBound).toHaveBeenCalledWith(TYPE.Controller);
+  });
+
+  it("returns all controllers when they are bound", () => {
+    const controllers = [{ name: "UsersController" }];
+    const container = {
+      isBound: jest.fn().mockReturnValue(true),
+      getAll: jest.fn().mockReturnValue(controllers),
+    };
+
+    expect(getControllersFromContainer(container as never, false)).toBe(controllers);
+  });
+});
