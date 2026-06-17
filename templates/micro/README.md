@@ -195,7 +195,7 @@ Run:
 expressots new my-app --template application
 ```
 
-See the [Application template README](https://github.com/expressots/templates/tree/v4.0.0/application) for the full layout and the [`application` template starter](https://expresso-ts.com/docs/core/first-steps).
+See the [Application template README](https://github.com/expressots/templates/tree/main/application) for the full layout and the [`application` template starter](https://expresso-ts.com/docs/core/first-steps).
 
 ## Testing
 
@@ -234,3 +234,7 @@ describe("Micro API", () => {
 - [Microservices architecture](https://expresso-ts.com/docs/guides/microservices-architecture)
 - [CLI reference](https://expresso-ts.com/docs/cli/overview)
 - [GitHub](https://github.com/expressots) · [Discord](https://discord.gg/PyPJfGK)
+
+## License
+
+[MIT](LICENSE.md)
