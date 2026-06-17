@@ -20,8 +20,9 @@ public/css/main.css
 # Coverage reports
 coverage
 
-# API keys and secrets
-.env
+# API keys and secrets (keep .env tracked for templates, ignore project-specific overrides)
+.env.local
+.env.*.local
 
 # Dependency directory
 node_modules

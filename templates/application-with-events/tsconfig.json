@@ -1,0 +1,49 @@
+{
+    "compilerOptions": {
+        "target": "ES2021",
+        "lib": ["ES2021"],
+
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+
+        "outDir": "./dist",
+        "rootDir": "./",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "removeComments": true,
+
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+
+        // Path aliases are resolved relative to this tsconfig file's location.
+        // No `baseUrl` is set on purpose — it's deprecated in TypeScript 7 and
+        // unnecessary now that `paths` resolve relative to the tsconfig dir.
+        "paths": {
+            "@useCases/*": ["./src/useCases/*"],
+            "@providers/*": ["./src/providers/*"],
+            "@entities/*": ["./src/entities/*"],
+            "@middleware/*": ["./src/middleware/*"],
+            "@interceptors/*": ["./src/interceptors/*"],
+            "@events/*": ["./src/events/*"],
+            "@guards/*": ["./src/guards/*"],
+            "@config/*": ["./src/config/*"]
+        },
+
+        "strict": true,
+        "noImplicitAny": false,
+        "strictPropertyInitialization": false,
+        "skipLibCheck": true,
+
+        "incremental": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+
+        "forceConsistentCasingInFileNames": true,
+
+        "types": ["node", "jest"]
+    },
+    "include": ["src/**/*.ts", "test/**/*.ts", "expressots.config.ts"],
+    "exclude": ["node_modules", "dist"]
+}

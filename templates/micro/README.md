@@ -1,213 +1,239 @@
 # ExpressoTS Micro
 
-A minimal, production-ready microservice template built on [ExpressoTS](https://expresso-ts.com/).
+A lightweight, minimal ExpressoTS v4 microservice template. Ships with the `micro()` fluent API plus working examples for circuit breakers, service discovery, service clients, and serverless deployments.
 
-## Quick Start
+Choose this template when you want:
+
+- **Sub-100 ms cold starts** — no DI container.
+- **Single-file Express apps** that scale through composition rather than module wiring.
+- **Serverless deployments** to AWS Lambda, Vercel, Cloudflare Workers.
+
+Need DI, scopes, lifecycle hooks, or large-scale modular layout? Use the **`application`** template instead:
 
 ```bash
-npm run dev
+expressots new my-app --template application
 ```
 
-Your API is running at `http://localhost:3000`.
+## Quick start
 
-## Project Structure
+```bash
+npm install
+npm run dev          # tsx --watch on src/api.ts
+npm run build        # tsc to dist/
+npm run prod         # node dist/src/api.js
+```
+
+The default app responds on <http://localhost:3000/>.
+
+## Project structure
 
 ```
 src/
-  api.ts          # Application entry point
+└── api.ts                          # Single-file app — fluent micro() API
+
+examples/                           # Reference recipes — run with npm run example:*
+├── circuit-breaker.example.ts      # CircuitBreaker integration
+├── service-discovery.example.ts    # Static + dynamic discovery
+├── service-client.example.ts       # HTTP client with retries + breaker
+├── serverless-lambda.example.ts    # AWS Lambda deployment
+└── full-di-api.example.ts          # When to graduate to the application template
+
 test/
-  api.spec.ts     # Tests
+└── api.spec.ts                     # Jest + native fetch
 ```
 
-## API
+## Defining routes
 
-```typescript
+```ts
 import { micro } from "@expressots/adapter-express";
 
 const app = micro();
 
-app.get("/", () => "Hello from ExpressoTS Micro API!");
+// Return value is auto-serialised as JSON.
+app.get("/users", () => ({ users: [] }));
+
+// Pull the request via the second arg.
+app.post("/users", (req) => req.body);
+
+// Route parameters.
+app.get("/users/:id", (req) => ({ id: req.params.id }));
+
+// Use res directly when you need full control.
+app.post("/custom", (_, res) => res.status(201).json({ created: true }));
 
 app.listen(3000);
 ```
 
-### Configuration
+## Middleware
 
-```typescript
-const app = micro({
-  globalPrefix: "/api",       // Prefix all routes (e.g. /api/users)
-  autoParseJson: true,        // Auto JSON + urlencoded parsing (default: true)
-  showBanner: true,           // Show startup log line (default: true)
-  environment: "development", // Auto-detected from NODE_ENV if not set
-});
-```
-
-### Route Handlers
-
-Handlers can return values directly — no need for `res.send()`:
-
-```typescript
-// String responses
-app.get("/", () => "Hello!");
-
-// JSON responses (auto-serialized)
-app.get("/users", () => [{ id: 1, name: "Alice" }]);
-
-// Async handlers
-app.get("/users/:id", async (req) => {
-  return await db.findUser(req.params.id);
+```ts
+// Global
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
 });
 
-// Full Express access when needed
-app.get("/download", (req, res) => {
-  res.download("/path/to/file.pdf");
-});
-```
+// Path scoped
+app.use("/api", authMiddleware);
 
-### Middleware
-
-Standard Express middleware works with `app.use()`:
-
-```typescript
-import cors from "cors";
-import helmet from "helmet";
-
-app.use(cors());
-app.use(helmet());
-```
-
-Per-route middleware:
-
-```typescript
-import { rateLimit } from "express-rate-limit";
-
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
-
-app.post("/login", limiter, (req) => {
-  // rate-limited route
-});
-```
-
-### Error Handling
-
-```typescript
-app.setErrorHandler((err, req, res, next) => {
-  const status = err.status || 500;
-  res.status(status).json({
-    status,
-    message: err.message,
-    ...(process.env.NODE_ENV !== "production" && { stack: err.stack }),
-  });
-});
-```
-
-### Server Access
-
-```typescript
-await app.listen(3000);
-
-// Access the HTTP server (for WebSockets, graceful shutdown, etc.)
-const server = app.getHttpServer();
-
-// Access the Express app (for advanced configuration)
-const expressApp = app.getApp();
-```
-
-## Production Wiring
-
-A production-ready setup with common middleware:
-
-```typescript
-import { micro } from "@expressots/adapter-express";
-import cors from "cors";
-import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
-
-const app = micro({ globalPrefix: "/api" });
-
-// Security
-app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") }));
-app.use(helmet());
-
-// Rate limiting
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
-
-// Health probes
-app.get("/health", () => ({ status: "ok", uptime: process.uptime() }));
-app.get("/ready", () => ({ status: "ready" }));
-
-// Routes
-app.get("/users", async () => {
-  return await fetchUsers();
-});
-
-// Error handler
-app.setErrorHandler((err, req, res, next) => {
-  res.status(err.status || 500).json({
-    type: "https://expressots.dev/errors/internal",
-    title: "Internal Server Error",
-    status: err.status || 500,
-    detail: err.message,
-  });
-});
-
-app.listen(process.env.PORT || 3000);
-```
-
-### Input Validation
-
-Use any validation library as middleware:
-
-```typescript
-import { z } from "zod";
-
-const validateBody = (schema: z.ZodSchema) => (req, res, next) => {
-  const result = schema.safeParse(req.body);
-  if (!result.success) {
-    return res.status(400).json({
-      type: "https://expressots.dev/errors/validation",
-      title: "Validation Error",
-      status: 400,
-      errors: result.error.flatten().fieldErrors,
-    });
-  }
-  req.body = result.data;
+// Per-route, before the handler
+const validate = (req, res, next) => {
+  if (!req.body.name) return res.status(400).json({ error: "Name required" });
   next();
 };
 
-const CreateUserSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-});
+app.post("/users", validate, (req) => req.body);
+```
 
-app.post("/users", validateBody(CreateUserSchema), async (req) => {
-  return await createUser(req.body);
+## Error handling
+
+```ts
+app.setErrorHandler((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: err.message });
 });
 ```
 
-### Graceful Shutdown
+## `micro()` options
 
-In production (`NODE_ENV=production`), the framework automatically drains
-connections on SIGTERM/SIGINT with a 5-second timeout before forcing exit.
+```ts
+const app = micro({
+  autoParseJson: true,        // default true
+  globalPrefix: "/api",       // optional
+  showBanner: true,           // default true
+});
+```
 
-In development, it exits immediately for fast hot-reload.
+## Advanced features
 
-## Scripts
+### Circuit breaker
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start with hot-reload (development) |
-| `npm run build` | Compile TypeScript |
-| `npm run prod` | Run production build |
-| `npm run test` | Run tests |
-| `npm run test:cov` | Run tests with coverage |
-| `npm run lint` | Lint and fix |
-| `npm run format` | Format with Prettier |
+```ts
+import { CircuitBreaker } from "@expressots/adapter-express";
 
-## Documentation
+const breaker = new CircuitBreaker({
+  failureThreshold: 5,
+  successThreshold: 2,
+  timeout: 60_000,
+});
 
-- [ExpressoTS Documentation](https://expresso-ts.com/)
-- [CLI Documentation](https://expresso-ts.com/docs/category/cli)
+app.get("/external", async () =>
+  breaker.execute(async () => (await fetch("https://api.example.com/data")).json()),
+);
+```
+
+### Service discovery
+
+```ts
+import { ServiceDiscovery } from "@expressots/adapter-express";
+
+const discovery = new ServiceDiscovery({ type: "static" });
+discovery.registerService({
+  id: "user-service-1",
+  name: "user-service",
+  host: "localhost",
+  port: 3001,
+  health: "healthy",
+  lastCheck: new Date(),
+});
+
+const instance = discovery.getService("user-service"); // round-robin LB
+```
+
+### Service client
+
+```ts
+import { ServiceClient } from "@expressots/adapter-express";
+
+const client = new ServiceClient({
+  name: "user-service",
+  baseUrl: "http://localhost:3001",
+  timeout: 5_000,
+  retries: 3,
+  circuitBreaker: { failureThreshold: 5, timeout: 60_000 },
+});
+
+app.get("/users", () => client.get("/api/users"));
+```
+
+### Serverless
+
+```ts
+import { awsLambdaAdapter } from "@expressots/adapter-express";
+
+// In your Lambda handler file:
+export const handler = awsLambdaAdapter(app, {
+  binaryContentTypes: ["application/pdf", "image/*"],
+});
+```
+
+See [`examples/serverless-lambda.example.ts`](./examples/serverless-lambda.example.ts) for the full setup including `serverless.yml`. Read [Micro API + serverless](https://expresso-ts.com/docs/guides/micro-api) for body / base64 / binary handling.
+
+## Running the examples
+
+Every example under `examples/` is a self-contained script:
+
+```bash
+npm run example:circuit-breaker
+npm run example:service-discovery
+npm run example:service-client
+npm run example:full-di-api
+```
+
+## When to graduate to the application template
+
+You need to move when:
+
+- You want **dependency injection** with `@provide` / `@inject`.
+- You want **lifecycle hooks** (`IBootstrap`, `IShutdown`, `postConstruct`, `preDestroy`).
+- You want **interceptors / guards / event handlers** auto-discovered from the container.
+- You're carrying more than a handful of routes and middleware in `src/api.ts`.
+
+Run:
+
+```bash
+expressots new my-app --template application
+```
+
+See the [Application template README](https://github.com/expressots/templates/tree/main/application) for the full layout and the [`application` template starter](https://expresso-ts.com/docs/core/first-steps).
+
+## Testing
+
+```ts
+import { micro, MicroApp } from "@expressots/adapter-express";
+import type { AddressInfo } from "net";
+
+describe("Micro API", () => {
+  let api: MicroApp;
+  let baseUrl: string;
+
+  beforeAll(async () => {
+    api = micro({ showBanner: false });
+    api.get("/", () => "Hello from ExpressoTS Micro API!");
+    await api.listen(0);
+    const { port } = api.getHttpServer().address() as AddressInfo;
+    baseUrl = `http://localhost:${port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => api.getHttpServer().close(() => resolve()));
+  });
+
+  it("returns the welcome message", async () => {
+    const response = await fetch(`${baseUrl}/`);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("Hello from ExpressoTS Micro API!");
+  });
+});
+```
+
+## Learn more
+
+- [ExpressoTS docs](https://expresso-ts.com/docs/)
+- [Micro API guide](https://expresso-ts.com/docs/guides/micro-api)
+- [Microservices architecture](https://expresso-ts.com/docs/guides/microservices-architecture)
+- [CLI reference](https://expresso-ts.com/docs/cli/overview)
+- [GitHub](https://github.com/expressots) · [Discord](https://discord.gg/PyPJfGK)
 
 ## License
 

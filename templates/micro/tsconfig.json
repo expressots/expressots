@@ -1,23 +1,46 @@
 {
     "compilerOptions": {
+        // Language and Environment
+        "target": "ES2021",
+        "lib": ["ES2021"],
+
+        // Modules
         "module": "commonjs",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+
+        // Emit
+        "outDir": "./dist",
+        "rootDir": "./",
         "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
         "removeComments": true,
+
+        // ExpressoTS Required: Decorators and Metadata
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true,
-        "target": "ES2021",
-        "sourceMap": true,
-        "rootDir": "./src",
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
+
+        // Path Mapping
+        "baseUrl": "./src",
+
+        // Type Checking
         "strict": true,
         "noImplicitAny": false,
         "strictPropertyInitialization": false,
         "skipLibCheck": true,
-        "types": ["reflect-metadata", "node", "jest"]
+
+        // Performance
+        "incremental": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+
+        // Interop Constraints
+        "forceConsistentCasingInFileNames": true,
+
+        // Type Definitions
+        "types": ["node", "jest"]
     },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules", "dist", "test/**/*"]
+    "include": ["src/**/*.ts", "test/**/*.ts", "expressots.config.ts"],
+    "exclude": ["node_modules", "dist"]
 }

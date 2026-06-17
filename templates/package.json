@@ -1,6 +1,6 @@
 {
     "name": "@expressots/templates",
-    "version": "3.0.0",
+    "version": "4.0.0-preview.3.4",
     "description": "Expressots templates",
     "author": "Richard Zampieri",
     "license": "MIT",
@@ -23,7 +23,8 @@
     ],
     "scripts": {
         "prepare": "husky",
-        "release": "release-it"
+        "release": "release-it",
+        "release:sync-deps": "node scripts/release/sync-template-deps.mjs"
     },
     "devDependencies": {
         "@commitlint/cli": "19.2.1",

@@ -50,12 +50,11 @@
     "prepare": "husky",
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
-    "build": "npm run clean && npm run build:cjs && npm run copy",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:esm": "node scripts/build-esm.js",
     "release": "release-it",
     "prepublish": "npm run build && npm pack",
-    "publish": "npm publish --tag latest",
     "test": "jest",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
@@ -64,23 +63,26 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
-    "@expressots/core": "3.0.0"
+    "@expressots/core": "4.0.0-preview.3.4"
   },
   "devDependencies": {
     "@commitlint/cli": "19.5.0",
     "@commitlint/config-conventional": "19.5.0",
-    "@release-it/conventional-changelog": "8.0.1",
+    "@release-it/conventional-changelog": "^11.0.0",
+    "@types/express": "^5.0.0",
     "@types/jest": "29.5.14",
     "@types/node": "22.5.0",
     "@typescript-eslint/eslint-plugin": "8.2.0",
     "@typescript-eslint/parser": "8.2.0",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
+    "express": "^5.0.0",
     "husky": "9.1.5",
     "jest": "29.7.0",
     "prettier": "3.3.3",
-    "release-it": "17.6.0",
+    "release-it": "^20.0.1",
     "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
     "typescript": "5.6.3"
   },
   "release-it": {
