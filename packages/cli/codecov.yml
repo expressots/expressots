@@ -1,0 +1,37 @@
+# Align Codecov patch/project gates with jest collectCoverageFrom exclusions.
+# Interactive CLI forms, thin yargs wrappers, and subprocess-heavy layers are
+# covered by integration tests (bin/cli.js spawn) rather than unit coverage.
+ignore:
+  - "**/*.spec.ts"
+  - "src/**/form.ts"
+  - "src/**/cli.ts"
+  - "src/migrate/**"
+  - "src/profile/**"
+  - "src/studio/**"
+  - "src/openapi/**"
+  - "src/info/**"
+  - "src/scripts/**"
+  - "src/providers/create/**"
+  - "src/templates/cli.ts"
+  - "src/templates/fetcher.ts"
+  - "src/templates/manager.ts"
+  - "src/costs/types.ts"
+  - "src/containerize/generators/ci-generator.ts"
+  - "src/cicd/generators/index.ts"
+  - "src/cicd/index.ts"
+  - "src/config/index.ts"
+  - "src/containerize/index.ts"
+  - "src/costs/index.ts"
+  - "src/costs/sources/index.ts"
+  - "src/dev/index.ts"
+  - "src/templates/index.ts"
+  - "src/utils/index.ts"
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: 80%

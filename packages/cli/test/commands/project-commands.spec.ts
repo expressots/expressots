@@ -150,17 +150,19 @@ describe("runCommand: dev", () => {
 
 	it("enables chokidar polling when EXPRESSOTS_WATCH_POLL is set", async () => {
 		process.env.EXPRESSOTS_WATCH_POLL = "1";
+		process.env.EXPRESSOTS_WATCH_INTERVAL = "500";
 		spawnMock.mockReturnValue(makeFakeChildProcess(0));
 
 		try {
 			await runCommand({ command: "dev" });
 		} finally {
 			delete process.env.EXPRESSOTS_WATCH_POLL;
+			delete process.env.EXPRESSOTS_WATCH_INTERVAL;
 		}
 
 		const opts = spawnMock.mock.calls[0][2] as { env?: NodeJS.ProcessEnv };
 		expect(opts.env?.CHOKIDAR_USEPOLLING).toBe("1");
-		expect(opts.env?.CHOKIDAR_INTERVAL).toBe("300");
+		expect(opts.env?.CHOKIDAR_INTERVAL).toBe("500");
 	});
 
 	it("does not preload tsconfig-paths/register (tsx resolves paths natively)", async () => {
@@ -207,6 +209,20 @@ describe("runCommand: build", () => {
 		// cross-spawn handles the Windows `.cmd` shim resolution
 		// internally, so the command we forward is always the bare name.
 		expect(cmd).toBe("npx");
+		expect(args).toEqual(["tsc", "-p", "tsconfig.build.json"]);
+	});
+
+	it("uses bunx tsc when bun.lock is present", async () => {
+		fs.writeFileSync(path.join(tmpDir, "bun.lock"), "{}");
+		spawnMock.mockImplementation(() => {
+			fs.mkdirSync(path.join(tmpDir, "dist"), { recursive: true });
+			return makeFakeChildProcess(0);
+		});
+
+		await runCommand({ command: "build" });
+
+		const [cmd, args] = spawnMock.mock.calls[0] as [string, string[]];
+		expect(cmd).toBe("bunx");
 		expect(args).toEqual(["tsc", "-p", "tsconfig.build.json"]);
 	});
 
