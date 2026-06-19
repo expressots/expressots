@@ -1,0 +1,1 @@
+export { migrateCommand } from "./cli";

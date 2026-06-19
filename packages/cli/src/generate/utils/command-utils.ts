@@ -11,7 +11,47 @@ import {
 import { printError } from "../../utils/cli-ui";
 import { verifyIfFileExists } from "../../utils/verify-file-exists";
 import Compiler from "../../utils/compiler";
+import { updateTsconfigPaths } from "../../utils/update-tsconfig-paths";
+import { safeResolveWithin } from "../../utils/input-validation";
 import { ExpressoConfig, Pattern } from "@expressots/shared";
+
+/**
+ * Reject generate targets that would resolve outside the project's
+ * source root. We only inspect the user-supplied `rawTarget` for
+ * absolute-path escape (`/etc/...`, `C:\Windows\...`); the
+ * `relativePath` is built internally and may legitimately start with
+ * a leading `/` when the schematic doesn't introduce its own folder.
+ *
+ * Aborts via `process.exit(1)` after `printError` so the caller
+ * surfaces a friendly message and writes nothing.
+ */
+function ensureWithinSourceRoot(
+	folderToScaffold: string,
+	relativePath: string,
+	rawTarget: string,
+): void {
+	if (nodePath.isAbsolute(rawTarget)) {
+		printError(
+			"Absolute paths are not allowed for generate targets",
+			rawTarget,
+		);
+		process.exit(1);
+	}
+
+	// Strip leading slashes from the synthesized relative path before
+	// resolution; the leading slash is a benign artifact of empty
+	// `path` segments, not an escape attempt.
+	const stripped = relativePath.replace(/^[\\/]+/, "");
+	const baseAbs = nodePath.resolve(process.cwd(), folderToScaffold);
+	const safe = safeResolveWithin(baseAbs, stripped);
+	if (safe === null) {
+		printError(
+			`Path traversal detected. Targets must stay inside ${folderToScaffold}`,
+			rawTarget,
+		);
+		process.exit(1);
+	}
+}
 
 export const enum PathStyle {
 	None = "none",
@@ -74,18 +114,29 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 	}
 
 	if (opinionated) {
-		const folderSchematic = schematicFolder(fp.schematic);
+		const folderSchematic = schematicFolder(
+			fp.schematic,
+			scaffoldSchematics,
+		);
 
 		const folderToScaffold = `${sourceRoot}/${folderSchematic}`;
 		const { path, file, className, moduleName, modulePath } =
 			await splitTarget({
 				target: fp.target,
 				schematic: fp.schematic,
+				opinionated: true,
 			});
+
+		ensureWithinSourceRoot(folderToScaffold, `${path}/${file}`, fp.target);
 
 		const outputPath = `${folderToScaffold}/${path}/${file}`;
 		await verifyIfFileExists(outputPath, fp.schematic);
 		mkdirSync(`${folderToScaffold}/${path}`, { recursive: true });
+
+		// Update tsconfig paths dynamically (handles both default and custom folder names)
+		if (folderSchematic) {
+			await updateTsconfigPaths(folderSchematic, sourceRoot);
+		}
 
 		return {
 			path,
@@ -116,6 +167,12 @@ export async function validateAndPrepareFile(fp: FilePreparation) {
 		fileBaseSchema !== undefined
 			? file.replace(fp.schematic, fileBaseSchema)
 			: file;
+
+	ensureWithinSourceRoot(
+		folderToScaffold,
+		`${path}/${validateFileSchema}`,
+		fp.target,
+	);
 
 	const outputPath = `${folderToScaffold}/${path}/${validateFileSchema}`;
 	await verifyIfFileExists(outputPath, fp.schematic);
@@ -152,9 +209,11 @@ export function getFileNameWithoutExtension(filePath: string) {
 export const splitTarget = async ({
 	target,
 	schematic,
+	opinionated = false,
 }: {
 	target: string;
 	schematic: string;
+	opinionated?: boolean;
 }): Promise<{
 	path: string;
 	file: string;
@@ -216,34 +275,79 @@ export const splitTarget = async ({
 		if (schematic === "service") schematic = "controller";
 		// 1. Extract the name (first part of the target)
 		const [name, ...remainingPath] = target.split("/");
-		// 2. Check if the name is camelCase or kebab-case
+		// 2. Check if the name is camelCase or kebab-case (compound word)
 		const camelCaseRegex = /[A-Z]/;
 		const kebabCaseRegex = /[_\-\s]+/;
 		const isCamelCase = camelCaseRegex.test(name);
 		const isKebabCase = kebabCaseRegex.test(name);
+
+		// Schematics that should create their own subfolder (grouped resources)
+		const groupedSchematics = [
+			"usecase",
+			"controller",
+			"service",
+			"dto",
+			"module",
+		];
+		const shouldCreateFolder = groupedSchematics.includes(schematic);
+
 		if (isCamelCase || isKebabCase) {
-			const [wordName, ...path] = name
-				? name
-						.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)
-						.map((word) => word.toLowerCase())
-				: [];
+			// Convert compound name to kebab-case for folder path (e.g., confirmLogin -> confirm-login)
+			const folderName = anyCaseToKebabCase(name);
+			// Extract first word for module name
+			const firstWord = name
+				.split(isCamelCase ? /(?=[A-Z])/ : kebabCaseRegex)[0]
+				.toLowerCase();
+
+			// Opinionated "syntactic sugar": decompose a compound name into a
+			// nested feature/use-case layout so every use-case of a feature is
+			// grouped under one module at the feature root. For example
+			// `userLogin` -> `user/login/login.{controller,usecase,dto}.ts` with
+			// the shared module at `user/user.module.ts`. A later `userLogout`
+			// adds `user/logout/...` and joins the same `UserModule`.
+			//
+			// Only applies to grouped schematics in opinionated mode; standalone
+			// schematics and non-opinionated mode keep the flat kebab folder so
+			// the developer retains full control over structure.
+			if (opinionated && shouldCreateFolder) {
+				const words = folderName.split("-").filter(Boolean);
+				if (words.length > 1) {
+					const feature = words[0];
+					const useCase = words.slice(1).join("-");
+					return {
+						path: `${feature}/${useCase}`,
+						file: `${await getNameWithScaffoldPattern(
+							useCase,
+						)}.${schematic}.ts`,
+						className: anyCaseToPascalCase(useCase),
+						moduleName: feature,
+						modulePath: feature,
+					};
+				}
+			}
+
+			// For standalone schematics (entity, provider, middleware, etc.),
+			// only create folder if explicit path is provided
+			const computedPath = shouldCreateFolder
+				? `${folderName}${pathEdgeCase(remainingPath)}`
+				: remainingPath.length > 0
+					? `${folderName}${pathEdgeCase(remainingPath)}`
+					: "";
 
 			return {
-				path: `${wordName}/${pathEdgeCase(path)}${pathEdgeCase(
-					remainingPath,
-				)}`,
+				path: computedPath,
 				file: `${await getNameWithScaffoldPattern(
 					name,
 				)}.${schematic}.ts`,
 				className: anyCaseToPascalCase(name),
-				moduleName: wordName,
+				moduleName: firstWord,
 				modulePath: pathContent[0].split("-")[1],
 			};
 		}
 
 		// 3. Return the base case
 		return {
-			path: "",
+			path: shouldCreateFolder ? name : "",
 			file: `${await getNameWithScaffoldPattern(name)}.${schematic}.ts`,
 			className: anyCaseToPascalCase(name),
 			moduleName: name,
@@ -295,30 +399,48 @@ export const writeTemplate = ({
 };
 
 /**
- * Returns the folder where the schematic should be placed
- * @param schematic
+ * Default folder mappings for opinionated scaffolding
  */
-export const schematicFolder = (schematic: string): string | undefined => {
-	switch (schematic) {
-		case "usecase":
-			return "useCases";
-		case "controller":
-			return "useCases";
-		case "dto":
-			return "useCases";
-		case "service":
-			return "useCases";
-		case "provider":
-			return "providers";
-		case "entity":
-			return "entities";
-		case "middleware":
-			return "providers/middlewares";
-		case "module":
-			return "useCases";
+const DEFAULT_SCHEMATIC_FOLDERS: Record<string, string> = {
+	usecase: "useCases",
+	controller: "useCases",
+	dto: "useCases",
+	service: "useCases",
+	provider: "providers",
+	entity: "entities",
+	middleware: "middleware",
+	module: "useCases",
+	// NEW v4.0 schematics
+	interceptor: "interceptors",
+	event: "events",
+	handler: "events",
+	guard: "guards",
+	config: "config",
+};
+
+/**
+ * Returns the folder where the schematic should be placed.
+ * Uses scaffoldSchematics from config if defined, otherwise falls back to defaults.
+ *
+ * @param schematic - The schematic type (usecase, controller, etc.)
+ * @param scaffoldSchematics - Custom folder mappings from expressots.config.ts
+ * @returns The folder path for the schematic
+ */
+export const schematicFolder = (
+	schematic: string,
+	scaffoldSchematics?: ExpressoConfig["scaffoldSchematics"],
+): string | undefined => {
+	// Check if custom mapping is defined in config
+	if (scaffoldSchematics) {
+		const customFolder =
+			scaffoldSchematics[schematic as keyof typeof scaffoldSchematics];
+		if (customFolder) {
+			return customFolder;
+		}
 	}
 
-	return undefined;
+	// Fall back to default mappings
+	return DEFAULT_SCHEMATIC_FOLDERS[schematic];
 };
 
 /**
@@ -375,19 +497,30 @@ export async function extractFirstWord(file: string) {
 }
 
 /**
- * Check if the path is a nested path, a single path or a sugar path
+ * Determine the path style for a generate target.
+ *
+ * - `Nested`: contains an explicit separator (`billing/invoice`) → grouped
+ *   under the parent folder.
+ * - `Sugar`: a single segment that normalizes to more than one word
+ *   (`userCreate`, `user-create`, `user_create`, `UserCreate`) → grouped under
+ *   its first word as a shared module (e.g. `UserModule`). camelCase and
+ *   kebab-case forms of the same name therefore produce identical output.
+ * - `Single`: a true single-word target (`user`) → self-contained module in its
+ *   own folder.
+ *
  * @param path
  * @returns the path style
  */
 export const checkPathStyle = (path: string): PathStyle => {
-	const singleOrNestedPathRegex = /\/|\\/;
-	const sugarPathRegex = /^\w+-\w+$/;
+	const nestedPathRegex = /\/|\\/;
 
-	if (singleOrNestedPathRegex.test(path)) {
+	if (nestedPathRegex.test(path)) {
 		return PathStyle.Nested;
-	} else if (sugarPathRegex.test(path)) {
-		return PathStyle.Sugar;
-	} else {
-		return PathStyle.Single;
 	}
+
+	if (anyCaseToKebabCase(path).includes("-")) {
+		return PathStyle.Sugar;
+	}
+
+	return PathStyle.Single;
 };

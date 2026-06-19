@@ -2,6 +2,7 @@ import {
 	anyCaseToCamelCase,
 	anyCaseToKebabCase,
 	anyCaseToPascalCase,
+	anyCaseToUpperSnakeCase,
 } from "./string-utils";
 import { ExpressoConfig } from "@expressots/shared";
 
@@ -15,17 +16,27 @@ import {
 } from "./command-utils";
 
 /**
+ * Additional options for v4.0 schematics
+ */
+type V4Options = {
+	event?: string;
+	priority?: number;
+};
+
+/**
  * Process the non-opinionated command
  * @param schematic - The schematic
  * @param target - The target
  * @param method - The method
  * @param expressoConfig - The expresso config
+ * @param v4Options - Additional options for v4.0 schematics
  */
 export async function nonOpinionatedProcess(
 	schematic: string,
 	target: string,
 	method: string,
 	expressoConfig: ExpressoConfig,
+	v4Options: V4Options = {},
 ): Promise<string> {
 	let f: FileOutput = await validateAndPrepareFile({
 		schematic,
@@ -169,6 +180,36 @@ export async function nonOpinionatedProcess(
 				f.schematic,
 			);
 			await printGenerateSuccess(f.schematic, f.file);
+			break;
+		// NEW v4.0 schematics
+		case "interceptor":
+			await generateInterceptor(
+				f.outputPath,
+				f.className,
+				v4Options.priority ?? 10,
+			);
+			await printGenerateSuccess("interceptor", f.file);
+			break;
+		case "event":
+			await generateEvent(f.outputPath, f.className);
+			await printGenerateSuccess("event", f.file);
+			break;
+		case "handler":
+			await generateHandler(
+				f.outputPath,
+				f.className,
+				v4Options.event ?? "MyEvent",
+				v4Options.priority ?? 10,
+			);
+			await printGenerateSuccess("handler", f.file);
+			break;
+		case "guard":
+			await generateGuard(f.outputPath, f.className);
+			await printGenerateSuccess("guard", f.file);
+			break;
+		case "config":
+			await generateConfig(f.outputPath, f.className, f.moduleName);
+			await printGenerateSuccess("config", f.file);
 			break;
 	}
 
@@ -386,6 +427,108 @@ async function generateModule(
 					: anyCaseToPascalCase(moduleName),
 				path,
 				schematic: anyCaseToPascalCase(schematic),
+			},
+		},
+	});
+}
+
+// NEW v4.0 Schematic Generators
+
+/**
+ * Generate an interceptor
+ */
+async function generateInterceptor(
+	outputPath: string,
+	className: string,
+	priority: number,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/nonopinionated/interceptor.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+				priority: priority.toString(),
+			},
+		},
+	});
+}
+
+/**
+ * Generate an event
+ */
+async function generateEvent(
+	outputPath: string,
+	className: string,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/nonopinionated/event.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+			},
+		},
+	});
+}
+
+/**
+ * Generate an event handler
+ */
+async function generateHandler(
+	outputPath: string,
+	className: string,
+	eventName: string,
+	priority: number,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/nonopinionated/handler.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+				eventName: anyCaseToPascalCase(eventName),
+				eventPath: `./${anyCaseToKebabCase(eventName)}.event`,
+				priority: priority.toString(),
+			},
+		},
+	});
+}
+
+/**
+ * Generate a guard
+ */
+async function generateGuard(
+	outputPath: string,
+	className: string,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/nonopinionated/guard.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+			},
+		},
+	});
+}
+
+/**
+ * Generate a config module
+ */
+async function generateConfig(
+	outputPath: string,
+	className: string,
+	moduleName: string,
+): Promise<void> {
+	writeTemplate({
+		outputPath,
+		template: {
+			path: "../templates/nonopinionated/config.tpl",
+			data: {
+				className: anyCaseToPascalCase(className),
+				moduleName: anyCaseToCamelCase(moduleName || className),
+				envPrefix: anyCaseToUpperSnakeCase(className),
 			},
 		},
 	});

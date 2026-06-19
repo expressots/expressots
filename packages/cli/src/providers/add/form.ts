@@ -1,50 +1,16 @@
 import chalk from "chalk";
-import { spawn } from "node:child_process";
-import fs from "node:fs";
 import { exit } from "node:process";
 import { printError } from "../../utils/cli-ui";
-
-type PackageManagerConfig = {
-	install: string;
-	addDev: string;
-	remove: string;
-};
-
-type PackageManager = {
-	npm: PackageManagerConfig;
-	yarn: PackageManagerConfig;
-	pnpm: PackageManagerConfig;
-};
-
-const PACKAGE_MANAGERS: PackageManager = {
-	npm: {
-		install: "install",
-		addDev: "install --save-dev",
-		remove: "uninstall",
-	},
-	yarn: {
-		install: "add",
-		addDev: "add --dev",
-		remove: "remove",
-	},
-	pnpm: {
-		install: "add",
-		addDev: "add --save-dev",
-		remove: "remove",
-	},
-};
-
-function detectPackageManager(): string | null {
-	const lockFiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"];
-	const managers = Object.keys(PACKAGE_MANAGERS);
-
-	for (let i = 0; i < lockFiles.length; i++) {
-		if (fs.existsSync(lockFiles[i])) {
-			return managers[i];
-		}
-	}
-	return null;
-}
+import {
+	isValidPackageName,
+	isValidVersion,
+} from "../../utils/input-validation";
+import { safeSpawn } from "../../utils/safe-spawn";
+import {
+	detectPackageManager,
+	getAddPackageArgs,
+	getRemovePackageArgs,
+} from "../../utils/package-manager-commands";
 
 async function execProcess({
 	command,
@@ -56,12 +22,14 @@ async function execProcess({
 	directory: string;
 }): Promise<void> {
 	return new Promise((resolve, reject) => {
-		const isWindows = process.platform === "win32";
-		const execCommand = isWindows ? `${command}.cmd` : command;
-
-		const processRunner = spawn(execCommand, args, {
+		// `safeSpawn` (cross-spawn) resolves the Windows `.cmd` shim and
+		// applies cmd.exe-aware escaping for every argv entry. Combined
+		// with the `isValidPackageName` / `isValidVersion` guards on the
+		// caller side, this prevents command injection via the package
+		// name or version specifier (which can legitimately contain
+		// `>`, `<`, `|`, etc. in a semver range).
+		const processRunner = safeSpawn(command, args, {
 			cwd: directory,
-			shell: true,
 		});
 
 		console.log(chalk.bold.blue(`Executing: ${command} ${args.join(" ")}`));
@@ -96,9 +64,31 @@ async function execProcess({
 
 export async function addProvider(
 	packageName: string,
-	version?: string,
+	version?: string | false,
 	isDevDependency = false,
 ): Promise<void> {
+	if (!isValidPackageName(packageName)) {
+		printError(
+			`Invalid package name: ${JSON.stringify(packageName)}`,
+			"add-package",
+		);
+		return;
+	}
+
+	// yargs assigns `false` for the version flag when the user omits
+	// it (see add/cli.ts). Treat that and "latest" as "no suffix".
+	let versionSuffix = "";
+	if (typeof version === "string" && version !== "latest") {
+		if (!isValidVersion(version)) {
+			printError(
+				`Invalid version specifier: ${JSON.stringify(version)}`,
+				"add-package",
+			);
+			return;
+		}
+		versionSuffix = `@${version}`;
+	}
+
 	const packageManager = detectPackageManager();
 
 	if (!packageManager) {
@@ -106,25 +96,27 @@ export async function addProvider(
 		return;
 	}
 
-	const pkgManagerConfig: PackageManagerConfig =
-		PACKAGE_MANAGERS[packageManager as keyof PackageManager];
-
-	const command = isDevDependency
-		? pkgManagerConfig.addDev
-		: pkgManagerConfig.install;
-	const versionSuffix = version && version !== "latest" ? `@${version}` : "";
+	const args = getAddPackageArgs(packageManager, { dev: isDevDependency });
 
 	console.log(
 		`${isDevDependency ? "Adding devDependency" : "Installing"} ${packageName}...`,
 	);
 	await execProcess({
 		command: packageManager,
-		args: [...command.split(" "), `${packageName}${versionSuffix}`],
+		args: [...args, `${packageName}${versionSuffix}`],
 		directory: process.cwd(),
 	});
 }
 
 export async function removeProvider(packageName: string): Promise<void> {
+	if (!isValidPackageName(packageName)) {
+		printError(
+			`Invalid package name: ${JSON.stringify(packageName)}`,
+			"remove-package",
+		);
+		return;
+	}
+
 	const packageManager = detectPackageManager();
 
 	if (!packageManager) {
@@ -132,13 +124,12 @@ export async function removeProvider(packageName: string): Promise<void> {
 		return;
 	}
 
-	const command =
-		PACKAGE_MANAGERS[packageManager as keyof PackageManager].remove;
+	const args = getRemovePackageArgs(packageManager);
 
 	console.log(`Removing ${packageName}...`);
 	await execProcess({
 		command: packageManager,
-		args: [...command.split(" "), packageName],
+		args: [...args, packageName],
 		directory: process.cwd(),
 	});
 }

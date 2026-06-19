@@ -1,3 +1,40 @@
+## [4.0.0-preview.3](https://github.com/expressots/expressots-cli/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
+
+Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [CLI reference](https://expresso-ts.com/docs/4.0.0/cli/overview) for the full picture.
+
+### Features
+
+* **new templates + presets:** `expressots new` accepts `--template application | micro` and `--preset api | web | graphql | microservice | minimal`. The `application` and `micro` templates have been modernised end-to-end.
+* **v4 schematic set:** `generate` now scaffolds `controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`. Supports folder/subfolder/resource paths, shorthand, trailing-slash semantics, and the `opinionated` vs. non-opinionated layout switch.
+* **provider management:** `expressots add`, `remove`, `create` with lockfile-aware package-manager detection (npm, yarn, pnpm).
+* **scripts runner:** `expressots scripts` for interactive (and direct) script execution with package-manager detection.
+* **studio integration:** `expressots studio` auto-installs `@expressots/studio` on first use, launches the UI, opens the browser, and probes the studio-agent.
+* **containerize:** `expressots containerize` for Docker / Compose / Kubernetes outputs with presets, project analyser, and `--include-ci`.
+* **profile:** `expressots profile` with `container` / `image` / `optimize` / `report` actions; Trivy integration for image security scans.
+* **cicd:** `expressots cicd` with `init` / `generate` / `list` / `validate` actions targeting GitHub Actions, GitLab CI, CircleCI, Jenkins, Bitbucket, Azure DevOps; `basic` / `comprehensive` / `security-focused` strategies.
+* **migrate:** `expressots migrate` with `init` / `generate` / `list` / `analyze` actions and supported paths Heroku → Railway, Docker Compose → Kubernetes (more on the roadmap).
+* **costs:** `expressots costs` with `estimate` / `compare` / `optimize` / `pricing` / `update` / `info` actions for cloud cost forecasting.
+* **container-dev:** `expressots container-dev` (`start` / `stop` / `attach` / `shell` / `status` / `logs`) for a docker-compose-based development workflow.
+* **info + resources:** `expressots info` (project, OS, Node, CLI versions) and `expressots resources` (cheat sheet for every command + schematic).
+* **dev / build / prod:** `dev` runs `tsx --watch`, `build` rewrites path aliases during emit, `prod` runs the built output via plain `node`.
+
+### Bug Fixes
+
+* `expressots new` no longer ships `nodemon` in template devDependencies (v4 uses `tsx --watch`).
+* `expressots scripts` correctly detects bun's absence and falls back to npm / yarn / pnpm based on the lockfile.
+* `BUNDLE_VERSION` is now derived from the CLI's own `package.json` (was hardcoded). `expressots --version` and `expressots info` now always match the published artifact.
+* `expressots new` and `expressots create` now degit a templates tag matching the CLI version (`v${BUNDLE_VERSION}`) rather than the moving `feature/v4.0` branch / a stale `v4.0.0-preview.1` tag. CLI releases and template tags now move together.
+* `expressots new` and `expressots create` now print the *actual* underlying error (e.g. `MISSING_REF`, `EACCES`, `DEST_NOT_EMPTY`) instead of the historical catch-all `"Project already exists or Folder is not empty"`. The "folder not empty" message is still emitted, but only when that's truly the cause.
+* During the preview window — when the matching `vX.Y.Z` templates tag has not yet been pushed to GitHub — `expressots new` / `expressots create` automatically fall back to the `feature/v4.0` branch and warn, rather than failing opaquely. The fallback is gated to preview/alpha/beta/rc CLI builds.
+* New `EXPRESSOTS_TEMPLATE_REF=<branch-or-tag>` environment variable lets users override the templates ref for either command (e.g. for testing a forked or in-flight template revision).
+* `chalk` moved from `devDependencies` to `dependencies` — fixes `Cannot find module 'chalk'` on a fresh `npm install -g @expressots/cli`.
+* `@expressots/shared` moved from `devDependencies` to `dependencies` for the same reason.
+
+### Build System
+
+* `expressots-cli` now requires Node.js 20.18.0+.
+* `release-it` upgraded to 17.6.0 with `@release-it/conventional-changelog@8.0.1`; commit message normalised to `chore(release): ${version}` for consistency with the rest of the framework.
+
 ## [3.0.0](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 
 ### Bug Fixes

@@ -1,0 +1,1 @@
+export { openApiCommand } from "./cli";

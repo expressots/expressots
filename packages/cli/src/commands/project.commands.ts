@@ -1,13 +1,124 @@
 import { spawn } from "child_process";
-import { promises as fs, readFileSync, existsSync, mkdirSync } from "fs";
+import {
+	promises as fs,
+	readFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+} from "fs";
 import os from "os";
 import path, { join } from "path";
+import chalk from "chalk";
 import { CommandModule } from "yargs";
 import { printError, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
+import {
+	detectPackageManagerOrDefault,
+	getExecCommand,
+} from "../utils/package-manager-commands";
+import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 
 /**
- * Helper function to load and extract outDir from tsconfig.build.json
+ * Resolve a tsconfig.json file with full `extends` chain support.
+ * Recursively loads the base config(s) and merges `compilerOptions`
+ * (child wins), producing the same flattened result that `tsc` sees.
+ */
+function resolveTsConfig(configPath: string): Record<string, unknown> {
+	if (!existsSync(configPath)) {
+		return {};
+	}
+
+	let raw: string;
+	try {
+		raw = readFileSync(configPath, "utf-8");
+	} catch {
+		return {};
+	}
+
+	// tsconfig.json allows JS-style comments but JSON.parse does not.
+	// We strip them character-by-character so we never touch `//` or
+	// `/*` sequences that appear inside quoted strings (e.g. paths).
+	const stripped = stripJsonComments(raw);
+
+	let config: Record<string, unknown>;
+	try {
+		config = JSON.parse(stripped);
+	} catch {
+		return {};
+	}
+
+	if (typeof config.extends === "string") {
+		const baseRelative = config.extends as string;
+		const basePath = path.resolve(path.dirname(configPath), baseRelative);
+		const baseConfig = resolveTsConfig(basePath);
+
+		const baseOpts =
+			(baseConfig.compilerOptions as Record<string, unknown>) ?? {};
+		const childOpts =
+			(config.compilerOptions as Record<string, unknown>) ?? {};
+
+		config.compilerOptions = { ...baseOpts, ...childOpts };
+		delete config.extends;
+	}
+
+	return config;
+}
+
+// Strip JS-style comments (single-line and block) from a JSON string
+// without corrupting quoted content. Walks the input character by
+// character, tracking whether we are inside a string literal.
+function stripJsonComments(text: string): string {
+	let result = "";
+	let i = 0;
+	const len = text.length;
+
+	while (i < len) {
+		const ch = text[i];
+
+		// String literal — copy verbatim until the closing quote.
+		if (ch === '"') {
+			let j = i + 1;
+			while (j < len) {
+				if (text[j] === "\\") {
+					j += 2; // skip escaped character
+				} else if (text[j] === '"') {
+					j++;
+					break;
+				} else {
+					j++;
+				}
+			}
+			result += text.slice(i, j);
+			i = j;
+			continue;
+		}
+
+		// Single-line comment
+		if (ch === "/" && text[i + 1] === "/") {
+			// Skip until end of line.
+			i += 2;
+			while (i < len && text[i] !== "\n") i++;
+			continue;
+		}
+
+		// Multi-line comment
+		if (ch === "/" && text[i + 1] === "*") {
+			i += 2;
+			while (i < len && !(text[i] === "*" && text[i + 1] === "/")) i++;
+			i += 2; // skip closing */
+			continue;
+		}
+
+		result += ch;
+		i++;
+	}
+
+	return result;
+}
+
+/**
+ * Helper function to load and extract outDir from tsconfig.build.json,
+ * resolving the `extends` chain so the value can live in the base config.
  */
 function getOutDir(): string {
 	const tsconfigBuildPath = join(process.cwd(), "tsconfig.build.json");
@@ -20,12 +131,15 @@ function getOutDir(): string {
 		process.exit(1);
 	}
 
-	const tsconfig = JSON.parse(readFileSync(tsconfigBuildPath, "utf-8"));
-	const outDir = tsconfig.compilerOptions.outDir;
+	const tsconfig = resolveTsConfig(tsconfigBuildPath);
+	const opts = tsconfig.compilerOptions as
+		| Record<string, unknown>
+		| undefined;
+	const outDir = opts?.outDir as string | undefined;
 
 	if (!outDir) {
 		printError(
-			"Cannot find outDir in tsconfig.build.json. Please provide an outDir.",
+			"Cannot find outDir in tsconfig.build.json (or its extended config). Please provide an outDir.",
 			"tsconfig-build-path",
 		);
 		process.exit(1);
@@ -40,42 +154,135 @@ function getOutDir(): string {
 }
 
 /**
- * Load the configuration from the compiler
- * @param compiler The compiler to load the configuration from
- * @returns The configuration
+ * Globs excluded from the dev watcher.
+ *
+ * tsx only watches the entry file plus its import graph, and already
+ * ignores `node_modules` and dotfiles (so `.env*` never triggers a
+ * reload). These extra patterns defend against the remaining restart-loop
+ * trigger: generated or written-at-runtime files that re-enter the import
+ * graph (e.g. the view type generator's `*.generated.d.ts`, build output,
+ * coverage reports, log files).
  */
-async function opinionatedConfig(): Promise<Array<string>> {
-	const { entryPoint } = await Compiler.loadConfig();
-	const config = [
-		"--watch",
-		"-r",
-		"tsconfig-paths/register",
-		`./src/${entryPoint}.ts`,
-	];
-	return config;
+const DEV_WATCH_EXCLUDES: ReadonlyArray<string> = [
+	"**/dist/**",
+	"**/build/**",
+	"**/coverage/**",
+	"**/*.generated.*",
+	"**/*.log",
+];
+
+/**
+ * Build the tsx watch arguments for development mode.
+ *
+ * Uses tsx's `watch` subcommand (not the root-level `--watch` flag) for
+ * reliable cross-platform file watching, which avoids nodemon + SIGTERM
+ * issues on Windows. The subcommand form is required so the watch-specific
+ * flags below are recognised; passing them to `tsx --watch` would forward
+ * them to Node and crash the process.
+ *
+ * Path aliases (`@useCases/*`, `@providers/*`, ...) are resolved natively by
+ * tsx from `tsconfig.json` (including when `baseUrl` is omitted, as the v4
+ * templates do), so no `tsconfig-paths/register` preload is needed at dev
+ * time. Production builds rewrite those aliases to relative paths during
+ * `build` (see {@link transformPathAliases}), so prod never needs it either.
+ *
+ * @returns The tsx arguments array
+ */
+async function buildDevArgs(): Promise<Array<string>> {
+	const { entryPoint, sourceRoot } = await Compiler.loadConfig();
+
+	const args: Array<string> = ["watch"];
+
+	// Keep prior logs on screen across reloads. tsx resets the terminal
+	// (\x1Bc) on every restart by default, which erases the "Restarting...
+	// <file>" line that tells you *why* a reload happened. On Windows a
+	// single save commonly emits several filesystem events (atomic
+	// save + antivirus/indexer re-touch), so preserving that line is
+	// essential to diagnose (and trust) restart behaviour.
+	args.push("--clear-screen=false");
+
+	for (const glob of DEV_WATCH_EXCLUDES) {
+		args.push("--exclude", glob);
+	}
+
+	// Honor `sourceRoot` from expressots.config.ts so projects whose
+	// source lives under a non-default folder (e.g. `api/` or
+	// `services/`) still resolve their entry point correctly.
+	args.push(`./${sourceRoot}/${entryPoint}.ts`);
+
+	return args;
 }
 
 /**
- * Load the configuration from the compiler
- * @param compiler The compiler to load the configuration from
- * @returns The configuration
+ * Resolve optional environment overrides for the dev watcher.
+ *
+ * On networked, virtualized, or cloud-synced filesystems (OneDrive, mapped
+ * drives, some VM shares) Windows' native `fs.watch` events are unreliable,
+ * which surfaces as missed reloads or phantom restart loops. Setting
+ * `EXPRESSOTS_WATCH_POLL=1` switches tsx's underlying chokidar watcher to
+ * polling, which is steadier at the cost of a little CPU. The poll interval
+ * (ms) can be tuned with `EXPRESSOTS_WATCH_INTERVAL` (default 300).
+ *
+ * @returns Env overrides to merge into the child process, or undefined.
  */
-async function nonOpinionatedConfig(): Promise<Array<string>> {
-	const { entryPoint } = await Compiler.loadConfig();
-	const config = ["--watch", `./src/${entryPoint}.ts`];
-	return config;
+function buildDevEnv(): NodeJS.ProcessEnv | undefined {
+	const poll = process.env.EXPRESSOTS_WATCH_POLL;
+	if (!poll || poll === "0" || poll === "false") {
+		return undefined;
+	}
+
+	return {
+		CHOKIDAR_USEPOLLING: "1",
+		CHOKIDAR_INTERVAL: process.env.EXPRESSOTS_WATCH_INTERVAL ?? "300",
+	};
+}
+
+/**
+ * Dev command options interface
+ */
+interface DevCommandOptions {
+	container?: boolean;
+	build?: boolean;
+	detach?: boolean;
 }
 
 /**
  * Dev command module
- * @type {CommandModule<object, object>}
+ * @type {CommandModule<object, DevCommandOptions>}
  * @returns The command module
  */
-export const devCommand: CommandModule<object, object> = {
+export const devCommand: CommandModule<object, DevCommandOptions> = {
 	command: "dev",
 	describe: "Start development server.",
-	handler: async () => {
-		await runCommand({ command: "dev" });
+	builder: {
+		container: {
+			alias: "c",
+			type: "boolean",
+			default: false,
+			description: "Run development inside Docker container",
+		},
+		build: {
+			alias: "b",
+			type: "boolean",
+			default: false,
+			description: "Rebuild container before starting (with --container)",
+		},
+		detach: {
+			alias: "d",
+			type: "boolean",
+			default: false,
+			description: "Run container in background (with --container)",
+		},
+	},
+	handler: async (argv) => {
+		if (argv.container) {
+			await runContainerDev({
+				build: argv.build ?? false,
+				detach: argv.detach ?? false,
+			});
+		} else {
+			await runCommand({ command: "dev" });
+		}
 	},
 };
 
@@ -106,6 +313,92 @@ export const prodCommand: CommandModule<object, object> = {
 };
 
 /**
+ * Recursively collect the PIDs of every descendant of `rootPid`.
+ *
+ * `tsx --watch` exits immediately on SIGINT/SIGTERM and *abandons* the
+ * server process it spawned, so the server is still running its graceful
+ * shutdown after `tsx` is gone. To wait for it we snapshot the process
+ * tree (while it's still attached to `tsx`) and later poll those PIDs.
+ *
+ * Returns an empty list on Windows (no `ps`) or if the lookup fails, in
+ * which case the caller simply skips the wait.
+ */
+function getDescendantPids(rootPid: number): Array<number> {
+	if (process.platform === "win32" || !rootPid || rootPid < 0) {
+		return [];
+	}
+
+	try {
+		const res = safeSpawnSync("ps", ["-A", "-o", "pid=,ppid="], {
+			encoding: "utf-8",
+		});
+		const out = res.stdout ? String(res.stdout) : "";
+
+		const childrenByParent = new Map<number, Array<number>>();
+		for (const line of out.split("\n")) {
+			const match = line.trim().match(/^(\d+)\s+(\d+)$/);
+			if (!match) continue;
+			const pid = Number(match[1]);
+			const ppid = Number(match[2]);
+			const siblings = childrenByParent.get(ppid) ?? [];
+			siblings.push(pid);
+			childrenByParent.set(ppid, siblings);
+		}
+
+		const descendants: Array<number> = [];
+		const stack = [rootPid];
+		while (stack.length > 0) {
+			const current = stack.pop() as number;
+			for (const child of childrenByParent.get(current) ?? []) {
+				descendants.push(child);
+				stack.push(child);
+			}
+		}
+		return descendants;
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Check whether a process is still alive. `process.kill(pid, 0)` sends no
+ * signal but performs the permission/existence check: ESRCH means gone,
+ * EPERM means alive but owned by another user.
+ */
+function isPidAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (err) {
+		return (err as NodeJS.ErrnoException).code === "EPERM";
+	}
+}
+
+/**
+ * Resolve once every PID in `pids` has exited, or once `timeoutMs` elapses.
+ */
+function waitForPidsToExit(
+	pids: Array<number>,
+	timeoutMs: number,
+): Promise<void> {
+	return new Promise((resolve) => {
+		if (pids.length === 0) {
+			resolve();
+			return;
+		}
+		const deadline = Date.now() + timeoutMs;
+		const poll = (): void => {
+			if (Date.now() >= deadline || !pids.some(isPidAlive)) {
+				resolve();
+				return;
+			}
+			setTimeout(poll, 50);
+		};
+		poll();
+	});
+}
+
+/**
  * Helper function to execute a command
  * @param command The command to execute
  * @param args The arguments to pass to the command
@@ -116,18 +409,76 @@ function execCmd(
 	command: string,
 	args: Array<string>,
 	cwd: string = process.cwd(),
+	env?: NodeJS.ProcessEnv,
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
-		const proc = spawn(command, args, {
+		// `safeSpawn` (cross-spawn) resolves Windows `.cmd` shims (npx,
+		// tsx, tsc, etc.) via PATHEXT and applies cmd.exe-aware escaping
+		// for every argv entry, while falling through to plain `spawn`
+		// with `shell: false` on Unix.
+		const proc = safeSpawn(command, args, {
 			stdio: "inherit",
-			shell: true,
 			cwd,
+			// Only override the environment when extra vars are supplied so
+			// the default (inherit the parent env) is preserved otherwise.
+			...(env ? { env: { ...process.env, ...env } } : {}),
 		});
 
-		proc.on("close", (code) => {
-			if (code === 0) {
-				resolve();
+		// On Ctrl+C the SIGINT hits the whole foreground process group, so
+		// the spawned process (and the server it runs) already receive it.
+		// We keep *this* (parent) process alive — instead of dying from the
+		// default signal behavior — so the shell doesn't redraw its prompt
+		// until the server has finished shutting down. We also snapshot the
+		// child process tree on the first signal: `tsx --watch` exits right
+		// away and abandons the server, so we remember the server PID(s) to
+		// wait on them after `tsx` is gone.
+		let descendantPids: Array<number> = [];
+		let signalled = false;
+		const onSignal = (): void => {
+			if (signalled) return;
+			signalled = true;
+			descendantPids = getDescendantPids(proc.pid ?? -1);
+		};
+		process.on("SIGINT", onSignal);
+		process.on("SIGTERM", onSignal);
+
+		const cleanup = (): void => {
+			process.removeListener("SIGINT", onSignal);
+			process.removeListener("SIGTERM", onSignal);
+		};
+
+		proc.on("error", (err) => {
+			cleanup();
+			reject(err);
+		});
+		proc.on("close", (code, signal) => {
+			// Exit codes 130 (SIGINT) and 143 (SIGTERM) mean the user or
+			// orchestrator intentionally stopped the process — not a failure.
+			const isSignalExit =
+				signalled ||
+				code === 130 ||
+				code === 143 ||
+				signal === "SIGINT" ||
+				signal === "SIGTERM";
+
+			if (code === 0 || isSignalExit) {
+				if (isSignalExit) {
+					// The server (a `tsx --watch` grandchild) may still be
+					// finishing its graceful shutdown after `tsx` itself has
+					// exited. Wait for it to fully terminate so its final
+					// "Graceful shutdown completed" log lands before the shell
+					// prompt returns. The 9s cap matches the framework's own
+					// shutdown watchdog (default timeout + buffer).
+					void waitForPidsToExit(descendantPids, 9000).then(() => {
+						cleanup();
+						resolve();
+					});
+				} else {
+					cleanup();
+					resolve();
+				}
 			} else {
+				cleanup();
 				reject(new Error(`Command failed with code ${code}`));
 			}
 		});
@@ -143,62 +494,523 @@ const cleanDist = async (outDir: string): Promise<void> => {
 };
 
 /**
- * Helper function to compile TypeScript
+ * Helper function to compile TypeScript.
+ *
+ * Runs `tsc` through the project's package manager runner so the build
+ * works regardless of which manager (and which container base image) is
+ * in use. This matters in Docker: `oven/bun` images ship `bunx` but not
+ * `npx`, so a hardcoded `npx tsc` fails on Bun projects.
  */
 const compileTypescript = async () => {
-	await execCmd("npx", ["tsc", "-p", "tsconfig.build.json"]);
+	const packageManager = detectPackageManagerOrDefault();
+	const { command, args } = getExecCommand(packageManager, "tsc", [
+		"-p",
+		"tsconfig.build.json",
+	]);
+	await execCmd(command, args);
 	printSuccess("Built successfully", "compile-typescript");
+};
+
+/**
+ * Transform path aliases to relative paths in compiled JavaScript files.
+ * This runs after TypeScript compilation to ensure production builds work
+ * without runtime path resolution.
+ *
+ * @param outDir - The output directory (e.g., "./dist")
+ */
+const transformPathAliases = async (outDir: string): Promise<void> => {
+	const tsconfigPath = join(process.cwd(), "tsconfig.build.json");
+
+	if (!existsSync(tsconfigPath)) {
+		return; // No tsconfig.build.json, skip transformation
+	}
+
+	const tsconfig = resolveTsConfig(tsconfigPath);
+	const opts = tsconfig.compilerOptions as
+		| Record<string, unknown>
+		| undefined;
+	const paths = opts?.paths as Record<string, string[]> | undefined;
+	// `baseUrl` is deprecated in TypeScript 7. When it's omitted the path
+	// targets are resolved relative to the tsconfig file itself, which is
+	// the project root in our generated templates — so default to ".".
+	const baseUrl = (opts?.baseUrl as string | undefined) ?? ".";
+
+	if (!paths) {
+		return; // No path aliases defined, skip
+	}
+
+	// Build regex patterns for each alias
+	const aliasPatterns: Array<{
+		pattern: RegExp;
+		alias: string;
+		target: string;
+	}> = [];
+
+	for (const [alias, targets] of Object.entries(paths)) {
+		if (!Array.isArray(targets) || targets.length === 0) continue;
+
+		// Convert @alias/* to regex pattern
+		// Matches: require("@alias/something") or require('@alias/something')
+		const aliasBase = alias.replace("/*", "");
+		const targetBase = (targets[0] as string).replace("/*", "");
+
+		// Pattern to match require("@alias/...") or require('@alias/...')
+		const pattern = new RegExp(
+			`require\\(["']${aliasBase.replace("@", "\\@")}/([^"']+)["']\\)`,
+			"g",
+		);
+
+		aliasPatterns.push({
+			pattern,
+			alias: aliasBase,
+			target: targetBase,
+		});
+	}
+
+	if (aliasPatterns.length === 0) {
+		return;
+	}
+
+	// Recursively find all .js files in outDir
+	const findJsFiles = async (dir: string): Promise<Array<string>> => {
+		const files: Array<string> = [];
+		const entries = await fs.readdir(dir, { withFileTypes: true });
+
+		for (const entry of entries) {
+			const fullPath = join(dir, entry.name);
+			if (entry.isDirectory()) {
+				files.push(...(await findJsFiles(fullPath)));
+			} else if (entry.name.endsWith(".js")) {
+				files.push(fullPath);
+			}
+		}
+
+		return files;
+	};
+
+	const jsFiles = await findJsFiles(outDir);
+	let transformedCount = 0;
+
+	for (const file of jsFiles) {
+		let content = await fs.readFile(file, "utf-8");
+		let modified = false;
+
+		// Get the directory of the current file relative to outDir
+		const fileDir = path.dirname(file);
+
+		for (const { pattern, alias, target } of aliasPatterns) {
+			// Calculate the relative path from this file to the target
+			const targetDir = join(outDir, baseUrl.replace("./", ""), target);
+			let relativePath = path.relative(fileDir, targetDir);
+
+			// Ensure it starts with ./ or ../
+			if (!relativePath.startsWith(".")) {
+				relativePath = "./" + relativePath;
+			}
+
+			// Replace Windows backslashes with forward slashes
+			relativePath = relativePath.replace(/\\/g, "/");
+
+			// Replace the alias with the relative path
+			const newContent = content.replace(pattern, (match, subPath) => {
+				modified = true;
+				return `require("${relativePath}/${subPath}")`;
+			});
+
+			if (newContent !== content) {
+				content = newContent;
+			}
+		}
+
+		if (modified) {
+			await fs.writeFile(file, content, "utf-8");
+			transformedCount++;
+		}
+	}
+
+	if (transformedCount > 0) {
+		printSuccess(
+			`Path aliases resolved in ${transformedCount} files`,
+			"transform-paths",
+		);
+	}
 };
 
 /**
  * Helper function to copy files to the dist directory
  */
 const copyFiles = async (outDir: string) => {
-	const { opinionated } = await Compiler.loadConfig();
-	let filesToCopy: Array<string> = [];
-	if (opinionated) {
-		filesToCopy = [
-			"./register-path.js",
-			"tsconfig.build.json",
-			"package.json",
-		];
-	} else {
-		filesToCopy = ["tsconfig.json", "package.json"];
+	// Only copy package.json - path aliases are resolved at build time
+	// No need for tsconfig files or register-path.js in production
+	const filesToCopy = ["package.json"];
+
+	for (const file of filesToCopy) {
+		if (existsSync(file)) {
+			await fs.copyFile(file, join(outDir, path.basename(file)));
+		}
 	}
-	filesToCopy.forEach((file) => {
-		fs.copyFile(file, join(outDir, path.basename(file)));
-	});
 };
 
 /**
  * Helper function to clear the screen
  */
 const clearScreen = () => {
+	// `cls` and `clear` are built-ins / well-known executables.
+	// Invoking them via `shell: true` is safe here because there are no
+	// user-controlled args, but we keep `windowsHide: true` to suppress
+	// the Windows console flash.
 	const platform = os.platform();
 	const command = platform === "win32" ? "cls" : "clear";
-	spawn(command, { stdio: "inherit", shell: true });
+	spawn(command, [], { stdio: "inherit", shell: true, windowsHide: true });
 };
 
 /**
+ * Container dev options
+ */
+interface ContainerDevOptions {
+	build: boolean;
+	detach: boolean;
+}
+
+/**
+ * Run development in Docker container with auto-setup
+ * This is the seamless "just works" experience
+ */
+async function runContainerDev(options: ContainerDevOptions): Promise<void> {
+	console.log(chalk.cyan("\n🐳 ExpressoTS Container Development\n"));
+
+	const cwd = process.cwd();
+	const composeDevFile = join(cwd, "docker-compose.development.yml");
+	const dockerfileDevFile = join(cwd, "Dockerfile.development");
+	const dockerSetupFile = join(cwd, "docker-setup.js");
+	const dockerDepsDir = join(cwd, ".docker-deps");
+	const packageDockerJson = join(cwd, "package.docker.json");
+
+	// Check if Docker is running
+	if (!isDockerRunning()) {
+		console.log(chalk.red("❌ Docker is not running."));
+		console.log(
+			chalk.gray("   Please start Docker Desktop or Docker daemon."),
+		);
+		return;
+	}
+
+	// Step 1: Auto-generate Docker files if missing
+	if (!existsSync(dockerfileDevFile) || !existsSync(composeDevFile)) {
+		console.log(chalk.yellow("📝 Docker files not found. Generating..."));
+
+		try {
+			// Import and run containerize
+			const { containerizeProject } = await import(
+				"../containerize/form"
+			);
+			await containerizeProject({
+				target: "docker",
+				environment: "development",
+				preset: "standard",
+				analyze: true,
+				skipCompose: false,
+				includeCi: false,
+			});
+			console.log();
+		} catch (error) {
+			console.log(chalk.red("❌ Failed to generate Docker files."));
+			console.log(
+				chalk.gray(
+					"   Run manually: expressots containerize docker --env development",
+				),
+			);
+			return;
+		}
+	}
+
+	// Step 1.5: Check bootstrap config and create missing env files if needed
+	try {
+		const {
+			analyzeBootstrapConfig,
+			shouldCopyEnvFiles,
+			getEnvFileForEnvironment,
+		} = await import("../containerize/analyzers/bootstrap-analyzer");
+		const bootstrapConfig = await analyzeBootstrapConfig();
+
+		if (
+			bootstrapConfig.hasEnvFileConfig &&
+			shouldCopyEnvFiles(bootstrapConfig)
+		) {
+			const devEnvFile = getEnvFileForEnvironment(
+				bootstrapConfig,
+				"development",
+			);
+
+			// Check if required env file is missing
+			if (bootstrapConfig.missingEnvFiles.includes(devEnvFile)) {
+				console.log(
+					chalk.yellow(
+						`⚠️  Required env file missing: ${devEnvFile}`,
+					),
+				);
+
+				// Auto-create template if configured or prompt user
+				if (bootstrapConfig.autoCreateTemplate) {
+					console.log(
+						chalk.gray(`   Creating template ${devEnvFile}...`),
+					);
+					await createEnvTemplate(
+						cwd,
+						devEnvFile,
+						"development",
+						bootstrapConfig.requiredVariables,
+					);
+					console.log(chalk.green(`   ✓ Created ${devEnvFile}`));
+				} else {
+					// Provide helpful instructions
+					console.log(chalk.cyan("\n💡 To fix this, either:"));
+					console.log(
+						chalk.gray(
+							`   1. Create ${devEnvFile} with your environment variables`,
+						),
+					);
+					console.log(
+						chalk.gray(
+							`   2. Add autoCreateTemplate: true to envFileConfig in bootstrap`,
+						),
+					);
+					console.log(
+						chalk.gray(
+							`   3. Use skipFileLoading: true for container deployments`,
+						),
+					);
+					console.log();
+
+					// Still continue - the container might work if env vars are set in docker-compose
+					console.log(
+						chalk.yellow(
+							`   ⚠️  Container may fail if ${devEnvFile} is required`,
+						),
+					);
+					console.log();
+				}
+			}
+
+			// Show required variables that need to be set
+			if (bootstrapConfig.requiredVariables.length > 0) {
+				console.log(chalk.cyan("📋 Required environment variables:"));
+				bootstrapConfig.requiredVariables.forEach((varName) => {
+					console.log(chalk.gray(`   • ${varName}`));
+				});
+				console.log(
+					chalk.gray(
+						`   Set these in ${devEnvFile} or docker-compose.development.yml`,
+					),
+				);
+				console.log();
+			}
+		}
+	} catch (error) {
+		// Non-fatal - continue with container startup
+		console.log(chalk.gray("   (Bootstrap analysis skipped)"));
+	}
+
+	// Step 2: Auto-run docker:setup if local dependencies exist
+	if (existsSync(packageDockerJson) && existsSync(dockerSetupFile)) {
+		// Check if .docker-deps needs to be updated
+		const needsSetup =
+			!existsSync(dockerDepsDir) || isDirEmpty(dockerDepsDir);
+
+		if (needsSetup) {
+			console.log(chalk.yellow("📦 Setting up local dependencies..."));
+			try {
+				const setupResult = safeSpawnSync(
+					process.execPath,
+					["docker-setup.js"],
+					{
+						cwd,
+						stdio: "inherit",
+						encoding: "utf-8",
+					},
+				);
+				if (setupResult.error) throw setupResult.error;
+				if (
+					typeof setupResult.status === "number" &&
+					setupResult.status !== 0
+				) {
+					throw new Error(`exited with code ${setupResult.status}`);
+				}
+				console.log();
+			} catch (error) {
+				console.log(
+					chalk.red("❌ Failed to setup local dependencies."),
+				);
+				console.log(
+					chalk.gray("   Run manually: npm run docker:setup"),
+				);
+				return;
+			}
+		}
+	}
+
+	// Step 3: Start the containers
+	console.log(chalk.yellow(`📄 Using docker-compose.development.yml`));
+
+	const args: string[] = ["-f", composeDevFile, "up"];
+
+	if (options.build) {
+		console.log(chalk.yellow("🔨 Rebuilding containers..."));
+		args.splice(2, 0, "--build");
+	}
+
+	if (options.detach) {
+		args.push("-d");
+	}
+
+	console.log(chalk.yellow("🚀 Starting development containers...\n"));
+
+	// Print dev info
+	console.log(chalk.bold("Development Environment:"));
+	console.log(`  🌐 App:      http://localhost:3000`);
+	console.log(`  🔍 Debug:    localhost:9229`);
+	console.log();
+	console.log(chalk.bold("Commands:"));
+	console.log(
+		`  ${chalk.gray("expressots dev -c")}           Start containers`,
+	);
+	console.log(
+		`  ${chalk.gray("expressots dev -c -b")}        Rebuild & start`,
+	);
+	console.log(
+		`  ${chalk.gray("expressots dev -c -d")}        Start in background`,
+	);
+	console.log(
+		`  ${chalk.gray("docker-compose -f docker-compose.development.yml down")}  Stop`,
+	);
+	console.log();
+	console.log(
+		chalk.green("🔄 Hot reload enabled - edit files to see changes"),
+	);
+
+	if (!options.detach) {
+		console.log(chalk.gray("Press Ctrl+C to stop\n"));
+	}
+
+	// Run docker-compose
+	runDockerComposeCommand(args, cwd, options.detach);
+
+	if (options.detach) {
+		console.log(chalk.green("\n✅ Containers started in background."));
+		console.log(
+			chalk.gray(
+				"   View logs: docker-compose -f docker-compose.development.yml logs -f",
+			),
+		);
+	}
+}
+
+/**
+ * Check if Docker is running
+ */
+function isDockerRunning(): boolean {
+	const result = safeSpawnSync("docker", ["info"], {
+		stdio: ["pipe", "pipe", "pipe"],
+	});
+	return !result.error && result.status === 0;
+}
+
+/**
+ * Check if directory is empty
+ */
+function isDirEmpty(dir: string): boolean {
+	try {
+		const files = readdirSync(dir);
+		return files.length === 0;
+	} catch {
+		return true;
+	}
+}
+
+/**
+ * Create an environment template file
+ */
+async function createEnvTemplate(
+	cwd: string,
+	fileName: string,
+	environment: string,
+	requiredVariables: string[],
+): Promise<void> {
+	const filePath = join(cwd, fileName);
+
+	const commonVars = [
+		"PORT=3000",
+		`NODE_ENV=${environment}`,
+		"# Add your environment variables below",
+	];
+
+	const requiredVars = requiredVariables.map((key) => `${key}=`);
+	const template = [...commonVars, ...requiredVars].join("\n");
+
+	await fs.writeFile(filePath, template, "utf-8");
+}
+
+/**
+ * Run docker-compose command
+ */
+function runDockerComposeCommand(
+	args: string[],
+	cwd: string,
+	detach: boolean,
+): void {
+	// Try docker compose (v2) first, fall back to docker-compose (v1).
+	// `safeSpawnSync` (cross-spawn) handles platform-specific binary
+	// resolution and cmd.exe-aware argv escaping, so compose file paths
+	// and service names are forwarded as discrete arguments rather than
+	// re-interpreted by the OS shell.
+	const v2 = safeSpawnSync("docker", ["compose", ...args], {
+		cwd,
+		stdio: "inherit",
+	});
+
+	if (v2.error || (typeof v2.status === "number" && v2.status !== 0)) {
+		const v1 = safeSpawnSync("docker-compose", args, {
+			cwd,
+			stdio: "inherit",
+		});
+
+		if (v1.error || (typeof v1.status === "number" && v1.status !== 0)) {
+			console.log(chalk.red("Error running docker-compose"));
+		}
+	}
+
+	// `detach` is honored implicitly by docker compose itself when "-d"
+	// is present in `args`. The previous branch tried to switch between
+	// execSync and spawnSync for that case, which served no real
+	// purpose and made shell injection harder to reason about.
+	void detach;
+}
+
+/**
+ * Run command options
+ */
+interface RunCommandOptions {
+	command: string;
+}
+
+/**
  * Helper function to run a command
- * @param command The command to run
+ * @param options The command options
  */
 export const runCommand = async ({
 	command,
-}: {
-	command: string;
-}): Promise<void> => {
-	const { opinionated, entryPoint } = await Compiler.loadConfig();
+}: RunCommandOptions): Promise<void> => {
+	const { opinionated, entryPoint, sourceRoot } = await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
 		switch (command) {
 			case "dev":
-				execCmd(
+				await execCmd(
 					"tsx",
-					opinionated
-						? await opinionatedConfig()
-						: await nonOpinionatedConfig(),
+					await buildDevArgs(),
+					process.cwd(),
+					buildDevEnv(),
 				);
 				break;
 			case "build":
@@ -211,6 +1023,10 @@ export const runCommand = async ({
 				}
 				await cleanDist(outDir);
 				await compileTypescript();
+				// Transform path aliases to relative paths for production
+				if (opinionated) {
+					await transformPathAliases(outDir);
+				}
 				await copyFiles(outDir);
 				break;
 			case "prod": {
@@ -222,18 +1038,12 @@ export const runCommand = async ({
 					process.exit(1);
 				}
 
-				let config: Array<string> = [];
-				if (opinionated) {
-					config = [
-						"-r",
-						`./${outDir}/register-path.js`,
-						`./${outDir}/src/${entryPoint}.js`,
-					];
-				} else {
-					config = [`./${outDir}/${entryPoint}.js`];
-				}
+				// Honor `sourceRoot` so the compiled entry-point path
+				// matches whatever folder the user configured (the TS
+				// compiler preserves the source tree under `outDir`).
+				const config = [`./${outDir}/${sourceRoot}/${entryPoint}.js`];
 				clearScreen();
-				execCmd("node", config);
+				await execCmd("node", config);
 				break;
 			}
 			default:

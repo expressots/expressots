@@ -1,15 +1,15 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
-
+# .github/dependabot.yml
+# Dependabot configuration must live at .github/dependabot.yml — it is NOT
+# a workflow. Previously the config sat under `.github/workflows/` where
+# GitHub silently ignored it. Moved here so daily dependency PRs actually
+# fire.
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    commit-message:
+    - package-ecosystem: "npm"
+      directory: "/"
+      schedule:
+          interval: "daily"
+      commit-message:
           prefix: feat
           prefix-development: feat
       open-pull-requests-limit: 99
