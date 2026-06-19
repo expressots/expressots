@@ -109,7 +109,8 @@
     "typescript": "5.5.3"
   },
   "overrides": {
-    "js-yaml": "4.2.0"
+    "js-yaml": "4.2.0",
+    "@opentelemetry/core": "2.8.0"
   },
   "lint-staged": {
     "src/**/*.ts": [
