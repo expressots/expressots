@@ -1,3 +1,27 @@
+## [4.0.0](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
+
+Stable release. `expressots new` now resolves templates from the `expressots/templates#v4.0.0` tag.
+
+### Breaking Changes
+
+* **engines:** minimum Node.js is now 20.19.0.
+
+### Bug Fixes
+
+* **tests:** the degit invocation test now derives the expected ref from the real package version and exercises the actual template-ref resolution, including the `EXPRESSOTS_TEMPLATE_REF` override.
+* **tests:** pricing-manager tests are isolated from the real `~/.expressots` disk cache.
+
+### Build System
+
+* `strictNullChecks` enabled and all resulting errors fixed.
+* removed unused dependencies (`semver`, `shx`, `reflect-metadata`, `@codecov/vite-plugin`) and the decorator tsconfig flags (the CLI has no decorators).
+* TypeScript 7-clean config: `module`/`moduleResolution` `node16` with explicit `rootDir`. Toolchain remains TypeScript 5.x.
+* published manifest is stripped of dev-only fields by `release:prepare`.
+
+### Code Refactoring
+
+* deleted the dead `src/index.ts` library facade and the placeholder test; renamed `nonopininated-cmd.ts` to `nonopinionated-cmd.ts`.
+
 ## [4.0.0-preview.3.4](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3.3...4.0.0-preview.3.4) (2026-06-13)
 
 ### Features

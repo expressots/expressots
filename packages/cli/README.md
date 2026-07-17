@@ -30,15 +30,13 @@
 npm i -g @expressots/cli
 ```
 
-### Preview releases (4.0)
-
-Preview builds are published under the `next` dist-tag. To try the 4.0 preview without a global install:
+Or scaffold a project without a global install:
 
 ```bash
-npx @expressots/cli@next new my-app
+npx @expressots/cli new my-app
 ```
 
-Note for preview consumers: scaffolding fetches templates from [expressots/templates](https://github.com/expressots/templates) at the git tag matching the CLI version (for example, CLI `4.0.0-preview.3.4` clones the `v4.0.0-preview.3.4` templates tag), so the CLI and its templates always move together.
+Note: scaffolding fetches templates from [expressots/templates](https://github.com/expressots/templates) at the git tag matching the CLI version (for example, CLI `4.0.0` clones the `v4.0.0` templates tag), so the CLI and its templates always move together.
 
 ## What This Package Does
 
