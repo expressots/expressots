@@ -179,7 +179,7 @@
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "typedoc": "^0.28.15",
-    "typescript": "5.5.3",
+    "typescript": "7.0.2",
     "zod": "^4.4.3"
   },
   "lint-staged": {
