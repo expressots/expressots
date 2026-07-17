@@ -9,7 +9,7 @@
 
   <p>
     <a href="https://www.npmjs.com/package/@expressots/studio"><img src="https://img.shields.io/npm/v/@expressots%2Fstudio?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
-    <a href="https://github.com/expressots/expressots-studio/blob/main/expressots/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/expressots-studio?style=flat-square&color=181717" alt="License"></a>
+    <a href="https://github.com/expressots/expressots-studio/blob/main/LICENSE"><img src="https://img.shields.io/github/license/expressots/expressots-studio?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
     <a href="https://github.com/expressots/expressots-studio/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots-studio/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
@@ -79,5 +79,5 @@ Welcome to the ExpressoTS community. See the [Contributing Guide](https://github
 
 ## License
 
-MIT. See [LICENSE](../expressots/LICENSE.md).
+MIT. See [LICENSE](./LICENSE).
 

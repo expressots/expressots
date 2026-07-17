@@ -128,7 +128,7 @@ describe('${className}', () => {
     
     // Create instance with mocked dependencies
     ${classCamel} = new ${className}(
-      // TODO: Add mocked dependencies here
+      // TODO: Pass a vi.fn()-based mock for each constructor dependency of ${className}
     );
   });
 
@@ -139,7 +139,7 @@ ${methods.map(method => `  describe('${method}', () => {
 
     it('should execute successfully', async () => {
       // Arrange
-      const input = {}; // TODO: Add test input
+      const input = {}; // TODO: Replace with a valid input object for ${method}
       
       // Act
       const result = await ${classCamel}.${method}(input);
@@ -159,11 +159,11 @@ ${methods.map(method => `  describe('${method}', () => {
 `).join('\n')}
   describe('Edge Cases', () => {
     it('should handle empty input', async () => {
-      // TODO: Test with empty/null input
+      // TODO: Call each method with empty/null input and assert the expected error or fallback
     });
 
     it('should handle large datasets', async () => {
-      // TODO: Test with large input
+      // TODO: Call the method under test with a large payload and assert it still succeeds
     });
   });
 });
@@ -191,7 +191,7 @@ describe('${className} (Integration)', () => {
     // Initialize container with real dependencies
     container = new Container();
     
-    // TODO: Bind real dependencies
+    // TODO: Bind the real dependencies this class needs, e.g.:
     // container.bind(DependencyToken).to(RealDependency);
     
     container.bind(${className}).toSelf();
@@ -199,47 +199,45 @@ describe('${className} (Integration)', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
-    // TODO: Close database connections, clean up test data
+    // TODO: Close database connections and remove any test data created above
   });
 
   beforeEach(async () => {
-    // Reset state before each test
-    // TODO: Clear test data if needed
+    // TODO: Reset shared state (e.g. truncate tables) so each test starts clean
   });
 
 ${methods.map(method => `  describe('${method}', () => {
     it('should integrate with dependencies correctly', async () => {
       // Arrange
-      const input = {}; // TODO: Add realistic test input
+      const input = {}; // TODO: Replace with realistic input matching the ${method} signature
       
       // Act
       const result = await ${classCamel}.${method}(input);
       
       // Assert
       expect(result).toBeDefined();
-      // TODO: Add integration-specific assertions
+      // TODO: Assert on the concrete result shape and any side effects
     });
 
     it('should persist data correctly', async () => {
       // Arrange
-      const testData = {}; // TODO: Add test data
+      const testData = {}; // TODO: Replace with the data ${method} should persist
       
       // Act
       await ${classCamel}.${method}(testData);
       
       // Assert
-      // TODO: Verify data was persisted correctly
+      // TODO: Query the store and assert the persisted record matches testData
     });
   });
 `).join('\n')}
   describe('Cross-Component Integration', () => {
     it('should work with multiple components', async () => {
-      // TODO: Test interaction between multiple components
+      // TODO: Exercise a flow that spans this class and its collaborators, then assert the combined result
     });
 
     it('should maintain data consistency', async () => {
-      // TODO: Test transactional behavior
+      // TODO: Trigger a failure mid-operation and assert partial writes are rolled back
     });
   });
 });
@@ -270,13 +268,11 @@ describe('${className} (E2E)', () => {
   const endpoint = \`\${baseUrl}/${baseRoute}\`;
 
   beforeAll(async () => {
-    // Wait for server to be ready
-    // TODO: Add health check or startup wait
+    // TODO: Poll a health endpoint (or retry the base URL) until the server is ready
   });
 
   afterAll(async () => {
-    // Cleanup test data
-    // TODO: Remove test records created during tests
+    // TODO: Delete the records created by these tests so reruns start clean
   });
 
   describe('GET /${baseRoute}', () => {
@@ -408,7 +404,7 @@ describe('${className} (E2E)', () => {
     });
 
     it('should handle server errors gracefully', async () => {
-      // TODO: Test error scenarios
+      // TODO: Force a 5xx (e.g. via an invalid state) and assert the error body shape
     });
   });
 
@@ -439,17 +435,17 @@ describe('${className} (E2E)', () => {
 
 ${methods.map(method => `  describe('${method}', () => {
     it('should complete full workflow', async () => {
-      // TODO: Test complete user workflow
+      // TODO: Drive the full user workflow through ${method} and assert the final state
     });
 
     it('should handle concurrent operations', async () => {
-      // TODO: Test concurrent access
+      // TODO: Run several ${method} calls with Promise.all and assert no conflicts
     });
   });
 `).join('\n')}
   describe('Full Workflow', () => {
     it('should complete end-to-end scenario', async () => {
-      // TODO: Implement complete E2E scenario
+      // TODO: Script the end-to-end scenario (setup, actions, assertions) for this component
     });
   });
 });

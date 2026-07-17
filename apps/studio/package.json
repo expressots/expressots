@@ -38,7 +38,6 @@
     "express": "^5.1.0",
     "open": "^10.1.0",
     "ora": "^8.1.0",
-    "serve-static": "^1.16.0",
     "socket.io-client": "^4.8.0"
   },
   "devDependencies": {
@@ -48,7 +47,6 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/serve-static": "^1.15.0",
     "@vitejs/plugin-react": "^4.3.0",
     "@xyflow/react": "^12.3.0",
     "autoprefixer": "^10.4.20",
@@ -83,5 +81,8 @@
     "developer-experience"
   ],
   "author": "ExpressoTS Team",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

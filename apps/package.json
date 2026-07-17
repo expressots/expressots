@@ -45,7 +45,7 @@
     "vite": "6.4.3"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.19.0"
   },
   "repository": {
     "type": "git",

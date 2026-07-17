@@ -28,16 +28,12 @@
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
-    "@opentelemetry/instrumentation-express": "^0.66.0",
-    "@opentelemetry/instrumentation-http": "^0.218.0",
     "@opentelemetry/resources": "^2.7.1",
     "@opentelemetry/sdk-node": "^0.218.0",
     "@opentelemetry/sdk-trace-node": "^2.7.1",
     "@opentelemetry/semantic-conventions": "^1.41.1",
     "glob": "^13.0.0",
-    "socket.io": "^4.8.0",
-    "socket.io-client": "^4.8.0"
+    "socket.io": "^4.8.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -72,5 +68,8 @@
     "observability"
   ],
   "author": "ExpressoTS Team",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

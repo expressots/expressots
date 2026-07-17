@@ -128,8 +128,9 @@ export class ${namePascal}Middleware {
    * Verify token and return payload
    */
   private verifyToken(token: string): ${namePascal}Payload | null {
-    // TODO: Implement actual token verification based on strategy
-    // This is a placeholder implementation
+    // TODO: Replace this placeholder with real verification for your strategy:
+    // JWT: verify with the jsonwebtoken library; session: look up the session store;
+    // API key: validate against your stored keys.
     
     try {
       // For JWT strategy, you would use jsonwebtoken library
@@ -572,7 +573,7 @@ export class ${namePascal}Middleware {
    * Express middleware function
    */
   use(req: Request, res: Response, next: NextFunction): void {
-    // TODO: Implement your custom middleware logic
+    // TODO: Replace the examples below with your middleware logic
     
     // Example: Add custom header
     res.setHeader('X-Custom-Header', 'value');

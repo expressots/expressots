@@ -54,5 +54,8 @@
     "model-context-protocol"
   ],
   "author": "ExpressoTS Team",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }
