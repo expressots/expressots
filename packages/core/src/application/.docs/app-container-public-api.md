@@ -105,7 +105,7 @@ container.create([
 ]);
 ```
 
-##### `viewContainerBindings(): void`
+##### `getFormattedBindingsView(): void`
 
 Displays all container bindings in a formatted table.
 
@@ -119,7 +119,7 @@ Displays all container bindings in a formatted table.
 
 ```typescript
 container.create([new MyModule()]);
-container.viewContainerBindings();
+container.getFormattedBindingsView();
 
 // Output:
 // ┌─────────────────────────┬──────────────┬──────────────┬────────┐
@@ -245,7 +245,7 @@ const container = new AppContainer();
 container.create([new MyModule()]);
 
 // View all bindings
-container.viewContainerBindings();
+container.getFormattedBindingsView();
 
 // Check options
 const options = container.getContainerOptions();
@@ -310,7 +310,7 @@ container.create([
 ```typescript
 const container = new AppContainer();
 container.create([new MyModule()]);  // Must call this first
-container.viewContainerBindings();    // Now this works
+container.getFormattedBindingsView();    // Now this works
 ```
 
 ### ❌ Service Not Found
@@ -348,7 +348,7 @@ const options = container.getContainerOptions();
 console.log('Default scope:', options.defaultScope);
 
 // View all bindings to see individual scopes
-container.viewContainerBindings();
+container.getFormattedBindingsView();
 ```
 
 ---
@@ -357,7 +357,7 @@ container.viewContainerBindings();
 
 1. **Use Request Scope**: Default request scope is best for most services
 2. **Singleton for Stateless**: Use singleton for stateless services or caches
-3. **Debug with viewContainerBindings()**: Use to understand container state
+3. **Debug with getFormattedBindingsView()**: Use to understand container state
 4. **Load Modules in Order**: Dependencies should be loaded before dependents
 5. **One Container Per App**: Create one container per application instance
 

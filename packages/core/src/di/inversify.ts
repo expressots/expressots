@@ -1,5 +1,5 @@
 /**
- * InversifyJS Dependency Injection Library
+ * ExpressoTS Dependency Injection
  *
  * @layer public
  * @audience application-developers
@@ -7,7 +7,8 @@
  * @difficulty intermediate
  *
  * @summary Quick Start
- * ExpressoTS uses InversifyJS for dependency injection. Most InversifyJS APIs are available here.
+ * ExpressoTS ships its own embedded dependency injection container with an
+ * Inversify-compatible API surface (Container, injectable, inject, scopes).
  *
  * @example
  * ```typescript
@@ -20,8 +21,8 @@
  * ```
  *
  * @note
- * This module re-exports InversifyJS APIs. For full InversifyJS documentation,
- * see: https://github.com/inversify/InversifyJS
+ * The API is intentionally compatible with the InversifyJS surface so
+ * existing knowledge and most upstream examples transfer directly.
  *
  * @public API
  */
@@ -44,7 +45,6 @@ export { tagged } from "./annotation/tagged.js";
 export { named } from "./annotation/named.js";
 export { inject } from "./annotation/inject.js";
 export { LazyServiceIdentifier } from "./annotation/lazy_service_identifier.js";
-export { LazyServiceIdentifier as LazyServiceIdentifer } from "./annotation/lazy_service_identifier.js";
 export { optional } from "./annotation/optional.js";
 export { unmanaged } from "./annotation/unmanaged.js";
 export { multiInject } from "./annotation/multi_inject.js";

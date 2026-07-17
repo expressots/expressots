@@ -84,7 +84,7 @@ describe("InMemoryAdapter includes and relations", () => {
         data: { name: "John", email: "john@example.com" },
       });
       await postsAdapter.create({
-        data: { title: "Post 1", authorId: user.id },
+        data: { title: "Post 1", authorId: user.id! },
       });
 
       // Act
@@ -124,7 +124,7 @@ describe("InMemoryAdapter includes and relations", () => {
         data: { name: "John", email: "john@example.com" },
       });
       await postsAdapter.create({
-        data: { title: "Post 1", authorId: user.id },
+        data: { title: "Post 1", authorId: user.id! },
       });
 
       // Act
@@ -403,10 +403,10 @@ describe("InMemoryAdapter includes and relations", () => {
         data: { name: "John", email: "john@example.com" },
       });
       await postsAdapter.create({
-        data: { title: "Post 1", authorId: user.id },
+        data: { title: "Post 1", authorId: user.id! },
       });
       await postsAdapter.create({
-        data: { title: "Post 2", authorId: user.id },
+        data: { title: "Post 2", authorId: user.id! },
       });
 
       // Verify relations are registered
@@ -436,7 +436,7 @@ describe("InMemoryAdapter includes and relations", () => {
         data: { name: "John", email: "john@example.com" },
       });
       await profilesAdapter.create({
-        data: { bio: "Bio", userId: user.id },
+        data: { bio: "Bio", userId: user.id! },
       });
 
       // Act
@@ -457,7 +457,7 @@ describe("InMemoryAdapter includes and relations", () => {
         data: { name: "John", email: "john@example.com" },
       });
       const post = await postsAdapter.create({
-        data: { title: "Post 1", authorId: user.id },
+        data: { title: "Post 1", authorId: user.id! },
       });
 
       // Act
@@ -497,7 +497,7 @@ describe("InMemoryAdapter includes and relations", () => {
         data: { name: "John", email: "john@example.com" },
       });
       await postsAdapter.create({
-        data: { title: "Post 1", authorId: user.id },
+        data: { title: "Post 1", authorId: user.id! },
       });
 
       // Act

@@ -1,3 +1,59 @@
+## Unreleased (4.0.0 hardening)
+
+Pre-GA hardening pass. These changes ship in the 4.0.0 stable release.
+
+### Breaking Changes
+
+* **removed deprecated APIs:** `AppFactory` is no longer exported (it remains the internal engine behind `bootstrap()`); the v3 `InMemoryDataProvider`/`InMemoryDataTable` were removed (use `InMemoryDBProvider`); the `LazyServiceIdentifer` typo alias was removed (use `LazyServiceIdentifier`); `Logger#formatMessage` (legacy) and `AppContainer#viewContainerBindings` (use `getFormattedBindingsView()` or `introspect()`) were removed.
+* **engines:** minimum Node.js is now 20.19.0 (aligned across all @expressots packages).
+
+### Features
+
+* **subpath exports:** `@expressots/core/testing`, `@expressots/core/di`, `@expressots/core/render`, and `@expressots/core/path-resolver` are now importable directly for a leaner dependency surface. The root export keeps the full surface for compatibility.
+* **validation:** new `validationRegistry` shared singleton export, matching the adapter documentation (`validationRegistry.register(createZodValidator())`).
+* **optional validator peers:** `zod`, `yup`, and `class-validator` are now declared as optional `peerDependencies`, so package managers surface version compatibility without forcing an install.
+* **llms.txt:** the published package now ships an `llms.txt` summary of the public API for AI coding agents.
+
+### Build System
+
+* TypeScript 7 compatibility: build configs no longer use the removed `downlevelIteration` and `moduleResolution: "node"` options (now `node16` with explicit `rootDir`); the codebase type-checks cleanly under TypeScript 7. The toolchain itself remains TypeScript 5.x.
+* published manifest is now stripped of `devDependencies`, `scripts`, and repo-only tooling config by `release:prepare`.
+* type declarations now ship once (`lib/cjs/types`) and serve both the CJS and ESM entry points; the previously duplicated `lib/esm/types` tree is gone, cutting the installed size by about 1.5 MB.
+* `sideEffects` is now declared so bundlers can tree-shake safely without dropping decorator registration modules.
+* correction to earlier notes: subpath `exports` first ship in this release; preview.3 only exposed the root entry point.
+
+## [4.0.0-preview.3.4](https://github.com/expressots/expressots/compare/4.0.0-preview.3.3...4.0.0-preview.3.4) (2026-06-13)
+
+### Bug Fixes
+
+* **deps:** replace local `file:` tarball references with registry semver ranges so published packages install cleanly ([5ed7f75](https://github.com/expressots/expressots/commit/5ed7f75))
+
+### Documentation
+
+* clarify bootstrap and path resolver comments ([55e850f](https://github.com/expressots/expressots/commit/55e850f))
+
+## [4.0.0-preview.3.3](https://github.com/expressots/expressots/compare/4.0.0-preview.3.2...4.0.0-preview.3.3) (2026-06-10)
+
+### Features
+
+* **validation:** add `extractSchema()` to the Zod adapter and a `schemaToJsonSchema` helper ([2f1dc73](https://github.com/expressots/expressots/commit/2f1dc73))
+
+## [4.0.0-preview.3.2](https://github.com/expressots/expressots/compare/4.0.0-preview.3.1...4.0.0-preview.3.2) (2026-06-06)
+
+Maintenance release aligning the v4 preview bundle versions across packages. No core source changes.
+
+## [4.0.0-preview.3.1](https://github.com/expressots/expressots/compare/4.0.0-preview.3...4.0.0-preview.3.1) (2026-06-06)
+
+### Features
+
+* **db-in-memory:** many-to-many relation support and validation in the in-memory adapter ([1fb20f1](https://github.com/expressots/expressots/commit/1fb20f1))
+* **logger:** structured log output with timestamp formatting and ANSI color detection in the console transport ([bbfb4f8](https://github.com/expressots/expressots/commit/bbfb4f8), [e4c7adc](https://github.com/expressots/expressots/commit/e4c7adc))
+* **env:** richer `loadEnvSync` options and documentation ([7ae8300](https://github.com/expressots/expressots/commit/7ae8300))
+
+### Security
+
+* upgrade release tooling (release-it 17 to 20, @release-it/conventional-changelog 8 to 11) to clear audit findings ([7775a14](https://github.com/expressots/expressots/commit/7775a14))
+
 ## [4.0.0-preview.3](https://github.com/expressots/expressots/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
 Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
@@ -28,7 +84,7 @@ Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes]
 ### Build System
 
 * `@expressots/shared` is now a runtime `dependency` (previously misclassified as `devDependency`), so a fresh install of `@expressots/core` no longer crashes with `Cannot find module '@expressots/shared'`.
-* dual ESM + CJS publication with subpath `exports` for both module systems.
+* dual ESM + CJS publication via conditional `exports` (root entry point; subpath exports arrive in 4.0.0 stable).
 * migrated from Vitest to Jest 29.
 * embedded our customised DI implementation (replaces `inversify`).
 * embedded `reflect-metadata` so consumers don't have to install it explicitly.

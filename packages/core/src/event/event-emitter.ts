@@ -92,7 +92,7 @@ export class EventEmitter implements IEventEmitter {
    * Waits for sync handlers, fires async handlers in background.
    */
   async emit<T>(event: T): Promise<void> {
-    const eventClass = event.constructor as EventClass<T>;
+    const eventClass = (event as object).constructor as EventClass<T>;
     const handlers = this.registry.getHandlers(eventClass);
 
     if (handlers.length === 0) {
@@ -139,7 +139,7 @@ export class EventEmitter implements IEventEmitter {
    * Emit an event and wait for ALL handlers (including async).
    */
   async emitAndWait<T>(event: T): Promise<void> {
-    const eventClass = event.constructor as EventClass<T>;
+    const eventClass = (event as object).constructor as EventClass<T>;
     const handlers = this.registry.getHandlers(eventClass);
 
     if (handlers.length === 0) {
@@ -261,7 +261,7 @@ export class EventEmitter implements IEventEmitter {
         ) {
           this.flowTracker.recordEvent(
             this.currentCorrelationId,
-            event.constructor.name,
+            (event as object).constructor.name,
             [handlerName],
             result.duration,
           );

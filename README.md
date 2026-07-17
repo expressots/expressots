@@ -43,6 +43,22 @@ import { App } from "./app";
 void bootstrap(App);
 ```
 
+## Requirements and Packaging
+
+- Node.js 20.19.0 or newer.
+- Ships dual builds: ESM (`import`) and CommonJS (`require`), selected automatically via conditional exports.
+- Subpath entry points: `@expressots/core/testing`, `@expressots/core/di`, `@expressots/core/render`, `@expressots/core/path-resolver`.
+- Validation is bring-your-own: `zod`, `yup`, and `class-validator` are optional peer dependencies. Install only the one you use; the matching adapter is detected at runtime.
+
+## Testing Utilities
+
+```typescript
+import { createTestApp, setupExpressoTSMatchers } from "@expressots/core/testing";
+
+const app = await createTestApp(App);
+await app.request().get("/health").expectStatus(200);
+```
+
 ## Documentation
 
 For guides, API reference, architecture patterns, and examples visit **[doc.expresso-ts.com](https://doc.expresso-ts.com)**.

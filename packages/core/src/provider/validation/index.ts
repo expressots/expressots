@@ -26,7 +26,10 @@ export type {
 } from "./validation.interface.js";
 
 // Core components
-export { ValidationRegistry } from "./validation-registry.js";
+export {
+  ValidationRegistry,
+  validationRegistry,
+} from "./validation-registry.js";
 export { schemaToJsonSchema } from "./schema-extract.js";
 export { SmartFieldDetector } from "./smart-field-detector.js";
 export {

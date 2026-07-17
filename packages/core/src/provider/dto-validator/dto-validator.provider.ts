@@ -31,18 +31,27 @@ export function ValidateDTO<T extends object>(
       );
 
       if (errors.length > 0) {
-        const DTO = errors.reduce((acc, error) => {
-          if (error.constraints) {
-            const propertyName = error.property;
-            if (!acc.some((e) => e.property === propertyName)) {
-              acc.push({ property: propertyName, messages: [] });
-            }
+        type DTOError = { property: string; messages: Array<string> };
+        const DTO = errors.reduce(
+          (
+            acc: Array<DTOError>,
+            error: { property: string; constraints?: Record<string, string> },
+          ) => {
+            if (error.constraints) {
+              const propertyName = error.property;
+              if (!acc.some((e: DTOError) => e.property === propertyName)) {
+                acc.push({ property: propertyName, messages: [] });
+              }
 
-            const target = acc.find((e) => e.property === propertyName);
-            target.messages.push(...Object.values(error.constraints));
-          }
-          return acc;
-        }, []);
+              const target = acc.find(
+                (e: DTOError) => e.property === propertyName,
+              );
+              target?.messages.push(...Object.values(error.constraints));
+            }
+            return acc;
+          },
+          [] as Array<DTOError>,
+        );
 
         res.status(StatusCode.BadRequest).json({
           errorCode: StatusCode.BadRequest,

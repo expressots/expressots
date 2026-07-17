@@ -137,8 +137,12 @@ describe("Field decorators", () => {
       // Assert
       const indexes = Reflect.getMetadata(DB_METADATA_KEYS.index, User);
       expect(indexes).toHaveLength(2);
-      expect(indexes.find((i) => i.field === "email")).toBeDefined();
-      expect(indexes.find((i) => i.field === "username")).toBeDefined();
+      expect(
+        indexes.find((i: { field: string }) => i.field === "email"),
+      ).toBeDefined();
+      expect(
+        indexes.find((i: { field: string }) => i.field === "username"),
+      ).toBeDefined();
     });
 
     it("should handle composite index", () => {

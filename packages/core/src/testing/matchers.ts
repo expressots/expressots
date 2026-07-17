@@ -8,7 +8,7 @@
  * @example
  * ```typescript
  * // Setup in test/setup.ts
- * import { setupExpressoTSMatchers } from "@expressots/testing";
+ * import { setupExpressoTSMatchers } from "@expressots/core/testing";
  * setupExpressoTSMatchers();
  *
  * // Use in tests
@@ -346,7 +346,7 @@ export const expressoTSMatchers = {
  * @example
  * ```typescript
  * // In test/setup.ts or jest.setup.ts
- * import { setupExpressoTSMatchers } from "@expressots/testing";
+ * import { setupExpressoTSMatchers } from "@expressots/core/testing";
  * setupExpressoTSMatchers();
  * ```
  */

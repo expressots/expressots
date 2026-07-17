@@ -97,9 +97,10 @@ class LogBuffer {
 }
 
 /**
- * Log query options for HTTP server.
+ * Log query options for the HTTP log server transport.
+ * A narrow subset of LogQueryOptions (logger.query) that this transport
+ * supports; use LogQueryOptions for richer in-process queries.
  * @public API
- * @deprecated Use LogQueryOptions from logger.query instead
  */
 export interface HttpLogQueryOptions {
   /** Filter by log level */

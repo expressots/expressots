@@ -258,3 +258,16 @@ export class ValidationRegistry {
     );
   }
 }
+
+/**
+ * Shared validation registry instance.
+ *
+ * This is the singleton the validation adapter docs refer to:
+ * ```typescript
+ * import { validationRegistry, createZodValidator } from "@expressots/core";
+ * validationRegistry.register(createZodValidator());
+ * ```
+ *
+ * @public API
+ */
+export const validationRegistry = new ValidationRegistry();

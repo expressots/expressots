@@ -38,7 +38,7 @@ async function runExample() {
 
   // View bindings (for demonstration)
   console.log("\n📊 Container Bindings:");
-  container.viewContainerBindings();
+  container.getFormattedBindingsView();
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }

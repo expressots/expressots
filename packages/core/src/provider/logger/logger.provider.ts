@@ -1,20 +1,11 @@
 import { provideSingleton } from "../../decorator/scope-binding.js";
 import { IProvider } from "../provider-manager.js";
-import {
-  LogLevel,
-  LogLevelString,
-  parseLogLevel,
-  shouldLog,
-} from "./utils/log-levels.js";
+import { LogLevel, parseLogLevel, shouldLog } from "./utils/log-levels.js";
 import { createLogEntry, LogTrace, LogEntry } from "./utils/log-entry.js";
 import { LoggerConfig, getDefaultLoggerConfig } from "./logger.config.js";
 import { ILogTransport } from "./transports/transport.interface.js";
 import { ConsoleTransport } from "./transports/console.transport.js";
-import {
-  formatDev,
-  formatGroupedDev,
-  formatGroupedProd,
-} from "./logger.formatter.js";
+import { formatGroupedDev, formatGroupedProd } from "./logger.formatter.js";
 import { ContextManager, LogContext } from "./logger.context.js";
 import {
   Timer,
@@ -904,29 +895,6 @@ class Logger implements IProvider {
       this.healthMonitor.stop();
       this.healthMonitor = null;
     }
-  }
-
-  /**
-   * Legacy formatMessage method for backward compatibility.
-   * @deprecated Use the new structured logging API instead
-   * @param logLevel - The level of the log
-   * @param message - The main log message
-   * @param module - Optional module name
-   * @returns The formatted log message
-   */
-  protected formatMessage(
-    logLevel: LogLevelString | "NONE" = "NONE",
-    message: string,
-    module?: string,
-  ): string {
-    const level = parseLogLevel(logLevel);
-    const entry = createLogEntry(level, message, {
-      context: module,
-      pid: this.pid,
-    });
-
-    // Use dev formatter for legacy format
-    return formatDev(entry);
   }
 }
 

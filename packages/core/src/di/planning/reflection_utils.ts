@@ -78,7 +78,8 @@ function getConstructorArgsAsTarget(
 
   // Take types to be injected from user-generated metadata
   // if not available use compiler-generated metadata
-  let serviceIdentifier = serviceIdentifiers[index];
+  let serviceIdentifier: interfaces.ServiceIdentifier<unknown> | undefined =
+    serviceIdentifiers[index];
   const injectIdentifier = metadata.inject || metadata.multiInject;
   serviceIdentifier = (
     injectIdentifier ? injectIdentifier : serviceIdentifier

@@ -55,7 +55,7 @@ import {
  * - Request scope by default (stateless, scalable)
  * - Auto-bind injectable for convenience
  * - Wraps InversifyJS for type safety
- * - Provides debugging utilities (viewContainerBindings)
+ * - Provides debugging utilities (getFormattedBindingsView)
  *
  * **Default Behavior**
  * - `defaultScope`: `Scope.Request` (one per request)
@@ -82,7 +82,7 @@ import {
  * Debugging container bindings:
  * ```typescript
  * container.create([new MyModule()]);
- * container.viewContainerBindings();  // Prints table of all bindings
+ * console.log(container.getFormattedBindingsView());  // Formatted view of all bindings
  * ```
  *
  * Accessing underlying InversifyJS container:
@@ -438,46 +438,6 @@ export class AppContainer {
       timestamp: new Date().toISOString(),
       containerId: this.container?.id ?? -1,
     };
-  }
-
-  /**
-   * Displays all container bindings in a formatted table.
-   *
-   * @layer public
-   * @audience application-developers
-   * @concept debugging
-   *
-   * @deprecated Use getFormattedBindingsView() for string output or introspect() for data.
-   *
-   * **Useful for:**
-   * - Debugging dependency injection issues
-   * - Understanding what's registered in the container
-   * - Verifying binding scopes
-   *
-   * @example
-   * ```typescript
-   * container.create([new MyModule()]);
-   * container.viewContainerBindings();
-   * // Prints table showing:
-   * // - Service Identifier
-   * // - Scope (Request, Singleton, Transient)
-   * // - Type (ConstantValue, Constructor, etc.)
-   * // - Cache status
-   * ```
-   *
-   * @public API
-   */
-  public viewContainerBindings(): void {
-    const bindings = this.getBindingsInfo();
-
-    const table = bindings.map((binding) => ({
-      "Service Identifier": binding.serviceIdentifier,
-      Scope: binding.scope,
-      Type: binding.type,
-      Cache: binding.cached ? "Yes" : "No",
-    }));
-
-    console.table(table);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

@@ -248,8 +248,10 @@ const _getContainerActivationsForService = <T>(
   )._activations;
 
   return activations.hasKey(serviceIdentifier)
-    ? activations.get(serviceIdentifier).values()
-    : [].values();
+    ? (activations.get(serviceIdentifier).values() as Iterator<
+        interfaces.BindingActivation<T>
+      >)
+    : ([].values() as Iterator<interfaces.BindingActivation<T>>);
 };
 
 const _getContainersIterator = (

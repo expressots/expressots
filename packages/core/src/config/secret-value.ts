@@ -160,7 +160,9 @@ export class SecretValueImpl implements SecretValue {
         return false;
       }
 
-      return nodeCrypto.timingSafeEqual(a, b);
+      // Explicit Uint8Array views keep this assignable under the stricter
+      // ArrayBufferView generics introduced by newer TypeScript lib types.
+      return nodeCrypto.timingSafeEqual(new Uint8Array(a), new Uint8Array(b));
     } catch {
       // Fallback to regular comparison
       return this._value === other;

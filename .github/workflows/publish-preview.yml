@@ -46,7 +46,7 @@ jobs:
         run: npm run release:prepare
 
       - name: Publish to npm
-        run: npm publish --tag ${{ inputs.tag }} --access public
+        run: npm publish --tag ${{ inputs.tag }} --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

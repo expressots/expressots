@@ -305,7 +305,7 @@ const CATEGORY_ICONS: Record<MiddlewareCategory, string> = {
  * @example
  * ```typescript
  * @provide(App)
- * export class App extends AppFactory {
+ * export class App extends AppExpress {
  *   configureServices(services: IService): void {
  *     // Add built-in middleware
  *     services.Middleware.addCors();
@@ -912,13 +912,23 @@ export class Middleware implements IMiddleware {
           "middleware-service",
         );
         // Fall back to default handler
-        this.errorHandler = (error, req, res, next): void => {
+        this.errorHandler = (
+          error: Error,
+          req: Request,
+          res: Response,
+          next: NextFunction,
+        ): void => {
           defaultErrorHandler(error, res, next, showStackTrace);
         };
       }
     } else {
       // Default error handler
-      this.errorHandler = (error, req, res, next): void => {
+      this.errorHandler = (
+        error: Error,
+        req: Request,
+        res: Response,
+        next: NextFunction,
+      ): void => {
         defaultErrorHandler(error, res, next, showStackTrace);
       };
     }
@@ -2210,8 +2220,8 @@ export class Middleware implements IMiddleware {
     };
 
     this.middlewarePipeline.sort((a, b) => {
-      const priorityA = priorityOrder[a.category] || 50;
-      const priorityB = priorityOrder[b.category] || 50;
+      const priorityA = (a.category && priorityOrder[a.category]) || 50;
+      const priorityB = (b.category && priorityOrder[b.category]) || 50;
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
       }

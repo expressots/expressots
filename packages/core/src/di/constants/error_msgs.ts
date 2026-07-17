@@ -14,7 +14,7 @@ export const MISSING_INJECT_ANNOTATION =
   "Missing required @inject or @multiInject annotation in:";
 export const UNDEFINED_INJECT_ANNOTATION = (name: string): string =>
   `@inject called with undefined this could mean that the class ${name} has ` +
-  "a circular dependency problem. You can use a LazyServiceIdentifer to " +
+  "a circular dependency problem. You can use a LazyServiceIdentifier to " +
   "overcome this limitation.";
 export const CIRCULAR_DEPENDENCY = "Circular dependency found:";
 export const NOT_IMPLEMENTED =

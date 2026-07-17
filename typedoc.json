@@ -15,9 +15,9 @@
     "**/early.spec/**",
     "**/__tests__/**"
   ],
-  "excludePrivate": false,
-  "excludeProtected": false,
-  "excludeInternal": false,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
   "includeVersion": true,
   "gitRevision": "main",
   "theme": "default",

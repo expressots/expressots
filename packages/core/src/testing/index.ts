@@ -19,7 +19,7 @@
  * @example
  * ```typescript
  * // Zero-config test setup
- * import { createTestApp } from "@expressots/testing";
+ * import { createTestApp } from "@expressots/core/testing";
  *
  * describe("UserController", () => {
  *   let app, request;
@@ -44,7 +44,7 @@
  * @example
  * ```typescript
  * // Smart mocking
- * import { mockProvider } from "@expressots/testing";
+ * import { mockProvider } from "@expressots/core/testing";
  *
  * test("UserService creates user", async () => {
  *   const { service, mocks } = mockProvider(UserService, {
@@ -64,7 +64,7 @@
  * @example
  * ```typescript
  * // Load testing
- * import { loadTest } from "@expressots/testing";
+ * import { loadTest } from "@expressots/core/testing";
  *
  * test("handles 1000 concurrent requests", async () => {
  *   const results = await loadTest(app, {

@@ -28,10 +28,11 @@ Comprehensive documentation for ExpressoTS middleware system.
 ### Built-in Middleware
 
 ```typescript
-import { AppFactory, IService } from "@expressots/core";
+import { IService } from "@expressots/core";
+import { AppExpress } from "@expressots/adapter-express";
 
 @provide(App)
-export class App extends AppFactory {
+export class App extends AppExpress {
   configureServices(services: IService): void {
     // Add built-in middleware
     services.Middleware.addCors();

@@ -41,8 +41,8 @@ describe("AppContainer.constructor() constructor", () => {
 
       // Assert
       const options = container.getContainerOptions();
-      expect(options.defaultScope).toBe(Scope.Singleton);
-      expect(options.autoBindInjectable).toBe(true); // Default value
+      expect(options?.defaultScope).toBe(Scope.Singleton);
+      expect(options?.autoBindInjectable).toBe(true); // Default value
     });
   });
 
@@ -55,7 +55,7 @@ describe("AppContainer.constructor() constructor", () => {
       expect(container).toBeInstanceOf(AppContainer);
       container.create([]);
       const options = container.getContainerOptions();
-      expect(options.defaultScope).toBe(Scope.Request);
+      expect(options?.defaultScope).toBe(Scope.Request);
     });
 
     it("should handle empty options object", () => {
@@ -69,7 +69,7 @@ describe("AppContainer.constructor() constructor", () => {
       expect(container).toBeInstanceOf(AppContainer);
       container.create([]);
       const options = container.getContainerOptions();
-      expect(options.defaultScope).toBe(Scope.Request);
+      expect(options?.defaultScope).toBe(Scope.Request);
     });
   });
 });

@@ -7,8 +7,6 @@ on:
       - feature/v4.0
   pull_request:
     branches: ["main", "feature/v4.0"]
-  pull_request_target:
-    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -50,3 +48,22 @@ jobs:
           working-directory: .
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: expressots/expressots
+
+  ts7-compat:
+    name: TypeScript 7 compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Type-check with TypeScript 7
+        run: npx --yes -p typescript@7 tsc -p tsconfig.cjs.json --noEmit

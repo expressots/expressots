@@ -19,7 +19,7 @@ import { Logger } from "../provider/logger/logger.provider.js";
 export function isWebServerConstructor<T extends IWebServer>(
   input: unknown,
 ): input is IWebServerConstructor<T> {
-  return input && typeof input === "function";
+  return typeof input === "function";
 }
 
 /**
@@ -130,13 +130,11 @@ export class AppFactory {
    *
    * @throws {Error} If webServerType is not a valid constructor
    *
-   * @deprecated Use `bootstrap()` from `@expressots/core` instead. `bootstrap()`
-   * additionally handles environment file loading, port configuration,
-   * graceful shutdown, the startup banner, and configuration validation.
-   * `AppFactory.create()` will keep working for advanced use cases but is
-   * scheduled for removal in a future major release.
-   *
-   * @public API
+   * @internal As of 4.0, `AppFactory` is no longer exported from the package
+   * root; it is the internal engine behind `bootstrap()`. Use `bootstrap()`
+   * from `@expressots/core`: it additionally handles environment file loading,
+   * port configuration, graceful shutdown, the startup banner, and
+   * configuration validation.
    */
   public static async create<T extends IWebServer>(
     webServerType: IWebServerConstructor<T>,

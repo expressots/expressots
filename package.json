@@ -8,19 +8,78 @@
   "exports": {
     ".": {
       "import": {
-        "types": "./lib/esm/types/index.d.ts",
+        "types": "./lib/cjs/types/index.d.ts",
         "default": "./lib/esm/index.mjs"
       },
       "require": {
         "types": "./lib/cjs/types/index.d.ts",
         "default": "./lib/cjs/index.js"
       }
+    },
+    "./testing": {
+      "import": {
+        "types": "./lib/cjs/types/testing/index.d.ts",
+        "default": "./lib/esm/testing/index.js"
+      },
+      "require": {
+        "types": "./lib/cjs/types/testing/index.d.ts",
+        "default": "./lib/cjs/testing/index.js"
+      }
+    },
+    "./di": {
+      "import": {
+        "types": "./lib/cjs/types/di/inversify.d.ts",
+        "default": "./lib/esm/di/inversify.js"
+      },
+      "require": {
+        "types": "./lib/cjs/types/di/inversify.d.ts",
+        "default": "./lib/cjs/di/inversify.js"
+      }
+    },
+    "./render": {
+      "import": {
+        "types": "./lib/cjs/types/render/index.d.ts",
+        "default": "./lib/esm/render/index.js"
+      },
+      "require": {
+        "types": "./lib/cjs/types/render/index.d.ts",
+        "default": "./lib/cjs/render/index.js"
+      }
+    },
+    "./path-resolver": {
+      "import": {
+        "types": "./lib/cjs/types/path-resolver/index.d.ts",
+        "default": "./lib/esm/path-resolver/index.js"
+      },
+      "require": {
+        "types": "./lib/cjs/types/path-resolver/index.d.ts",
+        "default": "./lib/cjs/path-resolver/index.js"
+      }
     }
   },
+  "sideEffects": [
+    "./lib/**/application/application-container.js",
+    "./lib/**/authorization/guard-decorators.js",
+    "./lib/**/authorization/guard-registry.js",
+    "./lib/**/db-in-memory/schema/decorators.js",
+    "./lib/**/di/binding-decorator/decorator/provide.js",
+    "./lib/**/di/binding-decorator/factory/module_factory.js",
+    "./lib/**/error/exception-filter-decorators.js",
+    "./lib/**/error/exception-filter-registry.js",
+    "./lib/**/event/event-decorators.js",
+    "./lib/**/interceptor/interceptor-decorators.js",
+    "./lib/**/interceptor/interceptor-registry.js",
+    "./lib/**/testing/mock-provider.js",
+    "./lib/**/validation/adapters/class-validator.adapter.js",
+    "./lib/**/validation/type-inference.js",
+    "./lib/**/validation/validation-registry.js",
+    "./lib/**/dto-validator/dto-validator.provider.js"
+  ],
   "files": [
     "README.md",
     "LICENSE.md",
     "CHANGELOG.md",
+    "llms.txt",
     "lib/**/*"
   ],
   "license": "MIT",
@@ -40,7 +99,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.18.0"
+    "node": ">=20.19.0"
   },
   "keywords": [
     "expressots",
@@ -60,7 +119,6 @@
     "build": "npm run clean && npm run sync-version && npm run build:cjs && npm run build:esm && npm run copy",
     "build:esm": "node scripts/build-esm.js",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "prepublish": "npm run build && npm pack",
     "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
     "release": "release-it",
     "release:prepare": "node scripts/release/prepare-publish.mjs",
@@ -78,6 +136,26 @@
   "dependencies": {
     "@expressots/shared": "^4.0.0-preview.3.4",
     "reflect-metadata": "0.2.2"
+  },
+  "peerDependencies": {
+    "class-validator": ">=0.14.0",
+    "express": ">=5.0.0",
+    "yup": ">=1.0.0",
+    "zod": ">=3.22.0"
+  },
+  "peerDependenciesMeta": {
+    "class-validator": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "yup": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
   },
   "overrides": {
     "js-yaml": "4.2.0"

@@ -53,8 +53,8 @@ describe("InMemoryAdapter many-to-many resolution", () => {
     const tagA = await tags.create({ data: { label: "typescript" } });
     const tagB = await tags.create({ data: { label: "node" } });
 
-    await joinTable.create({ data: { postId: post.id, tagId: tagA.id } });
-    await joinTable.create({ data: { postId: post.id, tagId: tagB.id } });
+    await joinTable.create({ data: { postId: post.id!, tagId: tagA.id! } });
+    await joinTable.create({ data: { postId: post.id!, tagId: tagB.id! } });
 
     const result = await posts.findUnique({
       where: { id: post.id },

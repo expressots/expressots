@@ -16,10 +16,10 @@ class MockIDataTable<T extends IEntity> implements IDataTable<T> {
 }
 
 class MockIDataProvider implements IDataProvider {
-  name: string;
-  version: string;
-  author: string;
-  repo: string;
+  name: string = "mock";
+  version: string = "1.0.0";
+  author: string = "test";
+  repo: string = "test";
   getTable = jest.fn<IDataTable<any>, [string]>();
 }
 

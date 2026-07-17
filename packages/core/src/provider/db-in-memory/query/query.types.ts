@@ -159,10 +159,12 @@ export type SelectInput<T> = {
  * @public API
  */
 export type IncludeInput<T> = {
-  [K in keyof T]?: T[K] extends Array<infer U>
+  // NonNullable so optional relation properties (posts?: Post[]) still
+  // resolve to their element type instead of collapsing to undefined.
+  [K in keyof T]?: NonNullable<T[K]> extends Array<infer U>
     ? boolean | FindManyArgs<U extends IEntity ? U : never>
-    : T[K] extends IEntity
-      ? boolean | FindUniqueArgs<T[K]>
+    : NonNullable<T[K]> extends IEntity
+      ? boolean | FindUniqueArgs<NonNullable<T[K]>>
       : never;
 };
 

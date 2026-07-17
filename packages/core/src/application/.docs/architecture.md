@@ -397,7 +397,7 @@ function isWebServerConstructor<T extends IWebServer>(
 
 1. **Container creation** - Creates InversifyJS container with defaults
 2. **Module loading** - Loads built-in provider module + custom modules
-3. **Debugging utilities** - Provides `viewContainerBindings()` for inspection
+3. **Debugging utilities** - Provides `getFormattedBindingsView()` for inspection
 4. **Configuration access** - Exposes container options
 
 ### Default Configuration
@@ -441,7 +441,7 @@ public create(modules: Array<ContainerModule>): void
 
 ### Debugging Utilities
 
-**`viewContainerBindings()`:**
+**`getFormattedBindingsView()`:**
 - Accesses internal binding dictionary
 - Formats as console table
 - Shows: identifier, scope, type, cache status

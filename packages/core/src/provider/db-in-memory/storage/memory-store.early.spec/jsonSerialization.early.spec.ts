@@ -178,7 +178,7 @@ describe("MemoryStore JSON serialization", () => {
       expect(restored).toHaveLength(1);
       expect(restored[0].createdAt).toBeInstanceOf(Date);
       expect(restored[0].updatedAt).toBeInstanceOf(Date);
-      expect(restored[0].createdAt.getTime()).toBe(
+      expect(restored[0].createdAt!.getTime()).toBe(
         new Date("2023-01-01T00:00:00.000Z").getTime(),
       );
     });

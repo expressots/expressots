@@ -10,13 +10,19 @@ const config: JestConfigWithTsJest = {
     "!**/*.spec.ts",
     "!packages/core/src/**/index.ts",
     "packages/core/src/path-resolver/index.ts",
-    "!packages/core/src/di/**/*.ts",
-    "!packages/core/src/middleware/**/*.ts",
     "!packages/core/src/application/application.types.ts",
     "!packages/core/src/provider/dto-validator/package-resolver.ts",
     "!**/.docs/**/*.ts",
     "!**/examples/**/*.ts",
   ],
+  coverageThreshold: {
+    global: {
+      lines: 60,
+      statements: 60,
+      functions: 55,
+      branches: 45,
+    },
+  },
   moduleNameMapper: {
     "^@src/(.*)$": "<rootDir>/packages/core/src/$1",
     "^express$":

@@ -714,7 +714,9 @@ describe("EventEmitter", () => {
       handler.lastEvent = undefined;
       await emitter.emit(new UserCreatedEvent("123", "test@test.com"));
       expect(handler.called).toBe(true);
-      expect(handler.lastEvent?.userId).toBe("123");
+      expect((handler.lastEvent as UserCreatedEvent | undefined)?.userId).toBe(
+        "123",
+      );
     });
 
     it("should handle events with no handlers", async () => {
@@ -907,7 +909,9 @@ describe("EventEmitter", () => {
       ]);
       // Handler should be called for both events (SimpleHandler is registered for UserCreatedEvent)
       expect(handler.called).toBe(true);
-      expect(handler.lastEvent?.userId).toBe("2"); // Last event
+      expect((handler.lastEvent as UserCreatedEvent | undefined)?.userId).toBe(
+        "2",
+      ); // Last event
     });
   });
 

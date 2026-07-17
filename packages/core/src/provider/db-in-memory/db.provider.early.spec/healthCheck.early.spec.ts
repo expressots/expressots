@@ -41,8 +41,8 @@ describe("InMemoryDBProvider.healthCheck() healthCheck method", () => {
 
       // Assert
       expect(result.status).toBe("healthy");
-      expect(result.details.tables).toBeGreaterThan(0);
-      expect(result.details.records).toBeGreaterThan(0);
+      expect(result.details!.tables).toBeGreaterThan(0);
+      expect(result.details!.records).toBeGreaterThan(0);
     });
 
     it("should calculate uptime when bootstrap was called", async () => {
@@ -54,7 +54,7 @@ describe("InMemoryDBProvider.healthCheck() healthCheck method", () => {
       const result = provider.healthCheck();
 
       // Assert
-      expect(result.details.uptime).toBeGreaterThan(0);
+      expect(result.details!.uptime).toBeGreaterThan(0);
     });
 
     it("should return zero uptime when bootstrap was not called", () => {
@@ -62,7 +62,7 @@ describe("InMemoryDBProvider.healthCheck() healthCheck method", () => {
       const result = provider.healthCheck();
 
       // Assert
-      expect(result.details.uptime).toBe(0);
+      expect(result.details!.uptime).toBe(0);
     });
   });
 });

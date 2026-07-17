@@ -387,7 +387,9 @@ function applyMockProviders(
     }
 
     if (mockValue !== undefined) {
-      testApp.overrideProvider(provider.provide, mockValue);
+      // Cast: mockValue is unknown by construction; overrideProvider accepts
+      // any partial implementation, including null overrides.
+      testApp.overrideProvider(provider.provide, mockValue as Partial<unknown>);
     }
   }
 }

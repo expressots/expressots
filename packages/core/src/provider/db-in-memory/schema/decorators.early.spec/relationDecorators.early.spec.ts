@@ -151,8 +151,12 @@ describe("Relation decorators", () => {
       const relations =
         Reflect.getMetadata("expressots:db:relation", User) || [];
       expect(relations).toHaveLength(2);
-      expect(relations.find((r) => r.type === "hasMany")).toBeDefined();
-      expect(relations.find((r) => r.type === "hasOne")).toBeDefined();
+      expect(
+        relations.find((r: { type: string }) => r.type === "hasMany"),
+      ).toBeDefined();
+      expect(
+        relations.find((r: { type: string }) => r.type === "hasOne"),
+      ).toBeDefined();
     });
   });
 });

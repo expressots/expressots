@@ -202,12 +202,6 @@ export {
   IDataProvider,
 } from "./db-in-memory.interface.js";
 
-// Legacy provider (deprecated, use InMemoryDBProvider)
-export {
-  InMemoryDataProvider,
-  InMemoryDataTable,
-} from "./db-in-memory.provider.js";
-
 // Legacy errors (now exported from storage)
 export {
   EntityNotFoundError as LegacyEntityNotFoundError,
