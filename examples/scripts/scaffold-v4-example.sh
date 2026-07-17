@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TEMPLATES="$ROOT/../templates"
-PREVIEW="4.0.0-preview.3.4"
+PREVIEW="4.0.0"
 
 copy_application_base() {
   local dir="$1"

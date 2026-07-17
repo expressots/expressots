@@ -1,6 +1,6 @@
 # ExpressoTS v4 Example Catalog
 
-Runnable examples for [ExpressoTS v4.0](https://doc.expresso-ts.com/) (`4.0.0-preview.3.4`).
+Runnable examples for [ExpressoTS v4.0](https://doc.expresso-ts.com/) (`4.0.0`).
 
 Each project maps to one guide or feature doc. Clone the repo, open the folder, follow its README.
 
@@ -44,4 +44,4 @@ npm run dev
 
 ## Branch
 
-v4 examples on `main` are pinned to `@expressots/*@4.0.0-preview.3.4`.
+v4 examples on `main` are pinned to `@expressots/*@4.0.0`.

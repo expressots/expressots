@@ -34,7 +34,7 @@ See **[CATALOG.md](./CATALOG.md)** for the full list of 15 examples mapped to do
 | 14 | [interceptors](./14-interceptors/) | Interceptors |
 | 15 | [openapi-studio](./15-openapi-studio/) | OpenAPI + Studio |
 
-**Preview pin:** `@expressots/*@4.0.0-preview.3.4`
+**Version pin:** `@expressots/*@4.0.0`
 
 ## Previous versions
 
