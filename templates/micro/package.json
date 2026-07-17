@@ -24,16 +24,16 @@
         "example:full-di-api": "tsx examples/full-di-api.example.ts"
     },
     "dependencies": {
-        "@expressots/adapter-express": "4.0.0-preview.3.4",
-        "@expressots/core": "4.0.0-preview.3.4",
-        "@expressots/shared": "4.0.0-preview.3.4",
+        "@expressots/adapter-express": "4.0.0",
+        "@expressots/core": "4.0.0",
+        "@expressots/shared": "4.0.0",
         "express": "5.2.1"
     },
     "devDependencies": {
         "@eslint/js": "9.39.2",
-        "@expressots/cli": "4.0.0-preview.3.4",
-        "@expressots/studio": "4.0.0-preview.3.4",
-        "@expressots/studio-agent": "4.0.0-preview.3.4",
+        "@expressots/cli": "4.0.0",
+        "@expressots/studio": "4.0.0",
+        "@expressots/studio-agent": "4.0.0",
         "@types/express": "5.0.6",
         "@types/jest": "30.0.0",
         "@types/node": "25.0.3",

@@ -1,3 +1,16 @@
+## [4.0.0] (2026-07-16)
+
+Stable release. All scaffolds pin `@expressots/*` to `4.0.0` exact via `sync-template-deps`. Consumed by `expressots new` through the `expressots/templates#v4.0.0` tag.
+
+### Bundle
+
+-   READMEs and this changelog now describe the actual scaffold contents (`src/main.ts`, `src/app.ts`, `src/app.controller.ts`); `defineConfig` and interceptors are documented as optional generator features.
+-   `AGENTS.md` added to `application`, `application-with-events`, and `micro` so generated projects are AI-agent-ready (entry points, commands, layout, do-not-use-v3-APIs list).
+-   `engines.node >= 20.19.0` and `.prettierrc` in every scaffold; tracked `.env` files removed (`micro` gains `.env.example`).
+-   `application`/`application-with-events`: unused `class-validator`/`class-transformer` removed.
+-   `micro`: `baseUrl` removed from tsconfigs (TypeScript 7-ready); stale `.eslintrc.js` deleted; Jest aligned to 30.2.
+-   `provider`: modernized to TypeScript 5.9.3, ESLint 9 flat config, Jest 30; README badges and peer wording fixed.
+
 ## [4.0.0-preview.3] (2026-05-25)
 
 Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release).

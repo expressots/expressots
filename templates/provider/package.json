@@ -66,7 +66,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
-    "@expressots/core": "4.0.0-preview.3.4"
+    "@expressots/core": "4.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "19.5.0",
