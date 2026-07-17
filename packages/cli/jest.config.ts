@@ -29,13 +29,17 @@ const config: JestConfigWithTsJest = {
 	moduleNameMapper: {
 		"^@src/(.*)$": "<rootDir>/src/$1",
 	},
-	setupFiles: ["reflect-metadata"],
 	transform: {
 		"^.+\\.ts$": [
 			"ts-jest",
 			{
 				tsconfig: "tsconfig.json",
-				// Add any ts-jest specific options here
+				// ts-jest warns (TS151002) that Node16 module resolution
+				// prefers isolatedModules: true, but enabling it triggers a
+				// ts-jest transpiler bug on TypeScript 5.2 (JSDocParsingMode
+				// is 5.3+). Suppress the advisory until the TS toolchain
+				// upgrade lands.
+				diagnostics: { ignoreCodes: [151002] },
 			},
 		],
 	},

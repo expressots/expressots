@@ -6,6 +6,19 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
+// PricingManager derives its disk-cache path from os.homedir() at import
+// time. Point it at a per-process temp dir so tests never read or write the
+// real ~/.expressots cache (which made this suite order-dependent).
+jest.mock("os", () => {
+	const actual = jest.requireActual("os");
+	const actualPath = jest.requireActual("path");
+	const fakeHome = actualPath.join(
+		actual.tmpdir(),
+		`ex-cli-pmgr-home-${process.pid}`,
+	);
+	return { ...actual, homedir: () => fakeHome };
+});
+
 jest.mock("../../src/config", () => ({
 	getConfigManager: () => ({
 		getPricingConfig: () => ({
@@ -62,6 +75,7 @@ beforeEach(() => {
 afterEach(() => {
 	logSpy.mockRestore();
 	fs.rmSync(path.dirname(pricingFile), { recursive: true, force: true });
+	fs.rmSync(os.homedir(), { recursive: true, force: true });
 	resetPricingManager();
 });
 

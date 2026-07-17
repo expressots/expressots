@@ -100,11 +100,6 @@ const containerize = (): CommandModule<CommandModuleArgs, any> => {
 				default: false,
 			});
 
-			// `--deployment-strategy` was previously exposed here but
-			// the value was never read by the K8s generator. The dead
-			// flag was removed; re-introduce it together with a real
-			// implementation in `kubernetes-generator.ts`.
-
 			return yargs;
 		},
 		handler: async ({

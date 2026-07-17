@@ -58,6 +58,22 @@ for (const section of ["dependencies", "devDependencies", "optionalDependencies"
     }
 }
 
+// Strip development-only noise from the published manifest. The backup is
+// restored by release:restore, so the repo copy keeps everything.
+// scripts.prepublishOnly is kept so the file-deps guard still runs on publish.
+const KEEP_SCRIPTS = new Set(["prepublishOnly"]);
+if (pkg.scripts) {
+    for (const name of Object.keys(pkg.scripts)) {
+        if (!KEEP_SCRIPTS.has(name)) delete pkg.scripts[name];
+    }
+}
+for (const field of ["devDependencies", "lint-staged", "release-it", "overrides"]) {
+    if (field in pkg) {
+        delete pkg[field];
+        console.log(`  stripped ${field} from published manifest`);
+    }
+}
+
 const indentMatch = original.match(/^(\s+)"name"/m);
 const indent = indentMatch ? indentMatch[1] : "  ";
 writeFileSync(backupPath, original);

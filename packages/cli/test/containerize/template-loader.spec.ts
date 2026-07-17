@@ -31,7 +31,7 @@ function makeAnalysis(
 		hasWorkspaces: false,
 		workspacePackagePaths: [],
 		hasNativeDependencies: false,
-		...(overrides as ProjectAnalysis),
+		...overrides,
 	} as ProjectAnalysis;
 }
 

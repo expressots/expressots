@@ -4,7 +4,7 @@ import { printError, printGenerateError } from "./cli-ui";
 
 async function verifyIfFileExists(path: string, schematic?: string) {
 	const fileExists = fs.existsSync(path);
-	const fileName = path.split("/").pop();
+	const fileName = path.split("/").pop() ?? path;
 
 	if (fileExists) {
 		const answer = await inquirer.prompt([

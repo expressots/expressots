@@ -5,15 +5,6 @@ import { ExpressoConfig } from "@expressots/shared";
 import { printError } from "./cli-ui";
 
 /**
- * The path to the expressots.config.ts file
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const EXPRESSOTS_CONFIG: string = path.join(
-	process.cwd(),
-	"expressots.config.ts",
-);
-
-/**
  * The config object
  */
 let globalConfigObject: any = null;

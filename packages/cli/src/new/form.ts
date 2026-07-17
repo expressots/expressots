@@ -970,4 +970,4 @@ const projectForm = async (
 	}
 };
 
-export { projectForm };
+export { projectForm, buildTemplateRepo, resolveTemplateRef };

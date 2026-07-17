@@ -1,6 +1,6 @@
 import Compiler from "../utils/compiler";
 import { checkPathStyle } from "./utils/command-utils";
-import { nonOpinionatedProcess } from "./utils/nonopininated-cmd";
+import { nonOpinionatedProcess } from "./utils/nonopinionated-cmd";
 import { opinionatedProcess } from "./utils/opinionated-cmd";
 
 /**

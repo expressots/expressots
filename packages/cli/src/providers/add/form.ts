@@ -37,11 +37,11 @@ async function execProcess({
 			chalk.yellow("-------------------------------------------------"),
 		);
 
-		processRunner.stdout.on("data", (data) => {
+		processRunner.stdout?.on("data", (data) => {
 			console.log(chalk.green(data.toString().trim()));
 		});
 
-		processRunner.stderr.on("data", (data) => {
+		processRunner.stderr?.on("data", (data) => {
 			console.error(chalk.red(data.toString().trim()));
 		});
 

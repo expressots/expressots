@@ -1,3 +1,55 @@
+## [4.0.0-preview.3.4](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3.3...4.0.0-preview.3.4) (2026-06-13)
+
+### Features
+
+* **dev:** improved file watching and environment handling for `expressots dev` ([9caaac3](https://github.com/expressots/expressots-cli/commit/9caaac3))
+
+### Bug Fixes
+
+* **new:** scaffold the pnpm `allowBuilds` config only when pnpm is the selected package manager ([98239b8](https://github.com/expressots/expressots-cli/commit/98239b8))
+
+### Code Refactoring
+
+* **cli:** removed the Node.js version check from project creation; the `engines` field is the single source of truth ([612d684](https://github.com/expressots/expressots-cli/commit/612d684))
+
+### Build System
+
+* declared `files` in package.json so published artifacts contain only README, LICENSE, CHANGELOG, and the `bin` output ([a0de8cd](https://github.com/expressots/expressots-cli/commit/a0de8cd))
+
+## [4.0.0-preview.3.3](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3.2...4.0.0-preview.3.3) (2026-06-10)
+
+### Features
+
+* **openapi:** new `expressots openapi emit` command for generating OpenAPI specs ([3a22c20](https://github.com/expressots/expressots-cli/commit/3a22c20))
+
+## [4.0.0-preview.3.2](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3.1...4.0.0-preview.3.2) (2026-06-06)
+
+* Republish of 4.0.0-preview.3.1 with no code changes.
+
+## [4.0.0-preview.3.1](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3...4.0.0-preview.3.1) (2026-06-06)
+
+### Features
+
+* **cli:** structured, grouped help screens for top-level and per-command help, with detailed choices and descriptions ([e1e4507](https://github.com/expressots/expressots-cli/commit/e1e4507), [21f59b4](https://github.com/expressots/expressots-cli/commit/21f59b4))
+* **dev/build/prod:** graceful shutdown process management; the parent process now waits for all child processes to exit ([bf8b647](https://github.com/expressots/expressots-cli/commit/bf8b647))
+* **cicd:** package-manager-aware command generation (npm, yarn, pnpm, bun) across all supported CI/CD platforms, with improved lockfile handling ([7e6b4ec](https://github.com/expressots/expressots-cli/commit/7e6b4ec))
+
+### Bug Fixes
+
+* **new:** middleware preset placeholder and preset files are applied before `npm install`, so a failed install still leaves a runnable scaffold ([ba03a33](https://github.com/expressots/expressots-cli/commit/ba03a33))
+* **security:** upgraded release-it 17 to 20, @release-it/conventional-changelog 8 to 11, and inquirer 8.2.6 to 8.2.7 ([f96f02c](https://github.com/expressots/expressots-cli/commit/f96f02c))
+* **cli:** deterministic help output in tests via `NO_COLOR` ([4c99278](https://github.com/expressots/expressots-cli/commit/4c99278))
+
+### Code Refactoring
+
+* **containerize:** structured output, warnings, and clearer error messages during containerization ([3820955](https://github.com/expressots/expressots-cli/commit/3820955))
+* **info:** async `infoForm` with more detailed OS information ([4ceec78](https://github.com/expressots/expressots-cli/commit/4ceec78))
+
+### Continuous Integrations
+
+* issue template refresh and Expressots Project sync workflow ([9958a2e](https://github.com/expressots/expressots-cli/commit/9958a2e))
+* lint-staged plus husky hooks for pre-commit lint and format ([e2e8953](https://github.com/expressots/expressots-cli/commit/e2e8953), [b118edf](https://github.com/expressots/expressots-cli/commit/b118edf))
+
 ## [4.0.0-preview.3](https://github.com/expressots/expressots-cli/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
 Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [CLI reference](https://expresso-ts.com/docs/4.0.0/cli/overview) for the full picture.
@@ -32,7 +84,7 @@ Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes]
 
 ### Build System
 
-* `expressots-cli` now requires Node.js 20.18.0+.
+* `expressots-cli` now requires Node.js 20.19.0+.
 * `release-it` upgraded to 17.6.0 with `@release-it/conventional-changelog@8.0.1`; commit message normalised to `chore(release): ${version}` for consistency with the rest of the framework.
 
 ## [3.0.0](https://github.com/expressots/expressots-cli/compare/3.0.0-beta.3...3.0.0) (2024-12-04)

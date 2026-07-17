@@ -702,7 +702,7 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
 		try {
 			// Import and run containerize
 			const { containerizeProject } = await import(
-				"../containerize/form"
+				"../containerize/form.js"
 			);
 			await containerizeProject({
 				target: "docker",
@@ -730,7 +730,7 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
 			analyzeBootstrapConfig,
 			shouldCopyEnvFiles,
 			getEnvFileForEnvironment,
-		} = await import("../containerize/analyzers/bootstrap-analyzer");
+		} = await import("../containerize/analyzers/bootstrap-analyzer.js");
 		const bootstrapConfig = await analyzeBootstrapConfig();
 
 		if (
