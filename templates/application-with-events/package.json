@@ -5,6 +5,9 @@
     "author": "",
     "license": "MIT",
     "main": "dist/src/main.js",
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "scripts": {
         "dev": "expressots dev",
         "build": "expressots build",
@@ -33,10 +36,8 @@
         "@types/node": "25.0.3",
         "@typescript-eslint/eslint-plugin": "8.61.0",
         "@typescript-eslint/parser": "8.61.0",
-        "class-transformer": "^0.5.1",
-        "class-validator": "^0.14.1",
         "eslint": "9.39.2",
-        "jest": "30.0.0",
+        "jest": "30.2.0",
         "prettier": "3.7.4",
         "ts-jest": "29.4.6",
         "tsx": "4.21.0",

@@ -5,6 +5,9 @@
     "author": "",
     "license": "MIT",
     "main": "dist/src/api.js",
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "scripts": {
         "build": "expressots build",
         "dev": "expressots dev",

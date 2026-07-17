@@ -15,14 +15,17 @@ Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes]
 
 ### `application` template
 
--   Type-safe `defineConfig` + `Env.*` in `src/config/app.config.ts` with multi-environment defaults.
 -   `bootstrap()` + `loadEnvSync` wiring in `src/main.ts`.
--   Full `AppExpress` lifecycle hooks in `src/app.ts` (`globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown`), `setGlobalRoutePrefix("/api")`, `Logger.configure`, `setupInterceptorsForExpress`, `setupEventSystemForExpress`.
--   Sample `LoggingInterceptor`, `UserCreatedEvent`, `WelcomeEmailHandler` to demo the new subsystems.
+-   `AppExpress` lifecycle hooks stubbed in `src/app.ts` (`globalConfiguration`, `configureServices`, `postServerInitialization`, `serverShutdown`) with `setGlobalRoutePrefix("/api")`.
+-   Minimal-by-design scaffold: `src/main.ts`, `src/app.ts`, `src/app.controller.ts`. Optional features (typed config via `defineConfig` + `Env.*`, interceptors, events) are added via `expressots generate` rather than shipped pre-wired.
 -   `expressots.config.ts` declares every v4 schematic (`controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`).
 -   Path aliases for every new scaffold folder in `tsconfig.json` / `tsconfig.build.json` / `jest.config.ts`.
 -   `.env.example`, `package.json` with `@expressots/studio` + `@expressots/studio-agent` devDeps, modernized README.
 -   Test file uses `expectBody` (partial matching) and covers the `/health` endpoint.
+
+### `application-with-events` template
+
+-   Same base as `application`, plus the type-safe Event Bus wired end-to-end: `setupEventSystemForExpress` in `configureServices` and a sample `UserCreatedEvent` + `WelcomeEmailHandler` under `src/events/`.
 
 ### `micro` template
 

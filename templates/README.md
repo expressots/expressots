@@ -33,6 +33,25 @@ expressots templates update
 expressots cicd generate github --strategy comprehensive
 ```
 
+## Project Scaffolds
+
+Four directories in this repo are project scaffolds consumed by `expressots new` via [degit](https://github.com/Rich-Harris/degit). The CLI fetches `expressots/templates/<folder>#v<version>`, where the tag matches the CLI release (e.g. `expressots/templates/application#v4.0.0`), so scaffolds are reproducible across CLI versions.
+
+| Folder | Purpose |
+| ------ | ------- |
+| `application/` | Standard v4 REST API starter (opinionated layout, lifecycle hooks, tests). |
+| `application-with-events/` | Same as `application`, plus the type-safe Event Bus wired in with a sample event and handler. |
+| `micro/` | Single-file micro API using `micro()` from `@expressots/adapter-express`. |
+| `provider/` | Library scaffold for building reusable DI providers, installed in apps with `expressots add`. |
+
+You can also fetch a scaffold directly without the CLI:
+
+```bash
+npx degit expressots/templates/application my-app
+```
+
+The remaining directories (`cli-templates/`, `github-issue-templates/`, `repo-readmes/`) hold CLI code-generation templates and org-wide repo assets; they are not project scaffolds.
+
 ## For Contributors
 
 1. Fork this repository

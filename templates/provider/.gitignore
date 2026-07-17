@@ -1,62 +1,41 @@
-lib-cov
-*.seed
-*.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
-*.swp
+# Dependencies
+node_modules/
 
-pids
-logs
-*-audit*
-results
-tmp
-
-# Build
-public/css/main.css
+# Build output
+lib/
+*.tsbuildinfo
 
 # Coverage reports
-coverage
+coverage/
 
 # API keys and secrets
 .env
+.env.local
+.env.*.local
+!.env.example
 
-# Dependency directory
-node_modules
-bower_components
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Pack output
+*.tgz
+
+# Lock files (template consumers generate their own)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Editors
-.idea
+.idea/
+.vscode/
 *.iml
+*.swp
 
 # OS metadata
 .DS_Store
 Thumbs.db
 
-# Ignore built ts files
-packages/core/dist
-packages/default-project/dist
-lib
-
-# ignore yarn.lock
-yarn.lock
-templates/opinionated/yarn.lock
-templates/opinionated/package-lock.json
-
-# ignore npm lock files
-*-lock.json
-
-# Ignore VSCODE configuration files
-.vscode
-
-# Ignore Typedoc generated documentation
-public/docs/*
-templates/opinionated/public
-
-# Ignore .pem files
+# Certificates
 *.pem
-
-# ignore pack files
-*.tgz

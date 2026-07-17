@@ -1,7 +1,6 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
-[![NPM][npm-shield]][npm-url]
 ![Build][build-shield]
 [![Contributors][contributors-shield]][contributors-url]
 [![MIT License][license-shield]][license-url]
@@ -40,7 +39,7 @@ A provider is a reusable building block that other ExpressoTS applications can i
 - **Decorated sample provider** (`GreeterProvider`) with a passing Jest suite.
 - **release-it** + conventional commits + a GitHub release flow.
 - **husky** + commitlint pre-configured.
-- A peer-friendly dependency on `@expressots/core` `^4.0.0`.
+- Requires `@expressots/core` 4.x; `package.json` pins the current 4.x release, and you can widen it to a peer range when publishing.
 
 ## Quick start
 
@@ -178,8 +177,6 @@ MIT — see [LICENSE](./LICENSE.md).
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[npm-url]: https://www.npmjs.com/package/@expressots/expressots-project-template
-[npm-shield]: https://img.shields.io/npm/v/@expressots/expressots-project-template?style=for-the-badge&logo=npm&color=9B3922
 [build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/templates/build.yaml?branch=main&style=for-the-badge&logo=github
 [contributors-shield]: https://img.shields.io/github/contributors/expressots/templates?style=for-the-badge
 [contributors-url]: https://github.com/expressots/templates/graphs/contributors

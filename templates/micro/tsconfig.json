@@ -22,8 +22,12 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
 
-        // Path Mapping
-        "baseUrl": "./src",
+        // Path aliases are resolved relative to this tsconfig file's location.
+        // No `baseUrl` is set on purpose: it's deprecated in TypeScript 7 and
+        // unnecessary now that `paths` resolve relative to the tsconfig dir.
+        "paths": {
+            "@app/*": ["./src/*"]
+        },
 
         // Type Checking
         "strict": true,

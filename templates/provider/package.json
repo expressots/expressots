@@ -5,6 +5,9 @@
   "author": "Author Name",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/types/index.d.ts",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "exports": {
     ".": {
       "import": {
@@ -68,22 +71,23 @@
   "devDependencies": {
     "@commitlint/cli": "19.5.0",
     "@commitlint/config-conventional": "19.5.0",
+    "@eslint/js": "9.39.2",
     "@release-it/conventional-changelog": "^11.0.0",
     "@types/express": "^5.0.0",
-    "@types/jest": "29.5.14",
+    "@types/jest": "30.0.0",
     "@types/node": "22.5.0",
-    "@typescript-eslint/eslint-plugin": "8.2.0",
-    "@typescript-eslint/parser": "8.2.0",
-    "eslint": "8.57.0",
-    "eslint-config-prettier": "9.1.0",
+    "@typescript-eslint/eslint-plugin": "8.61.0",
+    "@typescript-eslint/parser": "8.61.0",
+    "eslint": "9.39.2",
     "express": "^5.0.0",
     "husky": "9.1.5",
-    "jest": "29.7.0",
+    "jest": "30.2.0",
     "prettier": "3.3.3",
     "release-it": "^20.0.1",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "5.6.3"
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.61.0"
   },
   "release-it": {
     "git": {

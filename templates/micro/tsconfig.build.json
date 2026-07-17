@@ -10,8 +10,7 @@
         "incremental": true,
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "isolatedModules": true,
-        "types": ["node"],
-        "baseUrl": "."
+        "types": ["node"]
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules", "dist", "test"]
