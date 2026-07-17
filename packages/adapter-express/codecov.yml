@@ -18,7 +18,6 @@ ignore:
   - "src/adapter-express/express-utils/content-negotiation-decorators.ts"
   - "src/adapter-express/express-utils/resolver-multer.ts"
   - "src/adapter-express/express-utils/http-context-store.ts"
-  - "src/di/**"
   - "src/adapter-express/render/resolve-render.ts"
 
 coverage:

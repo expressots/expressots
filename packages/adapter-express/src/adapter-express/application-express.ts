@@ -61,7 +61,6 @@ import {
  * The AppExpress class provides methods for configuring and running an Express application.
  * @class AppExpress
  * @implements {IWebServer} - Interface for the WebServer application implementation.
- * @extends {ApplicationBase} - Base class for the application implementation that provides lifecycle hooks.
  * @method configure - Configures the InversifyJS container.
  * @method listen - Start listening on the given port and environment.
  * @method setGlobalRoutePrefix - Sets the global route prefix for the application.

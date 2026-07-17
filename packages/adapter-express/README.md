@@ -37,11 +37,34 @@ This adapter bridges ExpressoTS Core and Express.js. It provides the HTTP server
 ## Quick Look
 
 ```typescript
-import { ExpressAdapter } from "@expressots/adapter-express";
+import { AppExpress } from "@expressots/adapter-express";
+import { AppContainer, CreateModule, bootstrap } from "@expressots/core";
+import { AppController } from "./app.controller";
 
-const app = await AppFactory.create(App, ExpressAdapter);
-await app.listen(3000, "development");
+export class App extends AppExpress {
+  private readonly container: AppContainer = this.configContainer([
+    CreateModule([AppController]),
+  ]);
+
+  async configureServices(): Promise<void> {
+    // register middleware, interceptors, error handlers
+  }
+}
+
+void bootstrap(App); // starts on process.env.PORT or 3000
 ```
+
+`bootstrap()` builds the container, runs the `AppExpress` lifecycle hooks (`globalConfiguration`, `configureServices`, `postServerInitialization`), starts the HTTP server, and wires graceful shutdown on SIGINT / SIGTERM.
+
+## Requirements
+
+- Express 5 (the adapter targets the Express 5 API; body parsing uses the Express 5 native parsers)
+- Node.js >= 20.19.0
+- `@expressots/studio-agent` is an optional peer dependency: install it to enable ExpressoTS Studio integration, or omit it with no impact on the adapter.
+
+## Preview modules
+
+The `micro-api` module (gateway, service-mesh, serverless, queue) is preview quality: its APIs may change and it is not yet covered by the test suite. Use it for experimentation, not production-critical paths.
 
 ## Documentation
 

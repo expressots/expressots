@@ -328,6 +328,8 @@ export class ServiceDiscovery {
     }
 
     // etcd v3 API implementation
-    console.log("[ServiceDiscovery] etcd integration requires etcd3 client library");
+    if (this.config.debug) {
+      console.log("[ServiceDiscovery] etcd integration requires etcd3 client library");
+    }
   }
 }

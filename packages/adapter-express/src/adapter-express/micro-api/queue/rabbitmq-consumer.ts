@@ -163,7 +163,9 @@ export class RabbitMQConsumer<T = unknown> implements IQueueConsumer<T> {
       // Handle connection close
       this.connection.on("close", () => {
         this.stats.isConnected = false;
-        console.log("[RabbitMQ] Connection closed");
+        if (this.config.debug) {
+          console.log("[RabbitMQ] Connection closed");
+        }
       });
 
       this.connection.on("error", (err: unknown) => {

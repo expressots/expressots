@@ -1,3 +1,36 @@
+## [4.0.0-preview.3.4](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3.3...4.0.0-preview.3.4) (2026-06-13)
+
+### Features
+
+* **studio:** Studio integration now collects route schemas, so ExpressoTS Studio can display request and response shapes for registered routes ([5ced27d](https://github.com/expressots/adapter-express/commit/5ced27d)).
+
+### Bug Fixes
+
+* **deps:** replaced local `file:` dependency references with registry semver ranges so fresh installs from npm resolve `@expressots/core` and `@expressots/shared` correctly ([6d3c438](https://github.com/expressots/adapter-express/commit/6d3c438)).
+
+### Notes
+
+* The `micro-api` module (gateway, service-mesh, serverless, queue) is preview quality: its APIs may change and it is not yet covered by the test suite.
+
+## [4.0.0-preview.3.3](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3.2...4.0.0-preview.3.3) (2026-06-10)
+
+* Republish of preview.3.2 with refreshed package metadata; no source changes.
+
+## [4.0.0-preview.3.2](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3.1...4.0.0-preview.3.2) (2026-06-06)
+
+* Republish of preview.3.1 to correct the published artifact; no source changes.
+
+## [4.0.0-preview.3.1](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3...4.0.0-preview.3.1) (2026-06-06)
+
+### Code Refactoring
+
+* **shutdown:** graceful shutdown now logs through the framework logger (`logger.info` / `logger.error`) instead of `console.log`, and stdout/stderr are flushed before the process exits so shutdown messages are not lost ([531df90](https://github.com/expressots/adapter-express/commit/531df90)).
+* styling pass across the codebase ([8b642dd](https://github.com/expressots/adapter-express/commit/8b642dd)).
+
+### Chores
+
+* updated linting configuration and commit hooks ([e75fb76](https://github.com/expressots/adapter-express/commit/e75fb76)).
+
 ## [4.0.0-preview.3](https://github.com/expressots/adapter-express/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
 Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.
@@ -16,7 +49,8 @@ Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes]
 * **request logging middleware:** `createRequestLoggingMiddleware(logger, { verbosity, logBody, logHeaders, slowRequestThreshold, requestIdHeader, correlationIdHeader })`.
 * **route, body, query, params, header decorators:** `@Get/@Post/@Put/@Delete/@Patch`, `@body`, `@query`, `@param`, `@headers`.
 * **exception filter middleware:** `Middleware.setErrorHandler({ showStackTrace, enableExceptionFilters })`.
-* **studio agent integration:** `@expressots/studio-agent` is an optional peer dependency — adapter-express dynamically imports it only when `NODE_ENV=development` and the package is installed; production deployments pay zero runtime cost. Detection now uses `createRequire(import.meta.url)` so it works in both CJS and ESM consumers.
+* **studio agent integration:** `@expressots/studio-agent` is an optional peer dependency: adapter-express dynamically imports it only when `NODE_ENV=development` and the package is installed; production deployments pay zero runtime cost. Detection uses a dynamic `import()`, which works in both CJS and ESM consumers.
+* **body parsing:** JSON and urlencoded body parsing is Express 5 native via the core middleware (`express.json()` / `express.urlencoded()`); the adapter does not depend on the standalone `body-parser` package.
 
 ### Bug Fixes
 

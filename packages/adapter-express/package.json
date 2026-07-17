@@ -20,7 +20,17 @@
   "files": [
     "README.md",
     "LICENSE.md",
+    "CHANGELOG.md",
     "lib/**/*"
+  ],
+  "sideEffects": [
+    "./lib/**/adapter-express/express-utils/decorators.js",
+    "./lib/**/adapter-express/express-utils/validation-decorators.js",
+    "./lib/**/adapter-express/express-utils/guard-utils.js",
+    "./lib/**/adapter-express/express-utils/guard-context-factory.js",
+    "./lib/**/adapter-express/express-utils/content-negotiation-decorators.js",
+    "./lib/**/adapter-express/express-utils/interceptor-middleware.js",
+    "./lib/**/adapter-express/express-utils/http-status-middleware.js"
   ],
   "license": "MIT",
   "homepage": "https://expresso-ts.com",
@@ -63,7 +73,7 @@
     "release:prepare": "node scripts/release/prepare-publish.mjs",
     "release:restore": "node scripts/release/restore-package-json.mjs",
     "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
-    "prepublish": "npm run build && npm pack",
+    "prepublish": "npm run build",
     "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -87,7 +97,6 @@
     }
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "^2.0.1",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.2.2",
     "@expressots/studio-agent": "^4.0.0-preview.3.4",

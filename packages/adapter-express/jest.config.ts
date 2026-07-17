@@ -9,7 +9,6 @@ const config: JestConfigWithTsJest = {
     "src/**/*.ts",
     "!**/*.spec.ts",
     "!src/**/index.ts",
-    "!src/di/**",
     "!src/adapter-express/render/resolve-render.ts",
     "!src/adapter-express/micro-api/**",
     "!src/adapter-express/middleware/**",

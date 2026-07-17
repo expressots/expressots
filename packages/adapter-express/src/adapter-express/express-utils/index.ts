@@ -22,7 +22,7 @@ export { InterceptorMiddleware, createInterceptorMiddleware } from "./intercepto
 export { ScopeExtractor } from "./scope-extractor.js";
 export type { IScopeExtractor } from "./scope-extractor.interface.js";
 export { PermissionPreloaderMiddleware } from "./permission-preloader.middleware.js";
-export { TYPE } from "./constants.js";
+export { TYPE, PARAMETER_TYPE } from "./constants.js";
 export type { AuthProvider, Principal } from "./interfaces.js";
 export { setupAuthorizationForExpress } from "./setup-authorization.js";
 export { setupEventSystemForExpress } from "./setup-event-system.js";
