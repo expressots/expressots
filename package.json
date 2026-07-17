@@ -1,6 +1,6 @@
 {
   "name": "@expressots/core",
-  "version": "4.0.0-preview.3.4",
+  "version": "4.0.0",
   "description": "Expressots - modern, fast, lightweight nodejs web framework (@core)",
   "author": "Richard Zampieri",
   "main": "./lib/cjs/index.js",
@@ -134,7 +134,7 @@
     "docs:clean": "node scripts/rm.js docs"
   },
   "dependencies": {
-    "@expressots/shared": "^4.0.0-preview.3.4",
+    "@expressots/shared": "^4.0.0",
     "reflect-metadata": "0.2.2"
   },
   "peerDependencies": {

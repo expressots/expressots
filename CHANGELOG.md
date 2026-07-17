@@ -1,6 +1,6 @@
-## Unreleased (4.0.0 hardening)
+## [4.0.0](https://github.com/expressots/expressots/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
-Pre-GA hardening pass. These changes ship in the 4.0.0 stable release.
+Stable release. Closes the v4 preview line with a production hardening pass.
 
 ### Breaking Changes
 
