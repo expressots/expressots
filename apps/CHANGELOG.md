@@ -1,4 +1,4 @@
-## [4.0.0](https://github.com/expressots/expressots-studio/releases/tag/4.0.0) (2026-05-12)
+## [4.0.0](https://github.com/expressots/expressots-studio/releases/tag/v4.0.0) (2026-07-16)
 
 First public release of ExpressoTS Studio. Part of the ExpressoTS **v4.0.0 release bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [Studio section of the docs](https://expresso-ts.com/docs/4.0.0/studio/overview).
 
@@ -33,13 +33,16 @@ Studio is developed as three packages in this monorepo. Two of them are publishe
 * Requires `@expressots/core` ^4.0.0 and `@expressots/adapter-express` ^4.0.0.
 * Node.js >= 20.19.0.
 
-## Preview line (4.0.0-preview.3.x)
-
-### Unreleased (post preview.3.4)
+### Included since preview.3.4 (GA hardening)
 
 * **Security hardening (`c7ceead`):** root `overrides` pin `js-yaml`, `hono`, `ws`, `esbuild`, `protobufjs`, `@opentelemetry/core`, and `vite` to patched versions; in-memory rate limiter in the Studio server; stricter path normalization and error handling in the route scanner, OpenAPI path utils, and security engine.
 * Coverage detection and reporting features.
 * `type: module` set for ES module support; tightened type definitions across packages.
+* Removed unused dependencies: `serve-static` (studio), `socket.io-client` and three unused direct OpenTelemetry packages (studio-agent).
+* Tests added for `mcp-server` (0 to 15) and the Studio server (23 to 32); root MIT `LICENSE` added.
+* `engines.node >= 20.19.0` across all workspaces.
+
+## Preview line (4.0.0-preview.3.x)
 
 ### 4.0.0-preview.3.4 (2026-06-13)
 

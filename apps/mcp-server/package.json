@@ -1,6 +1,6 @@
 {
   "name": "@expressots/mcp-server",
-  "version": "4.0.0-preview.3.4",
+  "version": "4.0.0",
   "private": true,
   "publishConfig": {
     "access": "public"

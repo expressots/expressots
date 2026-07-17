@@ -1,6 +1,6 @@
 {
   "name": "@expressots/studio",
-  "version": "4.0.0-preview.3.4",
+  "version": "4.0.0",
   "publishConfig": {
     "access": "public"
   },
@@ -32,7 +32,7 @@
     "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore"
   },
   "dependencies": {
-    "@expressots/studio-agent": ">=4.0.0-preview.3 <5",
+    "@expressots/studio-agent": "^4.0.0",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "express": "^5.1.0",
