@@ -1,3 +1,31 @@
+## [4.0.0](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
+
+Stable release. Production hardening pass on top of preview.3.4.
+
+### Breaking Changes
+
+* **removed:** the orphan `ApplicationBase` abstract class (it was never wired into `AppExpress`).
+* **engines:** minimum Node.js is now 20.19.0.
+
+### Features
+
+* **exports:** `PARAMETER_TYPE` is now exported from the package barrel (required by the public `params()` helper).
+
+### Bug Fixes
+
+* **micro-api:** remaining unconditional `console.log` calls in the RabbitMQ consumer and service-discovery paths are now gated behind the per-module debug flags.
+* **docs:** README quick-start rewritten to the real `AppExpress` + `bootstrap` API (previous example imported a non-existent `ExpressAdapter`).
+
+### Build System
+
+* TypeScript 7-clean configs: `module`/`moduleResolution` `node16`, ES2022 target, explicit `rootDir`. Toolchain remains TypeScript 5.x.
+* `sideEffects` declared for the seven reflect-metadata-importing modules; `CHANGELOG.md` ships in the tarball; the `prepublish` pack step is gone.
+* published manifest is stripped of dev-only fields by `release:prepare`.
+
+### Notes
+
+* The `micro-api` module (gateway, service-mesh, serverless, queue) remains preview quality in 4.0.0.
+
 ## [4.0.0-preview.3.4](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3.3...4.0.0-preview.3.4) (2026-06-13)
 
 ### Features
