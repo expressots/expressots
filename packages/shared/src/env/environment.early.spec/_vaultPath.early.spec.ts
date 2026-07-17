@@ -5,8 +5,8 @@ import path from "path";
 import { _vaultPath } from "../environment";
 
 // Mock the logger to avoid actual logging during tests
-jest.mock("../../utils/logger", () => {
-  const actual = jest.requireActual("../../utils/logger");
+jest.mock("../logger", () => {
+  const actual = jest.requireActual("../logger");
   return {
     ...actual,
     log: jest.fn(), // Mock the log function

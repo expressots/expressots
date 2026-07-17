@@ -7,17 +7,17 @@ import crypto from "crypto";
 
 import { LINE_REGEX } from "./constants.js";
 import { IConfigOptions, IConfigOutput, IEnvObject } from "./interfaces.js";
-import { log, LogLevel } from "../utils/logger.js";
+import { log, LogLevel } from "./logger.js";
 
 /**
  * Module to parse the .env.vault file
  * @param options - The configuration options
  * @returns The parsed object
  */
-function _parseVault(options: IConfigOptions): IEnvObject {
+function _parseVault(options?: IConfigOptions): IEnvObject {
   const vaultPath = _vaultPath(options);
 
-  const result = configDotenv({ path: vaultPath });
+  const result = configDotenv({ path: vaultPath ?? undefined });
   if (!result.parsed) {
     const err: Error = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
     err.name = "MISSING_DATA";
@@ -49,10 +49,10 @@ function _parseVault(options: IConfigOptions): IEnvObject {
  * @param options - The configuration options
  * @returns The .env.vault file path
  */
-function _vaultPath(options) {
-  let possibleVaultPath = null;
+function _vaultPath(options?: IConfigOptions): string | null {
+  let possibleVaultPath: string | null = null;
 
-  if (options && options.path && options.path.length > 0) {
+  if (options && options.path && !(options.path instanceof URL) && options.path.length > 0) {
     if (Array.isArray(options.path)) {
       for (const filepath of options.path) {
         if (fs.existsSync(filepath)) {
@@ -66,7 +66,7 @@ function _vaultPath(options) {
     possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
   }
 
-  if (fs.existsSync(possibleVaultPath)) {
+  if (possibleVaultPath && fs.existsSync(possibleVaultPath)) {
     return possibleVaultPath;
   }
 
@@ -131,7 +131,7 @@ function _instructions(result: IConfigOutput, dotenvKey: string) {
 
   // Get ciphertext payload
   const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
-  const ciphertext = result.parsed[environmentKey]; // DOTENV_VAULT_PRODUCTION
+  const ciphertext = result.parsed?.[environmentKey]; // DOTENV_VAULT_PRODUCTION
   if (!ciphertext) {
     const err: any = new Error(
       `NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`,
@@ -157,12 +157,12 @@ function _resolveHome(envPath: string): string {
  * @param options - The configuration options
  * @returns The parsed object
  */
-export function _configVault(options: IConfigOptions): IConfigOutput {
+export function _configVault(options?: IConfigOptions): IConfigOutput {
   log("Loading env from encrypted .env.vault");
 
   const parsed = _parseVault(options);
 
-  let processEnv = process.env;
+  let processEnv = process.env as IEnvObject;
   if (options && options.envObject != null) {
     processEnv = options.envObject;
   }
@@ -218,7 +218,7 @@ export function configDotenv(options?: IConfigOptions): IConfigOutput {
       const fileContent = fs.readFileSync(envPath, { encoding });
       const parsedContent = parse(fileContent);
       Object.assign(parsed, parsedContent);
-      populate(process.env, parsedContent, opts);
+      populate(process.env as IEnvObject, parsedContent, opts);
     } catch (error: any) {
       lastError = error;
       if (debug) {

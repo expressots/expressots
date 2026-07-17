@@ -39,7 +39,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.18.0"
+    "node": ">=20.19.0"
   },
   "keywords": [
     "expressots",
@@ -71,17 +71,6 @@
     "format": "prettier --write \"src/**/*.ts\" --cache",
     "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
     "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
-  },
-  "dependencies": {
-    "chalk": "4.1.2"
-  },
-  "peerDependencies": {
-    "ts-node": ">=10.0.0"
-  },
-  "peerDependenciesMeta": {
-    "ts-node": {
-      "optional": true
-    }
   },
   "overrides": {
     "js-yaml": "4.2.0"

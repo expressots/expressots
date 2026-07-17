@@ -2,11 +2,11 @@ import fs from "fs";
 import path from "path";
 import { configDotenv } from "../environment";
 import { IConfigOutput } from "../interfaces";
-import { log, LogLevel } from "../../utils/logger";
+import { log, LogLevel } from "../logger";
 
 // Mocking the logger
-jest.mock("../../utils/logger", () => {
-  const actual = jest.requireActual("../../utils/logger");
+jest.mock("../logger", () => {
+  const actual = jest.requireActual("../logger");
   return {
     ...actual,
     log: jest.fn(),

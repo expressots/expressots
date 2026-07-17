@@ -4,8 +4,8 @@
 import { parse } from "../environment";
 
 // Mocking the logger
-jest.mock("../../utils/logger", () => {
-  const actual = jest.requireActual("../../utils/logger");
+jest.mock("../logger", () => {
+  const actual = jest.requireActual("../logger");
   return {
     ...actual,
     log: jest.fn(),

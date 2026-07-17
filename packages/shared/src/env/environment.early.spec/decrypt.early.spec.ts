@@ -3,8 +3,8 @@
 import crypto from "crypto";
 import { decrypt } from "../environment";
 
-jest.mock("../../utils/logger", () => {
-  const actual = jest.requireActual("../../utils/logger");
+jest.mock("../logger", () => {
+  const actual = jest.requireActual("../logger");
   return {
     ...actual,
     log: jest.fn(), // Mock the log function

@@ -3,14 +3,14 @@
 
 import fs from "fs";
 import { _dotenvKey, _vaultPath, config, configDotenv } from "../environment";
-import { log, LogLevel } from "../../utils/logger";
+import { log, LogLevel } from "../logger";
 
 // Import necessary modules and functions
 
 // Import necessary modules and functions
 // Mock the logger
-jest.mock("../../utils/logger", () => {
-  const actual = jest.requireActual("../../utils/logger");
+jest.mock("../logger", () => {
+  const actual = jest.requireActual("../logger");
   return {
     ...actual,
     log: jest.fn(),

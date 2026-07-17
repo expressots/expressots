@@ -1,3 +1,53 @@
+## Unreleased
+
+### BREAKING CHANGES
+
+* remove the `utils` module (`Compiler` and the chalk-based logger printers). The `Compiler` config loader now lives in `@expressots/cli` (`src/utils/compiler.ts`); the logger printers were never exported from the package barrel. The internal dotenv `log` helper moved to `src/env/logger.ts` and is unchanged.
+* drop the `chalk` runtime dependency and the optional `ts-node` peer dependency; both were only used by the removed utils module.
+* require Node.js `>=20.19.0` (was `>=20.18.0`).
+
+### Build System
+
+* enable `strictNullChecks` and `noImplicitAny`; remove unused `experimentalDecorators` / `emitDecoratorMetadata`; CJS build now compiles with `module: node16` / `moduleResolution: node16` and an explicit `rootDir`.
+
+### Continuous Integrations
+
+* remove the `pull_request_target` trigger from the build workflow.
+
+### Bug Fixes
+
+* resolve js-yaml advisory and remove clear-text logging of env values ([b56bc02](https://github.com/expressots/shared/commit/b56bc02))
+* bump undici to 7.28.0 and regenerate `package-lock.json` with npm 10 to resolve Dependabot alerts ([ba875c4](https://github.com/expressots/shared/commit/ba875c4), [8c9b3d8](https://github.com/expressots/shared/commit/8c9b3d8))
+
+### Tests
+
+* cover `Pattern` enum and config vault fallback paths ([cb6fa84](https://github.com/expressots/shared/commit/cb6fa84))
+
+## [4.0.0-preview.3.4](https://github.com/expressots/shared/compare/v4.0.0-preview.3.3...v4.0.0-preview.3.4) (2026-06-13)
+
+* version-only release to keep the v4 preview bundle aligned across packages.
+
+## [4.0.0-preview.3.3](https://github.com/expressots/shared/compare/4.0.0-preview.3.2...v4.0.0-preview.3.3) (2026-06-10)
+
+* version-only release to keep the v4 preview bundle aligned across packages.
+
+## [4.0.0-preview.3.2](https://github.com/expressots/shared/compare/v4.0.0-preview.3.1...4.0.0-preview.3.2) (2026-06-06)
+
+### Build System
+
+* add `prepublishOnly` guard (`scripts/release/guard-no-file-deps.mjs`) that blocks publishing with `file:` dependencies.
+
+## [4.0.0-preview.3.1](https://github.com/expressots/shared/compare/v4.0.0-preview.3...v4.0.0-preview.3.1) (2026-06-06)
+
+### Documentation
+
+* refresh README badges and links.
+* add GitHub issue templates (bug report, feature request, documentation, community ideas) and template chooser config.
+
+### Continuous Integrations
+
+* add ExpressoTS Project sync workflow.
+
 ## [4.0.0-preview.3](https://github.com/expressots/shared/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
 Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes](https://expresso-ts.com/docs/4.0.0/prologue/release) and the [upgrade guide](https://expresso-ts.com/docs/4.0.0/prologue/upgrade_guide) for the full picture.

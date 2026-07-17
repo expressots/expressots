@@ -6,7 +6,7 @@
  * subfolders) as ECMAScript Modules at runtime.
  *
  * Without this, the entry `index.mjs` is ESM (by extension) but its
- * relative imports of `./utils/foo.js` and friends would fall back to
+ * relative imports of `./env/foo.js` and friends would fall back to
  * the package root's package.json, which has no `"type"` field, and Node
  * would treat them as CommonJS - breaking the dual-package build.
  *

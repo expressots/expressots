@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Unit tests for: populate
 
-import { log, LogLevel } from "../../utils/logger";
+import { log, LogLevel } from "../logger";
 import { populate } from "../environment";
 
 // Mocking the logger
-jest.mock("../../utils/logger", () => {
-  const actual = jest.requireActual("../../utils/logger");
+jest.mock("../logger", () => {
+  const actual = jest.requireActual("../logger");
   return {
     ...actual,
     log: jest.fn(),
