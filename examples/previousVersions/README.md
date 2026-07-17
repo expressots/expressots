@@ -1,8 +1,10 @@
 # Previous Versions
 
-These examples target **ExpressoTS v1/v2** and pre-v4 patterns (`AppFactory`, `inversify-express-utils`, `ts-node-dev`). They are preserved for historical reference.
-
-Do not use them as starting points for new v4 projects. See the [v4 catalog](../CATALOG.md) instead.
+> **Warning: legacy code. Do not use as a reference for v4 projects.**
+>
+> These examples target **ExpressoTS v1/v2** and rely on APIs that were **removed in v4**: `AppFactory`, `BaseController`, `IMiddleware`, plus pre-v4 tooling (`inversify-express-utils`, `ts-node-dev`). Some of them pin `@expressots/core@latest`, so a fresh install will pull a v4 release and break them.
+>
+> They are preserved for historical reference only. Do not copy patterns, imports, or configuration from them into a v4 project. For new projects and v4 patterns, see the [v4 catalog](../CATALOG.md).
 
 | Folder | Description | Era |
 | --- | --- | --- |

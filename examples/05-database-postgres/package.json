@@ -4,6 +4,9 @@
     "description": "PostgreSQL provider with IBootstrap lifecycle",
     "private": true,
     "license": "MIT",
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "main": "dist/src/main.js",
     "scripts": {
         "dev": "expressots dev",

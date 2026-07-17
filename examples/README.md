@@ -56,9 +56,9 @@ npm run dev
 ./scripts/test-all.sh
 ```
 
-## Issues found during implementation
+## Known limitations
 
-See **[issues.md](./issues.md)** for framework bugs, doc drift, and workarounds discovered while building these examples.
+See **[issues.md](./issues.md)** for known limitations: framework bugs, doc drift, and workarounds discovered while building these examples.
 
 ## Documentation
 

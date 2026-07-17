@@ -4,6 +4,9 @@
     "description": "Type-safe event system",
     "private": true,
     "license": "MIT",
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "main": "dist/src/main.js",
     "scripts": {
         "dev": "expressots dev",
