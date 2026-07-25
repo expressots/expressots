@@ -345,6 +345,9 @@ async function versionStage(currentVersion) {
   const newVersion = bumpVersion(currentVersion, type);
   summary ||= `Release v${newVersion}`;
 
+  const preexisting = fs.readdirSync(path.join(ROOT, ".changeset")).filter((f) => f.endsWith(".md") && f !== "README.md");
+  if (preexisting.length) record("version", "pre-existing changesets folded into this release", "warn", preexisting.join(", "));
+
   const fixedGroup = JSON.parse(fs.readFileSync(path.join(ROOT, ".changeset/config.json"), "utf8")).fixed[0];
   const publishableNames = new Set(workspacePackages().filter(({ pkg }) => !pkg.private).map(({ pkg }) => pkg.name));
   const frontmatter = fixedGroup.filter((n) => publishableNames.has(n)).map((n) => `"${n}": ${type}`).join("\n");
