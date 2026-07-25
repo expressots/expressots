@@ -1,3 +1,5 @@
+# @expressots/shared
+
 ## [4.0.0](https://github.com/expressots/shared/compare/v4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
 Stable release.

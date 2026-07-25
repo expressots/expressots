@@ -1,3 +1,5 @@
+# @expressots/cli
+
 ## [4.0.0](https://github.com/expressots/expressots-cli/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
 Stable release. `expressots new` now resolves templates from the `expressots/templates#v4.0.0` tag.

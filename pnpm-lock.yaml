@@ -281,9 +281,6 @@ importers:
       "@commitlint/config-conventional":
         specifier: 19.2.2
         version: 19.2.2
-      "@expressots/core":
-        specifier: 2.15.0
-        version: 2.15.0
       "@release-it/conventional-changelog":
         specifier: 8.0.1
         version: 8.0.1(release-it@17.6.0(typescript@5.5.3))
@@ -1698,13 +1695,6 @@ packages:
         integrity: sha512-Ys+3g2TaW7gADOJzPt83SJtCDhMjndcDMFVQ/Tj9iA1BfJzFKD9mAUXT3OenpuPHbI6P/myECxRJrofUsDx/5g==,
       }
     engines: { node: ^12.22.0 || ^14.17.0 || >=16.0.0 }
-
-  "@expressots/core@2.15.0":
-    resolution:
-      {
-        integrity: sha512-RbACoTumgZyd48YTq9pBDFsknMizA4L47owkQkhkKuKU44+/ATuhnVXV2bxckkA9v+Za9lSpWOZugWXztUlvTg==,
-      }
-    engines: { node: ">=18.18.0" }
 
   "@expressots/core@4.0.0":
     resolution:
@@ -7263,18 +7253,6 @@ packages:
       }
     engines: { node: ">= 0.10" }
 
-  inversify-binding-decorators@4.0.0:
-    resolution:
-      {
-        integrity: sha512-r8au/oH3vS7ttHj0RivAznwElySeRohLfg8lvOSzbrX6abf/8ik8ptk49XbzdShgrnalvl7CM6MjcskfM7MMqQ==,
-      }
-
-  inversify@6.0.2:
-    resolution:
-      {
-        integrity: sha512-i9m8j/7YIv4mDuYXUAcrpKPSaju/CIly9AHK5jvCBeoiM/2KEsuCQTTP+rzSWWpLYWRukdXFSl6ZTk2/uumbiA==,
-      }
-
   ip-address@10.3.1:
     resolution:
       {
@@ -12169,12 +12147,6 @@ snapshots:
 
   "@eslint/js@8.57.0": {}
 
-  "@expressots/core@2.15.0":
-    dependencies:
-      inversify: 6.0.2
-      inversify-binding-decorators: 4.0.0
-      reflect-metadata: 0.2.2
-
   "@expressots/core@4.0.0(class-validator@0.15.1)(express@5.2.1)(yup@1.7.1)(zod@4.4.3)":
     dependencies:
       "@expressots/shared": 4.0.0
@@ -16356,10 +16328,6 @@ snapshots:
   internmap@2.0.3: {}
 
   interpret@1.4.0: {}
-
-  inversify-binding-decorators@4.0.0: {}
-
-  inversify@6.0.2: {}
 
   ip-address@10.3.1: {}
 

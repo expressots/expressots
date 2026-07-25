@@ -1,42 +1,44 @@
+# @expressots/core
+
 ## [4.0.0](https://github.com/expressots/expressots/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
 Stable release. Closes the v4 preview line with a production hardening pass.
 
 ### Breaking Changes
 
-* **removed deprecated APIs:** `AppFactory` is no longer exported (it remains the internal engine behind `bootstrap()`); the v3 `InMemoryDataProvider`/`InMemoryDataTable` were removed (use `InMemoryDBProvider`); the `LazyServiceIdentifer` typo alias was removed (use `LazyServiceIdentifier`); `Logger#formatMessage` (legacy) and `AppContainer#viewContainerBindings` (use `getFormattedBindingsView()` or `introspect()`) were removed.
-* **engines:** minimum Node.js is now 20.19.0 (aligned across all @expressots packages).
+- **removed deprecated APIs:** `AppFactory` is no longer exported (it remains the internal engine behind `bootstrap()`); the v3 `InMemoryDataProvider`/`InMemoryDataTable` were removed (use `InMemoryDBProvider`); the `LazyServiceIdentifer` typo alias was removed (use `LazyServiceIdentifier`); `Logger#formatMessage` (legacy) and `AppContainer#viewContainerBindings` (use `getFormattedBindingsView()` or `introspect()`) were removed.
+- **engines:** minimum Node.js is now 20.19.0 (aligned across all @expressots packages).
 
 ### Features
 
-* **subpath exports:** `@expressots/core/testing`, `@expressots/core/di`, `@expressots/core/render`, and `@expressots/core/path-resolver` are now importable directly for a leaner dependency surface. The root export keeps the full surface for compatibility.
-* **validation:** new `validationRegistry` shared singleton export, matching the adapter documentation (`validationRegistry.register(createZodValidator())`).
-* **optional validator peers:** `zod`, `yup`, and `class-validator` are now declared as optional `peerDependencies`, so package managers surface version compatibility without forcing an install.
-* **llms.txt:** the published package now ships an `llms.txt` summary of the public API for AI coding agents.
+- **subpath exports:** `@expressots/core/testing`, `@expressots/core/di`, `@expressots/core/render`, and `@expressots/core/path-resolver` are now importable directly for a leaner dependency surface. The root export keeps the full surface for compatibility.
+- **validation:** new `validationRegistry` shared singleton export, matching the adapter documentation (`validationRegistry.register(createZodValidator())`).
+- **optional validator peers:** `zod`, `yup`, and `class-validator` are now declared as optional `peerDependencies`, so package managers surface version compatibility without forcing an install.
+- **llms.txt:** the published package now ships an `llms.txt` summary of the public API for AI coding agents.
 
 ### Build System
 
-* TypeScript 7 compatibility: build configs no longer use the removed `downlevelIteration` and `moduleResolution: "node"` options (now `node16` with explicit `rootDir`); the codebase type-checks cleanly under TypeScript 7. The toolchain itself remains TypeScript 5.x.
-* published manifest is now stripped of `devDependencies`, `scripts`, and repo-only tooling config by `release:prepare`.
-* type declarations now ship once (`lib/cjs/types`) and serve both the CJS and ESM entry points; the previously duplicated `lib/esm/types` tree is gone, cutting the installed size by about 1.5 MB.
-* `sideEffects` is now declared so bundlers can tree-shake safely without dropping decorator registration modules.
-* correction to earlier notes: subpath `exports` first ship in this release; preview.3 only exposed the root entry point.
+- TypeScript 7 compatibility: build configs no longer use the removed `downlevelIteration` and `moduleResolution: "node"` options (now `node16` with explicit `rootDir`); the codebase type-checks cleanly under TypeScript 7. The toolchain itself remains TypeScript 5.x.
+- published manifest is now stripped of `devDependencies`, `scripts`, and repo-only tooling config by `release:prepare`.
+- type declarations now ship once (`lib/cjs/types`) and serve both the CJS and ESM entry points; the previously duplicated `lib/esm/types` tree is gone, cutting the installed size by about 1.5 MB.
+- `sideEffects` is now declared so bundlers can tree-shake safely without dropping decorator registration modules.
+- correction to earlier notes: subpath `exports` first ship in this release; preview.3 only exposed the root entry point.
 
 ## [4.0.0-preview.3.4](https://github.com/expressots/expressots/compare/4.0.0-preview.3.3...4.0.0-preview.3.4) (2026-06-13)
 
 ### Bug Fixes
 
-* **deps:** replace local `file:` tarball references with registry semver ranges so published packages install cleanly ([5ed7f75](https://github.com/expressots/expressots/commit/5ed7f75))
+- **deps:** replace local `file:` tarball references with registry semver ranges so published packages install cleanly ([5ed7f75](https://github.com/expressots/expressots/commit/5ed7f75))
 
 ### Documentation
 
-* clarify bootstrap and path resolver comments ([55e850f](https://github.com/expressots/expressots/commit/55e850f))
+- clarify bootstrap and path resolver comments ([55e850f](https://github.com/expressots/expressots/commit/55e850f))
 
 ## [4.0.0-preview.3.3](https://github.com/expressots/expressots/compare/4.0.0-preview.3.2...4.0.0-preview.3.3) (2026-06-10)
 
 ### Features
 
-* **validation:** add `extractSchema()` to the Zod adapter and a `schemaToJsonSchema` helper ([2f1dc73](https://github.com/expressots/expressots/commit/2f1dc73))
+- **validation:** add `extractSchema()` to the Zod adapter and a `schemaToJsonSchema` helper ([2f1dc73](https://github.com/expressots/expressots/commit/2f1dc73))
 
 ## [4.0.0-preview.3.2](https://github.com/expressots/expressots/compare/4.0.0-preview.3.1...4.0.0-preview.3.2) (2026-06-06)
 
@@ -46,13 +48,13 @@ Maintenance release aligning the v4 preview bundle versions across packages. No 
 
 ### Features
 
-* **db-in-memory:** many-to-many relation support and validation in the in-memory adapter ([1fb20f1](https://github.com/expressots/expressots/commit/1fb20f1))
-* **logger:** structured log output with timestamp formatting and ANSI color detection in the console transport ([bbfb4f8](https://github.com/expressots/expressots/commit/bbfb4f8), [e4c7adc](https://github.com/expressots/expressots/commit/e4c7adc))
-* **env:** richer `loadEnvSync` options and documentation ([7ae8300](https://github.com/expressots/expressots/commit/7ae8300))
+- **db-in-memory:** many-to-many relation support and validation in the in-memory adapter ([1fb20f1](https://github.com/expressots/expressots/commit/1fb20f1))
+- **logger:** structured log output with timestamp formatting and ANSI color detection in the console transport ([bbfb4f8](https://github.com/expressots/expressots/commit/bbfb4f8), [e4c7adc](https://github.com/expressots/expressots/commit/e4c7adc))
+- **env:** richer `loadEnvSync` options and documentation ([7ae8300](https://github.com/expressots/expressots/commit/7ae8300))
 
 ### Security
 
-* upgrade release tooling (release-it 17 to 20, @release-it/conventional-changelog 8 to 11) to clear audit findings ([7775a14](https://github.com/expressots/expressots/commit/7775a14))
+- upgrade release tooling (release-it 17 to 20, @release-it/conventional-changelog 8 to 11) to clear audit findings ([7775a14](https://github.com/expressots/expressots/commit/7775a14))
 
 ## [4.0.0-preview.3](https://github.com/expressots/expressots/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
@@ -62,32 +64,32 @@ Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes]
 
 ### Features (core)
 
-* **interceptors:** new AOP system (`@Interceptor`, `IInterceptor`, `ExecutionContext`, `CallHandler`) with composition helpers `whenInterceptor`, `unlessInterceptor`, `pipeInterceptors`, `combineInterceptors`, and built-ins `LoggingInterceptor`, `PerformanceInterceptor`, `TimeoutInterceptor`.
-* **events:** type-safe event bus (`EventEmitter`, `@OnEvent`, `@OnEvents`, `@When`, `IEventHandler`) with auto-discovery, priority-based execution, `EventRecorder`, and `EventFlowTracker`.
-* **lazy loading:** `LazyModule` with `withPreloadHint`, `withLazyConfig`, `CreateLazyModule`, plus standalone helper exports of the same names; `idle` / `immediate` / `manual` warmup strategies and zero-config route detection from `@controller()`.
-* **configuration:** type-safe `defineConfig` + `Env.{string,number,boolean,enum,port,url,secret,array,json}` field builders with inline multi-environment defaults, `SecretValue` auto-redaction, helpful validation errors, and `Env.when()` helper for environment-specific resolution.
-* **logging:** 11-phase production logger with `Logger.configure` (static + instance), `withContext`, `child`, transports (`ConsoleTransport`, `FileTransport`, `HttpTransport`), redaction, suggestions, flow tracker, performance metrics, grouping, query/export API, and health monitor.
-* **authorization:** guard system with `@RequireAuthentication`, `@RequireRoles`, `@RequirePermissions`, built-in `AuthenticatedGuard` / `RoleGuard` / `PermissionGuard` / `ResourceOwnerGuard`, ABAC via `@RequirePolicy`, composition helpers `combineGuards` / `sequenceGuards` / `whenGuard`, permission hierarchy, multi-tenant support, request-scoped caching.
-* **middleware:** named registry (`getMiddlewareRegistry`, `use`, `compose`, `when`, `parallel`, `timeout`), category-based preset API via `applyPreset()` / `definePreset()` (available both as `Middleware` instance methods and as standalone exports) with eight built-in presets (`api`, `web`, `spa`, `microservice`, `graphql`, `minimal`, `development`, `production`), `MiddlewareProfiler`, optional-package resolver.
-* **smart validation:** auto-detected `class-validator` integration with helpful errors, plus built-in adapters for **Zod** (`createZodValidator`) and **Yup** (`createYupValidator`) with optional peer dependencies — install only the validator you actually use.
-* **error handling:** RFC 7807 compliant `AppError` with helpers (`badRequest`, `notFound`, `validationFailed`, etc.), auto-discovered exception filters via `@Catch`, route-level `@UseFilters`, and inherited filter matching.
-* **lifecycle hooks:** `IBootstrap`, `IShutdown`, `@postConstruct`, `@preDestroy` on DI-managed classes.
-* **DI scopes:** `Scope.Singleton` / `Transient` / `Request` plus custom scopes (`tenant`, `transaction`, `workflow`, `session`) via `provideInScope`.
-* **testing module:** `createTestApp`, `request` fluent API, `mockProvider`, `setupExpressoTSMatchers`, `expectStatus`, `expectBody` (with partial matching), snapshot testing, load testing, database fixtures.
+- **interceptors:** new AOP system (`@Interceptor`, `IInterceptor`, `ExecutionContext`, `CallHandler`) with composition helpers `whenInterceptor`, `unlessInterceptor`, `pipeInterceptors`, `combineInterceptors`, and built-ins `LoggingInterceptor`, `PerformanceInterceptor`, `TimeoutInterceptor`.
+- **events:** type-safe event bus (`EventEmitter`, `@OnEvent`, `@OnEvents`, `@When`, `IEventHandler`) with auto-discovery, priority-based execution, `EventRecorder`, and `EventFlowTracker`.
+- **lazy loading:** `LazyModule` with `withPreloadHint`, `withLazyConfig`, `CreateLazyModule`, plus standalone helper exports of the same names; `idle` / `immediate` / `manual` warmup strategies and zero-config route detection from `@controller()`.
+- **configuration:** type-safe `defineConfig` + `Env.{string,number,boolean,enum,port,url,secret,array,json}` field builders with inline multi-environment defaults, `SecretValue` auto-redaction, helpful validation errors, and `Env.when()` helper for environment-specific resolution.
+- **logging:** 11-phase production logger with `Logger.configure` (static + instance), `withContext`, `child`, transports (`ConsoleTransport`, `FileTransport`, `HttpTransport`), redaction, suggestions, flow tracker, performance metrics, grouping, query/export API, and health monitor.
+- **authorization:** guard system with `@RequireAuthentication`, `@RequireRoles`, `@RequirePermissions`, built-in `AuthenticatedGuard` / `RoleGuard` / `PermissionGuard` / `ResourceOwnerGuard`, ABAC via `@RequirePolicy`, composition helpers `combineGuards` / `sequenceGuards` / `whenGuard`, permission hierarchy, multi-tenant support, request-scoped caching.
+- **middleware:** named registry (`getMiddlewareRegistry`, `use`, `compose`, `when`, `parallel`, `timeout`), category-based preset API via `applyPreset()` / `definePreset()` (available both as `Middleware` instance methods and as standalone exports) with eight built-in presets (`api`, `web`, `spa`, `microservice`, `graphql`, `minimal`, `development`, `production`), `MiddlewareProfiler`, optional-package resolver.
+- **smart validation:** auto-detected `class-validator` integration with helpful errors, plus built-in adapters for **Zod** (`createZodValidator`) and **Yup** (`createYupValidator`) with optional peer dependencies — install only the validator you actually use.
+- **error handling:** RFC 7807 compliant `AppError` with helpers (`badRequest`, `notFound`, `validationFailed`, etc.), auto-discovered exception filters via `@Catch`, route-level `@UseFilters`, and inherited filter matching.
+- **lifecycle hooks:** `IBootstrap`, `IShutdown`, `@postConstruct`, `@preDestroy` on DI-managed classes.
+- **DI scopes:** `Scope.Singleton` / `Transient` / `Request` plus custom scopes (`tenant`, `transaction`, `workflow`, `session`) via `provideInScope`.
+- **testing module:** `createTestApp`, `request` fluent API, `mockProvider`, `setupExpressoTSMatchers`, `expectStatus`, `expectBody` (with partial matching), snapshot testing, load testing, database fixtures.
 
 ### Breaking Changes
 
-* `.env` files are **opt-in** — `bootstrap()` now requires `envFileConfig` to load `.env`. Containerised deployments no longer trip "missing .env" alarms. See ADR-001.
-* `AppFactory.create()` is deprecated in favor of `bootstrap()` from `@expressots/core` (still exported for advanced use; will be removed in a future major).
-* Node.js 20.18.0+ is now the minimum supported runtime (now declared in `engines`).
+- `.env` files are **opt-in** — `bootstrap()` now requires `envFileConfig` to load `.env`. Containerised deployments no longer trip "missing .env" alarms. See ADR-001.
+- `AppFactory.create()` is deprecated in favor of `bootstrap()` from `@expressots/core` (still exported for advanced use; will be removed in a future major).
+- Node.js 20.18.0+ is now the minimum supported runtime (now declared in `engines`).
 
 ### Build System
 
-* `@expressots/shared` is now a runtime `dependency` (previously misclassified as `devDependency`), so a fresh install of `@expressots/core` no longer crashes with `Cannot find module '@expressots/shared'`.
-* dual ESM + CJS publication via conditional `exports` (root entry point; subpath exports arrive in 4.0.0 stable).
-* migrated from Vitest to Jest 29.
-* embedded our customised DI implementation (replaces `inversify`).
-* embedded `reflect-metadata` so consumers don't have to install it explicitly.
+- `@expressots/shared` is now a runtime `dependency` (previously misclassified as `devDependency`), so a fresh install of `@expressots/core` no longer crashes with `Cannot find module '@expressots/shared'`.
+- dual ESM + CJS publication via conditional `exports` (root entry point; subpath exports arrive in 4.0.0 stable).
+- migrated from Vitest to Jest 29.
+- embedded our customised DI implementation (replaces `inversify`).
+- embedded `reflect-metadata` so consumers don't have to install it explicitly.
 
 ## [3.0.0](https://github.com/expressots/expressots/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 

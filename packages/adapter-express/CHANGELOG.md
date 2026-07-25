@@ -1,3 +1,5 @@
+# @expressots/adapter-express
+
 ## [4.0.0](https://github.com/expressots/adapter-express/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
 Stable release. Production hardening pass on top of preview.3.4.
