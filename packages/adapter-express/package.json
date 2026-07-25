@@ -40,10 +40,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/adapter-express"
+    "url": "git+https://github.com/expressots/expressots.git",
+    "directory": "packages/adapter-express"
   },
   "bugs": {
-    "url": "https://github.com/expressots/adapter-express/issues"
+    "url": "https://github.com/expressots/expressots/issues"
   },
   "publishConfig": {
     "access": "public"

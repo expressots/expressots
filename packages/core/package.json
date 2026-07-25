@@ -90,7 +90,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/expressots"
+    "url": "git+https://github.com/expressots/expressots.git",
+    "directory": "packages/core"
   },
   "bugs": {
     "url": "https://github.com/expressots/expressots/issues"
@@ -127,8 +128,8 @@
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
     "format": "prettier --write \"packages/**/*.ts\" --cache",
-    "lint": "eslint \"packages/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
-    "lint:fix": "eslint \"packages/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/",
+    "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/",
     "docs:generate": "node scripts/generate-docs.js",
     "docs:clean": "node scripts/rm.js docs"
   },

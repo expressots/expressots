@@ -30,10 +30,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/shared"
+    "url": "git+https://github.com/expressots/expressots.git",
+    "directory": "packages/shared"
   },
   "bugs": {
-    "url": "https://github.com/expressots/shared/issues"
+    "url": "https://github.com/expressots/expressots/issues"
   },
   "publishConfig": {
     "access": "public"

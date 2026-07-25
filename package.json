@@ -20,9 +20,9 @@
     "lint": "turbo run lint",
     "format": "turbo run format",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "changeset publish",
-    "prepare": "husky"
+    "release": "node scripts/release/index.mjs",
+    "prepare": "husky",
+    "release:report": "node scripts/release/index.mjs --report-only"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
@@ -31,13 +31,9 @@
     "husky": "^9.1.7",
     "prettier": "^3.3.0",
     "turbo": "^2.5.0",
-    "lint-staged": "^15.2.10"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "protobufjs"
-    ]
+    "lint-staged": "^15.2.10",
+    "publint": "^0.3.0",
+    "@arethetypeswrong/cli": "^0.18.0"
   },
   "lint-staged": {
     "*.{ts,tsx,json,md,yml,yaml}": [

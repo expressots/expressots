@@ -67,3 +67,6 @@ templates/opinionated/public
 .turbo
 dist
 *.tsbuildinfo
+
+# Release reports
+.release-reports

@@ -43,8 +43,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/expressots/expressots-studio",
-    "directory": "packages/mcp-server"
+    "url": "git+https://github.com/expressots/expressots.git",
+    "directory": "apps/mcp-server"
   },
   "keywords": [
     "expressots",
