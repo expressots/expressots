@@ -260,7 +260,7 @@ function writeReport(currentVersion) {
     ``,
     `| Stage | Check | Status | Detail |`,
     `| ----- | ----- | ------ | ------ |`,
-    ...results.map((r) => `| ${r.stage} | ${r.name} | ${r.status.toUpperCase()} | ${r.detail?.replace(/\|/g, "\\|") ?? ""} |`),
+    ...results.map((r) => `| ${r.stage} | ${r.name} | ${r.status.toUpperCase()} | ${r.detail?.replace(/\|/g, "\\|").replace(/\s+/g, " ") ?? ""} |`),
   ];
   fs.writeFileSync(file, lines.join("\n") + "\n");
 
