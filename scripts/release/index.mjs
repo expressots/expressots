@@ -4,7 +4,7 @@
  *
  *   pnpm release                 full flow: report -> version -> publish
  *   pnpm release:report          production-readiness report only
- *   flags: --report-only --skip-smoke --yes
+ *   flags: --report-only --skip-smoke --skip-templates --yes
  *
  * Stages:
  *   1. Preflight     git/tooling sanity
@@ -12,8 +12,12 @@
  *   3. Pack checks   publint + arethetypeswrong on every publishable package
  *   4. Smoke test    install packed tarballs into the starter example, boot it,
  *                    hit /api/health — tests what users actually download
- *   5. Version       conventional-commit scan -> suggested bump -> changeset
+ *   5. Version       conventional-commit scan -> suggested bump -> changeset;
+ *                    also re-pins @expressots/* in templates/ and examples/
  *   6. Publish       changeset publish (topological order) + tags
+ *   7. Templates     sync templates/ -> expressots/templates and tag vX.Y.Z
+ *                    (the CLI scaffolds via degit expressots/templates#v<cli version>,
+ *                    so a published CLI is broken until its matching tag exists)
  */
 import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";
@@ -26,7 +30,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const args = process.argv.slice(2);
 const REPORT_ONLY = args.includes("--report-only");
 const SKIP_SMOKE = args.includes("--skip-smoke");
+const SKIP_TEMPLATES = args.includes("--skip-templates");
 const YES = args.includes("--yes");
+
+const TEMPLATES_REPO = "git@github.com:expressots/templates.git";
 
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[0m`,
@@ -102,8 +109,19 @@ function preflight() {
   if (nodeMajor < 20) { record("preflight", "node >= 20", "fail", `node ${process.versions.node}`); ok = false; }
   else record("preflight", "node >= 20", "pass", `node ${process.versions.node}`);
 
+  // Warn-only here so the version stage can be rehearsed while logged out;
+  // publishStage() re-checks and hard-fails before anything leaves the machine.
   try { record("preflight", "npm authenticated", "pass", sh("npm whoami")); }
-  catch { record("preflight", "npm authenticated", REPORT_ONLY ? "warn" : "fail", "run `npm login` before publishing"); if (!REPORT_ONLY) ok = false; }
+  catch { record("preflight", "npm authenticated", "warn", "run `npm login` before publishing"); }
+
+  try {
+    sh(`git ls-remote --heads ${TEMPLATES_REPO} main`);
+    record("preflight", "templates repo reachable", "pass");
+  } catch {
+    const needed = !REPORT_ONLY && !SKIP_TEMPLATES;
+    record("preflight", "templates repo reachable", needed ? "fail" : "warn", `cannot reach ${TEMPLATES_REPO}`);
+    if (needed) ok = false;
+  }
 
   return ok;
 }
@@ -260,6 +278,44 @@ function bumpVersion(v, type) {
   return type === "major" ? `${maj + 1}.0.0` : type === "minor" ? `${maj}.${min + 1}.0` : `${maj}.${min}.${pat + 1}`;
 }
 
+/**
+ * templates/ and examples/ are not pnpm workspace members, so changesets
+ * never touches them — their exact `@expressots/*` pins are rewritten here
+ * to the released version and committed with the release.
+ */
+function syncPinnedVersions(newVersion) {
+  const names = new Set(workspacePackages().filter(({ pkg }) => !pkg.private).map(({ pkg }) => pkg.name));
+  const touched = [];
+
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== "node_modules" && entry.name !== "dist") walk(full);
+      } else if (entry.name === "package.json") {
+        const raw = fs.readFileSync(full, "utf8");
+        const pkg = JSON.parse(raw);
+        let changed = false;
+        for (const section of ["dependencies", "devDependencies", "peerDependencies"]) {
+          for (const dep of Object.keys(pkg[section] ?? {})) {
+            if (names.has(dep) && pkg[section][dep] !== newVersion) { pkg[section][dep] = newVersion; changed = true; }
+          }
+        }
+        if (changed) {
+          const indent = raw.match(/^[ \t]+/m)?.[0] ?? "  ";
+          fs.writeFileSync(full, JSON.stringify(pkg, null, indent) + "\n");
+          touched.push(path.relative(ROOT, full));
+        }
+      }
+    }
+  };
+  for (const top of ["templates", "examples"]) {
+    const dir = path.join(ROOT, top);
+    if (fs.existsSync(dir)) walk(dir);
+  }
+  return touched;
+}
+
 async function versionStage(currentVersion) {
   header("Stage 5 · Version bump");
 
@@ -295,6 +351,8 @@ async function versionStage(currentVersion) {
   fs.writeFileSync(path.join(ROOT, `.changeset/release-${newVersion}.md`), `---\n${frontmatter}\n---\n\n${summary}\n`);
 
   sh("pnpm changeset version", { stdio: ["ignore", "inherit", "inherit"] });
+  const pinned = syncPinnedVersions(newVersion);
+  if (pinned.length) record("version", `templates/examples pinned to v${newVersion}`, "pass", `${pinned.length} package.json file(s)`);
   sh("git add -A");
   sh(`git commit -m "chore(release): v${newVersion}"`, { stdio: ["ignore", "pipe", "pipe"] });
   record("version", `bumped to v${newVersion} and committed`, "pass", `changelogs updated`);
@@ -304,18 +362,69 @@ async function versionStage(currentVersion) {
 // ---------------------------------------------------------------- stage 6
 async function publishStage(newVersion) {
   header("Stage 6 · Publish to npm");
+
+  try { sh("npm whoami"); }
+  catch {
+    record("publish", "npm authenticated", "fail", "run `npm login`, then publish with: pnpm changeset publish");
+    return false;
+  }
+
   if (!YES) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = (await rl.question(`  Publish v${newVersion} to npm now? [y/N] `)).trim().toLowerCase();
+    const answer = (await rl.question(`  Publish v${newVersion} to npm and sync expressots/templates? [y/N] `)).trim().toLowerCase();
     rl.close();
     if (answer !== "y") {
       console.log(c.yellow(`  Skipped. Publish later with: pnpm changeset publish && git push --follow-tags`));
-      return;
+      console.log(c.yellow(`  (remember: the v${newVersion} CLI needs the matching expressots/templates tag — rerun with the templates sync)`));
+      return false;
     }
   }
   execSync("pnpm changeset publish", { cwd: ROOT, stdio: "inherit" });
   record("publish", `published v${newVersion}`, "pass");
-  console.log(c.bold(`\n  Done. Push commits and tags: ${c.cyan("git push --follow-tags")}`));
+  return true;
+}
+
+// ---------------------------------------------------------------- stage 7
+/**
+ * The monorepo's templates/ directory is the source of truth, but installed
+ * CLIs scaffold with `degit expressots/templates/<folder>#v<cli version>` —
+ * a small standalone repo, so `ex new` downloads ~360 KB instead of the
+ * whole monorepo tree. This stage replaces that repo's content with
+ * templates/ and pushes the version tag the freshly published CLI expects.
+ */
+function templatesSyncStage(newVersion) {
+  header("Stage 7 · Sync templates -> expressots/templates");
+  if (SKIP_TEMPLATES) { record("templates", "sync + tag", "skip", "--skip-templates"); return true; }
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "expressots-templates-"));
+  const repo = path.join(tmp, "templates");
+  const start = Date.now();
+  try {
+    sh(`git clone --depth 1 ${TEMPLATES_REPO} ${JSON.stringify(repo)}`);
+    for (const entry of fs.readdirSync(repo)) {
+      if (entry !== ".git") fs.rmSync(path.join(repo, entry), { recursive: true, force: true });
+    }
+    fs.cpSync(path.join(ROOT, "templates"), repo, {
+      recursive: true,
+      filter: (src) => !src.includes("node_modules"),
+    });
+
+    const dirty = sh("git status --porcelain", { cwd: repo });
+    if (dirty) {
+      sh("git add -A", { cwd: repo });
+      sh(`git commit -m "chore(release): sync from expressots/expressots v${newVersion}"`, { cwd: repo });
+    }
+    sh(`git tag v${newVersion}`, { cwd: repo });
+    sh("git push origin HEAD --follow-tags", { cwd: repo });
+    record("templates", `synced and tagged v${newVersion}`, "pass", dirty ? "content updated" : "no content changes, tag only", (Date.now() - start) / 1000);
+    return true;
+  } catch (err) {
+    record("templates", `synced and tagged v${newVersion}`, "fail", String(err.message).split("\n")[0]);
+    console.log(c.red(`  Templates sync failed — 'ex new' is broken for v${newVersion} until the tag exists.`));
+    console.log(c.yellow(`  Recover manually: clone ${TEMPLATES_REPO}, replace its content with the monorepo's templates/,`));
+    console.log(c.yellow(`  then: git add -A && git commit -m "chore(release): sync v${newVersion}" && git tag v${newVersion} && git push origin HEAD --follow-tags`));
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------- main
@@ -338,4 +447,9 @@ if (!ready) {
 
 const newVersion = await versionStage(currentVersion);
 if (!newVersion) { console.log(c.yellow("Aborted at version stage.")); process.exit(1); }
-await publishStage(newVersion);
+const published = await publishStage(newVersion);
+if (published) {
+  const synced = templatesSyncStage(newVersion);
+  console.log(c.bold(`\n  Done. Push commits and tags: ${c.cyan("git push --follow-tags")}`));
+  process.exit(synced ? 0 : 1);
+}
