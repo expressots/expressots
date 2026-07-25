@@ -82,8 +82,8 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
   },
   "dependencies": {
-    "@expressots/core": "^4.0.0",
-    "@expressots/shared": "^4.0.0",
+    "@expressots/core": "workspace:*",
+    "@expressots/shared": "workspace:*",
     "express": "^5.1.0",
     "reflect-metadata": "0.2.2"
   },
@@ -98,7 +98,7 @@
   "devDependencies": {
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.2.2",
-    "@expressots/studio-agent": "^4.0.0",
+    "@expressots/studio-agent": "workspace:*",
     "@release-it/conventional-changelog": "^11.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "29.5.14",

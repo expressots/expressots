@@ -32,7 +32,7 @@
     "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore"
   },
   "dependencies": {
-    "@expressots/studio-agent": "^4.0.0",
+    "@expressots/studio-agent": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "express": "^5.1.0",
