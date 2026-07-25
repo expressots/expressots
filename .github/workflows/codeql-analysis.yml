@@ -2,9 +2,9 @@ name: "CodeQL Analysis Report"
 
 on:
   push:
-    branches: ["main", "feature/v4.0"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "feature/v4.0"]
+    branches: ["main"]
   schedule:
     - cron: "0 17 * * 4"
 
@@ -18,30 +18,19 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["typescript", "javascript"]
-        node-version: ["20.19.0"]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-
+      # CodeQL extracts JS/TS sources directly — no Node setup or dependency
+      # install needed, and "javascript-typescript" covers both languages in
+      # a single analysis.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
-        continue-on-error: true
         with:
-          languages: ${{ matrix.language }}
+          languages: javascript-typescript
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{matrix.language}}"
-          path: "packages/core"
+          category: "/language:javascript-typescript"
