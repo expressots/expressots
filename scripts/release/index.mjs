@@ -260,7 +260,12 @@ function writeReport(currentVersion) {
     ``,
     `| Stage | Check | Status | Detail |`,
     `| ----- | ----- | ------ | ------ |`,
-    ...results.map((r) => `| ${r.stage} | ${r.name} | ${r.status.toUpperCase()} | ${r.detail?.replace(/\|/g, "\\|").replace(/\s+/g, " ") ?? ""} |`),
+    // Escape backslashes before pipes so a trailing '\' cannot neutralize
+    // the pipe escape, then flatten whitespace to keep table rows intact.
+    ...results.map(
+      (r) =>
+        `| ${r.stage} | ${r.name} | ${r.status.toUpperCase()} | ${r.detail?.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\s+/g, " ") ?? ""} |`,
+    ),
   ];
   fs.writeFileSync(file, lines.join("\n") + "\n");
 

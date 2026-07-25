@@ -164,11 +164,15 @@ export class ServiceProxy {
   private async executeRequest(req: Request): Promise<ProxyResponse> {
     // Rewrite path if configured
     const path = this.config.pathRewrite(req.path);
-    const url = new URL(path, this.config.target);
 
-    // A crafted path such as '//evil.com/x' or 'http://evil.com' overrides
-    // the base in the URL constructor; refuse anything that escapes the
-    // configured target origin (SSRF guard).
+    // SSRF guard: only plain same-origin paths may be proxied. A crafted
+    // path such as '//evil.com/x' or 'http://evil.com' would override the
+    // base in the URL constructor, so reject anything that is not a
+    // single-slash local path before building the URL.
+    if (!path.startsWith("/") || path.startsWith("//")) {
+      throw new Error(`Proxy request blocked: path '${req.path}' is not a same-origin path`);
+    }
+    const url = new URL(path, this.config.target);
     if (url.origin !== new URL(this.config.target).origin) {
       throw new Error(
         `Proxy request blocked: path '${req.path}' resolves outside the configured target origin`,

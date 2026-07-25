@@ -201,9 +201,13 @@ export function createLazyModuleMiddleware(config: LazyModuleMiddlewareConfig): 
         return next("route");
       } else {
         // Fallback: 307 redirect for single round-trip (temporary redirect preserves method).
-        // Collapse leading slashes so a crafted '//host/path' cannot become a
-        // protocol-relative redirect to another origin.
-        res.redirect(307, req.originalUrl.replace(/^\/+/, "/"));
+        // Only local single-slash paths are safe redirect targets: a
+        // protocol-relative '//host/path' or an absolute URL (possible with
+        // absolute-form request lines) would redirect off-origin.
+        const original = req.originalUrl;
+        const redirectTarget =
+          original.startsWith("/") && !original.startsWith("//") ? original : "/";
+        res.redirect(307, redirectTarget);
       }
     } catch (error) {
       loadingModules.delete(matchedRoute.moduleName);
