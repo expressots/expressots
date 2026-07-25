@@ -7,8 +7,9 @@
     "moduleResolution": "NodeNext",
     "rootDir": "src",
     "outDir": "lib/esm",
-    // Declarations ship once from the CJS build (lib/cjs/types); the trees
-    // were byte-identical, so emitting them twice only doubled install size.
+    // Declarations are emitted once by the CJS build (lib/cjs/types); the
+    // trees are byte-identical, so build-esm.js copies them into
+    // lib/esm/types (ESM scope) instead of running tsc's emit twice.
     "declaration": false
   }
 }

@@ -75,6 +75,23 @@ try {
     JSON.stringify({ type: "module" }, null, 2) + "\n",
   );
   process.stdout.write(`[build-esm] Wrote ${ESM_PKG}\n`);
+
+  // Copy the declaration tree under the ESM scope. The CJS-scoped copy at
+  // lib/cjs/types is interpreted as CommonJS declarations by NodeNext
+  // resolution; ESM importers need a copy that sits under the
+  // `{"type":"module"}` scope so the types match the .mjs/.js ESM runtime
+  // files. Source imports carry explicit .js extensions, so the same .d.ts
+  // files are valid in both scopes.
+  const CJS_TYPES = path.join("lib", "cjs", "types");
+  const ESM_TYPES = path.join(ESM_DIR, "types");
+  if (fs.existsSync(CJS_TYPES)) {
+    fs.cpSync(CJS_TYPES, ESM_TYPES, { recursive: true });
+    process.stdout.write(`[build-esm] Copied ${CJS_TYPES} -> ${ESM_TYPES}\n`);
+  } else {
+    process.stdout.write(
+      `[build-esm] WARN: ${CJS_TYPES} not found; ESM types not copied.\n`,
+    );
+  }
 } finally {
   if (!wasAlreadyModule) {
     fs.writeFileSync(PKG_PATH, originalRaw);

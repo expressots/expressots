@@ -141,10 +141,22 @@ function packChecks(packDir) {
 
   for (const { dir, pkg } of publishable) {
     ok = check("pack", `publint ${pkg.name}`, `pnpm exec publint ${JSON.stringify(path.join(ROOT, dir))}`) && ok;
-    if (tarballs[pkg.name]) {
-      // attw is advisory: strict resolution nits should be visible, not blocking
-      check("pack", `attw ${pkg.name}`, `pnpm exec attw ${JSON.stringify(tarballs[pkg.name])} --format table-flipped`, { failStatus: "warn" });
+    if (!tarballs[pkg.name]) continue;
+
+    // Bin-only packages (no main/exports/types) have no importable surface;
+    // attw has nothing to analyze and crashes on them.
+    if (!pkg.main && !pkg.exports && !pkg.types) {
+      record("pack", `attw ${pkg.name}`, "pass", "bin-only package — no importable entry points, attw n/a");
+      continue;
     }
+
+    // ESM-only packages intentionally ship no CJS build (engines require
+    // Node >= 20.19, where require(esm) works natively). Tell attw the
+    // supported profile instead of warning about resolutions we don't claim.
+    const esmOnly = pkg.type === "module" && !JSON.stringify(pkg.exports ?? {}).includes('"require"');
+    const profile = esmOnly ? " --profile esm-only" : "";
+    // attw is advisory: strict resolution nits should be visible, not blocking
+    check("pack", `attw ${pkg.name}`, `pnpm exec attw ${JSON.stringify(tarballs[pkg.name])} --format table-flipped${profile}`, { failStatus: "warn" });
   }
   return { ok, tarballs };
 }

@@ -8,7 +8,7 @@
   "exports": {
     ".": {
       "import": {
-        "types": "./lib/cjs/types/index.d.ts",
+        "types": "./lib/esm/types/index.d.ts",
         "default": "./lib/esm/index.mjs"
       },
       "require": {
@@ -18,7 +18,7 @@
     },
     "./testing": {
       "import": {
-        "types": "./lib/cjs/types/testing/index.d.ts",
+        "types": "./lib/esm/types/testing/index.d.ts",
         "default": "./lib/esm/testing/index.js"
       },
       "require": {
@@ -28,7 +28,7 @@
     },
     "./di": {
       "import": {
-        "types": "./lib/cjs/types/di/inversify.d.ts",
+        "types": "./lib/esm/types/di/inversify.d.ts",
         "default": "./lib/esm/di/inversify.js"
       },
       "require": {
@@ -38,7 +38,7 @@
     },
     "./render": {
       "import": {
-        "types": "./lib/cjs/types/render/index.d.ts",
+        "types": "./lib/esm/types/render/index.d.ts",
         "default": "./lib/esm/render/index.js"
       },
       "require": {
@@ -48,7 +48,7 @@
     },
     "./path-resolver": {
       "import": {
-        "types": "./lib/cjs/types/path-resolver/index.d.ts",
+        "types": "./lib/esm/types/path-resolver/index.d.ts",
         "default": "./lib/esm/path-resolver/index.js"
       },
       "require": {
@@ -241,6 +241,22 @@
           ]
         }
       }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "testing": [
+        "./lib/cjs/types/testing/index.d.ts"
+      ],
+      "di": [
+        "./lib/cjs/types/di/inversify.d.ts"
+      ],
+      "render": [
+        "./lib/cjs/types/render/index.d.ts"
+      ],
+      "path-resolver": [
+        "./lib/cjs/types/path-resolver/index.d.ts"
+      ]
     }
   }
 }
