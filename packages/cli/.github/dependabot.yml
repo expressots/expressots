@@ -1,0 +1,15 @@
+# .github/dependabot.yml
+# Dependabot configuration must live at .github/dependabot.yml (it is NOT
+# a workflow). Previously the config sat under `.github/workflows/` where
+# GitHub silently ignored it. Moved here so daily dependency PRs actually
+# fire.
+version: 2
+updates:
+    - package-ecosystem: "npm"
+      directory: "/"
+      schedule:
+          interval: "daily"
+      commit-message:
+          prefix: chore
+          prefix-development: chore
+      open-pull-requests-limit: 99

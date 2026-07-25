@@ -1,0 +1,293 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`generate templates nonopinionated renders controller.tpl 1`] = `
+"import { controller } from "@expressots/adapter-express";
+
+@controller("/user")
+export class User {}
+"
+`;
+
+exports[`generate templates nonopinionated renders dto.tpl 1`] = `
+"export interface IUserRequest {}
+
+export interface IUserResponse {}
+"
+`;
+
+exports[`generate templates nonopinionated renders usecase.tpl 1`] = `
+"import { provide } from "@expressots/core";
+
+@provide(User)
+export class User {}
+"
+`;
+
+exports[`generate templates opinionated renders config.tpl (v4) 1`] = `
+"import { defineConfig, Env, loadEnvSync } from "@expressots/core";
+
+/**
+ * User Configuration
+ *
+ * Type-safe configuration with full TypeScript inference.
+ * Features:
+ * - Multi-environment defaults
+ * - Secret management with auto-redaction
+ * - Validation with helpful errors
+ */
+
+// Load environment files before config resolution
+const envFiles = {
+    development: ".env.local",
+    production: ".env.prod",
+};
+
+loadEnvSync({ files: envFiles });
+
+export const Config = defineConfig({
+    // Add your configuration schema here
+    enabled: Env.boolean("_ENABLED", {
+        default: true,
+        description: "Enable/disable User feature",
+    }),
+    // Example settings - customize as needed
+    setting1: Env.string("_SETTING1", {
+        default: "default-value",
+    }),
+    setting2: Env.number("_SETTING2", {
+        default: 100,
+        min: 0,
+        max: 1000,
+    }),
+    bootstrap: {
+        envFileConfig: {
+            autoCreateTemplate: true,
+            files: envFiles,
+        },
+    },
+});
+
+// Export typed config values
+export const config = Config.values;
+export type UserConfig = typeof config;
+
+"
+`;
+
+exports[`generate templates opinionated renders controller-service-get.tpl 1`] = `
+"import { controller, Get } from "@expressots/adapter-express";
+import { inject } from "@expressots/core";
+import { UserUseCase } from "./user.usecase";
+
+@controller("/user")
+export class UserController {
+    @inject(UserUseCase) private userUseCase: UserUseCase;
+	
+    @Get("/")
+    execute() {
+        return this.userUseCase.execute();
+    }
+}
+"
+`;
+
+exports[`generate templates opinionated renders controller-service-post.tpl 1`] = `
+"import { body, controller, Post } from "@expressots/adapter-express";
+import { inject } from "@expressots/core";
+import { UserUseCase } from "./user.usecase";
+import { IUserRequestDTO } from "./user.dto";
+
+@controller("/user")
+export class UserController {
+    @inject(UserUseCase) private userUseCase: UserUseCase;
+
+    @Post("/")
+    execute(@body() payload: IUserRequestDTO) {
+        return this.userUseCase.execute(payload);
+    }
+}
+"
+`;
+
+exports[`generate templates opinionated renders dto.tpl 1`] = `
+"export interface IUserRequestDTO {}
+
+export interface IUserResponseDTO {}
+"
+`;
+
+exports[`generate templates opinionated renders event.tpl (v4) 1`] = `
+"/**
+ * User Event
+ *
+ * Type-safe event - no strings!
+ *
+ * Usage:
+ * await this.eventEmitter.emit(new UserEvent(data));
+ */
+export class UserEvent {
+    constructor(
+        public readonly data: Record<string, unknown>,
+        public readonly timestamp: Date = new Date(),
+    ) {}
+}
+
+"
+`;
+
+exports[`generate templates opinionated renders guard.tpl (v4) 1`] = `
+"import { provide } from "@expressots/core";
+import { Request, Response, NextFunction } from "express";
+
+/**
+ * User Guard
+ *
+ * Usage:
+ * @controller("/protected")
+ * @Use(UserGuard)
+ * export class ProtectedController { }
+ */
+@provide(UserGuard)
+export class UserGuard {
+    /**
+     * Check if the request is authorized
+     */
+    canActivate(req: Request, res: Response, next: NextFunction): void {
+        // TODO: Implement authorization logic
+        const isAuthorized = this.checkAuthorization(req);
+
+        if (!isAuthorized) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        next();
+    }
+
+    private checkAuthorization(req: Request): boolean {
+        // Example: Check for authorization header
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+            return false;
+        }
+
+        // TODO: Validate token/credentials
+        return true;
+    }
+}
+
+"
+`;
+
+exports[`generate templates opinionated renders handler.tpl (v4) 1`] = `
+"import { provide, OnEvent, IEventHandler } from "@expressots/core";
+import {  } from "";
+
+/**
+ * Handler for 
+ *
+ * Features:
+ * - Auto-discovered
+ * - Priority: 
+ * - Full type safety
+ */
+@provide(UserHandler)
+@OnEvent(, { priority:  })
+export class UserHandler implements IEventHandler<> {
+    async handle(event: ): Promise<void> {
+        console.log(\`Handling \${event.constructor.name}\`, {
+            timestamp: event.timestamp,
+        });
+
+        // TODO: Implement handler logic
+    }
+}
+
+"
+`;
+
+exports[`generate templates opinionated renders interceptor.tpl (v4) 1`] = `
+"import {
+    IInterceptor,
+    ExecutionContext,
+    CallHandler,
+    Interceptor,
+    provide,
+} from "@expressots/core";
+
+/**
+ * User Interceptor
+ *
+ * Priority:  (lower = earlier execution)
+ *
+ * Usage:
+ * @UseInterceptors(UserInterceptor)
+ * @controller("/route")
+ * export class MyController { }
+ */
+@Interceptor({ priority:  })
+@provide(UserInterceptor)
+export class UserInterceptor implements IInterceptor {
+    async intercept(context: ExecutionContext, next: CallHandler) {
+        const request = context.getRequest();
+
+        // Pre-processing logic
+        console.log(\`[User] Before handler\`, {
+            method: request.method,
+            path: request.path,
+        });
+
+        const startTime = Date.now();
+
+        try {
+            // Execute next interceptor or handler
+            const result = await next.handle();
+
+            // Post-processing logic
+            const duration = Date.now() - startTime;
+            console.log(\`[User] After handler\`, {
+                duration: \`\${duration}ms\`,
+            });
+
+            return result;
+        } catch (error) {
+            console.error(\`[User] Handler error\`, error);
+            throw error;
+        }
+    }
+}
+
+"
+`;
+
+exports[`generate templates opinionated renders middleware.tpl 1`] = `
+"import { ExpressoMiddleware, provide } from "@expressots/core";
+import { NextFunction, Request, Response } from "express";
+
+@provide(UserMiddleware)
+export class UserMiddleware extends ExpressoMiddleware {
+    use(req: Request, res: Response, next: NextFunction): void | Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+}"
+`;
+
+exports[`generate templates opinionated renders provider.tpl 1`] = `
+"import { provide } from "@expressots/core";
+
+@provide(UserProvider)
+export class UserProvider {}"
+`;
+
+exports[`generate templates opinionated renders usecase.tpl 1`] = `
+"import { provide } from "@expressots/core";
+
+@provide(UserUseCase)
+export class UserUseCase {
+    execute() {
+        return "Use Case";
+    }
+}
+"
+`;

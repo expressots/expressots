@@ -1,0 +1,171 @@
+{
+  "name": "@expressots/cli",
+  "version": "4.0.0",
+  "description": "Expressots CLI - modern, fast, lightweight nodejs web framework (@cli)",
+  "author": "Richard Zampieri",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/expressots/expressots-cli/issues"
+  },
+  "bin": {
+    "expressots": "bin/cli.js",
+    "ex": "bin/cli.js"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/expressots-cli"
+  },
+  "homepage": "https://expresso-ts.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ExpressoTS",
+    "CLI",
+    "Scaffolding"
+  ],
+  "files": [
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md",
+    "bin/**/*"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "start:build": "npm run build && npm run start",
+    "start": "node ./bin/cli.js",
+    "start:dev": "tsx ./src/cli.ts",
+    "build": "npm run clean && tsc -p tsconfig.json && npm run cp:templates && node scripts/chmod.js ./bin/cli.js",
+    "cp:templates": "node scripts/cp.js ./src/generate/templates ./bin/generate/",
+    "clean": "node scripts/rm.js bin",
+    "prepublish": "npm run build && npm pack",
+    "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
+    "format": "prettier --write \"./src/**/*.ts\" --cache",
+    "lint": "eslint \"./src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
+    "lint:fix": "eslint \"./src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/",
+    "release": "release-it",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@expressots/shared": "^4.0.0",
+    "chalk": "4.1.2",
+    "cli-progress": "3.12.0",
+    "cross-spawn": "7.0.6",
+    "degit": "2.8.4",
+    "glob": "13.0.6",
+    "inquirer": "^8.2.7",
+    "mustache": "4.2.0",
+    "ora": "5.4.1",
+    "ts-node": "10.9.2",
+    "yargs": "17.7.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.2.1",
+    "@commitlint/config-conventional": "19.1.0",
+    "@release-it/conventional-changelog": "^11.0.0",
+    "@types/cli-progress": "3.11.0",
+    "@types/cross-spawn": "6.0.6",
+    "@types/degit": "2.8.3",
+    "@types/inquirer": "^8.2.13",
+    "@types/jest": "^29.5.14",
+    "@types/mustache": "4.2.2",
+    "@types/node": "20.12.7",
+    "@types/yargs": "17.0.22",
+    "@typescript-eslint/eslint-plugin": "7.6.0",
+    "@typescript-eslint/parser": "7.6.0",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "9.1.0",
+    "husky": "9.0.11",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.10",
+    "prettier": "3.2.5",
+    "release-it": "^20.0.1",
+    "ts-jest": "^29.2.5",
+    "tsx": "^4.19.2",
+    "typescript": "5.2.2"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --cache --cache-location node_modules/.cache/eslint/ --fix",
+      "prettier --write --cache"
+    ]
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release ${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": false
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "infile": "CHANGELOG.md",
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance Improvements"
+            },
+            {
+              "type": "revert",
+              "section": "Reverts"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "style",
+              "section": "Styles"
+            },
+            {
+              "type": "refactor",
+              "section": "Code Refactoring"
+            },
+            {
+              "type": "test",
+              "section": "Tests"
+            },
+            {
+              "type": "build",
+              "section": "Build System"
+            },
+            {
+              "type": "ci",
+              "section": "Continuous Integrations"
+            },
+            {
+              "type": "chore",
+              "hidden": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}
