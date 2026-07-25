@@ -14,7 +14,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const ROOT_DIR = path.resolve(__dirname, "..");
-const SRC_DIR = path.join(ROOT_DIR, "packages", "core", "src");
+const SRC_DIR = path.join(ROOT_DIR, "src");
 const DOCS_OUTPUT_DIR = path.join(ROOT_DIR, "docs");
 const TYPEDOC_OUTPUT_DIR = path.join(DOCS_OUTPUT_DIR, "api");
 

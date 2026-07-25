@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
 const PKG = path.join(ROOT, "package.json");
-const TARGET = path.join(ROOT, "packages", "core", "src", "framework-version.ts");
+const TARGET = path.join(ROOT, "src", "framework-version.ts");
 
 const pkg = JSON.parse(fs.readFileSync(PKG, "utf8"));
 const version = pkg.version;

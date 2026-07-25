@@ -71,11 +71,12 @@ function createLazyMiddleware(name: string): RequestHandler {
     // If it's an array of middleware, compose them
     if (Array.isArray(middleware)) {
       const composed = composeHandlers(middleware);
-      return composed(req, res, next);
+      composed(req, res, next);
+      return;
     }
 
     // Single middleware
-    return middleware(req, res, next);
+    middleware(req, res, next);
   };
 }
 
