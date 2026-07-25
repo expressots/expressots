@@ -5,7 +5,7 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "rootDir": "packages/core/src",
+    "rootDir": "src",
     "outDir": "lib/esm",
     // Declarations ship once from the CJS build (lib/cjs/types); the trees
     // were byte-identical, so emitting them twice only doubled install size.

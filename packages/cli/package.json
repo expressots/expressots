@@ -39,7 +39,6 @@
     "bin/**/*"
   ],
   "scripts": {
-    "prepare": "husky",
     "start:build": "npm run build && npm run start",
     "start": "node ./bin/cli.js",
     "start:dev": "tsx ./src/cli.ts",

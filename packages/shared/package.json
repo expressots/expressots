@@ -53,7 +53,6 @@
     "library"
   ],
   "scripts": {
-    "prepare": "husky",
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
     "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",

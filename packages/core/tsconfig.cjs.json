@@ -4,7 +4,7 @@
     "module": "node16",
     "target": "ES2021",
     "moduleResolution": "node16",
-    "rootDir": "packages/core/src",
+    "rootDir": "src",
     "outDir": "lib/cjs",
     "declarationDir": "lib/cjs/types"
   }

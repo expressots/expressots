@@ -128,7 +128,7 @@ function generateTypeDoc() {
   // Use source files for TypeDoc
   // Note: TypeDoc may only fully document modules without external dependencies
   // The comprehensive documentation is in the .docs/ markdown files
-  const entryPoints = ["packages/core/src"];
+  const entryPoints = ["src"];
   const outDir = "docs/api";
   const readmePath = "README.md";
 

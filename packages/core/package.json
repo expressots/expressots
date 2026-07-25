@@ -112,7 +112,6 @@
     "server-side"
   ],
   "scripts": {
-    "prepare": "husky",
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
     "sync-version": "node scripts/sync-version.js",

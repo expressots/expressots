@@ -1,7 +1,7 @@
 {
   "name": "ExpressoTS Core API",
   "entryPoints": [
-    "packages/core/src"
+    "src"
   ],
   "entryPointStrategy": "expand",
   "out": "docs/api",
