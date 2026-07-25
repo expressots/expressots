@@ -59,7 +59,6 @@
     "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "node scripts/build-esm.js",
-    "release": "release-it",
     "release:prepare": "node scripts/release/prepare-publish.mjs",
     "release:restore": "node scripts/release/restore-package-json.mjs",
     "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
@@ -78,7 +77,6 @@
   "devDependencies": {
     "@commitlint/cli": "19.6.0",
     "@commitlint/config-conventional": "19.6.0",
-    "@release-it/conventional-changelog": "^11.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "29.5.13",
     "@types/node": "20.14.10",
@@ -91,7 +89,6 @@
     "lint-staged": "^15.2.10",
     "prettier": "3.5.3",
     "reflect-metadata": "0.2.2",
-    "release-it": "^20.0.1",
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "typescript": "5.5.3"
@@ -101,62 +98,5 @@
       "eslint --cache --cache-location node_modules/.cache/eslint/ --fix",
       "prettier --write --cache"
     ]
-  },
-  "release-it": {
-    "git": {
-      "commitMessage": "chore(release): ${version}"
-    },
-    "github": {
-      "release": true
-    },
-    "npm": {
-      "publish": false
-    },
-    "plugins": {
-      "@release-it/conventional-changelog": {
-        "infile": "CHANGELOG.md",
-        "preset": {
-          "name": "conventionalcommits",
-          "types": [
-            {
-              "type": "feat",
-              "section": "Features"
-            },
-            {
-              "type": "fix",
-              "section": "Bug Fixes"
-            },
-            {
-              "type": "perf",
-              "section": "Performance Improvements"
-            },
-            {
-              "type": "revert",
-              "section": "Reverts"
-            },
-            {
-              "type": "docs",
-              "section": "Documentation"
-            },
-            {
-              "type": "refactor",
-              "section": "Code Refactoring"
-            },
-            {
-              "type": "test",
-              "section": "Tests"
-            },
-            {
-              "type": "build",
-              "section": "Build System"
-            },
-            {
-              "type": "ci",
-              "section": "Continuous Integrations"
-            }
-          ]
-        }
-      }
-    }
   }
 }
