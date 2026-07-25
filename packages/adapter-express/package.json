@@ -51,7 +51,6 @@
   "engines": {
     "node": ">=20.19.0"
   },
-  "packageManager": "npm@10.8.2",
   "keywords": [
     "expressots",
     "nodejs",

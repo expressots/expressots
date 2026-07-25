@@ -14,7 +14,6 @@
   "engines": {
     "node": ">=20.19.0"
   },
-  "packageManager": "npm@10.8.2",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/expressots"
