@@ -1,0 +1,13 @@
+@layer components {
+    .x-select {
+        @apply flex cursor-default justify-between w-full flex-1 rounded-md border-0 py-1.5 pl-2 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6;
+
+        &.has_error {
+            @apply outline outline-red-500;
+        }
+
+        &__options {
+            @apply absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm;
+        }
+    }
+}
