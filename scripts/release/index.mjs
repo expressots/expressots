@@ -350,7 +350,9 @@ async function versionStage(currentVersion) {
   const frontmatter = fixedGroup.filter((n) => publishableNames.has(n)).map((n) => `"${n}": ${type}`).join("\n");
   fs.writeFileSync(path.join(ROOT, `.changeset/release-${newVersion}.md`), `---\n${frontmatter}\n---\n\n${summary}\n`);
 
-  sh("pnpm changeset version", { stdio: ["ignore", "inherit", "inherit"] });
+  // execSync directly: sh() trims the captured output, but inherited stdio
+  // makes execSync return null.
+  execSync("pnpm changeset version", { cwd: ROOT, stdio: ["ignore", "inherit", "inherit"] });
   const pinned = syncPinnedVersions(newVersion);
   if (pinned.length) record("version", `templates/examples pinned to v${newVersion}`, "pass", `${pinned.length} package.json file(s)`);
   sh("git add -A");
