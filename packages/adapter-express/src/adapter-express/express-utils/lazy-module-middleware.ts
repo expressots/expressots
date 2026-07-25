@@ -202,11 +202,14 @@ export function createLazyModuleMiddleware(config: LazyModuleMiddlewareConfig): 
       } else {
         // Fallback: 307 redirect for single round-trip (temporary redirect preserves method).
         // Only local single-slash paths are safe redirect targets: a
-        // protocol-relative '//host/path' or an absolute URL (possible with
-        // absolute-form request lines) would redirect off-origin.
+        // protocol-relative '//host/path' (or its '/\host' variant, which
+        // browsers normalize the same way) or an absolute URL (possible
+        // with absolute-form request lines) would redirect off-origin.
         const original = req.originalUrl;
         const redirectTarget =
-          original.startsWith("/") && !original.startsWith("//") ? original : "/";
+          original.startsWith("/") && !original.startsWith("//") && !original.startsWith("/\\")
+            ? original
+            : "/";
         res.redirect(307, redirectTarget);
       }
     } catch (error) {

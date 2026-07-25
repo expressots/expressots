@@ -166,18 +166,17 @@ export class ServiceProxy {
     const path = this.config.pathRewrite(req.path);
 
     // SSRF guard: only plain same-origin paths may be proxied. A crafted
-    // path such as '//evil.com/x' or 'http://evil.com' would override the
-    // base in the URL constructor, so reject anything that is not a
-    // single-slash local path before building the URL.
-    if (!path.startsWith("/") || path.startsWith("//")) {
+    // path such as '//evil.com/x', '/\\evil.com' or 'http://evil.com'
+    // would escape the configured target, so reject anything that is not
+    // a single-slash local path.
+    if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) {
       throw new Error(`Proxy request blocked: path '${req.path}' is not a same-origin path`);
     }
-    const url = new URL(path, this.config.target);
-    if (url.origin !== new URL(this.config.target).origin) {
-      throw new Error(
-        `Proxy request blocked: path '${req.path}' resolves outside the configured target origin`,
-      );
-    }
+    // Append the validated path to the trusted origin so user input can
+    // never control the scheme or host. Matches the previous
+    // `new URL(path, target)` semantics, where an absolute path replaces
+    // the target's own path.
+    const url = new URL(new URL(this.config.target).origin + path);
 
     // Copy query parameters
     Object.entries(req.query).forEach(([key, value]) => {
