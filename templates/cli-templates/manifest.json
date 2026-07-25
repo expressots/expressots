@@ -1,0 +1,147 @@
+{
+  "$schema": "https://raw.githubusercontent.com/expressots/templates/main/manifest.schema.json",
+  "version": "1.0.0",
+  "updated": "2026-01-07T00:00:00Z",
+  "description": "ExpressoTS CLI Templates Repository",
+  "templates": {
+    "cicd": {
+      "github": {
+        "basic": {
+          "path": "cicd/github/basic.yml",
+          "version": "1.0.0",
+          "description": "Basic GitHub Actions CI/CD pipeline with lint, test, and build"
+        },
+        "comprehensive": {
+          "path": "cicd/github/comprehensive.yml",
+          "version": "1.0.0",
+          "description": "Full CI/CD pipeline with security scanning, E2E tests, and Docker"
+        },
+        "security-focused": {
+          "path": "cicd/github/security-focused.yml",
+          "version": "1.0.0",
+          "description": "Security-focused pipeline with Trivy, Snyk, and OWASP checks"
+        }
+      },
+      "gitlab": {
+        "basic": {
+          "path": "cicd/gitlab/basic.yml",
+          "version": "1.0.0",
+          "description": "Basic GitLab CI pipeline"
+        },
+        "comprehensive": {
+          "path": "cicd/gitlab/comprehensive.yml",
+          "version": "1.0.0",
+          "description": "Comprehensive GitLab CI pipeline"
+        },
+        "security-focused": {
+          "path": "cicd/gitlab/security-focused.yml",
+          "version": "1.0.0",
+          "description": "Security-focused GitLab CI pipeline"
+        }
+      },
+      "circleci": {
+        "basic": {
+          "path": "cicd/circleci/basic.yml",
+          "version": "1.0.0",
+          "description": "Basic CircleCI pipeline"
+        },
+        "comprehensive": {
+          "path": "cicd/circleci/comprehensive.yml",
+          "version": "1.0.0",
+          "description": "Comprehensive CircleCI pipeline"
+        }
+      },
+      "jenkins": {
+        "basic": {
+          "path": "cicd/jenkins/basic.groovy",
+          "version": "1.0.0",
+          "description": "Basic Jenkinsfile"
+        }
+      },
+      "bitbucket": {
+        "basic": {
+          "path": "cicd/bitbucket/basic.yml",
+          "version": "1.0.0",
+          "description": "Basic Bitbucket Pipelines"
+        }
+      },
+      "azure": {
+        "basic": {
+          "path": "cicd/azure/basic.yml",
+          "version": "1.0.0",
+          "description": "Basic Azure DevOps pipeline"
+        }
+      }
+    },
+    "docker": {
+      "production": {
+        "path": "docker/Dockerfile.production.tpl",
+        "version": "1.0.0",
+        "description": "Production-optimized multi-stage Dockerfile"
+      },
+      "development": {
+        "path": "docker/Dockerfile.development.tpl",
+        "version": "1.0.0",
+        "description": "Development Dockerfile with hot reload"
+      },
+      "compose": {
+        "path": "docker/docker-compose.yml.tpl",
+        "version": "1.0.0",
+        "description": "Production Docker Compose configuration"
+      },
+      "compose-development": {
+        "path": "docker/docker-compose.development.yml.tpl",
+        "version": "1.0.0",
+        "description": "Development Docker Compose with volume mounts"
+      }
+    },
+    "kubernetes": {
+      "deployment": {
+        "path": "kubernetes/deployment.yml.tpl",
+        "version": "1.0.0",
+        "description": "Kubernetes Deployment manifest"
+      },
+      "service": {
+        "path": "kubernetes/service.yml.tpl",
+        "version": "1.0.0",
+        "description": "Kubernetes Service manifest"
+      },
+      "configmap": {
+        "path": "kubernetes/configmap.yml.tpl",
+        "version": "1.0.0",
+        "description": "Kubernetes ConfigMap manifest"
+      },
+      "ingress": {
+        "path": "kubernetes/ingress.yml.tpl",
+        "version": "1.0.0",
+        "description": "Kubernetes Ingress manifest"
+      }
+    },
+    "migrations": {
+      "heroku-to-railway": {
+        "checklist": {
+          "path": "migrations/heroku-to-railway/checklist.md.tpl",
+          "version": "1.0.0"
+        }
+      },
+      "heroku-to-render": {
+        "checklist": {
+          "path": "migrations/heroku-to-render/checklist.md.tpl",
+          "version": "1.0.0"
+        }
+      },
+      "heroku-to-fly": {
+        "checklist": {
+          "path": "migrations/heroku-to-fly/checklist.md.tpl",
+          "version": "1.0.0"
+        }
+      },
+      "compose-to-kubernetes": {
+        "checklist": {
+          "path": "migrations/compose-to-kubernetes/checklist.md.tpl",
+          "version": "1.0.0"
+        }
+      }
+    }
+  }
+}

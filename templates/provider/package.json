@@ -1,0 +1,149 @@
+{
+  "name": "provider-name",
+  "version": "0.0.1",
+  "description": "Expressots - Your provider description (provider-name)",
+  "author": "Author Name",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/cjs/types/index.d.ts",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/esm/types/index.d.ts",
+        "default": "./lib/esm/index.mjs"
+      },
+      "require": {
+        "types": "./lib/cjs/types/index.d.ts",
+        "default": "./lib/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "license": "MIT",
+  "homepage": "https://expresso-ts.com",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/<<repo_name>>"
+  },
+  "bugs": {
+    "url": "https://github.com/expressots/<<repo_name>>/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "expressots",
+    "nodejs",
+    "microservices",
+    "typescript",
+    "clean-architecture",
+    "typescript-framework",
+    "framework",
+    "server-side"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "clean": "node scripts/rm.js lib",
+    "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "node scripts/build-esm.js",
+    "release": "release-it",
+    "prepublish": "npm run build && npm pack",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "format": "prettier --write \"src/**/*.ts\" --cache",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "@expressots/core": "4.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.5.0",
+    "@commitlint/config-conventional": "19.5.0",
+    "@eslint/js": "9.39.2",
+    "@release-it/conventional-changelog": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/jest": "30.0.0",
+    "@types/node": "22.5.0",
+    "@typescript-eslint/eslint-plugin": "8.61.0",
+    "@typescript-eslint/parser": "8.61.0",
+    "eslint": "9.39.2",
+    "express": "^5.0.0",
+    "husky": "9.1.5",
+    "jest": "30.2.0",
+    "prettier": "3.3.3",
+    "release-it": "^20.0.1",
+    "ts-jest": "29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.61.0"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore(release): ${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": false
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "infile": "CHANGELOG.md",
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance Improvements"
+            },
+            {
+              "type": "revert",
+              "section": "Reverts"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "refactor",
+              "section": "Code Refactoring"
+            },
+            {
+              "type": "test",
+              "section": "Tests"
+            },
+            {
+              "type": "build",
+              "section": "Build System"
+            },
+            {
+              "type": "ci",
+              "section": "Continuous Integrations"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+name: Templates Smoke Test
+
+# Each scaffold is a standalone npm project pointing at a *published*
+# `@expressots/*` version, so we can only smoke-test it AFTER the framework
+# has been pushed to npm. Therefore this workflow is manual-dispatch +
+# nightly: kicked off after the publish-preview workflow finishes, or by a
+# maintainer on demand.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 06:00 UTC every day — runs against the latest published framework
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: ["application", "application-with-events", "micro", "provider"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.18.0"
+
+      - name: Install template deps
+        working-directory: ${{ matrix.template }}
+        run: npm install --no-audit --no-fund
+
+      - name: Build template
+        working-directory: ${{ matrix.template }}
+        run: npm run build --if-present
+
+      - name: Test template
+        working-directory: ${{ matrix.template }}
+        run: npm test --if-present

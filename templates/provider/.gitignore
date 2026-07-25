@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+lib/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+
+# API keys and secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Pack output
+*.tgz
+
+# Lock files (template consumers generate their own)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Editors
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Certificates
+*.pem
