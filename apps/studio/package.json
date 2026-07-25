@@ -1,0 +1,88 @@
+{
+  "name": "@expressots/studio",
+  "version": "4.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "ExpressoTS Studio - Developer Experience Platform (CLI + UI)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "bin": {
+    "expressots-studio": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "npm run build:server && npm run build:ui",
+    "build:server": "tsc",
+    "build:ui": "tsc -b tsconfig.ui.json && vite build",
+    "dev": "tsc --watch",
+    "dev:ui": "vite",
+    "start": "node dist/cli.js",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "clean": "rimraf dist",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore"
+  },
+  "dependencies": {
+    "@expressots/studio-agent": "^4.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "express": "^5.1.0",
+    "open": "^10.1.0",
+    "ora": "^8.1.0",
+    "socket.io-client": "^4.8.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.9",
+    "@tanstack/react-query": "^5.60.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@xyflow/react": "^12.3.0",
+    "autoprefixer": "^10.4.20",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.460.0",
+    "postcss": "^8.4.49",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.14.0",
+    "rimraf": "^6.0.0",
+    "tailwind-merge": "^2.5.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0",
+    "vite": "^6.4.3",
+    "vitest": "^4.1.7",
+    "zustand": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/expressots-studio",
+    "directory": "packages/studio"
+  },
+  "keywords": [
+    "expressots",
+    "studio",
+    "devtools",
+    "observability",
+    "developer-experience"
+  ],
+  "author": "ExpressoTS Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
