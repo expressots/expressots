@@ -213,7 +213,7 @@ export class AutoDetection {
 
       return packagesToCheck.every((pkg) => {
         try {
-          require.resolve(pkg, { paths: [process.cwd()] });
+          this.resolvePackage(pkg);
           return true;
         } catch {
           return false;
@@ -222,5 +222,18 @@ export class AutoDetection {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Resolve a package from the application's working directory.
+   *
+   * Kept as a separate method so tests can stub resolution; spying on
+   * `require.resolve` from a spec file only patches the spec's own
+   * `require` object, never this module's.
+   *
+   * @internal
+   */
+  protected resolvePackage(pkg: string): string {
+    return require.resolve(pkg, { paths: [process.cwd()] });
   }
 }

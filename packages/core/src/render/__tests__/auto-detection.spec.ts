@@ -207,9 +207,13 @@ describe("AutoDetection", () => {
 
   describe("isEngineAvailable", () => {
     beforeEach(() => {
-      // Mock require.resolve
+      // Stub package resolution; spying on `require.resolve` here would
+      // only patch the spec's own `require`, not the module under test.
       jest
-        .spyOn(require, "resolve")
+        .spyOn(
+          autoDetect as unknown as { resolvePackage(pkg: string): string },
+          "resolvePackage",
+        )
         .mockImplementation((modulePath: string) => {
           if (modulePath === "ejs") return "/node_modules/ejs/index.js";
           throw new Error("Module not found");
