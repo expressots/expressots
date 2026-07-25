@@ -202,7 +202,11 @@ export class ValidationService {
   ): Promise<Array<ValidationSchemaMetadata>> {
     const inferredMetadata: Array<ValidationSchemaMetadata> = [];
 
-    for (let i = 0; i < args.length; i++) {
+    // The loop is bounded by the controller method's parameter count, but
+    // args can be influenced by request data — cap it so a forged large
+    // .length cannot drive an unbounded iteration.
+    const paramCount = Math.min(args.length, 64);
+    for (let i = 0; i < paramCount; i++) {
       const typeInfo = getParameterType(controllerConstructor.prototype, methodName, i);
 
       if (!typeInfo || !typeInfo.type) continue;

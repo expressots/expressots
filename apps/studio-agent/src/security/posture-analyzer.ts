@@ -24,9 +24,9 @@ import type {
   RecordedExchange,
   RouteInfo,
   Severity,
-} from '../types/index.js';
-import type { LogEntry } from '../logging/log-capture.js';
-import { createHash } from 'node:crypto';
+} from "../types/index.js";
+import type { LogEntry } from "../logging/log-capture.js";
+import { createHash } from "node:crypto";
 
 /**
  * Inputs the analyzer needs. We accept them as an opaque object so the
@@ -68,12 +68,16 @@ export function analyzePosture(input: PostureInputs): PostureFinding[] {
 // Rule: missing standard security response headers
 // ────────────────────────────────────────────────────────────────────
 
-const REQUIRED_HEADERS: Array<{ name: string; severity: Severity; owasp: string }> = [
-  { name: 'content-security-policy', severity: 'MEDIUM', owasp: 'API8:2023' },
-  { name: 'strict-transport-security', severity: 'MEDIUM', owasp: 'API8:2023' },
-  { name: 'x-content-type-options', severity: 'LOW', owasp: 'API8:2023' },
-  { name: 'x-frame-options', severity: 'LOW', owasp: 'API8:2023' },
-  { name: 'referrer-policy', severity: 'LOW', owasp: 'API8:2023' },
+const REQUIRED_HEADERS: Array<{
+  name: string;
+  severity: Severity;
+  owasp: string;
+}> = [
+  { name: "content-security-policy", severity: "MEDIUM", owasp: "API8:2023" },
+  { name: "strict-transport-security", severity: "MEDIUM", owasp: "API8:2023" },
+  { name: "x-content-type-options", severity: "LOW", owasp: "API8:2023" },
+  { name: "x-frame-options", severity: "LOW", owasp: "API8:2023" },
+  { name: "referrer-policy", severity: "LOW", owasp: "API8:2023" },
 ];
 
 /**
@@ -91,7 +95,7 @@ function checkSecurityHeaders(input: PostureInputs): PostureFinding[] {
     for (const required of REQUIRED_HEADERS) {
       if (headers[required.name]) continue;
       out.push({
-        id: stableId('missing-header', required.name, exchange.request.path),
+        id: stableId("missing-header", required.name, exchange.request.path),
         rule: `missing-${required.name}`,
         owasp: required.owasp,
         severity: required.severity,
@@ -99,10 +103,10 @@ function checkSecurityHeaders(input: PostureInputs): PostureFinding[] {
         description:
           `Responses to \`${exchange.request.method} ${exchange.request.path}\` ` +
           `are not sending the \`${prettyHeader(required.name)}\` header. ` +
-          'This relaxes browser-side defences against a range of common attacks.',
-        evidence: { kind: 'exchange', exchangeId: exchange.id },
+          "This relaxes browser-side defences against a range of common attacks.",
+        evidence: { kind: "exchange", exchangeId: exchange.id },
         fixHint:
-          'Register `helmet()` (or set the header explicitly in a response interceptor).',
+          "Register `helmet()` (or set the header explicitly in a response interceptor).",
       });
     }
   }
@@ -126,31 +130,38 @@ function checkPermissiveCors(input: PostureInputs): PostureFinding[] {
 
   for (const ex of input.exchanges) {
     const headers = lowercaseHeaderKeys(ex.response.headers);
-    if (headers['access-control-allow-origin'] !== '*') continue;
+    if (headers["access-control-allow-origin"] !== "*") continue;
 
     const reqHeaders = lowercaseHeaderKeys(ex.request.headers);
-    const hasAuth = Boolean(reqHeaders['authorization'] || reqHeaders['cookie']);
+    const hasAuth = Boolean(
+      reqHeaders["authorization"] || reqHeaders["cookie"],
+    );
 
     const key = `${ex.request.method}:${ex.request.path}:${hasAuth}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
     out.push({
-      id: stableId('permissive-cors', ex.request.method, ex.request.path, String(hasAuth)),
-      rule: 'permissive-cors',
-      owasp: 'API8:2023',
-      severity: hasAuth ? 'HIGH' : 'LOW',
+      id: stableId(
+        "permissive-cors",
+        ex.request.method,
+        ex.request.path,
+        String(hasAuth),
+      ),
+      rule: "permissive-cors",
+      owasp: "API8:2023",
+      severity: hasAuth ? "HIGH" : "LOW",
       title: hasAuth
-        ? 'Wildcard CORS on authenticated route'
-        : 'Wildcard CORS origin',
+        ? "Wildcard CORS on authenticated route"
+        : "Wildcard CORS origin",
       description: hasAuth
         ? `\`${ex.request.method} ${ex.request.path}\` returns \`Access-Control-Allow-Origin: *\` ` +
-          'while the client sends credentials. Browsers will refuse the response, but the ' +
-          'configuration is a footgun — pin the origin to your front-end host instead.'
+          "while the client sends credentials. Browsers will refuse the response, but the " +
+          "configuration is a footgun — pin the origin to your front-end host instead."
         : `\`${ex.request.method} ${ex.request.path}\` returns \`Access-Control-Allow-Origin: *\`. ` +
-          'Acceptable for fully public endpoints; replace with an explicit allow-list otherwise.',
-      evidence: { kind: 'exchange', exchangeId: ex.id },
-      fixHint: 'Configure CORS with a concrete `origin` list rather than `*`.',
+          "Acceptable for fully public endpoints; replace with an explicit allow-list otherwise.",
+      evidence: { kind: "exchange", exchangeId: ex.id },
+      fixHint: "Configure CORS with a concrete `origin` list rather than `*`.",
     });
   }
 
@@ -188,7 +199,9 @@ function checkAuthGaps(input: PostureInputs): PostureFinding[] {
   const middlewareNames = (input.structure?.middleware ?? []).map((m) =>
     m.name.toLowerCase(),
   );
-  const hasGlobalAuth = middlewareNames.some((n) => /auth|jwt|session|guard/.test(n));
+  const hasGlobalAuth = middlewareNames.some((n) =>
+    /auth|jwt|session|guard/.test(n),
+  );
 
   for (const [routeKey, exchange] of lastByRoute) {
     if (looksPublic(exchange.request.path)) continue;
@@ -197,27 +210,31 @@ function checkAuthGaps(input: PostureInputs): PostureFinding[] {
     const everyExchange = allByRoute.get(routeKey) ?? [];
     const sawCredentials = everyExchange.some((ex) => {
       const h = lowercaseHeaderKeys(ex.request.headers);
-      return Boolean(h['authorization'] || h['cookie']);
+      return Boolean(h["authorization"] || h["cookie"]);
     });
     if (sawCredentials) continue;
 
     out.push({
-      id: stableId('unauthenticated-route', exchange.request.method, exchange.request.path),
-      rule: 'unauthenticated-route',
-      owasp: 'API2:2023',
-      severity: 'LOW',
-      title: 'Route may be unauthenticated',
+      id: stableId(
+        "unauthenticated-route",
+        exchange.request.method,
+        exchange.request.path,
+      ),
+      rule: "unauthenticated-route",
+      owasp: "API2:2023",
+      severity: "LOW",
+      title: "Route may be unauthenticated",
       description:
         `\`${exchange.request.method} ${exchange.request.path}\` returned 2xx for every ` +
-        'recorded request, and Studio never observed an `Authorization` header or session ' +
-        'cookie. If this endpoint is meant to be private, add an auth interceptor.',
+        "recorded request, and Studio never observed an `Authorization` header or session " +
+        "cookie. If this endpoint is meant to be private, add an auth interceptor.",
       evidence: {
-        kind: 'route',
+        kind: "route",
         method: exchange.request.method,
         path: exchange.request.path,
       },
       fixHint:
-        'Apply an auth interceptor on the controller or the route, or register one globally.',
+        "Apply an auth interceptor on the controller or the route, or register one globally.",
     });
   }
 
@@ -228,7 +245,10 @@ function checkAuthGaps(input: PostureInputs): PostureFinding[] {
 // Rule: verbose error responses (stack trace leakage)
 // ────────────────────────────────────────────────────────────────────
 
-const STACK_REGEX = /at\s+[\w.<>$]+\s+\([^)]+:\d+:\d+\)/;
+// Linear-time by construction: the path segment excludes ':' (with an
+// optional Windows drive prefix) so it cannot overlap the :line:col tail —
+// the previous [^)]+ form was polynomially backtrackable on crafted bodies.
+const STACK_REGEX = /at\s+[\w.<>$]+\s+\((?:[A-Za-z]:)?[^():]*:\d+:\d+\)/;
 
 function checkVerboseErrors(input: PostureInputs): PostureFinding[] {
   const out: PostureFinding[] = [];
@@ -245,18 +265,18 @@ function checkVerboseErrors(input: PostureInputs): PostureFinding[] {
     seen.add(key);
 
     out.push({
-      id: stableId('verbose-error', ex.request.method, ex.request.path),
-      rule: 'verbose-error',
-      owasp: 'API8:2023',
-      severity: 'MEDIUM',
-      title: '5xx response includes a stack trace',
+      id: stableId("verbose-error", ex.request.method, ex.request.path),
+      rule: "verbose-error",
+      owasp: "API8:2023",
+      severity: "MEDIUM",
+      title: "5xx response includes a stack trace",
       description:
         `\`${ex.request.method} ${ex.request.path}\` returned ${ex.response.statusCode} ` +
-        'with a response body containing what looks like a stack trace. Production clients ' +
-        'should never see implementation details from server-side errors.',
-      evidence: { kind: 'exchange', exchangeId: ex.id },
+        "with a response body containing what looks like a stack trace. Production clients " +
+        "should never see implementation details from server-side errors.",
+      evidence: { kind: "exchange", exchangeId: ex.id },
       fixHint:
-        'Install a global error filter that strips stack frames from outbound responses.',
+        "Install a global error filter that strips stack frames from outbound responses.",
     });
   }
 
@@ -274,12 +294,15 @@ function checkVerboseErrors(input: PostureInputs): PostureFinding[] {
  * that might be a token". Adopt the [trufflehog / git-leaks] vocab.
  */
 const SECRET_PATTERNS: Array<{ name: string; regex: RegExp }> = [
-  { name: 'AWS Access Key', regex: /AKIA[0-9A-Z]{16}/ },
-  { name: 'GitHub PAT', regex: /\bghp_[A-Za-z0-9]{36}\b/ },
-  { name: 'GitHub Fine-grained PAT', regex: /\bgithub_pat_[A-Za-z0-9_]{82}\b/ },
-  { name: 'Slack token', regex: /\bxox[abprs]-[A-Za-z0-9-]{10,48}\b/ },
-  { name: 'Stripe live key', regex: /\bsk_live_[A-Za-z0-9]{24,}\b/ },
-  { name: 'JWT', regex: /\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/ },
+  { name: "AWS Access Key", regex: /AKIA[0-9A-Z]{16}/ },
+  { name: "GitHub PAT", regex: /\bghp_[A-Za-z0-9]{36}\b/ },
+  { name: "GitHub Fine-grained PAT", regex: /\bgithub_pat_[A-Za-z0-9_]{82}\b/ },
+  { name: "Slack token", regex: /\bxox[abprs]-[A-Za-z0-9-]{10,48}\b/ },
+  { name: "Stripe live key", regex: /\bsk_live_[A-Za-z0-9]{24,}\b/ },
+  {
+    name: "JWT",
+    regex: /\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/,
+  },
 ];
 
 function checkSecretLeakage(input: PostureInputs): PostureFinding[] {
@@ -291,16 +314,21 @@ function checkSecretLeakage(input: PostureInputs): PostureFinding[] {
     for (const pat of SECRET_PATTERNS) {
       if (!pat.regex.test(body)) continue;
       out.push({
-        id: stableId('response-secret', pat.name, ex.request.method, ex.request.path),
-        rule: 'response-secret',
-        owasp: 'API3:2023',
-        severity: 'HIGH',
+        id: stableId(
+          "response-secret",
+          pat.name,
+          ex.request.method,
+          ex.request.path,
+        ),
+        rule: "response-secret",
+        owasp: "API3:2023",
+        severity: "HIGH",
         title: `Response body matches a ${pat.name} pattern`,
         description:
           `\`${ex.request.method} ${ex.request.path}\` returned a body containing what ` +
           `looks like a ${pat.name}. Strip credentials from response payloads — they should ` +
-          'never reach the client.',
-        evidence: { kind: 'exchange', exchangeId: ex.id },
+          "never reach the client.",
+        evidence: { kind: "exchange", exchangeId: ex.id },
       });
     }
   }
@@ -310,15 +338,15 @@ function checkSecretLeakage(input: PostureInputs): PostureFinding[] {
     for (const pat of SECRET_PATTERNS) {
       if (!pat.regex.test(entry.message)) continue;
       out.push({
-        id: stableId('log-secret', pat.name, entry.message.slice(0, 64)),
-        rule: 'log-secret',
-        owasp: 'API3:2023',
-        severity: 'MEDIUM',
+        id: stableId("log-secret", pat.name, entry.message.slice(0, 64)),
+        rule: "log-secret",
+        owasp: "API3:2023",
+        severity: "MEDIUM",
         title: `Log line matches a ${pat.name} pattern`,
         description:
           `A captured log entry contains what looks like a ${pat.name}. Logs propagate to ` +
-          'log aggregators and rotated files; treat them as untrusted destinations for secrets.',
-        evidence: { kind: 'log', logIndex: i },
+          "log aggregators and rotated files; treat them as untrusted destinations for secrets.",
+        evidence: { kind: "log", logIndex: i },
       });
       // Don't double-report on the same line for multiple patterns.
       break;
@@ -367,18 +395,26 @@ function checkInputValidation(input: PostureInputs): PostureFinding[] {
     // `srcRoot` (future enhancement). For now, surface the route and let
     // the user verify — INFO severity reflects the uncertainty.
     out.push({
-      id: stableId('unvalidated-body', route.controller, route.controllerMethod),
-      rule: 'unvalidated-body',
-      owasp: 'API4:2023',
-      severity: 'INFO',
+      id: stableId(
+        "unvalidated-body",
+        route.controller,
+        route.controllerMethod,
+      ),
+      rule: "unvalidated-body",
+      owasp: "API4:2023",
+      severity: "INFO",
       title: `Verify request validation for ${route.controller}.${route.controllerMethod}`,
       description:
         `\`${ex.request.method} ${ex.request.path}\` (handled by ` +
         `\`${route.controller}.${route.controllerMethod}\`) accepts a body. Confirm that the ` +
-        'handler validates it (zod, class-validator, or a project DTO) before use.',
-      evidence: { kind: 'file', filePath: ctrl.filePath, lineNumber: route.lineNumber },
+        "handler validates it (zod, class-validator, or a project DTO) before use.",
+      evidence: {
+        kind: "file",
+        filePath: ctrl.filePath,
+        lineNumber: route.lineNumber,
+      },
       fixHint:
-        'Wrap the body parameter in a typed DTO + validation pipe or use a runtime schema check.',
+        "Wrap the body parameter in a typed DTO + validation pipe or use a runtime schema check.",
     });
   }
 
@@ -437,19 +473,19 @@ function routeKey(method: HttpMethod, path: string): string {
 }
 
 function renderBody(body: unknown): string {
-  if (body == null) return '';
-  if (typeof body === 'string') return body;
+  if (body == null) return "";
+  if (typeof body === "string") return body;
   try {
     return JSON.stringify(body);
   } catch {
-    return '';
+    return "";
   }
 }
 
 function hasMeaningfulBody(body: unknown): boolean {
   if (body == null) return false;
-  if (typeof body === 'string') return body.trim().length > 0;
-  if (typeof body === 'object') {
+  if (typeof body === "string") return body.trim().length > 0;
+  if (typeof body === "object") {
     return Object.keys(body as object).length > 0;
   }
   return true;
@@ -457,9 +493,9 @@ function hasMeaningfulBody(body: unknown): boolean {
 
 function prettyHeader(headerName: string): string {
   return headerName
-    .split('-')
+    .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('-');
+    .join("-");
 }
 
 /**
@@ -468,10 +504,10 @@ function prettyHeader(headerName: string): string {
  * detection (hash the id set; only broadcast on transition).
  */
 function stableId(...parts: string[]): string {
-  const h = createHash('sha256');
+  const h = createHash("sha256");
   for (const p of parts) h.update(p);
-  h.update('\0');
-  return h.digest('hex').slice(0, 16);
+  h.update("\0");
+  return h.digest("hex").slice(0, 16);
 }
 
 // Re-export `PostureEvidence` so callers can pattern-match without

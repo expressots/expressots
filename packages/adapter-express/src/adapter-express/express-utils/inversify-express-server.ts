@@ -324,7 +324,7 @@ export class InversifyExpressServer {
         body.actions = actionHint.actions;
       }
 
-      res.status(404).type("application/json").send(JSON.stringify(body));
+      res.status(404).json(body);
     });
   }
 
@@ -987,8 +987,7 @@ export class InversifyExpressServer {
     // Content-Type are rejected with 415 before guards or validation run.
     const consumesTypes: Array<string> | undefined = controllerConstructor
       ? (Reflect.getMetadata(METADATA_KEY.consumes, controllerConstructor.prototype, key) as
-          | Array<string>
-          | undefined)
+          Array<string> | undefined)
       : undefined;
 
     // Create handler function

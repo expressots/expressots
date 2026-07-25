@@ -166,6 +166,15 @@ export class ServiceProxy {
     const path = this.config.pathRewrite(req.path);
     const url = new URL(path, this.config.target);
 
+    // A crafted path such as '//evil.com/x' or 'http://evil.com' overrides
+    // the base in the URL constructor; refuse anything that escapes the
+    // configured target origin (SSRF guard).
+    if (url.origin !== new URL(this.config.target).origin) {
+      throw new Error(
+        `Proxy request blocked: path '${req.path}' resolves outside the configured target origin`,
+      );
+    }
+
     // Copy query parameters
     Object.entries(req.query).forEach(([key, value]) => {
       if (typeof value === "string") {

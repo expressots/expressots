@@ -200,8 +200,10 @@ export function createLazyModuleMiddleware(config: LazyModuleMiddlewareConfig): 
         // The route should now match a real handler
         return next("route");
       } else {
-        // Fallback: 307 redirect for single round-trip (temporary redirect preserves method)
-        res.redirect(307, req.originalUrl);
+        // Fallback: 307 redirect for single round-trip (temporary redirect preserves method).
+        // Collapse leading slashes so a crafted '//host/path' cannot become a
+        // protocol-relative redirect to another origin.
+        res.redirect(307, req.originalUrl.replace(/^\/+/, "/"));
       }
     } catch (error) {
       loadingModules.delete(matchedRoute.moduleName);

@@ -29,6 +29,12 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
+          # Scan shipped code only: examples and scaffolding templates are
+          # user-facing sample code, not part of any published package.
+          config: |
+            paths-ignore:
+              - examples
+              - templates
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

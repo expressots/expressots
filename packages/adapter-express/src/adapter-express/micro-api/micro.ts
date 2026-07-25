@@ -264,7 +264,7 @@ export function micro(config?: MicroConfig): MicroApp {
         }
       }
 
-      res.status(404).type("application/json").send(JSON.stringify(body));
+      res.status(404).json(body);
     });
   };
 

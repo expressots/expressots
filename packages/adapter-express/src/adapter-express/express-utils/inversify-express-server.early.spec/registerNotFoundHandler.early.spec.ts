@@ -20,12 +20,11 @@ describe("InversifyExpressServer 404 suggestions handler", () => {
       next: () => void,
     ) => void;
 
-    const send = jest.fn();
+    const json = jest.fn();
     const res = {
       headersSent: false,
       status: jest.fn().mockReturnThis(),
-      type: jest.fn().mockReturnThis(),
-      send,
+      json,
     } as unknown as Response;
 
     notFoundLayer(
@@ -35,7 +34,7 @@ describe("InversifyExpressServer 404 suggestions handler", () => {
     );
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(send).toHaveBeenCalled();
+    expect(json).toHaveBeenCalled();
   });
 
   it("delegates to next when suggestions are disabled", () => {
@@ -87,8 +86,7 @@ describe("InversifyExpressServer 404 suggestions handler", () => {
       {
         headersSent: false,
         status: jest.fn().mockReturnThis(),
-        type: jest.fn().mockReturnThis(),
-        send: jest.fn(),
+        json: jest.fn(),
       } as unknown as Response,
       () => undefined,
     );

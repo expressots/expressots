@@ -190,8 +190,10 @@ export function cloudflareAdapter(
           expressApp(req, res, (err: any) => {
             if (err) {
               console.error("[Cloudflare] Express error:", err);
+              // Details stay in the log; the response body must not leak
+              // internal error messages or stack fragments.
               resolve(
-                new globalThis.Response(JSON.stringify({ error: err.message }), {
+                new globalThis.Response(JSON.stringify({ error: "Internal Server Error" }), {
                   status: 500,
                   headers: {
                     "content-type": "application/json",
@@ -201,10 +203,9 @@ export function cloudflareAdapter(
             }
           });
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
           console.error("[Cloudflare] Handler error:", error);
           resolve(
-            new globalThis.Response(JSON.stringify({ error: errorMessage }), {
+            new globalThis.Response(JSON.stringify({ error: "Internal Server Error" }), {
               status: 500,
               headers: { "content-type": "application/json" },
             }),
