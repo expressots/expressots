@@ -1,0 +1,187 @@
+{
+  "name": "@expressots/adapter-express",
+  "version": "4.0.0",
+  "description": "Expressots - modern, fast, lightweight nodejs web framework (@adapter-express)",
+  "author": "Richard Zampieri",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/cjs/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/esm/types/index.d.ts",
+        "default": "./lib/esm/index.mjs"
+      },
+      "require": {
+        "types": "./lib/cjs/types/index.d.ts",
+        "default": "./lib/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md",
+    "lib/**/*"
+  ],
+  "sideEffects": [
+    "./lib/**/adapter-express/express-utils/decorators.js",
+    "./lib/**/adapter-express/express-utils/validation-decorators.js",
+    "./lib/**/adapter-express/express-utils/guard-utils.js",
+    "./lib/**/adapter-express/express-utils/guard-context-factory.js",
+    "./lib/**/adapter-express/express-utils/content-negotiation-decorators.js",
+    "./lib/**/adapter-express/express-utils/interceptor-middleware.js",
+    "./lib/**/adapter-express/express-utils/http-status-middleware.js"
+  ],
+  "license": "MIT",
+  "homepage": "https://expresso-ts.com",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expressots/adapter-express"
+  },
+  "bugs": {
+    "url": "https://github.com/expressots/adapter-express/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "keywords": [
+    "expressots",
+    "nodejs",
+    "microservices",
+    "typescript",
+    "clean-architecture",
+    "typescript-framework",
+    "framework",
+    "server-side"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "clean": "node scripts/rm.js lib",
+    "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "node scripts/build-esm.js",
+    "release": "release-it",
+    "release:prepare": "node scripts/release/prepare-publish.mjs",
+    "release:restore": "node scripts/release/restore-package-json.mjs",
+    "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
+    "prepublish": "npm run build",
+    "prepublishOnly": "node scripts/release/guard-no-file-deps.mjs",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "format": "prettier --write \"src/**/*.ts\" --cache",
+    "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint/",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
+  },
+  "dependencies": {
+    "@expressots/core": "^4.0.0",
+    "@expressots/shared": "^4.0.0",
+    "express": "^5.1.0",
+    "reflect-metadata": "0.2.2"
+  },
+  "peerDependencies": {
+    "@expressots/studio-agent": ">=4.0.0-0"
+  },
+  "peerDependenciesMeta": {
+    "@expressots/studio-agent": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.2.1",
+    "@commitlint/config-conventional": "19.2.2",
+    "@expressots/studio-agent": "^4.0.0",
+    "@release-it/conventional-changelog": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/jest": "29.5.14",
+    "@types/node": "20.14.10",
+    "@typescript-eslint/eslint-plugin": "7.16.1",
+    "@typescript-eslint/parser": "7.16.1",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "9.1.1",
+    "jest": "29.7.0",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.8.1",
+    "release-it": "^20.0.1",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "5.5.3"
+  },
+  "overrides": {
+    "js-yaml": "4.2.0",
+    "@opentelemetry/core": "2.8.0"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --cache --cache-location node_modules/.cache/eslint/ --fix",
+      "prettier --write --cache"
+    ]
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore(release): ${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": false
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "infile": "CHANGELOG.md",
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance Improvements"
+            },
+            {
+              "type": "revert",
+              "section": "Reverts"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "refactor",
+              "section": "Code Refactoring"
+            },
+            {
+              "type": "test",
+              "section": "Tests"
+            },
+            {
+              "type": "build",
+              "section": "Build System"
+            },
+            {
+              "type": "ci",
+              "section": "Continuous Integrations"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

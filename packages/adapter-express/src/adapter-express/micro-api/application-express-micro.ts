@@ -1,0 +1,253 @@
+import { IMiddleware, interfaces, Logger, Middleware } from "@expressots/core";
+import { Env, IConsoleMessage } from "@expressots/shared";
+import express from "express";
+import { Server } from "http";
+import { MiddlewareConfig } from "../application-express.types.js";
+import { IIOC, IOC } from "./application-express-micro-container.js";
+import { IRoute, Route } from "./application-express-micro-route.js";
+
+/**
+ * Configuration options for the Express Micro API adapter
+ * @public API
+ */
+export type MicroAPIConfig = {
+  containerOptions: interfaces.ContainerOptions;
+};
+
+/**
+ * Interface for the Create Method of Express Micro API adapter
+ */
+export interface ICreateMicroAPI {
+  /**
+   * Set the global route prefix
+   * @param prefix - The global route prefix
+   * @public API
+   */
+  setGlobalRoutePrefix(prefix: string): void;
+
+  /**
+   * Get the Container instance
+   * @returns IIOC - The container instance interface
+   * @public API
+   */
+  get Container(): IIOC;
+
+  /**
+   * Get the Express HTTP Server instance
+   * @returns express.Application
+   * @public API
+   */
+  getHttpServer(): Server;
+
+  /**
+   * Build the Web Server Micro API
+   * @returns IWebServerMicroAPI
+   * @public API
+   */
+  build(): IWebServerMicroAPI;
+}
+
+/**
+ * Interface for the Build Method of the Web Server Micro API adapter
+ */
+export interface IWebServerMicroAPI {
+  /**
+   * Get the Middleware instance
+   * @returns IMiddleware
+   * @public API
+   */
+  get Middleware(): IMiddleware;
+
+  /**
+   * Get the Route instance
+   * @returns IRoute
+   * @public API
+   */
+  get Route(): IRoute;
+
+  /**
+   * Listen for incoming requests
+   * @param port - The port to listen on
+   * @param appInfo - Information about the application
+   * @public API
+   */
+  listen(port: number | string, appInfo?: IConsoleMessage): Promise<void>;
+}
+
+class AppExpressMicro {
+  private logger: Logger = new Logger();
+  private app: express.Application;
+  private httpServer: Server;
+  private port: number;
+  private environment: Env.Environment;
+  private container: IIOC;
+  private globalPrefix: string = "/";
+  private middlewareManager: IMiddleware;
+  private routeManager: IRoute;
+
+  /**
+   * Handle the exit of the server
+   * @private
+   */
+  private handleExit(): void {
+    process.exit(0);
+  }
+
+  /**
+   * Configure the middleware for the application
+   * @private
+   */
+  private configureMiddleware(): void {
+    const sortedMiddlewarePipeline = (this.middlewareManager as Middleware).getMiddlewarePipeline();
+    const pipeline = sortedMiddlewarePipeline.map((entry) => entry.middleware);
+
+    for (const entry of pipeline) {
+      if (typeof entry === "function") {
+        this.app.use(entry as express.RequestHandler);
+      } else if ((entry as MiddlewareConfig).middlewares) {
+        const { path, middlewares } = entry as MiddlewareConfig;
+        for (const mid of middlewares) {
+          if (path) {
+            this.app.use(path, mid as express.RequestHandler);
+          } else {
+            this.app.use(mid as express.RequestHandler);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Set the global route prefix
+   * @param prefix - The global route prefix
+   * @public API
+   */
+  public setGlobalRoutePrefix(prefix: string): void {
+    this.globalPrefix = prefix;
+  }
+
+  /**
+   * Get the Middleware instance
+   * @returns IMiddleware
+   * @public API
+   */
+  public get Middleware(): IMiddleware {
+    return this.middlewareManager;
+  }
+
+  /**
+   * Get the Route instance
+   * @returns IRoute
+   * @public API
+   */
+  public get Route(): IRoute {
+    return this.routeManager;
+  }
+
+  /**
+   * Get the Container instance
+   * @returns IIOC
+   * @public API
+   */
+  public get Container(): IIOC {
+    return this.container;
+  }
+
+  /**
+   * Get the Express HTTP Server instance
+   * @returns express.Application
+   * @public API
+   */
+  public getHttpServer(): Server {
+    return this.httpServer;
+  }
+
+  /**
+   * Create a new instance of the Express Micro API adapter
+   * @param config - Configuration options
+   * @returns ICreateMicroAPI
+   * @public API
+   */
+  public create(config?: MicroAPIConfig): ICreateMicroAPI {
+    this.app = express();
+    this.routeManager = new Route(this.app);
+    this.container = new IOC(config?.containerOptions);
+    this.middlewareManager = new Middleware();
+
+    this.environment = "development";
+
+    return this as unknown as ICreateMicroAPI;
+  }
+
+  /**
+   * Build the Web Server Micro API
+   * @returns IWebServerMicroAPI
+   * @public API
+   */
+  public build(): IWebServerMicroAPI {
+    (this.routeManager as Route).setGlobalRoutePrefix(this.globalPrefix);
+    return this as unknown as IWebServerMicroAPI;
+  }
+
+  /**
+   * Listen for incoming requests
+   * @param port - The port to listen on
+   * @param appInfo - Information about the application
+   * @public API
+   */
+  public async listen(port: number | string, appInfo?: IConsoleMessage): Promise<void> {
+    const logger: Logger = new Logger();
+    const normalizedPort = typeof port === "string" ? parseInt(port, 10) : port;
+
+    this.configureMiddleware();
+
+    (this.routeManager as Route).applyRoutes();
+
+    if (this.Middleware.getErrorHandler()) {
+      this.app.use(this.Middleware.getErrorHandler() as express.ErrorRequestHandler);
+    }
+
+    return new Promise((resolve, reject) => {
+      this.httpServer = this.app.listen(normalizedPort, () => {
+        const address = this.httpServer.address();
+
+        if (typeof address === "object" && address?.port) {
+          this.port = address.port;
+        } else {
+          this.port = normalizedPort;
+        }
+
+        const name = appInfo?.appName || "ExpressoTS Micro";
+        const version = appInfo?.appVersion || "1.0.0";
+        logger.info(
+          `${name} version ${version} is running on port ${this.port} - Environment: ${this.environment}`,
+          "micro",
+        );
+
+        (["SIGTERM", "SIGHUP", "SIGBREAK", "SIGQUIT", "SIGINT"] as Array<NodeJS.Signals>).forEach(
+          (signal) => {
+            process.on(signal, this.handleExit.bind(this));
+          },
+        );
+        resolve();
+      });
+
+      this.httpServer.on("error", (error) => {
+        logger.error(`Error starting server: ${error.message}`, "micro");
+        reject(error);
+      });
+    });
+  }
+}
+
+/**
+ * Create a new instance of the Express Micro API adapter
+ * @param config - Configuration options
+ * @returns ICreateMicroAPI
+ * @public API
+ */
+export function createMicroAPI(config?: MicroAPIConfig): ICreateMicroAPI {
+  const microAPI = new AppExpressMicro();
+  const create = microAPI.create.bind(microAPI);
+  return create(config);
+}

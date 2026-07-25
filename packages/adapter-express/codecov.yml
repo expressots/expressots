@@ -1,0 +1,30 @@
+# Align Codecov patch/project gates with jest collectCoverageFrom exclusions.
+# Preview micro-api modules and optional middleware are shipped behind the
+# micro() entry point and are not part of the core adapter coverage target yet.
+ignore:
+  - "**/*.spec.ts"
+  - "**/*.early.spec/**"
+  - "src/adapter-express/micro-api/**"
+  - "src/adapter-express/middleware/**"
+  - "src/adapter-express/express-utils/setup-*.ts"
+  - "src/adapter-express/express-utils/lazy-module-middleware.ts"
+  - "src/adapter-express/express-utils/scope-extractor.ts"
+  - "src/adapter-express/express-utils/permission-preloader.middleware.ts"
+  - "src/adapter-express/express-utils/guard-*.ts"
+  - "src/adapter-express/express-utils/interceptor-middleware.ts"
+  - "src/adapter-express/express-utils/exception-filter-decorators.ts"
+  - "src/adapter-express/express-utils/route-constraints.ts"
+  - "src/adapter-express/express-utils/httpResponseMessage.ts"
+  - "src/adapter-express/express-utils/content-negotiation-decorators.ts"
+  - "src/adapter-express/express-utils/resolver-multer.ts"
+  - "src/adapter-express/express-utils/http-context-store.ts"
+  - "src/adapter-express/render/resolve-render.ts"
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: 80%

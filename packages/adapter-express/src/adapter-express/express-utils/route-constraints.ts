@@ -1,0 +1,109 @@
+/**
+ * Route parameter patterns for common use cases.
+ *
+ * Express 5 / path-to-regexp v8 dropped the inline-regex form
+ * (`:id(\\d+)`), so the framework no longer hands these patterns to
+ * the underlying matcher verbatim. Instead, the HTTP-method decorators
+ * (`@Get`, `@Post`, …) parse the constraint out of the path at decorator
+ * time, register the route under a plain `:id` placeholder, and inject
+ * a small validator middleware that 404s when the captured value
+ * doesn't match. The user-facing semantics are unchanged: a path that
+ * uses `Patterns.NUMERIC_ID` still rejects `/users/abc` and only
+ * dispatches the handler for matches like `/users/123`.
+ *
+ * @example
+ * ```typescript
+ * import { Patterns, pattern } from "@expressots/adapter-express";
+ *
+ * @Get(`/users/${pattern("id", Patterns.NUMERIC_ID)}`)
+ * getUserById(@param("id") id: number) {
+ *   // Only dispatches for numeric IDs like /users/123
+ * }
+ *
+ * @Get(`/documents/${pattern("uuid", Patterns.UUID)}`)
+ * getDocument(@param("uuid") uuid: string) {
+ *   // Only dispatches for valid UUIDs
+ * }
+ * ```
+ *
+ * @public API
+ */
+export const Patterns = {
+  /**
+   * Matches one or more digits (numeric ID)
+   * Example: matches /users/123, does not match /users/abc
+   */
+  NUMERIC_ID: "(\\d+)",
+
+  /**
+   * Matches a valid UUID v4 format
+   * Example: matches /documents/550e8400-e29b-41d4-a716-446655440000
+   */
+  UUID: "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+
+  /**
+   * Matches lowercase letters, numbers, and hyphens (URL-friendly slug)
+   * Example: matches /posts/my-awesome-post, does not match /posts/My_Post
+   */
+  SLUG: "([a-z0-9-]+)",
+
+  /**
+   * Matches alphanumeric characters (letters and numbers only)
+   * Example: matches /codes/ABC123, does not match /codes/ABC-123
+   */
+  ALPHANUMERIC: "([a-zA-Z0-9]+)",
+
+  /**
+   * Matches lowercase letters only
+   * Example: matches /tags/javascript, does not match /tags/JavaScript
+   */
+  LOWERCASE: "([a-z]+)",
+
+  /**
+   * Matches uppercase letters only
+   * Example: matches /codes/USD, does not match /codes/usd
+   */
+  UPPERCASE: "([A-Z]+)",
+
+  /**
+   * Matches email format (basic validation)
+   * Example: matches /users/user@example.com
+   */
+  EMAIL: "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})",
+
+  /**
+   * Matches hexadecimal string (e.g., color codes, hash)
+   * Example: matches /colors/ff5733, does not match /colors/xyz
+   */
+  HEXADECIMAL: "([0-9a-fA-F]+)",
+
+  /**
+   * Matches MongoDB ObjectId format (24 hex characters)
+   * Example: matches /documents/507f1f77bcf86cd799439011
+   */
+  MONGO_ID: "([0-9a-fA-F]{24})",
+} as const;
+
+/**
+ * Helper function to build route parameter patterns.
+ * This is optional - you can also use Patterns directly in template strings.
+ *
+ * @param paramName - The parameter name (e.g., "id", "uuid")
+ * @param pattern - The pattern from Patterns
+ * @returns The formatted route parameter with pattern
+ *
+ * @example
+ * ```typescript
+ * import { pattern, Patterns } from "@expressots/adapter-express";
+ *
+ * @Get(`/users/${pattern("id", Patterns.NUMERIC_ID)}`)
+ * getUserById(@param("id") id: number) {
+ *   // Route: /users/:id(\\d+)
+ * }
+ * ```
+ *
+ * @public API
+ */
+export function pattern(paramName: string, patternValue: string): string {
+  return `:${paramName}(${patternValue})`;
+}

@@ -1,0 +1,122 @@
+import { Logger } from "@expressots/core";
+import { interfaces } from "@expressots/core";
+import { METADATA_KEY, NO_CONTROLLERS_FOUND, TYPE } from "./constants.js";
+import type {
+  BaseController,
+  ControllerMetadata,
+  ControllerMethodMetadata,
+  ControllerParameterMetadata,
+  DecoratorTarget,
+  IHttpActionResult,
+} from "./interfaces.js";
+
+export function getControllersFromContainer(
+  container: interfaces.Container,
+  forceControllers: boolean,
+): Array<BaseController> {
+  if (container.isBound(TYPE.Controller)) {
+    return container.getAll<BaseController>(TYPE.Controller);
+  }
+  if (forceControllers) {
+    const logger: Logger = new Logger();
+    logger.error(NO_CONTROLLERS_FOUND, "adapter-express");
+    throw new Error(NO_CONTROLLERS_FOUND);
+  } else {
+    return [];
+  }
+}
+
+export function getControllersFromMetadata(): Array<DecoratorTarget> {
+  const arrayOfControllerMetadata: Array<ControllerMetadata> =
+    (Reflect.getMetadata(METADATA_KEY.controller, Reflect) as Array<ControllerMetadata>) || [];
+  return arrayOfControllerMetadata.map((metadata) => metadata.target);
+}
+
+export function getControllerMetadata(constructor: NewableFunction): ControllerMetadata {
+  const controllerMetadata: ControllerMetadata = Reflect.getOwnMetadata(
+    METADATA_KEY.controller,
+    constructor,
+  ) as ControllerMetadata;
+  return controllerMetadata;
+}
+
+export function getControllerMethodMetadata(
+  constructor: NewableFunction,
+): Array<ControllerMethodMetadata> {
+  const methodMetadata = Reflect.getOwnMetadata(
+    METADATA_KEY.controllerMethod,
+    constructor,
+  ) as Array<ControllerMethodMetadata>;
+
+  const genericMetadata = Reflect.getMetadata(
+    METADATA_KEY.controllerMethod,
+    Reflect.getPrototypeOf(constructor) as NewableFunction,
+  ) as Array<ControllerMethodMetadata>;
+
+  if (genericMetadata !== undefined && methodMetadata !== undefined) {
+    return methodMetadata.concat(genericMetadata);
+  }
+  if (genericMetadata !== undefined) {
+    return genericMetadata;
+  }
+  return methodMetadata;
+}
+
+export function getControllerParameterMetadata(
+  constructor: NewableFunction,
+): ControllerParameterMetadata {
+  const parameterMetadata: ControllerParameterMetadata = Reflect.getOwnMetadata(
+    METADATA_KEY.controllerParameter,
+    constructor,
+  ) as ControllerParameterMetadata;
+
+  const genericMetadata: ControllerParameterMetadata = Reflect.getMetadata(
+    METADATA_KEY.controllerParameter,
+    Reflect.getPrototypeOf(constructor) as NewableFunction,
+  ) as ControllerParameterMetadata;
+
+  if (genericMetadata !== undefined && parameterMetadata !== undefined) {
+    return { ...parameterMetadata, ...genericMetadata };
+  }
+  if (genericMetadata !== undefined) {
+    return genericMetadata;
+  }
+  return parameterMetadata;
+}
+
+export function cleanUpMetadata(): void {
+  Reflect.defineMetadata(METADATA_KEY.controller, [], Reflect);
+}
+
+export function instanceOfIHttpActionResult(value: unknown): value is IHttpActionResult {
+  return value != null && typeof (value as IHttpActionResult).executeAsync === "function";
+}
+
+/**
+ * Gets content negotiation metadata from a controller method.
+ * @param target - Controller instance
+ * @param propertyKey - Method name
+ * @returns Content negotiation metadata
+ */
+export function getContentNegotiationMetadata(
+  target: object,
+  propertyKey: string | symbol,
+): {
+  accept?: Array<string>;
+  consumes?: Array<string>;
+  produces?: Array<string>;
+  csvOptions?: import("@expressots/core").CsvFormatOptions;
+  xmlOptions?: import("@expressots/core").XmlFormatOptions;
+  yamlOptions?: import("@expressots/core").YamlFormatOptions;
+  streamResponse?: boolean;
+} {
+  return {
+    accept: Reflect.getMetadata(METADATA_KEY.accept, target, propertyKey),
+    consumes: Reflect.getMetadata(METADATA_KEY.consumes, target, propertyKey),
+    produces: Reflect.getMetadata(METADATA_KEY.produces, target, propertyKey),
+    csvOptions: Reflect.getMetadata(METADATA_KEY.csvOptions, target, propertyKey),
+    xmlOptions: Reflect.getMetadata(METADATA_KEY.xmlOptions, target, propertyKey),
+    yamlOptions: Reflect.getMetadata(METADATA_KEY.yamlOptions, target, propertyKey),
+    streamResponse: Reflect.getMetadata(METADATA_KEY.streamResponse, target, propertyKey),
+  };
+}
