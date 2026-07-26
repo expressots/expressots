@@ -45,9 +45,10 @@ yarn.lock
 templates/opinionated/yarn.lock
 templates/opinionated/package-lock.json
 
-# ignore npm lock files (keep root package-lock.json for CI npm ci)
+# ignore npm/yarn lock files everywhere — the workspace uses pnpm-lock.yaml,
+# and examples are installed fresh by users (and by the release smoke test),
+# so committed example lockfiles only pin stale, CVE-accumulating transitives
 *-lock.json
-!package-lock.json
 
 # Ignore VSCODE configuration files
 .vscode
