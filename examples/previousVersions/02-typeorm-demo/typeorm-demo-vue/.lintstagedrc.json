@@ -1,6 +1,0 @@
-{
-    "*.ts,*.vue,*.scss": [
-        "prettier --write",
-        "eslint"
-    ]
-}
