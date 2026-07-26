@@ -51,7 +51,7 @@
     "@types/express": "4.17.21",
     "@types/jest": "29.5.14",
     "@types/node": "22.0.2",
-    "@typescript-eslint/eslint-plugin": "7.16.1",
+    "@typescript-eslint/eslint-plugin": "8.65.0",
     "@typescript-eslint/parser": "7.16.1",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
