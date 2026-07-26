@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "rimraf": "^6.0.0",
-    "typescript": "^5.6.0",
+    "typescript": "^7.0.2",
     "vite": "^6.4.3",
     "vitest": "^4.1.7"
   },
