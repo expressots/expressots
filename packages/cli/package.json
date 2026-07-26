@@ -71,7 +71,7 @@
     "yargs": "17.7.2"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.2.1",
+    "@commitlint/cli": "21.2.1",
     "@commitlint/config-conventional": "19.1.0",
     "@types/cli-progress": "3.11.0",
     "@types/cross-spawn": "6.0.6",

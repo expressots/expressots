@@ -160,7 +160,7 @@
     "js-yaml": "4.2.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.2.1",
+    "@commitlint/cli": "21.2.1",
     "@commitlint/config-conventional": "19.1.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
