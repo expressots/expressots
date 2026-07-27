@@ -8,7 +8,7 @@
     <a href="https://www.npmjs.com/package/@expressots/studio-agent"><img src="https://img.shields.io/npm/v/@expressots%2Fstudio-agent?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
     <a href="https://github.com/expressots/expressots-studio/blob/main/LICENSE"><img src="https://img.shields.io/github/license/expressots/expressots-studio?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/expressots-studio/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots-studio/build.yml?branch=feature/v4.0&style=flat-square&logo=github&label=build" alt="Build"></a>
+    <a href="https://github.com/expressots/expressots/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots/ci.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
 
 </div>
@@ -30,11 +30,11 @@ npm install @expressots/studio-agent
 ## Quick Start
 
 ```typescript
-import { StudioAgent } from '@expressots/studio-agent';
+import { StudioAgent } from "@expressots/studio-agent";
 
 const agent = new StudioAgent({
   port: 3334,
-  serviceName: 'my-app',
+  serviceName: "my-app",
   enableRecording: true,
 });
 
@@ -57,25 +57,25 @@ await agent.stop();
 interface AgentConfig {
   /** Port for the agent WebSocket server (default: 3334) */
   port: number;
-  
+
   /** Path to store SQLite database (default: '.studio/studio.db') */
   dbPath: string;
-  
+
   /** Enable request/response recording (default: true) */
   enableRecording: boolean;
-  
+
   /** Maximum number of recorded exchanges to keep (default: 1000) */
   maxRecordedExchanges: number;
-  
+
   /** Enable performance profiling (default: true) */
   enableProfiling: boolean;
-  
+
   /** Sample rate for tracing 0-1 (default: 1.0) */
   traceSampleRate: number;
-  
+
   /** Custom service name (default: 'expressots-app') */
   serviceName: string;
-  
+
   /** Express app instance for runtime route scanning */
   expressApp?: any;
 }
@@ -92,9 +92,9 @@ Main orchestrator that coordinates all functionality.
 Scans TypeScript source files to discover routes and their metadata:
 
 ```typescript
-import { RouteScanner } from '@expressots/studio-agent';
+import { RouteScanner } from "@expressots/studio-agent";
 
-const scanner = new RouteScanner('./src');
+const scanner = new RouteScanner("./src");
 const structure = await scanner.scan();
 
 console.log(structure.controllers);
@@ -107,16 +107,16 @@ console.log(structure.dependencies);
 Records HTTP requests/responses for later replay:
 
 ```typescript
-import { RequestRecorder } from '@expressots/studio-agent';
+import { RequestRecorder } from "@expressots/studio-agent";
 
-const recorder = new RequestRecorder('.studio/studio.db');
+const recorder = new RequestRecorder(".studio/studio.db");
 await recorder.initialize();
 
 // Get recent exchanges
 const exchanges = recorder.getRecentExchanges(100);
 
 // Search by path
-const results = recorder.searchExchanges('/api/users', 'GET');
+const results = recorder.searchExchanges("/api/users", "GET");
 ```
 
 ### StudioTracer
@@ -124,29 +124,33 @@ const results = recorder.searchExchanges('/api/users', 'GET');
 OpenTelemetry tracer with custom span processing:
 
 ```typescript
-import { StudioTracer } from '@expressots/studio-agent';
+import { StudioTracer } from "@expressots/studio-agent";
 
-const tracer = new StudioTracer('my-service');
+const tracer = new StudioTracer("my-service");
 await tracer.start((trace) => {
-  console.log('Trace completed:', trace.traceId);
+  console.log("Trace completed:", trace.traceId);
 });
 
 // Create custom spans
-await tracer.createSpan('my-operation', async () => {
-  // Your code here
-}, { attribute: 'value' });
+await tracer.createSpan(
+  "my-operation",
+  async () => {
+    // Your code here
+  },
+  { attribute: "value" },
+);
 ```
 
 ## WebSocket Events
 
 The agent emits real-time events to connected clients:
 
-| Event | Description |
-|-------|-------------|
-| `routes` | Discovered routes |
-| `trace` | Completed trace |
-| `request` | New request recorded |
-| `metrics` | Updated metrics |
+| Event       | Description           |
+| ----------- | --------------------- |
+| `routes`    | Discovered routes     |
+| `trace`     | Completed trace       |
+| `request`   | New request recorded  |
+| `metrics`   | Updated metrics       |
 | `structure` | Application structure |
 
 ## License

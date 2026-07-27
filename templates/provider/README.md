@@ -1,6 +1,7 @@
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
+
 ![Build][build-shield]
 [![Contributors][contributors-shield]][contributors-url]
 [![MIT License][license-shield]][license-url]
@@ -10,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://expresso-ts.com/">
-    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="Logo" width="120">
+    <img src="https://raw.githubusercontent.com/expressots/expressots/main/packages/core/media/expressots.png" alt="Logo" width="120">
   </a>
 
   <h3 align="center">ExpressoTS Provider Template</h3>
@@ -77,22 +78,22 @@ import { provide, inject } from "@expressots/core";
 
 @provide(MyProvider)
 export class MyProvider {
-    constructor(@inject(SomeDependency) private readonly dep: SomeDependency) {}
+  constructor(@inject(SomeDependency) private readonly dep: SomeDependency) {}
 
-    doWork() {
-        return this.dep.run();
-    }
+  doWork() {
+    return this.dep.run();
+  }
 }
 ```
 
 Common provider shapes:
 
-| Shape                          | Example                                                        |
-| ------------------------------ | -------------------------------------------------------------- |
-| Plain helper / SDK wrapper     | The sample `GreeterProvider` in this template.                 |
-| Adapter to an external service | Database client, queue client, SDK wrapper.                    |
-| Cross-cutting concern          | Logger transport, cache, feature-flag provider.                |
-| Configuration                  | A wrapper around `defineConfig` exposing a typed values bag.   |
+| Shape                          | Example                                                      |
+| ------------------------------ | ------------------------------------------------------------ |
+| Plain helper / SDK wrapper     | The sample `GreeterProvider` in this template.               |
+| Adapter to an external service | Database client, queue client, SDK wrapper.                  |
+| Cross-cutting concern          | Logger transport, cache, feature-flag provider.              |
+| Configuration                  | A wrapper around `defineConfig` exposing a typed values bag. |
 
 Lifecycle is supported via the core decorators when you need it:
 
@@ -101,31 +102,31 @@ import { provide, postConstruct, preDestroy } from "@expressots/core";
 
 @provide(DbClient)
 export class DbClient {
-    @postConstruct()
-    async connect() {
-        // open the connection once the container resolves the instance
-    }
+  @postConstruct()
+  async connect() {
+    // open the connection once the container resolves the instance
+  }
 
-    @preDestroy()
-    async disconnect() {
-        // close when the container disposes
-    }
+  @preDestroy()
+  async disconnect() {
+    // close when the container disposes
+  }
 }
 ```
 
 ## Scripts
 
-| Script               | What it does                                                 |
-| -------------------- | ------------------------------------------------------------ |
+| Script               | What it does                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------- |
 | `npm run build`      | Cleans `lib/`, builds the CJS bundle, copies `package.json` + `README.md` + `CHANGELOG.md`. |
-| `npm run build:cjs`  | CJS build only.                                              |
-| `npm run build:esm`  | ESM build only.                                              |
-| `npm run release`    | release-it release flow (tag, GitHub release, CHANGELOG bump). |
-| `npm run prepublish` | `build` + `npm pack` — produces the `.tgz` you can publish.  |
-| `npm test`           | Jest test suite.                                             |
-| `npm run coverage`   | Jest with `--coverage`.                                      |
-| `npm run lint:fix`   | ESLint with `--fix`.                                         |
-| `npm run format`     | Prettier formatting for `src/`.                              |
+| `npm run build:cjs`  | CJS build only.                                                                             |
+| `npm run build:esm`  | ESM build only.                                                                             |
+| `npm run release`    | release-it release flow (tag, GitHub release, CHANGELOG bump).                              |
+| `npm run prepublish` | `build` + `npm pack` — produces the `.tgz` you can publish.                                 |
+| `npm test`           | Jest test suite.                                                                            |
+| `npm run coverage`   | Jest with `--coverage`.                                                                     |
+| `npm run lint:fix`   | ESLint with `--fix`.                                                                        |
+| `npm run format`     | Prettier formatting for `src/`.                                                             |
 
 ## Publishing
 
@@ -177,6 +178,7 @@ MIT — see [LICENSE](./LICENSE.md).
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
+
 [build-shield]: https://img.shields.io/github/actions/workflow/status/expressots/templates/build.yaml?branch=main&style=for-the-badge&logo=github
 [contributors-shield]: https://img.shields.io/github/contributors/expressots/templates?style=for-the-badge
 [contributors-url]: https://github.com/expressots/templates/graphs/contributors

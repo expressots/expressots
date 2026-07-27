@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://expresso-ts.com">
-    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+    <img src="https://raw.githubusercontent.com/expressots/expressots/main/packages/core/media/expressots.png" alt="ExpressoTS" width="120">
   </a>
 
   <h1>ExpressoTS Templates</h1>
@@ -10,7 +10,7 @@
   <p>
     <a href="https://github.com/expressots/templates/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/templates?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/templates/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/templates/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
+    <a href="https://github.com/expressots/expressots/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots/ci.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
 
   <p>
@@ -37,12 +37,12 @@ expressots cicd generate github --strategy comprehensive
 
 Four directories in this repo are project scaffolds consumed by `expressots new` via [degit](https://github.com/Rich-Harris/degit). The CLI fetches `expressots/templates/<folder>#v<version>`, where the tag matches the CLI release (e.g. `expressots/templates/application#v4.0.0`), so scaffolds are reproducible across CLI versions.
 
-| Folder | Purpose |
-| ------ | ------- |
-| `application/` | Standard v4 REST API starter (opinionated layout, lifecycle hooks, tests). |
+| Folder                     | Purpose                                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------- |
+| `application/`             | Standard v4 REST API starter (opinionated layout, lifecycle hooks, tests).                    |
 | `application-with-events/` | Same as `application`, plus the type-safe Event Bus wired in with a sample event and handler. |
-| `micro/` | Single-file micro API using `micro()` from `@expressots/adapter-express`. |
-| `provider/` | Library scaffold for building reusable DI providers, installed in apps with `expressots add`. |
+| `micro/`                   | Single-file micro API using `micro()` from `@expressots/adapter-express`.                     |
+| `provider/`                | Library scaffold for building reusable DI providers, installed in apps with `expressots add`. |
 
 You can also fetch a scaffold directly without the CLI:
 
@@ -85,4 +85,3 @@ Welcome to the ExpressoTS community. See the [Contributing Guide](https://github
 ## License
 
 MIT. See [LICENSE](./LICENSE.md).
-

@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://expresso-ts.com">
-    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+    <img src="https://raw.githubusercontent.com/expressots/expressots/main/packages/core/media/expressots.png" alt="ExpressoTS" width="120">
   </a>
 
   <h1>@expressots/shared</h1>

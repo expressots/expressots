@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://expresso-ts.com">
-    <img src="https://github.com/expressots/expressots/blob/main/media/expressots.png" alt="ExpressoTS" width="120">
+    <img src="https://raw.githubusercontent.com/expressots/expressots/main/packages/core/media/expressots.png" alt="ExpressoTS" width="120">
   </a>
 
   <h1>@expressots/core</h1>
@@ -11,7 +11,7 @@
     <a href="https://www.npmjs.com/package/@expressots/core"><img src="https://img.shields.io/npm/v/@expressots%2Fcore?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
     <a href="https://github.com/expressots/expressots/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/expressots/expressots?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/expressots/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots/build.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
+    <a href="https://github.com/expressots/expressots/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots/ci.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
 
   <p>
@@ -53,7 +53,10 @@ void bootstrap(App);
 ## Testing Utilities
 
 ```typescript
-import { createTestApp, setupExpressoTSMatchers } from "@expressots/core/testing";
+import {
+  createTestApp,
+  setupExpressoTSMatchers,
+} from "@expressots/core/testing";
 
 const app = await createTestApp(App);
 await app.request().get("/health").expectStatus(200);
@@ -77,4 +80,3 @@ Welcome to the ExpressoTS community. See the [Contributing Guide](https://github
 ## License
 
 MIT. See [LICENSE](./LICENSE.md).
-

@@ -8,7 +8,7 @@
     <a href="https://www.npmjs.com/package/@expressots/studio"><img src="https://img.shields.io/npm/v/@expressots%2Fstudio?style=flat-square&color=181717&logo=npm&logoColor=white" alt="npm"></a>
     <a href="https://github.com/expressots/expressots-studio/blob/main/LICENSE"><img src="https://img.shields.io/github/license/expressots/expressots-studio?style=flat-square&color=181717" alt="License"></a>
     <a href="https://discord.com/invite/PyPJfGK"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://github.com/expressots/expressots-studio/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots-studio/build.yml?branch=feature/v4.0&style=flat-square&logo=github&label=build" alt="Build"></a>
+    <a href="https://github.com/expressots/expressots/actions"><img src="https://img.shields.io/github/actions/workflow/status/expressots/expressots/ci.yml?branch=main&style=flat-square&logo=github&label=build" alt="Build"></a>
   </p>
 
 </div>
@@ -40,13 +40,13 @@ npx expressots-studio clean
 ### Programmatic Usage
 
 ```typescript
-import { Studio } from '@expressots/studio';
+import { Studio } from "@expressots/studio";
 
 const studio = new Studio({
   uiPort: 3333,
   agentPort: 3334,
-  dbPath: '.studio/studio.db',
-  srcPath: './src',
+  dbPath: ".studio/studio.db",
+  srcPath: "./src",
 });
 
 await studio.start();
@@ -73,6 +73,7 @@ expressots studio
 Start ExpressoTS Studio.
 
 Options:
+
 - `-p, --port <port>` - UI port (default: 3333)
 - `-a, --agent-port <port>` - Agent WebSocket port (default: 3334)
 - `-d, --db-path <path>` - Database path (default: .studio/studio.db)
@@ -84,6 +85,7 @@ Options:
 Show information about the current project including discovered routes.
 
 Options:
+
 - `--src <path>` - Source directory to scan (default: ./src)
 
 ### `clean`
@@ -91,6 +93,7 @@ Options:
 Remove all Studio data (database, cache).
 
 Options:
+
 - `-d, --db-path <path>` - Database path (default: .studio/studio.db)
 
 ## Configuration
@@ -103,7 +106,7 @@ export default {
   studio: {
     uiPort: 3333,
     agentPort: 3334,
-    dbPath: '.studio/studio.db',
+    dbPath: ".studio/studio.db",
   },
 };
 ```
