@@ -436,6 +436,18 @@ function templatesSyncStage(newVersion) {
     sh(`git tag -a v${newVersion} -m "ExpressoTS templates ${newVersion}"`, { cwd: repo });
     sh("git push origin HEAD --follow-tags", { cwd: repo });
     record("templates", `synced and tagged v${newVersion}`, "pass", dirty ? "content updated" : "no content changes, tag only", (Date.now() - start) / 1000);
+
+    // Warn-only: the tag above is what the CLI needs; the Release is cosmetic.
+    try {
+      sh(
+        `gh release create v${newVersion} --repo expressots/templates` +
+          ` --title ${JSON.stringify(`ExpressoTS Templates ${newVersion}`)} --generate-notes`,
+      );
+      record("templates", `GitHub release ExpressoTS Templates ${newVersion}`, "pass");
+    } catch (err) {
+      record("templates", `GitHub release ExpressoTS Templates ${newVersion}`, "warn", String(err.message).split("\n")[0]);
+      console.log(c.yellow(`  Create manually: gh release create v${newVersion} --repo expressots/templates --title "ExpressoTS Templates ${newVersion}" --generate-notes`));
+    }
     return true;
   } catch (err) {
     record("templates", `synced and tagged v${newVersion}`, "fail", String(err.message).split("\n")[0]);
