@@ -51,7 +51,7 @@
     "@xyflow/react": "^12.3.0",
     "autoprefixer": "^10.4.20",
     "clsx": "^2.1.0",
-    "lucide-react": "^0.460.0",
+    "lucide-react": "^1.27.0",
     "postcss": "^8.4.49",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
