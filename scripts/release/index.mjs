@@ -18,6 +18,8 @@
  *   7. Templates     sync templates/ -> expressots/templates and tag vX.Y.Z
  *                    (the CLI scaffolds via degit expressots/templates#v<cli version>,
  *                    so a published CLI is broken until its matching tag exists)
+ *   8. GitHub        tag vX.Y.Z, git push --follow-tags, gh release create
+ *                    with generated notes (changesets only tags per-package)
  */
 import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";
@@ -122,6 +124,10 @@ function preflight() {
     record("preflight", "templates repo reachable", needed ? "fail" : "warn", `cannot reach ${TEMPLATES_REPO}`);
     if (needed) ok = false;
   }
+
+  // Warn-only: githubReleaseStage() prints manual recovery steps on failure.
+  try { sh("gh auth status"); record("preflight", "gh CLI authenticated", "pass"); }
+  catch { record("preflight", "gh CLI authenticated", "warn", "run `gh auth login` — needed for the GitHub release stage"); }
 
   return ok;
 }
@@ -437,6 +443,33 @@ function templatesSyncStage(newVersion) {
   }
 }
 
+// ---------------------------------------------------------------- stage 8
+/**
+ * changesets only creates per-package git tags (@expressots/core@X.Y.Z);
+ * the repo's Releases page tracks unified vX.Y.Z tags. This stage tags the
+ * release commit, pushes everything, and publishes a GitHub Release with
+ * generated notes so "Latest" always reflects the newest version.
+ */
+function githubReleaseStage(newVersion, previousVersion) {
+  header("Stage 8 · GitHub release");
+  const start = Date.now();
+  try {
+    sh(`git tag v${newVersion}`);
+    sh("git push --follow-tags");
+    sh(
+      `gh release create v${newVersion} --title ${JSON.stringify(`ExpressoTS ${newVersion}`)}` +
+        ` --generate-notes --notes-start-tag v${previousVersion}`,
+    );
+    record("github", `pushed and released v${newVersion}`, "pass", "", (Date.now() - start) / 1000);
+    return true;
+  } catch (err) {
+    record("github", `pushed and released v${newVersion}`, "fail", String(err.message).split("\n")[0]);
+    console.log(c.yellow(`  Recover manually: git tag v${newVersion} && git push --follow-tags`));
+    console.log(c.yellow(`  then: gh release create v${newVersion} --title "ExpressoTS ${newVersion}" --generate-notes --notes-start-tag v${previousVersion}`));
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------- main
 const currentVersion = JSON.parse(fs.readFileSync(path.join(ROOT, "packages/core/package.json"), "utf8")).version;
 console.log(c.bold(`ExpressoTS release pipeline — current version v${currentVersion}${REPORT_ONLY ? " (report only)" : ""}`));
@@ -460,6 +493,7 @@ if (!newVersion) { console.log(c.yellow("Aborted at version stage.")); process.e
 const published = await publishStage(newVersion);
 if (published) {
   const synced = templatesSyncStage(newVersion);
-  console.log(c.bold(`\n  Done. Push commits and tags: ${c.cyan("git push --follow-tags")}`));
-  process.exit(synced ? 0 : 1);
+  const released = githubReleaseStage(newVersion, currentVersion);
+  console.log(c.bold(`\n  Done. v${newVersion} is published, pushed, and released.`));
+  process.exit(synced && released ? 0 : 1);
 }
