@@ -45,7 +45,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "0.0.1-beta.6",
+    "@codecov/vite-plugin": "2.0.1",
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.2.2",
     "@types/express": "4.17.21",
