@@ -37,7 +37,7 @@
     "commander": "^12.1.0",
     "express": "^5.1.0",
     "open": "^10.1.0",
-    "ora": "^8.1.0",
+    "ora": "^9.4.1",
     "socket.io-client": "^4.8.0"
   },
   "devDependencies": {
