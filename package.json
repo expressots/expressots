@@ -22,7 +22,8 @@
     "changeset": "changeset",
     "release": "node scripts/release/index.mjs",
     "prepare": "husky",
-    "release:report": "node scripts/release/index.mjs --report-only"
+    "release:report": "node scripts/release/index.mjs --report-only",
+    "pack:local": "turbo run build && node scripts/pack-local.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.0",

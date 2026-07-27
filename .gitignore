@@ -71,3 +71,6 @@ dist
 
 # Release reports
 .release-reports
+
+# Local tarballs for testing (pnpm pack:local)
+.local-packs/
