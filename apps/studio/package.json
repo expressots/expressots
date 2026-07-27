@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@expressots/studio-agent": "workspace:*",
-    "chalk": "^5.3.0",
+    "chalk": "^6.0.0",
     "commander": "^12.1.0",
     "express": "^5.1.0",
     "open": "^10.1.0",
