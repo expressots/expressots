@@ -68,7 +68,7 @@
     "mustache": "4.2.0",
     "ora": "5.4.1",
     "ts-node": "10.9.2",
-    "yargs": "17.7.2"
+    "yargs": "18.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "19.2.1",
