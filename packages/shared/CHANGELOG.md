@@ -1,56 +1,62 @@
 # @expressots/shared
 
+## 4.1.0
+
+### Minor Changes
+
+- Project monorepo & small fixes
+
 ## [4.0.0](https://github.com/expressots/shared/compare/v4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
 Stable release.
 
 ### BREAKING CHANGES
 
-* remove the `utils` module (`Compiler` and the chalk-based logger printers). The `Compiler` config loader now lives in `@expressots/cli` (`src/utils/compiler.ts`); the logger printers were never exported from the package barrel. The internal dotenv `log` helper moved to `src/env/logger.ts` and is unchanged.
-* drop the `chalk` runtime dependency and the optional `ts-node` peer dependency; both were only used by the removed utils module.
-* require Node.js `>=20.19.0` (was `>=20.18.0`).
+- remove the `utils` module (`Compiler` and the chalk-based logger printers). The `Compiler` config loader now lives in `@expressots/cli` (`src/utils/compiler.ts`); the logger printers were never exported from the package barrel. The internal dotenv `log` helper moved to `src/env/logger.ts` and is unchanged.
+- drop the `chalk` runtime dependency and the optional `ts-node` peer dependency; both were only used by the removed utils module.
+- require Node.js `>=20.19.0` (was `>=20.18.0`).
 
 ### Build System
 
-* enable `strictNullChecks` and `noImplicitAny`; remove unused `experimentalDecorators` / `emitDecoratorMetadata`; CJS build now compiles with `module: node16` / `moduleResolution: node16` and an explicit `rootDir`.
+- enable `strictNullChecks` and `noImplicitAny`; remove unused `experimentalDecorators` / `emitDecoratorMetadata`; CJS build now compiles with `module: node16` / `moduleResolution: node16` and an explicit `rootDir`.
 
 ### Continuous Integrations
 
-* remove the `pull_request_target` trigger from the build workflow.
+- remove the `pull_request_target` trigger from the build workflow.
 
 ### Bug Fixes
 
-* resolve js-yaml advisory and remove clear-text logging of env values ([b56bc02](https://github.com/expressots/shared/commit/b56bc02))
-* bump undici to 7.28.0 and regenerate `package-lock.json` with npm 10 to resolve Dependabot alerts ([ba875c4](https://github.com/expressots/shared/commit/ba875c4), [8c9b3d8](https://github.com/expressots/shared/commit/8c9b3d8))
+- resolve js-yaml advisory and remove clear-text logging of env values ([b56bc02](https://github.com/expressots/shared/commit/b56bc02))
+- bump undici to 7.28.0 and regenerate `package-lock.json` with npm 10 to resolve Dependabot alerts ([ba875c4](https://github.com/expressots/shared/commit/ba875c4), [8c9b3d8](https://github.com/expressots/shared/commit/8c9b3d8))
 
 ### Tests
 
-* cover `Pattern` enum and config vault fallback paths ([cb6fa84](https://github.com/expressots/shared/commit/cb6fa84))
+- cover `Pattern` enum and config vault fallback paths ([cb6fa84](https://github.com/expressots/shared/commit/cb6fa84))
 
 ## [4.0.0-preview.3.4](https://github.com/expressots/shared/compare/v4.0.0-preview.3.3...v4.0.0-preview.3.4) (2026-06-13)
 
-* version-only release to keep the v4 preview bundle aligned across packages.
+- version-only release to keep the v4 preview bundle aligned across packages.
 
 ## [4.0.0-preview.3.3](https://github.com/expressots/shared/compare/4.0.0-preview.3.2...v4.0.0-preview.3.3) (2026-06-10)
 
-* version-only release to keep the v4 preview bundle aligned across packages.
+- version-only release to keep the v4 preview bundle aligned across packages.
 
 ## [4.0.0-preview.3.2](https://github.com/expressots/shared/compare/v4.0.0-preview.3.1...4.0.0-preview.3.2) (2026-06-06)
 
 ### Build System
 
-* add `prepublishOnly` guard (`scripts/release/guard-no-file-deps.mjs`) that blocks publishing with `file:` dependencies.
+- add `prepublishOnly` guard (`scripts/release/guard-no-file-deps.mjs`) that blocks publishing with `file:` dependencies.
 
 ## [4.0.0-preview.3.1](https://github.com/expressots/shared/compare/v4.0.0-preview.3...v4.0.0-preview.3.1) (2026-06-06)
 
 ### Documentation
 
-* refresh README badges and links.
-* add GitHub issue templates (bug report, feature request, documentation, community ideas) and template chooser config.
+- refresh README badges and links.
+- add GitHub issue templates (bug report, feature request, documentation, community ideas) and template chooser config.
 
 ### Continuous Integrations
 
-* add ExpressoTS Project sync workflow.
+- add ExpressoTS Project sync workflow.
 
 ## [4.0.0-preview.3](https://github.com/expressots/shared/compare/3.0.0...4.0.0-preview.3) (2026-05-25)
 
@@ -58,36 +64,34 @@ Part of the ExpressoTS **v4.0.0 preview bundle**. See the [v4.0.0 release notes]
 
 ### Features
 
-* extend `ExpressoConfig` with `scaffoldSchematics` covering all v4 schematics (`controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`).
-* add type-safe `Pattern` enum (regular `enum`, not `const enum`, so consumers compiling with `isolatedModules: true` such as Vite/Vitest/esbuild/SWC can import it).
-* expose shared content-negotiation primitives consumed by `@expressots/core` formatters.
-* add `Env.when(condition, value, fallback)` helper for environment-specific config resolution.
-* publish dual ESM + CJS builds with subpath exports for both module systems.
-* declare `engines.node: ">=20.18.0"`.
+- extend `ExpressoConfig` with `scaffoldSchematics` covering all v4 schematics (`controller`, `usecase`, `dto`, `module`, `provider`, `entity`, `middleware`, `interceptor`, `event`, `handler`, `guard`, `config`).
+- add type-safe `Pattern` enum (regular `enum`, not `const enum`, so consumers compiling with `isolatedModules: true` such as Vite/Vitest/esbuild/SWC can import it).
+- expose shared content-negotiation primitives consumed by `@expressots/core` formatters.
+- add `Env.when(condition, value, fallback)` helper for environment-specific config resolution.
+- publish dual ESM + CJS builds with subpath exports for both module systems.
+- declare `engines.node: ">=20.18.0"`.
 
 ### Bug Fixes
 
-* tighten the `IWebServer` / `IWebServerBuilder` typings so v4 adapters can declare their server contract without leaking Express types.
-* `configDotenv()` is now safe to call with no arguments — null-guard added on `options.encoding` / `options.debug` (previously threw `TypeError: Cannot read properties of undefined`).
+- tighten the `IWebServer` / `IWebServerBuilder` typings so v4 adapters can declare their server contract without leaking Express types.
+- `configDotenv()` is now safe to call with no arguments — null-guard added on `options.encoding` / `options.debug` (previously threw `TypeError: Cannot read properties of undefined`).
 
 ### Build System
 
-* bump dev toolchain to TypeScript 5.5, ESLint 8.57, Jest 29.7, Prettier 3.5.
+- bump dev toolchain to TypeScript 5.5, ESLint 8.57, Jest 29.7, Prettier 3.5.
 
 ## [3.0.0](https://github.com/expressots/shared/compare/3.0.0-beta.3...3.0.0) (2024-12-04)
 
-
 ### Features
 
-* refactor IWebServer interface, add IWebServerBuilder ([9a23fff](https://github.com/expressots/shared/commit/9a23fff1e7de8d3880ed90317ffde1037ef1947b))
-* update initEnvironment method to return a Promise for better async handling ([6ae9525](https://github.com/expressots/shared/commit/6ae9525b5497dacf81c1861e467bf6e27421ad2e))
+- refactor IWebServer interface, add IWebServerBuilder ([9a23fff](https://github.com/expressots/shared/commit/9a23fff1e7de8d3880ed90317ffde1037ef1947b))
+- update initEnvironment method to return a Promise for better async handling ([6ae9525](https://github.com/expressots/shared/commit/6ae9525b5497dacf81c1861e467bf6e27421ad2e))
 
 ## [3.0.0](https://github.com/expressots/shared/compare/3.0.0-beta.3...3.0.0) (2024-12-03)
 
-
 ### Features
 
-* refactor IWebServer interface, add IWebServerBuilder ([9a23fff](https://github.com/expressots/shared/commit/9a23fff1e7de8d3880ed90317ffde1037ef1947b))
+- refactor IWebServer interface, add IWebServerBuilder ([9a23fff](https://github.com/expressots/shared/commit/9a23fff1e7de8d3880ed90317ffde1037ef1947b))
 
 ## [3.0.0-beta.3](https://github.com/expressots/shared/compare/0.3.0...0.4.0) (2024-11-28)
 

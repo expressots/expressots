@@ -1,5 +1,16 @@
 # @expressots/core
 
+## 4.1.0
+
+### Minor Changes
+
+- Project monorepo & small fixes
+
+### Patch Changes
+
+- Updated dependencies
+  - @expressots/shared@4.1.0
+
 ## [4.0.0](https://github.com/expressots/expressots/compare/4.0.0-preview.3.4...v4.0.0) (2026-07-16)
 
 Stable release. Closes the v4 preview line with a production hardening pass.
