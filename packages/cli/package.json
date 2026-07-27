@@ -64,7 +64,7 @@
     "cross-spawn": "7.0.6",
     "degit": "2.8.4",
     "glob": "13.0.6",
-    "inquirer": "^8.2.7",
+    "inquirer": "^14.0.2",
     "mustache": "4.2.0",
     "ora": "5.4.1",
     "ts-node": "10.9.2",
