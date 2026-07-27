@@ -73,7 +73,7 @@
   "devDependencies": {
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
-    "@types/cli-progress": "3.11.0",
+    "@types/cli-progress": "3.11.6",
     "@types/cross-spawn": "6.0.6",
     "@types/degit": "2.8.3",
     "@types/inquirer": "^8.2.13",
