@@ -430,7 +430,10 @@ function templatesSyncStage(newVersion) {
       sh("git add -A", { cwd: repo });
       sh(`git commit -m "chore(release): sync from expressots/expressots v${newVersion}"`, { cwd: repo });
     }
-    sh(`git tag v${newVersion}`, { cwd: repo });
+    // Annotated tag: `push --follow-tags` only pushes annotated tags — a
+    // lightweight tag here silently never reaches the remote and breaks
+    // `ex new` for the freshly published CLI (degit MISSING_REF).
+    sh(`git tag -a v${newVersion} -m "ExpressoTS templates ${newVersion}"`, { cwd: repo });
     sh("git push origin HEAD --follow-tags", { cwd: repo });
     record("templates", `synced and tagged v${newVersion}`, "pass", dirty ? "content updated" : "no content changes, tag only", (Date.now() - start) / 1000);
     return true;
@@ -454,7 +457,8 @@ function githubReleaseStage(newVersion, previousVersion) {
   header("Stage 8 · GitHub release");
   const start = Date.now();
   try {
-    sh(`git tag v${newVersion}`);
+    // Annotated: --follow-tags does not push lightweight tags.
+    sh(`git tag -a v${newVersion} -m "ExpressoTS ${newVersion}"`);
     sh("git push --follow-tags");
     sh(
       `gh release create v${newVersion} --title ${JSON.stringify(`ExpressoTS ${newVersion}`)}` +
