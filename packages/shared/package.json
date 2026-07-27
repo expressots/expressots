@@ -89,7 +89,7 @@
     "lint-staged": "^15.2.10",
     "prettier": "3.5.3",
     "reflect-metadata": "0.2.2",
-    "ts-jest": "29.2.5",
+    "ts-jest": "29.4.12",
     "ts-node": "10.9.2",
     "typescript": "5.5.3"
   },

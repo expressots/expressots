@@ -1,11 +1,17 @@
 # .github/dependabot.yml
 version: 2
 updates:
-  - package-ecosystem: 'npm'
-    directory: '/'
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: 'daily'
+      interval: "weekly"
+      day: "monday"
     commit-message:
-      prefix: feat
-      prefix-development: feat
-    open-pull-requests-limit: 99
+      prefix: chore(deps)
+      prefix-development: chore(deps)
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"

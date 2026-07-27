@@ -73,12 +73,12 @@
   "devDependencies": {
     "@commitlint/cli": "19.2.1",
     "@commitlint/config-conventional": "19.1.0",
-    "@types/cli-progress": "3.11.0",
+    "@types/cli-progress": "3.11.6",
     "@types/cross-spawn": "6.0.6",
     "@types/degit": "2.8.3",
     "@types/inquirer": "^8.2.13",
     "@types/jest": "^29.5.14",
-    "@types/mustache": "4.2.2",
+    "@types/mustache": "4.2.6",
     "@types/node": "20.12.7",
     "@types/yargs": "17.0.22",
     "@typescript-eslint/eslint-plugin": "7.6.0",
@@ -89,7 +89,7 @@
     "jest": "^29.7.0",
     "lint-staged": "^15.2.10",
     "prettier": "3.2.5",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "29.4.12",
     "tsx": "^4.19.2",
     "typescript": "5.2.2"
   },

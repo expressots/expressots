@@ -25,15 +25,15 @@
     "release:report": "node scripts/release/index.mjs --report-only"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.0",
     "@changesets/cli": "^2.27.0",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "husky": "^9.1.7",
-    "prettier": "^3.3.0",
-    "turbo": "^2.5.0",
     "lint-staged": "^15.2.10",
+    "prettier": "^3.3.0",
     "publint": "^0.3.0",
-    "@arethetypeswrong/cli": "^0.18.0"
+    "turbo": "^2.10.7"
   },
   "lint-staged": {
     "*.{ts,tsx,json,md,yml,yaml}": [
