@@ -1,5 +1,14 @@
 # @expressots/adapter-express
 
+## 4.1.1
+
+### Patch Changes
+
+- Readme tags update
+- Updated dependencies
+  - @expressots/core@4.1.1
+  - @expressots/shared@4.1.1
+
 ## 4.1.0
 
 ### Minor Changes

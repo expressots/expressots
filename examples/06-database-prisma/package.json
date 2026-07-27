@@ -22,16 +22,16 @@
         "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix"
     },
     "dependencies": {
-        "@expressots/adapter-express": "4.1.0",
-        "@expressots/core": "4.1.0",
-        "@expressots/shared": "4.1.0",
+        "@expressots/adapter-express": "4.1.1",
+        "@expressots/core": "4.1.1",
+        "@expressots/shared": "4.1.1",
         "@prisma/client": "^6.9.0",
         "express": "5.2.1"
     },
     "devDependencies": {
         "prisma": "^6.9.0",
         "@eslint/js": "9.39.2",
-        "@expressots/cli": "4.1.0",
+        "@expressots/cli": "4.1.1",
         "@types/express": "5.0.6",
         "@types/jest": "30.0.0",
         "@types/node": "25.0.3",
