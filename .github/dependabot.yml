@@ -10,6 +10,12 @@ updates:
       prefix: chore(deps)
       prefix-development: chore(deps)
     open-pull-requests-limit: 10
+    ignore:
+      # @types/node tracks the minimum supported runtime (engines >=20.19),
+      # not the latest Node major — types for newer majors would let code
+      # use APIs that crash on the Node versions we actually support.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types:
