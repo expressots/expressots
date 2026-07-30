@@ -10,6 +10,7 @@ import { changePackageName } from "../utils/change-package-info";
 import { printError } from "../utils/cli-ui";
 import { isValidPackageManager } from "../utils/input-validation";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
+import { applyCloudflareTarget } from "./cloudflare-target";
 import { writePnpmAllowBuildsConfig } from "./pnpm-allow-builds";
 
 /**
@@ -503,7 +504,7 @@ const SKIP_INSTALL_FOR_TESTING =
  * For development: points to the templates folder in the monorepo
  * For production: this will be replaced with the actual path
  */
-const LOCAL_TEMPLATES_PATH = path.resolve(__dirname, "../../../templates");
+const LOCAL_TEMPLATES_PATH = path.resolve(__dirname, "../../../../templates");
 
 /**
  * Optional override for the templates ref/tag.
@@ -620,7 +621,7 @@ const projectForm = async (
 		confirm: boolean;
 	};
 
-	const [packageManager, template, directory, preset, events] = args;
+	const [packageManager, template, directory, preset, events, target] = args;
 
 	if (packageManager && template) {
 		const resolvedPreset =
@@ -877,6 +878,13 @@ const projectForm = async (
 				);
 			}
 			process.exit(1);
+		}
+
+		if (target === "cloudflare") {
+			applyCloudflareTarget({
+				targetDir: answer.name,
+				projectName,
+			});
 		}
 
 		// Apply preset files + placeholder substitution BEFORE install so
