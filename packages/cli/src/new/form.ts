@@ -238,6 +238,7 @@ type ProjectFormArgs = [
 	string,
 	MiddlewarePresetKeys,
 	boolean | undefined,
+	"cloudflare" | undefined,
 ];
 
 /**

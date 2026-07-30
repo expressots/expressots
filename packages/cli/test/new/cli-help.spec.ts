@@ -14,6 +14,9 @@ describe("expressots new --help", () => {
 
 		expect(out).toContain("application");
 		expect(out).toContain("micro");
+		expect(out).toContain("cloudflare");
+		expect(out).toContain("Cloudflare Workers");
+		expect(out).toContain("micro template only");
 		expect(out).toContain("npm");
 		expect(out).toContain("pnpm");
 		expect(out).toContain("api");
