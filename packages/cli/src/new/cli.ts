@@ -13,6 +13,8 @@ export const PACKAGE_MANAGER_CHOICES = [
 
 export const TEMPLATE_CHOICES = ["application", "micro"] as const;
 
+export const TARGET_CHOICES = ["cloudflare"] as const;
+
 export const MIDDLEWARE_PRESET_CHOICES = [
 	"api",
 	"web",
@@ -33,6 +35,9 @@ const NEW_COMMAND_EPILOG = [
 	chalk.dim(
 		"  Tip: add -e / --events with application to scaffold application-with-events",
 	),
+	"",
+	chalk.bold("Targets") + ` (${formatInlineChoices(TARGET_CHOICES)})`,
+	"  cloudflare    Cloudflare Workers deployment target (micro template only)",
 	"",
 	chalk.bold("Package managers") +
 		` (${formatInlineChoices(PACKAGE_MANAGER_CHOICES)})`,
@@ -78,6 +83,11 @@ const commandOptions = (yargs: Argv): Argv => {
 			choices: [...TEMPLATE_CHOICES],
 			alias: "t",
 		})
+		.option("target", {
+			describe: "Deployment target",
+			type: "string",
+			choices: [...TARGET_CHOICES],
+		})
 		.option("package-manager", {
 			describe: "Package manager",
 			type: "string",
@@ -105,6 +115,13 @@ const commandOptions = (yargs: Argv): Argv => {
 		.implies("template", "package-manager")
 		.implies("preset", "template")
 		.implies("events", "template")
+		.implies("target", "template")
+		.check((argv) =>
+			validateTargetTemplate(
+				argv.target as string | undefined,
+				argv.template as string | undefined,
+			),
+		)
 		.epilog(NEW_COMMAND_EPILOG);
 };
 
@@ -120,6 +137,7 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 			directory,
 			preset,
 			events,
+			target,
 		}) => {
 			return await projectForm(projectName, [
 				packageManager,
@@ -127,9 +145,22 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 				directory,
 				preset,
 				events,
+				target,
 			]);
 		},
 	};
 };
+
+export function validateTargetTemplate(
+	target?: string,
+	template?: string,
+): true {
+	if (target === "cloudflare" && template !== "micro") {
+		throw new Error(
+			'The "cloudflare" target supports only the "micro" template.',
+		);
+	}
+	return true;
+}
 
 export { createProject, NEW_COMMAND_EPILOG };
