@@ -92,6 +92,7 @@ describe("applyCloudflareTarget", () => {
 		);
 		expect(api).toContain("cloudflareAdapter");
 		expect(api).toContain("cloudflareAdapter(app.getApp())");
+		expect(api).toContain("autoParseJson: false");
 		expect(api).not.toContain("app.listen");
 
 		const pkg = JSON.parse(
