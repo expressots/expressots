@@ -17,7 +17,7 @@
  * @packageDocumentation
  */
 
-import * as Module from "module";
+import Module from "node:module";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -142,53 +142,47 @@ export function registerPathMappings(config: PathResolverConfig): void {
 
   // Try multiple ways to override module resolution (Node version compatibility)
   try {
-    // Method 1: Direct assignment (works on Node < 22)
-    (Module as any)._resolveFilename = resolveWithPaths;
+    Object.defineProperty(Module, "_resolveFilename", {
+      value: resolveWithPaths,
+      writable: true,
+      configurable: true,
+    });
   } catch {
-    try {
-      // Method 2: Object.defineProperty (Node 22+ where direct assignment fails)
-      Object.defineProperty(Module, "_resolveFilename", {
-        value: resolveWithPaths,
-        writable: true,
-        configurable: true,
-      });
-    } catch (e) {
-      // Method 3: Use require.cache manipulation for Node 22+
-      // This is a fallback that doesn't require modifying Module internals
-      if (debug) {
-        console.log(`[PathResolver] Using fallback resolution method`);
-      }
+    // Method 3: Use require.cache manipulation for Node 22+
+    // This is a fallback that doesn't require modifying Module internals
+    if (debug) {
+      console.log(`[PathResolver] Using fallback resolution method`);
+    }
 
-      // Store mappings for use with manual requires
-      (global as any).__expressotsPathMappings = {
-        absoluteBase,
-        paths,
-        resolve: (request: string): string | null => {
-          for (const [alias, targets] of Object.entries(paths)) {
-            const regex = aliasPathPatternToRegExp(alias);
-            const match = request.match(regex);
+    // Store mappings for use with manual requires
+    (global as any).__expressotsPathMappings = {
+      absoluteBase,
+      paths,
+      resolve: (request: string): string | null => {
+        for (const [alias, targets] of Object.entries(paths)) {
+          const regex = aliasPathPatternToRegExp(alias);
+          const match = request.match(regex);
 
-            if (match) {
-              for (const target of targets) {
-                const resolvedTarget = target.replace(/\*/g, match[1] || "");
-                const fullPath = path.resolve(absoluteBase, resolvedTarget);
-                const extensions = [".js", ".json", "/index.js", ".node"];
+          if (match) {
+            for (const target of targets) {
+              const resolvedTarget = target.replace(/\*/g, match[1] || "");
+              const fullPath = path.resolve(absoluteBase, resolvedTarget);
+              const extensions = [".js", ".json", "/index.js", ".node"];
 
-                for (const ext of extensions) {
-                  const tryPath = fullPath.endsWith(".js")
-                    ? fullPath
-                    : fullPath + ext;
-                  if (fs.existsSync(tryPath)) {
-                    return tryPath;
-                  }
+              for (const ext of extensions) {
+                const tryPath = fullPath.endsWith(".js")
+                  ? fullPath
+                  : fullPath + ext;
+                if (fs.existsSync(tryPath)) {
+                  return tryPath;
                 }
               }
             }
           }
-          return null;
-        },
-      };
-    }
+        }
+        return null;
+      },
+    };
   }
 }
 
