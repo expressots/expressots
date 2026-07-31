@@ -5,8 +5,8 @@ import {
 	getRunScriptCommand,
 } from "../utils/package-manager-commands";
 
-export const CLOUDFLARE_COMPATIBILITY_DATE = "2026-07-31";
-export const WRANGLER_VERSION = "^4.95.0";
+export const CLOUDFLARE_COMPATIBILITY_DATE = "2026-07-29";
+export const WRANGLER_VERSION = "^4.115.0";
 
 export interface CloudflareTargetOptions {
 	targetDir: string;
