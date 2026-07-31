@@ -148,8 +148,8 @@ export function registerPathMappings(config: PathResolverConfig): void {
       configurable: true,
     });
   } catch {
-    // Method 3: Use require.cache manipulation for Node 22+
-    // This is a fallback that doesn't require modifying Module internals
+    // Expose a global manual-resolution fallback when Module internals
+    // cannot be patched in the current runtime.
     if (debug) {
       console.log(`[PathResolver] Using fallback resolution method`);
     }

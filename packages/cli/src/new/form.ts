@@ -884,6 +884,7 @@ const projectForm = async (
 			applyCloudflareTarget({
 				targetDir: answer.name,
 				projectName,
+				packageManager: answer.packageManager,
 			});
 		}
 

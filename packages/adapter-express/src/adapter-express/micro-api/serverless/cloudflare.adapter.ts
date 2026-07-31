@@ -95,9 +95,32 @@ export function cloudflareAdapter(
       }
 
       // Parse body if present
-      let body: string | undefined;
+      let body: unknown;
       if (request.method !== "GET" && request.method !== "HEAD") {
-        body = await request.text();
+        const requestBody = await request.text();
+        if (requestBody) {
+          const contentType = request.headers
+            .get("content-type")
+            ?.split(";", 1)[0]
+            .trim()
+            .toLowerCase();
+          const isJson = contentType === "application/json" || contentType?.endsWith("+json");
+
+          if (isJson) {
+            try {
+              body = JSON.parse(requestBody);
+            } catch {
+              return new globalThis.Response(JSON.stringify({ error: "Bad Request" }), {
+                status: 400,
+                headers: { "content-type": "application/json" },
+              });
+            }
+          } else if (contentType === "application/x-www-form-urlencoded") {
+            body = Object.fromEntries(new URLSearchParams(requestBody));
+          } else {
+            body = requestBody;
+          }
+        }
       }
 
       // Build query parameters
@@ -122,7 +145,7 @@ export function cloudflareAdapter(
           headers,
           query,
           params: {},
-          body: body ? JSON.parse(body) : undefined,
+          body,
           get: (name: string) => headers[name.toLowerCase()],
           cloudflare: { env, ctx },
         };
