@@ -88,7 +88,7 @@ describe("applyCloudflareTarget", () => {
 			[
 				'name = "my-worker"',
 				'main = "src/api.ts"',
-				'compatibility_date = "2026-07-31"',
+				'compatibility_date = "2026-07-29"',
 				'compatibility_flags = ["nodejs_compat"]',
 				"",
 			].join("\n"),
@@ -128,7 +128,7 @@ describe("applyCloudflareTarget", () => {
 		});
 		expect(pkg.scripts.prod).toBeUndefined();
 		expect(pkg.scripts.studio).toBeUndefined();
-		expect(pkg.devDependencies.wrangler).toBe("^4.95.0");
+		expect(pkg.devDependencies.wrangler).toBe("^4.115.0");
 		expect(pkg.devDependencies["@expressots/studio"]).toBeUndefined();
 		expect(pkg.devDependencies["@expressots/studio-agent"]).toBeUndefined();
 		expect(pkg.engines.node).toBe(">=22.0.0");
