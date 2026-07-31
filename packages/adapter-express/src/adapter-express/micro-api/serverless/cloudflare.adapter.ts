@@ -223,6 +223,13 @@ export function cloudflareAdapter(
                   },
                 }),
               );
+            } else {
+              resolve(
+                new globalThis.Response(JSON.stringify({ error: "Not Found" }), {
+                  status: 404,
+                  headers: { "content-type": "application/json" },
+                }),
+              );
             }
           });
         } catch (error: unknown) {

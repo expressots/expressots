@@ -73,6 +73,23 @@ describe("cloudflareAdapter request bodies", () => {
     expect(await response.json()).toEqual({ error: "Bad Request" });
   });
 
+  it("returns a 404 JSON response for an unmatched route", async () => {
+    const worker = createBodyEchoWorker();
+    const response = await worker.fetch(
+      new Request("https://worker.example/missing", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: "plain text",
+      }),
+      {},
+      context,
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("content-type")).toBe("application/json");
+    expect(await response.json()).toEqual({ error: "Not Found" });
+  }, 1000);
+
   it.each([
     ["text/plain", "plain text"],
     ["application/octet-stream", "raw-payload"],
