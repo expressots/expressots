@@ -17,6 +17,7 @@ const CLOUDFLARE_API_SOURCE = `import {
 } from "@expressots/adapter-express";
 
 const app = micro({
+    autoParseJson: false,
     showBanner: false,
     studio: { enabled: false },
 });
