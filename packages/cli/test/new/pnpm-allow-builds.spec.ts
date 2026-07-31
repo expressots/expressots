@@ -8,7 +8,9 @@ import {
 
 describe("pnpm allowBuilds scaffold", () => {
 	it("writes pnpm-workspace.yaml with approved lifecycle builds", () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "expressots-pnpm-"));
+		const tmpDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "expressots-pnpm-"),
+		);
 		writePnpmAllowBuildsConfig(tmpDir);
 
 		const filePath = path.join(tmpDir, "pnpm-workspace.yaml");
@@ -16,5 +18,6 @@ describe("pnpm allowBuilds scaffold", () => {
 		expect(fs.readFileSync(filePath, "utf8")).toBe(PNPM_ALLOW_BUILDS_YAML);
 		expect(PNPM_ALLOW_BUILDS_YAML).toContain("allowBuilds:");
 		expect(PNPM_ALLOW_BUILDS_YAML).toContain("esbuild: true");
+		expect(PNPM_ALLOW_BUILDS_YAML).toContain("workerd: true");
 	});
 });

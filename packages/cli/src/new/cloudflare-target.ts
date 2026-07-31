@@ -1,5 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+	getExecCommand,
+	getRunScriptCommand,
+} from "../utils/package-manager-commands";
 
 export const CLOUDFLARE_COMPATIBILITY_DATE = "2026-07-31";
 export const WRANGLER_VERSION = "^4.95.0";
@@ -7,9 +11,8 @@ export const WRANGLER_VERSION = "^4.95.0";
 export interface CloudflareTargetOptions {
 	targetDir: string;
 	projectName: string;
+	packageManager?: string;
 }
-
-const CLOUDFLARE_README_HEADING = "## Cloudflare Workers";
 
 const CLOUDFLARE_API_SOURCE = `import {
     cloudflareAdapter,
@@ -32,29 +35,103 @@ app.get("/health", () => ({
 export default cloudflareAdapter(app.getApp());
 `;
 
-const CLOUDFLARE_README_SECTION = `## Cloudflare Workers
+const CLOUDFLARE_TEST_SOURCE = `import worker from "../src/api";
 
-This project targets Cloudflare Workers and uses Wrangler for development,
-build validation, and deployment.
+const env = {};
+const ctx = {
+    waitUntil: (_promise: Promise<unknown>) => undefined,
+    passThroughOnException: () => undefined,
+};
+
+describe("Cloudflare Worker", () => {
+    it("returns the welcome message on GET /", async () => {
+        const response = await worker.fetch(new Request("http://localhost/"), env, ctx);
+
+        expect(response.status).toBe(200);
+        expect(await response.text()).toBe(
+            "Hello from ExpressoTS on Cloudflare Workers!",
+        );
+    });
+
+    it("returns health details on GET /health", async () => {
+        const response = await worker.fetch(
+            new Request("http://localhost/health"),
+            env,
+            ctx,
+        );
+
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({
+            status: "ok",
+            timestamp: expect.any(String),
+        });
+    });
+});
+`;
+
+function getInstallCommand(packageManager: string): string {
+	switch (packageManager) {
+		case "pnpm":
+			return "pnpm install";
+		case "yarn":
+			return "yarn install";
+		case "bun":
+			return "bun install";
+		default:
+			return "npm install";
+	}
+}
+
+function createCloudflareReadme(packageManager: string): string {
+	const installCommand = getInstallCommand(packageManager);
+	const devCommand = getRunScriptCommand(packageManager, "dev");
+	const buildCommand = getRunScriptCommand(packageManager, "build");
+	const deployCommand = getRunScriptCommand(packageManager, "deploy");
+	const login = getExecCommand(packageManager, "wrangler", ["login"]);
+	const loginCommand = [login.command, ...login.args].join(" ");
+
+	return `# ExpressoTS Cloudflare Worker
+
+This ExpressoTS micro API runs on Cloudflare Workers through Wrangler.
+
+## Install
 
 \`\`\`bash
-npm run dev
-npm run build
-npx wrangler login
-npm run deploy
+${installCommand}
 \`\`\`
 
-\`wrangler dev\` runs the application in the local Workers runtime and makes
-Cloudflare bindings available. \`expressots dev\` starts a regular Node.js
-process, so it is not used by this target.
+## Local development
 
-The Worker enables \`nodejs_compat\` because ExpressoTS currently runs through
-the Express adapter. Review Cloudflare's Express deployment tutorial and the
-ExpressoTS micro API guide for additional background.
+\`\`\`bash
+${devCommand}
+\`\`\`
 
-- [Deploy an Express app to Cloudflare Workers](https://developers.cloudflare.com/workers/tutorials/deploy-an-express-app/)
-- [ExpressoTS micro API guide](https://expresso-ts.com/docs/guides/micro-api)
+The development script runs \`wrangler dev\`, which uses the local Workers
+runtime and provides Cloudflare bindings. \`ex dev\` starts the regular Node.js
+development workflow, so it is not used for this target.
+
+## Dry-run build
+
+\`\`\`bash
+${buildCommand}
+\`\`\`
+
+The build script runs \`wrangler deploy --dry-run\` to validate the Worker
+bundle without deploying it.
+
+## Login and deploy
+
+\`\`\`bash
+${loginCommand}
+${deployCommand}
+\`\`\`
+
+## Cloudflare Workers
+
+The generated \`wrangler.toml\` enables \`nodejs_compat\` because ExpressoTS
+currently uses Node.js-compatible APIs through the Express adapter.
 `;
+}
 
 export function normalizeWorkerName(projectName: string): string {
 	const nameSegments = projectName.split(/[\\/]/).filter(Boolean);
@@ -73,15 +150,23 @@ export function normalizeWorkerName(projectName: string): string {
 export function applyCloudflareTarget({
 	targetDir,
 	projectName,
+	packageManager = "npm",
 }: CloudflareTargetOptions): void {
 	const packagePath = path.join(targetDir, "package.json");
 	const readmePath = path.join(targetDir, "README.md");
 	const apiPath = path.join(targetDir, "src", "api.ts");
+	const testPath = path.join(targetDir, "test", "api.spec.ts");
 	const wranglerPath = path.join(targetDir, "wrangler.toml");
 
 	const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8")) as {
+		engines?: Record<string, string>;
 		scripts?: Record<string, string>;
 		devDependencies?: Record<string, string>;
+	};
+
+	pkg.engines = {
+		...pkg.engines,
+		node: ">=22.0.0",
 	};
 
 	pkg.scripts = {
@@ -103,6 +188,7 @@ export function applyCloudflareTarget({
 
 	fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 4)}\n`, "utf8");
 	fs.writeFileSync(apiPath, CLOUDFLARE_API_SOURCE, "utf8");
+	fs.writeFileSync(testPath, CLOUDFLARE_TEST_SOURCE, "utf8");
 	fs.writeFileSync(
 		wranglerPath,
 		[
@@ -115,12 +201,9 @@ export function applyCloudflareTarget({
 		"utf8",
 	);
 
-	const readme = fs.readFileSync(readmePath, "utf8");
-	if (!readme.includes(CLOUDFLARE_README_HEADING)) {
-		fs.writeFileSync(
-			readmePath,
-			`${readme.trimEnd()}\n\n${CLOUDFLARE_README_SECTION}\n`,
-			"utf8",
-		);
-	}
+	fs.writeFileSync(
+		readmePath,
+		createCloudflareReadme(packageManager),
+		"utf8",
+	);
 }

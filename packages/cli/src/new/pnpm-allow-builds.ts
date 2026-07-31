@@ -8,9 +8,9 @@ import path from "node:path";
  */
 export const PNPM_ALLOW_BUILDS_YAML = `# pnpm 11+ requires every dependency that ships a lifecycle (install / postinstall)
 # script to be explicitly approved, otherwise \`pnpm install\` exits 1 with
-# ERR_PNPM_IGNORED_BUILDS. The packages below are pulled transitively by the
-# ExpressoTS Studio agent (OpenTelemetry), tsx / vite / vitest, and
-# typescript-eslint, and all need their build scripts to run.
+# ERR_PNPM_IGNORED_BUILDS. The packages below are pulled transitively by
+# ExpressoTS tooling, Wrangler, tsx / vite / vitest, and typescript-eslint,
+# and all need their build scripts to run.
 #
 # Flip any of these to \`false\` if you would rather skip the native build for
 # that package (the dep will still install, just without its postinstall step).
@@ -19,6 +19,7 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   unrs-resolver: true
+  workerd: true
 `;
 
 export function writePnpmAllowBuildsConfig(projectDir: string): void {

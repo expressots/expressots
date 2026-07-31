@@ -85,16 +85,59 @@ describe("Cloudflare target validation", () => {
 
 		expect(result.status).toBe(0);
 		const projectDir = path.join(tempDir, "edge-api");
-		expect(fs.existsSync(path.join(projectDir, "wrangler.toml"))).toBe(true);
+		expect(fs.existsSync(path.join(projectDir, "wrangler.toml"))).toBe(
+			true,
+		);
 		expect(
 			fs.readFileSync(path.join(projectDir, "src", "api.ts"), "utf8"),
 		).toContain("cloudflareAdapter(app.getApp())");
+		const workerTest = fs.readFileSync(
+			path.join(projectDir, "test", "api.spec.ts"),
+			"utf8",
+		);
+		expect(workerTest).toContain('import worker from "../src/api";');
+		expect(workerTest).toContain(
+			'worker.fetch(new Request("http://localhost/")',
+		);
+		expect(workerTest).toContain('new Request("http://localhost/health")');
+		expect(workerTest).not.toContain("micro(");
+		expect(workerTest).not.toContain(".listen(");
+		expect(workerTest).not.toContain("getHttpServer");
+		expect(
+			fs.readFileSync(
+				path.join(projectDir, "pnpm-workspace.yaml"),
+				"utf8",
+			),
+		).toContain("workerd: true");
+		const readme = fs.readFileSync(
+			path.join(projectDir, "README.md"),
+			"utf8",
+		);
+		expect(readme).toContain("pnpm install");
+		expect(readme).toContain("pnpm run dev");
+		expect(readme).toContain("pnpm run build");
+		expect(readme).toContain("pnpm exec wrangler login");
+		expect(readme).toContain("pnpm run deploy");
+		expect(readme).toContain("wrangler dev");
+		expect(readme).toContain("ex dev");
+		expect(readme).toContain("nodejs_compat");
+		expect(readme).not.toMatch(/\bprod\b/);
+		expect(readme).not.toContain("3000");
+		expect(readme).not.toContain("app.listen");
+		expect(readme).not.toContain(
+			"https://expresso-ts.com/docs/guides/micro-api",
+		);
 		expect(
 			JSON.parse(
 				fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
-			).scripts.dev,
-		).toBe("wrangler dev");
-		expect(`${result.stdout}\n${result.stderr}`).toContain("$ pnpm run dev");
+			),
+		).toMatchObject({
+			engines: { node: ">=22.0.0" },
+			scripts: { dev: "wrangler dev" },
+		});
+		expect(`${result.stdout}\n${result.stderr}`).toContain(
+			"$ pnpm run dev",
+		);
 	});
 
 	it("preserves an untargeted micro project", () => {
@@ -130,7 +173,14 @@ describe("Cloudflare target validation", () => {
 
 		expect(result.status).toBe(0);
 		const projectDir = path.join(tempDir, "plain-api");
-		expect(fs.existsSync(path.join(projectDir, "wrangler.toml"))).toBe(false);
+		expect(fs.existsSync(path.join(projectDir, "wrangler.toml"))).toBe(
+			false,
+		);
+		expect(
+			JSON.parse(
+				fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+			).engines.node,
+		).toBe(">=20.19.0");
 		expect(
 			fs.readFileSync(path.join(projectDir, "src", "api.ts"), "utf8"),
 		).toBe(

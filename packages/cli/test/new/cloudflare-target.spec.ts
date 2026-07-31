@@ -24,9 +24,14 @@ function createMicroFixture(): string {
 		path.join(os.tmpdir(), "expressots-cloudflare-target-"),
 	);
 	fs.mkdirSync(path.join(targetDir, "src"), { recursive: true });
+	fs.mkdirSync(path.join(targetDir, "test"), { recursive: true });
 	fs.writeFileSync(
 		path.join(targetDir, "src", "api.ts"),
 		'console.log("node scaffold");\n',
+	);
+	fs.writeFileSync(
+		path.join(targetDir, "test", "api.spec.ts"),
+		'import { micro } from "@expressots/adapter-express";\n',
 	);
 	fs.writeFileSync(
 		path.join(targetDir, "README.md"),
@@ -37,6 +42,9 @@ function createMicroFixture(): string {
 		`${JSON.stringify(
 			{
 				name: "expressots-micro",
+				engines: {
+					node: ">=20.19.0",
+				},
 				scripts: {
 					build: "expressots build",
 					dev: "expressots dev",
@@ -95,6 +103,19 @@ describe("applyCloudflareTarget", () => {
 		expect(api).toContain("autoParseJson: false");
 		expect(api).not.toContain("app.listen");
 
+		const workerTest = fs.readFileSync(
+			path.join(targetDir, "test", "api.spec.ts"),
+			"utf8",
+		);
+		expect(workerTest).toContain('import worker from "../src/api";');
+		expect(workerTest).toContain(
+			'worker.fetch(new Request("http://localhost/")',
+		);
+		expect(workerTest).toContain('new Request("http://localhost/health")');
+		expect(workerTest).not.toContain("micro(");
+		expect(workerTest).not.toContain(".listen(");
+		expect(workerTest).not.toContain("getHttpServer");
+
 		const pkg = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "package.json"), "utf8"),
 		);
@@ -110,6 +131,7 @@ describe("applyCloudflareTarget", () => {
 		expect(pkg.devDependencies.wrangler).toBe("^4.95.0");
 		expect(pkg.devDependencies["@expressots/studio"]).toBeUndefined();
 		expect(pkg.devDependencies["@expressots/studio-agent"]).toBeUndefined();
+		expect(pkg.engines.node).toBe(">=22.0.0");
 
 		const readme = fs.readFileSync(
 			path.join(targetDir, "README.md"),
@@ -117,4 +139,79 @@ describe("applyCloudflareTarget", () => {
 		);
 		expect(readme.match(/## Cloudflare Workers/g)).toHaveLength(1);
 	});
+
+	it.each([
+		[
+			"npm",
+			[
+				"npm install",
+				"npm run dev",
+				"npm run build",
+				"npx wrangler login",
+				"npm run deploy",
+			],
+		],
+		[
+			"yarn",
+			[
+				"yarn install",
+				"yarn dev",
+				"yarn build",
+				"yarn wrangler login",
+				"yarn deploy",
+			],
+		],
+		[
+			"pnpm",
+			[
+				"pnpm install",
+				"pnpm run dev",
+				"pnpm run build",
+				"pnpm exec wrangler login",
+				"pnpm run deploy",
+			],
+		],
+		[
+			"bun",
+			[
+				"bun install",
+				"bun run dev",
+				"bun run build",
+				"bunx wrangler login",
+				"bun run deploy",
+			],
+		],
+	])(
+		"replaces Node instructions with a %s-specific Worker guide",
+		(packageManager, commands) => {
+			const targetDir = createMicroFixture();
+			temporaryDirectories.push(targetDir);
+			const options = {
+				targetDir,
+				projectName: "edge-api",
+				packageManager,
+			};
+
+			applyCloudflareTarget(options);
+
+			const readme = fs.readFileSync(
+				path.join(targetDir, "README.md"),
+				"utf8",
+			);
+			for (const command of commands) {
+				expect(readme).toContain(command);
+			}
+			expect(readme).toContain("wrangler dev");
+			expect(readme).toContain("ex dev");
+			expect(readme).toContain("dry-run");
+			expect(readme).toContain("nodejs_compat");
+			expect(readme).not.toContain("## Learn more");
+			expect(readme).not.toMatch(/\bprod\b/);
+			expect(readme).not.toContain("3000");
+			expect(readme).not.toContain("app.listen");
+			expect(readme).not.toContain(
+				"https://expresso-ts.com/docs/guides/micro-api",
+			);
+		},
+	);
 });
