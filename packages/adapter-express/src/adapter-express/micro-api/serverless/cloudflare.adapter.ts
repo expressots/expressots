@@ -50,23 +50,26 @@ export interface CloudflareAdapterConfig {
  *
  * @example
  * ```typescript
- * // src/worker.ts
- * import { createMicroAPI, cloudflareAdapter } from "@expressots/adapter-express";
+ * // src/api.ts
+ * import { cloudflareAdapter, micro } from "@expressots/adapter-express";
  *
- * const microAPI = createMicroAPI();
- * const app = microAPI.build();
+ * const app = micro({
+ *   autoParseJson: false,
+ *   showBanner: false,
+ *   studio: { enabled: false },
+ * });
  *
- * app.Middleware.parse();
- * app.Route.get("/", (req, res) => res.json({ message: "Hello Workers!" }));
+ * app.get("/", () => ({ message: "Hello Workers!" }));
  *
- * export default cloudflareAdapter(app);
+ * export default cloudflareAdapter(app.getApp());
  * ```
  *
  * wrangler.toml:
  * ```toml
  * name = "my-worker"
- * main = "src/worker.ts"
- * compatibility_date = "2024-01-01"
+ * main = "src/api.ts"
+ * compatibility_date = "2026-07-29"
+ * compatibility_flags = ["nodejs_compat"]
  * ```
  */
 export function cloudflareAdapter(

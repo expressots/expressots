@@ -5,6 +5,8 @@ import {
 	getRunScriptCommand,
 } from "../utils/package-manager-commands";
 
+// Bump these together when preparing a CLI release, after checking the latest
+// compatibility date supported by the selected Wrangler/workerd version.
 export const CLOUDFLARE_COMPATIBILITY_DATE = "2026-07-29";
 export const WRANGLER_VERSION = "^4.115.0";
 
@@ -14,10 +16,7 @@ export interface CloudflareTargetOptions {
 	packageManager?: string;
 }
 
-const CLOUDFLARE_API_SOURCE = `import {
-    cloudflareAdapter,
-    micro,
-} from "@expressots/adapter-express";
+const CLOUDFLARE_API_SOURCE = `import { cloudflareAdapter, micro } from "@expressots/adapter-express";
 
 const app = micro({
     autoParseJson: false,
@@ -87,12 +86,30 @@ function createCloudflareReadme(packageManager: string): string {
 	const devCommand = getRunScriptCommand(packageManager, "dev");
 	const buildCommand = getRunScriptCommand(packageManager, "build");
 	const deployCommand = getRunScriptCommand(packageManager, "deploy");
+	const testCommand = getRunScriptCommand(packageManager, "test");
+	const typesCommand = getRunScriptCommand(packageManager, "types");
 	const login = getExecCommand(packageManager, "wrangler", ["login"]);
 	const loginCommand = [login.command, ...login.args].join(" ");
 
 	return `# ExpressoTS Cloudflare Worker
 
 This ExpressoTS micro API runs on Cloudflare Workers through Wrangler.
+
+> [!IMPORTANT]
+> Keep \`autoParseJson: false\` in \`src/api.ts\`. The Cloudflare adapter parses
+> request bodies before passing them to Express. Stream-reading middleware such
+> as \`express.json()\`, \`express.urlencoded()\`, \`express.text()\`, and
+> \`express.raw()\` is not supported by this target and can make requests fail at
+> runtime.
+
+## Known constraints
+
+- Read parsed request data from \`req.body\`; do not add Express body parsers.
+- \`app.setErrorHandler()\` is not wired for Workers because the serverless
+  handler does not call \`app.listen()\`. Until
+  [#950](https://github.com/expressots/expressots/issues/950) is resolved,
+  handle expected errors in route handlers. Unexpected errors return a generic
+  500 response.
 
 ## Install
 
@@ -109,6 +126,43 @@ ${devCommand}
 The development script runs \`wrangler dev\`, which uses the local Workers
 runtime and provides Cloudflare bindings. \`ex dev\` starts the regular Node.js
 development workflow, so it is not used for this target.
+
+## Project structure
+
+\`\`\`text
+src/api.ts                 Worker entrypoint and micro routes
+test/api.spec.ts           Jest tests that call the Worker fetch handler
+wrangler.toml              Cloudflare Worker configuration
+worker-configuration.d.ts  Generated binding types (after running the types script)
+\`\`\`
+
+## Defining routes
+
+\`\`\`ts
+app.get("/users", () => ({ users: [] }));
+app.post("/users", (req) => ({ received: req.body }));
+\`\`\`
+
+Return values are serialized by the micro API. The adapter supports JSON,
+\`application/*+json\`, URL-encoded forms, and text request bodies.
+
+## Test
+
+\`\`\`bash
+${testCommand}
+\`\`\`
+
+The generated tests call the exported Worker handler directly without opening
+a Node.js HTTP port.
+
+## Generate binding types
+
+\`\`\`bash
+${typesCommand}
+\`\`\`
+
+Wrangler writes \`worker-configuration.d.ts\`, which is included by
+\`tsconfig.json\` and ignored by Git.
 
 ## Dry-run build
 
@@ -131,6 +185,68 @@ ${deployCommand}
 The generated \`wrangler.toml\` enables \`nodejs_compat\` because ExpressoTS
 currently uses Node.js-compatible APIs through the Express adapter.
 `;
+}
+
+function configureWorkerGitignore(targetDir: string): void {
+	const gitignorePath = path.join(targetDir, ".gitignore");
+	const gitignore = fs.readFileSync(gitignorePath, "utf8");
+	const cleanedGitignore = gitignore
+		.replace("# Environment files (except examples)", "# Environment files")
+		.replace(/^!\.env\.example\r?\n?/m, "");
+	const entries = ["/.wrangler/", "/worker-configuration.d.ts"];
+	const existingLines = new Set(cleanedGitignore.split(/\r?\n/));
+	const additions = entries.filter((entry) => !existingLines.has(entry));
+
+	if (additions.length === 0 && cleanedGitignore === gitignore) {
+		return;
+	}
+
+	const separator = cleanedGitignore.endsWith("\n") ? "" : "\n";
+	const cloudflareSection =
+		additions.length > 0
+			? `${separator}\n# Cloudflare Workers\n${additions.join("\n")}\n`
+			: "";
+	fs.writeFileSync(
+		gitignorePath,
+		`${cleanedGitignore}${cloudflareSection}`,
+		"utf8",
+	);
+}
+
+function configureWorkerTypes(targetDir: string): void {
+	const tsconfigPath = path.join(targetDir, "tsconfig.json");
+	const tsconfig = fs.readFileSync(tsconfigPath, "utf8");
+	const includePattern = /("include"\s*:\s*)\[[\s\S]*?\]/;
+
+	if (!includePattern.test(tsconfig)) {
+		throw new Error(
+			"Unable to configure Cloudflare types: tsconfig.json has no include array.",
+		);
+	}
+
+	fs.writeFileSync(
+		tsconfigPath,
+		tsconfig.replace(
+			includePattern,
+			'$1["src/**/*.ts", "test/**/*.ts", "worker-configuration.d.ts"]',
+		),
+		"utf8",
+	);
+}
+
+function removeNodeScaffoldArtifacts(targetDir: string): void {
+	for (const relativePath of [
+		"AGENTS.md",
+		".env.example",
+		"examples",
+		"expressots.config.ts",
+		"tsconfig.build.json",
+	]) {
+		fs.rmSync(path.join(targetDir, relativePath), {
+			recursive: true,
+			force: true,
+		});
+	}
 }
 
 export function normalizeWorkerName(projectName: string): string {
@@ -159,6 +275,7 @@ export function applyCloudflareTarget({
 	const wranglerPath = path.join(targetDir, "wrangler.toml");
 
 	const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8")) as {
+		main?: string;
 		engines?: Record<string, string>;
 		scripts?: Record<string, string>;
 		devDependencies?: Record<string, string>;
@@ -178,13 +295,20 @@ export function applyCloudflareTarget({
 	};
 	delete pkg.scripts.prod;
 	delete pkg.scripts.studio;
+	delete pkg.scripts["example:circuit-breaker"];
+	delete pkg.scripts["example:service-discovery"];
+	delete pkg.scripts["example:service-client"];
+	delete pkg.scripts["example:full-di-api"];
+	delete pkg.main;
 
 	pkg.devDependencies = {
 		...pkg.devDependencies,
 		wrangler: WRANGLER_VERSION,
 	};
+	delete pkg.devDependencies["@expressots/cli"];
 	delete pkg.devDependencies["@expressots/studio"];
 	delete pkg.devDependencies["@expressots/studio-agent"];
+	delete pkg.devDependencies.tsx;
 
 	fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 4)}\n`, "utf8");
 	fs.writeFileSync(apiPath, CLOUDFLARE_API_SOURCE, "utf8");
@@ -206,4 +330,7 @@ export function applyCloudflareTarget({
 		createCloudflareReadme(packageManager),
 		"utf8",
 	);
+	configureWorkerGitignore(targetDir);
+	configureWorkerTypes(targetDir);
+	removeNodeScaffoldArtifacts(targetDir);
 }

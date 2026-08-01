@@ -25,6 +25,7 @@ function createMicroFixture(): string {
 	);
 	fs.mkdirSync(path.join(targetDir, "src"), { recursive: true });
 	fs.mkdirSync(path.join(targetDir, "test"), { recursive: true });
+	fs.mkdirSync(path.join(targetDir, "examples"), { recursive: true });
 	fs.writeFileSync(
 		path.join(targetDir, "src", "api.ts"),
 		'console.log("node scaffold");\n',
@@ -37,11 +38,43 @@ function createMicroFixture(): string {
 		path.join(targetDir, "README.md"),
 		"# Micro\n\n## Learn more\n",
 	);
+	fs.writeFileSync(path.join(targetDir, "AGENTS.md"), "Run npm run prod.\n");
+	fs.writeFileSync(path.join(targetDir, ".env.example"), "PORT=3000\n");
+	fs.writeFileSync(
+		path.join(targetDir, "examples", "serverless-lambda.example.ts"),
+		"export {};\n",
+	);
+	fs.writeFileSync(
+		path.join(targetDir, "expressots.config.ts"),
+		"export default {};\n",
+	);
+	fs.writeFileSync(path.join(targetDir, "tsconfig.build.json"), "{}\n");
+	fs.writeFileSync(
+		path.join(targetDir, ".gitignore"),
+		"/dist\n/node_modules\n\n# Environment files (except examples)\n.env\n!.env.example\n",
+	);
+	fs.writeFileSync(
+		path.join(targetDir, "tsconfig.json"),
+		`${JSON.stringify(
+			{
+				compilerOptions: { types: ["node", "jest"] },
+				include: [
+					"src/**/*.ts",
+					"test/**/*.ts",
+					"expressots.config.ts",
+				],
+				exclude: ["node_modules", "dist"],
+			},
+			null,
+			4,
+		)}\n`,
+	);
 	fs.writeFileSync(
 		path.join(targetDir, "package.json"),
 		`${JSON.stringify(
 			{
 				name: "expressots-micro",
+				main: "dist/src/api.js",
 				engines: {
 					node: ">=20.19.0",
 				},
@@ -51,11 +84,20 @@ function createMicroFixture(): string {
 					prod: "expressots prod",
 					studio: "expressots studio",
 					test: "jest",
+					"example:circuit-breaker":
+						"tsx examples/circuit-breaker.example.ts",
+					"example:service-discovery":
+						"tsx examples/service-discovery.example.ts",
+					"example:service-client":
+						"tsx examples/service-client.example.ts",
+					"example:full-di-api":
+						"tsx examples/full-di-api.example.ts",
 				},
 				devDependencies: {
 					"@expressots/cli": "4.1.1",
 					"@expressots/studio": "4.1.1",
 					"@expressots/studio-agent": "4.1.1",
+					tsx: "4.21.0",
 				},
 			},
 			null,
@@ -140,6 +182,73 @@ describe("applyCloudflareTarget", () => {
 		expect(readme.match(/## Cloudflare Workers/g)).toHaveLength(1);
 	});
 
+	it("formats the generated Worker entrypoint", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+
+		applyCloudflareTarget({ targetDir, projectName: "edge-api" });
+
+		expect(
+			fs.readFileSync(path.join(targetDir, "src", "api.ts"), "utf8"),
+		).toContain(
+			'import { cloudflareAdapter, micro } from "@expressots/adapter-express";',
+		);
+	});
+
+	it("removes Node-only scaffold files and metadata", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+
+		applyCloudflareTarget({ targetDir, projectName: "edge-api" });
+
+		const pkg = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "package.json"), "utf8"),
+		);
+		expect(pkg.main).toBeUndefined();
+		expect(pkg.scripts["example:circuit-breaker"]).toBeUndefined();
+		expect(pkg.scripts["example:service-discovery"]).toBeUndefined();
+		expect(pkg.scripts["example:service-client"]).toBeUndefined();
+		expect(pkg.scripts["example:full-di-api"]).toBeUndefined();
+		expect(pkg.devDependencies["@expressots/cli"]).toBeUndefined();
+		expect(pkg.devDependencies.tsx).toBeUndefined();
+
+		for (const nodeOnlyPath of [
+			"AGENTS.md",
+			".env.example",
+			"examples",
+			"expressots.config.ts",
+			"tsconfig.build.json",
+		]) {
+			expect(fs.existsSync(path.join(targetDir, nodeOnlyPath))).toBe(
+				false,
+			);
+		}
+	});
+
+	it("configures generated Worker tooling artifacts", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+
+		applyCloudflareTarget({ targetDir, projectName: "edge-api" });
+
+		const gitignore = fs.readFileSync(
+			path.join(targetDir, ".gitignore"),
+			"utf8",
+		);
+		expect(gitignore).toContain("/.wrangler/");
+		expect(gitignore).toContain("/worker-configuration.d.ts");
+		expect(gitignore).not.toContain("!.env.example");
+
+		const tsconfig = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "tsconfig.json"), "utf8"),
+		);
+		expect(tsconfig.include).toEqual([
+			"src/**/*.ts",
+			"test/**/*.ts",
+			"worker-configuration.d.ts",
+		]);
+	});
+
 	it.each([
 		[
 			"npm",
@@ -205,10 +314,12 @@ describe("applyCloudflareTarget", () => {
 			expect(readme).toContain("ex dev");
 			expect(readme).toContain("dry-run");
 			expect(readme).toContain("nodejs_compat");
+			expect(readme).toContain("autoParseJson: false");
+			expect(readme).toContain("app.setErrorHandler()");
 			expect(readme).not.toContain("## Learn more");
 			expect(readme).not.toMatch(/\bprod\b/);
 			expect(readme).not.toContain("3000");
-			expect(readme).not.toContain("app.listen");
+			expect(readme).not.toContain("app.listen(3000)");
 			expect(readme).not.toContain(
 				"https://expresso-ts.com/docs/guides/micro-api",
 			);

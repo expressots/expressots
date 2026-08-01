@@ -46,9 +46,13 @@ The ExpressoTS CLI creates new projects, generates controllers, use-cases, provi
 
 ```bash
 expressots new my-app
+expressots new edge-api --template micro --package-manager pnpm --target cloudflare
 expressots generate usecase user/create
 expressots dev
 ```
+
+Cloudflare Workers scaffolding is available for the micro template through the
+explicit `--target cloudflare` flag.
 
 ## Documentation
 
@@ -68,4 +72,3 @@ Welcome to the ExpressoTS community. See the [Contributing Guide](https://github
 ## License
 
 MIT. See [LICENSE](./LICENSE.md).
-

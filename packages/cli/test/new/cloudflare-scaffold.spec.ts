@@ -90,7 +90,9 @@ describe("Cloudflare target validation", () => {
 		);
 		expect(
 			fs.readFileSync(path.join(projectDir, "src", "api.ts"), "utf8"),
-		).toContain("cloudflareAdapter(app.getApp())");
+		).toContain(
+			'import { cloudflareAdapter, micro } from "@expressots/adapter-express";',
+		);
 		const workerTest = fs.readFileSync(
 			path.join(projectDir, "test", "api.spec.ts"),
 			"utf8",
@@ -121,20 +123,48 @@ describe("Cloudflare target validation", () => {
 		expect(readme).toContain("wrangler dev");
 		expect(readme).toContain("ex dev");
 		expect(readme).toContain("nodejs_compat");
+		expect(readme).toContain("autoParseJson: false");
+		expect(readme).toContain("app.setErrorHandler()");
 		expect(readme).not.toMatch(/\bprod\b/);
 		expect(readme).not.toContain("3000");
-		expect(readme).not.toContain("app.listen");
+		expect(readme).not.toContain("app.listen(3000)");
 		expect(readme).not.toContain(
 			"https://expresso-ts.com/docs/guides/micro-api",
 		);
-		expect(
-			JSON.parse(
-				fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
-			),
-		).toMatchObject({
+		const pkg = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+		);
+		expect(pkg).toMatchObject({
 			engines: { node: ">=22.0.0" },
 			scripts: { dev: "wrangler dev" },
 		});
+		expect(pkg.main).toBeUndefined();
+		expect(pkg.scripts["example:circuit-breaker"]).toBeUndefined();
+		expect(pkg.devDependencies["@expressots/cli"]).toBeUndefined();
+		expect(pkg.devDependencies.tsx).toBeUndefined();
+		for (const nodeOnlyPath of [
+			"AGENTS.md",
+			".env.example",
+			"examples",
+			"expressots.config.ts",
+			"tsconfig.build.json",
+		]) {
+			expect(fs.existsSync(path.join(projectDir, nodeOnlyPath))).toBe(
+				false,
+			);
+		}
+		const gitignore = fs.readFileSync(
+			path.join(projectDir, ".gitignore"),
+			"utf8",
+		);
+		expect(gitignore).toContain("/worker-configuration.d.ts");
+		expect(gitignore).not.toContain("!.env.example");
+		const tsconfig = fs.readFileSync(
+			path.join(projectDir, "tsconfig.json"),
+			"utf8",
+		);
+		expect(tsconfig).toContain('"worker-configuration.d.ts"');
+		expect(tsconfig).not.toContain('"expressots.config.ts"');
 		expect(`${result.stdout}\n${result.stderr}`).toContain(
 			"$ pnpm run dev",
 		);
