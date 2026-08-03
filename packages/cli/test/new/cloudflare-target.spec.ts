@@ -151,7 +151,7 @@ describe("applyCloudflareTarget", () => {
 		);
 		expect(workerTest).toContain('import worker from "../src/api";');
 		expect(workerTest).toContain(
-			'worker.fetch(new Request("http://localhost/")',
+			'new Request("http://localhost/")',
 		);
 		expect(workerTest).toContain('new Request("http://localhost/health")');
 		expect(workerTest).not.toContain("micro(");
@@ -211,9 +211,11 @@ describe("applyCloudflareTarget", () => {
 		expect(pkg.scripts["example:full-di-api"]).toBeUndefined();
 		expect(pkg.devDependencies["@expressots/cli"]).toBeUndefined();
 		expect(pkg.devDependencies.tsx).toBeUndefined();
+		expect(pkg.description).toBe(
+			"ExpressoTS micro API running on Cloudflare Workers via Wrangler",
+		);
 
 		for (const nodeOnlyPath of [
-			"AGENTS.md",
 			".env.example",
 			"examples",
 			"expressots.config.ts",
@@ -223,6 +225,30 @@ describe("applyCloudflareTarget", () => {
 				false,
 			);
 		}
+	});
+
+	it("rewrites AGENTS.md for the Worker runtime instead of deleting it", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+
+		applyCloudflareTarget({ targetDir, projectName: "edge-api" });
+
+		const agents = fs.readFileSync(
+			path.join(targetDir, "AGENTS.md"),
+			"utf8",
+		);
+
+		// The Node-only instructions the template ships must be gone.
+		expect(agents).not.toContain("npm run prod");
+		expect(agents).not.toContain("start with `app.listen(");
+		expect(agents).not.toContain(".env.example");
+
+		// ...and the Worker constraints must be stated, since this is the
+		// first file a coding agent reads.
+		expect(agents).toContain("autoParseJson: false");
+		expect(agents).toContain("Never call `app.listen()`");
+		expect(agents).toContain("setErrorHandler");
+		expect(agents).toContain("cloudflareAdapter(app.getApp())");
 	});
 
 	it("configures generated Worker tooling artifacts", () => {
@@ -247,6 +273,61 @@ describe("applyCloudflareTarget", () => {
 			"test/**/*.ts",
 			"worker-configuration.d.ts",
 		]);
+	});
+
+	it("preserves unrelated tsconfig include entries and its comments", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+
+		// A template that has drifted: a new include entry this target knows
+		// nothing about, and the `//` comments that make the file JSONC.
+		fs.writeFileSync(
+			path.join(targetDir, "tsconfig.json"),
+			[
+				"{",
+				'    "compilerOptions": {',
+				"        // Keep decorators on for ExpressoTS",
+				'        "experimentalDecorators": true',
+				"    },",
+				'    "include": ["src/**/*.ts", "test/**/*.ts", "expressots.config.ts", "scripts/**/*.ts"],',
+				'    "exclude": ["node_modules", "dist"]',
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+
+		applyCloudflareTarget({ targetDir, projectName: "edge-api" });
+
+		const raw = fs.readFileSync(
+			path.join(targetDir, "tsconfig.json"),
+			"utf8",
+		);
+
+		// Comments survive: the file is rewritten in place, not re-serialized.
+		expect(raw).toContain("// Keep decorators on for ExpressoTS");
+
+		const tsconfig = JSON.parse(
+			raw.replace(/^\s*\/\/.*$/gm, ""),
+		) as Record<string, unknown>;
+
+		expect(tsconfig.include).toEqual([
+			"src/**/*.ts",
+			"test/**/*.ts",
+			// The unknown entry is kept; only files this target deletes go.
+			"scripts/**/*.ts",
+			"worker-configuration.d.ts",
+		]);
+	});
+
+	it("fails with a named error when the template is missing a file", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+		fs.rmSync(path.join(targetDir, "tsconfig.json"));
+
+		expect(() =>
+			applyCloudflareTarget({ targetDir, projectName: "edge-api" }),
+		).toThrow(/Cloudflare target: cannot read "tsconfig\.json"/);
 	});
 
 	it.each([

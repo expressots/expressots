@@ -1,6 +1,11 @@
 import chalk from "chalk";
 import { Argv, CommandModule } from "yargs";
 import { projectForm } from "./form";
+import {
+	resolveTargetFromChoice,
+	templateSupportsTargetPrompt,
+	validateTargetTemplate,
+} from "./target-prompt";
 
 type CommandModuleArgs = object;
 
@@ -38,6 +43,9 @@ const NEW_COMMAND_EPILOG = [
 	"",
 	chalk.bold("Targets") + ` (${formatInlineChoices(TARGET_CHOICES)})`,
 	"  cloudflare    Cloudflare Workers deployment target (micro template only)",
+	chalk.dim(
+		"  Also offered as a prompt when you pick the micro template interactively",
+	),
 	"",
 	chalk.bold("Package managers") +
 		` (${formatInlineChoices(PACKAGE_MANAGER_CHOICES)})`,
@@ -62,7 +70,7 @@ const NEW_COMMAND_EPILOG = [
 	"",
 	chalk.bold("Silent vs interactive"),
 	"  Pass -t and -p together for non-interactive scaffold (CI-friendly).",
-	"  Omit both for prompts (template, package manager, preset, events).",
+	"  Omit both for prompts (template, package manager, preset, events, target).",
 ].join("\n");
 
 const commandOptions = (yargs: Argv): Argv => {
@@ -151,16 +159,10 @@ const createProject = (): CommandModule<CommandModuleArgs, any> => {
 	};
 };
 
-export function validateTargetTemplate(
-	target?: string,
-	template?: string,
-): true {
-	if (target === "cloudflare" && template !== "micro") {
-		throw new Error(
-			'The "cloudflare" target supports only the "micro" template.',
-		);
-	}
-	return true;
-}
+export {
+	resolveTargetFromChoice,
+	templateSupportsTargetPrompt,
+	validateTargetTemplate,
+};
 
 export { createProject, NEW_COMMAND_EPILOG };

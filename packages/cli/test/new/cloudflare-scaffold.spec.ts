@@ -99,7 +99,7 @@ describe("Cloudflare target validation", () => {
 		);
 		expect(workerTest).toContain('import worker from "../src/api";');
 		expect(workerTest).toContain(
-			'worker.fetch(new Request("http://localhost/")',
+			'new Request("http://localhost/")',
 		);
 		expect(workerTest).toContain('new Request("http://localhost/health")');
 		expect(workerTest).not.toContain("micro(");
@@ -143,7 +143,6 @@ describe("Cloudflare target validation", () => {
 		expect(pkg.devDependencies["@expressots/cli"]).toBeUndefined();
 		expect(pkg.devDependencies.tsx).toBeUndefined();
 		for (const nodeOnlyPath of [
-			"AGENTS.md",
 			".env.example",
 			"examples",
 			"expressots.config.ts",
@@ -153,6 +152,13 @@ describe("Cloudflare target validation", () => {
 				false,
 			);
 		}
+		const agents = fs.readFileSync(
+			path.join(projectDir, "AGENTS.md"),
+			"utf8",
+		);
+		expect(agents).toContain("Cloudflare Workers");
+		expect(agents).toContain("autoParseJson: false");
+		expect(agents).not.toContain("npm run prod");
 		const gitignore = fs.readFileSync(
 			path.join(projectDir, ".gitignore"),
 			"utf8",

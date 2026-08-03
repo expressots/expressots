@@ -25,5 +25,6 @@ describe("expressots new --help", () => {
 		expect(out).toContain("minimal");
 		expect(out).toContain("Available choices");
 		expect(out).toContain("application-with-events");
+		expect(out).toContain("interactively");
 	});
 });

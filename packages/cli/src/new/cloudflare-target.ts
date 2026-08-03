@@ -10,6 +10,20 @@ import {
 export const CLOUDFLARE_COMPATIBILITY_DATE = "2026-07-29";
 export const WRANGLER_VERSION = "^4.115.0";
 
+/**
+ * Files the micro template ships for the Node.js workflow that have no
+ * meaning on Workers. Also used to prune the tsconfig `include` array, so
+ * the two never drift apart.
+ */
+const NODE_ONLY_SCAFFOLD_PATHS = [
+	".env.example",
+	"examples",
+	"expressots.config.ts",
+	"tsconfig.build.json",
+] as const;
+
+const WORKER_TYPES_FILE = "worker-configuration.d.ts";
+
 export interface CloudflareTargetOptions {
 	targetDir: string;
 	projectName: string;
@@ -44,7 +58,11 @@ const ctx = {
 
 describe("Cloudflare Worker", () => {
     it("returns the welcome message on GET /", async () => {
-        const response = await worker.fetch(new Request("http://localhost/"), env, ctx);
+        const response = await worker.fetch(
+            new Request("http://localhost/"),
+            env,
+            ctx,
+        );
 
         expect(response.status).toBe(200);
         expect(await response.text()).toBe(
@@ -67,6 +85,76 @@ describe("Cloudflare Worker", () => {
     });
 });
 `;
+
+/**
+ * Workers-flavoured replacement for the template's AGENTS.md. The Node.js
+ * version documents `app.listen`, `.env` and `ex prod`, none of which exist
+ * on this target — and this is the first file a coding agent reads, so
+ * leaving it stale is worse than the README being right.
+ */
+function createCloudflareAgentsDoc(packageManager: string): string {
+	const devCommand = getRunScriptCommand(packageManager, "dev");
+	const testCommand = getRunScriptCommand(packageManager, "test");
+	const buildCommand = getRunScriptCommand(packageManager, "build");
+	const deployCommand = getRunScriptCommand(packageManager, "deploy");
+	const typesCommand = getRunScriptCommand(packageManager, "types");
+
+	return `# Agent instructions
+
+ExpressoTS v4 micro API targeting **Cloudflare Workers**: single-file,
+functional style. No DI container. Runs on workerd, not Node.js.
+
+## Entry points
+
+- \`src/api.ts\` is the whole app and the Worker module. \`micro()\` from
+  \`@expressots/adapter-express\` creates the app; routes are
+  \`app.get("/path", handler)\`; the default export is
+  \`cloudflareAdapter(app.getApp())\`.
+- Keep the single-file style. Add routes to \`src/api.ts\`; do not create
+  controllers, modules, or usecases here.
+- \`wrangler.toml\` is the Worker config: name, entrypoint, compatibility date
+  and the \`nodejs_compat\` flag.
+
+## Hard constraints on this target
+
+- **Never remove \`autoParseJson: false\` from \`micro()\`.** The adapter parses
+  the request body before Express sees it and hands Express a mock request
+  rather than a stream. Any stream-reading middleware — \`express.json()\`,
+  \`express.urlencoded()\`, \`express.text()\`, \`express.raw()\` — makes *every*
+  route fail at runtime, including GET. Read request data from \`req.body\`.
+- **Never call \`app.listen()\`.** Workers has no HTTP port; the runtime invokes
+  the exported \`fetch\` handler. There is no \`ex dev\` / \`ex prod\` here and
+  \`@expressots/cli\` is not a dependency of this project.
+- **\`app.setErrorHandler()\` is not wired on this target** because it is
+  installed inside \`listen()\`. Handle expected errors inside route handlers;
+  unexpected ones return a generic 500.
+- **No \`.env\` files.** Configuration comes from \`wrangler.toml\` vars and
+  secrets, reachable through the bindings on the request context.
+- Request bodies are parsed by content type: JSON and \`application/*+json\`
+  and URL-encoded forms arrive as objects; text and bodies with no content
+  type arrive as strings.
+
+## Commands
+
+- \`${devCommand}\`: \`wrangler dev\` on the local Workers runtime.
+- \`${testCommand}\`: Jest against the exported \`fetch\` handler, no HTTP port.
+- \`${buildCommand}\`: \`wrangler deploy --dry-run\` to validate the bundle.
+- \`${deployCommand}\`: deploy to Cloudflare.
+- \`${typesCommand}\`: regenerate \`${WORKER_TYPES_FILE}\` after editing
+  \`wrangler.toml\`.
+
+## Do not use v3 APIs
+
+These were removed in v4. Never write or suggest:
+
+- \`AppFactory\` (v4 uses \`micro()\` here).
+- \`BaseController\` (no controllers in this template at all).
+- \`IMiddleware\` (use \`app.use\` with Express middleware — subject to the
+  body-parser constraint above).
+- \`ExpressoConfig\` imported from \`@expressots/core\`
+  (config types come from \`@expressots/shared\`).
+`;
+}
 
 function getInstallCommand(packageManager: string): string {
 	switch (packageManager) {
@@ -124,8 +212,12 @@ ${devCommand}
 \`\`\`
 
 The development script runs \`wrangler dev\`, which uses the local Workers
-runtime and provides Cloudflare bindings. \`ex dev\` starts the regular Node.js
-development workflow, so it is not used for this target.
+runtime and provides Cloudflare bindings.
+
+This target does not use the ExpressoTS CLI (\`ex dev\` and friends) — those
+commands drive a Node.js HTTP server, which Workers does not run.
+\`@expressots/cli\` is therefore not installed as a dependency of this project.
+Wrangler owns the development, build, and deployment workflow instead.
 
 ## Project structure
 
@@ -187,61 +279,110 @@ currently uses Node.js-compatible APIs through the Express adapter.
 `;
 }
 
+/**
+ * Read a file the micro template is expected to ship, converting the raw
+ * ENOENT into a message that names the missing file and the target that
+ * wanted it. Template drift should read as a template problem, not as a
+ * stack trace from the middle of a scaffold.
+ */
+function readTemplateFile(targetDir: string, relativePath: string): string {
+	try {
+		return fs.readFileSync(path.join(targetDir, relativePath), "utf8");
+	} catch (error) {
+		const reason = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Cloudflare target: cannot read "${relativePath}" from the micro template (${reason}).`,
+		);
+	}
+}
+
 function configureWorkerGitignore(targetDir: string): void {
 	const gitignorePath = path.join(targetDir, ".gitignore");
-	const gitignore = fs.readFileSync(gitignorePath, "utf8");
-	const cleanedGitignore = gitignore
-		.replace("# Environment files (except examples)", "# Environment files")
-		.replace(/^!\.env\.example\r?\n?/m, "");
-	const entries = ["/.wrangler/", "/worker-configuration.d.ts"];
-	const existingLines = new Set(cleanedGitignore.split(/\r?\n/));
-	const additions = entries.filter((entry) => !existingLines.has(entry));
+	const gitignore = readTemplateFile(targetDir, ".gitignore");
 
-	if (additions.length === 0 && cleanedGitignore === gitignore) {
+	// The template keeps `.env.example` out of the ignore rules with a
+	// negation. This target deletes that file, so the negation would dangle.
+	// Match on the rule itself rather than on the comment above it: comment
+	// wording is prose and drifts, the rule is the contract.
+	const lines = gitignore.split(/\r?\n/);
+	const cleanedLines = lines
+		.filter((line) => line.trim() !== "!.env.example")
+		.map((line) =>
+			/^#.*environment files/i.test(line) ? "# Environment files" : line,
+		);
+
+	const entries = ["/.wrangler/", "/worker-configuration.d.ts"];
+	const existing = new Set(cleanedLines.map((line) => line.trim()));
+	const additions = entries.filter((entry) => !existing.has(entry));
+
+	let cleanedGitignore = cleanedLines.join("\n");
+	if (additions.length > 0) {
+		const separator = cleanedGitignore.endsWith("\n") ? "" : "\n";
+		cleanedGitignore += `${separator}\n# Cloudflare Workers\n${additions.join("\n")}\n`;
+	}
+
+	if (cleanedGitignore === gitignore) {
 		return;
 	}
 
-	const separator = cleanedGitignore.endsWith("\n") ? "" : "\n";
-	const cloudflareSection =
-		additions.length > 0
-			? `${separator}\n# Cloudflare Workers\n${additions.join("\n")}\n`
-			: "";
-	fs.writeFileSync(
-		gitignorePath,
-		`${cleanedGitignore}${cloudflareSection}`,
-		"utf8",
-	);
+	fs.writeFileSync(gitignorePath, cleanedGitignore, "utf8");
 }
 
 function configureWorkerTypes(targetDir: string): void {
 	const tsconfigPath = path.join(targetDir, "tsconfig.json");
-	const tsconfig = fs.readFileSync(tsconfigPath, "utf8");
-	const includePattern = /("include"\s*:\s*)\[[\s\S]*?\]/;
+	const tsconfig = readTemplateFile(targetDir, "tsconfig.json");
 
-	if (!includePattern.test(tsconfig)) {
+	// The template tsconfig carries `//` comments, so it is JSONC and cannot
+	// go through JSON.parse. Capture just the `include` array and rewrite it
+	// in place: everything else in the file — comments included — is
+	// preserved byte-for-byte.
+	const includePattern = /("include"\s*:\s*)(\[[\s\S]*?\])/;
+	const match = tsconfig.match(includePattern);
+
+	if (!match) {
 		throw new Error(
-			"Unable to configure Cloudflare types: tsconfig.json has no include array.",
+			"Cloudflare target: tsconfig.json has no include array to configure.",
 		);
 	}
 
+	let currentInclude: Array<string>;
+	try {
+		currentInclude = JSON.parse(match[2]) as Array<string>;
+	} catch {
+		throw new Error(
+			`Cloudflare target: could not parse the tsconfig.json include array (${match[2]}).`,
+		);
+	}
+
+	// Preserve whatever else the template includes rather than overwriting
+	// with a fixed list — a future template entry should survive this target.
+	// Only drop entries whose files this target removes.
+	const removedFromScaffold = new Set<string>(NODE_ONLY_SCAFFOLD_PATHS);
+	const nextInclude = currentInclude.filter(
+		(entry) => !removedFromScaffold.has(entry),
+	);
+
+	if (!nextInclude.includes(WORKER_TYPES_FILE)) {
+		nextInclude.push(WORKER_TYPES_FILE);
+	}
+
+	// Replace via a function so `$`-sequences in a path can never be read as
+	// replacement patterns.
+	const serializedInclude = `[${nextInclude
+		.map((entry) => JSON.stringify(entry))
+		.join(", ")}]`;
+
 	fs.writeFileSync(
 		tsconfigPath,
-		tsconfig.replace(
-			includePattern,
-			'$1["src/**/*.ts", "test/**/*.ts", "worker-configuration.d.ts"]',
-		),
+		tsconfig.replace(includePattern, (_full, prefix: string) => {
+			return `${prefix}${serializedInclude}`;
+		}),
 		"utf8",
 	);
 }
 
 function removeNodeScaffoldArtifacts(targetDir: string): void {
-	for (const relativePath of [
-		"AGENTS.md",
-		".env.example",
-		"examples",
-		"expressots.config.ts",
-		"tsconfig.build.json",
-	]) {
+	for (const relativePath of NODE_ONLY_SCAFFOLD_PATHS) {
 		fs.rmSync(path.join(targetDir, relativePath), {
 			recursive: true,
 			force: true,
@@ -274,12 +415,28 @@ export function applyCloudflareTarget({
 	const testPath = path.join(targetDir, "test", "api.spec.ts");
 	const wranglerPath = path.join(targetDir, "wrangler.toml");
 
-	const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8")) as {
+	const packageSource = readTemplateFile(targetDir, "package.json");
+	let pkg: {
 		main?: string;
+		description?: string;
 		engines?: Record<string, string>;
 		scripts?: Record<string, string>;
 		devDependencies?: Record<string, string>;
 	};
+
+	try {
+		pkg = JSON.parse(packageSource);
+	} catch (error) {
+		const reason = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Cloudflare target: package.json in the micro template is not valid JSON (${reason}).`,
+		);
+	}
+
+	// The template description advertises the Node-only example apps this
+	// target removes.
+	pkg.description =
+		"ExpressoTS micro API running on Cloudflare Workers via Wrangler";
 
 	pkg.engines = {
 		...pkg.engines,
@@ -328,6 +485,11 @@ export function applyCloudflareTarget({
 	fs.writeFileSync(
 		readmePath,
 		createCloudflareReadme(packageManager),
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(targetDir, "AGENTS.md"),
+		createCloudflareAgentsDoc(packageManager),
 		"utf8",
 	);
 	configureWorkerGitignore(targetDir);

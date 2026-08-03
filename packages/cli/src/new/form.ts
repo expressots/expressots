@@ -12,6 +12,10 @@ import { isValidPackageManager } from "../utils/input-validation";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
 import { applyCloudflareTarget } from "./cloudflare-target";
 import { writePnpmAllowBuildsConfig } from "./pnpm-allow-builds";
+import {
+	resolveTargetFromChoice,
+	templateSupportsTargetPrompt,
+} from "./target-prompt";
 
 /**
  * Install dependencies using the selected package manager
@@ -618,6 +622,7 @@ const projectForm = async (
 		template: Template;
 		preset?: MiddlewarePreset;
 		events?: boolean;
+		target?: string;
 		confirm: boolean;
 	};
 
@@ -638,6 +643,7 @@ const projectForm = async (
 				? MiddlewarePreset[resolvedPreset]
 				: undefined,
 			events: events,
+			target: target,
 			confirm: true,
 		};
 	} else {
@@ -712,6 +718,30 @@ const projectForm = async (
 			]);
 		}
 
+		// Deployment target. Only the micro template has a non-Node target
+		// today, so the prompt stays hidden for `application` instead of
+		// offering a list with a single selectable entry.
+		let targetAnswer: { target?: string } = {};
+		if (templateSupportsTargetPrompt(baseAnswers.template)) {
+			const { deploymentTarget } = await inquirer.prompt([
+				{
+					type: "list",
+					name: "deploymentTarget",
+					message: "Select a deployment target",
+					choices: [
+						`Node.js :: Standard Node.js server. (${chalk.yellow(
+							"Recommended",
+						)})`,
+						"Cloudflare Workers :: Deploy to the edge with Wrangler.",
+					],
+				},
+			]);
+
+			targetAnswer = {
+				target: resolveTargetFromChoice(deploymentTarget),
+			};
+		}
+
 		const confirmAnswer = await inquirer.prompt([
 			{
 				type: "confirm",
@@ -725,6 +755,7 @@ const projectForm = async (
 			...baseAnswers,
 			...presetAnswer,
 			...eventsAnswer,
+			...targetAnswer,
 			...confirmAnswer,
 		};
 	}
@@ -880,7 +911,7 @@ const projectForm = async (
 			process.exit(1);
 		}
 
-		if (target === "cloudflare") {
+		if (answer.target === "cloudflare") {
 			applyCloudflareTarget({
 				targetDir: answer.name,
 				projectName,
