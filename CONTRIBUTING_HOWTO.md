@@ -56,10 +56,35 @@ Note: `--package=<tarball> expressots` is required. The CLI ships two binaries
 (`expressots` and `ex`), so `npx <tarball>` alone cannot pick one and fails
 with a confusing "Permission denied" on the tarball path.
 
-### 2. Install the framework from the local tarballs
+### 2. Point the app at the local tarballs
 
-Install all tarballs in **one** command so internal `@expressots/*`
-dependencies resolve from the sibling tarballs instead of the npm registry:
+The one-step way — packs a fresh build and rewires the app in place:
+
+```bash
+pnpm pack:local --link ../my-app
+```
+
+`--link` rewrites the app's `@expressots/*` dependencies to the freshly packed
+tarballs, pins the transitive ones (`@expressots/adapter-express` depends on
+`@expressots/core` _by version_, so without a pin the published copy installs
+alongside the local one and the bundler picks the wrong file), and reinstalls
+with the app's package manager.
+
+The tarball filenames carry a content hash. Package managers cache `file:`
+specifiers by path, so without it a re-link after a rebuild silently reuses the
+previous tarball and you test stale code — which looks exactly like "my fix
+doesn't work".
+
+A freshly scaffolded app has no lockfile, so there is nothing to detect the
+package manager from and `--link` assumes npm. Say which one you want:
+
+```bash
+pnpm pack:local --link ../my-app --pm bun     # npm | pnpm | yarn | bun
+```
+
+Doing it by hand instead is fine — install all tarballs in **one** command so
+internal `@expressots/*` dependencies resolve from the siblings rather than the
+registry:
 
 ```bash
 cd my-app
@@ -74,9 +99,8 @@ npm run dev    # watch mode; or `npm run prod` for the compiled build
 curl http://localhost:3000/api/health
 ```
 
-After editing framework code, repeat `pnpm pack:local` (fast — turbo only
-rebuilds what changed) and re-run the `npm install ...tgz` command in the test
-app to pick up the new tarballs.
+After editing framework code, re-run `pnpm pack:local --link ../my-app` (fast —
+turbo only rebuilds what changed). That repacks and reinstalls in one step.
 
 ### Why tarballs instead of `npm link`?
 
