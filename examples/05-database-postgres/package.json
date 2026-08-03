@@ -20,16 +20,16 @@
         "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix"
     },
     "dependencies": {
-        "@expressots/adapter-express": "4.1.1",
-        "@expressots/core": "4.1.1",
-        "@expressots/shared": "4.1.1",
+        "@expressots/adapter-express": "4.2.0",
+        "@expressots/core": "4.2.0",
+        "@expressots/shared": "4.2.0",
         "express": "5.2.1",
         "pg": "^8.16.0"
     },
     "devDependencies": {
         "@types/pg": "^8.15.2",
         "@eslint/js": "9.39.2",
-        "@expressots/cli": "4.1.1",
+        "@expressots/cli": "4.2.0",
         "@types/express": "5.0.6",
         "@types/jest": "30.0.0",
         "@types/node": "25.0.3",

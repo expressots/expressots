@@ -20,16 +20,16 @@
         "studio": "expressots studio"
     },
     "dependencies": {
-        "@expressots/adapter-express": "4.1.1",
-        "@expressots/core": "4.1.1",
-        "@expressots/shared": "4.1.1",
+        "@expressots/adapter-express": "4.2.0",
+        "@expressots/core": "4.2.0",
+        "@expressots/shared": "4.2.0",
         "express": "5.2.1"
     },
     "devDependencies": {
         "@eslint/js": "9.39.2",
-        "@expressots/cli": "4.1.1",
-        "@expressots/studio": "4.1.1",
-        "@expressots/studio-agent": "4.1.1",
+        "@expressots/cli": "4.2.0",
+        "@expressots/studio": "4.2.0",
+        "@expressots/studio-agent": "4.2.0",
         "@types/express": "5.0.6",
         "@types/jest": "30.0.0",
         "@types/node": "25.0.3",

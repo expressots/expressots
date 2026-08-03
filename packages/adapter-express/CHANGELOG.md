@@ -1,5 +1,122 @@
 # @expressots/adapter-express
 
+## 4.2.0
+
+### Minor Changes
+
+- 1dab8bc: Serverless adapters: response fidelity, working lifecycle hooks, and a loud
+  guard for body-parsing middleware.
+
+  **Adapters accept a `MicroApp` directly.** `cloudflareAdapter(app)`,
+  `vercelAdapter(app)` and `awsLambdaAdapter(app)` now unwrap `getApp()` as well
+  as `getExpressApp()`. Passing a `MicroApp` previously handed Express an object
+  that was not an Express app, failing deep inside the router rather than at the
+  call site. `app.getApp()` keeps working.
+
+  **Response fidelity (#948).**
+
+  - Multiple `Set-Cookie` headers no longer collapse into one comma-joined value,
+    which broke every cookie-based session. Cloudflare emits them via
+    `Headers.append()`; Lambda emits them in `multiValueHeaders`.
+  - `res.statusCode = 201` is honoured on Cloudflare. It was tracked in a closure
+    only `res.status()` wrote to, so direct assignment — ordinary Express, and
+    what several third-party middlewares do internally — was silently dropped.
+  - 204/205/304 responses carry no body. Passing an empty Buffer is tolerated by
+    workerd but throws under Node/undici, so a 204 endpoint passed in production
+    and failed in its own Jest suite.
+
+  **`setErrorHandler` and the RFC-7807 404 work on serverless targets (#950).**
+  Both were installed inside `listen()`, which serverless adapters never call, so
+  `setErrorHandler` type-checked and did nothing. `micro()` now finalizes its
+  middleware stack on the first request, so hosting makes no difference.
+  Registration is idempotent, and the handler is resolved at request time so
+  `setErrorHandler` still takes effect if called late.
+
+  **Body-parsing middleware fails loudly instead of at runtime (#951).**
+  `micro()`'s auto-parsers stand down when a Cloudflare or Lambda adapter is
+  attached, so the default `micro()` config now works on Workers without
+  `autoParseJson: false`. Explicitly registering `express.json()`,
+  `express.urlencoded()`, `express.text()`, `express.raw()`, `multer()` or
+  `compression()` on those targets throws a named error at adapter construction —
+  which in a Worker is module scope, so it surfaces at `wrangler dev` startup
+  rather than as a 500 on every request.
+
+  `vercelAdapter` is deliberately exempt from that guard: Vercel supplies a real
+  Node request/response pair, so body parsers work there normally. Its error
+  responses no longer leak `err.message` to the client, matching the other
+  adapters.
+
+  The Cloudflare scaffold drops the now-unnecessary `autoParseJson: false` line,
+  and its README and `AGENTS.md` describe the constraint rather than the
+  workaround.
+
+- d9e96bb: Request fidelity on Cloudflare Workers, and Worker tests that run on workerd.
+
+  **Binary and multipart bodies survive intact (#949).** The adapter read every
+  body with `request.text()`, UTF-8 decoding arbitrary bytes — any invalid
+  sequence became `U+FFFD` and the original was unrecoverable, silently. File
+  uploads were impossible. Bodies are now read as bytes and only decoded when the
+  content type is textual; anything else reaches `req.body` as a `Buffer`.
+  `multipart/form-data` is parsed with the runtime's native `FormData`, with file
+  parts exposed as `{ filename, contentType, size, data }`.
+
+  **Duplicate and bracketed keys match Node (#949).** Query strings and
+  urlencoded bodies now go through `qs`, the parser
+  `express.urlencoded({ extended: true })` uses. Previously `?tag=a&tag=b` gave
+  `{ tag: "b" }` on Workers and `{ tag: ["a","b"] }` on Node, so the same handler
+  returned different data depending on where it was deployed. `qs` is already in
+  the Worker bundle via Express, so this costs no bundle size.
+
+  **Request bodies are capped (#949).** Bodies over 1 MiB are rejected with
+  **413**, checked against `content-length` before reading. A Workers isolate has
+  128 MB of memory and Cloudflare accepts bodies up to 100 MB, so an unbounded
+  read was an availability hazard. Configure with
+  `cloudflareAdapter(app, { maxBodySize })`; `0` disables it.
+
+  **Cloudflare scaffolds test on workerd, not Node (#952).** The target now
+  generates Vitest with `@cloudflare/vitest-pool-workers` instead of Jest, plus a
+  `vitest.config.mts` pointed at `wrangler.toml`, and specs that drive the Worker
+  through `SELF.fetch()`. Node-hosted tests were wrong in both directions:
+  `undici` omits `content-length`, so Express body middleware short-circuited and
+  a Worker that failed every request in production tested green; and `undici`
+  rejects a 204 response body that workerd accepts, so a correct endpoint failed
+  its own suite. The generated `tsconfig.json` moves to
+  `module: esnext` / `moduleResolution: bundler`, which a Workers project wants
+  anyway and which Node10 resolution could not provide.
+
+  **CLI: `expressots new` no longer crashes in a narrow terminal (#955).**
+  `centerText` passed a negative count to `" ".repeat()`, throwing a `RangeError`
+  _after_ the scaffold had completed and reported success — leaving a working
+  project alongside a stack trace and a non-zero exit code.
+
+  **Build: `turbo run build test` no longer races (#956).** The `test` task
+  declared only `^build` (upstream packages), so `@expressots/cli`'s tests could
+  spawn `bin/cli.js` while its own build was deleting that directory.
+
+- Cloudflare workers + small fixes on adapter
+
+### Patch Changes
+
+- f4906bb: Add Cloudflare Workers as a scaffold target for ExpressoTS micro projects,
+  including Wrangler configuration, runtime-aware documentation, and Worker
+  handler tests. The target is selectable both with `--target cloudflare` and
+  from the interactive `expressots new` wizard when the micro template is
+  chosen.
+
+  Harden Cloudflare request-body handling and keep path-alias registration
+  compatible with bundled ESM output.
+
+  Cloudflare adapter request bodies are now parsed according to their content
+  type. JSON and URL-encoded bodies remain structured values, while text and
+  requests without a content type are passed to handlers as strings.
+
+  Partially addresses #945. Thanks @xgame92 for the contribution.
+
+- Updated dependencies [f4906bb]
+- Updated dependencies
+  - @expressots/core@4.2.0
+  - @expressots/shared@4.2.0
+
 ## 4.1.1
 
 ### Patch Changes
