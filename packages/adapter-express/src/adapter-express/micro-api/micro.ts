@@ -17,6 +17,7 @@ import {
   reportStudioRuntimeInfo,
   rescanStudioRoutes,
 } from "../studio/index.js";
+import { SERVERLESS_HOST_SETTING } from "./serverless/serverless-app.js";
 
 /**
  * Minimal configuration for micro API
@@ -139,10 +140,38 @@ export function micro(config?: MicroConfig): MicroApp {
     next();
   });
 
-  // Auto-enable JSON parsing by default
+  // Finalize the middleware stack on the first request. `listen()` also calls
+  // this, but serverless adapters consume `getApp()` and never call `listen()`
+  // — so without a lazy trigger the 404 fallback and setErrorHandler would be
+  // dead on Cloudflare, Vercel and Lambda. Registered here, ahead of user
+  // routes, so that by the time a request falls through the stack the
+  // terminal handlers have been appended.
+  app.use((_req, _res, next) => {
+    finalize();
+    next();
+  });
+
+  // Auto-enable JSON parsing by default.
+  //
+  // The parsers are wrapped rather than registered directly: on a serverless
+  // runtime that synthesises a mock request, body-parser reaches for
+  // `req.socket` and throws on *every* request, including GETs with no body.
+  // The adapter sets SERVERLESS_HOST_SETTING at construction, and these stand
+  // down — the adapter has already parsed the body by then, so nothing is
+  // lost. The wrapper name matters: it must not collide with the names
+  // `prepareServerlessApp` rejects, or micro's own parsers would trip its
+  // guard.
   if (config?.autoParseJson !== false) {
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
+    const parsers = [express.json(), express.urlencoded({ extended: true })];
+
+    for (const parser of parsers) {
+      app.use(function expressotsAutoParser(req, res, next) {
+        if (app.get(SERVERLESS_HOST_SETTING)) {
+          return next();
+        }
+        return parser(req, res, next);
+      });
+    }
   }
 
   /**
@@ -269,6 +298,47 @@ export function micro(config?: MicroConfig): MicroApp {
   };
 
   /**
+   * Append the terminal middleware — the 404 fallback and the error handler —
+   * exactly once, whatever is hosting the app.
+   *
+   * This used to live inline in `listen()`, which meant every serverless
+   * target silently lost both: adapters consume `getApp()` and never listen.
+   * `setErrorHandler` type-checked and did nothing, and unmatched routes fell
+   * through to whatever the adapter did on its own.
+   */
+  let finalized = false;
+  const finalize = (): void => {
+    if (finalized) {
+      return;
+    }
+    finalized = true;
+
+    // 404 fallback first, so unmatched routes get suggestions instead of
+    // falling through to Express's default HTML — or worse, to a regular
+    // middleware that arity-confused its way into running on every request.
+    installNotFoundHandler();
+
+    // Then the error handler, always registered with 4 arity so Express
+    // recognises it as error-handling regardless of whether the user wrote
+    // `(err, req, res)` or `(err, req, res, next)`. Without the wrapper,
+    // Express would treat a 3-arg user handler as ordinary middleware and run
+    // it on every request, swallowing 404s and crashing when the user calls
+    // `res.status(...)` (positional `res` would actually be Express's `next`).
+    //
+    // Registered unconditionally and resolved at call time, so
+    // `setErrorHandler()` still takes effect when it is called after the
+    // stack has been finalized. With no handler set, `next(err)` restores
+    // Express's default behaviour exactly.
+    const wrappedErrorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
+      if (!errorHandler) {
+        return next(err);
+      }
+      return errorHandler(err, req, res, next);
+    };
+    app.use(wrappedErrorHandler);
+  };
+
+  /**
    * Handle server shutdown. In development, exit immediately for fast
    * hot-reload. In production, drain connections before exiting.
    */
@@ -333,25 +403,9 @@ export function micro(config?: MicroConfig): MicroApp {
         }
       }
 
-      // Install the 404 fallback before the user error handler so unmatched
-      // routes get suggestions instead of falling through to the default
-      // Express HTML or - worse - to a regular middleware that arity-confused
-      // its way into running on every request.
-      installNotFoundHandler();
-
-      // Apply error handler last. Wrap it in a 4-arity function so that
-      // Express recognizes it as an error-handling middleware regardless of
-      // whether the user wrote `(err, req, res)` or `(err, req, res, next)`.
-      // Without this wrapper, Express would treat a 3-arg user handler as a
-      // regular middleware and run it on every request, which both swallows
-      // 404s and crashes when the user calls `res.status(...)` (positional
-      // `res` would actually be Express's `next`).
-      if (errorHandler) {
-        const userHandler = errorHandler;
-        const wrappedErrorHandler: express.ErrorRequestHandler = (err, req, res, next) =>
-          userHandler(err, req, res, next);
-        app.use(wrappedErrorHandler);
-      }
+      // Append the 404 fallback and error handler. Idempotent, so a request
+      // that already triggered the lazy finalize does not double-register.
+      finalize();
 
       return new Promise((resolve, reject) => {
         httpServer = app.listen(normalizedPort, async () => {

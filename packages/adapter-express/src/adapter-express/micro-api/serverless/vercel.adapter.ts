@@ -4,7 +4,8 @@
  * Converts Vercel serverless function requests to Express format.
  */
 
-import { Application, Request, Response } from "express";
+import { Request, Response } from "express";
+import { resolveExpressApp, ServerlessApp } from "./serverless-app.js";
 
 /**
  * Vercel Request type - extends Express Request with Vercel-specific properties
@@ -57,13 +58,14 @@ export interface VercelAdapterConfig {
  * }
  * ```
  */
-export function vercelAdapter(
-  app: { getExpressApp?: () => Application } | Application,
-  config?: VercelAdapterConfig,
-): VercelHandler {
-  const expressApp =
-    "getExpressApp" in app && app.getExpressApp ? app.getExpressApp() : (app as Application);
+export function vercelAdapter(app: ServerlessApp, config?: VercelAdapterConfig): VercelHandler {
+  const expressApp = resolveExpressApp(app);
 
+  // Deliberately no `prepareServerlessApp` here. Vercel hands the function a
+  // real Node IncomingMessage/ServerResponse pair, so `express.json()` and
+  // friends work normally — unlike the Cloudflare and Lambda adapters, which
+  // synthesise a mock request. Disabling the parsers here would break working
+  // deployments.
   const debug = config?.debug ?? false;
 
   return async (req: VercelRequest, res: VercelResponse): Promise<void> => {
@@ -121,17 +123,15 @@ export function vercelAdapter(
         expressApp(req as Request, res as Response, (err: unknown) => {
           if (err) {
             console.error("[Vercel] Express error:", err);
-            res.status(500).json({
-              error: err instanceof Error ? err.message : "Unknown error",
-            });
+            // Details stay in the log; the response body must not leak
+            // internal error messages or stack fragments to the client.
+            res.status(500).json({ error: "Internal Server Error" });
             resolve();
           }
         });
       } catch (error: unknown) {
         console.error("[Vercel] Handler error:", error);
-        res.status(500).json({
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+        res.status(500).json({ error: "Internal Server Error" });
         resolve();
       }
     });
