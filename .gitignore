@@ -74,3 +74,6 @@ dist
 
 # Local tarballs for testing (pnpm pack:local)
 .local-packs/
+
+# Claude Code: share commands/agents, keep per-machine settings local
+.claude/settings.local.json

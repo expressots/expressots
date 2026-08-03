@@ -22,7 +22,7 @@ importers:
         version: 2.31.1(@types/node@22.0.2)
       '@commitlint/cli':
         specifier: ^19.5.0
-        version: 19.6.0(@types/node@22.0.2)
+        version: 19.6.0(@types/node@22.0.2)(typescript@5.9.3)
       '@commitlint/config-conventional':
         specifier: ^19.5.0
         version: 19.6.0
@@ -337,8 +337,8 @@ importers:
         specifier: 7.0.6
         version: 7.0.6
       degit:
-        specifier: 2.8.4
-        version: 2.8.4
+        specifier: 2.8.6
+        version: 2.8.6
       glob:
         specifier: 13.0.6
         version: 13.0.6
@@ -3194,8 +3194,8 @@ packages:
     resolution: {integrity: sha512-N+MeXYoqr3pOgn8xfyRPREN7gHakLYjhsHhWGT3fWAiL4IkAt0iDw14QiiEm2bE30c5XX5q0FtAA3CK5f9/BUg==}
     engines: {node: '>=12'}
 
-  degit@2.8.4:
-    resolution: {integrity: sha512-vqYuzmSA5I50J882jd+AbAhQtgK6bdKUJIex1JNfEUPENCgYsxugzKVZlFyMwV4i06MmnV47/Iqi5Io86zf3Ng==}
+  degit@2.8.6:
+    resolution: {integrity: sha512-UzjEf67itNZtQF4ZFSNYT+JY78VKtkRJPnksn1tVDAX74Ar0zMqnB5UvsiAjIOBiIHv3BbAPCEJDn/zasbV5rw==}
     engines: {node: '>=8.0.0'}
     hasBin: true
 
@@ -6115,11 +6115,11 @@ snapshots:
       - '@types/node'
       - typescript
 
-  '@commitlint/cli@19.6.0(@types/node@22.0.2)':
+  '@commitlint/cli@19.6.0(@types/node@22.0.2)(typescript@5.9.3)':
     dependencies:
       '@commitlint/format': 19.8.1
       '@commitlint/lint': 19.8.1
-      '@commitlint/load': 19.8.1(@types/node@22.0.2)
+      '@commitlint/load': 19.8.1(@types/node@22.0.2)(typescript@5.9.3)
       '@commitlint/read': 19.8.1
       '@commitlint/types': 19.8.1
       tinyexec: 0.3.2
@@ -6184,7 +6184,7 @@ snapshots:
       '@commitlint/types': 19.8.1
       chalk: 5.6.2
       cosmiconfig: 9.0.2(typescript@5.2.2)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.12.7)(cosmiconfig@9.0.2(typescript@5.2.2))(typescript@5.2.2)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.12.7)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.2.2)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -6200,23 +6200,7 @@ snapshots:
       '@commitlint/types': 19.8.1
       chalk: 5.6.2
       cosmiconfig: 9.0.2(typescript@5.5.3)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.14.10)(cosmiconfig@9.0.2(typescript@5.5.3))(typescript@5.5.3)
-      lodash.isplainobject: 4.0.6
-      lodash.merge: 4.6.2
-      lodash.uniq: 4.5.0
-    transitivePeerDependencies:
-      - '@types/node'
-      - typescript
-
-  '@commitlint/load@19.8.1(@types/node@22.0.2)':
-    dependencies:
-      '@commitlint/config-validator': 19.8.1
-      '@commitlint/execute-rule': 19.8.1
-      '@commitlint/resolve-extends': 19.8.1
-      '@commitlint/types': 19.8.1
-      chalk: 5.6.2
-      cosmiconfig: 9.0.2
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.14.10)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.5.3)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -6232,7 +6216,23 @@ snapshots:
       '@commitlint/types': 19.8.1
       chalk: 5.6.2
       cosmiconfig: 9.0.2(typescript@5.5.3)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.5.3))(typescript@5.5.3)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.5.3)
+      lodash.isplainobject: 4.0.6
+      lodash.merge: 4.6.2
+      lodash.uniq: 4.5.0
+    transitivePeerDependencies:
+      - '@types/node'
+      - typescript
+
+  '@commitlint/load@19.8.1(@types/node@22.0.2)(typescript@5.9.3)':
+    dependencies:
+      '@commitlint/config-validator': 19.8.1
+      '@commitlint/execute-rule': 19.8.1
+      '@commitlint/resolve-extends': 19.8.1
+      '@commitlint/types': 19.8.1
+      chalk: 5.6.2
+      cosmiconfig: 9.0.2(typescript@5.9.3)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.9.3)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -8781,39 +8781,33 @@ snapshots:
       object-assign: 4.1.1
       vary: 1.1.2
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@20.12.7)(cosmiconfig@9.0.2(typescript@5.2.2))(typescript@5.2.2):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@20.12.7)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.2.2):
     dependencies:
       '@types/node': 20.12.7
-      cosmiconfig: 9.0.2(typescript@5.2.2)
+      cosmiconfig: 9.0.2(typescript@5.9.3)
       jiti: 2.6.1
       typescript: 5.2.2
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@20.14.10)(cosmiconfig@9.0.2(typescript@5.5.3))(typescript@5.5.3):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@20.14.10)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.5.3):
     dependencies:
       '@types/node': 20.14.10
-      cosmiconfig: 9.0.2(typescript@5.5.3)
+      cosmiconfig: 9.0.2(typescript@5.9.3)
       jiti: 2.6.1
       typescript: 5.5.3
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.5.3))(typescript@5.5.3):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.5.3):
     dependencies:
       '@types/node': 22.0.2
-      cosmiconfig: 9.0.2(typescript@5.5.3)
+      cosmiconfig: 9.0.2(typescript@5.9.3)
       jiti: 2.6.1
       typescript: 5.5.3
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.9.3):
     dependencies:
       '@types/node': 22.0.2
-      cosmiconfig: 9.0.2
+      cosmiconfig: 9.0.2(typescript@5.9.3)
       jiti: 2.6.1
-
-  cosmiconfig@9.0.2:
-    dependencies:
-      env-paths: 2.2.1
-      import-fresh: 3.3.1
-      js-yaml: 4.3.0
-      parse-json: 5.2.0
+      typescript: 5.9.3
 
   cosmiconfig@9.0.2(typescript@5.2.2):
     dependencies:
@@ -8832,6 +8826,15 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.5.3
+
+  cosmiconfig@9.0.2(typescript@5.9.3):
+    dependencies:
+      env-paths: 2.2.1
+      import-fresh: 3.3.1
+      js-yaml: 4.3.0
+      parse-json: 5.2.0
+    optionalDependencies:
+      typescript: 5.9.3
 
   create-jest@29.7.0(@types/node@20.12.7)(ts-node@10.9.2(@types/node@20.12.7)(typescript@5.2.2)):
     dependencies:
@@ -8983,7 +8986,7 @@ snapshots:
 
   define-lazy-prop@3.0.0: {}
 
-  degit@2.8.4: {}
+  degit@2.8.6: {}
 
   depd@2.0.0: {}
 
