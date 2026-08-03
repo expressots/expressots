@@ -6,7 +6,9 @@
 
 Add Cloudflare Workers as a scaffold target for ExpressoTS micro projects,
 including Wrangler configuration, runtime-aware documentation, and Worker
-handler tests.
+handler tests. The target is selectable both with `--target cloudflare` and
+from the interactive `expressots new` wizard when the micro template is
+chosen.
 
 Harden Cloudflare request-body handling and keep path-alias registration
 compatible with bundled ESM output.
