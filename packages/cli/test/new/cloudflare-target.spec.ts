@@ -133,6 +133,12 @@ describe("applyCloudflareTarget", () => {
 				'compatibility_date = "2026-07-29"',
 				'compatibility_flags = ["nodejs_compat"]',
 				"",
+				"# express -> body-parser -> iconv-lite bundles ~485 KiB of encoding",
+				"# tables that this target never executes, because the adapter parses",
+				"# request bodies and Express's body middleware is disabled. The same",
+				"# alias is repeated in vitest.config.mts, which does not read this file.",
+				'alias = { "iconv-lite" = "./src/shims/iconv-lite.cjs" }',
+				"",
 			].join("\n"),
 		);
 
@@ -228,6 +234,47 @@ describe("applyCloudflareTarget", () => {
 				false,
 			);
 		}
+	});
+
+	it("aliases iconv-lite away in both the wrangler and vitest builds", () => {
+		const targetDir = createMicroFixture();
+		temporaryDirectories.push(targetDir);
+
+		applyCloudflareTarget({ targetDir, projectName: "edge-api" });
+
+		const shimPath = path.join(targetDir, "src", "shims", "iconv-lite.cjs");
+		expect(fs.existsSync(shimPath)).toBe(true);
+
+		// CommonJS: raw-body and body-parser require() it, and an ESM shim
+		// breaks their interop under Vitest.
+		const shim = fs.readFileSync(shimPath, "utf8");
+		expect(shim).toContain("module.exports");
+		for (const api of [
+			"encodingExists",
+			"decode",
+			"encode",
+			"getDecoder",
+			"getEncoder",
+		]) {
+			expect(shim).toContain(api);
+		}
+
+		const wrangler = fs.readFileSync(
+			path.join(targetDir, "wrangler.toml"),
+			"utf8",
+		);
+		expect(wrangler).toContain(
+			'alias = { "iconv-lite" = "./src/shims/iconv-lite.cjs" }',
+		);
+
+		// Both builds must agree, or the suite tests a different bundle than
+		// the one that deploys.
+		const vitestConfig = fs.readFileSync(
+			path.join(targetDir, "vitest.config.mts"),
+			"utf8",
+		);
+		expect(vitestConfig).toContain("iconv-lite");
+		expect(vitestConfig).toContain("./src/shims/iconv-lite.cjs");
 	});
 
 	it("rewrites AGENTS.md for the Worker runtime instead of deleting it", () => {
