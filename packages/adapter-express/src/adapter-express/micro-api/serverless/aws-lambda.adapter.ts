@@ -4,7 +4,7 @@
  * Converts Lambda events to Express requests and responses.
  */
 
-import { Application } from "express";
+import { prepareServerlessApp, resolveExpressApp, ServerlessApp } from "./serverless-app.js";
 
 /**
  * AWS Lambda Event (simplified)
@@ -42,6 +42,12 @@ export interface LambdaContext {
 export interface LambdaResponse {
   statusCode: number;
   headers: Record<string, string>;
+  /**
+   * Headers that legitimately repeat — `Set-Cookie` above all. API Gateway
+   * merges this with `headers`, so a header appears in exactly one of the
+   * two, never both. Only present when some header was set more than once.
+   */
+  multiValueHeaders?: Record<string, Array<string>>;
   body: string;
   isBase64Encoded: boolean;
 }
@@ -79,12 +85,12 @@ export interface LambdaAdapterConfig {
  * export const handler = awsLambdaAdapter(app);
  * ```
  */
-export function awsLambdaAdapter(
-  app: { getExpressApp?: () => Application } | Application,
-  config?: LambdaAdapterConfig,
-): LambdaHandler {
-  const expressApp =
-    "getExpressApp" in app && app.getExpressApp ? app.getExpressApp() : (app as Application);
+export function awsLambdaAdapter(app: ServerlessApp, config?: LambdaAdapterConfig): LambdaHandler {
+  const expressApp = resolveExpressApp(app);
+
+  // Like Cloudflare, this adapter hands Express a mock request rather than a
+  // stream, so body-reading middleware cannot work here either.
+  prepareServerlessApp(expressApp, "awsLambdaAdapter");
 
   const binaryTypes = config?.binaryContentTypes ?? [
     "application/octet-stream",
@@ -159,17 +165,40 @@ export function awsLambdaAdapter(
         get: (name: string) => headers[name.toLowerCase()],
       };
 
-      // Create mock Express-compatible response object
+      // Create mock Express-compatible response object.
       const chunks: Array<Buffer> = [];
-      const responseHeaders: Record<string, string> = {};
+
+      // Values are kept as arrays so repeatable headers survive. A plain
+      // Record silently collapses two Set-Cookie calls into one malformed
+      // header, which breaks any cookie-based session.
+      const headerValues = new Map<string, Array<string>>();
+      const appendHeader = (name: string, value: string | Array<string>): void => {
+        const key = name.toLowerCase();
+        const existing = headerValues.get(key) ?? [];
+        for (const entry of Array.isArray(value) ? value : [value]) {
+          existing.push(String(entry));
+        }
+        headerValues.set(key, existing);
+      };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = {
         statusCode: 200,
-        setHeader: (name: string, value: string) => {
-          responseHeaders[name.toLowerCase()] = value;
+        setHeader: (name: string, value: string | Array<string>) => {
+          headerValues.delete(name.toLowerCase());
+          appendHeader(name, value);
         },
-        getHeader: (name: string) => responseHeaders[name.toLowerCase()],
+        appendHeader: (name: string, value: string | Array<string>) => {
+          appendHeader(name, value);
+        },
+        getHeader: (name: string) => {
+          const values = headerValues.get(name.toLowerCase());
+          if (!values) return undefined;
+          return values.length > 1 ? values : values[0];
+        },
+        removeHeader: (name: string) => {
+          headerValues.delete(name.toLowerCase());
+        },
         write: (chunk: string | Buffer) => {
           chunks.push(Buffer.from(chunk));
         },
@@ -179,7 +208,7 @@ export function awsLambdaAdapter(
           }
 
           const bodyBuffer = Buffer.concat(chunks);
-          const contentType = responseHeaders["content-type"] || "";
+          const contentType = headerValues.get("content-type")?.[0] || "";
           const isBinary = binaryTypes.some((type) => {
             if (type.endsWith("/*")) {
               return contentType.startsWith(type.replace("/*", "/"));
@@ -187,9 +216,22 @@ export function awsLambdaAdapter(
             return contentType === type;
           });
 
+          // A header goes in exactly one of the two maps: API Gateway merges
+          // them, so listing a value in both would emit it twice.
+          const responseHeaders: Record<string, string> = {};
+          const multiValueHeaders: Record<string, Array<string>> = {};
+          headerValues.forEach((values, name) => {
+            if (values.length > 1) {
+              multiValueHeaders[name] = values;
+            } else {
+              responseHeaders[name] = values[0];
+            }
+          });
+
           const response: LambdaResponse = {
             statusCode: res.statusCode,
             headers: responseHeaders,
+            ...(Object.keys(multiValueHeaders).length > 0 ? { multiValueHeaders } : {}),
             body: isBinary ? bodyBuffer.toString("base64") : bodyBuffer.toString("utf8"),
             isBase64Encoded: isBinary,
           };

@@ -6,7 +6,12 @@
  * or uses a fetch-based approach.
  */
 
-import { Application } from "express";
+import {
+  NULL_BODY_STATUSES,
+  prepareServerlessApp,
+  resolveExpressApp,
+  ServerlessApp,
+} from "./serverless-app.js";
 
 /**
  * Cloudflare Workers Environment bindings
@@ -73,11 +78,14 @@ export interface CloudflareAdapterConfig {
  * ```
  */
 export function cloudflareAdapter(
-  app: { getExpressApp?: () => Application } | Application,
+  app: ServerlessApp,
   config?: CloudflareAdapterConfig,
 ): CloudflareHandler {
-  const expressApp =
-    "getExpressApp" in app && app.getExpressApp ? app.getExpressApp() : (app as Application);
+  const expressApp = resolveExpressApp(app);
+
+  // Runs at module scope in a Worker, so an unusable middleware stack fails
+  // at `wrangler dev` startup / deploy rather than as a 500 per request.
+  prepareServerlessApp(expressApp, "cloudflareAdapter");
 
   const debug = config?.debug ?? false;
 
@@ -153,18 +161,41 @@ export function cloudflareAdapter(
           cloudflare: { env, ctx },
         };
 
-        // Create mock Express-compatible response object
+        // Create mock Express-compatible response object.
         const chunks: Array<Buffer> = [];
-        const responseHeaders: Record<string, string> = {};
+
+        // Values are kept as arrays so repeatable headers survive. Set-Cookie
+        // is the one that matters: a Record collapses two cookies into one
+        // comma-joined value, which breaks every cookie-based session. The
+        // Headers object is built from this at the end, via append().
+        const headerValues = new Map<string, Array<string>>();
+        const appendHeader = (name: string, value: string | Array<string>): void => {
+          const key = name.toLowerCase();
+          const existing = headerValues.get(key) ?? [];
+          for (const entry of Array.isArray(value) ? value : [value]) {
+            existing.push(String(entry));
+          }
+          headerValues.set(key, existing);
+        };
         let statusCode = 200;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res: any = {
-          statusCode: 200,
-          setHeader: (name: string, value: string) => {
-            responseHeaders[name.toLowerCase()] = value;
+          setHeader: (name: string, value: string | Array<string>) => {
+            headerValues.delete(name.toLowerCase());
+            appendHeader(name, value);
           },
-          getHeader: (name: string) => responseHeaders[name.toLowerCase()],
+          appendHeader: (name: string, value: string | Array<string>) => {
+            appendHeader(name, value);
+          },
+          getHeader: (name: string) => {
+            const values = headerValues.get(name.toLowerCase());
+            if (!values) return undefined;
+            return values.length > 1 ? values : values[0];
+          },
+          removeHeader: (name: string) => {
+            headerValues.delete(name.toLowerCase());
+          },
           write: (chunk: string | Buffer) => {
             chunks.push(Buffer.from(chunk));
           },
@@ -175,16 +206,33 @@ export function cloudflareAdapter(
 
             const bodyBuffer = Buffer.concat(chunks);
 
+            // append() rather than the Headers constructor, so a header set
+            // more than once emits more than once.
+            const responseHeaders = new globalThis.Headers();
+            headerValues.forEach((values, name) => {
+              for (const value of values) {
+                responseHeaders.append(name, value);
+              }
+            });
+
             if (debug) {
+              const debugHeaders: Record<string, Array<string>> = {};
+              headerValues.forEach((values, name) => {
+                debugHeaders[name] = values;
+              });
               console.log("[Cloudflare] Response:", {
                 statusCode,
-                headers: responseHeaders,
+                headers: debugHeaders,
                 bodyLength: bodyBuffer.length,
               });
             }
 
+            // 204/205/304 and friends must carry no body at all. workerd
+            // tolerates an empty Buffer here, but Node/undici throws — which
+            // would make a 204 endpoint pass in production and fail in its
+            // own Jest suite.
             resolve(
-              new globalThis.Response(bodyBuffer, {
+              new globalThis.Response(NULL_BODY_STATUSES.has(statusCode) ? null : bodyBuffer, {
                 status: statusCode,
                 headers: responseHeaders,
               }),
@@ -209,6 +257,19 @@ export function cloudflareAdapter(
             }
           },
         };
+
+        // `res.statusCode = 201` is ordinary Express, and several third-party
+        // middlewares set it directly rather than calling res.status(). Back
+        // it with the same storage res.status() writes to, or the assignment
+        // is silently dropped and the response goes out as 200.
+        Object.defineProperty(res, "statusCode", {
+          get: () => statusCode,
+          set: (code: number) => {
+            statusCode = code;
+          },
+          enumerable: true,
+          configurable: true,
+        });
 
         // Handle request through Express
         try {

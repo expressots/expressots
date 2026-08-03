@@ -33,7 +33,6 @@ export interface CloudflareTargetOptions {
 const CLOUDFLARE_API_SOURCE = `import { cloudflareAdapter, micro } from "@expressots/adapter-express";
 
 const app = micro({
-    autoParseJson: false,
     showBanner: false,
     studio: { enabled: false },
 });
@@ -117,17 +116,18 @@ functional style. No DI container. Runs on workerd, not Node.js.
 
 ## Hard constraints on this target
 
-- **Never remove \`autoParseJson: false\` from \`micro()\`.** The adapter parses
-  the request body before Express sees it and hands Express a mock request
-  rather than a stream. Any stream-reading middleware — \`express.json()\`,
-  \`express.urlencoded()\`, \`express.text()\`, \`express.raw()\` — makes *every*
-  route fail at runtime, including GET. Read request data from \`req.body\`.
+- **Never add Express body-parsing middleware.** The adapter parses the
+  request body before Express sees it and hands Express a mock request rather
+  than a stream. \`express.json()\`, \`express.urlencoded()\`, \`express.text()\`,
+  \`express.raw()\`, \`multer()\` and \`compression()\` cannot run here. Read
+  request data from \`req.body\`. \`micro()\`'s own parsers are disabled
+  automatically on this runtime; registering one explicitly throws a named
+  error at startup rather than failing per request.
 - **Never call \`app.listen()\`.** Workers has no HTTP port; the runtime invokes
-  the exported \`fetch\` handler. There is no \`ex dev\` / \`ex prod\` here and
+  the exported \`fetch\` handler. There is no \`ex dev\` here and
   \`@expressots/cli\` is not a dependency of this project.
-- **\`app.setErrorHandler()\` is not wired on this target** because it is
-  installed inside \`listen()\`. Handle expected errors inside route handlers;
-  unexpected ones return a generic 500.
+- **Responses are buffered, not streamed.** The adapter collects the whole
+  body before returning it.
 - **No \`.env\` files.** Configuration comes from \`wrangler.toml\` vars and
   secrets, reachable through the bindings on the request context.
 - Request bodies are parsed by content type: JSON and \`application/*+json\`
@@ -184,20 +184,20 @@ function createCloudflareReadme(packageManager: string): string {
 This ExpressoTS micro API runs on Cloudflare Workers through Wrangler.
 
 > [!IMPORTANT]
-> Keep \`autoParseJson: false\` in \`src/api.ts\`. The Cloudflare adapter parses
-> request bodies before passing them to Express. Stream-reading middleware such
-> as \`express.json()\`, \`express.urlencoded()\`, \`express.text()\`, and
-> \`express.raw()\` is not supported by this target and can make requests fail at
-> runtime.
+> Express body-parsing middleware does not work on this target. The adapter
+> reads and parses the request body itself, then hands Express a mock request
+> rather than a stream — so \`express.json()\`, \`express.urlencoded()\`,
+> \`express.text()\`, \`express.raw()\`, \`multer()\` and \`compression()\` cannot
+> run here. Read parsed data from \`req.body\` instead.
 
 ## Known constraints
 
 - Read parsed request data from \`req.body\`; do not add Express body parsers.
-- \`app.setErrorHandler()\` is not wired for Workers because the serverless
-  handler does not call \`app.listen()\`. Until
-  [#950](https://github.com/expressots/expressots/issues/950) is resolved,
-  handle expected errors in route handlers. Unexpected errors return a generic
-  500 response.
+  \`micro()\`'s built-in parsers stand down automatically on this runtime, and
+  registering one yourself fails at \`wrangler dev\` startup with a named error
+  rather than silently returning 500 on every request.
+- Streaming responses are not supported; the adapter buffers the full body
+  before returning it.
 
 ## Install
 

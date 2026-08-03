@@ -123,8 +123,8 @@ describe("Cloudflare target validation", () => {
 		expect(readme).toContain("wrangler dev");
 		expect(readme).toContain("ex dev");
 		expect(readme).toContain("nodejs_compat");
-		expect(readme).toContain("autoParseJson: false");
-		expect(readme).toContain("app.setErrorHandler()");
+		expect(readme).toContain("Express body-parsing middleware does not work");
+		expect(readme).toContain("do not add Express body parsers");
 		expect(readme).not.toMatch(/\bprod\b/);
 		expect(readme).not.toContain("3000");
 		expect(readme).not.toContain("app.listen(3000)");
@@ -157,7 +157,7 @@ describe("Cloudflare target validation", () => {
 			"utf8",
 		);
 		expect(agents).toContain("Cloudflare Workers");
-		expect(agents).toContain("autoParseJson: false");
+		expect(agents).toContain("Never add Express body-parsing middleware");
 		expect(agents).not.toContain("npm run prod");
 		const gitignore = fs.readFileSync(
 			path.join(projectDir, ".gitignore"),

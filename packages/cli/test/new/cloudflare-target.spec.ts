@@ -142,7 +142,7 @@ describe("applyCloudflareTarget", () => {
 		);
 		expect(api).toContain("cloudflareAdapter");
 		expect(api).toContain("cloudflareAdapter(app.getApp())");
-		expect(api).toContain("autoParseJson: false");
+		expect(api).not.toContain("autoParseJson");
 		expect(api).not.toContain("app.listen");
 
 		const workerTest = fs.readFileSync(
@@ -245,9 +245,9 @@ describe("applyCloudflareTarget", () => {
 
 		// ...and the Worker constraints must be stated, since this is the
 		// first file a coding agent reads.
-		expect(agents).toContain("autoParseJson: false");
+		expect(agents).toContain("Never add Express body-parsing middleware");
 		expect(agents).toContain("Never call `app.listen()`");
-		expect(agents).toContain("setErrorHandler");
+		expect(agents).toContain("Responses are buffered, not streamed");
 		expect(agents).toContain("cloudflareAdapter(app.getApp())");
 	});
 
@@ -395,8 +395,8 @@ describe("applyCloudflareTarget", () => {
 			expect(readme).toContain("ex dev");
 			expect(readme).toContain("dry-run");
 			expect(readme).toContain("nodejs_compat");
-			expect(readme).toContain("autoParseJson: false");
-			expect(readme).toContain("app.setErrorHandler()");
+			expect(readme).toContain("Express body-parsing middleware does not work");
+			expect(readme).toContain("do not add Express body parsers");
 			expect(readme).not.toContain("## Learn more");
 			expect(readme).not.toMatch(/\bprod\b/);
 			expect(readme).not.toContain("3000");
