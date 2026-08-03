@@ -1,6 +1,6 @@
 import express from "express";
 import { Server as HTTPServer } from "http";
-import * as fs from "node:fs";
+import * as logBuffer from "./log-buffer.js";
 
 // Note: We use the global `process` object directly instead of importing it
 // because signal handlers (SIGTERM, SIGINT, etc.) don't work correctly when
@@ -121,22 +121,13 @@ export class AppExpress implements Server.IWebServer {
   // without ever booting an app will see normal `process.stdout` /
   // `console.*` behavior. `micro()` calls `disableBuffering()` on entry
   // because it does not use the banner system.
-  private static originalStdoutWrite: typeof process.stdout.write | null = null;
-  private static originalStderrWrite: typeof process.stderr.write | null = null;
-  private static logBuffer: Array<string> = [];
-  private static isBuffering: boolean = false;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static originalGlobalConsole: any = null;
-
   /**
    * Disable log buffering. Called by micro() to restore normal console output
    * since micro API doesn't use the banner system.
    * @public API
    */
   public static disableBuffering(): void {
-    AppExpress.stopBuffering();
-    // Clear any buffered logs since micro() doesn't need them
-    AppExpress.logBuffer = [];
+    logBuffer.disableBuffering();
   }
 
   /**
@@ -151,74 +142,7 @@ export class AppExpress implements Server.IWebServer {
    * automatically inside the constructor as a safety net.
    */
   public static startLogBuffering(): void {
-    if (AppExpress.isBuffering) return;
-
-    // Store original streams
-    AppExpress.originalStdoutWrite = process.stdout.write.bind(process.stdout);
-    AppExpress.originalStderrWrite = process.stderr.write.bind(process.stderr);
-
-    // Create wrapper functions that use fs.writeSync directly (always works
-    // in both CJS and ESM scope - hence the static `node:fs` import above).
-    const createOriginalConsoleMethod =
-      (useStderr: boolean = false) =>
-      (...args: Array<unknown>): void => {
-        const message =
-          args
-            .map((a) => {
-              if (typeof a === "object" && a !== null) {
-                try {
-                  return JSON.stringify(a, null, 2);
-                } catch {
-                  return String(a);
-                }
-              }
-              return String(a);
-            })
-            .join(" ") + "\n";
-        // Use fs.writeSync directly - this always works
-        fs.writeSync(useStderr ? 2 : 1, message);
-      };
-
-    AppExpress.originalGlobalConsole = {
-      log: createOriginalConsoleMethod(false),
-      info: createOriginalConsoleMethod(false),
-      warn: createOriginalConsoleMethod(true),
-      error: createOriginalConsoleMethod(true),
-      debug: createOriginalConsoleMethod(false),
-    };
-
-    AppExpress.logBuffer = [];
-    AppExpress.isBuffering = true;
-
-    // Create buffering functions for console methods
-    const bufferConsoleMethod =
-      () =>
-      (...args: Array<unknown>): void => {
-        const message =
-          args
-            .map((a) => (typeof a === "object" && a !== null ? JSON.stringify(a) : String(a)))
-            .join(" ") + "\n";
-        AppExpress.logBuffer.push(message);
-      };
-
-    // Override console methods directly (not replacing the console object)
-    // This ensures even cached references to console.log will use the buffered version
-    console.log = bufferConsoleMethod();
-    console.info = bufferConsoleMethod();
-    console.warn = bufferConsoleMethod();
-    console.error = bufferConsoleMethod();
-    console.debug = bufferConsoleMethod();
-
-    // Also override process.stdout.write for direct writes (like our Logger)
-    const bufferWrite = (chunk: string | Uint8Array): boolean => {
-      const str = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString();
-      AppExpress.logBuffer.push(str);
-      return true;
-    };
-
-    // Use direct assignment for overriding
-    (process.stdout as unknown as { write: typeof bufferWrite }).write = bufferWrite;
-    (process.stderr as unknown as { write: typeof bufferWrite }).write = bufferWrite;
+    logBuffer.startLogBuffering();
   }
 
   /**
@@ -227,29 +151,7 @@ export class AppExpress implements Server.IWebServer {
    * @private
    */
   private static stopBuffering(): void {
-    if (!AppExpress.isBuffering) return;
-
-    // Restore original console methods using our wrapper functions
-    if (AppExpress.originalGlobalConsole) {
-      console.log = AppExpress.originalGlobalConsole.log;
-      console.info = AppExpress.originalGlobalConsole.info;
-      console.warn = AppExpress.originalGlobalConsole.warn;
-      console.error = AppExpress.originalGlobalConsole.error;
-      console.debug = AppExpress.originalGlobalConsole.debug;
-    }
-
-    // Restore original stdout/stderr by direct assignment
-    // (Object.defineProperty may not work correctly for stream.write)
-    if (AppExpress.originalStdoutWrite) {
-      (process.stdout as unknown as { write: typeof process.stdout.write }).write =
-        AppExpress.originalStdoutWrite;
-    }
-    if (AppExpress.originalStderrWrite) {
-      (process.stderr as unknown as { write: typeof process.stderr.write }).write =
-        AppExpress.originalStderrWrite;
-    }
-
-    AppExpress.isBuffering = false;
+    logBuffer.stopBuffering();
   }
 
   /**
@@ -258,16 +160,7 @@ export class AppExpress implements Server.IWebServer {
    * @private
    */
   private static flushBufferedLogs(): void {
-    const logs = AppExpress.logBuffer;
-    AppExpress.logBuffer = [];
-
-    for (const log of logs) {
-      if (AppExpress.originalStdoutWrite) {
-        AppExpress.originalStdoutWrite.call(process.stdout, log);
-      } else {
-        process.stdout.write(log);
-      }
-    }
+    logBuffer.flushBufferedLogs();
   }
 
   constructor() {
@@ -1491,8 +1384,7 @@ export class AppExpress implements Server.IWebServer {
     try {
       const providerMetadata =
         (Reflect.getMetadata(PROVIDE_METADATA_KEY, Reflect) as
-          | Array<{ implementationType?: { name?: string } }>
-          | undefined) || [];
+          Array<{ implementationType?: { name?: string } }> | undefined) || [];
 
       const providers: Array<{ name: string; source: string }> = [];
       for (const entry of providerMetadata) {
@@ -1504,8 +1396,7 @@ export class AppExpress implements Server.IWebServer {
 
       const interceptorMetadata =
         (Reflect.getMetadata(INTERCEPTOR_METADATA_KEY.interceptor, Reflect) as
-          | Array<{ interceptor?: { name?: string }; priority?: number }>
-          | undefined) || [];
+          Array<{ interceptor?: { name?: string }; priority?: number }> | undefined) || [];
 
       const interceptors: Array<{
         name: string;

@@ -1,5 +1,5 @@
 import { micro, MicroApp } from "./micro";
-import { AppExpress } from "../application-express";
+import * as logBuffer from "../log-buffer";
 
 jest.mock("@expressots/core", () => {
   return {
@@ -11,8 +11,11 @@ jest.mock("@expressots/core", () => {
   };
 });
 
-jest.mock("../application-express", () => ({
-  AppExpress: { disableBuffering: jest.fn() },
+// micro() imports disableBuffering from ../log-buffer directly rather than
+// through AppExpress — pulling AppExpress in for that one call dragged the
+// whole DI/full-framework stack into every micro build.
+jest.mock("../log-buffer", () => ({
+  disableBuffering: jest.fn(),
 }));
 
 describe("micro()", () => {
@@ -22,8 +25,8 @@ describe("micro()", () => {
     app = micro({ showBanner: false });
   });
 
-  it("disables AppExpress log buffering at construction", () => {
-    expect(AppExpress.disableBuffering).toHaveBeenCalled();
+  it("disables banner log buffering at construction", () => {
+    expect(logBuffer.disableBuffering).toHaveBeenCalled();
   });
 
   it("returns the underlying Express app via getApp()", () => {

@@ -3,11 +3,19 @@ import { AppExpress } from "../application-express";
 describe("AppExpress log buffering static API", () => {
   const originalStdout = process.stdout.write.bind(process.stdout);
   const originalStderr = process.stderr.write.bind(process.stderr);
+  const originalConsole = {
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    debug: console.debug,
+  };
 
   afterEach(() => {
     AppExpress.disableBuffering();
     process.stdout.write = originalStdout;
     process.stderr.write = originalStderr;
+    Object.assign(console, originalConsole);
   });
 
   it("buffers console and stdout output until disabled", () => {
@@ -20,35 +28,53 @@ describe("AppExpress log buffering static API", () => {
     expect(() => console.log("after-disable")).not.toThrow();
   });
 
-  it("flushes buffered logs after disabling buffering", () => {
-    const writes: string[] = [];
-    const captureWrite = ((chunk: string | Uint8Array) => {
+  it("swallows output while buffering and restores it afterwards", () => {
+    // Install the capture *before* buffering starts so it becomes the
+    // "original" stream the buffer restores to. Asserting through the public
+    // API rather than reaching into private state keeps this test honest
+    // about what callers can actually observe.
+    const writes: Array<string> = [];
+    process.stdout.write = ((chunk: string | Uint8Array) => {
       writes.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString());
       return true;
     }) as typeof process.stdout.write;
 
     AppExpress.startLogBuffering();
-    (
-      AppExpress as unknown as { originalStdoutWrite: typeof process.stdout.write }
-    ).originalStdoutWrite = captureWrite;
-    console.log("queued-log");
-    (AppExpress as unknown as { flushBufferedLogs: () => void }).flushBufferedLogs();
+    process.stdout.write("queued-write\n");
+    expect(writes.join("")).not.toContain("queued-write");
+
     AppExpress.disableBuffering();
+    process.stdout.write("released-write\n");
+
+    expect(writes.join("")).toContain("released-write");
+  });
+
+  it("flushes buffered logs to the original stream", () => {
+    const writes: Array<string> = [];
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      writes.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString());
+      return true;
+    }) as typeof process.stdout.write;
+
+    AppExpress.startLogBuffering();
+    process.stdout.write("queued-log\n");
+
+    // flushBufferedLogs is private; the banner flow reaches it internally.
+    // Exercise it the same way AppExpress does.
+    (AppExpress as unknown as { flushBufferedLogs: () => void }).flushBufferedLogs();
 
     expect(writes.join("")).toContain("queued-log");
   });
 
-  it("falls back to String() when original console methods receive circular objects", () => {
+  it("restores console methods that survive circular objects", () => {
     AppExpress.startLogBuffering();
     AppExpress.disableBuffering();
 
     const circular: { self?: unknown } = {};
     circular.self = circular;
 
-    expect(() =>
-      (
-        AppExpress as unknown as { originalGlobalConsole: { warn: (...args: unknown[]) => void } }
-      ).originalGlobalConsole.warn(circular),
-    ).not.toThrow();
+    // After disabling, console.warn is the restored original — JSON.stringify
+    // would throw on this input, so it must fall back to String().
+    expect(() => console.warn(circular)).not.toThrow();
   });
 });
