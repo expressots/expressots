@@ -215,6 +215,9 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.2.1
+      qs:
+        specifier: ^6.14.0
+        version: 6.15.3
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -237,6 +240,9 @@ importers:
       '@types/node':
         specifier: 20.14.10
         version: 20.14.10
+      '@types/qs':
+        specifier: ^6.14.0
+        version: 6.15.1
       '@typescript-eslint/eslint-plugin':
         specifier: 7.16.1
         version: 7.16.1(@typescript-eslint/parser@7.16.1(eslint@8.57.0)(typescript@5.5.3))(eslint@8.57.0)(typescript@5.5.3)

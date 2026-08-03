@@ -11,6 +11,18 @@ export const CLOUDFLARE_COMPATIBILITY_DATE = "2026-07-29";
 export const WRANGLER_VERSION = "^4.115.0";
 
 /**
+ * Worker tests run inside workerd via Miniflare, not under Node.
+ *
+ * Node-hosted tests are wrong in both directions here: undici omits
+ * `content-length`, so body-parser short-circuits and a Worker that 500s on
+ * every request goes green; and undici rejects a 204 `Response` body that
+ * workerd accepts, so a correct endpoint fails its own suite. The pool's
+ * vitest peer range is narrow, so these three move together.
+ */
+export const VITEST_VERSION = "^4.1.0";
+export const VITEST_POOL_WORKERS_VERSION = "^0.20.1";
+
+/**
  * Files the micro template ships for the Node.js workflow that have no
  * meaning on Workers. Also used to prune the tsconfig `include` array, so
  * the two never drift apart.
@@ -20,9 +32,18 @@ const NODE_ONLY_SCAFFOLD_PATHS = [
 	"examples",
 	"expressots.config.ts",
 	"tsconfig.build.json",
+	// The Worker suite runs on workerd through Vitest, so the Jest config
+	// would only serve to run tests against the wrong runtime.
+	"jest.config.ts",
 ] as const;
 
 const WORKER_TYPES_FILE = "worker-configuration.d.ts";
+
+/**
+ * Supplies the `cloudflare:test` module declarations used by the spec. The
+ * declarations live behind the `/types` subpath, not the package root.
+ */
+const WORKER_TEST_TYPES = "@cloudflare/vitest-pool-workers/types";
 
 export interface CloudflareTargetOptions {
 	targetDir: string;
@@ -47,21 +68,16 @@ app.get("/health", () => ({
 export default cloudflareAdapter(app.getApp());
 `;
 
-const CLOUDFLARE_TEST_SOURCE = `import worker from "../src/api";
+const CLOUDFLARE_TEST_SOURCE = `import { SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
 
-const env = {};
-const ctx = {
-    waitUntil: (_promise: Promise<unknown>) => undefined,
-    passThroughOnException: () => undefined,
-};
-
+// SELF.fetch() dispatches through the real Worker inside workerd, so these
+// assertions exercise the runtime the code actually ships to. Importing the
+// handler and calling it under Node would test undici instead, which both
+// hides real failures and invents fake ones.
 describe("Cloudflare Worker", () => {
     it("returns the welcome message on GET /", async () => {
-        const response = await worker.fetch(
-            new Request("http://localhost/"),
-            env,
-            ctx,
-        );
+        const response = await SELF.fetch("https://example.com/");
 
         expect(response.status).toBe(200);
         expect(await response.text()).toBe(
@@ -70,11 +86,7 @@ describe("Cloudflare Worker", () => {
     });
 
     it("returns health details on GET /health", async () => {
-        const response = await worker.fetch(
-            new Request("http://localhost/health"),
-            env,
-            ctx,
-        );
+        const response = await SELF.fetch("https://example.com/health");
 
         expect(response.status).toBe(200);
         expect(await response.json()).toEqual({
@@ -82,6 +94,34 @@ describe("Cloudflare Worker", () => {
             timestamp: expect.any(String),
         });
     });
+
+    it("parses a JSON body sent with content-length", async () => {
+        // Node's undici omits content-length, which makes body-parser
+        // short-circuit and hides runtime failures. workerd sends it.
+        const response = await SELF.fetch("https://example.com/", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ping: true }),
+        });
+
+        expect(response.status).toBe(404);
+        expect(response.headers.get("content-type")).toContain("application/json");
+    });
+});
+`;
+
+const CLOUDFLARE_VITEST_CONFIG = `import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import { defineConfig } from "vitest/config";
+
+// cloudflareTest() is a Vite plugin as of @cloudflare/vitest-pool-workers
+// 0.20 / Vitest 4; earlier versions used defineWorkersConfig from the
+// "/config" subpath, which no longer exists.
+export default defineConfig({
+    plugins: [
+        cloudflareTest({
+            wrangler: { configPath: "./wrangler.toml" },
+        }),
+    ],
 });
 `;
 
@@ -130,14 +170,20 @@ functional style. No DI container. Runs on workerd, not Node.js.
   body before returning it.
 - **No \`.env\` files.** Configuration comes from \`wrangler.toml\` vars and
   secrets, reachable through the bindings on the request context.
-- Request bodies are parsed by content type: JSON and \`application/*+json\`
-  and URL-encoded forms arrive as objects; text and bodies with no content
-  type arrive as strings.
+- Request bodies are parsed by content type. JSON, \`application/*+json\` and
+  URL-encoded forms arrive as objects (with \`qs\` semantics, so \`a=1&a=2\`
+  and \`u[name]=jo\` behave as they do on Node); text arrives as a string;
+  anything else — images, \`application/octet-stream\` — arrives as a
+  \`Buffer\` with its bytes intact. \`multipart/form-data\` is parsed with the
+  runtime's own \`FormData\`, with file parts as
+  \`{ filename, contentType, size, data }\`.
+- Bodies over 1 MiB are rejected with 413. Change it with
+  \`cloudflareAdapter(app, { maxBodySize })\`.
 
 ## Commands
 
 - \`${devCommand}\`: \`wrangler dev\` on the local Workers runtime.
-- \`${testCommand}\`: Jest against the exported \`fetch\` handler, no HTTP port.
+- \`${testCommand}\`: Vitest inside workerd via \`@cloudflare/vitest-pool-workers\`.
 - \`${buildCommand}\`: \`wrangler deploy --dry-run\` to validate the bundle.
 - \`${deployCommand}\`: deploy to Cloudflare.
 - \`${typesCommand}\`: regenerate \`${WORKER_TYPES_FILE}\` after editing
@@ -223,7 +269,8 @@ Wrangler owns the development, build, and deployment workflow instead.
 
 \`\`\`text
 src/api.ts                 Worker entrypoint and micro routes
-test/api.spec.ts           Jest tests that call the Worker fetch handler
+test/api.spec.ts           Vitest tests that run inside workerd
+vitest.config.mts          Test runner config, pointed at wrangler.toml
 wrangler.toml              Cloudflare Worker configuration
 worker-configuration.d.ts  Generated binding types (after running the types script)
 \`\`\`
@@ -235,8 +282,21 @@ app.get("/users", () => ({ users: [] }));
 app.post("/users", (req) => ({ received: req.body }));
 \`\`\`
 
-Return values are serialized by the micro API. The adapter supports JSON,
-\`application/*+json\`, URL-encoded forms, and text request bodies.
+Return values are serialized by the micro API.
+
+Request bodies are parsed by content type:
+
+| Content-Type | \`req.body\` |
+| --- | --- |
+| \`application/json\`, \`application/*+json\` | Parsed object. Malformed JSON returns 400 without reaching your handler. |
+| \`application/x-www-form-urlencoded\` | Object, parsed with \`qs\` — same shapes as \`express.urlencoded({ extended: true })\`. |
+| \`multipart/form-data\` | Object; file parts become \`{ filename, contentType, size, data }\` with \`data\` a \`Buffer\`. |
+| \`text/*\`, or no content type | The raw string. |
+| Anything else | A \`Buffer\` with the bytes intact. |
+
+Bodies larger than 1 MiB are rejected with 413. Adjust with
+\`cloudflareAdapter(app, { maxBodySize: 5 * 1024 * 1024 })\`, or pass \`0\` to
+disable the limit.
 
 ## Test
 
@@ -244,8 +304,15 @@ Return values are serialized by the micro API. The adapter supports JSON,
 ${testCommand}
 \`\`\`
 
-The generated tests call the exported Worker handler directly without opening
-a Node.js HTTP port.
+Tests run **inside workerd**, not Node, using
+[\`@cloudflare/vitest-pool-workers\`](https://developers.cloudflare.com/workers/testing/vitest-integration/).
+\`SELF.fetch()\` dispatches through the real Worker, so the suite exercises the
+runtime this project deploys to.
+
+This matters: under Node, \`undici\` omits \`content-length\`, which makes
+Express body middleware short-circuit and hides failures that only appear in
+production — and it rejects a 204 response body that workerd accepts, failing
+correct endpoints. Testing on the wrong runtime is wrong in both directions.
 
 ## Generate binding types
 
@@ -372,13 +439,46 @@ function configureWorkerTypes(targetDir: string): void {
 		.map((entry) => JSON.stringify(entry))
 		.join(", ")}]`;
 
-	fs.writeFileSync(
-		tsconfigPath,
-		tsconfig.replace(includePattern, (_full, prefix: string) => {
-			return `${prefix}${serializedInclude}`;
-		}),
-		"utf8",
-	);
+	let next = tsconfig.replace(includePattern, (_full, prefix: string) => {
+		return `${prefix}${serializedInclude}`;
+	});
+
+	// The template targets CommonJS on Node. A Worker is an ES module bundled
+	// by Wrangler, and `moduleResolution: "node"` (Node10) cannot read the
+	// `exports` maps that `@cloudflare/vitest-pool-workers` and other modern
+	// packages publish — which makes `cloudflare:test` unresolvable and the
+	// generated spec fail to typecheck.
+	next = next
+		.replace(/("module"\s*:\s*)"commonjs"/i, '$1"esnext"')
+		.replace(/("moduleResolution"\s*:\s*)"node"/i, '$1"bundler"');
+
+	// Jest's types go with Jest. The Vitest pool ships the `cloudflare:test`
+	// module declarations, so without this the generated spec does not
+	// typecheck.
+	const typesPattern = /("types"\s*:\s*)(\[[\s\S]*?\])/;
+	const typesMatch = next.match(typesPattern);
+	if (typesMatch) {
+		let currentTypes: Array<string> = [];
+		try {
+			currentTypes = JSON.parse(typesMatch[2]) as Array<string>;
+		} catch {
+			currentTypes = [];
+		}
+
+		const nextTypes = currentTypes.filter((entry) => entry !== "jest");
+		if (!nextTypes.includes(WORKER_TEST_TYPES)) {
+			nextTypes.push(WORKER_TEST_TYPES);
+		}
+
+		const serializedTypes = `[${nextTypes
+			.map((entry) => JSON.stringify(entry))
+			.join(", ")}]`;
+		next = next.replace(typesPattern, (_full, prefix: string) => {
+			return `${prefix}${serializedTypes}`;
+		});
+	}
+
+	fs.writeFileSync(tsconfigPath, next, "utf8");
 }
 
 function removeNodeScaffoldArtifacts(targetDir: string): void {
@@ -449,6 +549,9 @@ export function applyCloudflareTarget({
 		dev: "wrangler dev",
 		deploy: "wrangler deploy",
 		types: "wrangler types",
+		test: "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 	};
 	delete pkg.scripts.prod;
 	delete pkg.scripts.studio;
@@ -460,6 +563,8 @@ export function applyCloudflareTarget({
 
 	pkg.devDependencies = {
 		...pkg.devDependencies,
+		"@cloudflare/vitest-pool-workers": VITEST_POOL_WORKERS_VERSION,
+		vitest: VITEST_VERSION,
 		wrangler: WRANGLER_VERSION,
 	};
 	delete pkg.devDependencies["@expressots/cli"];
@@ -467,9 +572,22 @@ export function applyCloudflareTarget({
 	delete pkg.devDependencies["@expressots/studio-agent"];
 	delete pkg.devDependencies.tsx;
 
+	// Jest runs under Node, which is not the runtime this project deploys to.
+	// The Worker suite runs inside workerd instead, so Jest and its transform
+	// would be dead weight that also invites tests written against the wrong
+	// runtime.
+	delete pkg.devDependencies.jest;
+	delete pkg.devDependencies["ts-jest"];
+	delete pkg.devDependencies["@types/jest"];
+
 	fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 4)}\n`, "utf8");
 	fs.writeFileSync(apiPath, CLOUDFLARE_API_SOURCE, "utf8");
 	fs.writeFileSync(testPath, CLOUDFLARE_TEST_SOURCE, "utf8");
+	fs.writeFileSync(
+		path.join(targetDir, "vitest.config.mts"),
+		CLOUDFLARE_VITEST_CONFIG,
+		"utf8",
+	);
 	fs.writeFileSync(
 		wranglerPath,
 		[

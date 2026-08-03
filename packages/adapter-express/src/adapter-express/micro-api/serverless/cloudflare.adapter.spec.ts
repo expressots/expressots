@@ -119,24 +119,24 @@ describe("cloudflareAdapter request bodies", () => {
     expect(await response.json()).toEqual({ error: "Not Found" });
   }, 1000);
 
-  it.each([
-    ["text/plain", "plain text"],
-    ["application/octet-stream", "raw-payload"],
-  ])("keeps %s payloads as text", async (contentType, requestBody) => {
-    const worker = createBodyEchoWorker();
-    const response = await worker.fetch(
-      new Request("https://worker.example/echo", {
-        method: "POST",
-        headers: { "content-type": contentType },
-        body: requestBody,
-      }),
-      {},
-      context,
-    );
+  it.each([["text/plain", "plain text"]])(
+    "keeps %s payloads as text",
+    async (contentType, requestBody) => {
+      const worker = createBodyEchoWorker();
+      const response = await worker.fetch(
+        new Request("https://worker.example/echo", {
+          method: "POST",
+          headers: { "content-type": contentType },
+          body: requestBody,
+        }),
+        {},
+        context,
+      );
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ body: requestBody });
-  });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ body: requestBody });
+    },
+  );
 
   it("parses URL-encoded payloads into a key/value object", async () => {
     const worker = createBodyEchoWorker();
@@ -298,5 +298,156 @@ describe("micro() finalize outside listen()", () => {
 
     expect(response.status).toBe(418);
     expect(await response.json()).toEqual({ handled: true });
+  });
+});
+
+describe("cloudflareAdapter request fidelity", () => {
+  function echoWorker(config?: Parameters<typeof cloudflareAdapter>[1]): CloudflareHandler {
+    const app = micro({ showBanner: false, studio: { enabled: false } });
+    app.post("/echo", (request) => {
+      const body = request.body as unknown;
+      if (Buffer.isBuffer(body)) {
+        return { kind: "buffer", bytes: Array.from(body) };
+      }
+      return { kind: typeof body, body: body ?? null };
+    });
+    app.get("/query", (request) => ({ query: request.query }));
+    return cloudflareAdapter(app, config);
+  }
+
+  it("round-trips binary bodies byte for byte", async () => {
+    // 0xFF/0xFE/0xC8 are invalid UTF-8. text() would replace each with U+FFFD
+    // and lose the original irrecoverably.
+    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0xff, 0xfe, 0xc8]);
+    const worker = echoWorker();
+
+    const response = await worker.fetch(
+      new Request("https://worker.example/echo", {
+        method: "POST",
+        headers: { "content-type": "application/octet-stream" },
+        body: bytes,
+      }),
+      {},
+      context,
+    );
+
+    expect(await response.json()).toEqual({
+      kind: "buffer",
+      bytes: [0x00, 0x01, 0x02, 0xff, 0xfe, 0xc8],
+    });
+  });
+
+  it("parses multipart/form-data without corrupting file bytes", async () => {
+    const form = new FormData();
+    form.append("name", "widget");
+    form.append(
+      "file",
+      new Blob([new Uint8Array([0xff, 0x00, 0xc8])], { type: "application/octet-stream" }),
+      "raw.bin",
+    );
+
+    const app = micro({ showBanner: false, studio: { enabled: false } });
+    app.post("/upload", (request) => {
+      const body = request.body as Record<string, unknown>;
+      const file = body.file as { filename: string; size: number; data: Buffer };
+      return {
+        name: body.name,
+        filename: file.filename,
+        size: file.size,
+        bytes: Array.from(file.data),
+      };
+    });
+
+    const worker = cloudflareAdapter(app);
+    const response = await worker.fetch(
+      new Request("https://worker.example/upload", { method: "POST", body: form }),
+      {},
+      context,
+    );
+
+    expect(await response.json()).toEqual({
+      name: "widget",
+      filename: "raw.bin",
+      size: 3,
+      bytes: [0xff, 0x00, 0xc8],
+    });
+  });
+
+  it.each([
+    ["tag=a&tag=b", { tag: ["a", "b"] }],
+    ["n[]=x&n[]=y", { n: ["x", "y"] }],
+    ["u[name]=jo", { u: { name: "jo" } }],
+  ])("parses urlencoded %s the way express.urlencoded does", async (raw, expected) => {
+    const worker = echoWorker();
+    const response = await worker.fetch(
+      new Request("https://worker.example/echo", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: raw,
+      }),
+      {},
+      context,
+    );
+
+    expect(await response.json()).toEqual({ kind: "object", body: expected });
+  });
+
+  it("keeps duplicate query keys instead of letting the last one win", async () => {
+    const worker = echoWorker();
+    const response = await worker.fetch(
+      new Request("https://worker.example/query?tag=a&tag=b&u[name]=jo"),
+      {},
+      context,
+    );
+
+    expect(await response.json()).toEqual({
+      query: { tag: ["a", "b"], u: { name: "jo" } },
+    });
+  });
+
+  it("rejects a body larger than maxBodySize with 413 from content-length", async () => {
+    const worker = echoWorker({ maxBodySize: 16 });
+    const response = await worker.fetch(
+      new Request("https://worker.example/echo", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: "x".repeat(64),
+      }),
+      {},
+      context,
+    );
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "Payload Too Large", limit: 16 });
+  });
+
+  it("allows a body at the limit", async () => {
+    const worker = echoWorker({ maxBodySize: 16 });
+    const response = await worker.fetch(
+      new Request("https://worker.example/echo", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: "x".repeat(16),
+      }),
+      {},
+      context,
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it("treats maxBodySize: 0 as unlimited", async () => {
+    const worker = echoWorker({ maxBodySize: 0 });
+    const response = await worker.fetch(
+      new Request("https://worker.example/echo", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: "x".repeat(4096),
+      }),
+      {},
+      context,
+    );
+
+    expect(response.status).toBe(200);
   });
 });

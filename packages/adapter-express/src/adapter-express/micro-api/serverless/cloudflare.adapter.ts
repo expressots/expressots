@@ -6,12 +6,73 @@
  * or uses a fetch-based approach.
  */
 
+import qs from "qs";
 import {
+  DEFAULT_MAX_BODY_BYTES,
+  isTextualContentType,
   NULL_BODY_STATUSES,
   prepareServerlessApp,
   resolveExpressApp,
   ServerlessApp,
 } from "./serverless-app.js";
+
+function jsonResponse(status: number, payload: unknown): globalThis.Response {
+  return new globalThis.Response(JSON.stringify(payload), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function badRequest(): globalThis.Response {
+  return jsonResponse(400, { error: "Bad Request" });
+}
+
+function payloadTooLarge(limit: number): globalThis.Response {
+  return jsonResponse(413, { error: "Payload Too Large", limit });
+}
+
+/**
+ * Turn a parsed `FormData` into a plain object.
+ *
+ * Repeated field names become arrays, matching how `qs` treats repeated
+ * urlencoded keys. File parts keep their bytes as a Buffer rather than being
+ * stringified.
+ */
+async function formDataToObject(form: globalThis.FormData): Promise<Record<string, unknown>> {
+  const result: Record<string, unknown> = {};
+
+  const entries: Array<[string, globalThis.FormDataEntryValue]> = [];
+  form.forEach((value, key) => {
+    entries.push([key, value]);
+  });
+
+  for (const [key, value] of entries) {
+    let parsed: unknown;
+
+    if (typeof value === "string") {
+      parsed = value;
+    } else {
+      const file = value as globalThis.File;
+      parsed = {
+        filename: file.name,
+        contentType: file.type,
+        size: file.size,
+        data: Buffer.from(await file.arrayBuffer()),
+      };
+    }
+
+    const existing = result[key];
+    if (existing === undefined) {
+      result[key] = parsed;
+    } else if (Array.isArray(existing)) {
+      existing.push(parsed);
+    } else {
+      result[key] = [existing, parsed];
+    }
+  }
+
+  return result;
+}
 
 /**
  * Cloudflare Workers Environment bindings
@@ -45,6 +106,26 @@ export type CloudflareHandler = {
 export interface CloudflareAdapterConfig {
   /** Enable debug logging */
   debug?: boolean;
+  /**
+   * Maximum buffered request body in bytes. Bodies whose `content-length`
+   * exceeds this are rejected with 413 before being read. Defaults to 1 MiB.
+   * Set to `0` to disable the limit (not recommended: a Workers isolate has
+   * 128 MB of memory and Cloudflare accepts bodies up to 100 MB).
+   */
+  maxBodySize?: number;
+}
+
+/**
+ * A file received in a `multipart/form-data` body.
+ *
+ * Multipart is parsed with the runtime's native `FormData`, so bytes survive
+ * intact — `multer` and friends cannot run on this target.
+ */
+export interface CloudflareUploadedFile {
+  filename: string;
+  contentType: string;
+  size: number;
+  data: Buffer;
 }
 
 /**
@@ -88,6 +169,7 @@ export function cloudflareAdapter(
   prepareServerlessApp(expressApp, "cloudflareAdapter");
 
   const debug = config?.debug ?? false;
+  const maxBodySize = config?.maxBodySize ?? DEFAULT_MAX_BODY_BYTES;
 
   return {
     async fetch(
@@ -108,37 +190,71 @@ export function cloudflareAdapter(
       // Parse body if present
       let body: unknown;
       if (request.method !== "GET" && request.method !== "HEAD") {
-        const requestBody = await request.text();
-        if (requestBody) {
-          const contentType = request.headers
-            .get("content-type")
-            ?.split(";", 1)[0]
-            .trim()
-            .toLowerCase();
-          const isJson = contentType === "application/json" || contentType?.endsWith("+json");
+        const contentType = request.headers
+          .get("content-type")
+          ?.split(";", 1)[0]
+          .trim()
+          .toLowerCase();
 
-          if (isJson) {
-            try {
-              body = JSON.parse(requestBody);
-            } catch {
-              return new globalThis.Response(JSON.stringify({ error: "Bad Request" }), {
-                status: 400,
-                headers: { "content-type": "application/json" },
-              });
+        // Reject oversized bodies from the declared length, before reading a
+        // single byte. Bodies sent without content-length are still capped
+        // below, but only after buffering — streaming is #947.
+        const declaredLength = Number(request.headers.get("content-length"));
+        if (maxBodySize > 0 && Number.isFinite(declaredLength) && declaredLength > maxBodySize) {
+          return payloadTooLarge(maxBodySize);
+        }
+
+        if (contentType === "multipart/form-data") {
+          // The runtime's own multipart parser. Hand-decoding would repeat
+          // the UTF-8 corruption this whole branch exists to avoid.
+          try {
+            const form = await request.formData();
+            body = await formDataToObject(form);
+          } catch {
+            return badRequest();
+          }
+        } else {
+          // Read as bytes first so the size cap applies even without a
+          // content-length header, and so non-text payloads survive intact.
+          const raw = Buffer.from(await request.arrayBuffer());
+
+          if (maxBodySize > 0 && raw.byteLength > maxBodySize) {
+            return payloadTooLarge(maxBodySize);
+          }
+
+          if (raw.byteLength > 0) {
+            if (!isTextualContentType(contentType)) {
+              // Binary stays binary. `request.text()` would UTF-8 decode it
+              // and replace every invalid sequence with U+FFFD, silently and
+              // irrecoverably corrupting uploads.
+              body = raw;
+            } else {
+              const requestBody = raw.toString("utf8");
+              const isJson = contentType === "application/json" || contentType?.endsWith("+json");
+
+              if (isJson) {
+                try {
+                  body = JSON.parse(requestBody);
+                } catch {
+                  return badRequest();
+                }
+              } else if (contentType === "application/x-www-form-urlencoded") {
+                // qs, not URLSearchParams: it is what express.urlencoded({
+                // extended: true }) uses, so `a=1&a=2`, `n[]=x` and
+                // `u[name]=jo` produce the same shapes they do on Node.
+                body = qs.parse(requestBody);
+              } else {
+                body = requestBody;
+              }
             }
-          } else if (contentType === "application/x-www-form-urlencoded") {
-            body = Object.fromEntries(new URLSearchParams(requestBody));
-          } else {
-            body = requestBody;
           }
         }
       }
 
-      // Build query parameters
-      const query: Record<string, string> = {};
-      url.searchParams.forEach((value, key) => {
-        query[key] = value;
-      });
+      // Build query parameters with the same parser Express uses, so
+      // `?tag=a&tag=b` is an array here as well rather than the last value
+      // winning.
+      const query = qs.parse(url.search.replace(/^\?/, ""));
 
       // Build headers
       const headers: Record<string, string> = {};

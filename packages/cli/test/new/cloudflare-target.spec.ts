@@ -149,11 +149,13 @@ describe("applyCloudflareTarget", () => {
 			path.join(targetDir, "test", "api.spec.ts"),
 			"utf8",
 		);
-		expect(workerTest).toContain('import worker from "../src/api";');
-		expect(workerTest).toContain(
-			'new Request("http://localhost/")',
-		);
-		expect(workerTest).toContain('new Request("http://localhost/health")');
+		// The suite must run inside workerd, not Node: undici hides the
+		// body-parser failures and invents a 204 failure of its own.
+		expect(workerTest).toContain('import { SELF } from "cloudflare:test";');
+		expect(workerTest).toContain('from "vitest"');
+		expect(workerTest).toContain('SELF.fetch("https://example.com/")');
+		expect(workerTest).toContain("content-length");
+		expect(workerTest).not.toContain('import worker from "../src/api"');
 		expect(workerTest).not.toContain("micro(");
 		expect(workerTest).not.toContain(".listen(");
 		expect(workerTest).not.toContain("getHttpServer");
@@ -166,7 +168,8 @@ describe("applyCloudflareTarget", () => {
 			dev: "wrangler dev",
 			deploy: "wrangler deploy",
 			types: "wrangler types",
-			test: "jest",
+			// Vitest on workerd, not Jest on Node.
+			test: "vitest run",
 		});
 		expect(pkg.scripts.prod).toBeUndefined();
 		expect(pkg.scripts.studio).toBeUndefined();
