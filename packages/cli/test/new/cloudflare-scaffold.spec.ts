@@ -97,11 +97,13 @@ describe("Cloudflare target validation", () => {
 			path.join(projectDir, "test", "api.spec.ts"),
 			"utf8",
 		);
-		expect(workerTest).toContain('import worker from "../src/api";');
-		expect(workerTest).toContain(
-			'new Request("http://localhost/")',
-		);
-		expect(workerTest).toContain('new Request("http://localhost/health")');
+		// The suite must run inside workerd, not Node: undici hides the
+		// body-parser failures and invents a 204 failure of its own.
+		expect(workerTest).toContain('import { SELF } from "cloudflare:test";');
+		expect(workerTest).toContain('from "vitest"');
+		expect(workerTest).toContain('SELF.fetch("https://example.com/")');
+		expect(workerTest).toContain("content-length");
+		expect(workerTest).not.toContain('import worker from "../src/api"');
 		expect(workerTest).not.toContain("micro(");
 		expect(workerTest).not.toContain(".listen(");
 		expect(workerTest).not.toContain("getHttpServer");
@@ -142,6 +144,28 @@ describe("Cloudflare target validation", () => {
 		expect(pkg.scripts["example:circuit-breaker"]).toBeUndefined();
 		expect(pkg.devDependencies["@expressots/cli"]).toBeUndefined();
 		expect(pkg.devDependencies.tsx).toBeUndefined();
+
+		// Worker tests run on workerd via Vitest, not on Node via Jest.
+		expect(pkg.scripts.test).toBe("vitest run");
+		expect(pkg.devDependencies.vitest).toBeDefined();
+		expect(
+			pkg.devDependencies["@cloudflare/vitest-pool-workers"],
+		).toBeDefined();
+		expect(pkg.devDependencies.jest).toBeUndefined();
+		expect(pkg.devDependencies["ts-jest"]).toBeUndefined();
+		expect(pkg.devDependencies["@types/jest"]).toBeUndefined();
+		expect(fs.existsSync(path.join(projectDir, "jest.config.ts"))).toBe(
+			false,
+		);
+
+		const vitestConfig = fs.readFileSync(
+			// .mts, because the pool is ESM-only and the project is not
+			// "type": "module" — a .ts config would be loaded as CJS.
+			path.join(projectDir, "vitest.config.mts"),
+			"utf8",
+		);
+		expect(vitestConfig).toContain("cloudflareTest");
+		expect(vitestConfig).toContain("./wrangler.toml");
 		for (const nodeOnlyPath of [
 			".env.example",
 			"examples",
@@ -171,6 +195,12 @@ describe("Cloudflare target validation", () => {
 		);
 		expect(tsconfig).toContain('"worker-configuration.d.ts"');
 		expect(tsconfig).not.toContain('"expressots.config.ts"');
+		// Node10 resolution cannot read the pool's exports subpath, so
+		// `cloudflare:test` would not typecheck.
+		expect(tsconfig).toContain('"moduleResolution": "bundler"');
+		expect(tsconfig).toContain('"module": "esnext"');
+		expect(tsconfig).toContain('"@cloudflare/vitest-pool-workers/types"');
+		expect(tsconfig).not.toContain('"jest"');
 		expect(`${result.stdout}\n${result.stderr}`).toContain(
 			"$ pnpm run dev",
 		);

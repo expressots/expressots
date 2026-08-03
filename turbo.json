@@ -6,7 +6,7 @@
       "outputs": ["lib/**", "dist/**", "bin/**"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "build"]
     },
     "lint": {},
     "format": {}

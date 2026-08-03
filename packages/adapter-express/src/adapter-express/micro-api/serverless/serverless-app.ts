@@ -14,6 +14,41 @@ export type ServerlessApp =
   { getExpressApp?: () => Application } | { getApp?: () => Application } | Application;
 
 /**
+ * Default ceiling on a buffered request body, matching the spirit of
+ * `express.json()`'s 100 KB default but sized for API payloads.
+ *
+ * Workers isolates get 128 MB of memory and Cloudflare accepts bodies up to
+ * 100 MB, so an unbounded read is an availability hazard: one large upload
+ * can OOM the isolate. Configurable per adapter.
+ */
+export const DEFAULT_MAX_BODY_BYTES = 1_048_576;
+
+/**
+ * Content types whose bodies are text and can be UTF-8 decoded safely.
+ * Everything else is treated as binary and kept as a Buffer — decoding
+ * arbitrary bytes as UTF-8 replaces every invalid sequence with U+FFFD and
+ * loses the original irrecoverably, which made file uploads impossible.
+ */
+export function isTextualContentType(contentType: string | undefined): boolean {
+  if (!contentType) {
+    // No content type means we cannot know. Text is the safer default
+    // here: it preserves the historical behaviour for plain payloads.
+    return true;
+  }
+
+  return (
+    contentType.startsWith("text/") ||
+    contentType === "application/json" ||
+    contentType.endsWith("+json") ||
+    contentType === "application/x-www-form-urlencoded" ||
+    contentType === "application/xml" ||
+    contentType.endsWith("+xml") ||
+    contentType === "application/javascript" ||
+    contentType === "application/graphql"
+  );
+}
+
+/**
  * Statuses whose responses must not carry a body. Passing even an empty
  * Buffer for these throws `TypeError: Invalid response status code` under
  * Node/undici, while workerd tolerates it — so a 204 endpoint would pass in
