@@ -65,9 +65,10 @@
   "scripts": {
     "clean": "node scripts/rm.js lib",
     "copy": "node scripts/copy.js package.json README.md CHANGELOG.md lib",
-    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy && npm run verify:cloudflare-interop",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "node scripts/build-esm.js",
+    "verify:cloudflare-interop": "node scripts/check-cloudflare-bindings-interop.mjs",
     "release:prepare": "node scripts/release/prepare-publish.mjs",
     "release:restore": "node scripts/release/restore-package-json.mjs",
     "release:publish": "npm run build && npm run release:prepare && npm publish --tag next --access public && npm run release:restore",
