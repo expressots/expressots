@@ -1,5 +1,5 @@
 ---
-"@expressots/cli": patch
+"@expressots/cli": minor
 ---
 
 Alias `iconv-lite` out of Cloudflare Worker builds — roughly 195 KiB gzipped.
