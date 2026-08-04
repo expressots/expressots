@@ -42,9 +42,7 @@ import { AppContainer, CreateModule, bootstrap } from "@expressots/core";
 import { AppController } from "./app.controller";
 
 export class App extends AppExpress {
-  private readonly container: AppContainer = this.configContainer([
-    CreateModule([AppController]),
-  ]);
+  private readonly container: AppContainer = this.configContainer([CreateModule([AppController])]);
 
   async configureServices(): Promise<void> {
     // register middleware, interceptors, error handlers
@@ -64,7 +62,25 @@ void bootstrap(App); // starts on process.env.PORT or 3000
 
 ## Preview modules
 
-The `micro-api` module (gateway, service-mesh, serverless, queue) is preview quality: its APIs may change and it is not yet covered by the test suite. Use it for experimentation, not production-critical paths.
+The `micro-api` module (gateway, service-mesh, serverless, queue) is preview quality: its APIs may change. Use it for experimentation, not production-critical paths.
+
+## Cloudflare binding providers
+
+Cloudflare binding providers are opt-in and available through the `micro-api` module:
+
+```ts
+const bindings = cloudflareBindings<Env>();
+const Settings = bindings.kv("SETTINGS");
+
+const app = micro<CloudflareRequest<Env>>();
+app.get("/settings", async (req) => ({
+  theme: await req.services.get(Settings).get("theme"),
+}));
+
+export default cloudflareAdapter(app, { bindings });
+```
+
+Use `bindings.d1` for D1 databases, `bindings.r2` for R2 buckets, and `bindings.queue` for Queue producers. The adapter creates the request container only on the first `services.get()` call.
 
 ## Documentation
 
@@ -84,4 +100,3 @@ Welcome to the ExpressoTS community. See the [Contributing Guide](https://github
 ## License
 
 MIT. See [LICENSE](./LICENSE.md).
-
