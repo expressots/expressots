@@ -8,7 +8,7 @@ import {
 import { IConsoleMessage } from "@expressots/shared";
 import express from "express";
 import { Server } from "http";
-import { AppExpress } from "../application-express.js";
+import { disableBuffering } from "../log-buffer.js";
 import {
   initializeStudio,
   stopStudio,
@@ -117,9 +117,12 @@ export interface MicroApp {
  * @public API
  */
 export function micro(config?: MicroConfig): MicroApp {
-  // Disable the log buffering from AppExpress since micro() doesn't use the banner system
+  // Disable the banner-first log buffering; micro() has no banner system.
+  // Imported from ./log-buffer directly rather than via AppExpress: pulling
+  // in AppExpress for this one call dragged the whole DI/full-framework
+  // stack into every micro build (141 KiB gzip on a Worker).
   // This restores normal console output for micro API users
-  AppExpress.disableBuffering();
+  disableBuffering();
 
   const app = express();
   const logger = new Logger();

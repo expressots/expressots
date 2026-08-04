@@ -166,6 +166,31 @@ describe("Cloudflare target validation", () => {
 		);
 		expect(vitestConfig).toContain("cloudflareTest");
 		expect(vitestConfig).toContain("./wrangler.toml");
+
+		// iconv-lite is aliased away: express -> body-parser pulls in ~485 KiB
+		// of encoding tables that this target never executes.
+		const shim = fs.readFileSync(
+			// .cjs on purpose — raw-body/body-parser reach it via require(),
+			// and an ESM shim breaks their interop under Vitest.
+			path.join(projectDir, "src", "shims", "iconv-lite.cjs"),
+			"utf8",
+		);
+		expect(shim).toContain("module.exports");
+		expect(shim).toContain("encodingExists");
+		expect(shim).toContain("getDecoder");
+
+		const wrangler = fs.readFileSync(
+			path.join(projectDir, "wrangler.toml"),
+			"utf8",
+		);
+		expect(wrangler).toContain(
+			'alias = { "iconv-lite" = "./src/shims/iconv-lite.cjs" }',
+		);
+		// The pool does not read wrangler.toml, so the alias must be repeated
+		// in the Vitest config or tests would run against a different bundle
+		// than production.
+		expect(vitestConfig).toContain("iconv-lite");
+		expect(vitestConfig).toContain("./src/shims/iconv-lite.cjs");
 		for (const nodeOnlyPath of [
 			".env.example",
 			"examples",
