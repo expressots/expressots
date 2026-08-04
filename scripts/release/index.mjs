@@ -34,6 +34,15 @@ const REPORT_ONLY = args.includes("--report-only");
 const SKIP_SMOKE = args.includes("--skip-smoke");
 const SKIP_TEMPLATES = args.includes("--skip-templates");
 const YES = args.includes("--yes");
+/**
+ * Publish the version already committed on disk, without bumping again.
+ *
+ * The pipeline always runs the version stage, so re-running it after
+ * declining the publish prompt bumps a second time (4.2.1 -> 4.2.2) rather
+ * than resuming. This flag skips stage 5 and runs publish/templates/GitHub
+ * against whatever is already committed.
+ */
+const PUBLISH_ONLY = args.includes("--publish-only");
 
 const TEMPLATES_REPO = "git@github.com:expressots/templates.git";
 
@@ -452,7 +461,14 @@ async function publishStage(newVersion) {
     rl.close();
     if (answer !== "y") {
       console.log(c.yellow(`  Skipped. Publish later with: pnpm changeset publish && git push --follow-tags`));
-      console.log(c.yellow(`  (remember: the v${newVersion} CLI needs the matching expressots/templates tag — rerun with the templates sync)`));
+      console.log(
+        c.yellow(
+          `  Resume this release later with: pnpm release --publish-only\n` +
+            `  (that publishes v${newVersion}, tags it, and syncs the matching\n` +
+            `   expressots/templates tag, which the v${newVersion} CLI needs to scaffold.\n` +
+            `   Re-running plain 'pnpm release' would bump again instead of resuming.)`,
+        ),
+      );
       return false;
     }
   }
@@ -547,6 +563,63 @@ function githubReleaseStage(newVersion, previousVersion) {
   }
 }
 
+/**
+ * The version this release follows, for the GitHub release notes range.
+ * In --publish-only mode `currentVersion` is the version being released, so
+ * the predecessor has to come from the tags rather than from package.json.
+ */
+function previousReleasedVersion(version) {
+  try {
+    const tag = sh("git describe --tags --abbrev=0 --match 'v*'").replace(/^v/, "");
+    if (tag && tag !== version) return tag;
+  } catch {
+    // no tags yet
+  }
+  return version;
+}
+
+/**
+ * Refuse to publish-only from a state that is not actually mid-release.
+ * Each of these would otherwise produce a half-broken release rather than an
+ * error: an un-bumped tree, a version already tagged, or one already on npm.
+ */
+function assertResumable(version) {
+  const pending = fs
+    .readdirSync(path.join(ROOT, ".changeset"))
+    .filter((f) => f.endsWith(".md") && f !== "README.md");
+  if (pending.length) {
+    console.log(
+      c.red(
+        `\n  --publish-only: ${pending.length} changeset(s) are still pending ` +
+          `(${pending.join(", ")}).\n  A version bump is owed — run without --publish-only.`,
+      ),
+    );
+    process.exit(1);
+  }
+
+  const tags = sh("git tag -l").split("\n");
+  if (tags.includes(`v${version}`)) {
+    console.log(
+      c.red(
+        `\n  --publish-only: v${version} is already tagged, so this release has already run.`,
+      ),
+    );
+    process.exit(1);
+  }
+
+  try {
+    const published = sh(`npm view @expressots/core@${version} version`).trim();
+    if (published === version) {
+      console.log(
+        c.red(`\n  --publish-only: @expressots/core@${version} is already on npm.`),
+      );
+      process.exit(1);
+    }
+  } catch {
+    // not published yet, which is what we want
+  }
+}
+
 // ---------------------------------------------------------------- main
 const currentVersion = JSON.parse(fs.readFileSync(path.join(ROOT, "packages/core/package.json"), "utf8")).version;
 console.log(c.bold(`ExpressoTS release pipeline — current version v${currentVersion}${REPORT_ONLY ? " (report only)" : ""}`));
@@ -565,12 +638,24 @@ if (!ready) {
   process.exit(1);
 }
 
-const newVersion = await versionStage(currentVersion);
-if (!newVersion) { console.log(c.yellow("Aborted at version stage.")); process.exit(1); }
+let newVersion;
+let previousVersion = currentVersion;
+
+if (PUBLISH_ONLY) {
+  newVersion = currentVersion;
+  previousVersion = previousReleasedVersion(currentVersion);
+  assertResumable(newVersion);
+  header("Stage 5 · Version bump");
+  record("version", `skipped — publishing the committed v${newVersion}`, "skip", "--publish-only");
+} else {
+  newVersion = await versionStage(currentVersion);
+  if (!newVersion) { console.log(c.yellow("Aborted at version stage.")); process.exit(1); }
+}
+
 const published = await publishStage(newVersion);
 if (published) {
   const synced = templatesSyncStage(newVersion);
-  const released = githubReleaseStage(newVersion, currentVersion);
+  const released = githubReleaseStage(newVersion, previousVersion);
   console.log(c.bold(`\n  Done. v${newVersion} is published, pushed, and released.`));
   process.exit(synced && released ? 0 : 1);
 }
