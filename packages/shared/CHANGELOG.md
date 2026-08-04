@@ -1,5 +1,11 @@
 # @expressots/shared
 
+## 4.2.1
+
+### Patch Changes
+
+- Release v4.2.1
+
 ## 4.2.0
 
 ### Minor Changes

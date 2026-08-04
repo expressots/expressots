@@ -1,5 +1,60 @@
 # @expressots/adapter-express
 
+## 4.2.1
+
+### Patch Changes
+
+- 2b5fced: Cut the full-framework stack out of `micro()` builds.
+
+  `micro()` called `AppExpress.disableBuffering()` — one static call, to turn off
+  the banner-first log buffering it does not use. Importing `AppExpress` for it
+  pulled in `inversify-express-server`, the DI container and `middleware-service`,
+  so every micro build carried the entire full-framework stack.
+
+  The buffering state machine moves to its own dependency-free module that both
+  `AppExpress` and `micro()` import. `AppExpress.startLogBuffering()` and
+  `AppExpress.disableBuffering()` keep working exactly as before — they now
+  delegate — so there is no public API change.
+
+  Measured on a scaffolded Cloudflare Worker:
+
+  ```
+  before:  2428.83 KiB raw / 537.36 KiB gzip
+  after:   1713.68 KiB raw / 396.82 KiB gzip   (-26%)
+  ```
+
+  Node applications are unaffected: the banner still renders before the buffered
+  startup logs flush, verified by booting the starter example.
+
+- Release v4.2.1
+- 2b5fced: Fix `createTestApp()` failing under Jest — the default scaffold's own test
+  suite did not pass.
+
+  `AppExpress.listen()` reaches `isPortAvailable()` and `killProcessOnPort()`,
+  which loaded `net`, `child_process` and `util` with `await import(...)`. In the
+  CJS build those compile to dynamic imports that Jest's VM cannot execute,
+  so any suite calling `createTestApp()` failed with:
+
+  ```
+  TypeError: A dynamic import callback was invoked without --experimental-vm-modules
+  ```
+
+  Since `createTestApp()` is the documented way to test an ExpressoTS app — and
+  the `application` template ships a spec that uses it — a freshly scaffolded
+  project failed `npm test` out of the box. Present in 4.1.1 and 4.2.0.
+
+  All three are Node built-ins with no reason to be lazy, and are now imported
+  statically. Twelve of the fifteen example projects went from a fully failing
+  suite to a fully passing one; all fifteen now pass.
+
+  Worker bundles are unaffected: `micro()` no longer imports `AppExpress`, so it
+  stays tree-shaken and `child_process` never reaches the edge build. Measured
+  unchanged at 202 KiB gzipped.
+
+- Updated dependencies
+  - @expressots/core@4.2.1
+  - @expressots/shared@4.2.1
+
 ## 4.2.0
 
 ### Minor Changes
