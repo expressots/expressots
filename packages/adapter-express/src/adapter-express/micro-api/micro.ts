@@ -48,8 +48,8 @@ export interface MicroConfig {
 /**
  * Route handler that can return a value or use res directly
  */
-type RouteHandler = (
-  req: express.Request,
+type RouteHandler<TRequest extends express.Request = express.Request> = (
+  req: TRequest,
   res: express.Response,
   next: express.NextFunction,
 ) => unknown | Promise<unknown>;
@@ -63,21 +63,21 @@ type Middleware = express.RequestHandler | express.ErrorRequestHandler;
  * Pure simplicity micro API interface
  * @public API
  */
-export interface MicroApp {
+export interface MicroApp<TRequest extends express.Request = express.Request> {
   /** Register a GET route */
-  get(path: string, ...handlers: [...Array<Middleware>, RouteHandler]): this;
+  get(path: string, ...handlers: [...Array<Middleware>, RouteHandler<TRequest>]): this;
 
   /** Register a POST route */
-  post(path: string, ...handlers: [...Array<Middleware>, RouteHandler]): this;
+  post(path: string, ...handlers: [...Array<Middleware>, RouteHandler<TRequest>]): this;
 
   /** Register a PUT route */
-  put(path: string, ...handlers: [...Array<Middleware>, RouteHandler]): this;
+  put(path: string, ...handlers: [...Array<Middleware>, RouteHandler<TRequest>]): this;
 
   /** Register a PATCH route */
-  patch(path: string, ...handlers: [...Array<Middleware>, RouteHandler]): this;
+  patch(path: string, ...handlers: [...Array<Middleware>, RouteHandler<TRequest>]): this;
 
   /** Register a DELETE route */
-  delete(path: string, ...handlers: [...Array<Middleware>, RouteHandler]): this;
+  delete(path: string, ...handlers: [...Array<Middleware>, RouteHandler<TRequest>]): this;
 
   /** Add global middleware */
   use(...middleware: Array<Middleware>): this;
@@ -116,7 +116,9 @@ export interface MicroApp {
  * @returns MicroApp instance
  * @public API
  */
-export function micro(config?: MicroConfig): MicroApp {
+export function micro<TRequest extends express.Request = express.Request>(
+  config?: MicroConfig,
+): MicroApp<TRequest> {
   // Disable the banner-first log buffering; micro() has no banner system.
   // Imported from ./log-buffer directly rather than via AppExpress: pulling
   // in AppExpress for this one call dragged the whole DI/full-framework
@@ -180,10 +182,10 @@ export function micro(config?: MicroConfig): MicroApp {
   /**
    * Wrap handler to auto-send return values
    */
-  const wrapHandler = (handler: RouteHandler): express.RequestHandler => {
+  const wrapHandler = (handler: RouteHandler<TRequest>): express.RequestHandler => {
     return async (req, res, next) => {
       try {
-        const result = await handler(req, res, next);
+        const result = await handler(req as TRequest, res, next);
 
         // If response already sent, don't send again
         if (res.headersSent) {
@@ -210,10 +212,10 @@ export function micro(config?: MicroConfig): MicroApp {
   const route = (
     method: "get" | "post" | "put" | "patch" | "delete",
     path: string,
-    ...handlers: [...Array<Middleware>, RouteHandler]
-  ): MicroApp => {
+    ...handlers: [...Array<Middleware>, RouteHandler<TRequest>]
+  ): MicroApp<TRequest> => {
     const fullPath = `${globalPrefix}${path.startsWith("/") ? path : `/${path}`}`;
-    const handler = handlers.pop() as RouteHandler;
+    const handler = handlers.pop() as RouteHandler<TRequest>;
     const middleware = handlers as Array<Middleware>;
 
     app[method](fullPath, ...middleware, wrapHandler(handler));
@@ -362,7 +364,7 @@ export function micro(config?: MicroConfig): MicroApp {
     }
   };
 
-  const microApp: MicroApp = {
+  const microApp: MicroApp<TRequest> = {
     get: (path, ...handlers) => route("get", path, ...handlers),
     post: (path, ...handlers) => route("post", path, ...handlers),
     put: (path, ...handlers) => route("put", path, ...handlers),
