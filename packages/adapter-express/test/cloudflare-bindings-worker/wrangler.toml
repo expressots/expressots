@@ -1,0 +1,30 @@
+name = "expressots-cloudflare-bindings-test"
+main = "src/worker.ts"
+compatibility_date = "2026-07-29"
+compatibility_flags = ["nodejs_compat"]
+alias = { "iconv-lite" = "./src/shims/iconv-lite.cjs" }
+
+[[kv_namespaces]]
+binding = "SETTINGS"
+id = "00000000000000000000000000000001"
+
+[[kv_namespaces]]
+binding = "QUEUE_RESULTS"
+id = "00000000000000000000000000000002"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "expressots-bindings-test"
+database_id = "00000000-0000-0000-0000-000000000001"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "expressots-bindings-test"
+
+[[queues.producers]]
+binding = "JOBS"
+queue = "expressots-bindings-jobs"
+
+[[queues.consumers]]
+queue = "expressots-bindings-jobs"
+max_batch_timeout = 1
