@@ -19,17 +19,19 @@ interface TestBindingEnv {
 const bindings = cloudflareBindings<TestBindingEnv>();
 const Settings = bindings.kv("SETTINGS");
 
-const typedMicroApp = micro<CloudflareRequest<TestBindingEnv>>({
-  showBanner: false,
-  studio: { enabled: false },
-});
-typedMicroApp.get("/compile-only", (req) => {
-  const settings: TestKv = req.services.get(Settings);
-  return settings;
-});
+if (false) {
+  const typedMicroApp = micro<CloudflareRequest<TestBindingEnv>>({
+    showBanner: false,
+    studio: { enabled: false },
+  });
+  typedMicroApp.get("/compile-only", (req) => {
+    const settings: TestKv = req.services.get(Settings);
+    return settings;
+  });
 
-const plainMicroApp = micro();
-plainMicroApp.get("/compile-only", () => ({ ok: true }));
+  const plainMicroApp = micro();
+  plainMicroApp.get("/compile-only", () => ({ ok: true }));
+}
 
 const context: CloudflareContext = {
   waitUntil: () => undefined,
@@ -93,7 +95,17 @@ describe("cloudflareAdapter bindings", () => {
       showBanner: false,
       studio: { enabled: false },
     });
+    let enteredHandlers = 0;
+    let releaseHandlers: () => void;
+    const bothHandlersEntered = new Promise<void>((resolve) => {
+      releaseHandlers = resolve;
+    });
     app.get("/theme", async (req) => {
+      enteredHandlers += 1;
+      if (enteredHandlers === 2) {
+        releaseHandlers();
+      }
+      await bothHandlersEntered;
       const result = await req.services.get(Settings).getWithMetadata("theme");
       return { theme: result.value };
     });
@@ -123,17 +135,27 @@ describe("cloudflareAdapter bindings", () => {
     });
     app.get("/theme", (req) => req.services.get(Settings));
     const worker = cloudflareAdapter(app, { bindings });
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
-    const response = await worker.fetch(
-      new Request("https://worker.example/theme"),
-      {} as TestBindingEnv,
-      context,
-    );
-    const body = await response.json();
+    try {
+      const response = await worker.fetch(
+        new Request("https://worker.example/theme"),
+        {} as TestBindingEnv,
+        context,
+      );
+      const body = await response.json();
+      await new Promise<void>((resolve) => setImmediate(resolve));
 
-    expect(response.status).toBe(500);
-    expect(body).toEqual({ error: "Internal Server Error" });
-    expect(JSON.stringify(body)).not.toContain("SETTINGS");
+      expect(response.status).toBe(500);
+      expect(body).toEqual({ error: "Internal Server Error" });
+      expect(JSON.stringify(body)).not.toContain("SETTINGS");
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[Cloudflare] Express error:",
+        expect.any(CloudflareBindingNotFoundError),
+      );
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it("passes missing binding errors to a custom error handler", async () => {
