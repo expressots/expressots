@@ -396,23 +396,40 @@ async function versionStage(currentVersion) {
 }
 
 /**
- * The version `changeset version` actually wrote, read from a publishable
- * package. Every package sits in the changesets `fixed` group, so they all
- * carry the same version; disagreement means the bump did not apply cleanly
- * and is worth failing on rather than guessing past.
+ * The version `changeset version` actually wrote, read from the packages in
+ * the changesets `fixed` group — the ones whose versions are kept in lockstep
+ * and that define "the release version".
+ *
+ * Deliberately scoped to that group: not every publishable package is in it.
+ * `@expressots/boost-ts` versions independently (1.x), so comparing across all
+ * publishable packages would always "disagree" and abort every release.
+ *
+ * Within the group, disagreement means the bump did not apply cleanly, which
+ * is worth failing on rather than guessing past.
  */
 function readPublishedVersion() {
+  const fixedGroup = JSON.parse(
+    fs.readFileSync(path.join(ROOT, ".changeset/config.json"), "utf8"),
+  ).fixed[0];
+  const inGroup = new Set(fixedGroup);
+
   const versions = new Map();
   for (const { pkg } of workspacePackages()) {
-    if (!pkg.private) versions.set(pkg.name, pkg.version);
+    if (!pkg.private && inGroup.has(pkg.name)) versions.set(pkg.name, pkg.version);
+  }
+
+  if (versions.size === 0) {
+    throw new Error(
+      "Release aborted: no publishable packages found in the changesets 'fixed' group.",
+    );
   }
 
   const distinct = [...new Set(versions.values())];
   if (distinct.length !== 1) {
     const detail = [...versions].map(([n, v]) => `${n}@${v}`).join(", ");
     throw new Error(
-      `Release aborted: publishable packages disagree on version after 'changeset version' (${detail}). ` +
-        `They are in the changesets 'fixed' group and must match.`,
+      `Release aborted: packages in the 'fixed' group disagree on version after 'changeset version' (${detail}). ` +
+        `They are version-locked and must match.`,
     );
   }
 
