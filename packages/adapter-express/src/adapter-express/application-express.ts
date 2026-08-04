@@ -1,5 +1,13 @@
 import express from "express";
 import { Server as HTTPServer } from "http";
+// Node built-ins used by the port-conflict handling in listen(). Imported
+// statically: as `await import(...)` they compile to a dynamic import that
+// Jest's CJS VM cannot execute without --experimental-vm-modules, which
+// made createTestApp() — and therefore the default scaffold's own test
+// suite — fail for every user.
+import { exec } from "node:child_process";
+import * as net from "node:net";
+import { promisify } from "node:util";
 import * as logBuffer from "./log-buffer.js";
 
 // Note: We use the global `process` object directly instead of importing it
@@ -923,8 +931,6 @@ export class AppExpress implements Server.IWebServer {
    * @private
    */
   private async killProcessOnPort(port: number): Promise<boolean> {
-    const { exec } = await import("child_process");
-    const { promisify } = await import("util");
     const execAsync = promisify(exec);
 
     try {
@@ -978,8 +984,6 @@ export class AppExpress implements Server.IWebServer {
    * @private
    */
   private async isPortAvailable(port: number): Promise<boolean> {
-    const net = await import("net");
-
     return new Promise<boolean>((resolve) => {
       const testServer = net.createServer();
 
