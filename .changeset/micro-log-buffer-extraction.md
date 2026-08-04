@@ -1,5 +1,5 @@
 ---
-"@expressots/adapter-express": minor
+"@expressots/adapter-express": patch
 ---
 
 Cut the full-framework stack out of `micro()` builds.

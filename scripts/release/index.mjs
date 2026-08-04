@@ -353,8 +353,8 @@ async function versionStage(currentVersion) {
     summary = (await rl.question(`  One-line release summary [Release v${bumpVersion(currentVersion, type)}]: `)).trim();
     rl.close();
   }
-  const newVersion = bumpVersion(currentVersion, type);
-  summary ||= `Release v${newVersion}`;
+  const requestedVersion = bumpVersion(currentVersion, type);
+  summary ||= `Release v${requestedVersion}`;
 
   const preexisting = fs.readdirSync(path.join(ROOT, ".changeset")).filter((f) => f.endsWith(".md") && f !== "README.md");
   if (preexisting.length) record("version", "pre-existing changesets folded into this release", "warn", preexisting.join(", "));
@@ -362,17 +362,61 @@ async function versionStage(currentVersion) {
   const fixedGroup = JSON.parse(fs.readFileSync(path.join(ROOT, ".changeset/config.json"), "utf8")).fixed[0];
   const publishableNames = new Set(workspacePackages().filter(({ pkg }) => !pkg.private).map(({ pkg }) => pkg.name));
   const frontmatter = fixedGroup.filter((n) => publishableNames.has(n)).map((n) => `"${n}": ${type}`).join("\n");
-  fs.writeFileSync(path.join(ROOT, `.changeset/release-${newVersion}.md`), `---\n${frontmatter}\n---\n\n${summary}\n`);
+  fs.writeFileSync(path.join(ROOT, `.changeset/release-${requestedVersion}.md`), `---\n${frontmatter}\n---\n\n${summary}\n`);
 
   // execSync directly: sh() trims the captured output, but inherited stdio
   // makes execSync return null.
   execSync("pnpm changeset version", { cwd: ROOT, stdio: ["ignore", "inherit", "inherit"] });
+
+  // Read the version back rather than trusting the bump we asked for.
+  // `changeset version` takes the MAXIMUM bump across every changeset — ours
+  // plus any that were already sitting in .changeset/ — so answering "patch"
+  // with a pending "minor" changeset yields a minor. Using the requested
+  // version from here on pinned templates and examples to a version that was
+  // never published, and tagged the repos with it too. Everything downstream
+  // (pins, commit message, git tag, templates tag, GitHub release) must use
+  // what actually landed on disk.
+  const newVersion = readPublishedVersion();
+
+  if (newVersion !== requestedVersion) {
+    record(
+      "version",
+      `changesets produced v${newVersion}, not the requested v${requestedVersion}`,
+      "warn",
+      "a pending changeset outranked the chosen bump; continuing with the real version",
+    );
+  }
+
   const pinned = syncPinnedVersions(newVersion);
   if (pinned.length) record("version", `templates/examples pinned to v${newVersion}`, "pass", `${pinned.length} package.json file(s)`);
   sh("git add -A");
   sh(`git commit -m "chore(release): v${newVersion}"`, { stdio: ["ignore", "pipe", "pipe"] });
   record("version", `bumped to v${newVersion} and committed`, "pass", `changelogs updated`);
   return newVersion;
+}
+
+/**
+ * The version `changeset version` actually wrote, read from a publishable
+ * package. Every package sits in the changesets `fixed` group, so they all
+ * carry the same version; disagreement means the bump did not apply cleanly
+ * and is worth failing on rather than guessing past.
+ */
+function readPublishedVersion() {
+  const versions = new Map();
+  for (const { pkg } of workspacePackages()) {
+    if (!pkg.private) versions.set(pkg.name, pkg.version);
+  }
+
+  const distinct = [...new Set(versions.values())];
+  if (distinct.length !== 1) {
+    const detail = [...versions].map(([n, v]) => `${n}@${v}`).join(", ");
+    throw new Error(
+      `Release aborted: publishable packages disagree on version after 'changeset version' (${detail}). ` +
+        `They are in the changesets 'fixed' group and must match.`,
+    );
+  }
+
+  return distinct[0];
 }
 
 // ---------------------------------------------------------------- stage 6

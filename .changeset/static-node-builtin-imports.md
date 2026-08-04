@@ -1,5 +1,5 @@
 ---
-"@expressots/adapter-express": minor
+"@expressots/adapter-express": patch
 ---
 
 Fix `createTestApp()` failing under Jest — the default scaffold's own test
