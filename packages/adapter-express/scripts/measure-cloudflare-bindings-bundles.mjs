@@ -19,13 +19,7 @@ const workspaceDir = resolve(packageDir, "..", "..");
 const fixtureDir = join(packageDir, "test", "cloudflare-bindings-worker");
 const packageManagerCli = process.env.npm_execpath;
 const sourceAliasValue = '"./src/shims/iconv-lite.cjs"';
-const wranglerCliPath = join(
-  packageDir,
-  "node_modules",
-  "wrangler",
-  "bin",
-  "wrangler.js",
-);
+const wranglerCliPath = join(packageDir, "node_modules", "wrangler", "bin", "wrangler.js");
 const localPackages = [
   { name: "@expressots/shared", directory: join(workspaceDir, "packages", "shared") },
   { name: "@expressots/core", directory: join(workspaceDir, "packages", "core") },
@@ -38,6 +32,7 @@ const maxBaseGzipBytes = 205 * 1024;
 const maxAddedGzipBytes = 1024;
 const relativeCeiling = 1.1;
 const temporaryParent = mkdtempSync(join(tmpdir(), "expressots-bindings-bundle-"));
+const wranglerOutputDir = join(temporaryParent, "wrangler");
 
 function processFailure(label, result) {
   const details = [result.stdout, result.stderr, result.error?.message].filter(Boolean).join("\n");
@@ -74,6 +69,13 @@ function runWrangler(cwd, args, label) {
   const result = spawnSync(process.execPath, [wranglerCliPath, ...args], {
     cwd,
     encoding: "utf8",
+    env: {
+      ...process.env,
+      WRANGLER_LOG_PATH: join(wranglerOutputDir, "logs"),
+      WRANGLER_CACHE_DIR: join(wranglerOutputDir, "cache"),
+      XDG_CACHE_HOME: join(wranglerOutputDir, "cache"),
+      XDG_CONFIG_HOME: join(wranglerOutputDir, "config"),
+    },
   });
   if (result.status !== 0 || result.error) {
     throw processFailure(label, result);
