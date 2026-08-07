@@ -1,6 +1,37 @@
 import express from "express";
 import { micro } from "../micro";
-import { cloudflareAdapter, CloudflareContext, CloudflareHandler } from "./cloudflare.adapter";
+import {
+  cloudflareAdapter,
+  CloudflareContext,
+  CloudflareHandler,
+  CloudflareRequest,
+} from "./cloudflare.adapter";
+import { cloudflareBindings, CloudflareBindingNotFoundError } from "./cloudflare-bindings";
+
+interface TestKv {
+  getWithMetadata(key: string): Promise<{ value: string | null }>;
+}
+
+interface TestBindingEnv {
+  SETTINGS: TestKv;
+}
+
+const bindings = cloudflareBindings<TestBindingEnv>();
+const Settings = bindings.kv("SETTINGS");
+
+if (false) {
+  const typedMicroApp = micro<CloudflareRequest<TestBindingEnv>>({
+    showBanner: false,
+    studio: { enabled: false },
+  });
+  typedMicroApp.get("/compile-only", (req) => {
+    const settings: TestKv = req.services.get(Settings);
+    return settings;
+  });
+
+  const plainMicroApp = micro();
+  plainMicroApp.get("/compile-only", () => ({ ok: true }));
+}
 
 const context: CloudflareContext = {
   waitUntil: () => undefined,
@@ -19,6 +50,154 @@ function createBodyEchoWorker(): CloudflareHandler {
 
   return cloudflareAdapter(app.getApp());
 }
+
+describe("cloudflareAdapter bindings", () => {
+  it("resolves the current request binding through req.services", async () => {
+    const app = micro<CloudflareRequest<TestBindingEnv>>({
+      showBanner: false,
+      studio: { enabled: false },
+    });
+    app.get("/theme", async (req) => {
+      const result = await req.services.get(Settings).getWithMetadata("theme");
+      return { theme: result.value };
+    });
+
+    const worker = cloudflareAdapter(app, { bindings });
+    const response = await worker.fetch(
+      new Request("https://worker.example/theme"),
+      { SETTINGS: { getWithMetadata: async () => ({ value: "dark" }) } },
+      context,
+    );
+
+    expect(await response.json()).toEqual({ theme: "dark" });
+  });
+
+  it("does not fail an unrelated route when a binding is missing", async () => {
+    const app = micro<CloudflareRequest<TestBindingEnv>>({
+      showBanner: false,
+      studio: { enabled: false },
+    });
+    app.get("/health", () => ({ ok: true }));
+    app.get("/theme", (req) => req.services.get(Settings));
+    const worker = cloudflareAdapter(app, { bindings });
+
+    const response = await worker.fetch(
+      new Request("https://worker.example/health"),
+      {} as TestBindingEnv,
+      context,
+    );
+
+    expect(await response.json()).toEqual({ ok: true });
+  });
+
+  it("keeps bindings isolated between concurrent requests", async () => {
+    const app = micro<CloudflareRequest<TestBindingEnv>>({
+      showBanner: false,
+      studio: { enabled: false },
+    });
+    let enteredHandlers = 0;
+    let releaseHandlers: () => void;
+    const bothHandlersEntered = new Promise<void>((resolve) => {
+      releaseHandlers = resolve;
+    });
+    app.get("/theme", async (req) => {
+      enteredHandlers += 1;
+      if (enteredHandlers === 2) {
+        releaseHandlers();
+      }
+      await bothHandlersEntered;
+      const result = await req.services.get(Settings).getWithMetadata("theme");
+      return { theme: result.value };
+    });
+    const worker = cloudflareAdapter(app, { bindings });
+
+    const [first, second] = await Promise.all([
+      worker.fetch(
+        new Request("https://worker.example/theme"),
+        { SETTINGS: { getWithMetadata: async () => ({ value: "first" }) } },
+        context,
+      ),
+      worker.fetch(
+        new Request("https://worker.example/theme"),
+        { SETTINGS: { getWithMetadata: async () => ({ value: "second" }) } },
+        context,
+      ),
+    ]);
+
+    expect(await first.json()).toEqual({ theme: "first" });
+    expect(await second.json()).toEqual({ theme: "second" });
+  });
+
+  it("returns a generic 500 without a missing binding name", async () => {
+    const app = micro<CloudflareRequest<TestBindingEnv>>({
+      showBanner: false,
+      studio: { enabled: false },
+    });
+    app.get("/theme", (req) => req.services.get(Settings));
+    const worker = cloudflareAdapter(app, { bindings });
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+    try {
+      const response = await worker.fetch(
+        new Request("https://worker.example/theme"),
+        {} as TestBindingEnv,
+        context,
+      );
+      const body = await response.json();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      expect(response.status).toBe(500);
+      expect(body).toEqual({ error: "Internal Server Error" });
+      expect(JSON.stringify(body)).not.toContain("SETTINGS");
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[Cloudflare] Express error:",
+        expect.any(CloudflareBindingNotFoundError),
+      );
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  it("passes missing binding errors to a custom error handler", async () => {
+    const app = micro<CloudflareRequest<TestBindingEnv>>({
+      showBanner: false,
+      studio: { enabled: false },
+    });
+    app.get("/theme", (req) => req.services.get(Settings));
+    app.setErrorHandler((error, _req, res, _next) => {
+      if (error instanceof CloudflareBindingNotFoundError) {
+        res.status(503).json({ error: "Binding unavailable" });
+      }
+    });
+    const worker = cloudflareAdapter(app, { bindings });
+
+    const response = await worker.fetch(
+      new Request("https://worker.example/theme"),
+      {} as TestBindingEnv,
+      context,
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "Binding unavailable" });
+  });
+
+  it("preserves the original Cloudflare environment without bindings", async () => {
+    const env = { FEATURE_FLAG: "enabled" };
+    const app = micro<CloudflareRequest<typeof env>>({
+      showBanner: false,
+      studio: { enabled: false },
+    });
+    app.get("/env", (req) => ({
+      sameEnv: req.cloudflare.env === env,
+      hasServices: Object.prototype.hasOwnProperty.call(req, "services"),
+    }));
+
+    const worker = cloudflareAdapter<typeof env>(app);
+    const response = await worker.fetch(new Request("https://worker.example/env"), env, context);
+
+    expect(await response.json()).toEqual({ sameEnv: true, hasServices: false });
+  });
+});
 
 describe("cloudflareAdapter request bodies", () => {
   it.each(["application/json", "application/problem+json; charset=utf-8"])(

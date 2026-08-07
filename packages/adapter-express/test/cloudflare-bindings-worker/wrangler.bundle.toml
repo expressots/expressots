@@ -1,0 +1,4 @@
+name = "expressots-cloudflare-bindings-bundle"
+compatibility_date = "2026-07-29"
+compatibility_flags = ["nodejs_compat"]
+alias = { "iconv-lite" = "./src/shims/iconv-lite.cjs" }
