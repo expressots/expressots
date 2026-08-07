@@ -18,8 +18,9 @@ if (!version || typeof version !== "string") {
 const contents = `/**
  * Framework version string surfaced in startup banners and diagnostics.
  *
- * This file is auto-synced from the root \`package.json\` by
- * \`scripts/sync-version.js\` before each build. Do not edit by hand.
+ * Auto-synced from this package's \`package.json\` by
+ * \`packages/core/scripts/sync-version.js\`, which runs before each build and
+ * again during the release version bump. Do not edit by hand.
  */
 export const FRAMEWORK_VERSION = "${version}";
 `;
