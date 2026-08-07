@@ -82,9 +82,31 @@ describe("cloudflareBindings", () => {
     expect(containersCreated).toBe(1);
   });
 
+  it("creates frozen tokens with fresh service identifiers", () => {
+    const anotherSettings = typedBindings.kv("SETTINGS");
+
+    expect(Object.isFrozen(Settings)).toBe(true);
+    expect(anotherSettings).not.toBe(Settings);
+    expect(anotherSettings.serviceIdentifier).not.toBe(Settings.serviceIdentifier);
+  });
+
   it("throws a named error for a missing binding", () => {
-    const services = createCloudflareServices({}, () => new Container());
-    expect(() => services.get(Settings)).toThrow(CloudflareBindingNotFoundError);
-    expect(() => services.get(Settings)).toThrow("SETTINGS");
+    let containersCreated = 0;
+    const services = createCloudflareServices({}, () => {
+      containersCreated += 1;
+      return new Container();
+    });
+
+    try {
+      services.get(Settings);
+      throw new Error("Expected the missing binding to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(CloudflareBindingNotFoundError);
+      expect(error).toMatchObject({
+        code: "EXPRESSOTS_CLOUDFLARE_BINDING_NOT_FOUND",
+        message: expect.stringContaining("SETTINGS"),
+      });
+    }
+    expect(containersCreated).toBe(0);
   });
 });
