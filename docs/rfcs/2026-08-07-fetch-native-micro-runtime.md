@@ -240,14 +240,26 @@ comfortably inside the 100 KB criterion.
 
 ### Residual risk
 
-The survey covers the code this project ships and documents, not applications in the wild.
 `RouteHandler` is typed as `express.Request` / `express.Response`, so the _typed_ surface is all of
 Express even though the _used_ surface is nine members. A user who reached for `res.setHeader`
 outside the shimmed set would break.
 
-This is a real but bounded risk, and it is bounded in the right direction: the shim covers
-everything the framework teaches, and anything beyond it keeps working on the Node target, where
-Express remains available.
+To size that, public GitHub code was searched for real adopters. Excluding the `expressots`
+organisation, **no third-party source file uses `micro()`**. Every non-org hit was a lockfile
+(`package-lock.json`, `bun.lock`, `pnpm-lock.yaml`) or a package-name word list. `cloudflareAdapter`
+appears only in `expressots/*` repositories. The third-party projects that do depend on
+`@expressots/adapter-express` — `Th3Mayar/expressoTS-test`,
+`nicktsan/backend_expressots_unopionated`, `pyr3-dev/expressots-backend`, `reidn3r/picpay-expressots`
+— all use the full `AppExpress` framework with controllers and DI, which this RFC does not touch.
+
+**This is evidence, not proof.** `@expressots/adapter-express` sees roughly 1.9M npm downloads a
+month, so users exist; their code is simply private or not indexed. Code search covers public
+default branches only. The honest reading is that no public `micro()` adopter would be affected,
+and that private exposure cannot be measured from here.
+
+The risk is therefore bounded in three directions at once: the shim covers everything the
+framework teaches, anything beyond it keeps working on the Node target where Express remains
+available, and no public consumer of the affected API has been found.
 
 ## Sequencing
 
@@ -296,13 +308,17 @@ described above is real but does not justify holding the work for a major versio
 
 ## Remaining decision
 
-One question is genuinely the maintainers' and is not resolvable by measurement:
+One question is genuinely the maintainers' and cannot be closed by measurement:
 
-**Is the residual compatibility risk acceptable?** The survey covers this repository, not user
-applications. Accepting v4 means accepting that a user calling an Express method outside the
-shimmed nine hits a breaking change in a minor release. The mitigations are to ship the shim as
-described, keep the full Express surface working on the Node target, and document the edge
-constraint — but the call is a judgement about the user base, not about the code.
+**Is the residual compatibility risk acceptable?** Two surveys bound it — nine members used across
+this repository, and no public third-party `micro()` source anywhere on GitHub. Neither can see
+private code, and ~1.9M monthly downloads say users exist. Accepting v4 means accepting that a
+user calling an Express method outside the shimmed nine hits a breaking change in a minor release,
+with no public example of such a user having been found.
+
+The mitigations are to ship the shim as described, keep the full Express surface working on the
+Node target, and document the edge constraint. What is left is a judgement about the user base
+rather than about the code, and it belongs to the people who know that user base.
 
 ## Decision requested
 
