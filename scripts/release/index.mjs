@@ -398,6 +398,15 @@ async function versionStage(currentVersion) {
 
   const pinned = syncPinnedVersions(newVersion);
   if (pinned.length) record("version", `templates/examples pinned to v${newVersion}`, "pass", `${pinned.length} package.json file(s)`);
+
+  // Stage 2 built core while package.json still held the OLD version, so the
+  // generated framework-version.ts is a release behind by the time we get
+  // here. Re-sync after the bump so the banner reports the version we are
+  // actually publishing, and so the file lands in this release commit rather
+  // than surfacing as a stray diff in the next contributor's build.
+  execSync("pnpm --filter @expressots/core run sync-version", { cwd: ROOT, stdio: ["ignore", "inherit", "inherit"] });
+  record("version", `framework-version.ts synced to v${newVersion}`, "pass", "core banner version");
+
   sh("git add -A");
   sh(`git commit -m "chore(release): v${newVersion}"`, { stdio: ["ignore", "pipe", "pipe"] });
   record("version", `bumped to v${newVersion} and committed`, "pass", `changelogs updated`);
