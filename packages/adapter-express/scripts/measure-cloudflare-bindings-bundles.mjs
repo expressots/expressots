@@ -113,11 +113,18 @@ function writeConsumer(packedPackages, consumerDir) {
         type: "module",
         packageManager: "pnpm@10.14.0",
         dependencies,
-        pnpm: { overrides: dependencies },
       },
       null,
       2,
     )}\n`,
+  );
+  writeFileSync(
+    join(consumerDir, "pnpm-workspace.yaml"),
+    [
+      "overrides:",
+      ...Object.entries(dependencies).map(([name, spec]) => `  "${name}": "${spec}"`),
+      "",
+    ].join("\n"),
   );
   cpSync(join(fixtureDir, "bundle"), join(consumerDir, "bundle"), {
     recursive: true,
@@ -138,6 +145,48 @@ function writeConsumer(packedPackages, consumerDir) {
     join(consumerDir, "wrangler.bundle.toml"),
     sourceConfig.replace(sourceAliasValue, runtimeAliasValue),
   );
+}
+
+function assertLocalPackageGraph(consumerDir, packedPackages) {
+  const localNames = new Set(Object.keys(packedPackages));
+  const seen = new Set();
+  const result = runPnpm(
+    consumerDir,
+    ["list", ...localNames, "--depth", "Infinity", "--json"],
+    "Inspecting packed consumer dependencies",
+  );
+  let projects;
+  try {
+    projects = JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error("Packed consumer dependency output is not valid JSON", { cause: error });
+  }
+  if (!Array.isArray(projects)) {
+    throw new Error("Packed consumer dependency output is not a project list");
+  }
+
+  function visit(node) {
+    if (node === null || typeof node !== "object") return;
+    for (const section of ["dependencies", "devDependencies", "optionalDependencies"]) {
+      for (const [name, dependency] of Object.entries(node[section] ?? {})) {
+        if (localNames.has(name)) {
+          seen.add(name);
+          if (typeof dependency.resolved === "string" && !dependency.resolved.startsWith("file:")) {
+            throw new Error(
+              `Packed consumer resolved ${name} outside the local tarballs: ${dependency.resolved}`,
+            );
+          }
+        }
+        visit(dependency);
+      }
+    }
+  }
+
+  for (const project of projects) visit(project);
+  const missing = [...localNames].filter((name) => !seen.has(name));
+  if (missing.length > 0) {
+    throw new Error(`Packed consumer is missing local packages: ${missing.join(", ")}`);
+  }
 }
 
 function listCodeFiles(directory) {
@@ -185,6 +234,8 @@ function withKiB(bytes) {
   return { bytes, kibibytes: bytes / 1024 };
 }
 
+let primaryError;
+
 try {
   assertPinnedWrangler();
   const packsDir = join(temporaryParent, "packs");
@@ -198,11 +249,17 @@ try {
     ]),
   );
   writeConsumer(packedPackages, consumerDir);
+  // `--prefer-offline`, not `--offline`: the consumer has no lockfile, so it
+  // needs registry metadata to resolve the packed packages' own dependencies.
+  // A `--frozen-lockfile` install (what CI runs) resolves entirely from the
+  // lockfile and writes no metadata cache, so `--offline` fails there even
+  // though the store is warm. This still prefers the cache when it is present.
   runPnpm(
     consumerDir,
-    ["install", "--ignore-scripts", "--offline", "--config.node-linker=hoisted"],
+    ["install", "--ignore-scripts", "--prefer-offline", "--config.node-linker=hoisted"],
     "Installing packed consumer",
   );
+  assertLocalPackageGraph(consumerDir, packedPackages);
 
   const measurements = {
     base: measureScenario("base", consumerDir, join(temporaryParent, "base")),
@@ -273,6 +330,24 @@ try {
   if (failures.length > 0) {
     throw new Error(`Cloudflare binding bundle gate failed: ${failures.join("; ")}`);
   }
-} finally {
+} catch (error) {
+  primaryError = error;
+}
+
+try {
   rmSync(temporaryParent, { recursive: true, force: true });
+} catch (cleanupError) {
+  if (primaryError) {
+    throw new AggregateError(
+      [primaryError, cleanupError],
+      `Cloudflare binding bundle check and temporary cleanup both failed: ${
+        primaryError instanceof Error ? primaryError.message : String(primaryError)
+      }; cleanup: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+    );
+  }
+  throw cleanupError;
+}
+
+if (primaryError) {
+  throw primaryError;
 }
