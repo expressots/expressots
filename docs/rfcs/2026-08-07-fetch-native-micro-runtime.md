@@ -16,9 +16,14 @@ This RFC proposes inverting the arrangement: a runtime-neutral router whose hand
 `(Request, ctx) => Response`, with Node becoming one adapter among several rather than the
 substrate everything else imitates.
 
-The proposal is backed by a measured prototype rather than estimates. **Read
-[Measured evidence](#measured-evidence) before the design** — it is what the decision should
-rest on.
+The proposal is backed by a measured prototype rather than estimates, and the compatibility cost
+was surveyed rather than guessed. **Read [Measured evidence](#measured-evidence) and
+[Compatibility surface and risk](#compatibility-surface-and-risk) before the design** — they are
+what the decision should rest on.
+
+The short version: 202.08 KiB → 2.45 KiB gzip including an Express compatibility shim,
+`nodejs_compat` no longer required, streaming becomes possible, and the shim covers 100% of the
+Express surface this project ships for about 120 bytes. Recommended as a **v4 minor**.
 
 ## Re-baselining #947
 
@@ -96,11 +101,14 @@ the capability the current architecture cannot provide at any level of patching.
 
 ### What the prototype does not prove
 
-It is roughly 200 lines and is **not** feature-equivalent. It omits Studio agent integration, the
-Express-middleware compatibility path, core's full suggestion engine, and `qs` bracket parsing.
-**2.33 KiB is a floor, not a shipping number.** The honest claim is narrower: the missing pieces
-are bounded and none of them require `node:http`, and the margin to the 100 KB acceptance
-criterion is roughly 40×, so the conclusion survives a large miss.
+It is roughly 200 lines and is **not** feature-equivalent. The Express compatibility shim and
+`qs` parsing were built and measured afterwards — see
+[Compatibility surface and risk](#compatibility-surface-and-risk) — but Studio agent integration
+and core's full suggestion engine remain unbuilt.
+
+**2.33 KiB is a floor, not a shipping number.** The honest claim is narrower: the omissions are
+bounded, none of them requires `node:http`, and the margin to the 100 KB criterion is roughly 40×
+— still 5× with `qs` included — so the conclusion survives a large miss.
 
 ## Goals
 
@@ -193,19 +201,53 @@ least certain section of this RFC.
 The public surface of `micro()` is preserved. The exposure is handlers reaching for Express
 members on `req`/`res` that a fetch-native context does not have:
 
-| Express usage                | Fetch-native equivalent             | Mitigation                           |
-| ---------------------------- | ----------------------------------- | ------------------------------------ |
-| `res.status(201).json(x)`    | `Response.json(x, { status: 201 })` | Compat shim on `ctx`                 |
-| `res.send(...)`              | return the value                    | Compat shim                          |
-| `req.params.id`              | `ctx.params.id`                     | Shim, or accept as breaking          |
-| `req.query.a` with brackets  | `ctx.query` (`URLSearchParams`)     | `qs`-compatible parser, opt-in       |
-| `req.body`                   | `await request.json()`              | Shim populating `ctx.body`           |
-| Arbitrary Express middleware | not portable                        | Node target only; loud error on edge |
+Every `micro()` call site in the repository was surveyed — `templates/micro/` (source, the five
+shipped examples, README) and `examples/13-micro-api/`. The Express surface actually touched is
+**nine members**, and it is a closed set:
 
-The unknown is how many real applications use `res`/`req` directly inside `micro()` handlers
-rather than returning values. The auto-send design encourages returning, which is the reason to
-think exposure is small — but that is a belief, not a measurement, and it should be checked
-against the templates and examples before this is scheduled.
+| Object | Members used                                                  | Occurrences |
+| ------ | ------------------------------------------------------------- | ----------- |
+| `req`  | `body`, `params`, `query`, `method`, `path`, `headers`, `url` | 25          |
+| `res`  | `status`, `json`                                              | 12          |
+
+Nothing else appears. No `res.send`, `res.setHeader`, `res.redirect`, `res.cookie`, `res.locals`,
+`res.end` or `res.write`; no direct stream access; no Express middleware invoked inside a handler.
+
+The distribution matters as much as the total. Route handlers in the default template and in
+`examples/13-micro-api` use **no** `req`/`res` at all — they return values, as the auto-send design
+encourages. The concentration is in two places: `setErrorHandler`, whose documented signature is
+`(err, req, res)` and which every scaffolded project therefore inherits, and the richer
+`templates/micro/examples/*` files that deliberately demonstrate Express-style usage.
+
+### The shim is close to free
+
+A compatibility shim covering all nine members — plus `res.send`, the most likely first omission —
+was implemented and measured against the same prototype:
+
+| Configuration                | gzip      | Delta          |
+| ---------------------------- | --------- | -------------- |
+| Router only                  | 2.33 KiB  | —              |
+| Router + Express compat shim | 2.45 KiB  | **+0.12 KiB**  |
+| Router + shim + `qs`         | 20.51 KiB | **+18.06 KiB** |
+
+The shim costs roughly 120 bytes gzip and was verified on workerd: `res.status(200).json(...)`
+chaining, `req.params`, `req.query` and `req.method` all behave, alongside plain returning
+handlers in the same app.
+
+`qs` costs 18 KiB — eight times the entire router — which answers where it belongs. Even so, the
+maximal configuration is 20.51 KiB gzip: an order of magnitude below today's 202.08 KiB and
+comfortably inside the 100 KB criterion.
+
+### Residual risk
+
+The survey covers the code this project ships and documents, not applications in the wild.
+`RouteHandler` is typed as `express.Request` / `express.Response`, so the _typed_ surface is all of
+Express even though the _used_ surface is nine members. A user who reached for `res.setHeader`
+outside the shimmed set would break.
+
+This is a real but bounded risk, and it is bounded in the right direction: the shim covers
+everything the framework teaches, and anything beyond it keeps working on the Node target, where
+Express remains available.
 
 ## Sequencing
 
@@ -230,29 +272,62 @@ test instead of a field report. The prototype's eight tests are the seed of that
 The bundle gate from #962 already enforces size thresholds in CI and extends to the 100 KB
 criterion directly.
 
-## Open questions
+## Resolved questions
 
-1. **Package name and scope.** `@expressots/micro` is the working name. Should the neutral core
-   also host the gateway, service-mesh and queue modules currently under `micro-api/`, or do
-   those stay Express-bound?
-2. **How far does the compat shim go?** A thin `ctx.res`-like object covering `status`/`json`/
-   `send` would make most handlers portable unchanged, at some bundle cost. Where is the line?
-3. **v4 minor or v5?** Depends entirely on the compatibility survey above.
-4. **Does `qs`-compatible query parsing belong in the core** or as an opt-in import? It is the
-   single largest behavioural difference between `URLSearchParams` and Express.
+The four questions this RFC opened with have been measured rather than left to judgement.
+
+**Scope of the neutral package.** The other `micro-api/` modules are already almost runtime-neutral.
+Of the nine non-test files under `gateway/`, `service-mesh/` and `queue/`, eight import neither
+`express` nor any `node:` builtin. The single exception is `gateway/service-proxy.ts`, which
+imports `Request`, `Response` and `NextFunction` — types only, no runtime dependency. So these
+modules move with the core, and `service-proxy` needs its handler signature swapped rather than a
+rewrite.
+
+**How far the compat shim goes.** All nine members, plus `res.send`. At 120 bytes gzip the
+argument for drawing a tighter line does not survive contact with the measurement.
+
+**Where `qs` belongs.** Opt-in, not core. 18 KiB gzip for bracket-syntax query parsing is eight
+times the router, and the survey found three `req.query` uses, none of which rely on bracket
+syntax. Projects that need Express-identical parsing import it explicitly.
+
+**v4 minor or v5.** **v4 minor.** The shim covers 100% of the Express surface this project ships
+and documents, for ~120 bytes, and `micro()`'s own signature is unchanged. The residual exposure
+described above is real but does not justify holding the work for a major version.
+
+## Remaining decision
+
+One question is genuinely the maintainers' and is not resolvable by measurement:
+
+**Is the residual compatibility risk acceptable?** The survey covers this repository, not user
+applications. Accepting v4 means accepting that a user calling an Express method outside the
+shimmed nine hits a breaking change in a minor release. The mitigations are to ship the shim as
+described, keep the full Express surface working on the Node target, and document the edge
+constraint — but the call is a judgement about the user base, not about the code.
 
 ## Decision requested
 
-Whether to proceed with the extraction as described, and if so whether it targets a v4 minor or
-v5. The measurements establish the payoff is real and large. The judgement call is whether the
-compatibility exposure in `micro()` handlers is small enough to absorb in v4 — which needs the
-survey in the compatibility section before it can be answered responsibly.
+Whether to proceed with the extraction as described, targeting a v4 minor.
+
+The measurements settle the engineering questions: the payoff is large (202.08 KiB → 2.45 KiB
+gzip, `nodejs_compat` no longer required, streaming becomes possible), and the compatibility cost
+is nine members and 120 bytes. What remains is the risk judgement above, plus scheduling against
+the Fastify adapter (#940), which will want the same runtime-neutral routing core and should not
+be designed independently of it.
 
 ## Appendix: reproducing the measurements
 
-- Baseline: the `base` scenario of `pnpm --filter @expressots/adapter-express test:cloudflare:bundle`
-  (added in #962), reported as `baseGzip`.
-- Prototype: `wrangler deploy --dry-run --outdir=dist` against a config with no
-  `compatibility_flags`, gzip reported by Wrangler as `Total Upload`.
-- Builtin list: the same build against `micro()` with `nodejs_compat` removed, collecting the
-  distinct `node:*` packages Wrangler reports as unresolved.
+- **Baseline (202.08 KiB).** The `base` scenario of
+  `pnpm --filter @expressots/adapter-express test:cloudflare:bundle` (added in #962), reported as
+  `baseGzip`.
+- **Prototype variants (2.33 / 2.45 / 20.51 KiB).** `wrangler deploy --dry-run` against configs
+  with no `compatibility_flags`, gzip as reported by Wrangler's `Total Upload`. The three entry
+  points differ only by whether the compat shim and `qs` are imported.
+- **Builtin list (21).** The same build against `micro()` with `nodejs_compat` removed, collecting
+  the distinct `node:*` packages Wrangler reports as unresolved.
+- **Behavioural tests.** `@cloudflare/vitest-pool-workers` 0.20.1 against the prototype: eight
+  tests for the router, two for the compat shim, all on workerd with no `nodejs_compat`.
+- **Compatibility survey.** Every `req.*` and `res.*` member reference under `templates/micro/`
+  and `examples/13-micro-api/`, deduplicated.
+
+The prototype is a throwaway built to answer these questions and is not part of this change. Its
+value is the numbers above; the RFC does not propose merging it.
