@@ -33,8 +33,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.9.6",
-    "publint": "^0.3.0",
-    "turbo": "^2.10.7"
+    "publint": "^0.3.23",
+    "turbo": "^2.10.8"
   },
   "lint-staged": {
     "*.{ts,tsx,json,md,yml,yaml}": [
