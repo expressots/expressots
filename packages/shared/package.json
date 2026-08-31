@@ -79,7 +79,7 @@
     "@commitlint/config-conventional": "19.6.0",
     "@types/express": "^5.0.0",
     "@types/jest": "29.5.13",
-    "@types/node": "20.14.10",
+    "@types/node": "20.19.43",
     "@typescript-eslint/eslint-plugin": "8.25.0",
     "@typescript-eslint/parser": "8.25.0",
     "eslint": "8.57.0",
