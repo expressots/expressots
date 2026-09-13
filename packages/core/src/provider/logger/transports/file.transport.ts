@@ -232,7 +232,7 @@ export class FileTransport implements ILogTransport {
     }
 
     const oldFilePath = join(this.directory, fileToRotate);
-    const newFilename = this.getRotatedFilename(fileToRotate);
+    const newFilename = await this.uniqueRotatedFilename(fileToRotate);
     const newFilePath = join(this.directory, newFilename);
 
     try {
@@ -271,6 +271,37 @@ export class FileTransport implements ILogTransport {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const baseName = filename.replace(".log", "");
     return `${baseName}-${timestamp}.log`;
+  }
+
+  /**
+   * The rotated name carries a millisecond timestamp, and `fs.rename` onto
+   * an existing name silently replaces it. Two rotations inside the same
+   * millisecond (a small maxSize, a burst of large entries, a fast disk)
+   * would therefore drop every line the earlier file held. Probe for the
+   * name, and for its compressed form, and add a sequence suffix until the
+   * name is free.
+   */
+  private async uniqueRotatedFilename(filename: string): Promise<string> {
+    const base = this.getRotatedFilename(filename).replace(/\.log$/, "");
+    for (let sequence = 0; ; sequence++) {
+      const candidate =
+        sequence === 0 ? `${base}.log` : `${base}-${sequence}.log`;
+      const taken =
+        (await this.exists(join(this.directory, candidate))) ||
+        (await this.exists(join(this.directory, `${candidate}.gz`)));
+      if (!taken) {
+        return candidate;
+      }
+    }
+  }
+
+  private async exists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private async compressFile(filePath: string): Promise<void> {
