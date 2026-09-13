@@ -11,8 +11,19 @@ This adapter bridges ExpressoTS Core and Express.js. It provides the HTTP server
 ## Quick Look
 
 ```typescript
-import { ExpressAdapter } from "@expressots/adapter-express";
+import { AppExpress } from "@expressots/adapter-express";
+import { AppContainer, CreateModule, bootstrap } from "@expressots/core";
+import { AppController } from "./app.controller";
 
-const app = await AppFactory.create(App, ExpressAdapter);
-await app.listen(3000, "development");
+export class App extends AppExpress {
+  private readonly container: AppContainer = this.configContainer([
+    CreateModule([AppController]),
+  ]);
+
+  async configureServices(): Promise<void> {
+    // register middleware, interceptors, error handlers
+  }
+}
+
+void bootstrap(App); // starts on process.env.PORT or 3000
 ```

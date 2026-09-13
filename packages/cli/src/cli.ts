@@ -20,6 +20,7 @@ import { templatesCommand } from "./templates";
 import { generateProject } from "./generate";
 import { helpCommand } from "./help/cli";
 import { infoProject } from "./info";
+import { llmsCommand } from "./llms";
 import { createProject } from "./new";
 import { addProviderCMD, removeProviderCMD } from "./providers";
 import { createExternalProviderCMD } from "./providers/create/cli";
@@ -110,6 +111,7 @@ yargs(hideBin(process.argv))
 	.command(studioCommand())
 	.command(openApiCommand())
 	.command(infoProject())
+	.command(llmsCommand())
 	.command(helpCommand())
 	.completion("completion", "Generate a shell completion script (bash/zsh)")
 	.demandCommand(1, "You need at least one command before moving on")
