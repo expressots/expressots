@@ -10,13 +10,19 @@ import os from "os";
 import path, { join } from "path";
 import chalk from "chalk";
 import { CommandModule } from "yargs";
-import { printError, printSuccess } from "../utils/cli-ui";
+import { printError, printInfo, printSuccess } from "../utils/cli-ui";
 import Compiler from "../utils/compiler";
 import {
 	detectPackageManagerOrDefault,
 	getExecCommand,
 } from "../utils/package-manager-commands";
 import { safeSpawn, safeSpawnSync } from "../utils/safe-spawn";
+import {
+	RUNTIMES,
+	RUNTIME_ENV,
+	resolveRuntime,
+	type Runtime,
+} from "../utils/runtime";
 
 /**
  * Resolve a tsconfig.json file with full `extends` chain support.
@@ -133,8 +139,7 @@ function getOutDir(): string {
 
 	const tsconfig = resolveTsConfig(tsconfigBuildPath);
 	const opts = tsconfig.compilerOptions as
-		| Record<string, unknown>
-		| undefined;
+		Record<string, unknown> | undefined;
 	const outDir = opts?.outDir as string | undefined;
 
 	if (!outDir) {
@@ -214,6 +219,21 @@ async function buildDevArgs(): Promise<Array<string>> {
 }
 
 /**
+ * Build the Bun watch arguments for development mode.
+ *
+ * Bun runs TypeScript directly, resolves `tsconfig.json` path aliases
+ * natively and restarts on changes to the imported graph, so the only
+ * flags needed are the watcher itself and keeping prior logs on screen
+ * (the same reason tsx gets `--clear-screen=false`).
+ *
+ * @returns The bun arguments array
+ */
+async function buildBunDevArgs(): Promise<Array<string>> {
+	const { entryPoint, sourceRoot } = await Compiler.loadConfig();
+	return ["--watch", "--no-clear-screen", `./${sourceRoot}/${entryPoint}.ts`];
+}
+
+/**
  * Resolve optional environment overrides for the dev watcher.
  *
  * On networked, virtualized, or cloud-synced filesystems (OneDrive, mapped
@@ -244,7 +264,18 @@ interface DevCommandOptions {
 	container?: boolean;
 	build?: boolean;
 	detach?: boolean;
+	runtime?: string;
 }
+
+/**
+ * Shared `--runtime` option for `dev` and `prod`.
+ */
+const runtimeOption = {
+	alias: "r",
+	type: "string" as const,
+	choices: RUNTIMES as ReadonlyArray<string>,
+	description: `Runtime that launches the app (default: bun when the project uses Bun and it is installed, otherwise node; or set ${RUNTIME_ENV})`,
+};
 
 /**
  * Dev command module
@@ -273,6 +304,7 @@ export const devCommand: CommandModule<object, DevCommandOptions> = {
 			default: false,
 			description: "Run container in background (with --container)",
 		},
+		runtime: runtimeOption,
 	},
 	handler: async (argv) => {
 		if (argv.container) {
@@ -281,7 +313,7 @@ export const devCommand: CommandModule<object, DevCommandOptions> = {
 				detach: argv.detach ?? false,
 			});
 		} else {
-			await runCommand({ command: "dev" });
+			await runCommand({ command: "dev", runtime: argv.runtime });
 		}
 	},
 };
@@ -300,15 +332,25 @@ export const buildCommand: CommandModule<object, object> = {
 };
 
 /**
+ * Prod command options interface
+ */
+interface ProdCommandOptions {
+	runtime?: string;
+}
+
+/**
  * Prod command module
- * @type {CommandModule<object, object>}
+ * @type {CommandModule<object, ProdCommandOptions>}
  * @returns The command module
  */
-export const prodCommand: CommandModule<object, object> = {
+export const prodCommand: CommandModule<object, ProdCommandOptions> = {
 	command: "prod",
 	describe: "Run in production mode.",
-	handler: async () => {
-		await runCommand({ command: "prod" });
+	builder: {
+		runtime: runtimeOption,
+	},
+	handler: async (argv) => {
+		await runCommand({ command: "prod", runtime: argv.runtime });
 	},
 };
 
@@ -527,8 +569,7 @@ const transformPathAliases = async (outDir: string): Promise<void> => {
 
 	const tsconfig = resolveTsConfig(tsconfigPath);
 	const opts = tsconfig.compilerOptions as
-		| Record<string, unknown>
-		| undefined;
+		Record<string, unknown> | undefined;
 	const paths = opts?.paths as Record<string, string[]> | undefined;
 	// `baseUrl` is deprecated in TypeScript 7. When it's omitted the path
 	// targets are resolved relative to the tsconfig file itself, which is
@@ -701,9 +742,8 @@ async function runContainerDev(options: ContainerDevOptions): Promise<void> {
 
 		try {
 			// Import and run containerize
-			const { containerizeProject } = await import(
-				"../containerize/form.js"
-			);
+			const { containerizeProject } =
+				await import("../containerize/form.js");
 			await containerizeProject({
 				target: "docker",
 				environment: "development",
@@ -991,6 +1031,8 @@ function runDockerComposeCommand(
  */
 interface RunCommandOptions {
 	command: string;
+	/** Runtime override from `--runtime`; see {@link resolveRuntime}. */
+	runtime?: string;
 }
 
 /**
@@ -999,20 +1041,35 @@ interface RunCommandOptions {
  */
 export const runCommand = async ({
 	command,
+	runtime: requestedRuntime,
 }: RunCommandOptions): Promise<void> => {
 	const { opinionated, entryPoint, sourceRoot } = await Compiler.loadConfig();
 	const outDir = getOutDir();
 
 	try {
 		switch (command) {
-			case "dev":
-				await execCmd(
-					"tsx",
-					await buildDevArgs(),
-					process.cwd(),
-					buildDevEnv(),
-				);
+			case "dev": {
+				const runtime: Runtime = resolveRuntime(requestedRuntime);
+				if (runtime === "bun") {
+					printInfo(
+						"Running with Bun (project uses Bun). Use --runtime node to run with tsx.",
+						"dev",
+					);
+					await execCmd(
+						"bun",
+						await buildBunDevArgs(),
+						process.cwd(),
+					);
+				} else {
+					await execCmd(
+						"tsx",
+						await buildDevArgs(),
+						process.cwd(),
+						buildDevEnv(),
+					);
+				}
 				break;
+			}
 			case "build":
 				if (!outDir) {
 					printError(
@@ -1042,8 +1099,9 @@ export const runCommand = async ({
 				// matches whatever folder the user configured (the TS
 				// compiler preserves the source tree under `outDir`).
 				const config = [`./${outDir}/${sourceRoot}/${entryPoint}.js`];
+				const runtime: Runtime = resolveRuntime(requestedRuntime);
 				clearScreen();
-				await execCmd("node", config);
+				await execCmd(runtime === "bun" ? "bun" : "node", config);
 				break;
 			}
 			default:
