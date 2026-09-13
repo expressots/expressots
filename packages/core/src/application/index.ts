@@ -10,3 +10,6 @@ export {
   loadEnvSync,
   LoadEnvSyncOptions,
 } from "./bootstrap.js";
+
+// Tombstones for names removed in v4; see removed-apis.ts.
+export { AppFactory } from "./removed-apis.js";

@@ -1,0 +1,45 @@
+# @expressots/core
+
+> ExpressoTS is a TypeScript-first Node.js framework for building server-side
+> applications with dependency injection, built on Express 5. This package is
+> the framework core: DI container, config, middleware, providers, testing.
+
+Requires Node >= 20.19. Ships dual CJS/ESM. Uses legacy TypeScript decorators
+(experimentalDecorators + emitDecoratorMetadata + reflect-metadata).
+
+## Entry points
+
+- `@expressots/core`: main API (bootstrap, AppContainer, decorators, providers)
+- `@expressots/core/testing`: createTestApp, mockProvider, loadTest, matchers
+- `@expressots/core/di`: Container, injectable, inject, scopes (Inversify-compatible)
+- `@expressots/core/render`: EJS/Pug/Handlebars/React render adapters
+- `@expressots/core/path-resolver`: manual path-alias resolution helpers
+
+## Core usage (v4)
+
+```ts
+import { bootstrap } from "@expressots/core";
+import { AppExpress } from "@expressots/adapter-express";
+
+await bootstrap(App); // App extends AppExpress
+```
+
+- Providers: `@provide(ClassName)` class decorator; constructor injection via `@inject`.
+- Modules: `CreateModule([Controller])`; app container wires modules.
+- Config: `expressots.config.ts` typed by `ExpressoConfig` from `@expressots/shared`.
+- Validation: optional peers zod, yup, class-validator; register adapters on
+  `validationRegistry` (e.g. `validationRegistry.register(createZodValidator())`).
+- Testing: `const app = await createTestApp(App)` then fluent `app.request()`.
+
+## Do not use (removed or v3-only)
+
+- `AppFactory` (internal since 4.0; use `bootstrap`)
+- `BaseController`, `IMiddleware`, `ExpressoConfig` imported from core (v3 APIs)
+- `InMemoryDataProvider` (removed; use `InMemoryDBProvider`)
+- `LazyServiceIdentifer` typo alias (removed; use `LazyServiceIdentifier`)
+
+## Docs
+
+- Guides: https://doc.expresso-ts.com
+- Source docs: per-module `.docs/` trees in the repository
+- Changelog: CHANGELOG.md in this package

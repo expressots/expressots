@@ -11,6 +11,10 @@ const COMMAND_GROUPS: HelpGroup[] = [
 			{ name: "build", desc: "Build the project for production" },
 			{ name: "prod", desc: "Run in production mode" },
 			{ name: "info", alias: "i", desc: "Display project information" },
+			{
+				name: "llms",
+				desc: "Print the installed framework's guidance for AI tools",
+			},
 			{ name: "scripts", desc: "Run one or more package scripts" },
 		],
 	},
