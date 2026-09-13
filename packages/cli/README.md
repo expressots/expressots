@@ -54,6 +54,14 @@ expressots dev
 Cloudflare Workers scaffolding is available for the micro template through the
 explicit `--target cloudflare` flag.
 
+### Runtime
+
+`expressots dev` and `expressots prod` launch the app with Bun when the project
+was created with Bun (a `bun.lock` is present) and the `bun` binary is
+installed; otherwise they use Node (`tsx` in dev). Override per invocation with
+`--runtime node|bun`, or for scripts and CI with `EXPRESSOTS_RUNTIME=node|bun`.
+`expressots build` always compiles with `tsc`.
+
 ## Documentation
 
 For guides, API reference, architecture patterns, and examples visit **[doc.expresso-ts.com](https://doc.expresso-ts.com)**.

@@ -176,6 +176,91 @@ describe("runCommand: dev", () => {
 	});
 });
 
+describe("runCommand: runtime selection (#941)", () => {
+	const envBefore = process.env.EXPRESSOTS_RUNTIME;
+	const crossSpawn = jest.requireMock("cross-spawn") as { sync: jest.Mock };
+
+	beforeEach(() => {
+		fs.writeFileSync(
+			path.join(tmpDir, "tsconfig.build.json"),
+			JSON.stringify({ compilerOptions: { outDir: "./dist" } }),
+		);
+		delete process.env.EXPRESSOTS_RUNTIME;
+		crossSpawn.sync.mockReset();
+		spawnMock.mockReturnValue(makeFakeChildProcess(0));
+	});
+
+	afterEach(() => {
+		if (envBefore === undefined) delete process.env.EXPRESSOTS_RUNTIME;
+		else process.env.EXPRESSOTS_RUNTIME = envBefore;
+	});
+
+	function launched(): [string, string[]] {
+		// prod clears the screen first; the app launch is the last spawn.
+		const call = spawnMock.mock.calls[spawnMock.mock.calls.length - 1];
+		return [call[0] as string, call[1] as string[]];
+	}
+
+	it("dev runs bun --watch when the project uses Bun and bun is installed", async () => {
+		fs.writeFileSync(path.join(tmpDir, "bun.lock"), "{}");
+		crossSpawn.sync.mockReturnValue({ status: 0 });
+
+		await runCommand({ command: "dev" });
+
+		const [cmd, args] = launched();
+		expect(cmd).toBe("bun");
+		expect(args).toEqual(["--watch", "--no-clear-screen", "./src/main.ts"]);
+	});
+
+	it("dev keeps tsx when the project uses Bun but bun is not installed", async () => {
+		fs.writeFileSync(path.join(tmpDir, "bun.lock"), "{}");
+		crossSpawn.sync.mockReturnValue({ status: 1 });
+
+		await runCommand({ command: "dev" });
+
+		expect(launched()[0]).toBe("tsx");
+	});
+
+	it("prod runs the compiled entrypoint with bun for a Bun project", async () => {
+		fs.writeFileSync(path.join(tmpDir, "bun.lock"), "{}");
+		crossSpawn.sync.mockReturnValue({ status: 0 });
+
+		await runCommand({ command: "prod" });
+
+		const [cmd, args] = launched();
+		expect(cmd).toBe("bun");
+		expect(args).toHaveLength(1);
+		expect(args[0]).toContain("./dist/src/main.js");
+	});
+
+	it("--runtime node overrides a Bun project for dev", async () => {
+		fs.writeFileSync(path.join(tmpDir, "bun.lock"), "{}");
+		crossSpawn.sync.mockReturnValue({ status: 0 });
+
+		await runCommand({ command: "dev", runtime: "node" });
+
+		expect(launched()[0]).toBe("tsx");
+	});
+
+	it("--runtime node overrides a Bun project for prod", async () => {
+		fs.writeFileSync(path.join(tmpDir, "bun.lock"), "{}");
+		crossSpawn.sync.mockReturnValue({ status: 0 });
+
+		await runCommand({ command: "prod", runtime: "node" });
+
+		expect(launched()[0]).toBe("node");
+	});
+
+	it("EXPRESSOTS_RUNTIME=bun selects bun without a Bun lockfile", async () => {
+		process.env.EXPRESSOTS_RUNTIME = "bun";
+
+		await runCommand({ command: "dev" });
+		expect(launched()[0]).toBe("bun");
+		// Explicit choice: no availability probe.
+		expect(crossSpawn.sync).not.toHaveBeenCalled();
+	});
+});
+
 describe("runCommand: build", () => {
 	beforeEach(() => {
 		fs.writeFileSync(
@@ -234,11 +319,11 @@ describe("runCommand: build", () => {
 
 	it("aborts build when tsconfig.build.json is missing", async () => {
 		fs.unlinkSync(path.join(tmpDir, "tsconfig.build.json"));
-		const exitSpy = jest
-			.spyOn(process, "exit")
-			.mockImplementation(((code?: number) => {
-				throw new Error(`exit:${code}`);
-			}) as never);
+		const exitSpy = jest.spyOn(process, "exit").mockImplementation(((
+			code?: number,
+		) => {
+			throw new Error(`exit:${code}`);
+		}) as never);
 
 		await expect(runCommand({ command: "build" })).rejects.toThrow(
 			/exit:1/,
@@ -248,15 +333,12 @@ describe("runCommand: build", () => {
 	});
 
 	it("aborts build when tsconfig.build.json is malformed", async () => {
-		fs.writeFileSync(
-			path.join(tmpDir, "tsconfig.build.json"),
-			"{not json",
-		);
-		const exitSpy = jest
-			.spyOn(process, "exit")
-			.mockImplementation(((code?: number) => {
-				throw new Error(`exit:${code}`);
-			}) as never);
+		fs.writeFileSync(path.join(tmpDir, "tsconfig.build.json"), "{not json");
+		const exitSpy = jest.spyOn(process, "exit").mockImplementation(((
+			code?: number,
+		) => {
+			throw new Error(`exit:${code}`);
+		}) as never);
 
 		await expect(runCommand({ command: "build" })).rejects.toThrow(
 			/exit:1/,
@@ -270,11 +352,11 @@ describe("runCommand: build", () => {
 			path.join(tmpDir, "tsconfig.build.json"),
 			JSON.stringify({ compilerOptions: {} }),
 		);
-		const exitSpy = jest
-			.spyOn(process, "exit")
-			.mockImplementation(((code?: number) => {
-				throw new Error(`exit:${code}`);
-			}) as never);
+		const exitSpy = jest.spyOn(process, "exit").mockImplementation(((
+			code?: number,
+		) => {
+			throw new Error(`exit:${code}`);
+		}) as never);
 
 		await expect(runCommand({ command: "build" })).rejects.toThrow(
 			/exit:1/,
@@ -305,8 +387,8 @@ describe("runCommand: prod", () => {
 		});
 		expect(nodeCall).toBeDefined();
 		const [, nodeArgs] = nodeCall as [string, string[]];
-		expect(
-			nodeArgs.some((a) => a.includes("./dist/src/main.js")),
-		).toBe(true);
+		expect(nodeArgs.some((a) => a.includes("./dist/src/main.js"))).toBe(
+			true,
+		);
 	});
 });

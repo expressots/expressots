@@ -412,6 +412,21 @@ const SPECS: CommandHelpSpec[] = [
 						"Run container in background",
 						"with --container",
 					),
+					o(
+						"-r, --runtime <node|bun>",
+						"Runtime that launches the app",
+						"default: bun if the project uses Bun and it is installed, else node",
+					),
+				],
+			},
+			{
+				title: "Environment",
+				entries: [
+					o(
+						"EXPRESSOTS_RUNTIME",
+						"Same as --runtime, for scripts and CI",
+						"node | bun",
+					),
 				],
 			},
 		],
