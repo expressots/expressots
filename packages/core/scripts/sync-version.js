@@ -18,14 +18,18 @@ if (!version || typeof version !== "string") {
 const contents = `/**
  * Framework version string surfaced in startup banners and diagnostics.
  *
- * This file is auto-synced from the root \`package.json\` by
- * \`scripts/sync-version.js\` before each build. Do not edit by hand.
+ * Auto-synced from this package's \`package.json\` by
+ * \`packages/core/scripts/sync-version.js\`, which runs before each build and
+ * again during the release version bump. Do not edit by hand.
  */
 export const FRAMEWORK_VERSION = "${version}";
 `;
 
 const current = fs.existsSync(TARGET) ? fs.readFileSync(TARGET, "utf8") : "";
-if (current === contents) {
+// Git may check this generated file out with CRLF on Windows. Compare
+// normalized text so an already-current file is not rewritten with LF and
+// reported as a working-tree modification.
+if (current.replace(/\r\n?/g, "\n") === contents) {
   console.log(`[sync-version] framework-version.ts already at ${version}`);
 } else {
   fs.writeFileSync(TARGET, contents);
