@@ -1,0 +1,15 @@
+# This file makes the fixture its own pnpm root, so an install here never
+# touches the monorepo lockfile, and it is where pnpm 10 reads these settings
+# (the "pnpm" field in package.json is no longer honoured for them).
+
+# Nothing in this fixture may run install scripts. esbuild and workerd ship
+# their binaries as optional dependencies and work without their postinstall.
+ignoredBuiltDependencies:
+  - esbuild
+  - workerd
+
+# Security floors for transitive dependencies whose parents pin below the
+# patched release (see `pnpm audit` here).
+overrides:
+  # wrangler 4.120 resolves sharp below the libheif fix (GHSA-rgj7-g3m4-5g8c)
+  sharp: ">=0.35.4"
