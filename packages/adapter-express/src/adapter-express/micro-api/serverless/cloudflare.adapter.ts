@@ -6,7 +6,9 @@
  * or uses a fetch-based approach.
  */
 
+import type express from "express";
 import qs from "qs";
+import { type CloudflareServices, createCloudflareServices } from "./cloudflare-bindings.js";
 import {
   DEFAULT_MAX_BODY_BYTES,
   isTextualContentType,
@@ -90,12 +92,35 @@ export interface CloudflareContext {
 }
 
 /**
+ * What `cloudflareAdapter` attaches to every request under `req.cloudflare`.
+ */
+export interface CloudflareRequestContext<TEnv extends object = CloudflareEnv> {
+  /** The Worker's bindings and vars for this request. */
+  env: TEnv;
+  /** The Worker's execution context (`waitUntil`, `passThroughOnException`). */
+  ctx: CloudflareContext;
+}
+
+/**
+ * The request a micro route handler receives on Cloudflare Workers.
+ *
+ * Pass it to `micro<CloudflareRequest<Env>>()` so handlers see
+ * `req.cloudflare.env` with the Worker's own `Env` type and can resolve
+ * binding tokens through `req.services`.
+ */
+export interface CloudflareRequest<TEnv extends object = CloudflareEnv> extends express.Request {
+  cloudflare: CloudflareRequestContext<TEnv>;
+  /** Resolves tokens from `cloudflareBindings<Env>()` against this request's `env`. */
+  services: CloudflareServices;
+}
+
+/**
  * Cloudflare Workers Handler Type
  */
-export type CloudflareHandler = {
+export type CloudflareHandler<TEnv extends object = CloudflareEnv> = {
   fetch(
     request: globalThis.Request,
-    env: CloudflareEnv,
+    env: TEnv,
     ctx: CloudflareContext,
   ): Promise<globalThis.Response>;
 };
@@ -150,6 +175,10 @@ export interface CloudflareUploadedFile {
  * export default cloudflareAdapter(app.getApp());
  * ```
  *
+ * Handlers reach the Worker's bindings through `req.cloudflare.env`, or with
+ * typed tokens via `req.services` — see {@link CloudflareRequest} and
+ * `cloudflareBindings()`.
+ *
  * wrangler.toml:
  * ```toml
  * name = "my-worker"
@@ -158,10 +187,10 @@ export interface CloudflareUploadedFile {
  * compatibility_flags = ["nodejs_compat"]
  * ```
  */
-export function cloudflareAdapter(
+export function cloudflareAdapter<TEnv extends object = CloudflareEnv>(
   app: ServerlessApp,
   config?: CloudflareAdapterConfig,
-): CloudflareHandler {
+): CloudflareHandler<TEnv> {
   const expressApp = resolveExpressApp(app);
 
   // Runs at module scope in a Worker, so an unusable middleware stack fails
@@ -174,7 +203,7 @@ export function cloudflareAdapter(
   return {
     async fetch(
       request: globalThis.Request,
-      env: CloudflareEnv,
+      env: TEnv,
       ctx: CloudflareContext,
     ): Promise<globalThis.Response> {
       const url = new URL(request.url);
@@ -275,6 +304,9 @@ export function cloudflareAdapter(
           body,
           get: (name: string) => headers[name.toLowerCase()],
           cloudflare: { env, ctx },
+          // Closes over this request's env only. Binding tokens are shared
+          // across requests; the values they resolve to must not be.
+          services: createCloudflareServices(env),
         };
 
         // Create mock Express-compatible response object.

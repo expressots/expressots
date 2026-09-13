@@ -32,3 +32,48 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+  # Cloudflare binding providers, verified where they run: the acceptance
+  # suite executes inside workerd against Miniflare's KV, D1, R2 and Queue
+  # implementations, and the bundle gate measures what a Worker project
+  # would ship. The fixture is a standalone project so Wrangler and workerd
+  # stay out of the monorepo lockfile and are installed only here.
+  cloudflare-bindings:
+    name: Cloudflare bindings on workerd + bundle gate
+    runs-on: ubuntu-latest
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    defaults:
+      run:
+        working-directory: packages/adapter-express/test/cloudflare-bindings-worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # workerd's tooling requires Node 22; the package itself still
+          # supports Node 20, which the build-and-test matrix covers.
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the adapter and its dependencies
+        working-directory: .
+        run: pnpm --filter @expressots/adapter-express... build
+
+      - name: Install fixture (standalone lockfile, no install scripts)
+        run: pnpm install --frozen-lockfile --ignore-workspace
+
+      - name: Type-check fixture
+        run: pnpm typecheck
+
+      - name: Bindings acceptance suite on workerd
+        run: pnpm test
+
+      - name: Bundle gate
+        run: pnpm measure

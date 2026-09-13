@@ -1,0 +1,39 @@
+# Worker under test for the cloudflareBindings() acceptance suite.
+# Every binding kind the provider supports is declared here so the suite
+# exercises real workerd implementations of KV, D1, R2 and Queues.
+name = "expressots-cloudflare-bindings-fixture"
+main = "src/worker.ts"
+compatibility_date = "2026-07-29"
+compatibility_flags = ["nodejs_compat"]
+
+# express -> body-parser -> iconv-lite would bundle ~485 KiB of encoding
+# tables. Body parsing is disabled on Workers, so the module is stubbed.
+[alias]
+"iconv-lite" = "./src/shims/iconv-lite.cjs"
+# Not installed in Worker projects; see the shim for why the alias is needed here.
+"@expressots/studio-agent" = "./src/shims/studio-agent-absent.mjs"
+
+[[kv_namespaces]]
+binding = "SETTINGS"
+id = "00000000000000000000000000000001"
+
+[[kv_namespaces]]
+binding = "QUEUE_RESULTS"
+id = "00000000000000000000000000000002"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "expressots-bindings-fixture"
+database_id = "00000000-0000-0000-0000-000000000001"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "expressots-bindings-fixture"
+
+[[queues.producers]]
+binding = "JOBS"
+queue = "expressots-bindings-jobs"
+
+[[queues.consumers]]
+queue = "expressots-bindings-jobs"
+max_batch_timeout = 1
