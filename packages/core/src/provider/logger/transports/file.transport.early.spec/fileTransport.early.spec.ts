@@ -18,6 +18,7 @@ describe("FileTransport", () => {
   });
 
   afterEach(async () => {
+    jest.restoreAllMocks();
     // Clean up
     if (transport) {
       await transport.close();
@@ -205,10 +206,51 @@ describe("FileTransport", () => {
         });
       }
 
-      // Assert
+      // Assert: every entry exceeds maxSize, so every write is followed by a
+      // rotation and each rotated file holds exactly one entry.
       const files = await fs.readdir(testDir);
-      // Should have rotated files
-      expect(files.length).toBeGreaterThan(1);
+      expect(files).toHaveLength(5);
+    });
+
+    it("keeps every rotated file when rotations happen in the same millisecond", async () => {
+      // Arrange: freeze the clock so every rotated name gets the same
+      // timestamp. Before the sequence suffix, each rename replaced the
+      // previous rotated file and its log lines were lost.
+      jest
+        .spyOn(Date.prototype, "toISOString")
+        .mockReturnValue("2026-09-13T03:57:40.123Z");
+      transport = new FileTransport({
+        directory: testDir,
+        maxSize: 100,
+      });
+      // Plain words: a long run of one character looks like a secret to
+      // the production formatter's redaction and would be masked.
+      const longMessage = "rotate me ".repeat(20);
+
+      // Act
+      for (let i = 0; i < 4; i++) {
+        await transport.log({
+          level: LogLevel.INFO,
+          message: `${longMessage} ${i}`,
+          timestamp: new Date(),
+        });
+      }
+
+      // Assert: four distinct files, and all four entries survived.
+      const files = (await fs.readdir(testDir)).sort();
+      expect(files).toHaveLength(4);
+      expect(new Set(files).size).toBe(4);
+      expect(files.filter((f) => /-\d\.log$/.test(f))).toHaveLength(3);
+      const contents = await Promise.all(
+        files.map((f) => fs.readFile(join(testDir, f), "utf8")),
+      );
+      const entries = contents.flatMap((c) => c.split("\n").filter(Boolean));
+      expect(entries).toHaveLength(4);
+      for (let i = 0; i < 4; i++) {
+        expect(
+          entries.some((line) => line.includes(`${longMessage} ${i}`)),
+        ).toBe(true);
+      }
     });
 
     it("should handle write errors gracefully", async () => {

@@ -72,7 +72,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix --cache --cache-location node_modules/.cache/eslint/"
   },
   "overrides": {
-    "js-yaml": "4.2.0"
+    "js-yaml": "4.3.2"
   },
   "devDependencies": {
     "@commitlint/cli": "19.6.0",

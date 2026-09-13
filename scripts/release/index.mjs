@@ -398,6 +398,22 @@ async function versionStage(currentVersion) {
 
   const pinned = syncPinnedVersions(newVersion);
   if (pinned.length) record("version", `templates/examples pinned to v${newVersion}`, "pass", `${pinned.length} package.json file(s)`);
+
+  // Stage 2 built core while package.json still held v${currentVersion}, and
+  // stage 6 publishes straight from dist/ without rebuilding, so the
+  // FRAMEWORK_VERSION baked into the tarball would be one release behind.
+  // Core's build regenerates src/framework-version.ts from package.json
+  // before compiling; running it here after the bump fixes the published
+  // banner and lands the regenerated source in this release commit instead
+  // of leaving it as a stray diff in the next contributor's build.
+  // (--publish-only skips this stage: there stage 2 already built the bumped
+  // version.)
+  const rebuilt = check("version", `core rebuilt at v${newVersion} (framework-version.ts re-synced)`, "pnpm --filter @expressots/core build");
+  if (!rebuilt) {
+    console.log(c.red("  Core failed to build after the version bump. Nothing was committed; inspect the tree, then `git checkout .` to undo the bump."));
+    return null;
+  }
+
   sh("git add -A");
   sh(`git commit -m "chore(release): v${newVersion}"`, { stdio: ["ignore", "pipe", "pipe"] });
   record("version", `bumped to v${newVersion} and committed`, "pass", `changelogs updated`);
