@@ -42,9 +42,7 @@ import { AppContainer, CreateModule, bootstrap } from "@expressots/core";
 import { AppController } from "./app.controller";
 
 export class App extends AppExpress {
-  private readonly container: AppContainer = this.configContainer([
-    CreateModule([AppController]),
-  ]);
+  private readonly container: AppContainer = this.configContainer([CreateModule([AppController])]);
 
   async configureServices(): Promise<void> {
     // register middleware, interceptors, error handlers
@@ -64,7 +62,46 @@ void bootstrap(App); // starts on process.env.PORT or 3000
 
 ## Preview modules
 
-The `micro-api` module (gateway, service-mesh, serverless, queue) is preview quality: its APIs may change and it is not yet covered by the test suite. Use it for experimentation, not production-critical paths.
+The `micro-api` module (gateway, service-mesh, serverless, queue) is preview quality: its APIs may change. Use it for experimentation, not production-critical paths.
+
+### Cloudflare binding providers
+
+On Cloudflare Workers, a micro app can resolve its bindings (KV, D1, R2, Queues) through typed tokens instead of reading `env` by name in every handler:
+
+```ts
+import {
+  cloudflareAdapter,
+  cloudflareBindings,
+  type CloudflareRequest,
+  micro,
+} from "@expressots/adapter-express";
+
+interface Env {
+  SETTINGS: KVNamespace;
+  DB: D1Database;
+}
+
+const bindings = cloudflareBindings<Env>();
+const Settings = bindings.kv("SETTINGS");
+const Database = bindings.d1("DB");
+
+const app = micro<CloudflareRequest<Env>>({ showBanner: false, studio: { enabled: false } });
+
+app.get("/theme", async (req) => ({
+  theme: await req.services.get(Settings).get("theme"),
+}));
+
+app.get("/items", (req) => req.services.get(Database).prepare("SELECT * FROM items").all());
+
+export default cloudflareAdapter<Env>(app);
+```
+
+- `bindings.kv`, `bindings.d1`, `bindings.r2` and `bindings.queue` return frozen tokens, memoized by kind and name. Tokens carry only a name and a kind, so creating them at module scope is safe on Workers.
+- `req.services.get(token)` reads the binding from the current request's `env` every time; nothing is cached across requests. `req.services.has(token)` reports whether the binding is present. `req.cloudflare.env` remains available for direct access.
+- A binding absent from `env` raises `CloudflareBindingNotFoundError` (`code: "EXPRESSOTS_CLOUDFLARE_BINDING_NOT_FOUND"`), which flows through the app's error handler like any other error. Inherited object properties such as `toString` are never treated as bindings.
+- Binding kinds are matched structurally against Cloudflare's runtime interfaces (for example, a KV namespace is recognised by `getWithMetadata`). With an explicit `Env`, each factory accepts only the names whose value matches its kind, and a value matching more than one kind is rejected as ambiguous. Without an `Env` type, any string is accepted, for applications whose bindings are configured dynamically.
+
+The providers are verified inside workerd against Miniflare's KV, D1, R2 and Queue implementations, and a bundle gate keeps their cost under 1 KiB gzip; both run in CI from `test/cloudflare-bindings-worker`.
 
 ## Documentation
 
@@ -84,4 +121,3 @@ Welcome to the ExpressoTS community. See the [Contributing Guide](https://github
 ## License
 
 MIT. See [LICENSE](./LICENSE.md).
-
