@@ -66,8 +66,11 @@ jobs:
         working-directory: .
         run: pnpm --filter @expressots/adapter-express... build
 
+      # The fixture carries its own pnpm-workspace.yaml, so pnpm treats it as
+      # a separate root: its lockfile, script policy and overrides apply here
+      # and the monorepo lockfile is never touched.
       - name: Install fixture (standalone lockfile, no install scripts)
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        run: pnpm install --frozen-lockfile
 
       - name: Type-check fixture
         run: pnpm typecheck
