@@ -62,9 +62,9 @@ route suggestions. It was bundled with Wrangler 4.118 and executed on workerd.
 | Additional shims           | `iconv-lite` alias | none           |
 | Streaming                  | impossible         | works          |
 
-The 202.08 KiB baseline is the `base` scenario of the bundle gate added in #962, measured in CI
-on the Node 22 leg. The prototype figure is `wrangler deploy --dry-run` on a config with **no**
-`compatibility_flags`.
+The 202.08 KiB baseline is `wrangler deploy --dry-run` against the micro Worker scaffold as it
+ships after #961, whose own measurements report the same figure (202.14 KiB gzip). The prototype
+figure is `wrangler deploy --dry-run` on a config with **no** `compatibility_flags`.
 
 ### The `nodejs_compat` requirement is broader than #947 states
 
@@ -207,8 +207,8 @@ shipped examples, README) and `examples/13-micro-api/`. The Express surface actu
 
 | Object | Members used                                                  | Occurrences |
 | ------ | ------------------------------------------------------------- | ----------- |
-| `req`  | `body`, `params`, `query`, `method`, `path`, `headers`, `url` | 25          |
-| `res`  | `status`, `json`                                              | 12          |
+| `req`  | `body`, `params`, `query`, `method`, `path`, `headers`, `url` | 28          |
+| `res`  | `status`, `json`                                              | 13          |
 
 Nothing else appears. No `res.send`, `res.setHeader`, `res.redirect`, `res.cookie`, `res.locals`,
 `res.end` or `res.write`; no direct stream access; no Express middleware invoked inside a handler.
@@ -252,8 +252,8 @@ appears only in `expressots/*` repositories. The third-party projects that do de
 `nicktsan/backend_expressots_unopionated`, `pyr3-dev/expressots-backend`, `reidn3r/picpay-expressots`
 — all use the full `AppExpress` framework with controllers and DI, which this RFC does not touch.
 
-**This is evidence, not proof.** `@expressots/adapter-express` sees roughly 1.9M npm downloads a
-month, so users exist; their code is simply private or not indexed. Code search covers public
+**This is evidence, not proof.** `@expressots/adapter-express` sees roughly 1.5–2M npm downloads
+a month, so users exist; their code is simply private or not indexed. Code search covers public
 default branches only. The honest reading is that no public `micro()` adopter would be affected,
 and that private exposure cannot be measured from here.
 
@@ -281,8 +281,9 @@ central mechanism rather than a final check. The same spec file runs twice: once
 adapter, once on workerd via `@cloudflare/vitest-pool-workers`. Divergence becomes a failing
 test instead of a field report. The prototype's eight tests are the seed of that suite.
 
-The bundle gate from #962 already enforces size thresholds in CI and extends to the 100 KB
-criterion directly.
+A CI bundle gate that measures the Worker bundle and fails on regression does not exist on
+`main` yet. It should land with step 1 so the 100 KB criterion is enforced rather than checked by
+hand.
 
 ## Resolved questions
 
@@ -312,7 +313,7 @@ One question is genuinely the maintainers' and cannot be closed by measurement:
 
 **Is the residual compatibility risk acceptable?** Two surveys bound it — nine members used across
 this repository, and no public third-party `micro()` source anywhere on GitHub. Neither can see
-private code, and ~1.9M monthly downloads say users exist. Accepting v4 means accepting that a
+private code, and well over a million monthly downloads say users exist. Accepting v4 means accepting that a
 user calling an Express method outside the shimmed nine hits a breaking change in a minor release,
 with no public example of such a user having been found.
 
@@ -332,9 +333,9 @@ be designed independently of it.
 
 ## Appendix: reproducing the measurements
 
-- **Baseline (202.08 KiB).** The `base` scenario of
-  `pnpm --filter @expressots/adapter-express test:cloudflare:bundle` (added in #962), reported as
-  `baseGzip`.
+- **Baseline (202.08 KiB).** `wrangler deploy --dry-run` against a micro Worker scaffolded by
+  the CLI's Cloudflare target, gzip as reported by Wrangler's `Total Upload`. #961 reports
+  202.14 KiB gzip for the same build.
 - **Prototype variants (2.33 / 2.45 / 20.51 KiB).** `wrangler deploy --dry-run` against configs
   with no `compatibility_flags`, gzip as reported by Wrangler's `Total Upload`. The three entry
   points differ only by whether the compat shim and `qs` are imported.
@@ -342,8 +343,10 @@ be designed independently of it.
   the distinct `node:*` packages Wrangler reports as unresolved.
 - **Behavioural tests.** `@cloudflare/vitest-pool-workers` 0.20.1 against the prototype: eight
   tests for the router, two for the compat shim, all on workerd with no `nodejs_compat`.
-- **Compatibility survey.** Every `req.*` and `res.*` member reference under `templates/micro/`
-  and `examples/13-micro-api/`, deduplicated.
+- **Compatibility survey.** Every `req.*` and `res.*` member reference in `.ts` and `.md` files
+  under `templates/micro/` and `examples/13-micro-api/`, excluding `node_modules`:
+  `grep -rhoE '\b(req|res)\.[a-zA-Z]+\b' --include='*.ts' --include='*.md'`, counted with
+  `sort | uniq -c`.
 
 The prototype is a throwaway built to answer these questions and is not part of this change. Its
 value is the numbers above; the RFC does not propose merging it.
