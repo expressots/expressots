@@ -22,12 +22,12 @@ const app = micro<CloudflareRequest<Env>>({
 });
 
 app.put("/kv/:key", async (req, res) => {
-  await req.services.get(Settings).put(req.params.key, String(req.body));
+  await req.services.get(Settings).put(String(req.params.key), String(req.body));
   res.status(204).end();
 });
 
 app.get("/kv/:key", async (req, res) => {
-  const value = await req.services.get(Settings).get(req.params.key);
+  const value = await req.services.get(Settings).get(String(req.params.key));
   if (value === null) {
     res.status(404).end();
     return;
@@ -47,12 +47,12 @@ app.post("/d1/items", async (req) => {
 });
 
 app.put("/r2/:key", async (req, res) => {
-  await req.services.get(Files).put(req.params.key, String(req.body));
+  await req.services.get(Files).put(String(req.params.key), String(req.body));
   res.status(204).end();
 });
 
 app.get("/r2/:key", async (req, res) => {
-  const object = await req.services.get(Files).get(req.params.key);
+  const object = await req.services.get(Files).get(String(req.params.key));
   if (object === null) {
     res.status(404).end();
     return;
@@ -61,12 +61,12 @@ app.get("/r2/:key", async (req, res) => {
 });
 
 app.post("/jobs/:key", async (req, res) => {
-  await req.services.get(Jobs).send({ key: req.params.key, value: String(req.body) });
+  await req.services.get(Jobs).send({ key: String(req.params.key), value: String(req.body) });
   res.status(202).end();
 });
 
 app.get("/jobs/:key", async (req, res) => {
-  const value = await req.services.get(QueueResults).get(req.params.key);
+  const value = await req.services.get(QueueResults).get(String(req.params.key));
   if (value === null) {
     res.status(404).end();
     return;
@@ -76,7 +76,7 @@ app.get("/jobs/:key", async (req, res) => {
 
 // Binding presence is per request: `has()` answers from this request's env.
 app.get("/has/:name", (req) => ({
-  present: req.services.has(cloudflareBindings().kv(req.params.name)),
+  present: req.services.has(cloudflareBindings().kv(String(req.params.name))),
 }));
 
 const adapter = cloudflareAdapter<Env>(app);
@@ -89,4 +89,4 @@ export default {
       message.ack();
     }
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Env, QueueJob>;
