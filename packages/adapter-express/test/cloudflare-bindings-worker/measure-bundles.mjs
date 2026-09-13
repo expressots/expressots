@@ -89,7 +89,9 @@ function build(name, entry) {
     files: files.map((file) => ({ file: file.slice(here.length + 1), bytes: statSync(file).size })),
     rawBytes: buffers.reduce((total, buffer) => total + buffer.byteLength, 0),
     gzipBytes: buffers.reduce((total, buffer) => total + gzipSync(buffer).byteLength, 0),
-    includesAppExpress: buffers.some((buffer) => buffer.includes("AppExpress")),
+    // The class declaration, not the bare name: error messages and comments
+    // may legitimately mention AppExpress without the DI stack being bundled.
+    includesAppExpress: buffers.some((buffer) => /\bclass AppExpress\b/.test(buffer.toString("utf8"))),
   };
 }
 

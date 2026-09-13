@@ -36,7 +36,9 @@ export const AppFactory: {
    * @deprecated Removed in v4. Use `await bootstrap(App)` from `@expressots/core`.
    */
   create(...args: Array<AppFactoryRemoved>): never;
-} = Object.freeze({
+  // Pure: bundlers drop the tombstone entirely when nothing imports it, so
+  // it costs Worker and browser bundles nothing.
+} = /* @__PURE__ */ Object.freeze({
   create(): never {
     throw new Error(APP_FACTORY_REMOVED);
   },
