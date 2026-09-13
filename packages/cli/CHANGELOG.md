@@ -1,5 +1,25 @@
 # @expressots/cli
 
+## 4.3.0
+
+### Minor Changes
+
+- f7592b3: Add `expressots llms`, which prints the installed `@expressots/core` package's
+  `llms.txt` (guidance for AI coding tools, including the v3 names removed in
+  v4) so it matches the version the project actually uses. `--package` selects
+  another package.
+- f1a3ae4: `expressots dev` and `expressots prod` run the app with Bun when the project
+  uses Bun (a `bun.lock` is present) and the `bun` binary is installed:
+  `bun --watch` in dev, `bun <compiled entrypoint>` in prod. Node remains the
+  default otherwise. Override with `--runtime node|bun` or
+  `EXPRESSOTS_RUNTIME`.
+- Release v4.3.0
+
+### Patch Changes
+
+- Updated dependencies
+    - @expressots/shared@4.3.0
+
 ## 4.2.1
 
 ### Patch Changes

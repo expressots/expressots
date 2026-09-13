@@ -1,5 +1,16 @@
 # @expressots/studio
 
+## 4.3.0
+
+### Minor Changes
+
+- Release v4.3.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @expressots/studio-agent@4.3.0
+
 ## 4.2.1
 
 ### Patch Changes

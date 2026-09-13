@@ -1,5 +1,29 @@
 # @expressots/core
 
+## 4.3.0
+
+### Minor Changes
+
+- f7592b3: Help AI coding tools land on the v4 API.
+
+  - `AppFactory` is exported again as a compile-time tombstone: any call to
+    `AppFactory.create()` fails to compile with a message that names the
+    replacement, `await bootstrap(App)`, and throws the same message at runtime.
+    It is marked `@deprecated` and will be removed in v5.
+  - `llms.txt` now actually ships in the package. It was listed in `files` but
+    lived outside the package directory, so 4.2.1 published without it.
+
+- Release v4.3.0
+
+### Patch Changes
+
+- 834c930: FileTransport no longer loses log lines when two size-based rotations happen
+  within the same millisecond. Rotated filenames now receive a sequence suffix
+  when the timestamped name (or its `.gz` form) already exists, instead of
+  renaming over the earlier rotated file.
+- Updated dependencies
+  - @expressots/shared@4.3.0
+
 ## 4.2.1
 
 ### Patch Changes

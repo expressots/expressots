@@ -5,4 +5,4 @@
  * `packages/core/scripts/sync-version.js`, which runs before each build and
  * again during the release version bump. Do not edit by hand.
  */
-export const FRAMEWORK_VERSION = "4.2.1";
+export const FRAMEWORK_VERSION = "4.3.0";

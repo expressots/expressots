@@ -1,5 +1,34 @@
 # @expressots/adapter-express
 
+## 4.3.0
+
+### Minor Changes
+
+- 72721b3: Add typed Cloudflare binding providers to the micro API.
+
+  `cloudflareBindings<Env>()` creates tokens for KV, D1, R2 and Queue bindings
+  that route handlers resolve with `req.services.get(token)`, typed from the
+  Worker's own `Env`. `micro()` and `cloudflareAdapter()` accept the request
+  type as a generic (`micro<CloudflareRequest<Env>>()`), so handlers see
+  `req.cloudflare.env` and `req.services` without casts. Values are resolved
+  from the current request's environment on every call; nothing is cached at
+  module scope. A binding missing from the environment raises
+  `CloudflareBindingNotFoundError` with a stable `code`.
+
+- Release v4.3.0
+
+### Patch Changes
+
+- a983f25: The port-conflict recovery in `AppExpress` no longer builds shell command
+  strings. Port lookup and process termination run through `execFile` argument
+  arrays (and `process.kill` on POSIX), the port is validated first, and on
+  Windows only the local-address column of `netstat` is matched.
+- Updated dependencies [f7592b3]
+- Updated dependencies [834c930]
+- Updated dependencies
+  - @expressots/core@4.3.0
+  - @expressots/shared@4.3.0
+
 ## 4.2.1
 
 ### Patch Changes
