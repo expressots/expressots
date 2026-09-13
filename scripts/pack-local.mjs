@@ -19,23 +19,45 @@
  * tarballs, pins the transitive ones so a published copy cannot sneak back
  * in, and reinstalls with whichever package manager the project uses.
  */
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+/**
+ * Run a command with an argv array and fail like execSync would. Windows
+ * package-manager shims are .cmd files, which need the shell to launch; the
+ * argv is still passed as a list, not interpolated into a command string.
+ */
+function run(file, args, options) {
+  const result = spawnSync(file, args, {
+    ...options,
+    shell: process.platform === "win32",
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0)
+    throw new Error(`${file} ${args.join(" ")} exited with ${result.status}`);
+  return result;
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEST = path.join(ROOT, ".local-packs");
 
 const args = process.argv.slice(2);
-const linkIndex = args.findIndex((a) => a === "--link" || a.startsWith("--link="));
+const linkIndex = args.findIndex(
+  (a) => a === "--link" || a.startsWith("--link="),
+);
 let linkTarget = null;
 if (linkIndex !== -1) {
   const arg = args[linkIndex];
-  linkTarget = arg.includes("=") ? arg.slice(arg.indexOf("=") + 1) : args[linkIndex + 1];
+  linkTarget = arg.includes("=")
+    ? arg.slice(arg.indexOf("=") + 1)
+    : args[linkIndex + 1];
   if (!linkTarget) {
-    console.error("  --link needs a project directory: pack:local --link ../my-app");
+    console.error(
+      "  --link needs a project directory: pack:local --link ../my-app",
+    );
     process.exit(1);
   }
   linkTarget = path.resolve(process.cwd(), linkTarget);
@@ -46,9 +68,13 @@ const pmIndex = args.findIndex((a) => a === "--pm" || a.startsWith("--pm="));
 let forcedPackageManager = null;
 if (pmIndex !== -1) {
   const arg = args[pmIndex];
-  forcedPackageManager = arg.includes("=") ? arg.slice(arg.indexOf("=") + 1) : args[pmIndex + 1];
+  forcedPackageManager = arg.includes("=")
+    ? arg.slice(arg.indexOf("=") + 1)
+    : args[pmIndex + 1];
   if (!SUPPORTED_PACKAGE_MANAGERS.includes(forcedPackageManager)) {
-    console.error(`  --pm must be one of: ${SUPPORTED_PACKAGE_MANAGERS.join(", ")}`);
+    console.error(
+      `  --pm must be one of: ${SUPPORTED_PACKAGE_MANAGERS.join(", ")}`,
+    );
     process.exit(1);
   }
 }
@@ -70,7 +96,9 @@ for (const group of groups) {
       console.log(`  skip ${pkg.name} (private)`);
       continue;
     }
-    execSync(`pnpm pack --pack-destination ${JSON.stringify(DEST)}`, {
+    // Argument array, no shell: DEST comes from the environment/argv and
+    // must never be interpreted as shell syntax.
+    run("pnpm", ["pack", "--pack-destination", DEST], {
       cwd: pkgDir,
       stdio: ["ignore", "ignore", "inherit"],
     });
@@ -91,7 +119,9 @@ if (linkTarget) {
   console.log(
     `\nScaffold with the packed CLI (local templates, no GitHub tag needed):`,
   );
-  const cliTgz = fs.readdirSync(DEST).find((f) => f.startsWith("expressots-cli-"));
+  const cliTgz = fs
+    .readdirSync(DEST)
+    .find((f) => f.startsWith("expressots-cli-"));
   if (cliTgz) {
     console.log(
       `  EXPRESSOTS_TEMPLATE_REF=main npx --yes ${path.join(DEST, cliTgz)} new my-test-app`,
@@ -124,8 +154,11 @@ function buildTarballMap() {
 
     // expressots-adapter-express-4.1.1.tgz -> @expressots/adapter-express
     const withoutExt = file.slice(0, -".tgz".length);
-    const name = withoutExt.replace(/^expressots-/, "").replace(/-\d[\d.]*.*$/, "");
-    const packageName = name === "expressots" ? "expressots" : `@expressots/${name}`;
+    const name = withoutExt
+      .replace(/^expressots-/, "")
+      .replace(/-\d[\d.]*.*$/, "");
+    const packageName =
+      name === "expressots" ? "expressots" : `@expressots/${name}`;
 
     const linkedName = `${withoutExt}-linked-${hash}.tgz`;
     const linkedPath = path.join(DEST, linkedName);
@@ -149,7 +182,10 @@ function detectPackageManager(dir, pkg) {
     if (SUPPORTED_PACKAGE_MANAGERS.includes(name)) return name;
   }
 
-  if (fs.existsSync(path.join(dir, "bun.lock")) || fs.existsSync(path.join(dir, "bun.lockb")))
+  if (
+    fs.existsSync(path.join(dir, "bun.lock")) ||
+    fs.existsSync(path.join(dir, "bun.lockb"))
+  )
     return "bun";
   if (fs.existsSync(path.join(dir, "pnpm-lock.yaml"))) return "pnpm";
   if (fs.existsSync(path.join(dir, "yarn.lock"))) return "yarn";
@@ -180,7 +216,9 @@ function linkProject(dir) {
   try {
     pkg = JSON.parse(raw);
   } catch (error) {
-    console.error(`\n  --link: ${manifestPath} is not valid JSON (${error.message})`);
+    console.error(
+      `\n  --link: ${manifestPath} is not valid JSON (${error.message})`,
+    );
     process.exit(1);
   }
 
@@ -201,7 +239,9 @@ function linkProject(dir) {
   }
 
   if (linked.length === 0) {
-    console.error(`\n  --link: ${dir} has no @expressots/* dependencies to link`);
+    console.error(
+      `\n  --link: ${dir} has no @expressots/* dependencies to link`,
+    );
     process.exit(1);
   }
 
@@ -241,9 +281,11 @@ function linkProject(dir) {
   console.log(`\nInstalling with ${packageManager}...`);
 
   try {
-    execSync(`${packageManager} install`, { cwd: dir, stdio: "inherit" });
+    run(packageManager, ["install"], { cwd: dir, stdio: "inherit" });
   } catch {
-    console.error(`\n  ${packageManager} install failed. Fix the errors above and rerun.`);
+    console.error(
+      `\n  ${packageManager} install failed. Fix the errors above and rerun.`,
+    );
     process.exit(1);
   }
 
@@ -253,17 +295,27 @@ function linkProject(dir) {
 
 function writePnpmOverrides(dir, overrides) {
   const workspacePath = path.join(dir, "pnpm-workspace.yaml");
-  const existing = fs.existsSync(workspacePath) ? fs.readFileSync(workspacePath, "utf8") : "";
+  const existing = fs.existsSync(workspacePath)
+    ? fs.readFileSync(workspacePath, "utf8")
+    : "";
 
   // Replace a previous block rather than appending a second `overrides:` key,
   // which would make the YAML invalid.
-  const withoutOverrides = existing.replace(/^overrides:\n(?:[ \t]+.*\n?)*/m, "");
+  const withoutOverrides = existing.replace(
+    /^overrides:\n(?:[ \t]+.*\n?)*/m,
+    "",
+  );
   const block = [
     "overrides:",
-    ...Object.entries(overrides).map(([name, spec]) => `  "${name}": "${spec}"`),
+    ...Object.entries(overrides).map(
+      ([name, spec]) => `  "${name}": "${spec}"`,
+    ),
     "",
   ].join("\n");
 
-  const separator = withoutOverrides.length === 0 || withoutOverrides.endsWith("\n") ? "" : "\n";
+  const separator =
+    withoutOverrides.length === 0 || withoutOverrides.endsWith("\n")
+      ? ""
+      : "\n";
   fs.writeFileSync(workspacePath, `${withoutOverrides}${separator}${block}`);
 }

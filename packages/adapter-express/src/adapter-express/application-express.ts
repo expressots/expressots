@@ -5,7 +5,7 @@ import { Server as HTTPServer } from "http";
 // Jest's CJS VM cannot execute without --experimental-vm-modules, which
 // made createTestApp() — and therefore the default scaffold's own test
 // suite — fail for every user.
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import * as net from "node:net";
 import { promisify } from "node:util";
 import * as logBuffer from "./log-buffer.js";
@@ -928,52 +928,58 @@ export class AppExpress implements Server.IWebServer {
 
   /**
    * Kill the process using a specific port.
+   *
+   * Every external command runs through `execFile` with an argument array,
+   * never through a shell, and the port is validated before use, so nothing
+   * from the environment can be interpreted as shell syntax. On POSIX the
+   * kill itself is `process.kill`, with no external command at all.
    * @private
    */
   private async killProcessOnPort(port: number): Promise<boolean> {
-    const execAsync = promisify(exec);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      return false;
+    }
+
+    const execFileAsync = promisify(execFile);
+    const ownPid = String(process.pid);
 
     try {
+      let pids: Array<string>;
+
       if (process.platform === "win32") {
-        // Windows: Find PID using netstat and kill it
-        const { stdout } = await execAsync(`netstat -ano | findstr :${port} | findstr LISTENING`);
-        const lines = stdout.trim().split("\n");
-
-        for (const line of lines) {
-          const parts = line.trim().split(/\s+/);
-          const pid = parts[parts.length - 1];
-
-          if (pid && pid !== String(process.pid) && /^\d+$/.test(pid)) {
-            try {
-              await execAsync(`taskkill /F /PID ${pid}`);
-              return true;
-            } catch {
-              // Process might have already exited
-            }
-          }
-        }
+        // netstat prints "TCP <local> <remote> LISTENING <pid>"; match the
+        // local address column exactly rather than any substring of ":port".
+        const { stdout } = await execFileAsync("netstat", ["-ano"]);
+        pids = stdout
+          .split("\n")
+          .map((line) => line.trim().split(/\s+/))
+          .filter(
+            (parts) =>
+              parts.length >= 5 && parts[1].endsWith(`:${port}`) && parts[3] === "LISTENING",
+          )
+          .map((parts) => parts[parts.length - 1]);
       } else {
-        // Linux/Mac: Use lsof to find PID and kill it
-        try {
-          const { stdout } = await execAsync(`lsof -ti:${port}`);
-          const pids = stdout.trim().split("\n").filter(Boolean);
+        const { stdout } = await execFileAsync("lsof", ["-ti", `:${port}`]);
+        pids = stdout.trim().split("\n");
+      }
 
-          for (const pid of pids) {
-            if (pid !== String(process.pid)) {
-              try {
-                await execAsync(`kill -9 ${pid}`);
-                return true;
-              } catch {
-                // Process might have already exited
-              }
-            }
+      for (const pid of pids) {
+        if (!/^\d+$/.test(pid) || pid === ownPid) {
+          continue;
+        }
+        try {
+          if (process.platform === "win32") {
+            await execFileAsync("taskkill", ["/F", "/PID", pid]);
+          } else {
+            process.kill(Number(pid), "SIGKILL");
           }
+          return true;
         } catch {
-          // No process found on port
+          // Process might have already exited
         }
       }
     } catch {
-      // Command failed - port might already be free
+      // Lookup failed - port might already be free, or the tool is missing
     }
 
     return false;
