@@ -164,7 +164,7 @@
     "@commitlint/config-conventional": "19.1.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "20.14.10",
+    "@types/node": "20.19.43",
     "@typescript-eslint/eslint-plugin": "7.16.0",
     "@typescript-eslint/parser": "7.16.0",
     "eslint": "8.57.0",
@@ -177,7 +177,7 @@
     "ts-node": "10.9.2",
     "typedoc": "^0.28.15",
     "typescript": "5.5.3",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "typesVersions": {
     "*": {
