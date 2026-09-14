@@ -29,7 +29,7 @@
     "@arethetypeswrong/cli": "^0.18.0",
     "@changesets/cli": "^2.27.0",
     "@commitlint/cli": "^19.5.0",
-    "@commitlint/config-conventional": "^19.5.0",
+    "@commitlint/config-conventional": "^21.2.2",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.9.6",
