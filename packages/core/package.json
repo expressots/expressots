@@ -177,7 +177,7 @@
     "ts-node": "10.9.2",
     "typedoc": "^0.28.15",
     "typescript": "5.5.3",
-    "zod": "^4.5.4"
+    "zod": "^4.6.2"
   },
   "typesVersions": {
     "*": {
