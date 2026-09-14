@@ -30,7 +30,7 @@ importers:
         version: 2.31.1(@types/node@22.0.2)
       '@commitlint/cli':
         specifier: ^19.5.0
-        version: 19.6.0(@types/node@22.0.2)(typescript@5.9.3)
+        version: 19.6.0(@types/node@22.0.2)
       '@commitlint/config-conventional':
         specifier: ^19.5.0
         version: 19.6.0
@@ -130,8 +130,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.1
       lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.8)
+        specifier: ^1.44.0
+        version: 1.44.0(react@19.2.8)
       postcss:
         specifier: ^8.5.28
         version: 8.5.28
@@ -4236,10 +4236,10 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.460.0:
-    resolution: {integrity: sha512-BVtq/DykVeIvRTJvRAgCsOwaGL8Un3Bxh8MbDxMhEWlZay3T4IpEKDEpwt5KZ0KJMHzgm6jrltxlT5eXOWXDHg==}
+  lucide-react@1.44.0:
+    resolution: {integrity: sha512-2egNApH4hX4j/qdCgRublh88+9u3mEhz9iSlW5ckm4kaQEqZbXbMr0l5u5JZLy8nmWRx2dbHGQkEDYz6C9aCgw==}
     peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   lunr@2.3.9:
     resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
@@ -6109,11 +6109,11 @@ snapshots:
       - '@types/node'
       - typescript
 
-  '@commitlint/cli@19.6.0(@types/node@22.0.2)(typescript@5.9.3)':
+  '@commitlint/cli@19.6.0(@types/node@22.0.2)':
     dependencies:
       '@commitlint/format': 19.8.1
       '@commitlint/lint': 19.8.1
-      '@commitlint/load': 19.8.1(@types/node@22.0.2)(typescript@5.9.3)
+      '@commitlint/load': 19.8.1(@types/node@22.0.2)
       '@commitlint/read': 19.8.1
       '@commitlint/types': 19.8.1
       tinyexec: 0.3.2
@@ -6178,7 +6178,7 @@ snapshots:
       '@commitlint/types': 19.8.1
       chalk: 5.6.2
       cosmiconfig: 9.0.2(typescript@5.2.2)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.2.2)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.2.2))(typescript@5.2.2)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -6194,7 +6194,7 @@ snapshots:
       '@commitlint/types': 19.8.1
       chalk: 5.6.2
       cosmiconfig: 9.0.2(typescript@5.5.3)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.5.3)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.5.3))(typescript@5.5.3)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -6202,15 +6202,15 @@ snapshots:
       - '@types/node'
       - typescript
 
-  '@commitlint/load@19.8.1(@types/node@22.0.2)(typescript@5.9.3)':
+  '@commitlint/load@19.8.1(@types/node@22.0.2)':
     dependencies:
       '@commitlint/config-validator': 19.8.1
       '@commitlint/execute-rule': 19.8.1
       '@commitlint/resolve-extends': 19.8.1
       '@commitlint/types': 19.8.1
       chalk: 5.6.2
-      cosmiconfig: 9.0.2(typescript@5.9.3)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.9.3)
+      cosmiconfig: 9.0.2
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -8736,26 +8736,32 @@ snapshots:
       object-assign: 4.1.1
       vary: 1.1.2
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.2.2):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.2.2))(typescript@5.2.2):
     dependencies:
       '@types/node': 20.19.43
-      cosmiconfig: 9.0.2(typescript@5.9.3)
+      cosmiconfig: 9.0.2(typescript@5.2.2)
       jiti: 2.6.1
       typescript: 5.2.2
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.5.3):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@20.19.43)(cosmiconfig@9.0.2(typescript@5.5.3))(typescript@5.5.3):
     dependencies:
       '@types/node': 20.19.43
-      cosmiconfig: 9.0.2(typescript@5.9.3)
+      cosmiconfig: 9.0.2(typescript@5.5.3)
       jiti: 2.6.1
       typescript: 5.5.3
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.9.3):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@22.0.2)(cosmiconfig@9.0.2):
     dependencies:
       '@types/node': 22.0.2
-      cosmiconfig: 9.0.2(typescript@5.9.3)
+      cosmiconfig: 9.0.2
       jiti: 2.6.1
-      typescript: 5.9.3
+
+  cosmiconfig@9.0.2:
+    dependencies:
+      env-paths: 2.2.1
+      import-fresh: 3.3.1
+      js-yaml: 4.3.2
+      parse-json: 5.2.0
 
   cosmiconfig@9.0.2(typescript@5.2.2):
     dependencies:
@@ -8774,15 +8780,6 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.5.3
-
-  cosmiconfig@9.0.2(typescript@5.9.3):
-    dependencies:
-      env-paths: 2.2.1
-      import-fresh: 3.3.1
-      js-yaml: 4.3.2
-      parse-json: 5.2.0
-    optionalDependencies:
-      typescript: 5.9.3
 
   create-jest@29.7.0(@types/node@20.19.43):
     dependencies:
@@ -10360,7 +10357,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.460.0(react@19.2.8):
+  lucide-react@1.44.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
