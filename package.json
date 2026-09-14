@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.0",
-    "@changesets/cli": "^2.27.0",
+    "@changesets/cli": "^3.0.2",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "husky": "^9.1.7",
