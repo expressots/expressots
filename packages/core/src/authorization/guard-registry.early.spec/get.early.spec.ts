@@ -6,6 +6,9 @@ import { injectable } from "../../di/inversify";
 import { Logger } from "../../provider/logger/logger.provider";
 import { GuardRegistry } from "../guard-registry";
 import type { IGuard, GuardClass } from "../guard.interface";
+import { Guard } from "../guard-decorators";
+import { RequireAuth } from "../guards/authenticated.guard";
+import { RequirePermission } from "../guards/permission.guard";
 import { GuardResult } from "../guard.interface";
 
 @injectable()
@@ -69,6 +72,22 @@ describe("GuardRegistry.get() get method", () => {
       // Assert
       expect(result).toBe(guardInstance);
     });
+  });
+
+  it("applies decorator priorities to convenience guard instances", () => {
+    expect(registry.get(RequireAuth()).priority).toBe(1);
+    expect(registry.get(RequirePermission("profile:read")).priority).toBe(20);
+  });
+  it("applies metadata to manually created classes while respecting explicit overrides", () => {
+    @Guard({ priority: 3, cacheable: true })
+    class DecoratedGuard extends TestGuard {}
+    const guard = registry.get(DecoratedGuard);
+    expect(guard.priority).toBe(3);
+    expect(guard.cacheable).toBeUndefined();
+    guard.priority = 5;
+    guard.cacheable = false;
+    expect(registry.get(guard).priority).toBe(5);
+    expect(registry.get(guard).cacheable).toBe(false);
   });
 
   describe("Edge Cases", () => {

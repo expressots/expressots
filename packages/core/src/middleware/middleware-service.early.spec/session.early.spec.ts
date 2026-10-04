@@ -1,6 +1,6 @@
 // Unit tests for: session
 
-import { middlewareResolver } from "../middleware-resolver";
+import { middlewareResolver, resolvePackage } from "../middleware-resolver";
 import { Middleware } from "../middleware-service";
 
 jest.mock("../middleware-resolver", () => {
@@ -8,6 +8,7 @@ jest.mock("../middleware-resolver", () => {
   return {
     ...actual,
     middlewareResolver: jest.fn(),
+    resolvePackage: jest.fn(),
   };
 });
 
@@ -166,17 +167,27 @@ describe("Middleware.session() session method", () => {
   });
 
   describe("JWT Session", () => {
-    it("should log warning for JWT session type", () => {
-      const logSpy = jest.spyOn(middleware as any, "bufferStartupLog");
-
-      middleware.session({
-        type: "jwt",
-        secret: "my-secret",
+    it("fails with an actionable error when the JWT plugin is missing", () => {
+      (resolvePackage as jest.Mock).mockReturnValue(null);
+      expect(() => middleware.session({ type: "jwt" })).toThrow(
+        "ex add @expressots/jwt",
+      );
+    });
+    it("delegates to the plugin and forwards the application container", () => {
+      const factory = jest.fn(() => jest.fn());
+      (resolvePackage as jest.Mock).mockReturnValue({
+        createJwtSessionMiddleware: factory,
       });
-
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("JWT sessions require custom implementation"),
-        "warn",
+      const container = {} as any;
+      middleware.session(
+        { type: "jwt", jwt: { storage: "header" } },
+        container,
+        undefined,
+      );
+      expect(factory).toHaveBeenCalledWith(
+        { storage: "header" },
+        container,
+        undefined,
       );
     });
   });

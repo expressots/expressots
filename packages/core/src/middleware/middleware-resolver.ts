@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import { Logger } from "../provider/logger/logger.provider.js";
 import type { ExpressHandler } from "./middleware-service.js";
+
+// Optional packages resolve from the application in both CommonJS and native ESM.
+const packageRequire =
+  typeof require === "function"
+    ? require
+    : createRequire(resolve(process.cwd(), "package.json"));
 
 /**
  * Registry mapping middleware names to their npm package names.
@@ -111,7 +119,7 @@ function isPackageInstalled(packageName: string): boolean {
   }
 
   try {
-    require.resolve(packageName, { paths: [process.cwd()] });
+    packageRequire.resolve(packageName, { paths: [process.cwd()] });
     installStatusCache.set(packageName, true);
     return true;
   } catch {
@@ -139,7 +147,9 @@ function resolveModule<T = unknown>(packageName: string): T | null {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require(packageName);
+    const mod = packageRequire(
+      packageRequire.resolve(packageName, { paths: [process.cwd()] }),
+    );
 
     // Handle various module export patterns:
     // 1. CommonJS: module.exports = fn → mod is the function

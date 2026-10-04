@@ -46,6 +46,7 @@ import { Env, IWebServerPublic, RenderEngine, Server } from "@expressots/shared"
 import { interfaces, schemaToJsonSchema } from "@expressots/core";
 import { ExpressHandler, MiddlewareConfig } from "./application-express.types.js";
 import { HttpStatusCodeMiddleware } from "./express-utils/http-status-middleware.js";
+import { getHttpContext } from "./express-utils/http-context-store.js";
 import { InversifyExpressServer } from "./express-utils/inversify-express-server.js";
 import { setEngineEjs, setEngineHandlebars, setEnginePug } from "./render/engine.js";
 import { AddressInfo } from "net";
@@ -404,6 +405,10 @@ export class AppExpress implements Server.IWebServer {
     // Create a proxy that intercepts setErrorHandler calls
     return new Proxy(baseMiddleware, {
       get(target: Middleware, prop: string | symbol): unknown {
+        if (prop === "session") {
+          return (config: import("@expressots/core").SessionConfig): void =>
+            target.session(config, container, getHttpContext);
+        }
         if (prop === "setErrorHandler") {
           return function (options?: import("@expressots/core").ErrorHandlerOptions): void {
             // Automatically inject container if enableExceptionFilters is true and container is available

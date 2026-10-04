@@ -1728,7 +1728,13 @@ export class Middleware implements IMiddleware {
    * Unified session management.
    * Replaces: addSession, addCookieSession
    */
-  public session(config: V4SessionConfig): void {
+  public session(
+    config: V4SessionConfig,
+    container?: import("../di/inversify.js").interfaces.Container,
+    contextResolver?: import("./middleware-config.js").JwtSessionContextResolver,
+  ): void {
+    if (config.type !== "jwt" && !config.secret?.length)
+      throw new Error("A session secret is required");
     switch (config.type) {
       case "cookie": {
         // Use cookie-session
@@ -1738,7 +1744,7 @@ export class Middleware implements IMiddleware {
           keys: config.keys || [
             typeof config.secret === "string"
               ? config.secret
-              : config.secret[0],
+              : config.secret?.[0],
           ],
           ...config.cookie,
         };
@@ -1766,11 +1772,27 @@ export class Middleware implements IMiddleware {
       }
 
       case "jwt": {
-        // JWT session - minimal implementation
-        this.bufferStartupLog(
-          "JWT sessions require custom implementation. Use Middleware.add() with your JWT middleware.",
-          "warn",
+        const plugin = resolvePackage<{
+          createJwtSessionMiddleware: (
+            options: V4SessionConfig["jwt"],
+            container?: import("../di/inversify.js").interfaces.Container,
+            contextResolver?: import("./middleware-config.js").JwtSessionContextResolver,
+          ) => ExpressHandler;
+        }>("@expressots/jwt");
+        if (
+          !plugin ||
+          typeof plugin.createJwtSessionMiddleware !== "function"
+        ) {
+          throw new Error(
+            "JWT sessions require @expressots/jwt. Install it with ex add @expressots/jwt and register JwtProvider.",
+          );
+        }
+        const handler = plugin.createJwtSessionMiddleware(
+          config.jwt,
+          container,
+          contextResolver,
         );
+        this.addBuiltInMiddleware("jwtSession", "session", () => handler);
         break;
       }
     }

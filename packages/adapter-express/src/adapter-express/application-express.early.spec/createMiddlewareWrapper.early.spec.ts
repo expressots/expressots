@@ -1,3 +1,4 @@
+import { getHttpContext } from "../express-utils/http-context-store";
 import { AppExpress } from "../application-express";
 
 describe("AppExpress.createMiddlewareWrapper() method", () => {
@@ -29,6 +30,21 @@ describe("AppExpress.createMiddlewareWrapper() method", () => {
     wrapper.setErrorHandler({ enableExceptionFilters: true });
 
     expect(setErrorHandler).toHaveBeenCalledWith(expect.objectContaining({ container }));
+  });
+
+  it("forwards the application container and request context accessor to JWT sessions", () => {
+    const app = new AppExpress();
+    const container = { id: "jwt-container" };
+    (app as unknown as { appContainer: { Container: unknown } }).appContainer = {
+      Container: container,
+    };
+    const session = jest.fn();
+    const base = { session };
+    const wrapper = (
+      app as unknown as { createMiddlewareWrapper: (middleware: typeof base) => typeof base }
+    ).createMiddlewareWrapper(base);
+    wrapper.session({ type: "jwt" });
+    expect(session).toHaveBeenCalledWith({ type: "jwt" }, container, getHttpContext);
   });
 
   it("forwards unrelated middleware properties through the proxy", () => {

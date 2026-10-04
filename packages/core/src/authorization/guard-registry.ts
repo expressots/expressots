@@ -97,18 +97,27 @@ export class GuardRegistry {
 
       // Try container
       if (this.container.isBound(guard)) {
-        return this.container.get<IGuard>(guard);
+        return this.applyPriority(this.container.get<IGuard>(guard));
       }
 
       // Create new instance
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const instance = new (guard as any)();
       this.injectDependencies(instance);
-      return instance;
+      return this.applyPriority(instance);
     }
 
     // Already an instance
-    return guard;
+    return this.applyPriority(guard);
+  }
+
+  private applyPriority(instance: IGuard): IGuard {
+    const metadata = Reflect.getMetadata(
+      GUARD_METADATA_KEY.guard,
+      instance.constructor,
+    ) as GuardMetadata | undefined;
+    instance.priority ??= metadata?.priority ?? 100;
+    return instance;
   }
 
   /**

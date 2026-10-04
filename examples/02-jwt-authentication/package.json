@@ -24,11 +24,10 @@
         "@expressots/shared": "4.3.0",
         "bcryptjs": "^3.0.2",
         "express": "5.2.1",
-        "jsonwebtoken": "^9.0.2"
+        "@expressots/jwt": "^4.3.0"
     },
     "devDependencies": {
         "@types/bcryptjs": "^2.4.6",
-        "@types/jsonwebtoken": "^9.0.9",
         "@eslint/js": "9.39.2",
         "@expressots/cli": "4.3.0",
         "@types/express": "5.0.6",

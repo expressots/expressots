@@ -330,12 +330,18 @@ export interface CompressConfig extends Partial<CompressionOptions> {
  */
 export type SessionType = "cookie" | "store" | "jwt";
 
+/** Adapter hook for the existing per-request principal and child container. */
+export type JwtSessionContextResolver = (request: Request) => {
+  container: import("../di/inversify.js").interfaces.Container;
+  user: import("../authorization/guard.interface.js").Principal;
+} | undefined;
+
 /**
  * JWT session options.
  */
 export interface JwtSessionOptions {
   /** JWT algorithm */
-  algorithm?: "HS256" | "HS384" | "HS512" | "RS256";
+  algorithm?: "HS256" | "HS384" | "HS512" | "RS256" | "ES256";
   /** Token expiration */
   expiresIn?: string | number;
   /** Token issuer */
@@ -367,9 +373,9 @@ export interface SessionConfig {
 
   /**
    * Secret for signing sessions/cookies.
-   * Required for all session types.
+   * Required for cookie and store sessions. JWT keys are configured on the provider.
    */
-  secret: string | Array<string>;
+  secret?: string | Array<string>;
 
   /**
    * Session store (for type: 'store').

@@ -1,12 +1,23 @@
 import { controller, Get, principal } from "@expressots/adapter-express";
-import { RequireAuthentication } from "@expressots/core";
-import { AppPrincipal } from "../auth/app-principal";
-
+import {
+    RequireAuthentication,
+    RequireRoles,
+    RequirePermissions,
+    UseGuards,
+} from "@expressots/core";
+import { JwtAuthGuard, JwtPrincipal } from "@expressots/jwt";
 @controller("/users")
 export class UserController {
     @Get("/me")
     @RequireAuthentication()
-    me(@principal() user: AppPrincipal) {
+    @RequirePermissions("profile:read")
+    me(@principal() user: JwtPrincipal) {
+        return user.details;
+    }
+    @Get("/admin")
+    @UseGuards(JwtAuthGuard)
+    @RequireRoles("admin")
+    admin(@principal() user: JwtPrincipal) {
         return user.details;
     }
 }

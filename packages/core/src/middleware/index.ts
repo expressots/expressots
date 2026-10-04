@@ -134,6 +134,7 @@ export type {
   SessionConfig,
   SessionType,
   JwtSessionOptions,
+  JwtSessionContextResolver,
   // Upload options
   UploadConfig,
   UploadHandler,

@@ -1,4 +1,4 @@
-import { provide } from "@expressots/core";
+import { provideSingleton } from "@expressots/core";
 import * as bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
 
@@ -10,7 +10,7 @@ export interface StoredUser {
     permissions: Array<string>;
 }
 
-@provide(UserRepository)
+@provideSingleton(UserRepository)
 export class UserRepository {
     private readonly users = new Map<string, StoredUser>();
 

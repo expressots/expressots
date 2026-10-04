@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "Node16",
+    "target": "ES2021",
+    "moduleResolution": "Node16",
+    "outDir": "lib/cjs",
+    "declarationDir": "lib/cjs/types"
+  }
+}
