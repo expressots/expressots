@@ -1,37 +1,36 @@
 # 10-redis-cache
 
-Redis-backed cache provider with an in-memory fallback when `REDIS_URL` is unset.
+Uses the official `@expressots/cache` system plugin with lifecycle discovery,
+health reporting and either memory or Redis. There is no automatic fallback.
 
-## Quick start
-
-```bash
+```sh
 npm install
 cp .env.example .env
 npm run dev
 ```
 
-Store and read cache entries:
+For Redis, run `docker run --rm -p 6379:6379 redis:7.2-alpine`. The example
+explicitly installs the optional ioredis peer and selects Redis in `.env.example`.
+For memory, set `CACHE_DRIVER=memory`; Redis is then not loaded or connected.
 
-```bash
+```sh
 curl -X POST http://localhost:3000/api/cache/session \
-  -H "Content-Type: application/json" \
+  -H 'Content-Type: application/json' \
   -d '{"value":"abc123","ttlSeconds":300}'
-
 curl http://localhost:3000/api/cache/session
 curl http://localhost:3000/api/health
 ```
 
-With Redis, set `REDIS_URL=redis://localhost:6379` in `.env`.
+The HTTP example retains ttlSeconds and converts to the package's millisecond
+TTL. Omission uses CACHE_DEFAULT_TTL_MS; zero disables expiry. Invalid TTL
+rejects. CacheProvider is registered through CreateModule and injected directly
+into controllers. bootstrap(App) manages provider startup/shutdown. A failed
+Redis connection fails initialization rather than selecting memory.
 
-## Tests
-
-```bash
+```sh
 npm test
+npm run build
 ```
 
-## Related examples
-
-| Example | Topic |
-| --- | --- |
-| [09-message-queue](../09-message-queue/) | BullMQ jobs |
-| [12-docker-compose](../12-docker-compose/) | Postgres + Redis via Docker |
+Tests explicitly select memory and exercise health, round trips and cache misses.
+For package semantics and real Redis tests see [@expressots/cache](../../packages/cache/README.md).

@@ -1,10 +1,10 @@
 import { controller, Get } from "@expressots/adapter-express";
 import { inject } from "@expressots/core";
-import { RedisCacheProvider } from "@providers/cache/redis-cache.provider";
+import { CacheProvider } from "@expressots/cache";
 
 @controller("/")
 export class AppController {
-    constructor(@inject(RedisCacheProvider) private readonly cache: RedisCacheProvider) {}
+    constructor(@inject(CacheProvider) private readonly cache: CacheProvider) {}
 
     @Get("/")
     welcome() {
@@ -17,7 +17,8 @@ export class AppController {
 
     @Get("/health")
     async health() {
-        const cacheHealthy = await this.cache.ping();
+        const cacheHealthy =
+            (await this.cache.healthCheck()).status === "healthy";
         return {
             status: cacheHealthy ? "ok" : "degraded",
             cache: {

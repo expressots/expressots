@@ -1,0 +1,9 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "env": ["CACHE_TEST_REDIS_URL"],
+      "cache": false
+    }
+  }
+}

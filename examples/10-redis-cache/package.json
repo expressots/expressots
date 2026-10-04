@@ -23,7 +23,8 @@
         "@expressots/core": "4.3.0",
         "@expressots/shared": "4.3.0",
         "express": "5.2.1",
-        "ioredis": "5.6.1"
+        "ioredis": "5.6.1",
+        "@expressots/cache": "^4.3.0"
     },
     "devDependencies": {
         "@eslint/js": "9.39.2",

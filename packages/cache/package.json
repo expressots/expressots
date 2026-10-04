@@ -1,0 +1,94 @@
+{
+  "name": "@expressots/cache",
+  "version": "4.3.0",
+  "description": "ExpressoTS cache system plugin with memory and optional Redis drivers",
+  "author": "ExpressoTS Team",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/cjs/types/index.d.ts",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/esm/types/index.d.ts",
+        "default": "./lib/esm/index.mjs"
+      },
+      "require": {
+        "types": "./lib/cjs/types/index.d.ts",
+        "default": "./lib/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "lib/**/*",
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md"
+  ],
+  "license": "MIT",
+  "homepage": "https://expresso-ts.com",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/expressots"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/expressots/expressots.git",
+    "directory": "packages/cache"
+  },
+  "bugs": {
+    "url": "https://github.com/expressots/expressots/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "expressots",
+    "nodejs",
+    "microservices",
+    "typescript",
+    "clean-architecture",
+    "typescript-framework",
+    "framework",
+    "server-side"
+  ],
+  "scripts": {
+    "clean": "node scripts/rm.js lib",
+    "copy": "node scripts/copy.js README.md CHANGELOG.md lib",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run copy",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "node scripts/build-esm.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "format": "prettier --write \"src/**/*.ts\" --cache",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "test:redis": "CACHE_TEST_REDIS_URL=redis://127.0.0.1:6379 jest --runInBand"
+  },
+  "devDependencies": {
+    "@expressots/core": "workspace:*",
+    "@types/jest": "^29.5.14",
+    "@types/node": "20.19.43",
+    "@typescript-eslint/eslint-plugin": "7.16.0",
+    "@typescript-eslint/parser": "7.16.0",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "9.1.0",
+    "ioredis": "5.6.1",
+    "jest": "29.7.0",
+    "ts-jest": "29.4.12",
+    "ts-node": "10.9.2",
+    "typescript": "5.5.3"
+  },
+  "peerDependencies": {
+    "@expressots/core": "^4.3.0",
+    "ioredis": "^5.6.1"
+  },
+  "peerDependenciesMeta": {
+    "ioredis": {
+      "optional": true
+    }
+  },
+  "type": "commonjs"
+}

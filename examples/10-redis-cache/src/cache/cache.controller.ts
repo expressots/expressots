@@ -1,6 +1,12 @@
-import { controller, Get, Post, param, body } from "@expressots/adapter-express";
-import { inject, NotFoundError } from "@expressots/core";
-import { RedisCacheProvider } from "@providers/cache/redis-cache.provider";
+import {
+    controller,
+    Get,
+    Post,
+    param,
+    body,
+} from "@expressots/adapter-express";
+import { inject, NotFoundError, ValidationErrorClass } from "@expressots/core";
+import { CacheProvider } from "@expressots/cache";
 
 interface SetCacheDto {
     value: string;
@@ -9,12 +15,12 @@ interface SetCacheDto {
 
 @controller("/cache")
 export class CacheController {
-    constructor(@inject(RedisCacheProvider) private readonly cache: RedisCacheProvider) {}
+    constructor(@inject(CacheProvider) private readonly cache: CacheProvider) {}
 
     @Get("/:key")
     async get(@param("key") key: string) {
         const value = await this.cache.get(key);
-        if (value === null) {
+        if (value === undefined) {
             throw new NotFoundError("Cache entry", key);
         }
 
@@ -23,7 +29,26 @@ export class CacheController {
 
     @Post("/:key")
     async set(@param("key") key: string, @body() dto: SetCacheDto) {
-        await this.cache.set(key, dto.value, dto.ttlSeconds);
+        if (
+            dto.ttlSeconds !== undefined &&
+            (typeof dto.ttlSeconds !== "number" ||
+                !Number.isSafeInteger(dto.ttlSeconds * 1000) ||
+                dto.ttlSeconds < 0)
+        ) {
+            throw new ValidationErrorClass([
+                {
+                    property: "ttlSeconds",
+                    messages: [
+                        "Must be non-negative seconds representable as integer milliseconds",
+                    ],
+                },
+            ]);
+        }
+        await this.cache.set(
+            key,
+            dto.value,
+            dto.ttlSeconds === undefined ? undefined : dto.ttlSeconds * 1000,
+        );
         return {
             key,
             stored: true,
