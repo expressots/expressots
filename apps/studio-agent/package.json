@@ -33,7 +33,7 @@
     "@opentelemetry/sdk-trace-node": "^2.11.0",
     "@opentelemetry/semantic-conventions": "^1.41.1",
     "glob": "^13.0.0",
-    "socket.io": "^4.8.0"
+    "socket.io": "^4.8.4"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

@@ -87,9 +87,9 @@
     "husky": "9.1.7",
     "jest": "29.7.0",
     "lint-staged": "^15.2.10",
-    "prettier": "3.9.6",
+    "prettier": "3.9.9",
     "reflect-metadata": "0.2.2",
-    "ts-jest": "29.4.12",
+    "ts-jest": "29.4.14",
     "ts-node": "10.9.2",
     "typescript": "5.5.3"
   },
